@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -40,6 +41,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
 
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
+    private volatile boolean subscribed;
 
     @Getter
     private final String topic;
@@ -69,23 +71,37 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
     @Override
     public void subscribe() {
         consumer.subscribe(Collections.singletonList(topic));
+        subscribed = true;
+    }
+
+    @Override
+    public void subscribe(List<Integer> partitions) {
+        consumer.subscribe(partitions.stream().map(partition -> topic + "." + partition).collect(Collectors.toList()));
+        subscribed = true;
     }
 
     @Override
     public List<T> poll(long durationInMillis) {
-        ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(durationInMillis));
-        if (records.count() > 0) {
-            List<T> result = new ArrayList<>();
-            records.forEach(record -> {
-                try {
-                    result.add(decode(record));
-                } catch (IOException e) {
-                    log.error("Failed decode record: [{}]", record);
-                }
-            });
-            return result;
+        if (!subscribed) {
+            try {
+                Thread.sleep(durationInMillis);
+            } catch (InterruptedException e) {
+                log.debug("Failed to await subscription", e);
+            }
+        } else {
+            ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(durationInMillis));
+            if (records.count() > 0) {
+                List<T> result = new ArrayList<>();
+                records.forEach(record -> {
+                    try {
+                        result.add(decode(record));
+                    } catch (IOException e) {
+                        log.error("Failed decode record: [{}]", record);
+                    }
+                });
+                return result;
+            }
         }
-
         return Collections.emptyList();
     }
 

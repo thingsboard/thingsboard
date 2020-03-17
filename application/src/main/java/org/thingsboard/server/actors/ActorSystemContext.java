@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.actors.service.ActorService;
@@ -64,6 +65,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
@@ -101,6 +103,11 @@ public class ActorSystemContext {
     public ConcurrentMap<TenantId, DebugTbRateLimits> getDebugPerTenantLimits() {
         return debugPerTenantLimits;
     }
+
+    @Autowired
+    @Getter
+    @Setter
+    private TbServiceInfoProvider serviceInfoProvider;
 
     @Getter
     @Setter
@@ -233,10 +240,6 @@ public class ActorSystemContext {
     @Getter
     private RuleChainTransactionService ruleChainTransactionService;
 
-    @Value("${cluster.partition_id}")
-    @Getter
-    private long queuePartitionId;
-
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
     private long maxConcurrentSessionsPerDevice;
@@ -359,7 +362,7 @@ public class ActorSystemContext {
         event.setEntityId(entityId);
         event.setType(DataConstants.ERROR);
         //TODO 2.5
-//        event.setBody(toBodyJson(discoveryService.getCurrentServer().getServerAddress(), method, toString(e)));
+        event.setBody(toBodyJson(serviceInfoProvider.getServiceInfo().getServiceId(), method, toString(e)));
         persistEvent(event);
     }
 
@@ -369,7 +372,7 @@ public class ActorSystemContext {
         event.setEntityId(entityId);
         event.setType(DataConstants.LC_EVENT);
         //TODO 2.5
-//        event.setBody(toBodyJson(discoveryService.getCurrentServer().getServerAddress(), lcEvent, Optional.ofNullable(e)));
+        event.setBody(toBodyJson(serviceInfoProvider.getServiceInfo().getServiceId(), lcEvent, Optional.ofNullable(e)));
         persistEvent(event);
     }
 
@@ -383,8 +386,8 @@ public class ActorSystemContext {
         return sw.toString();
     }
 
-    private JsonNode toBodyJson(ServerAddress server, ComponentLifecycleEvent event, Optional<Exception> e) {
-        ObjectNode node = mapper.createObjectNode().put("server", server.toString()).put("event", event.name());
+    private JsonNode toBodyJson(String serviceId, ComponentLifecycleEvent event, Optional<Exception> e) {
+        ObjectNode node = mapper.createObjectNode().put("server", serviceId).put("event", event.name());
         if (e.isPresent()) {
             node = node.put("success", false);
             node = node.put("error", toString(e.get()));
@@ -394,8 +397,8 @@ public class ActorSystemContext {
         return node;
     }
 
-    private JsonNode toBodyJson(ServerAddress server, String method, String body) {
-        return mapper.createObjectNode().put("server", server.toString()).put("method", method).put("error", body);
+    private JsonNode toBodyJson(String serviceId, String method, String body) {
+        return mapper.createObjectNode().put("server", serviceId).put("method", method).put("error", body);
     }
 
 

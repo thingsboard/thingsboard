@@ -15,14 +15,18 @@
  */
 package org.thingsboard.server;
 
-import org.thingsboard.server.discovery.TopicPartitionInfo;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-public interface TbQueueProducer<T extends TbQueueMsg> {
+@Data
+@Component
+public class TbQueueTransportNotificationSettings {
 
-    void init();
+    @Value("${queue.transport.notifications_topic}")
+    private String notificationsTopic;
 
-    String getDefaultTopic();
-
-    void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback);
+    @Value("${queue.transport.poll_interval}")
+    private long transportPollInterval;
 
 }

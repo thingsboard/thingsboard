@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server;
 
-import org.thingsboard.server.discovery.TopicPartitionInfo;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-public interface TbQueueProducer<T extends TbQueueMsg> {
+@Data
+@Component
+public class TbQueueRuleEngineSettings {
 
-    void init();
+    @Value("${queue.rule_engine.topic}")
+    private String topic;
 
-    String getDefaultTopic();
-
-    void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback);
-
+    @Value("${queue.rule_engine.partitions}")
+    private int partitions;
 }

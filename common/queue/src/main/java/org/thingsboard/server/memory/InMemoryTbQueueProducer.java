@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,10 +41,13 @@ public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueuePro
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
         boolean result = storage.put(tpi.getTopic(), msg);
         if (result) {
-            callback.onSuccess(null);
+            if (callback != null) {
+                callback.onSuccess(null);
+            }
         } else {
-            Exception e = new RuntimeException("Failure add msg to InMemoryQueue");
-            callback.onFailure(e);
+            if (callback != null) {
+                callback.onFailure(new RuntimeException("Failure add msg to InMemoryQueue"));
+            }
         }
     }
 }

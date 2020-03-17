@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.provider;
 
+import org.springframework.context.ApplicationListener;
 import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.discovery.PartitionChangeEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;

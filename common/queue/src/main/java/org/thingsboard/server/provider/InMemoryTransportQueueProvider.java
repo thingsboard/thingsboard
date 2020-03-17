@@ -15,13 +15,19 @@
  */
 package org.thingsboard.server.provider;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.TbQueueAdmin;
 import org.thingsboard.server.TbQueueConsumer;
+import org.thingsboard.server.TbQueueCoreSettings;
 import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.TbQueueRequestTemplate;
+import org.thingsboard.server.TbQueueRuleEngineSettings;
 import org.thingsboard.server.TbQueueTransportApiSettings;
+import org.thingsboard.server.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -37,20 +43,29 @@ import org.thingsboard.server.memory.InMemoryTbQueueProducer;
 @Slf4j
 public class InMemoryTransportQueueProvider implements TransportQueueProvider {
 
+    private final TbQueueCoreSettings coreSettings;
+    private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
+    private final TbQueueTransportNotificationSettings notificationSettings;
 
-    public InMemoryTransportQueueProvider(TbQueueTransportApiSettings transportApiSettings) {
+    public InMemoryTransportQueueProvider(TbQueueCoreSettings coreSettings,
+                                          TbQueueRuleEngineSettings ruleEngineSettings,
+                                          TbQueueTransportApiSettings transportApiSettings,
+                                          TbQueueTransportNotificationSettings notificationSettings) {
+        this.coreSettings = coreSettings;
+        this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
+        this.notificationSettings = notificationSettings;
     }
 
     @Override
     public TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiRequestTemplate() {
         InMemoryTbQueueProducer<TbProtoQueueMsg<TransportApiRequestMsg>> producer = new InMemoryTbQueueProducer<>(transportApiSettings.getRequestsTopic());
-
         InMemoryTbQueueConsumer<TbProtoQueueMsg<TransportApiResponseMsg>> consumer = new InMemoryTbQueueConsumer<>(transportApiSettings.getResponsesTopic());
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
                 <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> templateBuilder = DefaultTbQueueRequestTemplate.builder();
+        templateBuilder.queueAdmin(topic -> Futures.immediateFuture(null));
         templateBuilder.requestTemplate(producer);
         templateBuilder.responseTemplate(consumer);
         templateBuilder.maxPendingRequests(transportApiSettings.getMaxPendingRequests());
@@ -61,19 +76,16 @@ public class InMemoryTransportQueueProvider implements TransportQueueProvider {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-        InMemoryTbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> producer = new InMemoryTbQueueProducer<>(transportApiSettings.getRequestsTopic());
-        return producer;
+        return new InMemoryTbQueueProducer<>(ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        InMemoryTbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> producer = new InMemoryTbQueueProducer<>(transportApiSettings.getRequestsTopic());
-        return producer;
+        return new InMemoryTbQueueProducer<>(coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsConsumer() {
-        InMemoryTbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> consumer = new InMemoryTbQueueConsumer<>(transportApiSettings.getResponsesTopic());
-        return consumer;
+        return new InMemoryTbQueueConsumer<>(notificationSettings.getNotificationsTopic());
     }
 }

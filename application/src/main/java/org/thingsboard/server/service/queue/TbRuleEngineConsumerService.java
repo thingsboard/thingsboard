@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.queue;
 
-public interface TbRuleEngineConsumerService {
+import org.springframework.context.ApplicationListener;
+import org.thingsboard.server.discovery.PartitionChangeEvent;
+
+public interface TbRuleEngineConsumerService extends ApplicationListener<PartitionChangeEvent> {
 
 }

@@ -15,16 +15,24 @@
  */
 package org.thingsboard.server.memory;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.TbQueueMsg;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public final class InMemoryStorage {
     private static InMemoryStorage instance;
-    private final Map<String, Queue<TbQueueMsg>> storage;
+    private final Map<String, BlockingQueue<TbQueueMsg>> storage;
 
     private InMemoryStorage() {
         storage = new ConcurrentHashMap<>();
@@ -42,19 +50,38 @@ public final class InMemoryStorage {
     }
 
     public boolean put(String topic, TbQueueMsg msg) {
-        return storage.computeIfAbsent(topic, (t) -> new LinkedList<>()).add(msg);
+        return storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).add(msg);
     }
 
-    public TbQueueMsg get(String topic) {
+    public <T extends TbQueueMsg> List<T> get(String topic, long durationInMillis) {
         if (storage.containsKey(topic)) {
-            return storage.get(topic).peek();
+            try {
+                List<T> entities;
+                T first = (T) storage.get(topic).poll(durationInMillis, TimeUnit.MILLISECONDS);
+                if (first != null) {
+                    entities = new ArrayList<>();
+                    entities.add(first);
+                } else {
+                    entities = Collections.emptyList();
+                    List<TbQueueMsg> otherList = new ArrayList<>();
+                    storage.get(topic).drainTo(otherList, 100);
+                    for (TbQueueMsg other : otherList) {
+                        entities.add((T) other);
+                    }
+                }
+                return entities;
+            } catch (InterruptedException e) {
+                log.warn("Queue was interrupted", e);
+                return Collections.emptyList();
+            }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     public void commit(String topic) {
+        //TODO: 2.5 Until someone calls commit you should not allow to poll new elements.
         if (storage.containsKey(topic)) {
-            storage.get(topic).remove();
+//            storage.get(topic).remove();
         }
     }
 }

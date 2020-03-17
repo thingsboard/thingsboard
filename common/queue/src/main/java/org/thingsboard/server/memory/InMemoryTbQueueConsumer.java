@@ -18,7 +18,6 @@ package org.thingsboard.server.memory;
 import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.TbQueueMsg;
 
-import java.util.Collections;
 import java.util.List;
 
 public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueConsumer<T> {
@@ -41,13 +40,18 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     }
 
     @Override
+    public void subscribe(List<Integer> partitions) {
+
+    }
+
+    @Override
     public void unsubscribe() {
 
     }
 
     @Override
     public List<T> poll(long durationInMillis) {
-        return Collections.singletonList((T)storage.get(topic));
+        return storage.get(topic, durationInMillis);
     }
 
     @Override

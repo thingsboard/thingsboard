@@ -27,6 +27,8 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.discovery.PartitionChangeEvent;
+import org.thingsboard.server.discovery.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.provider.TbCoreQueueProvider;
@@ -69,8 +71,15 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
 
     @PostConstruct
     public void init() {
-        this.consumer.subscribe();
         this.mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-consumer"));
+    }
+
+    @Override
+    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
+        if (partitionChangeEvent.getServiceKey().getServiceType() == ServiceType.TB_CORE) {
+            log.info("Subscribing to partitions: {}", partitionChangeEvent.getPartitions());
+            this.consumer.subscribe(partitionChangeEvent.getPartitions());
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)

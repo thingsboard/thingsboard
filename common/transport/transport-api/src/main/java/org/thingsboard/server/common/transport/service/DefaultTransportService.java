@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -78,12 +78,11 @@ public class DefaultTransportService implements TransportService {
     private long sessionInactivityTimeout;
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
+    @Value("${queue.transport.poll_interval}")
+    private int notificationsPollDuration;
 
     private final TransportQueueProvider queueProvider;
     private final PartitionService partitionService;
-
-    @Value("${kafka.notifications.poll_interval}")
-    private int notificationsPollDuration;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -120,7 +119,7 @@ public class DefaultTransportService implements TransportService {
         ruleEngineMsgProducer = queueProvider.getRuleEngineMsgProducer();
         tbCoreMsgProducer = queueProvider.getTbCoreMsgProducer();
         transportNotificationsConsumer = queueProvider.getTransportNotificationsConsumer();
-
+        transportApiRequestTemplate.init();
         mainConsumerExecutor.execute(() -> {
             while (!stopped) {
                 try {
@@ -162,6 +161,9 @@ public class DefaultTransportService implements TransportService {
         }
         if (mainConsumerExecutor != null) {
             mainConsumerExecutor.shutdownNow();
+        }
+        if (transportApiRequestTemplate != null) {
+            transportApiRequestTemplate.stop();
         }
     }
 

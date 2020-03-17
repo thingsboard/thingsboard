@@ -19,6 +19,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public interface TbQueueRequestTemplate<Request extends TbQueueMsg, Response extends TbQueueMsg> {
 
+    void init();
+
     ListenableFuture<Response> send(Request request);
+
+    void stop();
 
 }

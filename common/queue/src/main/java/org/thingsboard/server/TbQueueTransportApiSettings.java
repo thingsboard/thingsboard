@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 @Data
 @Component
 public class TbQueueTransportApiSettings {
+
     @Value("${queue.transport_api.requests_topic}")
     private String requestsTopic;
 
@@ -33,6 +34,12 @@ public class TbQueueTransportApiSettings {
 
     @Value("${queue.transport_api.max_requests_timeout}")
     private int maxRequestsTimeout;
+
+    @Value("${queue.transport_api.max_callback_threads}")
+    private int maxCallbackThreads;
+
+    @Value("${queue.transport_api.request_poll_interval}")
+    private long requestPollInterval;
 
     @Value("${queue.transport_api.response_poll_interval}")
     private long responsePollInterval;

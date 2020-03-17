@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,11 +21,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.cluster.ServerType;
 import org.thingsboard.server.discovery.ConsistentHashPartitionService;
 import org.thingsboard.server.discovery.ServiceType;
 import org.thingsboard.server.discovery.TbServiceInfoProvider;
@@ -44,12 +43,13 @@ import static org.mockito.Mockito.mock;
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
-public class ConsistentClusterRoutingServiceTest {
+public class ConsistentHashParitionServiceTest {
 
     public static final int ITERATIONS = 1000000;
     private ConsistentHashPartitionService clusterRoutingService;
 
     private TbServiceInfoProvider discoveryService;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     private String hashFunctionName = "murmur3_128";
     private Integer virtualNodesSize = 16;
@@ -58,7 +58,8 @@ public class ConsistentClusterRoutingServiceTest {
     @Before
     public void setup() throws Exception {
         discoveryService = mock(TbServiceInfoProvider.class);
-        clusterRoutingService = new ConsistentHashPartitionService(discoveryService);
+        applicationEventPublisher = mock(ApplicationEventPublisher.class);
+        clusterRoutingService = new ConsistentHashPartitionService(discoveryService, applicationEventPublisher);
         ReflectionTestUtils.setField(clusterRoutingService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(clusterRoutingService, "corePartitions", 3);
         ReflectionTestUtils.setField(clusterRoutingService, "ruleEngineTopic", "tb.rule-engine");
@@ -103,7 +104,7 @@ public class ConsistentClusterRoutingServiceTest {
         List<Map.Entry<Integer, Integer>> data = map.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue)).collect(Collectors.toList());
         long end = System.currentTimeMillis();
         double diff = (data.get(data.size() - 1).getValue() - data.get(0).getValue());
-        System.out.println("Size: " + virtualNodesSize + " Time: " + (end - start) + " Diff: " + diff + "(" + String.format("%f", (diff/ITERATIONS) * 100.0) + "%)");
+        System.out.println("Size: " + virtualNodesSize + " Time: " + (end - start) + " Diff: " + diff + "(" + String.format("%f", (diff / ITERATIONS) * 100.0) + "%)");
 
         for (Map.Entry<Integer, Integer> entry : data) {
             System.out.println(entry.getKey() + ": " + entry.getValue());

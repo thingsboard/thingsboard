@@ -16,6 +16,7 @@
 package org.thingsboard.server.discovery;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
@@ -24,10 +25,13 @@ import java.util.List;
 public class PartitionChangeEvent extends ApplicationEvent {
 
     @Getter
+    private final ServiceKey serviceKey;
+    @Getter
     private final List<Integer> partitions;
 
-    public PartitionChangeEvent(Object source, List<Integer> partitions) {
+    public PartitionChangeEvent(Object source, ServiceKey serviceKey, List<Integer> partitions) {
         super(source);
+        this.serviceKey = serviceKey;
         this.partitions = partitions;
     }
 }

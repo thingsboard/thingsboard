@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.queue;
 
-import akka.actor.ActorRef;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -27,10 +26,10 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.discovery.PartitionChangeEvent;
+import org.thingsboard.server.discovery.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.provider.TbCoreQueueProvider;
 import org.thingsboard.server.provider.TbRuleEngineQueueProvider;
-import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -70,8 +69,15 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
 
     @PostConstruct
     public void init() {
-        this.consumer.subscribe();
         this.mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-consumer"));
+    }
+
+    @Override
+    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
+        if (partitionChangeEvent.getServiceKey().getServiceType() == ServiceType.TB_RULE_ENGINE) {
+            log.info("Subscribing to partitions: {}", partitionChangeEvent.getPartitions());
+            this.consumer.subscribe(partitionChangeEvent.getPartitions());
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)

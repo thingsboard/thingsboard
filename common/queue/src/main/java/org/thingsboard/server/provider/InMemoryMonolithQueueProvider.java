@@ -21,7 +21,11 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.TbQueueCoreSettings;
 import org.thingsboard.server.TbQueueProducer;
+import org.thingsboard.server.TbQueueRuleEngineSettings;
+import org.thingsboard.server.TbQueueTransportApiSettings;
+import org.thingsboard.server.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.discovery.PartitionChangeEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -36,50 +40,52 @@ import org.thingsboard.server.memory.InMemoryTbQueueProducer;
 public class InMemoryMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEngineQueueProvider {
 
     private final TbQueueCoreSettings coreSettings;
+    private final TbQueueRuleEngineSettings ruleEngineSettings;
+    private final TbQueueTransportApiSettings transportApiSettings;
+    private final TbQueueTransportNotificationSettings notificationSettings;
 
-    public InMemoryMonolithQueueProvider(TbQueueCoreSettings coreSettings) {
+    public InMemoryMonolithQueueProvider(TbQueueCoreSettings coreSettings,
+                                         TbQueueRuleEngineSettings ruleEngineSettings,
+                                         TbQueueTransportApiSettings transportApiSettings,
+                                         TbQueueTransportNotificationSettings notificationSettings) {
         this.coreSettings = coreSettings;
+        this.ruleEngineSettings = ruleEngineSettings;
+        this.transportApiSettings = transportApiSettings;
+        this.notificationSettings = notificationSettings;
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportMsgProducer() {
-        InMemoryTbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> producer = new InMemoryTbQueueProducer<>(coreSettings.getTopic());
-        return producer;
+        return new InMemoryTbQueueProducer<>(notificationSettings.getNotificationsTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-        InMemoryTbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> producer = new InMemoryTbQueueProducer<>(coreSettings.getTopic());
-        return producer;
+        return new InMemoryTbQueueProducer<>(ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        InMemoryTbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> producer = new InMemoryTbQueueProducer<>(coreSettings.getTopic());
-        return producer;
+        return new InMemoryTbQueueProducer<>(coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
-        InMemoryTbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer = new InMemoryTbQueueConsumer<>(coreSettings.getTopic());
-        return consumer;
+        return new InMemoryTbQueueConsumer<>(ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> getToCoreMsgConsumer() {
-        InMemoryTbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> consumer = new InMemoryTbQueueConsumer<>(coreSettings.getTopic());
-        return consumer;
+        return new InMemoryTbQueueConsumer<>(coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> getTransportApiRequestConsumer() {
-        InMemoryTbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> consumer = new InMemoryTbQueueConsumer<>(coreSettings.getTopic());
-        return consumer;
+        return new InMemoryTbQueueConsumer<>(transportApiSettings.getRequestsTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiResponseProducer() {
-        InMemoryTbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> producer = new InMemoryTbQueueProducer<>(coreSettings.getTopic());
-        return producer;
+        return new InMemoryTbQueueProducer<>(transportApiSettings.getResponsesTopic());
     }
 }

@@ -23,6 +23,8 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     void subscribe();
 
+    void subscribe(List<Integer> partitions);
+
     void unsubscribe();
 
     List<T> poll(long durationInMillis);

@@ -1,12 +1,27 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.discovery;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -20,7 +35,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,11 +53,12 @@ public class ConsistentHashPartitionService implements PartitionService {
     private String ruleEngineTopic;
     @Value("${queue.rule_engine.partitions:100}")
     private Integer ruleEnginePartitions;
-    @Value("${queue.partitions.hash_function_name:murmur3_32}")
+    @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
     @Value("${queue.partitions.virtual_nodes_size:16}")
     private Integer virtualNodesSize;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final ConcurrentMap<ServiceType, String> partitionTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<ServiceType, Integer> partitionSizes = new ConcurrentHashMap<>();
@@ -53,8 +68,9 @@ public class ConsistentHashPartitionService implements PartitionService {
 
     private HashFunction hashFunction;
 
-    public ConsistentHashPartitionService(TbServiceInfoProvider serviceInfoProvider) {
+    public ConsistentHashPartitionService(TbServiceInfoProvider serviceInfoProvider, ApplicationEventPublisher applicationEventPublisher) {
         this.serviceInfoProvider = serviceInfoProvider;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @PostConstruct
@@ -128,13 +144,15 @@ public class ConsistentHashPartitionService implements PartitionService {
             for (int i = 0; i < size; i++) {
                 ServiceInfo serviceInfo = resolveByPartitionIdx(newCircles.get(type), i);
                 if (currentService.equals(serviceInfo)) {
-                    myPartitions.putIfAbsent(new ServiceKey(type, getTenantId(serviceInfo)), new ArrayList<>());
+                    ServiceKey serviceKey = new ServiceKey(type, getTenantId(serviceInfo));
+                    myPartitions.computeIfAbsent(serviceKey, key -> new ArrayList<>()).add(i);
                 }
             }
         });
         myPartitions.forEach((serviceKey, partitions) -> {
             if (!partitions.equals(oldPartitions.get(serviceKey))) {
                 log.info("[{}] NEW PARTITIONS: {}", serviceKey, partitions);
+                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceKey, partitions));
             }
         });
     }
@@ -176,32 +194,6 @@ public class ConsistentHashPartitionService implements PartitionService {
 
     private HashCode hash(ServiceInfo instance, int i) {
         return hashFunction.newHasher().putString(instance.getServiceId(), StandardCharsets.UTF_8).putInt(i).hash();
-    }
-
-    private static class ServiceKey {
-        @Getter
-        private final ServiceType serviceType;
-        @Getter
-        private final TenantId tenantId;
-
-        public ServiceKey(ServiceType serviceType, TenantId tenantId) {
-            this.serviceType = serviceType;
-            this.tenantId = tenantId;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ServiceKey that = (ServiceKey) o;
-            return serviceType == that.serviceType &&
-                    Objects.equals(tenantId, that.tenantId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(serviceType, tenantId);
-        }
     }
 
     public static HashFunction forName(String name) {
