@@ -88,6 +88,9 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<ToCoreMsg>> msgs = consumer.poll(pollDuration);
+                    if(msgs.isEmpty()){
+                        continue;
+                    }
                     ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> ackMap = msgs.stream().collect(
                             Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);

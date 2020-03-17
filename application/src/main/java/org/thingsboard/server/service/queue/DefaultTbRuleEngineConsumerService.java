@@ -86,6 +86,9 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> msgs = consumer.poll(pollDuration);
+                    if(msgs.isEmpty()){
+                        continue;
+                    }
                     ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> ackMap = msgs.stream().collect(
                             Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
@@ -120,7 +123,8 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
     }
 
     //TODO 2.5
-    private void forwardToRuleEngineActor(TransportProtos.TransportToRuleEngineMsg toDeviceActorMsg, TbMsgCallback callback) {
+    private void forwardToRuleEngineActor(TransportProtos.TransportToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
+        log.info("Received RULE ENGINE msg: {}", toRuleEngineMsg);
 //        if (statsEnabled) {
 //            stats.log(toDeviceActorMsg);
 //        }
