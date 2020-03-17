@@ -19,12 +19,14 @@ import _ from 'lodash';
 import tinycolor from "tinycolor2";
 import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 
-import { Component, OnInit, Input, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, AfterViewInit, ChangeDetectorRef, SecurityContext } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
 import { MapProviders } from '../lib/maps/map-models';
-import { parseArray } from '@app/core/utils';
+import { parseArray, parseTemplate, safeExecute } from '@app/core/utils';
 import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
 import { tripAnimationSchema } from '../lib/maps/schemes';
+import { DomSanitizer } from '@angular/platform-browser';
+import { WidgetConfig } from '@app/shared/public-api';
 
 
 @Component({
@@ -34,7 +36,7 @@ import { tripAnimationSchema } from '../lib/maps/schemes';
 })
 export class TripAnimationComponent implements OnInit, AfterViewInit {
 
-  @Input() ctx;
+  @Input() ctx: WidgetConfig;
 
   @ViewChild('map') mapContainer;
 
@@ -45,10 +47,11 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   interpolatedData = [];
   widgetConfig;
   settings;
-  mainTooltip;
+  mainTooltip = '';
+  visibleTooltip = false;
   activeTrip;
 
-  constructor(private cd: ChangeDetectorRef) { }
+  constructor(private cd: ChangeDetectorRef,private sanitizer: DomSanitizer) { }
 
   ngOnInit(): void {
     this.widgetConfig = this.ctx.widgetConfig;
@@ -74,6 +77,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     let ctxCopy = _.cloneDeep(this.ctx);
     ctxCopy.settings.showLabel = false;
+    ctxCopy.settings.showTooltip = false;
     this.mapWidget = new MapWidgetController(MapProviders.openstreet, false, ctxCopy, this.mapContainer.nativeElement);
   }
 
@@ -99,6 +103,10 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   showHideTooltip() {
+    console.log(this.activeTrip);
+      let tooltipText: string = this.settings.useTooltipFunction ? safeExecute(this.settings.tooolTipFunction) : 
+     // this.mainTooltip = this.sanitizer.sanitize(SecurityContext.HTML, parseTemplate(tooltipText, this.activeTrip)) 
+      this.visibleTooltip = !this.visibleTooltip;
   }
 
   interpolateArray(originData, interpolatedIntervals) {

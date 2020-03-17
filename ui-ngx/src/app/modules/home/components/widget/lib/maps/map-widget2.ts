@@ -34,6 +34,8 @@ import { parseFunction, parseArray, parseData } from '@app/core/utils';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@app/core/schema-utils';
 import { AttributeScope, EntityId } from '@app/shared/public-api';
 import { forkJoin } from 'rxjs';
+import { WidgetContext } from '@app/modules/home/models/widget-component.models';
+import { AttributeService } from '@app/core/public-api';
 
 export class MapWidgetController implements MapWidgetInterface {
 
@@ -43,7 +45,7 @@ export class MapWidgetController implements MapWidgetInterface {
     data;
     settings;
 
-    constructor(public mapProvider: MapProviders, private drawRoutes, public ctx, $element) {
+    constructor(public mapProvider: MapProviders, private drawRoutes, public ctx: WidgetContext, $element) {
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -67,6 +69,8 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     setMarkerLocation = (e) => {
+        let s = this.ctx.$injector.get(AttributeService);
+        console.log("MapWidgetController -> setMarkerLocation -> s", s, s.saveEntityAttributes)
         let attributeService = this.ctx.$scope.$injector.get(this.ctx.servicesMap.get('attributeService'));
         forkJoin(
             this.data.filter(data => !!e[data.dataKey.name])

@@ -92,7 +92,7 @@ export default abstract class LeafletMap {
         L.control['addmarker']({ position: 'topright' }).addTo(this.map);
     }
 
-    inited() {
+    inited() {///!!!!
         return !!this.map;
     }
 
