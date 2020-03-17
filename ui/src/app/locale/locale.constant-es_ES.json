@@ -85,6 +85,7 @@
         "timeout-required": "Tiempo de espera es requerido.",
         "timeout-invalid": "Eso no parece un tiempo de espera válido.",
         "enable-tls": "Habilitar TLS",
+        "tls-version": "Versión TLS",
         "send-test-mail": "Enviar correo de prueba",
         "password-policy": "Política de contraseñas",
         "security-settings": "Configuraciones de seguridad",
@@ -271,7 +272,8 @@
         "asset-required": "El activo es requerido",
         "name-starts-with": "El nombre del activo comienza con",
         "import": "Importar activos",
-        "asset-file": "Archivo del activo"
+        "asset-file": "Archivo del activo",
+        "label": "Etiqueta"
     },
     "attribute": {
         "attributes": "Atributos",
@@ -806,6 +808,22 @@
         "no-entities-prompt": "Entidades no encontradas",
         "no-data": "No hay datos para mostrar",
         "columns-to-display": "Columnas a mostrar"
+    },
+    "entity-field": {
+        "created-time": "Tiempo de creación",
+        "name": "Nombre",
+        "type": "Tipo",
+        "first-name": "Nombre",
+        "last-name": "Apellido",
+        "email": "Correo electrónico",
+        "title": "Título",
+        "country": "País",
+        "state": "Estado",
+        "city": "Ciudad",
+        "address": "Dirección",
+        "address2": "Dirección 2",
+        "zip": "Código postal",
+        "phone": "Teléfono"
     },
     "entity-view": {
         "entity-view": "Vista de entidad",
@@ -1742,21 +1760,6 @@
         }
     },
     "language": {
-        "language": "Lenguaje",
-        "locales": {
-            "de_DE": "Alemán",
-            "fr_FR": "Francés",
-            "zh_CN": "Chino",
-            "en_US": "Inglés",
-            "it_IT": "Italiano",
-            "ko_KR": "Coreano",
-            "ru_RU": "Ruso",
-            "es_ES": "Español",
-            "ja_JA": "Japonés",
-            "tr_TR": "Turco",
-            "fa_IR": "Persa",
-            "uk_UA": "Ucraniano",
-            "cs_CZ": "Checo"
-        }
+        "language": "Lenguaje"
     }
 }

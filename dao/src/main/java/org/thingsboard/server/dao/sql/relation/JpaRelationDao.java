@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,9 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Autowired
     private RelationRepository relationRepository;
+
+    @Autowired
+    private RelationInsertRepository relationInsertRepository;
 
     @Override
     public ListenableFuture<List<EntityRelation>> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
@@ -117,12 +120,12 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Override
     public boolean saveRelation(TenantId tenantId, EntityRelation relation) {
-        return relationRepository.save(new RelationEntity(relation)) != null;
+        return relationInsertRepository.saveOrUpdate(new RelationEntity(relation)) != null;
     }
 
     @Override
     public ListenableFuture<Boolean> saveRelationAsync(TenantId tenantId, EntityRelation relation) {
-        return service.submit(() -> relationRepository.save(new RelationEntity(relation)) != null);
+        return service.submit(() -> relationInsertRepository.saveOrUpdate(new RelationEntity(relation)) != null);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,11 +144,11 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
                     tickSize = pendingRequests.size();
                     if (nextCleanupMs < tickTs) {
                         //cleanup;
-                        pendingRequests.entrySet().forEach(kv -> {
-                            if (kv.getValue().expTime < tickTs) {
-                                ResponseMetaData<Response> staleRequest = pendingRequests.remove(kv.getKey());
+                        pendingRequests.forEach((key, value) -> {
+                            if (value.expTime < tickTs) {
+                                ResponseMetaData<Response> staleRequest = pendingRequests.remove(key);
                                 if (staleRequest != null) {
-                                    log.trace("[{}] Request timeout detected, expTime [{}], tickTs [{}]", kv.getKey(), staleRequest.expTime, tickTs);
+                                    log.trace("[{}] Request timeout detected, expTime [{}], tickTs [{}]", key, staleRequest.expTime, tickTs);
                                     staleRequest.future.setException(new TimeoutException());
                                 }
                             }
@@ -189,13 +189,12 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
         SettableFuture<Response> future = SettableFuture.create();
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
         pendingRequests.putIfAbsent(requestId, responseMetaData);
-        request = requestTemplate.enrich(request, responseTemplate.getTopic(), requestId);
         log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, key, responseMetaData.expTime);
         requestTemplate.send(key, request, headers, (metadata, exception) -> {
             if (exception != null) {
                 log.trace("[{}] Failed to post the request", requestId, exception);
             } else {
-                log.trace("[{}] Posted the request", requestId, metadata);
+                log.trace("[{}] Posted the request: {}", requestId, metadata);
             }
         });
         return future;

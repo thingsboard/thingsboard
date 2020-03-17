@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,9 @@ class ThingsboardSchemaForm extends React.Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            groupId: null,
+        };
 
         this.mapper = {
             'number': ThingsboardNumber,
@@ -71,7 +74,6 @@ class ThingsboardSchemaForm extends React.Component {
     }
 
     onChange(key, val) {
-        //console.log('SchemaForm.onChange', key, val);
         this.props.onModelChange(key, val);
         if (this.hasConditions) {
             this.forceUpdate();
@@ -86,12 +88,15 @@ class ThingsboardSchemaForm extends React.Component {
         this.props.onIconClick(event);
     }
 
-    onToggleFullscreen() {
+    onToggleFullscreen(groupId) {
+        this.setState({
+            groupId: groupId
+        });
         this.props.onToggleFullscreen();
     }
 
-    
-    builder(form, model, index, onChange, onColorClick, onIconClick, onToggleFullscreen, mapper) {
+
+    builder(form, groupId, model, index, onChange, onColorClick, onIconClick, onToggleFullscreen, mapper) {
         var type = form.type;
         let Field = this.mapper[type];
         if(!Field) {
@@ -104,21 +109,21 @@ class ThingsboardSchemaForm extends React.Component {
                 return null;
             }
         }
-        return <Field model={model} form={form} key={index} onChange={onChange} onColorClick={onColorClick} onIconClick={onIconClick} onToggleFullscreen={onToggleFullscreen} mapper={mapper} builder={this.builder}/>
+        return <Field model={model} groupId={groupId} form={form} key={index} onChange={onChange} onColorClick={onColorClick} onIconClick={onIconClick} onToggleFullscreen={onToggleFullscreen} mapper={mapper} builder={this.builder}/>
     }
 
-    createSchema(theForm) {
+    createSchema(theForm, groupId) {
         let merged = utils.merge(this.props.schema, theForm, this.props.ignore, this.props.option);
         let mapper = this.mapper;
         if(this.props.mapper) {
             mapper = _.merge(this.mapper, this.props.mapper);
         }
         let forms = merged.map(function(form, index) {
-            return this.builder(form, this.props.model, index, this.onChange, this.onColorClick, this.onIconClick, this.onToggleFullscreen, mapper);
+            return this.builder(form, groupId, this.props.model, index, this.onChange, this.onColorClick, this.onIconClick, this.onToggleFullscreen, mapper);
         }.bind(this));
 
         let formClass = 'SchemaForm';
-        if (this.props.isFullscreen) {
+        if (this.props.isFullscreen && groupId === this.state.groupId) {
             formClass += ' SchemaFormFullscreen';
         }
 
@@ -131,7 +136,7 @@ class ThingsboardSchemaForm extends React.Component {
         if(this.props.groupInfoes&&this.props.groupInfoes.length>0){
             let content=[];
             for(let info of this.props.groupInfoes){
-                let forms = this.createSchema(this.props.form[info.formIndex]);
+                let forms = this.createSchema(this.props.form[info.formIndex], info.formIndex);
                 let item = <ThingsboardSchemaGroup key={content.length} forms={forms} info={info}></ThingsboardSchemaGroup>;
                 content.push(item);
             }
@@ -165,4 +170,4 @@ class ThingsboardSchemaGroup extends React.Component{
                     <div style={{padding: '20px'}} className={this.state.showGroup?"":"invisible"}>{this.props.forms}</div>
                 </section>);
     }
-} 
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ public class TbKafkaNodeConfiguration implements NodeConfiguration<TbKafkaNodeCo
     private String valueSerializer;
     private Map<String, String> otherProperties;
 
+    private boolean addMetadataKeyValuesAsKafkaHeaders;
+    private String kafkaHeadersCharset;
+
     @Override
     public TbKafkaNodeConfiguration defaultConfiguration() {
         TbKafkaNodeConfiguration configuration = new TbKafkaNodeConfiguration();
@@ -49,6 +52,8 @@ public class TbKafkaNodeConfiguration implements NodeConfiguration<TbKafkaNodeCo
         configuration.setKeySerializer(StringSerializer.class.getName());
         configuration.setValueSerializer(StringSerializer.class.getName());
         configuration.setOtherProperties(Collections.emptyMap());
+        configuration.setAddMetadataKeyValuesAsKafkaHeaders(false);
+        configuration.setKafkaHeadersCharset("UTF-8");
         return configuration;
     }
 }

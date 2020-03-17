@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -316,7 +317,7 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
                 }
             }
             return Futures.successfulAsList(futures);
-        });
+        }, MoreExecutors.directExecutor());
 
         edges = Futures.transform(edges, new Function<List<Edge>, List<Edge>>() {
             @Nullable
@@ -324,7 +325,7 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
             public List<Edge> apply(@Nullable List<Edge> edgeList) {
                 return edgeList == null ? Collections.emptyList() : edgeList.stream().filter(edge -> query.getEdgeTypes().contains(edge.getType())).collect(Collectors.toList());
             }
-        });
+        }, MoreExecutors.directExecutor());
 
         return edges;
     }
@@ -338,7 +339,7 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
                 edgeTypes -> {
                     edgeTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return edgeTypes;
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     @Override

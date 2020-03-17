@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.device;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
@@ -38,7 +40,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service
 @Slf4j
-public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
+public class DeviceCredentialsServiceImpl extends AbstractEntityService implements DeviceCredentialsService {
 
     @Autowired
     private DeviceCredentialsDao deviceCredentialsDao;
@@ -78,7 +80,20 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
-        return deviceCredentialsDao.save(tenantId, deviceCredentials);
+        if (!sqlDatabaseUsed) {
+            return deviceCredentialsDao.save(tenantId, deviceCredentials);
+        } else {
+            try {
+                return deviceCredentialsDao.save(tenantId, deviceCredentials);
+            } catch (Exception t) {
+                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key")) {
+                    throw new DataValidationException("Specified credentials are already registered!");
+                } else {
+                    throw t;
+                }
+            }
+        }
     }
 
     private void formatCertData(DeviceCredentials deviceCredentials) {
@@ -100,9 +115,11 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
 
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    DeviceCredentials existingCredentialsEntity = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
-                    if (existingCredentialsEntity != null) {
-                        throw new DataValidationException("Create of existent device credentials!");
+                    if (!sqlDatabaseUsed) {
+                        DeviceCredentials existingCredentialsEntity = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
+                        if (existingCredentialsEntity != null) {
+                            throw new DataValidationException("Create of existent device credentials!");
+                        }
                     }
                 }
 
@@ -112,9 +129,11 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
                     if (existingCredentials == null) {
                         throw new DataValidationException("Unable to update non-existent device credentials!");
                     }
-                    DeviceCredentials sameCredentialsId = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
-                    if (sameCredentialsId != null && !sameCredentialsId.getUuidId().equals(deviceCredentials.getUuidId())) {
-                        throw new DataValidationException("Specified credentials are already registered!");
+                    if (!sqlDatabaseUsed) {
+                        DeviceCredentials sameCredentialsId = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
+                        if (sameCredentialsId != null && !sameCredentialsId.getUuidId().equals(deviceCredentials.getUuidId())) {
+                            throw new DataValidationException("Specified credentials are already registered!");
+                        }
                     }
                 }
 
