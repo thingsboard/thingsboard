@@ -15,6 +15,23 @@
     limitations under the License.
 
 -->
-<div class="map" #map ></div>
-<tb-history-selector *ngIf="historicalData" [settings]="settings" [intervals]="intervals"
-    (onTimeUpdated)="timeUpdated($event)"></tb-history-selector>
+<div class="trip-animation-widget">
+    <div class="trip-animation-label-container" *ngIf="settings.showLabel">
+    {{settings.label | tbParseTemplate: activeTrip}}
+    </div>
+    <div class="trip-animation-container" layout="column">
+        <div class="map" #map></div>
+        <div class="trip-animation-info-panel" layout="row">
+            <button class="tooltip-button" mat-mini-fab color="primary" aria-label="tooltip"
+                *ngIf="settings.showTooltip" (click)="showHideTooltip()">
+                <mat-icon>info_outline</mat-icon>
+            </button>
+        </div>
+        <div class="trip-animation-tooltip md-whiteframe-z4" layout="column"
+            [ngClass]="{ 'trip-animation-tooltip-hidden':!settings.showTooltip}" [innerHTML]="mainTooltip"
+            [ngStyle]="{'background-color': settings.tooltipColor, 'opacity': settings.tooltipOpacity, 'color': settings.tooltipFontColor}">
+        </div>
+    </div>
+    <tb-history-selector *ngIf="historicalData" [settings]="settings" [intervals]="intervals"
+        (onTimeUpdated)="timeUpdated($event)"></tb-history-selector>
+</div>

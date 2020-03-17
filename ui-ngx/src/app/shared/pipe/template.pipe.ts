@@ -14,10 +14,13 @@
 /// limitations under the License.
 ///
 
-export * from './enum-to-array.pipe';
-export * from './highlight.pipe';
-export * from './keyboard-shortcut.pipe';
-export * from './milliseconds-to-time-string.pipe';
-export * from './nospace.pipe';
-export * from './truncate.pipe';
-export * from './template.pipe';
+import { Pipe, PipeTransform } from '@angular/core';
+import { parseTemplate } from '@app/core/utils';
+
+@Pipe({ name: 'tbParseTemplate' })
+export class TbTemplatePipe implements PipeTransform {
+  transform(template, data): string {
+    console.log("TbTemplatePipe -> transform -> template, data", template, data)
+    return parseTemplate(template, data);
+  }
+}

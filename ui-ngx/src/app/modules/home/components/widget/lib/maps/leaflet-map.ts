@@ -27,7 +27,6 @@ import { Observable, of, BehaviorSubject, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
-import { string } from 'prop-types';
 
 export default abstract class LeafletMap {
 
@@ -42,7 +41,6 @@ export default abstract class LeafletMap {
     options: MapOptions;
     isMarketCluster;
     bounds: L.LatLngBounds;
-
 
     constructor($container: HTMLElement, options: MapOptions) {
         this.options = options;
@@ -138,7 +136,7 @@ export default abstract class LeafletMap {
     }
 
     invalidateSize() {
-        this.map.invalidateSize(true);
+        this.map?.invalidateSize(true);
     }
 
     onResize() {
@@ -160,7 +158,7 @@ export default abstract class LeafletMap {
         }
     }
 
-    ////Markers
+    //Markers
     updateMarkers(markersData) {
         markersData.forEach(data => {
             if (data.rotationAngle) {
@@ -259,7 +257,6 @@ export default abstract class LeafletMap {
 
     createPolygon(data, dataSources, settings) {
         this.ready$.subscribe(() => {
-            //public map, coordinates, dataSources, settings, onClickListener?
             this.polygon = new Polygon(this.map, data, dataSources, settings);
             const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds());
             if (bounds.isValid()) {

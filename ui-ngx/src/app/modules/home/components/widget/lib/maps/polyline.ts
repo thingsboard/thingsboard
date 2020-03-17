@@ -24,7 +24,6 @@ export class Polyline {
     data;
 
     constructor(private map: L.Map, locations, data, dataSources, settings) {
-        console.log("Polyline -> constructor -> data", data)
         this.dataSources = dataSources;
         this.data = data;
         this.leafletPoly = L.polyline(locations,
@@ -34,7 +33,6 @@ export class Polyline {
 
     updatePolyline(settings, data, dataSources) {
         this.leafletPoly.setStyle(this.getPolyStyle(settings, data, dataSources));
-
     }
 
     getPolyStyle(settings, data, dataSources): L.PolylineOptions {

@@ -498,7 +498,7 @@ export function safeExecute(func: Function, params = []) {
       res = func(...params);
     }
     catch (err) {
-      console.log(err);
+      console.log('error in external function:', err);
       res = null;
     }
   }
@@ -519,7 +519,7 @@ export function parseFunction(source: string, params: string[] = []): Function {
   return res;
 }
 
-export function parseTemplate(template, data) {
+export function parseTemplate(template: string, data: object) {
   let res = '';
   try {
     let variables = '';

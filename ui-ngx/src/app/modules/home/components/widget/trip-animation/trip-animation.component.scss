@@ -14,8 +14,76 @@
  * limitations under the License.
  */
 
+.trip-animation-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+  line-height: 24px;
+  display: flex;
+  flex-direction: column;
 
-.map{
+  .trip-animation-label-container {
+    height: 24px;
+  }
+
+  .trip-animation-container {
+    position: relative;
+    z-index: 1;
+    flex: 1;
     width: 100%;
-    height: calc(100% - 100px);
+
+    .map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .trip-animation-info-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      pointer-events: none;
+
+      .tooltip-button {
+        top: 0;
+        left: 0;
+        width: 32px;
+        min-width: 32px;
+        height: 32px;
+        min-height: 32px;
+        padding: 0 0 2px;
+        margin: 2px;
+        line-height: 24px;
+        z-index: 999;
+
+        &::ng-deep .mat-button-wrapper {
+          padding: 0;
+        }
+
+        mat-icon {
+          width: 24px;
+          height: 24px;
+
+          svg {
+            width: inherit;
+            height: inherit;
+          }
+        }
+      }
+    }
+
+    .trip-animation-tooltip {
+      position: absolute;
+      top: 38px;
+      right: 0;
+      z-index: 2;
+      padding: 10px;
+      background-color: #fff;
+      transition: 0.3s ease-in-out;
+
+      &-hidden {
+        transform: translateX(110%);
+      }
+    }
+  }
 }

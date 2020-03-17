@@ -91,6 +91,15 @@ export class MapWidgetController implements MapWidgetInterface {
     initSettings(settings: any) {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider ? settings.provider : this.mapProvider;
+
+        function getDefCenterPosition(position) {
+            if (typeof (position) === 'string')
+                return position.split(',');
+            if (typeof (position) === 'object')
+                return position;
+            return [0, 0];
+        }
+
         const customOptions = {
             provider: this.provider,
             mapUrl: settings?.mapImageUrl,
@@ -102,7 +111,7 @@ export class MapWidgetController implements MapWidgetInterface {
             labelColor: this.ctx.widgetConfig.color,
             tooltipPattern: settings.tooltipPattern ||
                 "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + settings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + settings.lngKeyName + ":7}",
-            defaultCenterPosition: settings?.defaultCenterPosition?.split(',') || [0, 0],
+            defaultCenterPosition: getDefCenterPosition(settings?.defaultCenterPosition),
             useDraggableMarker: true,
             currentImage: (settings.useMarkerImage && settings.markerImage?.length) ? {
                 url: settings.markerImage,
@@ -137,7 +146,7 @@ export class MapWidgetController implements MapWidgetInterface {
         return {};
     }
 
-    public static getProvidersSchema() {
+    public static getProvidersSchema() { 
         return mergeSchemes([mapProviderSchema,
             ...Object.values(providerSets)?.map(
                 setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
@@ -246,5 +255,5 @@ const defaultSettings = {
     minZoomLevel: 16,
     credentials: '',
     markerClusteringSetting: null,
-    draggebleMarker: true
+    draggebleMarker: false
 }

@@ -56,7 +56,6 @@ export class Marker {
         if (onDragendListener) {
             this.leafletMarker.on('dragend', onDragendListener);
         }
-
     }
 
     setDataSources(data, dataSources) {
