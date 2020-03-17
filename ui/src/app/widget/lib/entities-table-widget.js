@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,15 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         icon: 'search'
     };
 
+    let columnDisplayAction = {
+        name: 'entity.columns-to-display',
+        show: true,
+        onAction: function($event) {
+            vm.editColumnsToDisplay($event);
+        },
+        icon: 'view_column'
+    };
+
     vm.enterFilterMode = enterFilterMode;
     vm.exitFilterMode = exitFilterMode;
     vm.onReorder = onReorder;
@@ -147,7 +156,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
     function initializeConfig() {
 
-        vm.ctx.widgetActions = [ vm.searchAction ];
+        vm.ctx.widgetActions = [ vm.searchAction, columnDisplayAction ];
 
         vm.actionCellDescriptors = vm.ctx.actionsApi.getActionDescriptors('actionCellButton');
 
@@ -162,6 +171,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         vm.searchAction.show = angular.isDefined(vm.settings.enableSearch) ? vm.settings.enableSearch : true;
         vm.displayEntityName = angular.isDefined(vm.settings.displayEntityName) ? vm.settings.displayEntityName : true;
         vm.displayEntityLabel = angular.isDefined(vm.settings.displayEntityLabel) ? vm.settings.displayEntityLabel : false;
+        columnDisplayAction.show = angular.isDefined(vm.settings.enableSelectColumnDisplay) ? vm.settings.enableSelectColumnDisplay : true;
 
         if (vm.settings.entityNameColumnTitle && vm.settings.entityNameColumnTitle.length) {
             vm.entityNameColumnTitle = utils.customTranslation(vm.settings.entityNameColumnTitle, vm.settings.entityNameColumnTitle);
@@ -186,9 +196,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         if (vm.settings.defaultSortOrder && vm.settings.defaultSortOrder.length) {
             vm.defaultSortOrder = vm.settings.defaultSortOrder;
             if (vm.settings.defaultSortOrder.charAt(0) === "-") {
-                vm.defaultSortOrder = "-'" + vm.settings.defaultSortOrder.substring(1) + "'";
+                vm.defaultSortOrder = '-"' + utils.customTranslation(vm.settings.defaultSortOrder.substring(1), vm.settings.defaultSortOrder.substring(1)) + '"';
             } else {
-                vm.defaultSortOrder = "'" + vm.settings.defaultSortOrder + "'";
+                vm.defaultSortOrder = '"' + utils.customTranslation(vm.settings.defaultSortOrder, vm.settings.defaultSortOrder) + '"';
             }
         }
 
@@ -301,13 +311,13 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         var actionSourceId = isDouble ? 'rowDoubleClick' : 'rowClick';
         var descriptors = vm.ctx.actionsApi.getActionDescriptors(actionSourceId);
         if (descriptors.length) {
-            var entityId;
-            var entityName;
+            var entityId, entityName, entityLabel;
             if (vm.currentEntity) {
                 entityId = vm.currentEntity.id;
                 entityName = vm.currentEntity.entityName;
+                entityLabel = vm.currentEntity.entityLabel;
             }
-            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
         }
     }
 
@@ -315,13 +325,13 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         if ($event) {
             $event.stopPropagation();
         }
-        var entityId;
-        var entityName;
+        var entityId, entityName, entityLabel;
         if (entity) {
             entityId = entity.id;
             entityName = entity.entityName;
+            entityLabel = entity.entityLabel;
         }
-        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName);
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, null, entityLabel);
     }
 
     function isCurrent(entity) {

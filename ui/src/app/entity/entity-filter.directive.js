@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                     filter.rootEntity = null;
                     filter.direction = types.entitySearchDirection.from;
                     filter.maxLevel = 1;
+                    filter.fetchLastLevelOnly = false;
                     if (filter.type === types.aliasFilterType.relationsQuery.value) {
                         filter.filters = [];
                     } else if (filter.type === types.aliasFilterType.assetSearchQuery.value) {

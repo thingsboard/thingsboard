@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
     @Override
     public void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
+        SslHandler sslHandler = null;
         if (context.getSslHandlerProvider() != null) {
-            SslHandler sslHandler = context.getSslHandlerProvider().getSslHandler();
+            sslHandler = context.getSslHandlerProvider().getSslHandler();
             pipeline.addLast(sslHandler);
-            context.setSslHandler(sslHandler);
         }
         pipeline.addLast("decoder", new MqttDecoder(context.getMaxPayloadSize()));
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
-        MqttTransportHandler handler = new MqttTransportHandler(context);
+        MqttTransportHandler handler = new MqttTransportHandler(context,sslHandler);
 
         pipeline.addLast(handler);
         ch.closeFuture().addListener(handler);

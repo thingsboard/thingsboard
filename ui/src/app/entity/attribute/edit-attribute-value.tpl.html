@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<md-edit-dialog>
-    <form name="editDialog" ng-submit="submit()">
+<md-edit-dialog class="tb-edit-dialog">
+    <form name="editDialog" ng-submit="submit()" >
         <div layout="column" class="md-content" style="width: 400px;">
             <fieldset>
                 <section layout="row">
@@ -38,7 +38,8 @@
                     </md-input-container>
                     <md-input-container ng-if="valueType===valueTypes.integer" flex="60" class="md-block">
                         <label translate>value.integer-value</label>
-                        <input required name="value" type="number" step="1" ng-pattern="/^-?[0-9]+$/" ng-model="model.value">
+                        <input required name="value" type="number" step="1" ng-pattern="/^-?[0-9]+$/"
+                               ng-model="model.value">
                         <div ng-messages="editDialog.value.$error">
                             <div translate ng-message="required">attribute.value-required</div>
                             <div translate ng-message="pattern">value.invalid-integer-value</div>
@@ -52,16 +53,31 @@
                         </div>
                     </md-input-container>
                     <div layout="column" layout-align="center" flex="60" ng-if="valueType===valueTypes.boolean">
-                        <md-checkbox ng-model="model.value" style="margin-bottom: 0px;">
+                        <md-checkbox ng-model="model.value" style="margin-bottom: 0;">
                             {{ (model.value ? 'value.true' : 'value.false') | translate }}
                         </md-checkbox>
+                    </div>
+                    <div layout="row" layout-align="center" ng-if="valueType===valueTypes.json" flex="60">
+                        <md-input-container class="md-block">
+                            <label translate>value.json-value</label>
+                            <input required tb-json-to-string name="value" ng-model="model.value">
+                            <div ng-messages="editDialog.value.$error">
+                                <div translate ng-message="required">attribute.value-required</div>
+                            </div>
+                        </md-input-container>
+                        <md-button class="md-icon-button" style="margin: 18px 0;"
+                                   ng-click="editJSON($event)" aria-label="{{ 'action.edit' | translate }}">
+                            <md-tooltip md-direction="top">
+                                {{ 'action.edit' | translate }}
+                            </md-tooltip>
+                            <ng-md-icon size="20" icon="open_in_new"></ng-md-icon>
+                        </md-button>
                     </div>
                 </section>
             </fieldset>
         </div>
         <div layout="row" layout-align="end" class="md-actions">
-            <md-button ng-click="dismiss()">{{ 'action.cancel' |
-                translate }}
+            <md-button ng-click="dismiss()">{{ 'action.cancel' | translate }}
             </md-button>
             <md-button ng-disabled="editDialog.$invalid || !editDialog.$dirty" type="submit"
                        class="md-raised md-primary">

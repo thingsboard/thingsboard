@@ -1,0 +1,75 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-dialog class="gateway-config-dialog">
+    <form name="theForm" ng-submit="vm.save()">
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2 translate translate-values='{ typeName: "{{vm.typeName | translate}}" }'>
+                    gateway.title-connectors-json
+                </h2>
+                <span flex></span>
+                <md-button class="md-icon-button"
+                           ng-click="vm.cancel()"
+                           aria-label="{{'action.close'|translate}}">
+                    <ng-md-icon icon="close" aria-label="Close"></ng-md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content>
+            <div class="md-dialog-content">
+                <div tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button" layout="column">
+                    <div layout="row" layout-align="start center" class="tb-json-toolbar">
+                        <label class="tb-title no-padding" translate>gateway.transformer-json-config</label>
+                        <span flex></span>
+                                <md-button ng-if="!readonly"
+                                           aria-label="{{'gateway.tidy'|translate}}"
+                                           class="tidy"
+                                           ng-click="vm.beautifyJson()">
+                                    {{'gateway.tidy'|translate}}
+                                    <md-tooltip md-direction="top">{{'gateway.tidy-tip' | translate }}</md-tooltip>
+                                </md-button>
+                            <md-button id="expand-button" aria-label="Fullscreen"
+                                       class="md-icon-button tb-md-32 tb-fullscreen-button-style"></md-button>
+                    </div>
+                    <div layout="row" class="tb-json-panel" flex>
+                        <div flex class="tb-json-input"
+                             ui-ace="vm.configAreaOptions"
+                             ng-model="vm.config"
+                             name="config"
+                             ng-change='vm.validateConfig(vm.config, "config")'
+                             required>
+                        </div>
+                    </div>
+                    <div class="tb-error-messages" layout="column" ng-messages="theForm.config.$error" role="alert">
+                        <div ng-message="required" flex class="tb-error-message" translate>gateway.json-required</div>
+                        <div ng-message="config" class="tb-error-message" translate>gateway.json-parse</div>
+                    </div>
+                </div>
+            </div>
+        </md-dialog-content>
+        <md-dialog-actions layout="row" layout-align="end center" class="action-buttons">
+            <md-button ng-disabled="$root.loading || theForm.config.$invalid || !theForm.config.$dirty" type="submit"
+                       class="md-raised md-primary">
+                {{'action.save'|translate}}
+            </md-button>
+            <md-button id="cancel-btn" ng-disabled="$root.loading" ng-click="vm.cancel()">
+                {{'action.cancel'|translate }}
+            </md-button>
+        </md-dialog-actions>
+    </form>
+</md-dialog>

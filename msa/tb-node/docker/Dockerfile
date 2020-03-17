@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,5 +24,9 @@ RUN chmod a+x /tmp/*.sh \
 RUN dpkg -i /tmp/${pkg.name}.deb
 
 RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
+
+RUN chown -R ${pkg.user}:${pkg.user} /tmp
+
+USER ${pkg.user}
 
 CMD ["start-tb-node.sh"]

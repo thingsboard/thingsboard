@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @EqualsAndHashCode(callSuper = true)
@@ -32,6 +33,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
     private CustomerId customerId;
     private String name;
     private String type;
+    private String label;
     private EdgeId edgeId;
 
     public Asset() {
@@ -48,6 +50,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.customerId = asset.getCustomerId();
         this.name = asset.getName();
         this.type = asset.getType();
+        this.label = asset.getLabel();
         this.edgeId = asset.getEdgeId();
     }
 
@@ -92,6 +95,14 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.type = type;
     }
 
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
     @Override
     public String getSearchText() {
         return getName();
@@ -110,6 +121,8 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         builder.append(name);
         builder.append(", type=");
         builder.append(type);
+        builder.append(", label=");
+        builder.append(label);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());
         builder.append(", createdTime=");

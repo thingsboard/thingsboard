@@ -56,6 +56,7 @@
         "base-url": "URL de base",
         "base-url-required": "L'URL de base est requise.",
         "enable-tls": "Activer TLS",
+        "tls-version": "Version TLS",
         "general": "Général",
         "general-settings": "Paramètres généraux",
         "mail-from": "Mail de",
@@ -271,7 +272,8 @@
         "unassign-assets-text": "Après la confirmation, tous les actifs sélectionnés ne seront pas attribués et ne seront pas accessibles au client.",
         "unassign-assets-title": "Êtes-vous sûr de vouloir retirer l'attribution de {count, plural, 1 {1 asset} other {# assets}}?",
         "unassign-from-customer": "Retirer du client",
-        "view-assets": "Afficher les actifs"
+        "view-assets": "Afficher les actifs",
+        "label": "Label"
     },
     "attribute": {
         "add": "Ajouter un attribut",
@@ -808,6 +810,22 @@
         "use-entity-name-filter": "Utiliser un filtre",
         "user-name-starts-with": "Utilisateurs dont les noms commencent par '{{prefix}}'"
     },
+    "entity-field": {
+        "address": "Adresse",
+        "address2": "Adresse 2",
+        "city": "Ville",
+        "country": "Pays",
+        "created-time": "Heure de création",
+        "email": "Email",
+        "first-name": "Prénom",
+        "last-name": "Nom de famille",
+        "name": "Nom",
+        "phone": "Téléphone",
+        "state": "Prov",
+        "title": "Titre",
+        "type": "Type",
+        "zip": "Code postal"
+    },
     "entity-view": {
         "add": "Ajouter une vue d'entité",
         "add-alias": "Ajouter un alias de vue d'entité",
@@ -1152,22 +1170,7 @@
         "value": "Valeur"
     },
     "language": {
-        "language": "Language",
-        "locales": {
-            "de_DE": "Allemand",
-            "en_US": "Anglais",
-            "fr_FR": "Français",
-            "es_ES": "Espagnol",
-            "it_IT": "Italien",
-            "ko_KR": "Coréen",
-            "ru_RU": "Russe",
-            "zh_CN": "Chinois",
-            "ja_JA": "Japonaise",
-            "tr_TR": "Turc",
-            "fa_IR": "Persane",
-            "uk_UA": "Ukrainien",
-            "cs_CZ": "Tchèque"
-        }
+        "language": "Language"
     },
     "layout": {
         "color": "Couleur",

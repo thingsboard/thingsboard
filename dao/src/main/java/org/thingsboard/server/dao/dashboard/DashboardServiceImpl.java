@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.dashboard;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +68,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private TenantDao tenantDao;
-    
+
     @Autowired
     private CustomerDao customerDao;
     
@@ -108,7 +109,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         return dashboardDao.save(dashboard.getTenantId(), dashboard);
     }
-    
+
     @Override
     public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
@@ -209,7 +210,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             public TimePageData<DashboardInfo> apply(@Nullable List<DashboardInfo> dashboards) {
                 return new TimePageData<>(dashboards, pageLink);
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -313,7 +314,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             public TimePageData<DashboardInfo> apply(@Nullable List<DashboardInfo> dashboards) {
                 return new TimePageData<>(dashboards, pageLink);
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     private Dashboard updateAssignedEdge(TenantId tenantId, DashboardId dashboardId, Edge edge) {
@@ -341,24 +342,24 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                         }
                     }
                 }
-    };
-    
+            };
+
     private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =
             new PaginatedRemover<TenantId, DashboardInfo>() {
-        
-        @Override
-        protected List<DashboardInfo> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
-            return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
-        }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
-            deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
-        }
-    };
-    
+                @Override
+                protected List<DashboardInfo> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
+                    return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
+                }
+
+                @Override
+                protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
+                    deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
+                }
+            };
+
     private class CustomerDashboardsUnassigner extends TimePaginatedRemover<Customer, DashboardInfo> {
-        
+
         private Customer customer;
 
         CustomerDashboardsUnassigner(Customer customer) {
@@ -379,7 +380,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
             unassignDashboardFromCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer.getId());
         }
-        
+
     }
 
     private class CustomerDashboardsUpdater extends TimePaginatedRemover<Customer, DashboardInfo> {

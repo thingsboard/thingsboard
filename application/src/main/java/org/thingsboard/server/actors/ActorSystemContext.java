@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
@@ -32,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
@@ -89,6 +92,7 @@ import java.io.StringWriter;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
@@ -291,6 +295,23 @@ public class ActorSystemContext {
     @Getter
     private long statisticsPersistFrequency;
 
+    @Getter
+    private final AtomicInteger jsInvokeRequestsCount = new AtomicInteger(0);
+    @Getter
+    private final AtomicInteger jsInvokeResponsesCount = new AtomicInteger(0);
+    @Getter
+    private final AtomicInteger jsInvokeFailuresCount = new AtomicInteger(0);
+
+    @Scheduled(fixedDelayString = "${actors.statistics.js_print_interval_ms}")
+    public void printStats() {
+        if (statisticsEnabled) {
+            if (jsInvokeRequestsCount.get() > 0 || jsInvokeResponsesCount.get() > 0 || jsInvokeFailuresCount.get() > 0) {
+                log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
+                        jsInvokeRequestsCount.getAndSet(0), jsInvokeResponsesCount.getAndSet(0), jsInvokeFailuresCount.getAndSet(0));
+            }
+        }
+    }
+
     @Value("${actors.tenant.create_components_on_init}")
     @Getter
     private boolean tenantComponentsInitEnabled;
@@ -341,6 +362,10 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private CassandraBufferedRateExecutor cassandraBufferedRateExecutor;
+
+    @Autowired(required = false)
+    @Getter
+    private RedisTemplate<String, Object> redisTemplate;
 
     public ActorSystemContext() {
         config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());
@@ -451,7 +476,7 @@ public class ActorSystemContext {
                     public void onFailure(Throwable th) {
                         log.error("Could not save debug Event for Node", th);
                     }
-                });
+                }, MoreExecutors.directExecutor());
             } catch (IOException ex) {
                 log.warn("Failed to persist rule node debug message", ex);
             }
@@ -504,7 +529,7 @@ public class ActorSystemContext {
             public void onFailure(Throwable th) {
                 log.error("Could not save debug Event for Rule Chain", th);
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     public static Exception toException(Throwable error) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,11 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private String requestMethod;
     private Map<String, String> headers;
     private boolean useSimpleClientHttpFactory;
+    private int readTimeoutMs;
+    private int maxParallelRequestsCount;
+    private boolean useRedisQueueForMsgPersistence;
+    private boolean trimQueue;
+    private int maxQueueSize;
 
     @Override
     public TbRestApiCallNodeConfiguration defaultConfiguration() {
@@ -36,6 +41,10 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setRequestMethod("POST");
         configuration.setHeaders(Collections.emptyMap());
         configuration.setUseSimpleClientHttpFactory(false);
+        configuration.setReadTimeoutMs(0);
+        configuration.setMaxParallelRequestsCount(0);
+        configuration.setUseRedisQueueForMsgPersistence(false);
+        configuration.setTrimQueue(false);
         return configuration;
     }
 }

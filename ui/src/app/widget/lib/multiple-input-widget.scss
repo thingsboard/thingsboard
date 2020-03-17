@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,36 @@
  */
 .tb-multiple-input {
   height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 
-  .md-button.md-icon-button {
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    min-height: 32px;
-    padding: 0 !important;
-    margin: 0;
-    line-height: 20px;
+  .fields-group {
+    padding: 0 8px;
+    margin: 10px 0;
+    border: 1px groove rgba(0, 0, 0, .25);
+
+    legend {
+      color: rgba(0, 0, 0, .7);
+    }
+  }
+
+  .input-field {
+    padding-right: 10px;
+
+    md-input-container,
+    md-checkbox,
+    md-switch {
+      margin-bottom: 5px;
+    }
+  }
+
+  md-checkbox {
+    margin-top: 22px;
+  }
+
+  md-switch {
+    margin-top: 20px;
+    white-space: normal;
   }
 
   .md-icon-button md-icon {
@@ -32,10 +53,56 @@
     height: 20px;
     min-height: 20px;
     font-size: 20px;
+  }
 
-    &:not([disabled]) {
-      color: #f66;
+  .date-time-input {
+    &__label {
+      margin-left: 36px;
+      font-size: 12px;
+      color: rgba(0, 0, 0, .54);
     }
+
+    mdp-date-picker,
+    mdp-time-picker {
+      width: 100%;
+
+      .md-button.md-icon-button {
+        margin: 5px 0 0;
+      }
+
+      md-input-container {
+        width: 100%;
+        margin: 2px 0;
+
+        label {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .vertical-alignment {
+    flex-direction: column;
+
+    md-checkbox,
+    md-switch {
+      margin-top: 18px;
+    }
+
+    md-switch {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .date-time-input {
+      &__label {
+        margin-top: 10px;
+      }
+    }
+  }
+
+  .vertically-aligned {
+    flex-direction: column;
   }
 }
 
