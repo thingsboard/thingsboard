@@ -56,7 +56,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             ncyBreadcrumb: {
                 label: '{"icon": "settings_ethernet", "label": "rulechain.system-rulechains"}'
             }
-        }).state('home.ruleChains.ruleChain', {
+        }).state('home.ruleChains.system.ruleChain', {
             url: '/:ruleChainId',
             reloadOnSearch: false,
             module: 'private',
@@ -106,7 +106,8 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             }
         },
         params: {
-            ruleChainImport: {}
+            ruleChainImport: {},
+            ruleChainType: {}
         },
         resolve: {
             ruleChain:
@@ -122,7 +123,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             ruleNodeComponents:
             /*@ngInject*/
                 function($stateParams, ruleChainService) {
-                    return ruleChainService.getRuleNodeComponents(types.systemRuleChainType);
+                    return ruleChainService.getRuleNodeComponents($stateParams.ruleChainType);
                 }
         },
         data: {

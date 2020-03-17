@@ -1269,7 +1269,11 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                             vm.isDirty = false;
                             vm.isImport = false;
                             $mdUtil.nextTick(() => {
-                                $state.go('home.ruleChains.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                if (vm.ruleChain.type === vm.types.systemRuleChainType) {
+                                    $state.go('home.ruleChains.system.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                } else {
+                                    $state.go('home.ruleChains.edge.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                }
                             });
                         } else {
                             prepareRuleChain();

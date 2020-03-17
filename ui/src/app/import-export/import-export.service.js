@@ -252,6 +252,8 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         }
         ruleChain.root = false;
         delete ruleChain.assignedEdgesText;
+        delete ruleChain.assignedEdges;
+        delete ruleChain.assignedEdgesIds;
         return ruleChain;
     }
 
@@ -273,12 +275,15 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         toast.showError($translate.instant('rulechain.export-failed-error', {error: message}));
     }
 
-    function importRuleChain($event) {
+    function importRuleChain($event, expectedRuleChainType) {
         var deferred = $q.defer();
         openImportDialog($event, 'rulechain.import', 'rulechain.rulechain-file').then(
             function success(ruleChainImport) {
                 if (!validateImportedRuleChain(ruleChainImport)) {
                     toast.showError($translate.instant('rulechain.invalid-rulechain-file-error'));
+                    deferred.reject();
+                } else if (ruleChainImport.ruleChain.type !== expectedRuleChainType) {
+                    toast.showError($translate.instant('rulechain.invalid-rulechain-type-error', {expectedRuleChainType: expectedRuleChainType}));
                     deferred.reject();
                 } else {
                     deferred.resolve(ruleChainImport);
@@ -299,6 +304,9 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             return false;
         }
         if (angular.isUndefined(ruleChainImport.ruleChain.name)) {
+            return false;
+        }
+        if (angular.isUndefined(ruleChainImport.ruleChain.type)) {
             return false;
         }
         return true;

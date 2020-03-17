@@ -164,9 +164,9 @@ export default function RuleChainsController(ruleChainService, userService, edge
             });
             vm.ruleChainGridConfig.addItemActions.push({
                 onAction: function ($event) {
-                    importExport.importRuleChain($event).then(
+                    importExport.importRuleChain($event, types.systemRuleChainType).then(
                         function(ruleChainImport) {
-                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport});
+                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport, ruleChainType: types.systemRuleChainType});
                         }
                     );
                 },
@@ -260,9 +260,9 @@ export default function RuleChainsController(ruleChainService, userService, edge
             });
             vm.ruleChainGridConfig.addItemActions.push({
                 onAction: function ($event) {
-                    importExport.importRuleChain($event).then(
+                    importExport.importRuleChain($event, types.edgeRuleChainType).then(
                         function(ruleChainImport) {
-                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport});
+                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport, ruleChainType: types.edgeRuleChainType});
                         }
                     );
                 },
@@ -376,7 +376,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
         } else if (vm.ruleChainsScope === 'edges') {
             $state.go('home.ruleChains.edge.ruleChain', {ruleChainId: ruleChain.id.id});
         } else {
-            $state.go('home.ruleChains.ruleChain', {ruleChainId: ruleChain.id.id});
+            $state.go('home.ruleChains.system.ruleChain', {ruleChainId: ruleChain.id.id});
         }
     }
 
