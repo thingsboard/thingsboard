@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,6 +45,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
     private volatile boolean subscribed;
+    private volatile Set<TopicPartitionInfo> partitions;
 
     @Getter
     private final String topic;
@@ -74,29 +75,31 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public void subscribe() {
-        createTopicIfNotExists(topic);
-        consumer.subscribe(Collections.singletonList(topic));
-        subscribed = true;
+        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null));
+        subscribed = false;
     }
 
     @Override
     public void subscribe(Set<TopicPartitionInfo> partitions) {
-        List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
-        topicNames.forEach(this::createTopicIfNotExists);
-        consumer.unsubscribe();
-        consumer.subscribe(topicNames);
-        subscribed = true;
+        this.partitions = partitions;
+        subscribed = false;
     }
 
     @Override
     public List<T> poll(long durationInMillis) {
-        if (!subscribed) {
+        if (!subscribed && partitions == null) {
             try {
                 Thread.sleep(durationInMillis);
             } catch (InterruptedException e) {
                 log.debug("Failed to await subscription", e);
             }
         } else {
+            if (!subscribed) {
+                List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+                topicNames.forEach(this::createTopicIfNotExists);
+                consumer.subscribe(topicNames);
+                subscribed = true;
+            }
             ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(durationInMillis));
             if (records.count() > 0) {
                 List<T> result = new ArrayList<>();
