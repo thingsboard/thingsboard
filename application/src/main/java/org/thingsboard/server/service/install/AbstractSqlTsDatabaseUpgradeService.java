@@ -32,7 +32,7 @@ import java.sql.Statement;
 public abstract class AbstractSqlTsDatabaseUpgradeService {
 
     protected static final String CALL_REGEX = "call ";
-        protected static final String DROP_TABLE = "DROP TABLE ";
+    protected static final String DROP_TABLE = "DROP TABLE ";
     protected static final String DROP_PROCEDURE_IF_EXISTS = "DROP PROCEDURE IF EXISTS ";
 
     @Value("${spring.datasource.url}")
