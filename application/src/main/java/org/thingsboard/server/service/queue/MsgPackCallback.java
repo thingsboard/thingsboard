@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;

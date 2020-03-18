@@ -24,9 +24,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.TbQueueProducer;
-import org.thingsboard.server.common.DefaultTbQueueRequestTemplate;
-import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 
 import javax.annotation.Nullable;

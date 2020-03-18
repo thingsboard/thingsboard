@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,15 +24,15 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.common.TbProtoQueueMsg;
-import org.thingsboard.server.discovery.PartitionChangeEvent;
-import org.thingsboard.server.discovery.ServiceType;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.provider.TbCoreQueueProvider;
+import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 

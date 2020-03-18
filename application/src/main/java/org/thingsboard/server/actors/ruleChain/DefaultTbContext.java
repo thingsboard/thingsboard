@@ -254,7 +254,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public String getNodeId() {
-        return mainCtx.getNodeIdProvider().getNodeId();
+        return mainCtx.getServiceInfoProvider().getServiceId();
     }
 
     @Override

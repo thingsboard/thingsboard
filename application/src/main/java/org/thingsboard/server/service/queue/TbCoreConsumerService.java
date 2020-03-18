@@ -16,10 +16,7 @@
 package org.thingsboard.server.service.queue;
 
 import org.springframework.context.ApplicationListener;
-import org.thingsboard.server.discovery.PartitionChangeEvent;
-import org.thingsboard.server.gen.transport.TransportProtos;
-
-import java.util.function.Consumer;
+import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 
 public interface TbCoreConsumerService extends ApplicationListener<PartitionChangeEvent> {
 

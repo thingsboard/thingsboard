@@ -16,16 +16,16 @@
 package org.thingsboard.server.common.transport.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.TbQueueCallback;
-import org.thingsboard.server.TbQueueConsumer;
-import org.thingsboard.server.TbQueueMsgMetadata;
-import org.thingsboard.server.TbQueueProducer;
-import org.thingsboard.server.TbQueueRequestTemplate;
-import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.TbQueueRequestTemplate;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,10 +34,10 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.discovery.PartitionService;
-import org.thingsboard.server.discovery.ServiceType;
-import org.thingsboard.server.discovery.TopicPartitionInfo;
-import org.thingsboard.server.provider.TransportQueueProvider;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.ServiceType;
+import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.queue.provider.TransportQueueProvider;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -46,7 +46,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToRuleEngineMsg;
-import org.thingsboard.server.common.AsyncCallbackTemplate;
+import org.thingsboard.server.queue.common.AsyncCallbackTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -66,6 +66,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Service
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport'")
 public class DefaultTransportService implements TransportService {
 
     @Value("${transport.rate_limits.enabled}")

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.service.ActorService;
-import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
@@ -56,13 +55,12 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.discovery.PartitionChangeEvent;
-import org.thingsboard.server.discovery.PartitionService;
-import org.thingsboard.server.discovery.ServiceType;
-import org.thingsboard.server.discovery.TopicPartitionInfo;
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
+import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.ServiceType;
+import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.provider.TbCoreQueueProvider;
+import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
 import org.thingsboard.server.service.queue.TbMsgCallback;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -153,6 +151,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     private ListeningScheduledExecutorService queueExecutor;
     private ConcurrentMap<TenantId, Set<DeviceId>> tenantDevices = new ConcurrentHashMap<>();
+    private ConcurrentMap<TopicPartitionInfo, Set<DeviceId>> partitionedDevices = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, Long> deviceLastReportedActivity = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, Long> deviceLastSavedActivity = new ConcurrentHashMap<>();
@@ -161,7 +160,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
     public void init() {
         // Should be always single threaded due to absence of locks.
         queueExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("device-state")));
-        queueExecutor.submit(this::initStateFromDB);
         queueExecutor.scheduleAtFixedRate(this::updateState, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
     }
 
@@ -250,14 +248,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     @Override
-    public void onClusterUpdate() {
-        if (!clusterUpdatePending) {
-            clusterUpdatePending = true;
-            queueExecutor.submit(this::onClusterUpdateSync);
-        }
-    }
-
-    @Override
     public void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto proto, TbMsgCallback callback) {
         try {
             TenantId tenantId = new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
@@ -272,8 +262,15 @@ public class DefaultDeviceStateService implements DeviceStateService {
                         Futures.addCallback(fetchDeviceState(device), new FutureCallback<DeviceStateData>() {
                             @Override
                             public void onSuccess(@Nullable DeviceStateData state) {
-                                addDeviceUsingState(state);
-                                callback.onSuccess();
+                                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, device.getId());
+                                if (partitionedDevices.containsKey(tpi)) {
+                                    addDeviceUsingState(tpi, state);
+                                    callback.onSuccess();
+                                } else {
+                                    log.warn("[{}][{}] Device belongs to external partition. Probably rebalancing is in progress. Topic: {}"
+                                            , tenantId, deviceId, tpi.getFullTopicName());
+                                    callback.onFailure(new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!"));
+                                }
                             }
 
                             @Override
@@ -307,61 +304,63 @@ public class DefaultDeviceStateService implements DeviceStateService {
     @Override
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceKey().getServiceType())) {
-            repartition(partitionChangeEvent.getPartitions());
-        }
-    }
-
-    private void onClusterUpdateSync() {
-        clusterUpdatePending = false;
-        List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
-        for (Tenant tenant : tenants) {
-            List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-            TextPageLink pageLink = new TextPageLink(initFetchPackSize);
-            while (pageLink != null) {
-                TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
-                pageLink = page.getNextPageLink();
-                for (Device device : page.getData()) {
-                    //TODO 2.5
-//                    if (!routingService.resolveById(device.getId()).isPresent()) {
-                    if (!deviceStates.containsKey(device.getId())) {
-                        fetchFutures.add(fetchDeviceState(device));
-                    }
-//                    } else {
-//                        Set<DeviceId> tenantDeviceSet = tenantDevices.get(tenant.getId());
-//                        if (tenantDeviceSet != null) {
-//                            tenantDeviceSet.remove(device.getId());
-//                        }
-//                        deviceStates.remove(device.getId());
-//                        deviceLastReportedActivity.remove(device.getId());
-//                        deviceLastSavedActivity.remove(device.getId());
-//                    }
-                }
-                try {
-                    Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
-                } catch (InterruptedException | ExecutionException e) {
-                    log.warn("Failed to init device state service from DB", e);
+            synchronized (this) {
+                if (!clusterUpdatePending) {
+                    clusterUpdatePending = true;
+                    queueExecutor.submit(() -> {
+                        clusterUpdatePending = false;
+                        initStateFromDB(partitionChangeEvent.getPartitions());
+                    });
                 }
             }
         }
     }
 
-    private void initStateFromDB() {
+    private void initStateFromDB(Set<TopicPartitionInfo> partitions) {
         try {
+            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(partitions);
+            addedPartitions.removeAll(partitionedDevices.keySet());
+
+            Set<TopicPartitionInfo> removedPartitions = new HashSet<>(partitionedDevices.keySet());
+            removedPartitions.removeAll(partitions);
+
+            // We no longer manage current partition of devices;
+            removedPartitions.forEach(partition -> {
+                Set<DeviceId> devices = partitionedDevices.remove(partition);
+                devices.forEach(deviceId -> {
+                    deviceStates.remove(deviceId);
+                    deviceLastReportedActivity.remove(deviceId);
+                    deviceLastSavedActivity.remove(deviceId);
+                });
+            });
+
+            //TODO 3.0: replace this dummy search with new functionality to search by partitions using SQL capabilities.
+            // Adding only devices that are in new partitions
             List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
             for (Tenant tenant : tenants) {
-                List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
                 TextPageLink pageLink = new TextPageLink(initFetchPackSize);
                 while (pageLink != null) {
+                    List<ListenableFuture<Void>> fetchFutures = new ArrayList<>();
                     TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
                     pageLink = page.getNextPageLink();
                     for (Device device : page.getData()) {
-                        //TODO 2.5
-//                        if (!routingService.resolveById(device.getId()).isPresent()) {
-                        fetchFutures.add(fetchDeviceState(device));
-//                        }
+                        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), device.getId());
+                        if (addedPartitions.contains(tpi)) {
+                            ListenableFuture<Void> future = Futures.transform(fetchDeviceState(device), new Function<DeviceStateData, Void>() {
+                                @Nullable
+                                @Override
+                                public Void apply(@Nullable DeviceStateData state) {
+                                    if (state != null) {
+                                        addDeviceUsingState(tpi, state);
+                                    }
+                                    return null;
+                                }
+                            });
+                            fetchFutures.add(future);
+                        }
                     }
                     try {
-                        Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
+                        Futures.successfulAsList(fetchFutures).get();
                     } catch (InterruptedException | ExecutionException e) {
                         log.warn("Failed to init device state service from DB", e);
                     }
@@ -372,11 +371,12 @@ public class DefaultDeviceStateService implements DeviceStateService {
         }
     }
 
-    private void addDeviceUsingState(DeviceStateData state) {
-        tenantDevices.computeIfAbsent(state.getTenantId(), id -> ConcurrentHashMap.newKeySet()).add(state.getDeviceId());
+    private void addDeviceUsingState(TopicPartitionInfo tpi, DeviceStateData state) {
+        partitionedDevices.computeIfAbsent(tpi, id -> ConcurrentHashMap.newKeySet()).add(state.getDeviceId());
         deviceStates.put(state.getDeviceId(), state);
     }
 
+    //TODO 2.5: review this method
     private void updateState() {
         long ts = System.currentTimeMillis();
         Set<DeviceId> deviceIds = new HashSet<>(deviceStates.keySet());
@@ -404,8 +404,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private DeviceStateData getOrFetchDeviceStateData(DeviceId deviceId) {
         DeviceStateData deviceStateData = deviceStates.get(deviceId);
         if (deviceStateData == null) {
-            //TODO 2.5
-//            if (!routingService.resolveById(deviceId).isPresent()) {
             Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
             if (device != null) {
                 try {
@@ -415,7 +413,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
                     log.debug("[{}] Failed to fetch device state!", deviceId, e);
                 }
             }
-//            }
         }
         return deviceStateData;
     }
@@ -538,7 +535,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         }
     }
 
-    private class AttributeSaveCallback implements FutureCallback<Void> {
+    private static class AttributeSaveCallback implements FutureCallback<Void> {
         private final DeviceId deviceId;
         private final String key;
         private final Object value;
