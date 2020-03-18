@@ -19,25 +19,25 @@ import { GaugeType } from '@home/components/widget/lib/canvas-digital-gauge';
 import { AnimationRule } from '@home/components/widget/lib/analogue-gauge.models';
 import { FontSettings } from '@home/components/widget/lib/settings.models';
 
-export interface attributeSourceProperty {
+export interface AttributeSourceProperty {
   valueSource: string;
   entityAlias?: string;
   attribute?: string;
   value?: number;
 }
 
-export interface fixedLevelColors {
-  from?: attributeSourceProperty;
-  to?: attributeSourceProperty;
+export interface FixedLevelColors {
+  from?: AttributeSourceProperty;
+  to?: AttributeSourceProperty;
   color: string;
 }
 
-export interface colorLevelSetting {
+export interface ColorLevelSetting {
   value: number;
   color: string;
 }
 
-export type colorLevel = Array<string | colorLevelSetting>;
+export type colorLevel = Array<string | ColorLevelSetting>;
 
 export type attributesGaugeType = 'levelColors' | 'ticks';
 
@@ -62,7 +62,7 @@ export interface DigitalGaugeSettings {
   gaugeColor?: string;
   useFixedLevelColor?: boolean;
   levelColors?: colorLevel;
-  fixedLevelColors?: fixedLevelColors[];
+  fixedLevelColors?: FixedLevelColors[];
   animation?: boolean;
   animationDuration?: number;
   animationRule?: AnimationRule;
@@ -75,7 +75,7 @@ export interface DigitalGaugeSettings {
   hideValue?: boolean;
   hideMinMax?: boolean;
   showTicks?: boolean;
-  ticksValue?: attributeSourceProperty[];
+  ticksValue?: AttributeSourceProperty[];
   ticks?: number[];
   colorTicks?: string;
   tickWidth?: number;

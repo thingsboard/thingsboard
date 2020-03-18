@@ -15,12 +15,12 @@
 ///
 
 import * as CanvasGauges from 'canvas-gauges';
-import GenericOptions = CanvasGauges.GenericOptions;
-import BaseGauge = CanvasGauges.BaseGauge;
 import { FontStyle, FontWeight } from '@home/components/widget/lib/settings.models';
 import * as tinycolor_ from 'tinycolor2';
 import { ColorFormats } from 'tinycolor2';
 import { isDefined, isString, isUndefined } from '@core/utils';
+import GenericOptions = CanvasGauges.GenericOptions;
+import BaseGauge = CanvasGauges.BaseGauge;
 
 const tinycolor = tinycolor_;
 
@@ -32,12 +32,12 @@ export interface DigitalGaugeColorRange {
   rgbString: string;
 }
 
-export interface colorLevelSetting {
+export interface ColorLevelSetting {
   value: number;
   color: string;
 }
 
-export type levelColors = Array<string | colorLevelSetting>;
+export type levelColors = Array<string | ColorLevelSetting>;
 
 export interface CanvasDigitalGaugeOptions extends GenericOptions {
   gaugeType?: GaugeType;
@@ -252,9 +252,14 @@ export class CanvasDigitalGauge extends BaseGauge {
       options.neonColorsRange = [];
     }
     for (let i = 0; i < options.levelColors.length; i++) {
-      let levelColor: any = options.levelColors[i];
+      const levelColor: any = options.levelColors[i];
       if (levelColor !== null) {
-        let percentage = isColorProperty ? inc * i : CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
+        let percentage: number;
+        if(isColorProperty){
+          percentage = inc * i;
+        } else {
+          percentage = CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
+        }
         let tColor = tinycolor(isColorProperty ? levelColor : levelColor.color);
         options.colorsRange[i] = {
           pct: percentage,
@@ -273,9 +278,9 @@ export class CanvasDigitalGauge extends BaseGauge {
     }
 
     options.ticksValue = [];
-    for(let i = 0; i < options.ticks.length; i++){
-      if(options.ticks[i] !== null){
-        options.ticksValue.push(CanvasDigitalGauge.normalizeValue(options.ticks[i], options.minValue, options.maxValue))
+    for (const tick of options.ticks) {
+      if (tick !== null) {
+        options.ticksValue.push(CanvasDigitalGauge.normalizeValue(tick, options.minValue, options.maxValue))
       }
     }
 
@@ -290,7 +295,7 @@ export class CanvasDigitalGauge extends BaseGauge {
   }
 
   static normalizeValue (value: number, min: number, max: number): number {
-    let normalValue = (value - min) / (max - min);
+    const normalValue = (value - min) / (max - min);
     if (normalValue <= 0) {
       return 0;
     }
@@ -673,7 +678,7 @@ function determineFontHeight (options: CanvasDigitalGaugeOptions, target: string
       fontStyle: options['font' + target + 'Style']
     };
     const text = $('<span>Hg</span>').css(fontStyle);
-    const block = $('<div style="display: inline-block; width: 1px; height: 0px;"></div>');
+    const block = $('<div style="display: inline-block; width: 1px; height: 0;"></div>');
 
     const div = $('<div></div>');
     div.append(text, block);
@@ -911,12 +916,12 @@ function drawTickArc(context: DigitalGaugeCanvasRenderingContext2D, tickValues: 
   context.beginPath();
   context.lineWidth = tickWidth;
   context.strokeStyle = color;
-  for (let i = 0; i < tickValues.length; i++) {
-    var angle = startAngle + tickValues[i] * endAngle;
-    var x1 = Cx + (Ri + strokeWidth) * Math.cos(angle);
-    var y1 = Cy + (Ri + strokeWidth) * Math.sin(angle);
-    var x2 = Cx + Ri * Math.cos(angle);
-    var y2 = Cy + Ri * Math.sin(angle);
+  for (const tick of tickValues) {
+    const angle = startAngle + tick * endAngle;
+    const x1 = Cx + (Ri + strokeWidth) * Math.cos(angle);
+    const y1 = Cy + (Ri + strokeWidth) * Math.sin(angle);
+    const x2 = Cx + Ri * Math.cos(angle);
+    const y2 = Cy + Ri * Math.sin(angle);
     context.moveTo(x1, y1);
     context.lineTo(x2, y2);
   }
@@ -932,8 +937,8 @@ function drawTickBar(context: DigitalGaugeCanvasRenderingContext2D, tickValues: 
   context.beginPath();
   context.lineWidth = tickWidth;
   context.strokeStyle = color;
-  for (let i = 0; i < tickValues.length; i++) {
-    let tickValue = tickValues[i] * distanceBar;
+  for (const tick of tickValues) {
+    const tickValue = tick * distanceBar;
     if (isVertical) {
       context.moveTo(startX - strokeWidth / 2, startY + tickValue - distanceBar);
       context.lineTo(startX + strokeWidth / 2, startY + tickValue - distanceBar);
