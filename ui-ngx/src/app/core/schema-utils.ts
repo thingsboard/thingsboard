@@ -18,7 +18,7 @@
 export function initSchema() {
     return {
         schema: {
-            type: "object",
+            type: 'object',
             properties: {},
             required: []
         },
@@ -29,8 +29,8 @@ export function initSchema() {
 
 export function addGroupInfo(schema, title: string) {
     schema.groupInfoes.push({
-        "formIndex": schema.groupInfoes?.length || 0,
-        "GroupTitle": title
+        formIndex: schema.groupInfoes?.length || 0,
+        GroupTitle: title
     });
 }
 
@@ -66,7 +66,7 @@ export function addCondition(schema, condition: String) {
         if (typeof element === 'string') {
             return {
                 key: element,
-                condition: condition
+                condition
             }
         }
         if (typeof element == 'object') {

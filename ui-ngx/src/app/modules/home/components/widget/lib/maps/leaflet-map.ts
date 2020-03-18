@@ -14,7 +14,8 @@
 /// limitations under the License.
 ///
 
-import * as L from 'leaflet';
+import L from 'leaflet';
+import './add-marker';
 
 import 'leaflet-providers';
 import 'leaflet.markercluster/dist/MarkerCluster.css'
@@ -67,34 +68,34 @@ export default abstract class LeafletMap {
 
     addMarkerControl() {
         if (this.options.draggebleMarker)
-            L.Control['AddMarker'] = L.Control.extend({
-                onAdd: function (map) {
-                    let img = L.DomUtil.create('img') as any;
+            L.Control.AddMarker  = L.Control.extend({
+                onAdd (map) {
+                    const img = L.DomUtil.create('img') as any;
                     img.src = `assets/add_location.svg`;
                     img.style.width = '32px';
                     img.style.height = '32px';
                     img.onclick = this.dragMarker;
                     return img;
                 },
-                addHooks: function () {
+                addHooks () {
                     L.DomEvent.on(window as any, 'onclick', this.enableDragMode, this);
                 },
-                onRemove: function (map) {
+                onRemove (map) {
                 },
                 dragMarker: ($event) => {
                     this.dragMode = !this.dragMode;
                 }
-            });
+            } as any);
 
-        L.control['addmarker'] = function (opts) {
-            return new L.Control['AddMarker'](opts);
+        L.control.addMarker = function (opts) {
+            return new L.Control.AddMarker(opts);
         }
-        L.control['addmarker']({ position: 'topright' }).addTo(this.map);
+        L.control.addMarker({ position: 'topright' }).addTo(this.map);
     }
 
-    inited() {///!!!!
+    /*inited() {/// !!!!
         return !!this.map;
-    }
+    }*/
 
     public setMap(map: L.Map) {
         this.map = map;
@@ -158,7 +159,7 @@ export default abstract class LeafletMap {
         }
     }
 
-    //Markers
+    // Markers
     updateMarkers(markersData) {
         markersData.forEach(data => {
             if (data.rotationAngle) {
@@ -188,7 +189,7 @@ export default abstract class LeafletMap {
 
     private updateMarker(key, data, dataSources, settings: MarkerSettings) {
         const marker: Marker = this.markers.get(key);
-        let location = this.convertPosition(data)
+        const location = this.convertPosition(data)
         if (!location.equals(marker.location)) {
             marker.updateMarkerPosition(location);
         }
@@ -203,12 +204,12 @@ export default abstract class LeafletMap {
 
     }
 
-    //polyline
+    // polyline
 
     updatePolylines(polyData: Array<Array<any>>) {
         polyData.forEach(data => {
             if (data.length) {
-                let dataSource = polyData.map(arr => arr[0]);
+                const dataSource = polyData.map(arr => arr[0]);
                 if (this.poly) {
                     this.updatePolyline(data, dataSource, this.options);
                 }
@@ -237,7 +238,7 @@ export default abstract class LeafletMap {
         });
     }
 
-    //polygon
+    // polygon
 
     updatePolygons(polyData: Array<Array<any>>) {
         polyData.forEach((data: any) => {

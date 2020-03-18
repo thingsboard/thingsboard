@@ -16,7 +16,7 @@
 
 import L from 'leaflet';
 import _ from 'lodash';
-import tinycolor from "tinycolor2";
+import tinycolor from 'tinycolor2';
 import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 
 import { Component, OnInit, Input, ViewChild, AfterViewInit, ChangeDetectorRef, SecurityContext } from '@angular/core';
@@ -27,6 +27,7 @@ import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
 import { tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetConfig } from '@app/shared/public-api';
+import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 
 
 @Component({
@@ -36,7 +37,9 @@ import { WidgetConfig } from '@app/shared/public-api';
 })
 export class TripAnimationComponent implements OnInit, AfterViewInit {
 
-  @Input() ctx: WidgetConfig;
+  constructor(private cd: ChangeDetectorRef,private sanitizer: DomSanitizer) { }
+
+  @Input() ctx: WidgetContext;
 
   @ViewChild('map') mapContainer;
 
@@ -51,7 +54,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   visibleTooltip = false;
   activeTrip;
 
-  constructor(private cd: ChangeDetectorRef,private sanitizer: DomSanitizer) { }
+  static getSettingsSchema() {
+    const schema = initSchema();
+    addToSchema(schema, TbMapWidgetV2.getProvidersSchema());
+    addGroupInfo(schema, 'Map Provider Settings');
+    addToSchema(schema, tripAnimationSchema);
+    addGroupInfo(schema, 'Trip Animation Settings');
+    return schema;
+  }
 
   ngOnInit(): void {
     this.widgetConfig = this.ctx.widgetConfig;
@@ -63,7 +73,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       rotationAngle: 0
     }
     this.settings = { ...settings, ...this.ctx.settings };
-    let subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
+    const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = (updated) => {
       this.historicalData = parseArray(this.ctx.data);
       this.activeTrip = this.historicalData[0][0];
@@ -75,7 +85,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    let ctxCopy = _.cloneDeep(this.ctx);
+    const ctxCopy: WidgetContext = _.cloneDeep(this.ctx);
     ctxCopy.settings.showLabel = false;
     ctxCopy.settings.showTooltip = false;
     this.mapWidget = new MapWidgetController(MapProviders.openstreet, false, ctxCopy, this.mapContainer.nativeElement);
@@ -104,8 +114,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
 
   showHideTooltip() {
     console.log(this.activeTrip);
-      let tooltipText: string = this.settings.useTooltipFunction ? safeExecute(this.settings.tooolTipFunction) : 
-     // this.mainTooltip = this.sanitizer.sanitize(SecurityContext.HTML, parseTemplate(tooltipText, this.activeTrip)) 
+      const tooltipText: string = this.settings.useTooltipFunction ? safeExecute(this.settings.tooolTipFunction) :
+     // this.mainTooltip = this.sanitizer.sanitize(SecurityContext.HTML, parseTemplate(tooltipText, this.activeTrip))
       this.visibleTooltip = !this.visibleTooltip;
   }
 
@@ -141,16 +151,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       j++;
     }
     return result;
-  };
-
-  static getSettingsSchema() {
-    let schema = initSchema();
-    addToSchema(schema, TbMapWidgetV2.getProvidersSchema());
-    addGroupInfo(schema, "Map Provider Settings");
-    addToSchema(schema, tripAnimationSchema);
-    addGroupInfo(schema, "Trip Animation Settings");
-    return schema;
-  }
-}
+  }}
 
 export let TbTripAnimationWidget = TripAnimationComponent;

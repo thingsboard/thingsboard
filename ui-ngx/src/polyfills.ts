@@ -94,7 +94,7 @@ import { TbAnalogueLinearGauge } from '@home/components/widget/lib/analogue-line
 import { TbCanvasDigitalGauge } from '@home/components/widget/lib/digital-gauge';
 import { TbMapWidgetV2 } from '@home/components/widget/lib/maps/map-widget2';
 import { TbTripAnimationWidget } from '@app/modules/home/components/widget/trip-animation/trip-animation.component';
- 
+
 import * as tinycolor_ from 'tinycolor2';
 
 const tinycolor = tinycolor_;

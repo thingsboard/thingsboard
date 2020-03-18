@@ -222,8 +222,8 @@ function scrollParents(node: Node): Node[] {
 }
 
 function hashCode(str) {
-  var hash = 0;
-  var i, char;
+  let hash = 0;
+  let i, char;
   if (str.length == 0) return hash;
   for (i = 0; i < str.length; i++) {
     char = str.charCodeAt(i);
@@ -450,21 +450,22 @@ export function aspectCache(imageUrl: string): Observable<number> {
 
 
 export function parseArray(input: any[]): any[] {
-  let alliases: any = _(input).groupBy(el => el?.datasource?.aliasName).values().value();
+  const alliases: any = _(input).groupBy(el => el?.datasource?.aliasName).values().value();
   return alliases.map((alliasArray, dsIndex) =>
     alliasArray[0].data.map((el, i) => {
       const obj = {
         aliasName: alliasArray[0]?.datasource?.aliasName,
         entityName: alliasArray[0]?.datasource?.entityName,
         $datasource: alliasArray[0]?.datasource,
-        dsIndex: dsIndex,
-        time: el[0]
+        dsIndex,
+        time: el[0],
+        deviceType: null
       };
       alliasArray.forEach(el => {
         obj[el?.dataKey?.label] = el?.data[i][1];
         obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
         if (el?.dataKey?.label == 'type') {
-          obj['deviceType'] = el?.data[0][1];
+          obj.deviceType = el?.data[0][1];
         }
       });
       return obj;
@@ -478,13 +479,14 @@ export function parseData(input: any[]): any[] {
       aliasName: alliasArray[0]?.datasource?.aliasName,
       entityName: alliasArray[0]?.datasource?.entityName,
       $datasource: alliasArray[0]?.datasource,
-      dsIndex: i
+      dsIndex: i,
+      deviceType: null
     };
     alliasArray.forEach(el => {
       obj[el?.dataKey?.label] = el?.data[0][1];
       obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
       if (el?.dataKey?.label == 'type') {
-        obj['deviceType'] = el?.data[0][1];
+        obj.deviceType = el?.data[0][1];
       }
     });
     return obj;
@@ -493,7 +495,7 @@ export function parseData(input: any[]): any[] {
 
 export function safeExecute(func: Function, params = []) {
   let res = null;
-  if (func && typeof (func) == "function") {
+  if (func && typeof (func) == 'function') {
     try {
       res = func(...params);
     }
@@ -523,17 +525,17 @@ export function parseTemplate(template: string, data: object) {
   let res = '';
   try {
     let variables = '';
-    let expressions = template
+    const expressions = template
       .match(/\{(.*?)\}/g) // find expressions
-      .map(exp => exp.replace(/{|}/g, '')) // remove brackets 
+      .map(exp => exp.replace(/{|}/g, '')) // remove brackets
       .map(exp => exp.split(':'))
-      .filter(arr => !!arr[1]) //filter expressions without format
+      .filter(arr => !!arr[1]) // filter expressions without format
       .reduce((res, current) => {
         res[current[0]] = current[1];
         return res;
       }, {});
 
-    for (let key in data) {
+    for (const key in data) {
       if (!key.includes('|'))
         variables += `let ${key} = '${expressions[key] ? padValue(data[key], +expressions[key]) : data[key]}';`;
     }

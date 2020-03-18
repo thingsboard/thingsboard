@@ -19,7 +19,7 @@ import LeafletMap from '../leaflet-map';
 import { MapOptions } from '../map-models';
 import { aspectCache } from '@app/core/utils';
 
-const maxZoom = 4;//?
+const maxZoom = 4;// ?
 
 export class ImageMap extends LeafletMap {
 
@@ -102,12 +102,12 @@ export class ImageMap extends LeafletMap {
 
     initMap(updateImage?) {
         if (!this.map && this.aspect > 0) {
-            var center = this.pointToLatLng(this.width / 2, this.height / 2);
+            const center = this.pointToLatLng(this.width / 2, this.height / 2);
             this.map = L.map(this.$container, {
                 minZoom: 1,
-                maxZoom: maxZoom,
+                maxZoom,
                 scrollWheelZoom: !this.options.disableScrollZooming,
-                center: center,
+                center,
                 zoom: 1,
                 crs: L.CRS.Simple,
                 attributionControl: false

@@ -20,7 +20,7 @@ import LeafletMap from '../leaflet-map';
 import { MapOptions } from '../map-models';
 import 'leaflet.gridlayer.googlemutant';
 
-var googleLoaded = false;
+let googleLoaded = false;
 
 
 export class GoogleMap extends LeafletMap {
@@ -29,7 +29,7 @@ export class GoogleMap extends LeafletMap {
         super($container, options);
         this.loadGoogle(() => {
             const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
-            var roads = (L.gridLayer as any).googleMutant({
+            const roads = (L.gridLayer as any).googleMutant({
                 type: options?.gmDefaultMapType || 'roadmap'
             }).addTo(map);
             super.setMap(map);
@@ -43,7 +43,7 @@ export class GoogleMap extends LeafletMap {
         }
         else {
             googleLoaded = true;
-            let script = document.createElement('script');
+            const script = document.createElement('script');
             script.onload = () => {
                 callback();
             }

@@ -243,9 +243,9 @@ export class CanvasDigitalGauge extends BaseGauge {
       options.neonColorsRange = [];
     }
     for (let i = 0; i < options.levelColors.length; i++) {
-      let levelColor: any = options.levelColors[i];
+      const levelColor: any = options.levelColors[i];
       if (levelColor !== null) {
-        let percentage = isColorProperty ? inc * i : CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
+        const percentage = isColorProperty ? inc * i : CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
         let tColor = tinycolor(isColorProperty ? levelColor : levelColor.color);
         options.colorsRange.push({
           pct: percentage,
@@ -274,7 +274,7 @@ export class CanvasDigitalGauge extends BaseGauge {
   }
 
   static normalizeValue (value: number, min: number, max: number): number {
-    let normalValue = (value - min) / (max - min);
+    const normalValue = (value - min) / (max - min);
     if (normalValue <= 0) {
       return 0;
     }

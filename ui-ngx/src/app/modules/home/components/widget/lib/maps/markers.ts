@@ -30,7 +30,7 @@ export class Marker {
     dataSources;
 
     constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data?, dataSources?, onClickListener?, onDragendListener?) {
-        //this.map = map;
+        // this.map = map;
         this.location = location;
         this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
@@ -108,7 +108,7 @@ export class Marker {
             return;
         }
 
-        let currentImage = this.settings.useMarkerImageFunction ?
+        const currentImage = this.settings.useMarkerImageFunction ?
             safeExecute(this.settings.markerImageFunction,
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
 
@@ -117,8 +117,8 @@ export class Marker {
             aspectCache(currentImage.url).subscribe(
                 (aspect) => {
                     if (aspect) {
-                        var width;
-                        var height;
+                        let width;
+                        let height;
                         if (aspect > 1) {
                             width = currentImage.size;
                             height = currentImage.size / aspect;
@@ -126,15 +126,15 @@ export class Marker {
                             width = currentImage.size * aspect;
                             height = currentImage.size;
                         }
-                        var icon = L.icon({
+                        const icon = L.icon({
                             iconUrl: currentImage.url,
                             iconSize: [width, height],
                             iconAnchor: [width / 2, height],
                             popupAnchor: [0, -height]
                         });
-                        var iconInfo = {
+                        const iconInfo = {
                             size: [width, height],
-                            icon: icon
+                            icon
                         };
                         onMarkerIconReady(iconInfo);
                     } else {
@@ -148,8 +148,8 @@ export class Marker {
     }
 
     createDefaultMarkerIcon(color, onMarkerIconReady) {
-        var pinColor = color.substr(1);
-        var icon = L.icon({
+        const pinColor = color.substr(1);
+        const icon = L.icon({
             iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
             iconSize: [21, 34],
             iconAnchor: [10, 34],
@@ -158,9 +158,9 @@ export class Marker {
             shadowSize: [40, 37],
             shadowAnchor: [12, 35]
         });
-        var iconInfo = {
+        const iconInfo = {
             size: [21, 34],
-            icon: icon
+            icon
         };
         onMarkerIconReady(iconInfo);
     }

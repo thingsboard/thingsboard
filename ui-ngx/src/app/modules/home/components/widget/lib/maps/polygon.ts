@@ -22,7 +22,7 @@ export class Polygon {
     leafletPoly: L.Polygon;
     tooltip;
 
-    constructor(public map, coordinates, dataSources, settings, onClickListener?) {     
+    constructor(public map, coordinates, dataSources, settings, onClickListener?) {
         this.leafletPoly = L.polygon(coordinates, {
             fill: true,
             fillColor: settings.polygonColor,
@@ -45,10 +45,10 @@ export class Polygon {
     }
 
     updatePolygonColor(settings, color) {
-        let style = {
+        const style = {
             fill: true,
             fillColor: color,
-            color: color,
+            color,
             weight: settings.polygonStrokeWeight,
             fillOpacity: settings.polygonOpacity,
             opacity: settings.polygonStrokeOpacity

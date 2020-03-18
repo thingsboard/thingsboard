@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { MapProviders, MapOptions } from "./map-models";
+import { MapProviders, MapOptions } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
     openstreetMapSettingsSchema,
@@ -39,12 +39,6 @@ import { AttributeService } from '@app/core/public-api';
 
 export class MapWidgetController implements MapWidgetInterface {
 
-    map: LeafletMap;
-    provider: MapProviders;
-    schema;
-    data;
-    settings;
-
     constructor(public mapProvider: MapProviders, private drawRoutes, public ctx: WidgetContext, $element) {
         if (this.map) {
             this.map.map.remove();
@@ -57,7 +51,7 @@ export class MapWidgetController implements MapWidgetInterface {
         }
         this.settings = this.initSettings(ctx.settings);
 
-        let MapClass = providerSets[this.provider]?.MapClass;
+        const MapClass = providerSets[this.provider]?.MapClass;
         if (!MapClass) {
             return;
         }
@@ -65,13 +59,64 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.saveMarkerLocation = this.setMarkerLocation;
     }
 
+    map: LeafletMap;
+    provider: MapProviders;
+    schema;
+    data;
+    settings;
+
+    public static dataKeySettingsSchema(): Object {
+        return {};
+    }
+
+    public static getProvidersSchema() {
+        return mergeSchemes([mapProviderSchema,
+            ...Object.values(providerSets)?.map(
+                setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
+    }
+
+    public static settingsSchema(mapProvider, drawRoutes): Object {
+        const schema = initSchema();
+        addToSchema(schema, this.getProvidersSchema());
+        addGroupInfo(schema, 'Map Provider Settings');
+        addToSchema(schema, commonMapSettingsSchema);
+        addGroupInfo(schema, 'Common Map Settings');
+
+        if (drawRoutes) {
+            addToSchema(schema, routeMapSettingsSchema);
+            addGroupInfo(schema, 'Route Map Settings');
+        } else if (mapProvider !== 'image-map') {
+            const clusteringSchema = mergeSchemes([markerClusteringSettingsSchemaLeaflet, markerClusteringSettingsSchema])
+            addToSchema(schema, clusteringSchema);
+            addGroupInfo(schema, 'Markers Clustering Settings');
+        }
+        return schema;
+    }
+
+    public static actionSources(): Object {
+        return {
+            markerClick: {
+                name: 'widget-action.marker-click',
+                multiple: false
+            },
+            polygonClick: {
+                name: 'widget-action.polygon-click',
+                multiple: false
+            },
+            tooltipAction: {
+                name: 'widget-action.tooltip-tag-action',
+                multiple: true
+            }
+        };
+    }
+
     onInit() {
     }
 
     setMarkerLocation = (e) => {
-        let s = this.ctx.$injector.get(AttributeService);
-        console.log("MapWidgetController -> setMarkerLocation -> s", s, s.saveEntityAttributes)
-        let attributeService = this.ctx.$scope.$injector.get(this.ctx.servicesMap.get('attributeService'));
+        const s = this.ctx.$injector.get(AttributeService);
+        console.log('MapWidgetController -> setMarkerLocation -> s', s, s.saveEntityAttributes)
+        const attributeService = this.ctx.$scope.$injector.get(this.ctx.servicesMap.get('attributeService'));
         forkJoin(
             this.data.filter(data => !!e[data.dataKey.name])
                 .map(data => {
@@ -88,7 +133,7 @@ export class MapWidgetController implements MapWidgetInterface {
                         }]
                     );
                 })).subscribe(res => {
-                    console.log("MapWidgetController -> setMarkerLocation -> res", res)
+                    console.log('MapWidgetController -> setMarkerLocation -> res', res)
                 });
     }
 
@@ -114,7 +159,7 @@ export class MapWidgetController implements MapWidgetInterface {
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             labelColor: this.ctx.widgetConfig.color,
             tooltipPattern: settings.tooltipPattern ||
-                "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + settings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + settings.lngKeyName + ":7}",
+                '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${' + settings.latKeyName + ':7}<br/><b>Longitude:</b> ${' + settings.lngKeyName + ':7}',
             defaultCenterPosition: getDefCenterPosition(settings?.defaultCenterPosition),
             useDraggableMarker: true,
             currentImage: (settings.useMarkerImage && settings.markerImage?.length) ? {
@@ -138,57 +183,12 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     onResize() {
-        this.map.onResize();//not work
+        this.map.onResize();// not work
     }
 
     resize() {
         this.map?.invalidateSize();
         this.map.onResize();
-    }
-
-    public static dataKeySettingsSchema(): Object {
-        return {};
-    }
-
-    public static getProvidersSchema() { 
-        return mergeSchemes([mapProviderSchema,
-            ...Object.values(providerSets)?.map(
-                setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
-    }
-
-    public static settingsSchema(mapProvider, drawRoutes): Object {
-        let schema = initSchema();
-        addToSchema(schema, this.getProvidersSchema());
-        addGroupInfo(schema, "Map Provider Settings");
-        addToSchema(schema, commonMapSettingsSchema);
-        addGroupInfo(schema, "Common Map Settings");
-
-        if (drawRoutes) {
-            addToSchema(schema, routeMapSettingsSchema);
-            addGroupInfo(schema, "Route Map Settings");
-        } else if (mapProvider !== 'image-map') {
-            let clusteringSchema = mergeSchemes([markerClusteringSettingsSchemaLeaflet, markerClusteringSettingsSchema])
-            addToSchema(schema, clusteringSchema);
-            addGroupInfo(schema, "Markers Clustering Settings");
-        }
-        return schema;
-    }
-
-    public static actionSources(): Object {
-        return {
-            'markerClick': {
-                name: 'widget-action.marker-click',
-                multiple: false
-            },
-            'polygonClick': {
-                name: 'widget-action.polygon-click',
-                multiple: false
-            },
-            'tooltipAction': {
-                name: 'widget-action.tooltip-tag-action',
-                multiple: true
-            }
-        };
     }
 
     onDestroy() {
@@ -202,27 +202,27 @@ const providerSets = {
     'openstreet-map': {
         MapClass: OpenStreetMap,
         schema: openstreetMapSettingsSchema,
-        name: "openstreet-map",
+        name: 'openstreet-map',
     },
     'tencent-map': {
         MapClass: TencentMap,
         schema: tencentMapSettingsSchema,
-        name: "tencent-map"
+        name: 'tencent-map'
     },
     'google-map': {
         MapClass: GoogleMap,
         schema: googleMapSettingsSchema,
-        name: "google-map"
+        name: 'google-map'
     },
-    'here': {
+    here: {
         MapClass: HEREMap,
         schema: hereMapSettingsSchema,
-        name: "here"
+        name: 'here'
     },
     'image-map': {
         MapClass: ImageMap,
         schema: imageMapSettingsSchema,
-        name: "image-map"
+        name: 'image-map'
     }
 }
 
@@ -235,16 +235,16 @@ const defaultSettings = {
     lngKeyName: 'longitude',
     polygonKeyName: 'coordinates',
     showLabel: false,
-    label: "${entityName}",
+    label: '${entityName}',
     showTooltip: false,
     useDefaultCenterPosition: false,
-    showTooltipAction: "click",
+    showTooltipAction: 'click',
     autocloseTooltip: false,
     showPolygon: true,
     labelColor: '#000000',
-    color: "#FE7569",
-    polygonColor: "#0000ff",
-    polygonStrokeColor: "#fe0001",
+    color: '#FE7569',
+    polygonColor: '#0000ff',
+    polygonStrokeColor: '#fe0001',
     polygonOpacity: 0.5,
     polygonStrokeOpacity: 1,
     polygonStrokeWeight: 1,

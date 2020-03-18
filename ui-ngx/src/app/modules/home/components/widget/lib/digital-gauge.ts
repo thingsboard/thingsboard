@@ -28,8 +28,8 @@ import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/
 import { DatePipe } from '@angular/common';
 import {DataKey, Datasource, DatasourceType, JsonSettingsSchema, widgetType} from '@shared/models/widget.models';
 import GenericOptions = CanvasGauges.GenericOptions;
-import {IWidgetSubscription, WidgetSubscriptionOptions} from "@core/api/widget-api.models";
-import {DataKeyType} from "@shared/models/telemetry/telemetry.models";
+import {IWidgetSubscription, WidgetSubscriptionOptions} from '@core/api/widget-api.models';
+import {DataKeyType} from '@shared/models/telemetry/telemetry.models';
 
 const tinycolor = tinycolor_;
 
@@ -202,55 +202,55 @@ export class TbCanvasDigitalGauge {
   }
 
   settingLevelColorsSubscribe(options) {
-    let levelColorsDatasource: Datasource[] = [];
-    let predefineLevelColors: colorLevelSetting[] = [];
+    const levelColorsDatasource: Datasource[] = [];
+    const predefineLevelColors: colorLevelSetting[] = [];
 
     function setLevelColor(levelSetting, color) {
       if (levelSetting.valueSource === 'predefinedValue' && isFinite(levelSetting.value)) {
         predefineLevelColors.push({
           value: levelSetting.value,
-          color: color
+          color
         })
       } else if (levelSetting.entityAlias && levelSetting.attribute) {
-        let entityAliasId = this.ctx.aliasController.getEntityAliasId(levelSetting.entityAlias);
+        const entityAliasId = this.ctx.aliasController.getEntityAliasId(levelSetting.entityAlias);
         if (!entityAliasId) {
           return;
         }
 
-        let datasource = levelColorsDatasource.find((datasource) => {
+        const datasource = levelColorsDatasource.find((datasource) => {
           return datasource.entityAliasId === entityAliasId;
         });
 
-        let dataKey: DataKey = {
+        const dataKey: DataKey = {
           type: DataKeyType.attribute,
           name: levelSetting.attribute,
           label: levelSetting.attribute,
           settings: [{
-            color: color,
+            color,
             index: predefineLevelColors.length
           }],
           _hash: Math.random()
         };
 
         if (datasource) {
-          let findDataKey = datasource.dataKeys.find((dataKey) => {
+          const findDataKey = datasource.dataKeys.find((dataKey) => {
             return dataKey.name === levelSetting.attribute;
           });
 
           if (findDataKey) {
             findDataKey.settings.push({
-              color: color,
+              color,
               index: predefineLevelColors.length
             });
           } else {
             datasource.dataKeys.push(dataKey)
           }
         } else {
-          let datasource: Datasource = {
+          const datasource: Datasource = {
             type: DatasourceType.entity,
             name: levelSetting.entityAlias,
             aliasName: levelSetting.entityAlias,
-            entityAliasId: entityAliasId,
+            entityAliasId,
             dataKeys: [dataKey]
           };
           levelColorsDatasource.push(datasource);
@@ -261,7 +261,7 @@ export class TbCanvasDigitalGauge {
     }
 
     for (let i = 0; i < options.length; i++) {
-      let levelColor = options[i];
+      const levelColor = options[i];
       if (levelColor.from) {
         setLevelColor.call(this, levelColor.from, levelColor.color);
       }
@@ -282,20 +282,20 @@ export class TbCanvasDigitalGauge {
   }
 
   subscribeLevelColorsAttributes(datasources: Datasource[]) {
-    let TbCanvasDigitalGauge = this;
-    let levelColorsSourcesSubscriptionOptions: WidgetSubscriptionOptions = {
-      datasources: datasources,
+    const TbCanvasDigitalGauge = this;
+    const levelColorsSourcesSubscriptionOptions: WidgetSubscriptionOptions = {
+      datasources,
       useDashboardTimewindow: false,
       type: widgetType.latest,
       callbacks: {
         onDataUpdated: (subscription) => {
           for (let i = 0; i < subscription.data.length; i++) {
-            let keyData = subscription.data[i];
+            const keyData = subscription.data[i];
             if (keyData && keyData.data && keyData.data[0]) {
-              let attrValue = keyData.data[0][1];
+              const attrValue = keyData.data[0][1];
               if (isFinite(attrValue)) {
                 for (let i = 0; i < keyData.dataKey.settings.length; i++) {
-                  let setting = keyData.dataKey.settings[i];
+                  const setting = keyData.dataKey.settings[i];
                   this.localSettings.levelColors[setting.index] = {
                     value: attrValue,
                     color: setting.color
