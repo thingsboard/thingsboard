@@ -14,27 +14,16 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  forwardRef,
-  Input,
-  ViewChild,
-  AfterViewInit,
-  OnDestroy,
-  ChangeDetectorRef
-} from '@angular/core';
+import { AfterViewInit, Component, forwardRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
-} from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { FlowDirective } from '@flowjs/ngx-flow';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { UtilsService } from "@core/services/utils.service";
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-image-input',
@@ -54,9 +43,11 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   label: string;
 
   private requiredValue: boolean;
+
   get required(): boolean {
     return this.requiredValue;
   }
+
   @Input()
   set required(value: boolean) {
     const newVal = coerceBooleanProperty(value);
@@ -69,10 +60,10 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   disabled: boolean;
 
   @Input()
-  showClearButton: boolean = true;
+  showClearButton = true;
 
   @Input()
-  showPreview: boolean = true;
+  showPreview = true;
 
   @Input()
   inputId = this.utils.guid();
