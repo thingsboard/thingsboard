@@ -16,11 +16,10 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapOptions } from '../map-models';
+import { MapSettings, UnitedMapSettings } from '../map-models';
 
 export class HEREMap extends LeafletMap {
-    constructor($container, options: MapOptions) {
-        console.log('HEREMap -> constructor -> options', options)
+    constructor($container, options: UnitedMapSettings) {
         const defaultCredentials =
         {
             app_id: 'AhM6TzD9ThyK78CT3ptx',

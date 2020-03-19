@@ -21,7 +21,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster/dist/leaflet.markercluster'
 
-import { MapOptions, MarkerSettings } from './map-models';
+import { MapSettings, MarkerSettings, FormattedData } from './map-models';
 import { Marker } from './markers';
 import { Observable, of, BehaviorSubject, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -38,15 +38,15 @@ export default abstract class LeafletMap {
     map: L.Map;
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
-    options: MapOptions;
+    options: MapSettings & MarkerSettings;
     isMarketCluster: boolean;
     bounds: L.LatLngBounds;
 
-    constructor($container: HTMLElement, options: MapOptions) {
+    constructor($container: HTMLElement, options: MapSettings & MarkerSettings) {
         this.options = options;
     }
 
-    public initSettings(options: MapOptions) {
+    public initSettings(options: MapSettings) {
         const { initCallback,
             defaultZoomLevel,
             dontFitMapBounds,
@@ -56,7 +56,7 @@ export default abstract class LeafletMap {
             credentials,
             defaultCenterPosition,
             draggebleMarker,
-            markerClusteringSetting }: MapOptions = options;
+            markerClusteringSetting }: MapSettings = options;
         if (disableScrollZooming) {
             this.map.scrollWheelZoom.disable();
         }
@@ -86,15 +86,11 @@ export default abstract class LeafletMap {
                 }
             } as any);
 
-        L.control.addMarker = function (opts) {
+        L.control.addMarker =  (opts) => {
             return new L.Control.AddMarker(opts);
         }
         L.control.addMarker({ position: 'topright' }).addTo(this.map);
     }
-
-    /*inited() {/// !!!!
-        return !!this.map;
-    }*/
 
     public setMap(map: L.Map) {
         this.map = map;
@@ -115,10 +111,6 @@ export default abstract class LeafletMap {
 
     public saveMarkerLocation(e) {
 
-    }
-
-    getContainer() {
-        return this.map;
     }
 
     createLatLng(lat: number, lng: number): L.LatLng {
@@ -147,8 +139,13 @@ export default abstract class LeafletMap {
         return this.map.getCenter();
     }
 
-    convertPosition(expression: any): L.LatLng {
-        return L.latLng(expression[this.options.latKeyName], expression[this.options.lngKeyName]) as L.LatLng;
+    convertPosition(expression: object): L.LatLng {
+        const lat = expression[this.options.latKeyName];
+        const lng = expression[this.options.lngKeyName];
+        if (isNaN(lat) || isNaN(lng))
+            return null;
+        else
+            return L.latLng(lat, lng) as L.LatLng;
     }
 
     convertToCustomFormat(position: L.LatLng): object {
@@ -161,24 +158,26 @@ export default abstract class LeafletMap {
     // Markers
     updateMarkers(markersData) {
         markersData.forEach(data => {
-            if (data.rotationAngle) {
-                this.options.icon = L.divIcon({
-                    html: `<div class="arrow" style="transform: rotate(${data.rotationAngle}deg)"><div>`
-                })
-            }
-            else {
-                this.options.icon = null;
-            }
-            if (this.markers.get(data.aliasName)) {
-                this.updateMarker(data.aliasName, data, markersData, this.options as MarkerSettings)
-            }
-            else {
-                this.createMarker(data.aliasName, data, markersData, this.options as MarkerSettings);
+            if (this.convertPosition(data)) {
+                if (data.rotationAngle) {
+                    this.options.icon = L.divIcon({
+                        html: `<div class="arrow" style="transform: rotate(${data.rotationAngle}deg)"><div>`
+                    })
+                }
+                else {
+                    this.options.icon = null;
+                }
+                if (this.markers.get(data.aliasName)) {
+                    this.updateMarker(data.aliasName, data, markersData, this.options)
+                }
+                else {
+                    this.createMarker(data.aliasName, data, markersData, this.options as MarkerSettings);
+                }
             }
         });
     }
 
-    private createMarker(key, data, dataSources, settings: MarkerSettings) {
+    private createMarker(key, data: FormattedData, dataSources, settings: MarkerSettings) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.map, this.convertPosition(data), settings, data, dataSources);
             this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
@@ -219,10 +218,11 @@ export default abstract class LeafletMap {
         })
     }
 
-    createPolyline(data, dataSources, settings) {
+    createPolyline(data: any[], dataSources, settings) {
         if (data.length)
             this.ready$.subscribe(() => {
-                this.poly = new Polyline(this.map, data.map(data => this.convertPosition(data)), data, dataSources, settings);
+                this.poly = new Polyline(this.map,
+                    data.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
                 const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
                 if (bounds.isValid()) {
                     this.map.fitBounds(bounds);
@@ -237,7 +237,7 @@ export default abstract class LeafletMap {
         });
     }
 
-    // polygon
+    // Polygon
 
     updatePolygons(polyData: Array<Array<any>>) {
         polyData.forEach((data: any) => {
@@ -268,7 +268,7 @@ export default abstract class LeafletMap {
 
     updatePolygon(data, dataSources, settings) {
         this.ready$.subscribe(() => {
-            //   this.polygon.updatePolygon(settings, data, dataSources);
+            // this.polygon.updatePolygon(settings, data, dataSources);
         });
     }
 }

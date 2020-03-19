@@ -15,23 +15,20 @@
 ///
 
 import L from 'leaflet';
-import { MarkerSettings } from './map-models';
+import { MarkerSettings, FormattedData } from './map-models';
 import { aspectCache, safeExecute, parseTemplate } from '@app/core/utils';
 import { createTooltip } from './maps-utils';
 
 export class Marker {
 
     leafletMarker: L.Marker;
-
-    tooltipOffset;
-    tooltip;
-    location;
-    data;
-    dataSources;
+    tooltipOffset: [number, number];
+    tooltip: L.Popup;
+    location: L.LatLngExpression;
+    data: FormattedData;
+    dataSources: FormattedData[];
 
     constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data?, dataSources?, onClickListener?, onDragendListener?) {
-        // this.map = map;
-        this.location = location;
         this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
             draggable: settings.draggable
@@ -58,12 +55,12 @@ export class Marker {
         }
     }
 
-    setDataSources(data, dataSources) {
+    setDataSources(data: FormattedData, dataSources: FormattedData[]) {
         this.data = data;
         this.dataSources = dataSources;
     }
 
-    updateMarkerTooltip(data) {
+    updateMarkerTooltip(data: FormattedData) {
         this.tooltip.setContent(parseTemplate(this.settings.tooltipPattern, data));
     }
 
@@ -71,7 +68,7 @@ export class Marker {
         this.leafletMarker.setLatLng(position);
     }
 
-    updateMarkerLabel(settings) {
+    updateMarkerLabel(settings: MarkerSettings) {
         this.leafletMarker.unbindTooltip();
 
         if (settings.showLabel) {
@@ -90,7 +87,7 @@ export class Marker {
         });
     }
 
-    updateMarkerIcon(settings) {
+    updateMarkerIcon(settings: MarkerSettings) {
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             this.tooltipOffset = [0, -iconInfo.size[1] + 10];

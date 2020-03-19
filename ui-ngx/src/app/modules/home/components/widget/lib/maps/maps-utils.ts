@@ -16,12 +16,13 @@
 
 import L from 'leaflet';
 import _ from 'lodash';
+import { MarkerSettings, PolylineSettings, PolygonSettings } from './map-models';
 
-export function createTooltip(target: L.Layer, settings): L.Popup {
+export function createTooltip(target: L.Layer, settings: MarkerSettings | PolylineSettings | PolygonSettings): L.Popup {
     const popup = L.popup();
     popup.setContent('');
     target.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
-    if (settings.displayTooltipAction == 'hover') {
+    if (settings.displayTooltipAction === 'hover') {
         target.off('click');
         target.on('mouseover', function () {
             this.openPopup();
@@ -40,6 +41,6 @@ export function getRatio(firsMoment: number, secondMoment: number, intermediateM
 export function findAngle(startPoint, endPoint) {
     let angle = -Math.atan2(endPoint.latitude - startPoint.latitude, endPoint.longitude - startPoint.longitude);
     angle = angle * 180 / Math.PI;
-    return parseInt(angle.toFixed(2));
+    return parseInt(angle.toFixed(2), 10);
 }
 

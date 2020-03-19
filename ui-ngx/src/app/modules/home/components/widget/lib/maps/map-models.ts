@@ -1,40 +1,43 @@
 ///
 /// Copyright © 2016-2020 The Thingsboard Authors
 ///
-/// Licensed under the Apache License, Version 2.0 (the "License");
+/// Licensed under the Apache License; Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
 /// You may obtain a copy of the License at
 ///
 ///     http://www.apache.org/licenses/LICENSE-2.0
 ///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// Unless required by applicable law or agreed to in writing; software
+/// distributed under the License is distributed on an "AS IS" BASIS;
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND; either express or implied.
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
 
-import { LatLngExpression, LatLngTuple } from 'leaflet';
+import { LatLngTuple } from 'leaflet';
 
-export interface MapOptions {
+export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
+export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
+
+export type MapSettings = {
     polygonKeyName: any;
     draggebleMarker: any;
-    initCallback?: Function,
-    defaultZoomLevel?: number,
-    dontFitMapBounds?: boolean,
-    disableScrollZooming?: boolean,
-    minZoomLevel?: number,
-    latKeyName?: string,
-    lngKeyName?: string,
-    xPosKeyName?: string,
-    yPosKeyName?: string,
-    mapProvider: MapProviders,
+    initCallback?: () => any;
+    defaultZoomLevel?: number;
+    dontFitMapBounds?: boolean;
+    disableScrollZooming?: boolean;
+    minZoomLevel?: number;
+    latKeyName?: string;
+    lngKeyName?: string;
+    xPosKeyName?: string;
+    yPosKeyName?: string;
+    mapProvider: MapProviders;
     mapUrl?: string;
-    credentials?: any, // declare credentials format
-    defaultCenterPosition?: LatLngTuple,
-    markerClusteringSetting?,
-    useDefaultCenterPosition?: boolean,
-    gmDefaultMapType?: string,
+    credentials?: any; // declare credentials format
+    defaultCenterPosition?: LatLngTuple;
+    markerClusteringSetting?;
+    useDefaultCenterPosition?: boolean;
+    gmDefaultMapType?: string;
     useLabelFunction: string;
     icon?: any;
 }
@@ -47,15 +50,73 @@ export enum MapProviders {
     tencent = 'tencent-map'
 }
 
-export interface MarkerSettings extends MapOptions {
+export type MarkerSettings = {
     tooltipPattern?: any;
     icon?: any;
-    showLabel?: boolean,
-    draggable?: boolean,
-    showTooltip?: boolean,
-    color?: string,
+    showLabel?: boolean;
+    label: string;
+    labelColor: string;
+    labelText: string;
+    useLabelFunction: boolean;
+    draggable?: boolean;
+    showTooltip?: boolean;
+    color?: string;
+    autocloseTooltip: boolean;
+    displayTooltipAction: string;
     currentImage?: string;
-    useMarkerImageFunction?: boolean,
-    markerImages?: string[],
-    markerImageFunction?: Function;
+    useMarkerImageFunction?: boolean;
+    markerImages?: string[];
+
+    labelFunction: GenericFunction;
+    markerImageFunction?: MarkerImageFunction;
 }
+
+export interface FormattedData {
+    aliasName: string;
+    entityName: string;
+    $datasource: string;
+    dsIndex: number;
+    deviceType: string
+}
+
+export type PolygonSettings = {
+    showPolygon: boolean;
+    showTooltip: any;
+    polygonStrokeOpacity: number;
+    polygonOpacity: number;
+    polygonStrokeWeight: number;
+    polygonStrokeColor: string;
+    polygonColor: string;
+    autocloseTooltip: boolean;
+    displayTooltipAction: string;
+}
+
+export type PolylineSettings = {
+    usePolylineDecorator: any;
+    autocloseTooltip: boolean;
+    displayTooltipAction: string;
+    useColorFunction: any;
+    color: string;
+    useStrokeOpacityFunction: any;
+    strokeOpacity: number;
+    useStrokeWeightFunction: any;
+    strokeWeight: number;
+    decoratorOffset: string | number;
+    endDecoratorOffset: string | number;
+    decoratorRepeat: string | number;
+    decoratorSymbol: any;
+    decoratorSymbolSize: any;
+    useDecoratorCustomColor: any;
+    decoratorCustomColor: any;
+
+
+    colorFunction(colorFunction: any, arg1: any[]): string;
+    strokeOpacityFunction(strokeOpacityFunction: any, arg1: any[]): number;
+    strokeWeightFunction(strokeWeightFunction: any, arg1: any[]): number;
+}
+
+export interface HistorySelectSettings {
+    buttonColor: string;
+}
+
+export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolygonSettings;

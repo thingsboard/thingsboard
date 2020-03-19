@@ -97,7 +97,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   timeUpdated(time: number) {
     const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]);
     this.activeTrip = currentPosition[0];
-    console.log("TripAnimationComponent -> timeUpdated -> this.interpolatedData", this.interpolatedData)
     if (this.settings.showPolygon) {
       this.mapWidget.map.updatePolygons(this.interpolatedData);
     }
@@ -120,11 +119,11 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   showHideTooltip() {
-    const tooltipText: string = this.settings.useTooltipFunction ? safeExecute(this.settings.tooolTipFunction, [this.activeTrip, this.historicalData, 0])
+    const tooltipText: string = this.settings.useTooltipFunction ?
+      safeExecute(this.settings.tooolTipFunction, [this.activeTrip, this.historicalData, 0])
       : this.settings.tooltipPattern;
 
     this.mainTooltip = this.sanitizer.sanitize(SecurityContext.HTML, parseTemplate(tooltipText, this.activeTrip))
-    console.log("TripAnimationComponent -> showHideTooltip -> this.mainTooltip", this.mainTooltip)
     this.visibleTooltip = !this.visibleTooltip;
   }
 
@@ -132,7 +131,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
 
     const result = {};
 
-    for (let i = 1, j = 0; i < originData.length, j < interpolatedIntervals.length;) {
+    for (let i = 1, j = 0; i < originData.length && j < interpolatedIntervals.length;) {
       const currentTime = interpolatedIntervals[j];
       while (originData[i].time < currentTime) i++;
       const before = originData[i - 1];

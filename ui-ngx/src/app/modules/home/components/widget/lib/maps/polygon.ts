@@ -14,15 +14,16 @@
 /// limitations under the License.
 ///
 
-import L from 'leaflet';
+import L, { LatLngExpression } from 'leaflet';
 import { createTooltip } from './maps-utils';
+import { PolygonSettings } from './map-models';
 
 export class Polygon {
 
     leafletPoly: L.Polygon;
     tooltip;
 
-    constructor(public map, coordinates, dataSources, settings, onClickListener?) {
+    constructor(public map, coordinates, dataSources, settings: PolygonSettings, onClickListener?) {
         this.leafletPoly = L.polygon(coordinates, {
             fill: true,
             fillColor: settings.polygonColor,
@@ -33,7 +34,7 @@ export class Polygon {
         }).addTo(this.map);
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletPoly,  settings);
+            this.tooltip = createTooltip(this.leafletPoly, settings);
         }
         if (onClickListener) {
             this.leafletPoly.on('click', onClickListener);
@@ -44,11 +45,13 @@ export class Polygon {
         this.map.removeLayer(this.leafletPoly);
     }
 
-    updatePolygonColor(settings, color) {
-        const style = {
+    updatePolygonColor(settings) {
+        console.log('Polygon -> updatePolygonColor -> settings', settings)
+        const style: L.PathOptions = {
+
             fill: true,
-            fillColor: color,
-            color,
+            fillColor: settings.color,
+            color: settings.color,
             weight: settings.polygonStrokeWeight,
             fillOpacity: settings.polygonOpacity,
             opacity: settings.polygonStrokeOpacity
@@ -60,7 +63,7 @@ export class Polygon {
         return this.leafletPoly.getLatLngs();
     }
 
-    setPolygonLatLngs(latLngs) {
+    setPolygonLatLngs(latLngs: LatLngExpression[]) {
         this.leafletPoly.setLatLngs(latLngs);
         this.leafletPoly.redraw();
     }

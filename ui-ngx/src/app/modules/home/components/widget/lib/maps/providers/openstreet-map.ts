@@ -16,10 +16,10 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapOptions } from '../map-models';
+import { MapSettings, UnitedMapSettings } from '../map-models';
 
 export class OpenStreetMap extends LeafletMap {
-    constructor($container, options: MapOptions) {
+    constructor($container, options: UnitedMapSettings) {
         super($container, options);
         const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
         const tileLayer = (L.tileLayer as any).provider('OpenStreetMap.Mapnik');

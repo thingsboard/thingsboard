@@ -18,51 +18,62 @@ import L, { PolylineDecoratorOptions } from 'leaflet';
 import 'leaflet-polylinedecorator';
 
 import { safeExecute } from '@app/core/utils';
+import { PolylineSettings, PolygonSettings } from './map-models';
 
 export class Polyline {
 
     leafletPoly: L.Polyline;
+    polylineDecorator: L.PolylineDecorator;
     dataSources;
     data;
 
-    constructor(private map: L.Map, locations, data, dataSources, settings) {
+    constructor(private map: L.Map, locations, data, dataSources, settings: PolylineSettings) {
         this.dataSources = dataSources;
         this.data = data;
 
         this.leafletPoly = L.polyline(locations,
-            this.getPolyStyle(settings, data, dataSources)
+            this.getPolyStyle(settings)
         ).addTo(this.map);
         if (settings.usePolylineDecorator) {
-            L.polylineDecorator(this.leafletPoly, {
-                patterns: [
-                    {
-                        offset: settings.decoratorOffset,
-                        endOffset: settings.endDecoratorOffset,
-                        repeat: settings.decoratorRepeat,
-                        symbol: L.Symbol[settings.decoratorSymbol]({
-                            pixelSize: settings.decoratorSymbolSize,
-                            polygon: false,
-                            pathOptions: {
-                                color: settings.useDecoratorCustomColor ? settings.decoratorCustomColor : this.getPolyStyle(settings, data, dataSources).color,
-                                stroke: true
-                            }
-                        })
-                    }
-                ],
-                interactive: false,
-            } as PolylineDecoratorOptions).addTo(this.map);
+            this.polylineDecorator = L.polylineDecorator(this.leafletPoly, this.getDecoratorSettings(settings)).addTo(this.map);
         }
     }
 
-    updatePolyline(settings, data, dataSources) {
-        this.leafletPoly.setStyle(this.getPolyStyle(settings, data, dataSources));
+    getDecoratorSettings(settings: PolylineSettings): PolylineDecoratorOptions {
+        return {
+            patterns: [
+                {
+                    offset: settings.decoratorOffset,
+                    endOffset: settings.endDecoratorOffset,
+                    repeat: settings.decoratorRepeat,
+                    symbol: L.Symbol[settings.decoratorSymbol]({
+                        pixelSize: settings.decoratorSymbolSize,
+                        polygon: false,
+                        pathOptions: {
+                            color: settings.useDecoratorCustomColor ? settings.decoratorCustomColor : this.getPolyStyle(settings).color,
+                            stroke: true
+                        }
+                    })
+                }
+            ],
+            interactive: false,
+        } as PolylineDecoratorOptions
     }
 
-    getPolyStyle(settings, data, dataSources): L.PolylineOptions {
+    updatePolyline(settings, data, dataSources) {
+        this.leafletPoly.setStyle(this.getPolyStyle(settings));
+        this.setPolylineLatLngs(data);
+        this.polylineDecorator.setPaths(this.leafletPoly);
+    }
+
+    getPolyStyle(settings: PolylineSettings): L.PolylineOptions {
         return {
-            color: settings.useColorFunction ? safeExecute(settings.colorFunction, [data, dataSources, data[0]?.dsIndex]) : settings.color,
-            opacity: settings.useStrokeOpacityFunction ? safeExecute(settings.strokeOpacityFunction, [data, dataSources, data[0]?.dsIndex]) : settings.strokeOpacity,
-            weight: settings.useStrokeWeightFunction ? safeExecute(settings.strokeWeightFunction, [data, dataSources, data[0]?.dsIndex]) : settings.strokeWeight,
+            color: settings.useColorFunction ?
+                safeExecute(settings.colorFunction, [this.data, this.dataSources, this.data[0]?.dsIndex]) : settings.color,
+            opacity: settings.useStrokeOpacityFunction ?
+                safeExecute(settings.strokeOpacityFunction, [this.data, this.dataSources, this.data[0]?.dsIndex]) : settings.strokeOpacity,
+            weight: settings.useStrokeWeightFunction ?
+                safeExecute(settings.strokeWeightFunction, [this.data, this.dataSources, this.data[0]?.dsIndex]) : settings.strokeWeight,
         }
     }
 

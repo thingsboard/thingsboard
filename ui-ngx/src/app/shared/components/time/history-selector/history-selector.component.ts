@@ -17,6 +17,7 @@
 import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { interval, Subscription, Subscriber, SubscriptionLike, Observer } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
+import { HistorySelectSettings } from '@app/modules/home/components/widget/lib/maps/map-models';
 
 @Component({
   selector: 'tb-history-selector',
@@ -25,10 +26,10 @@ import { filter, tap } from 'rxjs/operators';
 })
 export class HistorySelectorComponent implements OnInit, OnChanges {
 
-  @Input() settings
+  @Input() settings: HistorySelectSettings
   @Input() intervals = [];
 
-  @Output() onTimeUpdated: EventEmitter<number> = new EventEmitter();
+  @Output() timeUpdated: EventEmitter<number> = new EventEmitter();
 
   animationTime;
   minTimeIndex = 0;
@@ -58,7 +59,7 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
           tap(() => this.index++)).subscribe(() => {
             if (this.index < this.maxTimeIndex) {
               this.cd.detectChanges();
-              this.onTimeUpdated.emit(this.intervals[this.index]);
+              this.timeUpdated.emit(this.intervals[this.index]);
             }
             else {
               this.interval.complete();
@@ -70,12 +71,12 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
             this.playing = false;
             this.interval = null;
             this.cd.detectChanges();
-          });          
+          });
   }
 
   reeneble() {
     if (this.playing) {
-      let position = this.index;
+      const position = this.index;
       this.interval.complete();
       this.index = position;
       this.play();
@@ -85,7 +86,7 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   pause() {
     this.playing = false;
     this.cd.detectChanges();
-    this.onTimeUpdated.emit(this.intervals[this.index]);
+    this.timeUpdated.emit(this.intervals[this.index]);
   }
 
   moveNext() {
@@ -113,6 +114,6 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   }
 
   changeIndex() {
-    this.onTimeUpdated.emit(this.intervals[this.index]);
+    this.timeUpdated.emit(this.intervals[this.index]);
   }
 }

@@ -16,7 +16,7 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapOptions } from '../map-models';
+import { MapSettings, UnitedMapSettings } from '../map-models';
 import { aspectCache } from '@app/core/utils';
 
 const maxZoom = 4;// ?
@@ -28,7 +28,7 @@ export class ImageMap extends LeafletMap {
     width = 0;
     height = 0;
 
-    constructor(private $container: HTMLElement, options: MapOptions) {
+    constructor(private $container: HTMLElement, options: UnitedMapSettings) {
         super($container, options);
         aspectCache(options.mapUrl).subscribe(aspect => {
             this.aspect = aspect;

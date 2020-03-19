@@ -17,10 +17,10 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapOptions } from '../map-models';
+import { MapSettings, UnitedMapSettings } from '../map-models';
 
 export class TencentMap extends LeafletMap {
-    constructor($container, options: MapOptions) {
+    constructor($container, options: UnitedMapSettings) {
         super($container, options);
         const txUrl = 'http://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0';
         const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);

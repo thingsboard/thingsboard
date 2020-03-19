@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { MapProviders, MapOptions } from './map-models';
+import { MapProviders, MapSettings, MarkerSettings, PolygonSettings, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
     openstreetMapSettingsSchema,
@@ -63,7 +63,7 @@ export class MapWidgetController implements MapWidgetInterface {
     provider: MapProviders;
     schema;
     data;
-    settings;
+    settings:UnitedMapSettings;
 
     public static dataKeySettingsSchema(): Object {
         return {};

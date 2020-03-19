@@ -17,14 +17,14 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapOptions } from '../map-models';
+import { MapSettings, UnitedMapSettings } from '../map-models';
 import 'leaflet.gridlayer.googlemutant';
 
 let googleLoaded = false;
 
 
 export class GoogleMap extends LeafletMap {
-    constructor($container, options: MapOptions) {
+    constructor($container, options: UnitedMapSettings) {
 
         super($container, options);
         this.loadGoogle(() => {
