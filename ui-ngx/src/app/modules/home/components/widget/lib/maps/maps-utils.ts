@@ -17,7 +17,7 @@
 import L from 'leaflet';
 import _ from 'lodash';
 
-export function createTooltip(target, settings) {
+export function createTooltip(target: L.Layer, settings): L.Popup {
     const popup = L.popup();
     popup.setContent('');
     target.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
@@ -31,5 +31,15 @@ export function createTooltip(target, settings) {
         });
     }
     return popup;
+}
+
+export function getRatio(firsMoment: number, secondMoment: number, intermediateMoment: number): number {
+    return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
+};
+
+export function findAngle(startPoint, endPoint) {
+    let angle = -Math.atan2(endPoint.latitude - startPoint.latitude, endPoint.longitude - startPoint.longitude);
+    angle = angle * 180 / Math.PI;
+    return parseInt(angle.toFixed(2));
 }
 

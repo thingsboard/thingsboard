@@ -529,6 +529,10 @@ export function parseTemplate(template: string, data: object) {
       .match(/\{(.*?)\}/g) // find expressions
       .map(exp => exp.replace(/{|}/g, '')) // remove brackets
       .map(exp => exp.split(':'))
+      .map(arr => {
+        variables += `let ${arr[0]} = ''; `;
+        return arr;
+      })
       .filter(arr => !!arr[1]) // filter expressions without format
       .reduce((res, current) => {
         res[current[0]] = current[1];
@@ -537,7 +541,7 @@ export function parseTemplate(template: string, data: object) {
 
     for (const key in data) {
       if (!key.includes('|'))
-        variables += `let ${key} = '${expressions[key] ? padValue(data[key], +expressions[key]) : data[key]}';`;
+        variables += `${key} = '${expressions[key] ? padValue(data[key], +expressions[key]) : data[key]}';`;
     }
     template = template.replace(/:\d+}/g, '}');
     res = safeExecute(parseFunction(variables + 'return' + '`' + template + '`'));

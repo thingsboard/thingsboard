@@ -14,7 +14,9 @@
 /// limitations under the License.
 ///
 
-import L from 'leaflet';
+import L, { PolylineDecoratorOptions } from 'leaflet';
+import 'leaflet-polylinedecorator';
+
 import { safeExecute } from '@app/core/utils';
 
 export class Polyline {
@@ -26,9 +28,30 @@ export class Polyline {
     constructor(private map: L.Map, locations, data, dataSources, settings) {
         this.dataSources = dataSources;
         this.data = data;
+
         this.leafletPoly = L.polyline(locations,
             this.getPolyStyle(settings, data, dataSources)
         ).addTo(this.map);
+        if (settings.usePolylineDecorator) {
+            L.polylineDecorator(this.leafletPoly, {
+                patterns: [
+                    {
+                        offset: settings.decoratorOffset,
+                        endOffset: settings.endDecoratorOffset,
+                        repeat: settings.decoratorRepeat,
+                        symbol: L.Symbol[settings.decoratorSymbol]({
+                            pixelSize: settings.decoratorSymbolSize,
+                            polygon: false,
+                            pathOptions: {
+                                color: settings.useDecoratorCustomColor ? settings.decoratorCustomColor : this.getPolyStyle(settings, data, dataSources).color,
+                                stroke: true
+                            }
+                        })
+                    }
+                ],
+                interactive: false,
+            } as PolylineDecoratorOptions).addTo(this.map);
+        }
     }
 
     updatePolyline(settings, data, dataSources) {
@@ -38,8 +61,8 @@ export class Polyline {
     getPolyStyle(settings, data, dataSources): L.PolylineOptions {
         return {
             color: settings.useColorFunction ? safeExecute(settings.colorFunction, [data, dataSources, data[0]?.dsIndex]) : settings.color,
-            opacity: settings.strokeOpacity,
-            weight: settings.strokeWeight
+            opacity: settings.useStrokeOpacityFunction ? safeExecute(settings.strokeOpacityFunction, [data, dataSources, data[0]?.dsIndex]) : settings.strokeOpacity,
+            weight: settings.useStrokeWeightFunction ? safeExecute(settings.strokeWeightFunction, [data, dataSources, data[0]?.dsIndex]) : settings.strokeWeight,
         }
     }
 

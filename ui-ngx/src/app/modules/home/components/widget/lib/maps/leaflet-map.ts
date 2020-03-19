@@ -15,7 +15,6 @@
 ///
 
 import L from 'leaflet';
-import './add-marker';
 
 import 'leaflet-providers';
 import 'leaflet.markercluster/dist/MarkerCluster.css'
@@ -40,7 +39,7 @@ export default abstract class LeafletMap {
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
     options: MapOptions;
-    isMarketCluster;
+    isMarketCluster: boolean;
     bounds: L.LatLngBounds;
 
     constructor($container: HTMLElement, options: MapOptions) {
@@ -68,8 +67,8 @@ export default abstract class LeafletMap {
 
     addMarkerControl() {
         if (this.options.draggebleMarker)
-            L.Control.AddMarker  = L.Control.extend({
-                onAdd (map) {
+            L.Control.AddMarker = L.Control.extend({
+                onAdd(map) {
                     const img = L.DomUtil.create('img') as any;
                     img.src = `assets/add_location.svg`;
                     img.style.width = '32px';
@@ -77,10 +76,10 @@ export default abstract class LeafletMap {
                     img.onclick = this.dragMarker;
                     return img;
                 },
-                addHooks () {
+                addHooks() {
                     L.DomEvent.on(window as any, 'onclick', this.enableDragMode, this);
                 },
-                onRemove (map) {
+                onRemove(map) {
                 },
                 dragMarker: ($event) => {
                     this.dragMode = !this.dragMode;
@@ -122,15 +121,15 @@ export default abstract class LeafletMap {
         return this.map;
     }
 
-    createLatLng(lat, lng) {
+    createLatLng(lat: number, lng: number): L.LatLng {
         return L.latLng(lat, lng);
     }
 
-    createBounds() {
+    createBounds(): L.LatLngBounds {
         return this.map.getBounds();
     }
 
-    extendBounds(bounds, polyline) {
+    extendBounds(bounds: L.LatLngBounds, polyline: L.Polyline) {
         if (polyline && polyline.getLatLngs() && polyline.getBounds()) {
             bounds.extend(polyline.getBounds());
         }
@@ -204,7 +203,7 @@ export default abstract class LeafletMap {
 
     }
 
-    // polyline
+    // Polyline
 
     updatePolylines(polyData: Array<Array<any>>) {
         polyData.forEach(data => {

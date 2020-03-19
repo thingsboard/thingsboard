@@ -26,8 +26,9 @@ import { parseArray, parseTemplate, safeExecute } from '@app/core/utils';
 import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
 import { tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
-import { WidgetConfig } from '@app/shared/public-api';
+import { WidgetConfig, JsonSchema, JsonSettingsSchema } from '@app/shared/public-api';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
+import { getRatio, findAngle } from '../lib/maps/maps-utils';
 
 
 @Component({
@@ -37,7 +38,7 @@ import { WidgetContext } from '@app/modules/home/models/widget-component.models'
 })
 export class TripAnimationComponent implements OnInit, AfterViewInit {
 
-  constructor(private cd: ChangeDetectorRef,private sanitizer: DomSanitizer) { }
+  constructor(private cd: ChangeDetectorRef, private sanitizer: DomSanitizer) { }
 
   @Input() ctx: WidgetContext;
 
@@ -48,13 +49,13 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   intervals;
   normalizationStep = 1000;
   interpolatedData = [];
-  widgetConfig;
+  widgetConfig: WidgetConfig;
   settings;
   mainTooltip = '';
   visibleTooltip = false;
   activeTrip;
 
-  static getSettingsSchema() {
+  static getSettingsSchema(): JsonSettingsSchema {
     const schema = initSchema();
     addToSchema(schema, TbMapWidgetV2.getProvidersSchema());
     addGroupInfo(schema, 'Map Provider Settings');
@@ -79,6 +80,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       this.activeTrip = this.historicalData[0][0];
       this.calculateIntervals();
       this.timeUpdated(this.intervals[0]);
+      this.mapWidget.map.updatePolylines(this.interpolatedData.map(ds => _.values(ds)));
+
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
     }
@@ -91,14 +94,18 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.mapWidget = new MapWidgetController(MapProviders.openstreet, false, ctxCopy, this.mapContainer.nativeElement);
   }
 
-  timeUpdated(time) {
+  timeUpdated(time: number) {
     const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]);
     this.activeTrip = currentPosition[0];
-    this.mapWidget.map.updatePolylines(this.interpolatedData);
+    console.log("TripAnimationComponent -> timeUpdated -> this.interpolatedData", this.interpolatedData)
     if (this.settings.showPolygon) {
       this.mapWidget.map.updatePolygons(this.interpolatedData);
     }
     this.mapWidget.map.updateMarkers(currentPosition);
+  }
+
+  setActiveTrip() {
+
   }
 
   calculateIntervals() {
@@ -113,23 +120,15 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   showHideTooltip() {
-    console.log(this.activeTrip);
-      const tooltipText: string = this.settings.useTooltipFunction ? safeExecute(this.settings.tooolTipFunction) :
-     // this.mainTooltip = this.sanitizer.sanitize(SecurityContext.HTML, parseTemplate(tooltipText, this.activeTrip))
-      this.visibleTooltip = !this.visibleTooltip;
+    const tooltipText: string = this.settings.useTooltipFunction ? safeExecute(this.settings.tooolTipFunction, [this.activeTrip, this.historicalData, 0])
+      : this.settings.tooltipPattern;
+
+    this.mainTooltip = this.sanitizer.sanitize(SecurityContext.HTML, parseTemplate(tooltipText, this.activeTrip))
+    console.log("TripAnimationComponent -> showHideTooltip -> this.mainTooltip", this.mainTooltip)
+    this.visibleTooltip = !this.visibleTooltip;
   }
 
   interpolateArray(originData, interpolatedIntervals) {
-
-    const getRatio = (firsMoment, secondMoment, intermediateMoment) => {
-      return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
-    };
-
-    function findAngle(startPoint, endPoint) {
-      let angle = -Math.atan2(endPoint.latitude - startPoint.latitude, endPoint.longitude - startPoint.longitude);
-      angle = angle * 180 / Math.PI;
-      return parseInt(angle.toFixed(2));
-    }
 
     const result = {};
 
@@ -151,6 +150,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       j++;
     }
     return result;
-  }}
+  }
+}
 
 export let TbTripAnimationWidget = TripAnimationComponent;
+

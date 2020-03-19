@@ -14,8 +14,10 @@
 /// limitations under the License.
 ///
 
+import { JsonSchema, JsonSettingsSchema } from '@app/shared/public-api';
 
-export function initSchema() {
+
+export function initSchema(): JsonSettingsSchema {
     return {
         schema: {
             type: 'object',
@@ -27,21 +29,21 @@ export function initSchema() {
     };
 }
 
-export function addGroupInfo(schema, title: string) {
+export function addGroupInfo(schema: JsonSettingsSchema, title: string) {
     schema.groupInfoes.push({
         formIndex: schema.groupInfoes?.length || 0,
         GroupTitle: title
     });
 }
 
-export function addToSchema(schema, newSchema) {
+export function addToSchema(schema: JsonSettingsSchema, newSchema: JsonSettingsSchema) {
     Object.assign(schema.schema.properties, newSchema.schema.properties);
     schema.schema.required = schema.schema.required.concat(newSchema.schema.required);
     schema.form.push(newSchema.form);
 }
 
-export function mergeSchemes(schemes: any[]) {
-    return schemes.reduce((finalSchema, schema) => {
+export function mergeSchemes(schemes: JsonSettingsSchema[]): JsonSettingsSchema {
+    return schemes.reduce((finalSchema: JsonSettingsSchema, schema: JsonSettingsSchema) => {
         return {
             schema: {
                 properties: {
@@ -57,11 +59,11 @@ export function mergeSchemes(schemes: any[]) {
                 ...finalSchema.form,
                 ...schema.form
             ]
-        }
+        } as JsonSettingsSchema;
     }, initSchema());
 }
 
-export function addCondition(schema, condition: String) {
+export function addCondition(schema: JsonSettingsSchema, condition: String): JsonSettingsSchema {
     schema.form = schema.form.map(element => {
         if (typeof element === 'string') {
             return {

@@ -15,7 +15,7 @@
 ///
 
 import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, Subscriber, SubscriptionLike, Observer } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 
 @Component({
@@ -28,7 +28,7 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   @Input() settings
   @Input() intervals = [];
 
-  @Output() onTimeUpdated = new EventEmitter();
+  @Output() onTimeUpdated: EventEmitter<number> = new EventEmitter();
 
   animationTime;
   minTimeIndex = 0;
@@ -70,12 +70,14 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
             this.playing = false;
             this.interval = null;
             this.cd.detectChanges();
-          });
+          });          
   }
 
   reeneble() {
     if (this.playing) {
+      let position = this.index;
       this.interval.complete();
+      this.index = position;
       this.play();
     }
   }
