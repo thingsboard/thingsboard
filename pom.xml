@@ -92,6 +92,7 @@
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
         <snakeyaml.version>1.23</snakeyaml.version>
+        <amazonaws.sqs.version>1.11.747</amazonaws.sqs.version>
         <passay.version>1.5.0</passay.version>
         <ua-parser.version>1.4.3</ua-parser.version>
     </properties>
@@ -886,6 +887,11 @@
                 <artifactId>jts-core</artifactId>
                 <version>${jts.version}</version>
             </dependency>
+            <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-sqs</artifactId>
+            <version>${amazonaws.sqs.version}</version>
+        </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
                 <artifactId>passay</artifactId>

@@ -25,4 +25,5 @@ public interface TbQueueProducer<T extends TbQueueMsg> {
 
     void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback);
 
+    void stop();
 }

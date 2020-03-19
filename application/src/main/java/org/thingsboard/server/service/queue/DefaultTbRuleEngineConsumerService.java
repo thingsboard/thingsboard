@@ -141,11 +141,11 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
     @PreDestroy
     public void destroy() {
         stopped = true;
-        if (consumer != null) {
-            consumer.unsubscribe();
-        }
         if (mainConsumerExecutor != null) {
             mainConsumerExecutor.shutdownNow();
+        }
+        if (consumer != null) {
+            consumer.unsubscribe();
         }
     }
 }

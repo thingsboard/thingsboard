@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +59,6 @@ import org.thingsboard.server.discovery.PartitionChangeEvent;
 import org.thingsboard.server.discovery.PartitionService;
 import org.thingsboard.server.discovery.ServiceType;
 import org.thingsboard.server.discovery.TopicPartitionInfo;
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.provider.TbCoreQueueProvider;
 import org.thingsboard.server.service.queue.TbMsgCallback;
@@ -249,13 +247,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
         }
     }
 
-    @Override
-    public void onClusterUpdate() {
-        if (!clusterUpdatePending) {
-            clusterUpdatePending = true;
-            queueExecutor.submit(this::onClusterUpdateSync);
-        }
-    }
+//    @Override
+//    public void onClusterUpdate() {
+//        if (!clusterUpdatePending) {
+//            clusterUpdatePending = true;
+//            queueExecutor.submit(this::onClusterUpdateSync);
+//        }
+//    }
 
     @Override
     public void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto proto, TbMsgCallback callback) {
@@ -307,7 +305,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     @Override
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceKey().getServiceType())) {
-            repartition(partitionChangeEvent.getPartitions());
+//            repartition(partitionChangeEvent.getPartitions());
         }
     }
 

@@ -50,4 +50,9 @@ public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueuePro
             }
         }
     }
+
+    @Override
+    public void stop() {
+
+    }
 }

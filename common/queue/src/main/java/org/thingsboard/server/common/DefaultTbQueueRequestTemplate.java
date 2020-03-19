@@ -92,6 +92,8 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                     List<Response> responses = responseTemplate.poll(pollInterval);
                     if (responses.size() > 0) {
                         log.trace("Polling responses completed, consumer records count [{}]", responses.size());
+                    } else {
+                        continue;
                     }
                     responses.forEach(response -> {
                         log.trace("Received response to Kafka Template request: {}", response);
@@ -148,6 +150,8 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         if (internalExecutor) {
             executor.shutdownNow();
         }
+        responseTemplate.unsubscribe();
+        requestTemplate.stop();
     }
 
     @Override

@@ -87,6 +87,10 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                     }
                     List<Request> requests = requestTemplate.poll(pollInterval);
 
+                    if (requests.isEmpty()) {
+                        continue;
+                    }
+
                     requests.forEach(request -> {
                         long currentTime = System.currentTimeMillis();
                         long requestTime = bytesToLong(request.getHeaders().get(REQUEST_TIME));
@@ -153,6 +157,8 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
         if (loopExecutor != null) {
             loopExecutor.shutdownNow();
         }
+        requestTemplate.unsubscribe();
+        responseTemplate.stop();
     }
 
 }

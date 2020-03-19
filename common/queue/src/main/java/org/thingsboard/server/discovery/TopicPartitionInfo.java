@@ -38,4 +38,15 @@ public class TopicPartitionInfo {
     public Optional<Integer> getPartition() {
         return Optional.ofNullable(partition);
     }
+
+    public String getComplexTopic() {
+        StringBuilder topic = new StringBuilder().append(getTopic());
+        if (getTenantId().isPresent()) {
+            topic.append(".").append(getTenantId().get().getId().toString());
+        }
+        if (getPartition().isPresent()) {
+            topic.append(".").append(getPartition().get());
+        }
+        return topic.toString();
+    }
 }

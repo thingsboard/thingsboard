@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
@@ -73,7 +72,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public void subscribe() {
-        createTopicIfNotExists(topic);
+        admin.createTopicIfNotExists(topic);
         consumer.subscribe(Collections.singletonList(topic));
         subscribed = true;
     }
@@ -81,7 +80,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
     @Override
     public void subscribe(List<Integer> partitions) {
         List<String> topicNames = partitions.stream().map(partition -> topic + "." + partition).collect(Collectors.toList());
-        topicNames.forEach(this::createTopicIfNotExists);
+        topicNames.forEach(admin::createTopicIfNotExists);
         consumer.subscribe(topicNames);
         subscribed = true;
     }
@@ -125,7 +124,4 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
         return decoder.decode(new KafkaTbQueueMsg(record));
     }
 
-    private void createTopicIfNotExists(String topic) {
-        admin.createTopicIfNotExists(topic);
-    }
 }
