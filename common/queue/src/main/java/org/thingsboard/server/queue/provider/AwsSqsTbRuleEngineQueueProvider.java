@@ -35,11 +35,13 @@ public class AwsSqsTbRuleEngineQueueProvider implements TbRuleEngineQueueProvide
 
     private final TbAwsSqsSettings sqsSettings;
     private final TbQueueCoreSettings coreSettings;
+    private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueAdmin admin;
 
-    public AwsSqsTbRuleEngineQueueProvider(TbAwsSqsSettings sqsSettings, TbQueueCoreSettings coreSettings) {
+    public AwsSqsTbRuleEngineQueueProvider(TbAwsSqsSettings sqsSettings, TbQueueCoreSettings coreSettings, TbQueueRuleEngineSettings ruleEngineSettings) {
         this.sqsSettings = sqsSettings;
         this.coreSettings = coreSettings;
+        this.ruleEngineSettings = ruleEngineSettings;
         this.admin = new TbAwsSqsAdmin(sqsSettings);
     }
 
@@ -60,6 +62,6 @@ public class AwsSqsTbRuleEngineQueueProvider implements TbRuleEngineQueueProvide
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, coreSettings.getTopic(), msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, ruleEngineSettings.getTopic(), msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 }

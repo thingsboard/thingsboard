@@ -63,7 +63,7 @@ transport:
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
 
 queue:
-  type: "${TB_QUEUE_TYPE:kafka}" # kafka or ?
+  type: "${TB_QUEUE_TYPE:kafka}" # kafka or aws-sqs
   kafka:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
     acks: "${TB_KAFKA_ACKS:all}"
@@ -71,6 +71,10 @@ queue:
     batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
+  aws_sqs:
+    access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
+    secret_access_key: "${TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY:YOUR_SECRET}"
+    region: "${TB_QUEUE_AWS_SQS_REGION:YOUR_REGION}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}"
     virtual_nodes_size: "${TB_QUEUE_PARTITIONS_VIRTUAL_NODES_SIZE:16}"

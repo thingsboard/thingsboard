@@ -26,6 +26,7 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
 import org.thingsboard.server.queue.sqs.TbAwsSqsConsumerTemplate;
@@ -38,11 +39,13 @@ public class AwsSqsTbCoreQueueProvider implements TbCoreQueueProvider {
 
     private final TbAwsSqsSettings sqsSettings;
     private final TbQueueCoreSettings coreSettings;
+    private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueAdmin admin;
 
-    public AwsSqsTbCoreQueueProvider(TbAwsSqsSettings sqsSettings, TbQueueCoreSettings coreSettings) {
+    public AwsSqsTbCoreQueueProvider(TbAwsSqsSettings sqsSettings, TbQueueCoreSettings coreSettings, TbQueueTransportApiSettings transportApiSettings) {
         this.sqsSettings = sqsSettings;
         this.coreSettings = coreSettings;
+        this.transportApiSettings = transportApiSettings;
         this.admin = new TbAwsSqsAdmin(sqsSettings);
     }
 
@@ -68,7 +71,7 @@ public class AwsSqsTbCoreQueueProvider implements TbCoreQueueProvider {
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> getTransportApiRequestConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, coreSettings.getTopic(), msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, transportApiSettings.getRequestsTopic(), msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
