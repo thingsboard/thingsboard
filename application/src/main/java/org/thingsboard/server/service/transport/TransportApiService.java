@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.service.transport;
 
-import org.thingsboard.server.TbQueueHandler;
-import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.TbQueueHandler;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 

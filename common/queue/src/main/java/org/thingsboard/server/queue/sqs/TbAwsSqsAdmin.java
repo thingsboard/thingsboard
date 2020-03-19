@@ -1,0 +1,53 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.queue.sqs;
+
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import org.thingsboard.server.queue.TbQueueAdmin;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class TbAwsSqsAdmin implements TbQueueAdmin {
+
+    private final AmazonSQS sqsClient;
+    final Map<String, String> attributes = new HashMap<>();
+
+    public TbAwsSqsAdmin(TbAwsSqsSettings sqsSettings) {
+        AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
+        AWSStaticCredentialsProvider credProvider = new AWSStaticCredentialsProvider(awsCredentials);
+
+        this.sqsClient = AmazonSQSClientBuilder.standard()
+                .withCredentials(credProvider)
+                .withRegion(sqsSettings.getRegion())
+                .build();
+        attributes.put("FifoQueue", "true");
+        attributes.put("ContentBasedDeduplication", "true");
+    }
+
+    @Override
+    public void createTopicIfNotExists(String topic) {
+        final CreateQueueRequest createQueueRequest =
+                new CreateQueueRequest(topic.replaceAll("\\.", "_") + ".fifo")
+                        .withAttributes(attributes);
+        sqsClient.createQueue(createQueueRequest);
+    }
+}

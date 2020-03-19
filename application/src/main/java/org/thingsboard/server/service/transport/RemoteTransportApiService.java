@@ -16,24 +16,18 @@
 package org.thingsboard.server.service.transport;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.TbQueueConsumer;
-import org.thingsboard.server.TbQueueProducer;
-import org.thingsboard.server.TbQueueRequestTemplate;
-import org.thingsboard.server.TbQueueResponseTemplate;
-import org.thingsboard.server.common.DefaultTbQueueRequestTemplate;
-import org.thingsboard.server.common.DefaultTbQueueResponseTemplate;
-import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.TbQueueResponseTemplate;
+import org.thingsboard.server.queue.common.DefaultTbQueueResponseTemplate;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
-import org.thingsboard.server.kafka.TbNodeIdProvider;
-import org.thingsboard.server.provider.TbCoreQueueProvider;
+import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

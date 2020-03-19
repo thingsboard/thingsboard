@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.transport;
 
-import org.thingsboard.server.TbQueueMsg;
+import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.kafka.TbKafkaDecoder;
+import org.thingsboard.server.queue.kafka.TbKafkaDecoder;
 
 import java.io.IOException;
 
