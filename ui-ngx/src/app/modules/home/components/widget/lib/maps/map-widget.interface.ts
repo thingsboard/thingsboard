@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { JsonSettingsSchema } from '@app/shared/public-api';
+import { JsonSettingsSchema } from '@shared/models/widget.models';
 
 export interface MapWidgetInterface {
     resize(),

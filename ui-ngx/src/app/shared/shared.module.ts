@@ -128,7 +128,7 @@ import { LedLightComponent } from '@shared/components/led-light.component';
 import { TbJsonToStringDirective } from '@shared/components/directives/tb-json-to-string.directive';
 import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { HistorySelectorComponent } from './components/time/history-selector/history-selector.component';
-import { TbTemplatePipe } from './pipe/public-api';
+import { TbTemplatePipe } from '@shared/pipe/template.pipe';
 
 @NgModule({
   providers: [

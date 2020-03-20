@@ -30,13 +30,15 @@ import {
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import { parseFunction, parseArray, parseData } from '@app/core/utils';
-import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@app/core/schema-utils';
-import { AttributeScope, EntityId, JsonSettingsSchema } from '@app/shared/public-api';
+import { parseFunction, parseArray, parseData } from '@core/utils';
+import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
 import { forkJoin } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { AttributeService } from '@app/core/public-api';
 import { getDefCenterPosition } from './maps-utils';
+import { JsonSettingsSchema } from '@shared/models/widget.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeService } from '@core/http/attribute.service';
 
 let providerSets;
 let defaultSettings;
