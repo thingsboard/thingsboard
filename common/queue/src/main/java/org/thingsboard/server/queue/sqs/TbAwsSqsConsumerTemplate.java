@@ -41,7 +41,6 @@ import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
 import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     private volatile Set<String> queueUrls;
     private volatile Set<TopicPartitionInfo> partitions;
     private ListeningExecutorService consumerExecutor;
-    private ListenableFuture<List<AwsSqsMsgWrapper>> futureResult;
 
     private final int maxMessagesPool = 100;
 
@@ -109,10 +107,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
         if (consumerExecutor != null) {
             consumerExecutor.shutdownNow();
         }
-
-        if (futureResult != null) {
-            futureResult.cancel(true);
-        }
     }
 
     @Override
@@ -136,6 +130,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             }
 
             if (!messageList.isEmpty()) {
+                log.warn("Present {} non committed messages.", messageList.size());
                 return Collections.emptyList();
             }
 
@@ -148,9 +143,12 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                         .withMaxNumberOfMessages(10);
                 return new AwsSqsMsgWrapper(url, sqsClient.receiveMessage(request).getMessages());
             })).collect(Collectors.toList());
-            futureResult = Futures.allAsList(futureList);
+            ListenableFuture<List<AwsSqsMsgWrapper>> futureResult = Futures.allAsList(futureList);
             try {
-                List<AwsSqsMsgWrapper> messages = futureResult.get();
+                List<AwsSqsMsgWrapper> messages =
+                        futureResult.get().stream()
+                                .filter(msg -> !msg.getMessages().isEmpty())
+                                .collect(Collectors.toList());
                 if (messages.size() > 0) {
                     messageList.addAll(messages);
                     return messages.stream()
