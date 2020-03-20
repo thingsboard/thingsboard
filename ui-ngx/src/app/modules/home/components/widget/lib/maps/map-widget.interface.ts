@@ -14,17 +14,18 @@
 /// limitations under the License.
 ///
 
-import {Pipe, PipeTransform} from '@angular/core';
-import {isObject, isNumber} from '@core/utils';
+import { JsonSettingsSchema } from '@app/shared/public-api';
 
-@Pipe({name: 'tbJson'})
-export class TbJsonPipe implements PipeTransform {
-  transform(value: any): string {
-    if (isObject(value)) {
-      return JSON.stringify(value);
-    } else if (isNumber(value)) {
-      return value.toString();
-    }
-    return value;
-  }
+export interface MapWidgetInterface {
+    resize(),
+    update(),
+    onInit(),
+    onDestroy();
+}
+
+export interface MapWidgetStaticInterface {
+    settingsSchema(mapProvider?, drawRoutes?): JsonSettingsSchema;
+    getProvidersSchema():JsonSettingsSchema
+    dataKeySettingsSchema(): object;
+    actionSources(): object;
 }

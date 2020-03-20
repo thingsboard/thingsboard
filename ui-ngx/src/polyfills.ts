@@ -93,6 +93,8 @@ import { TbAnalogueCompass } from '@home/components/widget/lib/analogue-compass'
 import { TbAnalogueRadialGauge } from '@home/components/widget/lib/analogue-radial-gauge';
 import { TbAnalogueLinearGauge } from '@home/components/widget/lib/analogue-linear-gauge';
 import { TbCanvasDigitalGauge } from '@home/components/widget/lib/digital-gauge';
+import { TbMapWidgetV2 } from '@home/components/widget/lib/maps/map-widget2';
+import { TbTripAnimationWidget } from '@app/modules/home/components/widget/trip-animation/trip-animation.component';
 
 import * as tinycolor_ from 'tinycolor2';
 
@@ -106,3 +108,5 @@ const tinycolor = tinycolor_;
 (window as any).TbAnalogueRadialGauge = TbAnalogueRadialGauge;
 (window as any).TbAnalogueLinearGauge = TbAnalogueLinearGauge;
 (window as any).TbCanvasDigitalGauge = TbCanvasDigitalGauge;
+(window as any).TbMapWidgetV2 = TbMapWidgetV2;
+(window as any).TbTripAnimationWidget = TbTripAnimationWidget;

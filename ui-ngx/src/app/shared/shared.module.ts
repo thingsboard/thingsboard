@@ -104,7 +104,7 @@ import { TbErrorComponent } from '@shared/components/tb-error.component';
 import { EntityTypeListComponent } from '@shared/components/entity/entity-type-list.component';
 import { EntitySubTypeListComponent } from '@shared/components/entity/entity-subtype-list.component';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { TbJsonPipe } from "@shared/pipe/tbJson.pipe";
+import { TbJsonPipe } from '@shared/pipe/tbJson.pipe';
 import { ColorPickerDialogComponent } from '@shared/components/dialog/color-picker-dialog.component';
 import { MatChipDraggableDirective } from '@shared/components/mat-chip-draggable.directive';
 import { ColorInputComponent } from '@shared/components/color-input.component';
@@ -125,8 +125,10 @@ import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 import { TbHotkeysDirective } from '@shared/components/hotkeys.directive';
 import { NavTreeComponent } from '@shared/components/nav-tree.component';
 import { LedLightComponent } from '@shared/components/led-light.component';
-import { TbJsonToStringDirective } from "@shared/components/directives/tb-json-to-string.directive";
-import { JsonObjectEditDialogComponent } from "@shared/components/dialog/json-object-edit-dialog.component";
+import { TbJsonToStringDirective } from '@shared/components/directives/tb-json-to-string.directive';
+import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-object-edit-dialog.component';
+import { HistorySelectorComponent } from './components/time/history-selector/history-selector.component';
+import { TbTemplatePipe } from './pipe/public-api';
 
 @NgModule({
   providers: [
@@ -207,9 +209,11 @@ import { JsonObjectEditDialogComponent } from "@shared/components/dialog/json-ob
     HighlightPipe,
     TruncatePipe,
     TbJsonPipe,
+    TbTemplatePipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
-    JsonObjectEditDialogComponent
+    JsonObjectEditDialogComponent,
+    HistorySelectorComponent
   ],
   imports: [
     CommonModule,
@@ -365,9 +369,11 @@ import { JsonObjectEditDialogComponent } from "@shared/components/dialog/json-ob
     HighlightPipe,
     TruncatePipe,
     TbJsonPipe,
+    TbTemplatePipe,
     KeyboardShortcutPipe,
     TranslateModule,
-    JsonObjectEditDialogComponent
+    JsonObjectEditDialogComponent,
+    HistorySelectorComponent
   ]
 })
 export class SharedModule { }

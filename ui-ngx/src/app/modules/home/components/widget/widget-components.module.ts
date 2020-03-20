@@ -31,6 +31,7 @@ import {
   DateRangeNavigatorWidgetComponent
 } from '@home/components/widget/lib/date-range-navigator/date-range-navigator.component';
 import { MultipleInputWidgetComponent } from './lib/multiple-input-widget.component';
+import { TripAnimationComponent } from './trip-animation/trip-animation.component';
 import { WebCameraInputWidgetComponent } from './lib/web-camera-input.component';
 
 @NgModule({
@@ -45,6 +46,7 @@ import { WebCameraInputWidgetComponent } from './lib/web-camera-input.component'
       DateRangeNavigatorWidgetComponent,
       DateRangeNavigatorPanelComponent,
       MultipleInputWidgetComponent,
+      TripAnimationComponent,
       WebCameraInputWidgetComponent
     ],
   imports: [
@@ -61,6 +63,7 @@ import { WebCameraInputWidgetComponent } from './lib/web-camera-input.component'
     RpcWidgetsModule,
     DateRangeNavigatorWidgetComponent,
     MultipleInputWidgetComponent,
+    TripAnimationComponent,
     WebCameraInputWidgetComponent
   ],
   providers: [

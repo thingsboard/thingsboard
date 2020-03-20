@@ -14,17 +14,13 @@
 /// limitations under the License.
 ///
 
-import {Pipe, PipeTransform} from '@angular/core';
-import {isObject, isNumber} from '@core/utils';
+import { Pipe, PipeTransform } from '@angular/core';
+import { parseTemplate } from '@app/core/utils';
 
-@Pipe({name: 'tbJson'})
-export class TbJsonPipe implements PipeTransform {
-  transform(value: any): string {
-    if (isObject(value)) {
-      return JSON.stringify(value);
-    } else if (isNumber(value)) {
-      return value.toString();
-    }
-    return value;
+@Pipe({ name: 'tbParseTemplate' })
+export class TbTemplatePipe implements PipeTransform {
+  transform(template, data): string {
+    console.log('TbTemplatePipe -> transform -> template, data', template, data)
+    return parseTemplate(template, data);
   }
 }

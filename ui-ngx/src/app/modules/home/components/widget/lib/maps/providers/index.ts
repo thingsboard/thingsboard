@@ -14,17 +14,8 @@
 /// limitations under the License.
 ///
 
-import {Pipe, PipeTransform} from '@angular/core';
-import {isObject, isNumber} from '@core/utils';
-
-@Pipe({name: 'tbJson'})
-export class TbJsonPipe implements PipeTransform {
-  transform(value: any): string {
-    if (isObject(value)) {
-      return JSON.stringify(value);
-    } else if (isNumber(value)) {
-      return value.toString();
-    }
-    return value;
-  }
-}
+export * from './tencent-map';
+export * from './google-map';
+export * from './here-map';
+export * from './image-map';
+export * from './openstreet-map';

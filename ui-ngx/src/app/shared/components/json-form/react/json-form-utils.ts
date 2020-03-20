@@ -113,7 +113,7 @@ const canonicalTitleMap = (titleMap: any, originalEnum?: string[]): { name: stri
 
 const stdFormObj = (name: string, schema: any, options: DefaultsFormOptions): any => {
   options = options || {};
-  const f = options.global && options.global.formDefaults ? _.cloneDeep(options.global.formDefaults) : {};
+  const f: any = options.global && options.global.formDefaults ? _.cloneDeep(options.global.formDefaults) : {};
   if (options.global && options.global.supressPropertyTitles === true) {
     f.title = schema.title;
   } else {

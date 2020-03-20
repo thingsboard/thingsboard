@@ -15,8 +15,8 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Subject } from 'rxjs';
-import { finalize, share } from 'rxjs/operators';
+import { Observable, Subject, from, fromEvent, of } from 'rxjs';
+import { finalize, share, map } from 'rxjs/operators';
 import base64js from 'base64-js';
 
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
@@ -101,7 +101,7 @@ export function isNumber(value: any): boolean {
 }
 
 export function isNumeric(value: any): boolean {
-  return (value - parseFloat( value ) + 1) >= 0;
+  return (value - parseFloat(value) + 1) >= 0;
 }
 
 export function isString(value: any): boolean {
@@ -219,6 +219,18 @@ function scrollParents(node: Node): Node[] {
     scrollParentNodes.push(document.documentElement);
   }
   return scrollParentNodes;
+}
+
+function hashCode(str) {
+  let hash = 0;
+  let i, char;
+  if (str.length == 0) return hash;
+  for (i = 0; i < str.length; i++) {
+    char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
 }
 
 function easeInOut(
@@ -410,4 +422,148 @@ export function snakeCase(name: string, separator: string): string {
 
 export function getDescendantProp(obj: any, path: string): any {
   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+}
+
+export function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
+  const image = new Image();
+  const imageLoad$ = fromEvent(image, 'load').pipe(map(event => image));
+  image.src = imageUrl;
+  return imageLoad$;
+}
+
+const imageAspectMap = {};
+
+export function aspectCache(imageUrl: string): Observable<number> {
+  if (imageUrl?.length) {
+    const hash = hashCode(imageUrl);
+    let aspect = imageAspectMap[hash];
+    if (aspect) {
+      return of(aspect);
+    }
+    else return imageLoader(imageUrl).pipe(map(image => {
+      aspect = image.width / image.height;
+      imageAspectMap[hash] = aspect;
+      return aspect;
+    }))
+  }
+}
+
+
+export function parseArray(input: any[]): any[] {
+  const alliases: any = _(input).groupBy(el => el?.datasource?.aliasName).values().value();
+  return alliases.map((alliasArray, dsIndex) =>
+    alliasArray[0].data.map((el, i) => {
+      const obj = {
+        aliasName: alliasArray[0]?.datasource?.aliasName,
+        entityName: alliasArray[0]?.datasource?.entityName,
+        $datasource: alliasArray[0]?.datasource,
+        dsIndex,
+        time: el[0],
+        deviceType: null
+      };
+      alliasArray.forEach(el => {
+        obj[el?.dataKey?.label] = el?.data[i][1];
+        obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
+        if (el?.dataKey?.label === 'type') {
+          obj.deviceType = el?.data[0][1];
+        }
+      });
+      return obj;
+    })
+  );
+}
+
+export function parseData(input: any[]): any[] {
+  return _(input).groupBy(el => el?.datasource?.aliasName).values().value().map((alliasArray, i) => {
+    const obj = {
+      aliasName: alliasArray[0]?.datasource?.aliasName,
+      entityName: alliasArray[0]?.datasource?.entityName,
+      $datasource: alliasArray[0]?.datasource,
+      dsIndex: i,
+      deviceType: null
+    };
+    alliasArray.forEach(el => {
+      obj[el?.dataKey?.label] = el?.data[0][1];
+      obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
+      if (el?.dataKey?.label === 'type') {
+        obj.deviceType = el?.data[0][1];
+      }
+    });
+    return obj;
+  });
+}
+
+export function safeExecute(func: Function, params = []) {
+  let res = null;
+  if (func && typeof (func) === 'function') {
+    try {
+      res = func(...params);
+    }
+    catch (err) {
+      console.log('error in external function:', err);
+      res = null;
+    }
+  }
+  return res;
+}
+
+export function parseFunction(source: any, params: string[] = []): Function {
+  let res = null;
+  if (source?.length) {
+    try {
+      res = new Function(...params, source);
+    }
+    catch (err) {
+      console.error(err);
+      res = null;
+    }
+  }
+  return res;
+}
+
+export function parseTemplate(template: string, data: object) {
+  let res = '';
+  try {
+    let variables = '';
+    const expressions = template
+      .match(/\{(.*?)\}/g) // find expressions
+      .map(exp => exp.replace(/{|}/g, '')) // remove brackets
+      .map(exp => exp.split(':'))
+      .map(arr => {
+        variables += `let ${arr[0]} = ''; `;
+        return arr;
+      })
+      .filter(arr => !!arr[1]) // filter expressions without format
+      .reduce((res, current) => {
+        res[current[0]] = current[1];
+        return res;
+      }, {});
+
+    for (const key in data) {
+      if (!key.includes('|'))
+        variables += `${key} = '${expressions[key] ? padValue(data[key], +expressions[key]) : data[key]}';`;
+    }
+    template = template.replace(/:\d+}/g, '}');
+    res = safeExecute(parseFunction(variables + 'return' + '`' + template + '`'));
+  }
+  catch (ex) {
+  }
+  return res;
+}
+
+export function padValue(val: any, dec: number): string {
+  let strVal;
+  let n;
+
+  val = parseFloat(val);
+  n = (val < 0);
+  val = Math.abs(val);
+
+  if (dec > 0) {
+    strVal = val.toFixed(dec).toString()
+  } else {
+    strVal = Math.round(val).toString();
+  }
+  strVal = (n ? '-' : '') + strVal;
+  return strVal;
 }

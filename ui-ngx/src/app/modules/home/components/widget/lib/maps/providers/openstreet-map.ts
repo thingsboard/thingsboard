@@ -14,17 +14,17 @@
 /// limitations under the License.
 ///
 
-import {Pipe, PipeTransform} from '@angular/core';
-import {isObject, isNumber} from '@core/utils';
+import L from 'leaflet';
+import LeafletMap from '../leaflet-map';
+import { MapSettings, UnitedMapSettings } from '../map-models';
 
-@Pipe({name: 'tbJson'})
-export class TbJsonPipe implements PipeTransform {
-  transform(value: any): string {
-    if (isObject(value)) {
-      return JSON.stringify(value);
-    } else if (isNumber(value)) {
-      return value.toString();
+export class OpenStreetMap extends LeafletMap {
+    constructor($container, options: UnitedMapSettings) {
+        super($container, options);
+        const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
+        const tileLayer = (L.tileLayer as any).provider('OpenStreetMap.Mapnik');
+        tileLayer.addTo(map);
+        super.setMap(map);
+        super.initSettings(options);
     }
-    return value;
-  }
 }
