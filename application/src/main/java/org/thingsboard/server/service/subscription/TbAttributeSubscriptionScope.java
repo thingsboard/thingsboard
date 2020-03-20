@@ -13,25 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue;
+package org.thingsboard.server.service.subscription;
 
-public interface TbMsgCallback {
+public enum TbAttributeSubscriptionScope {
 
-    TbMsgCallback EMPTY = new TbMsgCallback() {
-
-        @Override
-        public void onSuccess() {
-
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-
-        }
-    };
-
-    void onSuccess();
-
-    void onFailure(Throwable t);
+    CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE
 
 }

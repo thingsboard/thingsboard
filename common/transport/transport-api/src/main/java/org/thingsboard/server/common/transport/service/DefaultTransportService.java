@@ -136,6 +136,7 @@ public class DefaultTransportService implements TransportService {
                             log.warn("Failed to process the notification.", e);
                         }
                     });
+                    transportNotificationsConsumer.commit();
                 } catch (Exception e) {
                     log.warn("Failed to obtain messages from queue.", e);
                     try {

@@ -412,7 +412,7 @@ audit-log:
 state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
-  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
+  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:true}"
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote

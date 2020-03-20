@@ -224,7 +224,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void process(ActorContext context, TransportToDeviceActorMsgWrapper wrapper) {
-        boolean reportDeviceActivity = false;
+        boolean reportDeviceActivity = true;
         TransportToDeviceActorMsg msg = wrapper.getMsg();
         TbMsgCallback callback = wrapper.getCallback();
         if (msg.hasSessionEvent()) {
@@ -263,7 +263,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         callback.onSuccess();
     }
 
-    //TODO 2.5 move this as a notification to the queue;
     private void reportLogicalDeviceActivity() {
         systemContext.getDeviceStateService().onDeviceActivity(deviceId);
     }

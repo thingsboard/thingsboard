@@ -240,6 +240,79 @@ message DeviceActorToTransportMsg {
 }
 
 /**
+ * TB Core Data Structures
+ */
+
+message TbSubscriptionProto {
+  string serviceId = 1;
+  string sessionId = 2;
+  int32 subscriptionId = 3;
+  string entityType = 4;
+  int64 tenantIdMSB = 5;
+  int64 tenantIdLSB = 6;
+  int64 entityIdMSB = 7;
+  int64 entityIdLSB = 8;
+}
+
+message TbTimeSeriesSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+  bool allKeys = 2;
+  repeated TbSubscriptionKetStateProto keyStates = 3;
+  int64 startTime = 4;
+  int64 endTime = 5;
+}
+
+message TbAttributeSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+  bool allKeys = 2;
+  repeated TbSubscriptionKetStateProto keyStates = 3;
+  string scope = 4;
+}
+
+message TbSubscriptionUpdateProto {
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  repeated TbSubscriptionUpdateValueListProto data = 5;
+}
+
+message TbAttributeUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string scope = 6;
+  repeated TsKvProto data = 7;
+}
+
+message TbTimeSeriesUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  repeated TsKvProto data = 6;
+}
+
+message TbSubscriptionCloseProto {
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+}
+
+message TbSubscriptionKetStateProto {
+  string key = 1;
+  int64 ts = 2;
+}
+
+message TbSubscriptionUpdateValueListProto {
+  string key = 1;
+  repeated int64 ts = 2;
+  repeated string value = 3;
+}
+
+/**
  * TB Core to TB Core messages
  */
 
@@ -253,27 +326,41 @@ message DeviceStateServiceMsgProto {
   bool deleted = 7;
 }
 
+message SubscriptionMgrMsgProto {
+  TbTimeSeriesSubscriptionProto telemetrySub = 1;
+  TbAttributeSubscriptionProto attributeSub = 2;
+  TbSubscriptionCloseProto subClose = 3;
+  TbTimeSeriesUpdateProto tsUpdate = 4;
+  TbAttributeUpdateProto attrUpdate = 5;
+}
+
+message LocalSubscriptionServiceMsgProto {
+  TbSubscriptionUpdateProto subUpdate = 1;
+}
+
 /**
  * Main messages;
  */
 
 /* Request from Transport Service to ThingsBoard Core Service */
 message TransportApiRequestMsg {
-   ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
-   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
-   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
+  ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
+  ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
+  GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
 message TransportApiResponseMsg {
-   ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
-   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
+  ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
+  GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
 message ToCoreMsg {
   TransportToDeviceActorMsg toDeviceActorMsg = 1;
   DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
+  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
+  LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 4;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

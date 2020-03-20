@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -92,7 +92,6 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
  */
 @Service
 @Slf4j
-//TODO: refactor to use page links as cursor and not fetch all
 public class DefaultDeviceStateService implements DeviceStateService {
 
     private static final ObjectMapper json = new ObjectMapper();
@@ -150,7 +149,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private volatile boolean clusterUpdatePending = false;
 
     private ListeningScheduledExecutorService queueExecutor;
-    private ConcurrentMap<TenantId, Set<DeviceId>> tenantDevices = new ConcurrentHashMap<>();
     private ConcurrentMap<TopicPartitionInfo, Set<DeviceId>> partitionedDevices = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, Long> deviceLastReportedActivity = new ConcurrentHashMap<>();
@@ -378,7 +376,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
         deviceStates.put(state.getDeviceId(), state);
     }
 
-    //TODO 2.5: review this method
     private void updateState() {
         long ts = System.currentTimeMillis();
         Set<DeviceId> deviceIds = new HashSet<>(deviceStates.keySet());
@@ -439,13 +436,9 @@ public class DefaultDeviceStateService implements DeviceStateService {
         deviceStates.remove(deviceId);
         deviceLastReportedActivity.remove(deviceId);
         deviceLastSavedActivity.remove(deviceId);
-        Set<DeviceId> deviceIds = tenantDevices.get(tenantId);
-        if (deviceIds != null) {
-            deviceIds.remove(deviceId);
-            if (deviceIds.isEmpty()) {
-                tenantDevices.remove(tenantId);
-            }
-        }
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
+        Set<DeviceId> deviceIdSet = partitionedDevices.get(tpi);
+        deviceIdSet.remove(deviceId);
     }
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
