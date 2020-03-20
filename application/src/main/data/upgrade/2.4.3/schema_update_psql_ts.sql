@@ -14,24 +14,6 @@
 -- limitations under the License.
 --
 
--- call check_version();
-
-CREATE OR REPLACE PROCEDURE check_version(INOUT valid_version boolean) LANGUAGE plpgsql AS $BODY$
-DECLARE
-    current_version integer;
-BEGIN
-    RAISE NOTICE 'Check the current installed PostgreSQL version...';
-    SELECT current_setting('server_version_num') INTO current_version;
-    IF current_version > 110000 THEN
-        RAISE NOTICE 'PostgreSQL version is valid!';
-        RAISE NOTICE 'Schema update started...';
-        SELECT true INTO valid_version;
-    ELSE
-        RAISE NOTICE 'Postgres version should be at least more than 10!';
-    END IF;
-END;
-$BODY$;
-
 -- call create_partition_ts_kv_table();
 
 CREATE OR REPLACE PROCEDURE create_partition_ts_kv_table() LANGUAGE plpgsql AS $$
