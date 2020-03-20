@@ -14,8 +14,7 @@
 /// limitations under the License.
 ///
 
-import { JsonSchema, JsonSettingsSchema } from '@app/shared/public-api';
-
+import { JsonSettingsSchema } from '@shared/models/widget.models';
 
 export function initSchema(): JsonSettingsSchema {
     return {
@@ -63,7 +62,7 @@ export function mergeSchemes(schemes: JsonSettingsSchema[]): JsonSettingsSchema 
     }, initSchema());
 }
 
-export function addCondition(schema: JsonSettingsSchema, condition: String): JsonSettingsSchema {
+export function addCondition(schema: JsonSettingsSchema, condition: string): JsonSettingsSchema {
     schema.form = schema.form.map(element => {
         if (typeof element === 'string') {
             return {
@@ -71,7 +70,7 @@ export function addCondition(schema: JsonSettingsSchema, condition: String): Jso
                 condition
             }
         }
-        if (typeof element == 'object') {
+        if (typeof element === 'object') {
             if (element.condition) {
                 element.condition += ' && ' + condition
             }

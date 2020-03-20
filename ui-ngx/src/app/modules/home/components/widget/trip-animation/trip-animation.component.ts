@@ -26,12 +26,13 @@ import { parseArray, parseTemplate, safeExecute } from '@app/core/utils';
 import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
 import { tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
-import { WidgetConfig, JsonSchema, JsonSettingsSchema } from '@app/shared/public-api';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getRatio, findAngle } from '../lib/maps/maps-utils';
+import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 
 
 @Component({
+  // tslint:disable-next-line:component-selector
   selector: 'trip-animation',
   templateUrl: './trip-animation.component.html',
   styleUrls: ['./trip-animation.component.scss']
