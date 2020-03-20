@@ -52,7 +52,12 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
         final CreateQueueRequest createQueueRequest =
                 new CreateQueueRequest(topic.replaceAll("\\.", "_") + ".fifo")
                         .withAttributes(attributes);
-        sqsClient.createQueue(createQueueRequest);
-        sqsClient.shutdown();
+        try {
+            sqsClient.createQueue(createQueueRequest);
+        } finally {
+            if (sqsClient != null) {
+                sqsClient.shutdown();
+            }
+        }
     }
 }

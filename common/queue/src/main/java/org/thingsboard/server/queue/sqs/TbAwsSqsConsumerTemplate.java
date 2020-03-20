@@ -24,7 +24,6 @@ import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -33,7 +32,6 @@ import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
@@ -50,9 +48,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -69,6 +66,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     private volatile Set<String> queueUrls;
     private volatile Set<TopicPartitionInfo> partitions;
     private ListeningExecutorService consumerExecutor;
+    private ListenableFuture<List<AwsSqsMsgWrapper>> futureResult;
 
     private final int maxMessagesPool = 100;
 
@@ -111,6 +109,10 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
         if (consumerExecutor != null) {
             consumerExecutor.shutdownNow();
         }
+
+        if (futureResult != null) {
+            futureResult.cancel(true);
+        }
     }
 
     @Override
@@ -137,7 +139,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                 return Collections.emptyList();
             }
 
-            List<ListenableFuture<AwsSqsMsgWrapper>> futures = queueUrls.stream().map(url -> consumerExecutor.submit(() -> {
+            List<ListenableFuture<AwsSqsMsgWrapper>> futureList = queueUrls.stream().map(url -> consumerExecutor.submit(() -> {
                 ReceiveMessageRequest request = new ReceiveMessageRequest();
                 request
                         .withWaitTimeSeconds((int) (durationInMillis / 1000))
@@ -146,28 +148,9 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                         .withMaxNumberOfMessages(10);
                 return new AwsSqsMsgWrapper(url, sqsClient.receiveMessage(request).getMessages());
             })).collect(Collectors.toList());
-
+            futureResult = Futures.allAsList(futureList);
             try {
-                List<AwsSqsMsgWrapper> messages = new ArrayList<>();
-                CountDownLatch latch = new CountDownLatch(1);
-                Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<AwsSqsMsgWrapper>>() {
-                    @Override
-                    public void onSuccess(List<AwsSqsMsgWrapper> result) {
-                        if (!CollectionUtils.isEmpty(result)) {
-                            messages.addAll(result.stream()
-                                    .filter(msg -> !msg.getMessages().isEmpty())
-                                    .collect(Collectors.toList()));
-                        }
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.error("Failed to consume messages.", t);
-                        latch.countDown();
-                    }
-                }, consumerExecutor);
-                latch.await();
+                List<AwsSqsMsgWrapper> messages = futureResult.get();
                 if (messages.size() > 0) {
                     messageList.addAll(messages);
                     return messages.stream()
@@ -182,7 +165,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                             }).filter(Objects::nonNull)
                             .collect(Collectors.toList());
                 }
-            } catch (InterruptedException /*| ExecutionException*/ e) {
+            } catch (InterruptedException | ExecutionException e) {
                 log.error("Failed to pool messages.", e);
             }
         }
