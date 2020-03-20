@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { MapProviders, MapSettings, MarkerSettings, PolygonSettings, UnitedMapSettings } from './map-models';
+import { MapProviders, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
     openstreetMapSettingsSchema,
@@ -43,7 +43,7 @@ let defaultSettings;
 
 export class MapWidgetController implements MapWidgetInterface {
 
-    constructor(public mapProvider: MapProviders, private drawRoutes, public ctx: WidgetContext, $element) {
+    constructor(public mapProvider: MapProviders, private drawRoutes, public ctx: WidgetContext, $element: HTMLElement) {
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -65,7 +65,7 @@ export class MapWidgetController implements MapWidgetInterface {
 
     map: LeafletMap;
     provider: MapProviders;
-    schema;
+    schema: JsonSettingsSchema;
     data;
     settings: UnitedMapSettings;
 
@@ -79,7 +79,7 @@ export class MapWidgetController implements MapWidgetInterface {
                 (setting: IProvider) => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
     }
 
-    public static settingsSchema(mapProvider, drawRoutes): object {
+    public static settingsSchema(mapProvider: MapProviders, drawRoutes: boolean): JsonSettingsSchema {
         const schema = initSchema();
         addToSchema(schema, this.getProvidersSchema());
         addGroupInfo(schema, 'Map Provider Settings');
@@ -139,10 +139,9 @@ export class MapWidgetController implements MapWidgetInterface {
                 });
     }
 
-    initSettings(settings: any) {
+    initSettings(settings: UnitedMapSettings) {
         const functionParams = ['data', 'dsData', 'dsIndex'];
-        this.provider = settings.provider ? settings.provider : this.mapProvider;
-        console.log(settings.draggableMarker);
+        this.provider = settings.provider || this.mapProvider;
         const customOptions = {
             provider: this.provider,
             mapUrl: settings?.mapImageUrl,
@@ -170,14 +169,11 @@ export class MapWidgetController implements MapWidgetInterface {
         if (this.settings.showPolygon) {
             this.map.updatePolygons(this.data);
         }
-        this.map.updateMarkers(parseData(this.data));
-    }
-
-    onDataUpdated() {
-    }
-
-    onResize() {
-        this.map.onResize();// not work
+        if (this.settings.draggableMarker) {
+            this.map.setDataSources(parseData(this.data));
+        }
+        else
+            this.map.updateMarkers(parseData(this.data));
     }
 
     resize() {

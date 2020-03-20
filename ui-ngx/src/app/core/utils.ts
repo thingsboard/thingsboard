@@ -464,7 +464,7 @@ export function parseArray(input: any[]): any[] {
       alliasArray.forEach(el => {
         obj[el?.dataKey?.label] = el?.data[i][1];
         obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
-        if (el?.dataKey?.label == 'type') {
+        if (el?.dataKey?.label === 'type') {
           obj.deviceType = el?.data[0][1];
         }
       });
@@ -485,7 +485,7 @@ export function parseData(input: any[]): any[] {
     alliasArray.forEach(el => {
       obj[el?.dataKey?.label] = el?.data[0][1];
       obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
-      if (el?.dataKey?.label == 'type') {
+      if (el?.dataKey?.label === 'type') {
         obj.deviceType = el?.data[0][1];
       }
     });
@@ -495,7 +495,7 @@ export function parseData(input: any[]): any[] {
 
 export function safeExecute(func: Function, params = []) {
   let res = null;
-  if (func && typeof (func) == 'function') {
+  if (func && typeof (func) === 'function') {
     try {
       res = func(...params);
     }
@@ -507,7 +507,7 @@ export function safeExecute(func: Function, params = []) {
   return res;
 }
 
-export function parseFunction(source: string, params: string[] = []): Function {
+export function parseFunction(source: any, params: string[] = []): Function {
   let res = null;
   if (source?.length) {
     try {

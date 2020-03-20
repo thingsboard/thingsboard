@@ -32,7 +32,6 @@ export default abstract class LeafletMap {
 
     markers: Map<string, Marker> = new Map();
     dragMode = true;
-    tooltips = [];
     poly: Polyline;
     polygon: Polygon;
     map: L.Map;
@@ -41,6 +40,8 @@ export default abstract class LeafletMap {
     options: UnitedMapSettings;
     isMarketCluster: boolean;
     bounds: L.LatLngBounds;
+    newMarker: L.Marker;
+    datasources: FormattedData[];
 
     constructor(public $container: HTMLElement, options: UnitedMapSettings) {
         this.options = options;
@@ -48,15 +49,7 @@ export default abstract class LeafletMap {
 
     public initSettings(options: MapSettings) {
         const { initCallback,
-            defaultZoomLevel,
-            dontFitMapBounds,
-            disableScrollZooming,
-            minZoomLevel,
-            mapProvider,
-            credentials,
-            defaultCenterPosition,
-            draggableMarker,
-            markerClusteringSetting }: MapSettings = options;
+            disableScrollZooming, }: MapSettings = options;
         if (disableScrollZooming) {
             this.map.scrollWheelZoom.disable();
         }
@@ -74,8 +67,26 @@ export default abstract class LeafletMap {
             })
             const dragListener = (e: L.DragEndEvent) => {
                 if (e.type === 'dragend' && mousePositionOnMap) {
-                    L.marker(mousePositionOnMap, {
-                    }).addTo(this.map);
+                    const newMarker = L.marker(mousePositionOnMap).addTo(this.map);
+                    const datasourcesList = document.createElement('div');
+                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
+                    this.datasources.forEach(ds => {
+                        const dsItem = document.createElement('p');
+                        dsItem.appendChild(document.createTextNode(ds.entityName));
+                        dsItem.setAttribute('style', 'font-size: 14px');
+                        dsItem.onclick = () => {
+                            const updatedEnttity = { ...ds, ...customLatLng };
+                            this.saveMarkerLocation(updatedEnttity);
+                            this.map.removeLayer(newMarker);
+                            this.deleteMarker(ds.aliasName);
+                            this.createMarker(ds.aliasName, updatedEnttity, this.datasources, this.options, false);
+                        }
+                        datasourcesList.append(dsItem);
+                    })
+                    const popup = L.popup();
+                    popup.setContent(datasourcesList);
+                    newMarker.bindPopup(popup).openPopup();
+
                 }
                 addMarker.setPosition('topright')
             }
@@ -91,9 +102,6 @@ export default abstract class LeafletMap {
                     draggableImg.enable();
                     draggableImg.on('dragend', dragListener)
                     return img;
-                },
-                addHooks() {
-                    // L.DomEvent.on(window as any, 'onmousedown', this.dragMarker, this);
                 },
                 onRemove(map) {
                 },
@@ -118,12 +126,12 @@ export default abstract class LeafletMap {
         else this.bounds = new L.LatLngBounds(null, null);
         if (this.options.draggableMarker) {
             this.addMarkerControl();
-            /*   this.map.on('click', (e: L.LeafletMouseEvent) => {
-                   if (this.dragMode)
-                       this.saveMarkerLocation(this.convertToCustomFormat(e.latlng));
-               })*/
         }
         this.map$.next(this.map);
+    }
+
+    public setDataSources(dataSources) {
+        this.datasources = dataSources;
     }
 
     public saveMarkerLocation(e) {
@@ -199,10 +207,11 @@ export default abstract class LeafletMap {
         this.saveMarkerLocation({ ...data, ...this.convertToCustomFormat(e.target._latlng) });
     }
 
-    private createMarker(key, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings) {
+    private createMarker(key, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings, setFocus = true) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.map, this.convertPosition(data), settings, data, dataSources, () => { }, this.dragMarker);
-            this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
+            if (setFocus)
+                this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
             this.markers.set(key, newMarker);
         });
     }
@@ -220,8 +229,13 @@ export default abstract class LeafletMap {
         marker.updateMarkerIcon(settings);
     }
 
-    private deleteMarker() {
-
+    deleteMarker(key) {
+        let marker = this.markers.get(key)?.leafletMarker;
+        if (marker) {
+            this.map.removeLayer(marker);
+            this.markers.delete(key);
+            marker = null;
+        }
     }
 
     // Polyline

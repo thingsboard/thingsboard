@@ -14,18 +14,18 @@
 /// limitations under the License.
 ///
 
+import { JsonSettingsSchema } from '@app/shared/public-api';
+
 export interface MapWidgetInterface {
     resize(),
     update(),
     onInit(),
-    onDataUpdated();
-    onResize();
     onDestroy();
 }
 
 export interface MapWidgetStaticInterface {
-    settingsSchema(mapProvider?, drawRoutes?): Object;
-    getProvidersSchema():Object
-    dataKeySettingsSchema(): Object;
-    actionSources(): Object;
+    settingsSchema(mapProvider?, drawRoutes?): JsonSettingsSchema;
+    getProvidersSchema():JsonSettingsSchema
+    dataKeySettingsSchema(): object;
+    actionSources(): object;
 }

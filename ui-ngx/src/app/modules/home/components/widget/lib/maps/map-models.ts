@@ -33,6 +33,8 @@ export type MapSettings = {
     yPosKeyName?: string;
     mapProvider: MapProviders;
     mapUrl?: string;
+    mapImageUrl?: string;
+    provider?: MapProviders;
     credentials?: any; // declare credentials format
     defaultCenterPosition?: LatLngTuple;
     markerClusteringSetting?;
@@ -66,7 +68,14 @@ export type MarkerSettings = {
     currentImage?: string;
     useMarkerImageFunction?: boolean;
     markerImages?: string[];
+    useMarkerImage: boolean;
+    markerImageSize: number;
+    markerImage: {
+        length: number
+    }
 
+    colorFunction: GenericFunction;
+    tooltipFunction: GenericFunction;
     labelFunction: GenericFunction;
     markerImageFunction?: MarkerImageFunction;
 }
@@ -89,6 +98,8 @@ export type PolygonSettings = {
     polygonColor: string;
     autocloseTooltip: boolean;
     displayTooltipAction: string;
+
+    polygonColorFunction?: GenericFunction;
 }
 
 export type PolylineSettings = {
