@@ -157,8 +157,12 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
         if (loopExecutor != null) {
             loopExecutor.shutdownNow();
         }
-        requestTemplate.unsubscribe();
-        responseTemplate.stop();
+        if (requestTemplate != null) {
+            requestTemplate.unsubscribe();
+        }
+        if (responseTemplate != null) {
+            responseTemplate.stop();
+        }
     }
 
 }

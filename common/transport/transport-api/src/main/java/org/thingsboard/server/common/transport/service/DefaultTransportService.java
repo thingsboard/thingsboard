@@ -126,6 +126,9 @@ public class DefaultTransportService implements TransportService {
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<ToTransportMsg>> records = transportNotificationsConsumer.poll(notificationsPollDuration);
+                    if (records.size() == 0) {
+                        continue;
+                    }
                     records.forEach(record -> {
                         try {
                             ToTransportMsg toTransportMsg = record.getValue();
@@ -136,6 +139,7 @@ public class DefaultTransportService implements TransportService {
                             log.warn("Failed to process the notification.", e);
                         }
                     });
+                    transportNotificationsConsumer.commit();
                 } catch (Exception e) {
                     log.warn("Failed to obtain messages from queue.", e);
                     try {

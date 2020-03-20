@@ -152,6 +152,7 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
 
     @PreDestroy
     public void destroy() {
+        log.info("Stopping defaultTbCoreConsumerService");
         stopped = true;
         if (consumer != null) {
             consumer.unsubscribe();

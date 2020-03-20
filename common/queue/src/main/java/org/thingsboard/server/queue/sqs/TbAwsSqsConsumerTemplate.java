@@ -18,11 +18,13 @@ package org.thingsboard.server.queue.sqs;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.AmazonSQSAsync;
+import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
+import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -31,23 +33,26 @@ import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.queue.TbQueueMsgDecoder;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
+import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
 import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -55,7 +60,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     private final Gson gson = new Gson();
     private final TbQueueAdmin admin;
-    private final AmazonSQS sqsClient;
+    private final AmazonSQSAsync sqsClient;
     private final String topic;
     private final TbQueueMsgDecoder<T> decoder;
 
@@ -65,6 +70,8 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     private volatile Set<TopicPartitionInfo> partitions;
     private ListeningExecutorService consumerExecutor;
 
+    private final int maxMessagesPool = 100;
+
     public TbAwsSqsConsumerTemplate(TbQueueAdmin admin, TbAwsSqsSettings sqsSettings, String topic, TbQueueMsgDecoder<T> decoder) {
         this.admin = admin;
         this.decoder = decoder;
@@ -73,7 +80,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
         AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
         AWSStaticCredentialsProvider credProvider = new AWSStaticCredentialsProvider(awsCredentials);
 
-        this.sqsClient = AmazonSQSClientBuilder.standard()
+        this.sqsClient = AmazonSQSAsyncClientBuilder.standard()
                 .withCredentials(credProvider)
                 .withRegion(sqsSettings.getRegion())
                 .build();
@@ -98,11 +105,11 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     @Override
     public void unsubscribe() {
-        if (consumerExecutor != null) {
-            consumerExecutor.shutdown();
-        }
         if (sqsClient != null) {
             sqsClient.shutdown();
+        }
+        if (consumerExecutor != null) {
+            consumerExecutor.shutdownNow();
         }
     }
 
@@ -141,15 +148,28 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             })).collect(Collectors.toList());
 
             try {
-                List<AwsSqsMsgWrapper> messages =
-                        Futures.allAsList(futures).get()
-                                .stream()
-                                .filter(msg -> !msg.getMessages().isEmpty())
-                                .collect(Collectors.toList());
+                List<AwsSqsMsgWrapper> messages = new ArrayList<>();
+                CountDownLatch latch = new CountDownLatch(1);
+                Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<AwsSqsMsgWrapper>>() {
+                    @Override
+                    public void onSuccess(List<AwsSqsMsgWrapper> result) {
+                        if (!CollectionUtils.isEmpty(result)) {
+                            messages.addAll(result.stream()
+                                    .filter(msg -> !msg.getMessages().isEmpty())
+                                    .collect(Collectors.toList()));
+                        }
+                        latch.countDown();
+                    }
 
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Failed to consume messages.", t);
+                        latch.countDown();
+                    }
+                }, consumerExecutor);
+                latch.await();
                 if (messages.size() > 0) {
                     messageList.addAll(messages);
-
                     return messages.stream()
                             .flatMap(msg -> msg.getMessages().stream())
                             .map(msg -> {
@@ -162,9 +182,8 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                             }).filter(Objects::nonNull)
                             .collect(Collectors.toList());
                 }
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException /*| ExecutionException*/ e) {
                 log.error("Failed to pool messages.", e);
-                return Collections.emptyList();
             }
         }
         return Collections.emptyList();
@@ -172,17 +191,16 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     @Override
     public void commit() {
-        try {
-            Futures.successfulAsList(messageList
-                    .stream()
-                    .map(msg -> consumerExecutor.submit(() -> msg
-                            .getMessages()
-                            .forEach(message -> sqsClient.deleteMessage(msg.url, message.getReceiptHandle()))
-                    )).collect(Collectors.toList())).get();
-            messageList.clear();
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("Failed to commit messages.", e);
-        }
+        messageList.forEach(msg ->
+                consumerExecutor.submit(() -> {
+                    List<DeleteMessageBatchRequestEntry> entries = msg.getMessages()
+                            .stream()
+                            .map(message -> new DeleteMessageBatchRequestEntry(message.getMessageId(), message.getReceiptHandle()))
+                            .collect(Collectors.toList());
+                    sqsClient.deleteMessageBatch(msg.getUrl(), entries);
+                }));
+
+        messageList.clear();
     }
 
     public T decode(Message message) throws InvalidProtocolBufferException {

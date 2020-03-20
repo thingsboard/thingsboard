@@ -18,10 +18,14 @@ package org.thingsboard.server.queue.sqs;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.AmazonSQSAsync;
+import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
 import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.JdkFutureAdapters;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
@@ -33,11 +37,12 @@ import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 @Slf4j
 public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueueProducer<T> {
     private final String defaultTopic;
-    private final AmazonSQS sqsClient;
+    private final AmazonSQSAsync sqsClient;
     private final Gson gson = new Gson();
     private final Map<String, String> queueUrlMap = new ConcurrentHashMap<>();
     private final TbQueueAdmin admin;
@@ -49,7 +54,7 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
         AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
         AWSStaticCredentialsProvider credProvider = new AWSStaticCredentialsProvider(awsCredentials);
 
-        this.sqsClient = AmazonSQSClientBuilder.standard()
+        this.sqsClient = AmazonSQSAsyncClientBuilder.standard()
                 .withCredentials(credProvider)
                 .withRegion(sqsSettings.getRegion())
                 .build();
@@ -79,10 +84,23 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
 
         sendMsgRequest.withMessageAttributes(attributes);
         sendMsgRequest.withMessageGroupId(msg.getKey().toString());
-        sqsClient.sendMessage(sendMsgRequest);
-        if (callback != null) {
-            callback.onSuccess(null);
-        }
+        Future<SendMessageResult> futureResult = sqsClient.sendMessageAsync(sendMsgRequest);
+
+        Futures.addCallback(JdkFutureAdapters.listenInPoolThread(futureResult), new FutureCallback<SendMessageResult>() {
+            @Override
+            public void onSuccess(SendMessageResult result) {
+                if (callback != null) {
+                    callback.onSuccess(new AwsSqsTbQueueMsgMetadata(result.getSdkHttpMetadata()));
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                if (callback != null) {
+                    callback.onFailure(t);
+                }
+            }
+        });
     }
 
     @Override
