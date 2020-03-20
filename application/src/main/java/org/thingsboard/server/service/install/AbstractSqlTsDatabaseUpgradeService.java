@@ -32,11 +32,8 @@ import java.sql.Statement;
 public abstract class AbstractSqlTsDatabaseUpgradeService {
 
     protected static final String CALL_REGEX = "call ";
-    protected static final String CHECK_VERSION = "check_version(false)";
-    protected static final String CHECK_VERSION_TO_DELETE = "check_version(INOUT valid_version boolean)";
     protected static final String DROP_TABLE = "DROP TABLE ";
     protected static final String DROP_PROCEDURE_IF_EXISTS = "DROP PROCEDURE IF EXISTS ";
-    protected static final String DROP_PROCEDURE_CHECK_VERSION = DROP_PROCEDURE_IF_EXISTS + CHECK_VERSION_TO_DELETE;
 
     @Value("${spring.datasource.url}")
     protected String dbUrl;
@@ -58,13 +55,14 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
     }
 
     protected boolean checkVersion(Connection conn) {
-        log.info("Check the current PostgreSQL version...");
         boolean versionValid = false;
         try {
             Statement statement = conn.createStatement();
-            ResultSet resultSet = statement.executeQuery(CALL_REGEX + CHECK_VERSION);
+            ResultSet resultSet = statement.executeQuery("SELECT current_setting('server_version_num')");
             resultSet.next();
-            versionValid = resultSet.getBoolean(1);
+            if(resultSet.getLong(1) > 110000) {
+                versionValid = true;
+            }
             statement.close();
         } catch (Exception e) {
             log.info("Failed to check current PostgreSQL version due to: {}", e.getMessage());

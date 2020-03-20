@@ -73,16 +73,15 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
         switch (fromVersion) {
             case "2.4.3":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Updating timescale schema ...");
-                    log.info("Load upgrade functions ...");
-                    loadSql(conn);
+                    log.info("Check the current PostgreSQL version...");
                     boolean versionValid = checkVersion(conn);
                     if (!versionValid) {
-                        log.info("PostgreSQL version should be at least more than 11!");
-                        log.info("Please upgrade your PostgreSQL and restart the script!");
+                        throw new RuntimeException("PostgreSQL version should be at least more than 11, please upgrade your PostgreSQL and restart the script!");
                     } else {
                         log.info("PostgreSQL version is valid!");
-                        log.info("Updating schema ...");
+                        log.info("Load upgrade functions ...");
+                        loadSql(conn);
+                        log.info("Updating timescale schema ...");
                         executeQuery(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
                         executeQuery(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
 
@@ -105,7 +104,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN json_v json;");
                         executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");
 
-                        log.info("schema timeseries updated!");
+                        log.info("schema timescale updated!");
                     }
                 }
                 break;
