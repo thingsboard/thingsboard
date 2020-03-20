@@ -32,10 +32,14 @@ import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.inter
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
 import { parseFunction, parseArray, parseData } from '@app/core/utils';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@app/core/schema-utils';
-import { AttributeScope, EntityId } from '@app/shared/public-api';
+import { AttributeScope, EntityId, JsonSettingsSchema } from '@app/shared/public-api';
 import { forkJoin } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { AttributeService } from '@app/core/public-api';
+import { getDefCenterPosition } from './maps-utils';
+
+let providerSets;
+let defaultSettings;
 
 export class MapWidgetController implements MapWidgetInterface {
 
@@ -63,19 +67,19 @@ export class MapWidgetController implements MapWidgetInterface {
     provider: MapProviders;
     schema;
     data;
-    settings:UnitedMapSettings;
+    settings: UnitedMapSettings;
 
-    public static dataKeySettingsSchema(): Object {
+    public static dataKeySettingsSchema(): object {
         return {};
     }
 
     public static getProvidersSchema() {
         return mergeSchemes([mapProviderSchema,
             ...Object.values(providerSets)?.map(
-                setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
+                (setting: IProvider) => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
     }
 
-    public static settingsSchema(mapProvider, drawRoutes): Object {
+    public static settingsSchema(mapProvider, drawRoutes): object {
         const schema = initSchema();
         addToSchema(schema, this.getProvidersSchema());
         addGroupInfo(schema, 'Map Provider Settings');
@@ -93,7 +97,7 @@ export class MapWidgetController implements MapWidgetInterface {
         return schema;
     }
 
-    public static actionSources(): Object {
+    public static actionSources(): object {
         return {
             markerClick: {
                 name: 'widget-action.marker-click',
@@ -114,9 +118,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     setMarkerLocation = (e) => {
-        const s = this.ctx.$injector.get(AttributeService);
-        console.log('MapWidgetController -> setMarkerLocation -> s', s, s.saveEntityAttributes)
-        const attributeService = this.ctx.$scope.$injector.get(this.ctx.servicesMap.get('attributeService'));
+        const attributeService = this.ctx.$injector.get(AttributeService);
         forkJoin(
             this.data.filter(data => !!e[data.dataKey.name])
                 .map(data => {
@@ -140,15 +142,7 @@ export class MapWidgetController implements MapWidgetInterface {
     initSettings(settings: any) {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider ? settings.provider : this.mapProvider;
-
-        function getDefCenterPosition(position) {
-            if (typeof (position) === 'string')
-                return position.split(',');
-            if (typeof (position) === 'object')
-                return position;
-            return [0, 0];
-        }
-
+        console.log(settings.draggableMarker);
         const customOptions = {
             provider: this.provider,
             mapUrl: settings?.mapImageUrl,
@@ -159,9 +153,9 @@ export class MapWidgetController implements MapWidgetInterface {
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             labelColor: this.ctx.widgetConfig.color,
             tooltipPattern: settings.tooltipPattern ||
-                '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${' + settings.latKeyName + ':7}<br/><b>Longitude:</b> ${' + settings.lngKeyName + ':7}',
+                '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${' +
+                settings.latKeyName + ':7}<br/><b>Longitude:</b> ${' + settings.lngKeyName + ':7}',
             defaultCenterPosition: getDefCenterPosition(settings?.defaultCenterPosition),
-            useDraggableMarker: true,
             currentImage: (settings.useMarkerImage && settings.markerImage?.length) ? {
                 url: settings.markerImage,
                 size: settings.markerImageSize || 34
@@ -197,8 +191,13 @@ export class MapWidgetController implements MapWidgetInterface {
 
 export let TbMapWidgetV2: MapWidgetStaticInterface = MapWidgetController;
 
+interface IProvider {
+    MapClass: LeafletMap,
+    schema: JsonSettingsSchema,
+    name: string
+}
 
-const providerSets = {
+providerSets = {
     'openstreet-map': {
         MapClass: OpenStreetMap,
         schema: openstreetMapSettingsSchema,
@@ -226,7 +225,7 @@ const providerSets = {
     }
 }
 
-const defaultSettings = {
+defaultSettings = {
     xPosKeyName: 'xPos',
     yPosKeyName: 'yPos',
     markerOffsetX: 0.5,
@@ -259,5 +258,5 @@ const defaultSettings = {
     minZoomLevel: 16,
     credentials: '',
     markerClusteringSetting: null,
-    draggebleMarker: false
+    draggableMarker: false
 }

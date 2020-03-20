@@ -21,7 +21,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster/dist/leaflet.markercluster'
 
-import { MapSettings, MarkerSettings, FormattedData } from './map-models';
+import { MapSettings, MarkerSettings, FormattedData, UnitedMapSettings, PolygonSettings } from './map-models';
 import { Marker } from './markers';
 import { Observable, of, BehaviorSubject, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -31,18 +31,18 @@ import { Polygon } from './polygon';
 export default abstract class LeafletMap {
 
     markers: Map<string, Marker> = new Map();
-    dragMode = false;
+    dragMode = true;
     tooltips = [];
     poly: Polyline;
     polygon: Polygon;
     map: L.Map;
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
-    options: MapSettings & MarkerSettings;
+    options: UnitedMapSettings;
     isMarketCluster: boolean;
     bounds: L.LatLngBounds;
 
-    constructor($container: HTMLElement, options: MapSettings & MarkerSettings) {
+    constructor(public $container: HTMLElement, options: UnitedMapSettings) {
         this.options = options;
     }
 
@@ -55,7 +55,7 @@ export default abstract class LeafletMap {
             mapProvider,
             credentials,
             defaultCenterPosition,
-            draggebleMarker,
+            draggableMarker,
             markerClusteringSetting }: MapSettings = options;
         if (disableScrollZooming) {
             this.map.scrollWheelZoom.disable();
@@ -66,7 +66,19 @@ export default abstract class LeafletMap {
     }
 
     addMarkerControl() {
-        if (this.options.draggebleMarker)
+        if (this.options.draggableMarker) {
+            let mousePositionOnMap: L.LatLng;
+            let addMarker: L.Control;
+            this.map.on('mouseup', (e: L.LeafletMouseEvent) => {
+                mousePositionOnMap = e.latlng
+            })
+            const dragListener = (e: L.DragEndEvent) => {
+                if (e.type === 'dragend' && mousePositionOnMap) {
+                    L.marker(mousePositionOnMap, {
+                    }).addTo(this.map);
+                }
+                addMarker.setPosition('topright')
+            }
             L.Control.AddMarker = L.Control.extend({
                 onAdd(map) {
                     const img = L.DomUtil.create('img') as any;
@@ -74,22 +86,27 @@ export default abstract class LeafletMap {
                     img.style.width = '32px';
                     img.style.height = '32px';
                     img.onclick = this.dragMarker;
+                    img.draggable = true;
+                    const draggableImg = new L.Draggable(img);
+                    draggableImg.enable();
+                    draggableImg.on('dragend', dragListener)
                     return img;
                 },
                 addHooks() {
-                    L.DomEvent.on(window as any, 'onclick', this.enableDragMode, this);
+                    // L.DomEvent.on(window as any, 'onmousedown', this.dragMarker, this);
                 },
                 onRemove(map) {
                 },
-                dragMarker: ($event) => {
-                    this.dragMode = !this.dragMode;
-                }
+                dragMarker: this.dragMarker
+
             } as any);
 
-        L.control.addMarker =  (opts) => {
-            return new L.Control.AddMarker(opts);
+            L.control.addMarker = (opts) => {
+                return new L.Control.AddMarker(opts);
+            }
+
+            addMarker = L.control.addMarker({ position: 'topright' }).addTo(this.map);
         }
-        L.control.addMarker({ position: 'topright' }).addTo(this.map);
     }
 
     public setMap(map: L.Map) {
@@ -99,12 +116,12 @@ export default abstract class LeafletMap {
             this.bounds = map.getBounds();
         }
         else this.bounds = new L.LatLngBounds(null, null);
-        if (this.options.draggebleMarker) {
+        if (this.options.draggableMarker) {
             this.addMarkerControl();
-            this.map.on('click', (e: L.LeafletMouseEvent) => {
-                if (this.dragMode)
-                    this.saveMarkerLocation(this.convertToCustomFormat(e.latlng));
-            })
+            /*   this.map.on('click', (e: L.LeafletMouseEvent) => {
+                   if (this.dragMode)
+                       this.saveMarkerLocation(this.convertToCustomFormat(e.latlng));
+               })*/
         }
         this.map$.next(this.map);
     }
@@ -177,9 +194,14 @@ export default abstract class LeafletMap {
         });
     }
 
-    private createMarker(key, data: FormattedData, dataSources, settings: MarkerSettings) {
+    dragMarker = (e, data?) => {
+        if (e.type !== 'dragend') return;
+        this.saveMarkerLocation({ ...data, ...this.convertToCustomFormat(e.target._latlng) });
+    }
+
+    private createMarker(key, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings) {
         this.ready$.subscribe(() => {
-            const newMarker = new Marker(this.map, this.convertPosition(data), settings, data, dataSources);
+            const newMarker = new Marker(this.map, this.convertPosition(data), settings, data, dataSources, () => { }, this.dragMarker);
             this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
             this.markers.set(key, newMarker);
         });
@@ -239,7 +261,7 @@ export default abstract class LeafletMap {
 
     // Polygon
 
-    updatePolygons(polyData: Array<Array<any>>) {
+    updatePolygons(polyData: any[]) {
         polyData.forEach((data: any) => {
             if (data.data.length && data.dataKey.name === this.options.polygonKeyName) {
                 if (typeof (data?.data[0][1]) === 'string') {
@@ -255,7 +277,7 @@ export default abstract class LeafletMap {
         });
     }
 
-    createPolygon(data, dataSources, settings) {
+    createPolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
             this.polygon = new Polygon(this.map, data, dataSources, settings);
             const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds());

@@ -28,7 +28,7 @@ export class ImageMap extends LeafletMap {
     width = 0;
     height = 0;
 
-    constructor(private $container: HTMLElement, options: UnitedMapSettings) {
+    constructor($container: HTMLElement, options: UnitedMapSettings) {
         super($container, options);
         aspectCache(options.mapUrl).subscribe(aspect => {
             this.aspect = aspect;

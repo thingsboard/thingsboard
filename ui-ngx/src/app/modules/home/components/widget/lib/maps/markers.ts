@@ -28,10 +28,11 @@ export class Marker {
     data: FormattedData;
     dataSources: FormattedData[];
 
-    constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data?, dataSources?, onClickListener?, onDragendListener?) {
+    constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings,
+        data?, dataSources?, onClickListener?, onDragendListener?) {
         this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
-            draggable: settings.draggable
+            draggable: settings.draggableMarker
         });
 
         this.createMarkerIcon((iconInfo) => {
@@ -51,7 +52,7 @@ export class Marker {
         }
 
         if (onDragendListener) {
-            this.leafletMarker.on('dragend', onDragendListener);
+            this.leafletMarker.on('dragend', (e) => onDragendListener(e, this.data));
         }
     }
 

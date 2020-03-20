@@ -21,7 +21,7 @@ export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[],
 
 export type MapSettings = {
     polygonKeyName: any;
-    draggebleMarker: any;
+    draggableMarker: boolean;
     initCallback?: () => any;
     defaultZoomLevel?: number;
     dontFitMapBounds?: boolean;
@@ -58,7 +58,7 @@ export type MarkerSettings = {
     labelColor: string;
     labelText: string;
     useLabelFunction: boolean;
-    draggable?: boolean;
+    draggableMarker: boolean;
     showTooltip?: boolean;
     color?: string;
     autocloseTooltip: boolean;
@@ -110,9 +110,9 @@ export type PolylineSettings = {
     decoratorCustomColor: any;
 
 
-    colorFunction(colorFunction: any, arg1: any[]): string;
-    strokeOpacityFunction(strokeOpacityFunction: any, arg1: any[]): number;
-    strokeWeightFunction(strokeWeightFunction: any, arg1: any[]): number;
+    colorFunction: GenericFunction;
+    strokeOpacityFunction: GenericFunction;
+    strokeWeightFunction: GenericFunction;
 }
 
 export interface HistorySelectSettings {

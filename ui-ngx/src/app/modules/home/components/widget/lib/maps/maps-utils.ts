@@ -44,3 +44,12 @@ export function findAngle(startPoint, endPoint) {
     return parseInt(angle.toFixed(2), 10);
 }
 
+
+export function getDefCenterPosition(position) {
+    if (typeof (position) === 'string')
+        return position.split(',');
+    if (typeof (position) === 'object')
+        return position;
+    return [0, 0];
+}
+
