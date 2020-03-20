@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
@@ -108,7 +109,7 @@ public class DefaultActorService implements ActorService {
     }
 
     @Override
-    public void onMsg(SendToClusterMsg msg) {
+    public void onMsg(TbActorMsg msg) {
         appActor.tell(msg, ActorRef.noSender());
     }
 

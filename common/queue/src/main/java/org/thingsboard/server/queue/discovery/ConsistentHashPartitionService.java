@@ -66,6 +66,10 @@ public class ConsistentHashPartitionService implements PartitionService {
     //TODO: Fetch this from the database, together with size of partitions for each service for each tenant.
     private ConcurrentMap<TenantId, Set<ServiceType>> isolatedTenants = new ConcurrentHashMap<>();
 
+    private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
+    private Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
+    private List<ServiceInfo> currentOtherServices;
+
     private HashFunction hashFunction;
 
     public ConsistentHashPartitionService(TbServiceInfoProvider serviceInfoProvider, ApplicationEventPublisher applicationEventPublisher) {
@@ -85,12 +89,11 @@ public class ConsistentHashPartitionService implements PartitionService {
     @Override
     public List<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType) {
         ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
-        TenantId tenantId = getTenantId(currentService);
+        TenantId tenantId = getSystemOrIsolatedTenantId(currentService);
         ServiceKey serviceKey = new ServiceKey(serviceType, tenantId);
         List<Integer> partitions = myPartitions.get(serviceKey);
         List<TopicPartitionInfo> topicPartitions = new ArrayList<>();
         for (Integer partition : partitions) {
-
             TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
             tpi.topic(partitionTopics.get(serviceType));
             tpi.partition(partition);
@@ -112,6 +115,101 @@ public class ConsistentHashPartitionService implements PartitionService {
         return buildTopicPartitionInfo(serviceType, tenantId, partition);
     }
 
+    @Override
+    public void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
+        logServiceInfo(currentService);
+        otherServices.forEach(this::logServiceInfo);
+
+        Map<ServiceKey, ConsistentHashCircle<ServiceInfo>> circles = new HashMap<>();
+        addNode(circles, currentService);
+        for (ServiceInfo other : otherServices) {
+            TenantId tenantId = getSystemOrIsolatedTenantId(other);
+            addNode(circles, other);
+            if (!tenantId.isNullUid()) {
+                isolatedTenants.putIfAbsent(tenantId, new HashSet<>());
+                for (String serviceType : other.getServiceTypesList()) {
+                    isolatedTenants.get(tenantId).add(ServiceType.valueOf(serviceType.toUpperCase()));
+                }
+
+            }
+        }
+        ConcurrentMap<ServiceKey, List<Integer>> oldPartitions = myPartitions;
+        TenantId myTenantId = getSystemOrIsolatedTenantId(currentService);
+        myPartitions = new ConcurrentHashMap<>();
+        partitionSizes.forEach((type, size) -> {
+            ServiceKey myServiceKey = new ServiceKey(type, myTenantId);
+            for (int i = 0; i < size; i++) {
+                ServiceInfo serviceInfo = resolveByPartitionIdx(circles.get(myServiceKey), i);
+                if (currentService.equals(serviceInfo)) {
+                    ServiceKey serviceKey = new ServiceKey(type, getSystemOrIsolatedTenantId(serviceInfo));
+                    myPartitions.computeIfAbsent(serviceKey, key -> new ArrayList<>()).add(i);
+                }
+            }
+        });
+        myPartitions.forEach((serviceKey, partitions) -> {
+            if (!partitions.equals(oldPartitions.get(serviceKey))) {
+                log.info("[{}] NEW PARTITIONS: {}", serviceKey, partitions);
+                Set<TopicPartitionInfo> tpiList = partitions.stream()
+                        .map(partition -> buildTopicPartitionInfo(serviceKey, partition))
+                        .collect(Collectors.toSet());
+                // Adding notifications topic for every @TopicPartitionInfo list
+                tpiList.add(getNotificationsTopic(serviceKey.getServiceType(), serviceInfoProvider.getServiceId()));
+                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceKey, tpiList));
+            }
+
+        });
+
+        if (currentOtherServices == null) {
+            currentOtherServices = new ArrayList<>(otherServices);
+        } else {
+            Set<ServiceKey> changes = new HashSet<>();
+            Map<ServiceKey, List<ServiceInfo>> currentMap = getServiceKeyListMap(currentOtherServices);
+            Map<ServiceKey, List<ServiceInfo>> newMap = getServiceKeyListMap(otherServices);
+            currentOtherServices = otherServices;
+            currentMap.forEach((key, list) -> {
+                if (!list.equals(newMap.get(key))) {
+                    changes.add(key);
+
+                }
+            });
+            currentMap.keySet().forEach(newMap::remove);
+            changes.addAll(newMap.keySet());
+            if (!changes.isEmpty()) {
+                applicationEventPublisher.publishEvent(new ClusterTopologyChangeEvent(this, changes));
+            }
+        }
+    }
+
+    private Map<ServiceKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
+        final Map<ServiceKey, List<ServiceInfo>> currentMap = new HashMap<>();
+        services.forEach(serviceInfo -> {
+            for (String serviceTypeStr : serviceInfo.getServiceTypesList()) {
+                ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
+                ServiceKey serviceKey = new ServiceKey(serviceType, getSystemOrIsolatedTenantId(serviceInfo));
+                currentMap.computeIfAbsent(serviceKey, key -> new ArrayList<>()).add(serviceInfo);
+            }
+        });
+        return currentMap;
+    }
+
+    @Override
+    public TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId) {
+        switch (serviceType) {
+            case TB_CORE:
+                return tbCoreNotificationTopics.computeIfAbsent(serviceId,
+                        id -> buildTopicPartitionInfo(serviceType, serviceId));
+            case TB_RULE_ENGINE:
+                return tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
+                        id -> buildTopicPartitionInfo(serviceType, serviceId));
+            default:
+                return buildTopicPartitionInfo(serviceType, serviceId);
+        }
+    }
+
+    private TopicPartitionInfo buildTopicPartitionInfo(ServiceType serviceType, String serviceId) {
+        return new TopicPartitionInfo(serviceType.name().toLowerCase() + "." + serviceId, null, null);
+    }
+
     private TopicPartitionInfo buildTopicPartitionInfo(ServiceKey serviceKey, int partition) {
         return buildTopicPartitionInfo(serviceKey.getServiceType(), serviceKey.getTenantId(), partition);
     }
@@ -127,51 +225,8 @@ public class ConsistentHashPartitionService implements PartitionService {
         return tpi.build();
     }
 
-    @Override
-    public void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
-        logServiceInfo(currentService);
-        otherServices.forEach(this::logServiceInfo);
-
-        Map<ServiceType, ConsistentHashCircle<ServiceInfo>> newCircles = new HashMap<>(ServiceType.values().length);
-        for (ServiceType serverType : ServiceType.values()) {
-            newCircles.put(serverType, new ConsistentHashCircle<>());
-        }
-        addNode(newCircles, currentService);
-        for (ServiceInfo other : otherServices) {
-            addNode(newCircles, other);
-            TenantId tenantId = getTenantId(other);
-            if (!tenantId.isNullUid()) {
-                isolatedTenants.putIfAbsent(tenantId, new HashSet<>());
-                for (String serviceType : other.getServiceTypesList()) {
-                    isolatedTenants.get(tenantId).add(ServiceType.valueOf(serviceType.toUpperCase()));
-                }
-
-            }
-        }
-        ConcurrentMap<ServiceKey, List<Integer>> oldPartitions = myPartitions;
-        myPartitions = new ConcurrentHashMap<>();
-        partitionSizes.forEach((type, size) -> {
-            for (int i = 0; i < size; i++) {
-                ServiceInfo serviceInfo = resolveByPartitionIdx(newCircles.get(type), i);
-                if (currentService.equals(serviceInfo)) {
-                    ServiceKey serviceKey = new ServiceKey(type, getTenantId(serviceInfo));
-                    myPartitions.computeIfAbsent(serviceKey, key -> new ArrayList<>()).add(i);
-                }
-            }
-        });
-        myPartitions.forEach((serviceKey, partitions) -> {
-            if (!partitions.equals(oldPartitions.get(serviceKey))) {
-                log.info("[{}] NEW PARTITIONS: {}", serviceKey, partitions);
-                Set<TopicPartitionInfo> tpiList = partitions.stream()
-                        .map(partition -> buildTopicPartitionInfo(serviceKey, partition))
-                        .collect(Collectors.toSet());
-                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceKey, tpiList));
-            }
-        });
-    }
-
     private void logServiceInfo(TransportProtos.ServiceInfo server) {
-        TenantId tenantId = getTenantId(server);
+        TenantId tenantId = getSystemOrIsolatedTenantId(server);
         if (tenantId.isNullUid()) {
             log.info("[{}] Found common server: [{}]", server.getServiceId(), server.getServiceTypesList());
         } else {
@@ -179,21 +234,23 @@ public class ConsistentHashPartitionService implements PartitionService {
         }
     }
 
-    private TenantId getTenantId(TransportProtos.ServiceInfo serviceInfo) {
+    private TenantId getSystemOrIsolatedTenantId(TransportProtos.ServiceInfo serviceInfo) {
         return new TenantId(new UUID(serviceInfo.getTenantIdMSB(), serviceInfo.getTenantIdLSB()));
     }
 
-    private void addNode(Map<ServiceType, ConsistentHashCircle<ServiceInfo>> circles, ServiceInfo instance) {
+    private void addNode(Map<ServiceKey, ConsistentHashCircle<ServiceInfo>> circles, ServiceInfo instance) {
+        TenantId tenantId = getSystemOrIsolatedTenantId(instance);
         for (String serviceTypeStr : instance.getServiceTypesList()) {
             ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
+            ServiceKey serviceKey = new ServiceKey(serviceType, tenantId);
             for (int i = 0; i < virtualNodesSize; i++) {
-                circles.get(serviceType).put(hash(instance, i).asLong(), instance);
+                circles.computeIfAbsent(serviceKey, key -> new ConsistentHashCircle<>()).put(hash(instance, i).asLong(), instance);
             }
         }
     }
 
     private ServiceInfo resolveByPartitionIdx(ConsistentHashCircle<ServiceInfo> circle, Integer partitionIdx) {
-        if (circle.isEmpty()) {
+        if (circle == null || circle.isEmpty()) {
             return null;
         }
         Long hash = hashFunction.newHasher().putInt(partitionIdx).hash().asLong();

@@ -64,69 +64,7 @@ enum MessageType {
 }
 
 // Messages related to CLUSTER_TELEMETRY_MESSAGE
-message SubscriptionProto {
-  string sessionId = 1;
-  int32 subscriptionId = 2;
-  string entityType = 3;
-  string tenantId = 4;
-  string entityId = 5;
-  string type = 6;
-  bool allKeys = 7;
-  repeated SubscriptionKetStateProto keyStates = 8;
-  string scope = 9;
-}
 
-message SubscriptionUpdateProto {
-    string sessionId = 1;
-    int32 subscriptionId = 2;
-    int32 errorCode = 3;
-    string errorMsg = 4;
-    repeated SubscriptionUpdateValueListProto data = 5;
-}
-
-message AttributeUpdateProto {
-    string entityType = 1;
-    string entityId = 2;
-    string scope = 3;
-    repeated KeyValueProto data = 4;
-}
-
-message TimeseriesUpdateProto {
-    string entityType = 1;
-    string entityId = 2;
-    repeated KeyValueProto data = 4;
-}
-
-message SessionCloseProto {
-    string sessionId = 1;
-}
-
-message SubscriptionCloseProto {
-    string sessionId = 1;
-    int32 subscriptionId = 2;
-}
-
-message SubscriptionKetStateProto {
-    string key = 1;
-    int64 ts = 2;
-}
-
-message SubscriptionUpdateValueListProto {
-    string key = 1;
-    repeated int64 ts = 2;
-    repeated string value = 3;
-}
-
-message KeyValueProto {
-    string key = 1;
-    int64 ts = 2;
-    int32 valueType = 3;
-    string strValue = 4;
-    int64 longValue = 5;
-    double doubleValue = 6;
-    bool boolValue = 7;
-    string jsonValue = 8;
-}
 
 message FromDeviceRPCResponseProto {
     int64 requestIdMSB = 1;

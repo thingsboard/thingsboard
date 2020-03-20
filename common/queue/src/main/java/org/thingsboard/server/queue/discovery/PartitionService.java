@@ -36,4 +36,13 @@ public interface PartitionService {
      * @param otherServices - all other discovered services {@link org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo}
      */
     void recalculatePartitions(TransportProtos.ServiceInfo currentService, List<TransportProtos.ServiceInfo> otherServices);
+
+    /**
+     * Each Service should start a consumer for messages that target individual service instance based on serviceId.
+     * This topic is likely to have single partition, and is always assigned to the service.
+     * @param tbCore
+     * @param serviceId
+     * @return
+     */
+    TopicPartitionInfo getNotificationsTopic(ServiceType tbCore, String serviceId);
 }

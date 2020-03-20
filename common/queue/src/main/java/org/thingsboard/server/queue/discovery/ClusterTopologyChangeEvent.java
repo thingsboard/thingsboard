@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue;
+package org.thingsboard.server.queue.discovery;
 
-public interface TbMsgCallback {
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
-    TbMsgCallback EMPTY = new TbMsgCallback() {
+import java.util.Set;
 
-        @Override
-        public void onSuccess() {
 
-        }
+public class ClusterTopologyChangeEvent extends ApplicationEvent {
 
-        @Override
-        public void onFailure(Throwable t) {
+    @Getter
+    private final Set<ServiceKey> serviceKeys;
 
-        }
-    };
-
-    void onSuccess();
-
-    void onFailure(Throwable t);
-
+    public ClusterTopologyChangeEvent(Object source, Set<ServiceKey> serviceKeys) {
+        super(source);
+        this.serviceKeys = serviceKeys;
+    }
 }
