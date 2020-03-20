@@ -62,7 +62,8 @@ export class Polyline {
 
     updatePolyline(settings, data, dataSources) {
         this.leafletPoly.setStyle(this.getPolyStyle(settings));
-        this.setPolylineLatLngs(data);
+      //  this.setPolylineLatLngs(data);
+      if(this.polylineDecorator)
         this.polylineDecorator.setPaths(this.leafletPoly);
     }
 

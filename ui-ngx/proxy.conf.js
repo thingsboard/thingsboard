@@ -18,7 +18,7 @@ const ruleNodeUiforwardPort = 8080;
 
 const PROXY_CONFIG = {
   "/api": {
-    "target": "http://64.225.65.220:8080",
+    "target": "http://localhost:8080",
     "secure": false,
   },
   "/static/rulenode": {
@@ -26,7 +26,7 @@ const PROXY_CONFIG = {
     "secure": false,
   },
   "/api/ws": {
-    "target": "ws://64.225.65.220:8080",
+    "target": "ws://localhost:8080",
     "ws": true,
   },
 };
