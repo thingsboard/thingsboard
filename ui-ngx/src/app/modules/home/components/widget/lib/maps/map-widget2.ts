@@ -43,7 +43,7 @@ let defaultSettings;
 
 export class MapWidgetController implements MapWidgetInterface {
 
-    constructor(public mapProvider: MapProviders, private drawRoutes, public ctx: WidgetContext, $element: HTMLElement) {
+    constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
         if (this.map) {
             this.map.map.remove();
             delete this.map;

@@ -14,34 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, forwardRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DataKey, DatasourceType } from '@shared/models/widget.models';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-  Validator,
-  Validators
-} from '@angular/forms';
-import { UtilsService } from '@core/services/utils.service';
-import { TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
-import { EntityService } from '@core/http/entity.service';
-import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { Observable, of, Subscription } from 'rxjs';
-import { map, mergeMap, tap } from 'rxjs/operators';
-import { alarmFields } from '@shared/models/alarm.models';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { DialogService } from '@core/services/dialog.service';
 import { FlowDirective } from '@flowjs/ngx-flow';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-image-input',
@@ -61,9 +43,11 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   label: string;
 
   private requiredValue: boolean;
+
   get required(): boolean {
     return this.requiredValue;
   }
+
   @Input()
   set required(value: boolean) {
     const newVal = coerceBooleanProperty(value);
@@ -74,6 +58,15 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  showClearButton = true;
+
+  @Input()
+  showPreview = true;
+
+  @Input()
+  inputId = this.utils.guid();
 
   imageUrl: string;
   safeImageUrl: SafeUrl;
@@ -86,6 +79,7 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   private propagateChange = null;
 
   constructor(protected store: Store<AppState>,
+              private utils: UtilsService,
               private sanitizer: DomSanitizer) {
     super(store);
   }

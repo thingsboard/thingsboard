@@ -75,6 +75,7 @@
 import './zone-flags';
 import 'zone.js/dist/zone';  // Included with Angular CLI.
 import 'core-js/es/array';
+import moment from 'moment';
 
 /***************************************************************************************************
  * APPLICATION IMPORTS
@@ -101,6 +102,7 @@ const tinycolor = tinycolor_;
 
 (window as any).tinycolor = tinycolor;
 (window as any).cssjs = cssjs;
+(window as any).moment = moment;
 (window as any).TbFlot = TbFlot;
 (window as any).TbAnalogueCompass = TbAnalogueCompass;
 (window as any).TbAnalogueRadialGauge = TbAnalogueRadialGauge;
