@@ -34,6 +34,7 @@ export class Polyline {
         this.leafletPoly = L.polyline(locations,
             this.getPolyStyle(settings)
         ).addTo(this.map);
+        
         if (settings.usePolylineDecorator) {
             this.polylineDecorator = L.polylineDecorator(this.leafletPoly, this.getDecoratorSettings(settings)).addTo(this.map);
         }
@@ -62,12 +63,16 @@ export class Polyline {
 
     updatePolyline(settings, data, dataSources) {
         this.leafletPoly.setStyle(this.getPolyStyle(settings));
+        console.log( this.getPolyStyle(settings));
+
       //  this.setPolylineLatLngs(data);
       if(this.polylineDecorator)
         this.polylineDecorator.setPaths(this.leafletPoly);
     }
 
     getPolyStyle(settings: PolylineSettings): L.PolylineOptions {
+        console.log(this.data,this.dataSources, this.dataSources[this.data[0]?.dsIndex], this.data[0]?.dsIndex);
+        
         return {
             color: settings.useColorFunction ?
                 safeExecute(settings.colorFunction, [this.data, this.dataSources, this.data[0]?.dsIndex]) : settings.color,

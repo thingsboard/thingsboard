@@ -210,8 +210,8 @@ export default abstract class LeafletMap {
     private createMarker(key, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings, setFocus = true) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.map, this.convertPosition(data), settings, data, dataSources, () => { }, this.dragMarker);
-            if (setFocus)
-                this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
+            if (setFocus && settings.fitMapBounds)
+                this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()).pad(0.2));
             this.markers.set(key, newMarker);
         });
     }
@@ -245,10 +245,10 @@ export default abstract class LeafletMap {
             if (data.length) {
                 const dataSource = polyData.map(arr => arr[0]);
                 if (this.poly) {
-                    this.updatePolyline(data, dataSource, this.options);
+                    this.updatePolyline(data, polyData, this.options);
                 }
                 else {
-                    this.createPolyline(data, dataSource, this.options);
+                    this.createPolyline(data, polyData, this.options);
                 }
             }
         })

@@ -46,9 +46,7 @@ export class Polygon {
     }
 
     updatePolygonColor(settings) {
-        console.log('Polygon -> updatePolygonColor -> settings', settings)
         const style: L.PathOptions = {
-
             fill: true,
             fillColor: settings.color,
             color: settings.color,

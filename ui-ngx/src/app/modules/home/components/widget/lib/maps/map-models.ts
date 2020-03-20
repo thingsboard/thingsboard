@@ -70,6 +70,7 @@ export type MarkerSettings = {
     markerImages?: string[];
     useMarkerImage: boolean;
     markerImageSize: number;
+    fitMapBounds: boolean;
     markerImage: {
         length: number
     }
