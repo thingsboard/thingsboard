@@ -186,7 +186,7 @@ export default abstract class LeafletMap {
             if (this.convertPosition(data)) {
                 if (data.rotationAngle) {
                     this.options.icon = L.divIcon({
-                        html: `<div class="arrow" style="transform: rotate(${data.rotationAngle}deg)"><div>`
+                        html: `<div class="arrow" style="transform: translate(-10px, -10px) rotate(${data.rotationAngle}deg);"><div>`
                     })
                 }
                 else {
@@ -245,10 +245,10 @@ export default abstract class LeafletMap {
             if (data.length) {
                 const dataSource = polyData.map(arr => arr[0]);
                 if (this.poly) {
-                    this.updatePolyline(data, polyData, this.options);
+                    this.updatePolyline(data, dataSource, this.options);
                 }
                 else {
-                    this.createPolyline(data, polyData, this.options);
+                    this.createPolyline(data, dataSource, this.options);
                 }
             }
         })
@@ -259,7 +259,7 @@ export default abstract class LeafletMap {
             this.ready$.subscribe(() => {
                 this.poly = new Polyline(this.map,
                     data.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
-                const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
+                const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds().pad(0.2));
                 if (bounds.isValid()) {
                     this.map.fitBounds(bounds);
                     this.bounds = bounds;
@@ -270,6 +270,11 @@ export default abstract class LeafletMap {
     updatePolyline(data, dataSources, settings) {
         this.ready$.subscribe(() => {
             this.poly.updatePolyline(settings, data, dataSources);
+            const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds().pad(0.2));
+                if (bounds.isValid()) {
+                    this.map.fitBounds(bounds);
+                    this.bounds = bounds;
+                }
         });
     }
 
@@ -294,7 +299,7 @@ export default abstract class LeafletMap {
     createPolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
             this.polygon = new Polygon(this.map, data, dataSources, settings);
-            const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds());
+            const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds().pad(0.2));
             if (bounds.isValid()) {
                 this.map.fitBounds(bounds);
                 this.bounds = bounds;
@@ -305,6 +310,11 @@ export default abstract class LeafletMap {
     updatePolygon(data, dataSources, settings) {
         this.ready$.subscribe(() => {
             // this.polygon.updatePolygon(settings, data, dataSources);
+            const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds().pad(0.2));
+            if (bounds.isValid()) {
+                this.map.fitBounds(bounds);
+                this.bounds = bounds;
+            }
         });
     }
 }

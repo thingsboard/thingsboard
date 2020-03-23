@@ -166,8 +166,6 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     update() {
-        console.log(parseArray(this.data));
-        
         if (this.drawRoutes)
             this.map.updatePolylines(parseArray(this.data));
         if (this.settings.showPolygon) {

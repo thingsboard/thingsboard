@@ -55,8 +55,9 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
     if (!this.interval)
       this.interval = interval(1000 / this.speed)
         .pipe(
-          filter(() => this.playing),
-          tap(() => this.index++)).subscribe(() => {
+          filter(() => this.playing)).subscribe(() => {
+          this.index++;
+          console.log("HistorySelectorComponent -> play -> this.index", this.index, this.maxTimeIndex)
             if (this.index < this.maxTimeIndex) {
               this.cd.detectChanges();
               this.timeUpdated.emit(this.intervals[this.index]);
