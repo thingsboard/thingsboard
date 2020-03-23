@@ -20,7 +20,6 @@ import { parseTemplate } from '@app/core/utils';
 @Pipe({ name: 'tbParseTemplate' })
 export class TbTemplatePipe implements PipeTransform {
   transform(template, data): string {
-    console.log('TbTemplatePipe -> transform -> template, data', template, data)
     return parseTemplate(template, data);
   }
 }
