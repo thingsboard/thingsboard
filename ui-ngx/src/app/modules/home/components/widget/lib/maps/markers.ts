@@ -74,7 +74,8 @@ export class Marker {
 
         if (settings.showLabel) {
             if (settings.useLabelFunction) {
-                settings.labelText = safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex])
+                settings.labelText = parseTemplate(
+                    safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex]), this.data)
             }
             else settings.labelText = parseTemplate(settings.label, this.data);
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,

@@ -253,6 +253,11 @@ export const commonMapSettingsSchema =
                 type: 'boolean',
                 default: true
             },
+            draggableMarker: {
+                title: 'Draggable Marker',
+                type: 'boolean',
+                default: false
+            },
             disableScrollZooming: {
                 title: 'Disable scroll zooming',
                 type: 'boolean',
@@ -371,11 +376,6 @@ export const commonMapSettingsSchema =
                 title: 'Polygon Color function: f(data, dsData, dsIndex)',
                 type: 'string'
             },
-            draggableMarker: {
-                title: 'Draggable Marker',
-                type: 'boolean',
-                default: false
-            },
             markerImage: {
                 title: 'Custom marker image',
                 type: 'string'
@@ -410,13 +410,13 @@ export const commonMapSettingsSchema =
         'useDefaultCenterPosition',
         'defaultCenterPosition',
         'fitMapBounds',
+        'draggableMarker',
         'disableScrollZooming',
         'latKeyName',
         'lngKeyName',
         'showLabel',
         'label',
         'useLabelFunction',
-        'draggableMarker',
         {
             key: 'labelFunction',
             type: 'javascript'

@@ -14,14 +14,17 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngExpression } from 'leaflet';
+import L, { LatLngExpression, LatLngTuple } from 'leaflet';
 import { createTooltip } from './maps-utils';
 import { PolygonSettings } from './map-models';
+import { DatasourceData } from '@app/shared/models/widget.models';
 
 export class Polygon {
 
     leafletPoly: L.Polygon;
     tooltip;
+    data;
+    dataSources;
 
     constructor(public map, coordinates, dataSources, settings: PolygonSettings, onClickListener?) {
         this.leafletPoly = L.polygon(coordinates, {
@@ -41,14 +44,19 @@ export class Polygon {
         }
     }
 
+    updatePolygon(data: LatLngTuple[], dataSources: DatasourceData[], settings: PolygonSettings) {
+        this.data = data;
+        this.dataSources = dataSources;
+        this.leafletPoly.setLatLngs(data);
+        this.updatePolygonColor(settings);
+    }
+
     removePolygon() {
         this.map.removeLayer(this.leafletPoly);
     }
 
     updatePolygonColor(settings) {
-        console.log('Polygon -> updatePolygonColor -> settings', settings)
         const style: L.PathOptions = {
-
             fill: true,
             fillColor: settings.color,
             color: settings.color,
