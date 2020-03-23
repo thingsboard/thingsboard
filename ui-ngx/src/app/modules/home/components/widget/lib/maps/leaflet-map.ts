@@ -14,26 +14,27 @@
 /// limitations under the License.
 ///
 
-import L from 'leaflet';
+import L, { LatLngTuple } from 'leaflet';
 
 import 'leaflet-providers';
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster/dist/leaflet.markercluster'
 
-import { MapSettings, MarkerSettings, FormattedData, UnitedMapSettings, PolygonSettings } from './map-models';
+import { MapSettings, MarkerSettings, FormattedData, UnitedMapSettings, PolygonSettings, PolylineSettings } from './map-models';
 import { Marker } from './markers';
 import { Observable, of, BehaviorSubject, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
+import { DatasourceData } from '@app/shared/models/widget.models';
 
 export default abstract class LeafletMap {
 
     markers: Map<string, Marker> = new Map();
+    polylines: Map<string, Polyline> = new Map();
+    polygons: Map<string, Polygon> = new Map();
     dragMode = true;
-    poly: Polyline;
-    polygon: Polygon;
     map: L.Map;
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
@@ -78,15 +79,14 @@ export default abstract class LeafletMap {
                             const updatedEnttity = { ...ds, ...customLatLng };
                             this.saveMarkerLocation(updatedEnttity);
                             this.map.removeLayer(newMarker);
-                            this.deleteMarker(ds.aliasName);
-                            this.createMarker(ds.aliasName, updatedEnttity, this.datasources, this.options, false);
+                            this.deleteMarker(ds.entityName);
+                            this.createMarker(ds.entityName, updatedEnttity, this.datasources, this.options, false);
                         }
                         datasourcesList.append(dsItem);
                     })
                     const popup = L.popup();
                     popup.setContent(datasourcesList);
                     newMarker.bindPopup(popup).openPopup();
-
                 }
                 addMarker.setPosition('topright')
             }
@@ -165,6 +165,7 @@ export default abstract class LeafletMap {
     }
 
     convertPosition(expression: object): L.LatLng {
+        if (!expression) return null;
         const lat = expression[this.options.latKeyName];
         const lng = expression[this.options.lngKeyName];
         if (isNaN(lat) || isNaN(lng))
@@ -192,11 +193,11 @@ export default abstract class LeafletMap {
                 else {
                     this.options.icon = null;
                 }
-                if (this.markers.get(data.aliasName)) {
-                    this.updateMarker(data.aliasName, data, markersData, this.options)
+                if (this.markers.get(data.entityName)) {
+                    this.updateMarker(data.entityName, data, markersData, this.options)
                 }
                 else {
-                    this.createMarker(data.aliasName, data, markersData, this.options as MarkerSettings);
+                    this.createMarker(data.entityName, data, markersData, this.options as MarkerSettings);
                 }
             }
         });
@@ -207,16 +208,16 @@ export default abstract class LeafletMap {
         this.saveMarkerLocation({ ...data, ...this.convertToCustomFormat(e.target._latlng) });
     }
 
-    private createMarker(key, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings, setFocus = true) {
+    private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings, setFocus = true) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.map, this.convertPosition(data), settings, data, dataSources, () => { }, this.dragMarker);
-            if (setFocus && settings.fitMapBounds)
+            if (setFocus /*&& settings.fitMapBounds*/)
                 this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()).pad(0.2));
             this.markers.set(key, newMarker);
         });
     }
 
-    private updateMarker(key, data, dataSources, settings: MarkerSettings) {
+    private updateMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings) {
         const marker: Marker = this.markers.get(key);
         const location = this.convertPosition(data)
         if (!location.equals(marker.location)) {
@@ -229,7 +230,7 @@ export default abstract class LeafletMap {
         marker.updateMarkerIcon(settings);
     }
 
-    deleteMarker(key) {
+    deleteMarker(key: string) {
         let marker = this.markers.get(key)?.leafletMarker;
         if (marker) {
             this.map.removeLayer(marker);
@@ -240,12 +241,12 @@ export default abstract class LeafletMap {
 
     // Polyline
 
-    updatePolylines(polyData: Array<Array<any>>) {
-        polyData.forEach(data => {
+    updatePolylines(polyData: FormattedData[][]) {
+        polyData.forEach((data: FormattedData[]) => {
             if (data.length) {
                 const dataSource = polyData.map(arr => arr[0]);
-                if (this.poly) {
-                    this.updatePolyline(data, dataSource, this.options);
+                if (this.polylines.get(data[0].entityName)) {
+                    this.updatePolyline(data[0].entityName, data, dataSource, this.options);
                 }
                 else {
                     this.createPolyline(data, dataSource, this.options);
@@ -254,67 +255,59 @@ export default abstract class LeafletMap {
         })
     }
 
-    createPolyline(data: any[], dataSources, settings) {
+    createPolyline(data: FormattedData[], dataSources: FormattedData[], settings: PolylineSettings) {
         if (data.length)
             this.ready$.subscribe(() => {
-                this.poly = new Polyline(this.map,
+                const poly = new Polyline(this.map,
                     data.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
-                const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds().pad(0.2));
+                const bounds = this.bounds.extend(poly.leafletPoly.getBounds().pad(0.2));
                 if (bounds.isValid()) {
                     this.map.fitBounds(bounds);
                     this.bounds = bounds;
                 }
+                this.polylines.set(data[0].entityName, poly)
             });
     }
 
-    updatePolyline(data, dataSources, settings) {
+    updatePolyline(key: string, data: FormattedData[], dataSources: FormattedData[], settings: PolylineSettings) {
         this.ready$.subscribe(() => {
-            this.poly.updatePolyline(settings, data, dataSources);
-            const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds().pad(0.2));
-                if (bounds.isValid()) {
-                    this.map.fitBounds(bounds);
-                    this.bounds = bounds;
-                }
+            this.polylines.get(key).updatePolyline(settings, data, dataSources);
         });
     }
 
     // Polygon
 
-    updatePolygons(polyData: any[]) {
-        polyData.forEach((data: any) => {
+    updatePolygons(polyData: DatasourceData[]) {
+        polyData.forEach((data: DatasourceData) => {
             if (data.data.length && data.dataKey.name === this.options.polygonKeyName) {
                 if (typeof (data?.data[0][1]) === 'string') {
-                    data.data = JSON.parse(data.data[0][1]);
+                    data.data = JSON.parse(data.data[0][1]) as LatLngTuple[];
                 }
-                if (this.polygon) {
-                    this.updatePolygon(data.data, polyData, this.options);
+                if (this.polygons.get(data.datasource.entityName)) {
+                    this.updatePolygon(data.datasource.entityName, data.data, polyData, this.options);
                 }
                 else {
-                    this.createPolygon(data.data, polyData, this.options);
+                    this.createPolygon(data.datasource.entityName, data.data, polyData, this.options);
                 }
             }
         });
     }
 
-    createPolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
+    createPolygon(key: string, data: LatLngTuple[], dataSources: DatasourceData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
-            this.polygon = new Polygon(this.map, data, dataSources, settings);
-            const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds().pad(0.2));
+            const polygon = new Polygon(this.map, data, dataSources, settings);
+            const bounds = this.bounds.extend(polygon.leafletPoly.getBounds().pad(0.2));
             if (bounds.isValid()) {
                 this.map.fitBounds(bounds);
                 this.bounds = bounds;
             }
+            this.polygons.set(key, polygon);
         });
     }
 
-    updatePolygon(data, dataSources, settings) {
+    updatePolygon(key: string, data: LatLngTuple[], dataSources: DatasourceData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
-            // this.polygon.updatePolygon(settings, data, dataSources);
-            const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds().pad(0.2));
-            if (bounds.isValid()) {
-                this.map.fitBounds(bounds);
-                this.bounds = bounds;
-            }
+            this.polygons.get(key).updatePolygon(data, dataSources, settings);
         });
     }
 }

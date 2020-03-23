@@ -131,4 +131,4 @@ export interface HistorySelectSettings {
     buttonColor: string;
 }
 
-export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolygonSettings;
+export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings;

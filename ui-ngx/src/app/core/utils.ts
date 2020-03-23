@@ -450,47 +450,46 @@ export function aspectCache(imageUrl: string): Observable<number> {
 
 
 export function parseArray(input: any[]): any[] {
-  const alliases: any = _(input).groupBy(el => el?.datasource?.aliasName).values().value();
-  return alliases.map((alliasArray, dsIndex) =>
-    alliasArray[0].data.map((el, i) => {
+  return _(input).groupBy(el => el?.datasource?.entityName)
+    .values().value().map((entityArray, dsIndex) =>
+      entityArray[0].data.map((el, i) => {
+        const obj = {
+          entityName: entityArray[0]?.datasource?.entityName,
+          $datasource: entityArray[0]?.datasource,
+          dsIndex,
+          time: el[0],
+          deviceType: null
+        };
+        entityArray.forEach(entity => {
+          obj[entity?.dataKey?.label] = entity?.data[i][1];
+          obj[entity?.dataKey?.label + '|ts'] = entity?.data[0][0];
+          if (entity?.dataKey?.label === 'type') {
+            obj.deviceType = entity?.data[0][1];
+          }
+        });
+        return obj;
+      })
+    );
+}
+
+export function parseData(input: any[]): any[] {
+  return _(input).groupBy(el => el?.datasource?.entityName)
+    .values().value().map((entityArray, i) => {
       const obj = {
-        aliasName: alliasArray[0]?.datasource?.aliasName,
-        entityName: alliasArray[0]?.datasource?.entityName,
-        $datasource: alliasArray[0]?.datasource,
-        dsIndex,
-        time: el[0],
+        entityName: entityArray[0]?.datasource?.entityName,
+        $datasource: entityArray[0]?.datasource,
+        dsIndex: i,
         deviceType: null
       };
-      alliasArray.forEach(el => {
-        obj[el?.dataKey?.label] = el?.data[i][1];
+      entityArray.forEach(el => {
+        obj[el?.dataKey?.label] = el?.data[0][1];
         obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
         if (el?.dataKey?.label === 'type') {
           obj.deviceType = el?.data[0][1];
         }
       });
       return obj;
-    })
-  );
-}
-
-export function parseData(input: any[]): any[] {
-  return _(input).groupBy(el => el?.datasource?.aliasName).values().value().map((alliasArray, i) => {
-    const obj = {
-      aliasName: alliasArray[0]?.datasource?.aliasName,
-      entityName: alliasArray[0]?.datasource?.entityName,
-      $datasource: alliasArray[0]?.datasource,
-      dsIndex: i,
-      deviceType: null
-    };
-    alliasArray.forEach(el => {
-      obj[el?.dataKey?.label] = el?.data[0][1];
-      obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
-      if (el?.dataKey?.label === 'type') {
-        obj.deviceType = el?.data[0][1];
-      }
     });
-    return obj;
-  });
 }
 
 export function safeExecute(func: Function, params = []) {
