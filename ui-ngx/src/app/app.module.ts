@@ -36,8 +36,8 @@ import { DashboardRoutingModule } from '@modules/dashboard/dashboard-routing.mod
     AppRoutingModule,
     CoreModule,
     LoginModule,
-    HomeModule,
-    DashboardRoutingModule
+    DashboardRoutingModule,
+    HomeModule
   ],
   providers: [],
   bootstrap: [AppComponent]

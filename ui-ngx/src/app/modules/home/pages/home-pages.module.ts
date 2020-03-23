@@ -23,12 +23,26 @@ import { TenantModule } from '@modules/home/pages/tenant/tenant.module';
 import { CustomerModule } from '@modules/home/pages/customer/customer.module';
 import { AuditLogModule } from '@modules/home/pages/audit-log/audit-log.module';
 import { UserModule } from '@modules/home/pages/user/user.module';
-import {DeviceModule} from '@modules/home/pages/device/device.module';
-import {AssetModule} from '@modules/home/pages/asset/asset.module';
-import {EntityViewModule} from '@modules/home/pages/entity-view/entity-view.module';
-import {RuleChainModule} from '@modules/home/pages/rulechain/rulechain.module';
-import {WidgetLibraryModule} from '@modules/home/pages/widget/widget-library.module';
-import {DashboardModule} from '@modules/home/pages/dashboard/dashboard.module';
+import { DeviceModule } from '@modules/home/pages/device/device.module';
+import { AssetModule } from '@modules/home/pages/asset/asset.module';
+import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.module';
+import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
+import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
+import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
+import { RouterModule, Routes } from '@angular/router';
+
+const routes: Routes = [
+  { path: '**',
+    redirectTo: 'home'
+  }
+];
+
+@NgModule({
+  imports: [
+    RouterModule.forChild(routes)],
+  exports: [RouterModule]
+})
+export class PageNotFoundRoutingModule { }
 
 @NgModule({
   exports: [
@@ -44,7 +58,8 @@ import {DashboardModule} from '@modules/home/pages/dashboard/dashboard.module';
     WidgetLibraryModule,
     DashboardModule,
     AuditLogModule,
-    UserModule
+    UserModule,
+    PageNotFoundRoutingModule
   ]
 })
 export class HomePagesModule { }
