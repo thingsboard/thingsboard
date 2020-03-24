@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.service.ActorService;
+import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -502,7 +503,12 @@ public class DefaultDeviceStateService implements DeviceStateService {
             TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
                     , json.writeValueAsString(state)
                     , null, null, null);
-            actorService.onMsg(new SendToClusterMsg(stateData.getDeviceId(), new QueueToRuleEngineMsg(stateData.getTenantId(), tbMsg)));
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, stateData.getTenantId(), stateData.getDeviceId());
+            TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                    .setTenantIdMSB(stateData.getTenantId().getId().getMostSignificantBits())
+                    .setTenantIdLSB(stateData.getTenantId().getId().getLeastSignificantBits())
+                    .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+            queueProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
         }

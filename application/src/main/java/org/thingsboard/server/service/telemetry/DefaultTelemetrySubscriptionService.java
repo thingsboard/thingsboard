@@ -168,7 +168,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
-            subscriptionManagerService.onTimeseriesDataUpdate(tenantId, entityId, ts, TbMsgCallback.EMPTY);
+            subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, ts, TbMsgCallback.EMPTY);
         } else {
             TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
             toCoreProducer.send(tpi, new TbProtoQueueMsg<>(entityId.getId(), toCoreMsg), null);

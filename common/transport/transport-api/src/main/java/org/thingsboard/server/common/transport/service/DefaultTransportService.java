@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -244,7 +244,7 @@ public class DefaultTransportService implements TransportService {
                 metaData.putValue("ts", tsKv.getTs() + "");
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
                 TbMsg tbMsg = new TbMsg(UUID.randomUUID(), SessionMsgType.POST_TELEMETRY_REQUEST.name(),
-                        deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, null);
+                        deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, TbMsgCallback.EMPTY);
                 sendToRuleEngine(tenantId, tbMsg, packCallback);
             }
         }
@@ -261,7 +261,7 @@ public class DefaultTransportService implements TransportService {
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
             TbMsg tbMsg = new TbMsg(UUID.randomUUID(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, metaData,
-                    TbMsgDataType.JSON, gson.toJson(json), null, null, null);
+                    TbMsgDataType.JSON, gson.toJson(json), null, null, TbMsgCallback.EMPTY);
             sendToRuleEngine(tenantId, tbMsg, new TransportTbQueueCallback(callback));
         }
     }
@@ -488,7 +488,7 @@ public class DefaultTransportService implements TransportService {
 
     protected void sendToRuleEngine(TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, tbMsg.getOriginator());
-        ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder().setTbMsg(ByteString.copyFrom(TbMsg.toByteArray(tbMsg)))
+        ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder().setTbMsg(TbMsg.toByteString(tbMsg))
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
         ruleEngineMsgProducer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);

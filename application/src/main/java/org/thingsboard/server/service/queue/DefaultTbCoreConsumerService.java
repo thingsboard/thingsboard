@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,6 +45,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -104,11 +105,13 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
                     if (msgs.isEmpty()) {
                         continue;
                     }
-                    ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> ackMap = msgs.stream().collect(
+                    ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> pendingMap = msgs.stream().collect(
                             Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
+                    ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> successMap = new ConcurrentHashMap<>();
+                    ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> failedMap = new ConcurrentHashMap<>();
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
-                    ackMap.forEach((id, msg) -> {
-                        TbMsgCallback callback = new MsgPackCallback<>(id, processingTimeoutLatch, ackMap);
+                    pendingMap.forEach((id, msg) -> {
+                        TbMsgCallback callback = new MsgPackCallback<>(id, processingTimeoutLatch, pendingMap, successMap, failedMap);
                         try {
                             ToCoreMsg toCoreMsg = msg.getValue();
                             if (toCoreMsg.hasToDeviceActorMsg()) {
@@ -130,7 +133,8 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
                         }
                     });
                     if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
-                        ackMap.forEach((id, msg) -> log.warn("[{}] Timeout to process message: {}", id, msg.getValue()));
+                        pendingMap.forEach((id, msg) -> log.warn("[{}] Timeout to process message: {}", id, msg.getValue()));
+                        failedMap.forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
                     }
                     consumer.commit();
                 } catch (Exception e) {
@@ -182,7 +186,7 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
             subscriptionManagerService.cancelSubscription(closeProto.getSessionId(), closeProto.getSubscriptionId(), callback);
         } else if (msg.hasTsUpdate()) {
             TransportProtos.TbTimeSeriesUpdateProto proto = msg.getTsUpdate();
-            subscriptionManagerService.onTimeseriesDataUpdate(
+            subscriptionManagerService.onTimeSeriesUpdate(
                     new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     TbSubscriptionUtils.toTsKvEntityList(proto.getDataList()), callback);

@@ -31,7 +31,8 @@ public interface SubscriptionManagerService extends ApplicationListener<Partitio
 
     void cancelSubscription(String sessionId, int subscriptionId, TbMsgCallback callback);
 
-    void onTimeseriesDataUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbMsgCallback callback);
+    void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbMsgCallback callback);
 
     void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbMsgCallback callback);
+
 }

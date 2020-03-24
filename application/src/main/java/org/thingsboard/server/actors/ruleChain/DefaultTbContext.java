@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,7 +65,10 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.ServiceType;
+import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import scala.concurrent.duration.Duration;
 
@@ -119,7 +122,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public boolean isLocalEntity(EntityId entityId) {
-        return mainCtx.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId).isMyPartition();
+        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId).isMyPartition();
     }
 
     private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {
@@ -151,8 +154,13 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void sendTbMsgToRuleEngine(TbMsg msg) {
-        mainCtx.getActorService().onMsg(new SendToClusterMsg(msg.getOriginator(), new QueueToRuleEngineMsg(getTenantId(), msg)));
+    public void sendTbMsgToRuleEngine(TbMsg tbMsg) {
+        TenantId tenantId = getTenantId();
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, tenantId, tbMsg.getOriginator());
+        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder().setTbMsg(TbMsg.toByteString(tbMsg))
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
+        mainCtx.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), null);
     }
 
     public TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId) {

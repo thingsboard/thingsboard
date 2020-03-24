@@ -93,6 +93,12 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.ServiceType;
+import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -184,6 +190,12 @@ public abstract class BaseController {
 
     @Autowired
     protected ClaimDevicesService claimDevicesService;
+
+    @Autowired
+    protected PartitionService partitionService;
+
+    @Autowired
+    protected TbCoreQueueProvider coreQueueProvider;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -662,7 +674,12 @@ public abstract class BaseController {
                 TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, entityId, metaData, TbMsgDataType.JSON
                         , json.writeValueAsString(entityNode)
                         , null, null, null);
-                actorService.onMsg(new SendToClusterMsg(entityId, new QueueToRuleEngineMsg(user.getTenantId(), tbMsg)));
+                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, user.getTenantId(), entityId);
+                TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                        .setTenantIdMSB(user.getTenantId().getId().getMostSignificantBits())
+                        .setTenantIdLSB(user.getTenantId().getId().getLeastSignificantBits())
+                        .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+                coreQueueProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }

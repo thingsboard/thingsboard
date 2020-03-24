@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -68,7 +68,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private final Map<RuleNodeId, RuleNodeCtx> nodeActors;
     private final Map<RuleNodeId, List<RuleNodeRelation>> nodeRoutes;
     private final RuleChainService service;
-    private final PartitionService partitionService;
     private final TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> producer;
 
     private RuleNodeId firstId;
@@ -83,7 +82,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         this.nodeActors = new HashMap<>();
         this.nodeRoutes = new HashMap<>();
         this.service = systemContext.getRuleChainService();
-        this.partitionService = systemContext.getPartitionService();
         this.producer = systemContext.getRuleEngineQueueProvider().getRuleEngineMsgProducer();
     }
 
@@ -234,7 +232,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         try {
             checkActive();
             EntityId entityId = msg.getOriginator();
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
+            TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
             RuleNodeId originatorNodeId = envelope.getOriginator();
             List<RuleNodeRelation> relations = nodeRoutes.get(originatorNodeId).stream()
                     .filter(r -> contains(envelope.getRelationTypes(), r.getType()))
@@ -242,9 +240,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             int relationsCount = relations.size();
             if (relationsCount == 0) {
                 log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
-                //TODO 2.5: Maybe let's check that the output relation is not a Failure?
                 if (envelope.getRelationTypes().contains(TbRelationTypes.FAILURE)) {
                     log.debug("[{}] Failure during message processing by Rule Node [{}]. Enable and see debug events for more info", entityId, envelope.getOriginator().getId());
+                    //TODO 2.5: Introduce our own RuleEngineFailureException to track what is wrong
                     msg.getCallback().onFailure(new RuntimeException("Failure during message processing by Rule Node [" + envelope.getOriginator().getId().toString() + "]"));
                 } else {
                     msg.getCallback().onSuccess();
@@ -297,7 +295,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         ToRuleEngineMsg toQueueMsg = ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setTbMsg(ByteString.copyFrom(TbMsg.toByteArray(newMsg)))
+                .setTbMsg(TbMsg.toByteString(newMsg))
                 .build();
         producer.send(tpi, new TbProtoQueueMsg<>(newMsg.getId(), toQueueMsg), callbackWrapper);
     }

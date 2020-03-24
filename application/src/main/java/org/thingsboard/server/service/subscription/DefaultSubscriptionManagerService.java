@@ -187,7 +187,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
     }
 
     @Override
-    public void onTimeseriesDataUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbMsgCallback callback) {
+    public void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbMsgCallback callback) {
         onLocalSubUpdate(entityId,
                 s -> {
                     if (TbSubscriptionType.TIMESERIES.equals(s.getType())) {

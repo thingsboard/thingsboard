@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,25 +20,37 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
-public class MsgPackCallback<T extends com.google.protobuf.GeneratedMessageV3> implements TbMsgCallback {
+public class MsgPackCallback<T> implements TbMsgCallback {
     private final CountDownLatch processingTimeoutLatch;
-    private final ConcurrentMap<UUID, TbProtoQueueMsg<T>> ackMap;
+    private final ConcurrentMap<UUID, T> ackMap;
+    private final ConcurrentMap<UUID, T> successMap;
+    private final ConcurrentMap<UUID, T> failedMap;
     private final UUID id;
 
-    public MsgPackCallback(UUID id, CountDownLatch processingTimeoutLatch, ConcurrentMap<UUID, TbProtoQueueMsg<T>> ackMap) {
+    public MsgPackCallback(UUID id, CountDownLatch processingTimeoutLatch,
+                           ConcurrentMap<UUID, T> ackMap,
+                           ConcurrentMap<UUID, T> successMap,
+                           ConcurrentMap<UUID, T> failedMap) {
         this.id = id;
         this.processingTimeoutLatch = processingTimeoutLatch;
         this.ackMap = ackMap;
+        this.successMap = successMap;
+        this.failedMap = failedMap;
     }
 
     @Override
     public void onSuccess() {
         log.trace("[{}] ON SUCCESS", id);
-        if (ackMap.remove(id) != null && ackMap.isEmpty()) {
+        T msg = ackMap.remove(id);
+        if (msg != null) {
+            successMap.put(id, msg);
+        }
+        if (msg != null && ackMap.isEmpty()) {
             processingTimeoutLatch.countDown();
         }
     }
@@ -46,8 +58,10 @@ public class MsgPackCallback<T extends com.google.protobuf.GeneratedMessageV3> i
     @Override
     public void onFailure(Throwable t) {
         log.trace("[{}] ON FAILURE", id);
-        TbProtoQueueMsg<T> message = ackMap.remove(id);
-        log.warn("Failed to process message: {}", message.getValue(), t);
+        T msg = ackMap.remove(id);
+        if (msg != null) {
+            failedMap.put(id, msg);
+        }
         if (ackMap.isEmpty()) {
             processingTimeoutLatch.countDown();
         }

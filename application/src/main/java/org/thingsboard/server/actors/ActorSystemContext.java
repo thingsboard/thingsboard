@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -63,8 +63,13 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.ServiceType;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
@@ -154,7 +159,6 @@ public class ActorSystemContext {
     private RuleChainService ruleChainService;
 
     @Autowired
-    @Getter
     private PartitionService partitionService;
 
     @Autowired
@@ -402,6 +406,17 @@ public class ActorSystemContext {
         return mapper.createObjectNode().put("server", serviceId).put("method", method).put("error", body);
     }
 
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> getTbCoreMsgProducer() {
+        return ruleEngineQueueProvider.getTbCoreMsgProducer();
+    }
+
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> getRuleEngineMsgProducer() {
+        return ruleEngineQueueProvider.getRuleEngineMsgProducer();
+    }
+
+    public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
+        return partitionService.resolve(serviceType, tenantId, entityId);
+    }
 
     public String getServerAddress() {
         return serviceInfoProvider.getServiceId();
