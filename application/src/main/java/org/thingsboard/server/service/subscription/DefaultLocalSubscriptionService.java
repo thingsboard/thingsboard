@@ -36,7 +36,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.ServiceType;
 import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
-import org.thingsboard.server.service.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 

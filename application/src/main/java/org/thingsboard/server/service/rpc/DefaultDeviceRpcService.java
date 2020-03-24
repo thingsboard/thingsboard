@@ -39,7 +39,7 @@ import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.ToServerRpcResponseMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 
@@ -185,8 +185,8 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
         try {
             TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), metaData, TbMsgDataType.JSON
                     , json.writeValueAsString(entityNode)
-                    , null, null, 0L);
-            actorService.onMsg(new SendToClusterMsg(msg.getDeviceId(), new ServiceToRuleEngineMsg(msg.getTenantId(), tbMsg)));
+                    , null, null, null);
+            actorService.onMsg(new SendToClusterMsg(msg.getDeviceId(), new QueueToRuleEngineMsg(msg.getTenantId(), tbMsg)));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

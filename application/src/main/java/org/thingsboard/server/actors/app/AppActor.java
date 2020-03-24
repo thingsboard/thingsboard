@@ -20,14 +20,9 @@ import akka.actor.LocalActorRef;
 import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
 import akka.actor.SupervisorStrategy;
-import akka.actor.SupervisorStrategy.Directive;
 import akka.actor.Terminated;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
-import akka.japi.Function;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -43,16 +38,11 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
 import scala.concurrent.duration.Duration;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 public class AppActor extends RuleChainManagerActor {
 
@@ -97,8 +87,8 @@ public class AppActor extends RuleChainManagerActor {
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
                 break;
-            case SERVICE_TO_RULE_ENGINE_MSG:
-                onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
+            case QUEUE_TO_RULE_ENGINE_MSG:
+                onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
@@ -145,7 +135,7 @@ public class AppActor extends RuleChainManagerActor {
 //        }
     }
 
-    private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
+    private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
 //            this may be a notification about system entities created.
 //            log.warn("[{}] Invalid service to rule engine msg called. System messages are not supported yet: {}", SYSTEM_TENANT, msg);

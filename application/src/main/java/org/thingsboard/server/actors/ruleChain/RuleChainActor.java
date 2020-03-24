@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
-import akka.actor.ActorInitializationException;
 import akka.actor.OneForOneStrategy;
 import akka.actor.SupervisorStrategy;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -26,7 +25,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import scala.concurrent.duration.Duration;
 
 public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMessageProcessor> {
@@ -43,8 +42,8 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
                 break;
-            case SERVICE_TO_RULE_ENGINE_MSG:
-                processor.onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
+            case QUEUE_TO_RULE_ENGINE_MSG:
+                processor.onServiceToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
             case DEVICE_ACTOR_TO_RULE_ENGINE_MSG:
                 processor.onDeviceActorToRuleEngineMsg((DeviceActorToRuleEngineMsg) msg);

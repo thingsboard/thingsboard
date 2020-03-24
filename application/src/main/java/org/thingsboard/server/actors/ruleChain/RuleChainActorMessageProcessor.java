@@ -18,10 +18,7 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.event.LoggingAdapter;
 import com.datastax.driver.core.utils.UUIDs;
-
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -42,7 +39,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 import java.util.ArrayList;
@@ -192,7 +189,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         state = ComponentLifecycleState.ACTIVE;
     }
 
-    void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg envelope) {
+    void onServiceToRuleEngineMsg(QueueToRuleEngineMsg envelope) {
         log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, envelope.getTbMsg().getId(), envelope.getTbMsg());
         checkActive();
         if (firstNode != null) {
@@ -301,14 +298,14 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void enqueueAndForwardMsgCopyToChain(TbMsg msg, EntityId target, String fromRelationType) {
         RuleChainId targetRCId = new RuleChainId(target.getId());
-        TbMsg copyMsg = msg.copy(UUIDs.timeBased(), targetRCId, null, DEFAULT_CLUSTER_PARTITION);
+        TbMsg copyMsg = msg.copy(UUIDs.timeBased(), targetRCId, null, null);
         parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, copyMsg, fromRelationType, true), self);
     }
 
     private void enqueueAndForwardMsgCopyToNode(TbMsg msg, EntityId target, String fromRelationType) {
         RuleNodeId targetId = new RuleNodeId(target.getId());
         RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
-        TbMsg copy = msg.copy(UUIDs.timeBased(), entityId, targetId, DEFAULT_CLUSTER_PARTITION);
+        TbMsg copy = msg.copy(UUIDs.timeBased(), entityId, targetId, null);
         pushMsgToNode(targetNodeCtx, copy, fromRelationType);
     }
 
@@ -331,6 +328,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private TbMsg enrichWithRuleChainId(TbMsg tbMsg) {
         // We don't put firstNodeId because it may change over time;
-        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(), tbMsg.getData(), entityId, null, 0);
+        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(), tbMsg.getDataType(), tbMsg.getData(), entityId, null, null);
     }
 }

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.queue;
 
+import akka.actor.ActorRef;
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -23,6 +25,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -47,7 +53,6 @@ import java.util.stream.Collectors;
 @ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine'")
 @Slf4j
 public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerService {
-
 
     @Value("${queue.rule_engine.poll_interval}")
     private long pollDuration;
@@ -86,7 +91,7 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> msgs = consumer.poll(pollDuration);
-                    if(msgs.isEmpty()){
+                    if (msgs.isEmpty()) {
                         continue;
                     }
                     ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> ackMap = msgs.stream().collect(
@@ -96,9 +101,10 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
                         TbMsgCallback callback = new MsgPackCallback<>(id, processingTimeoutLatch, ackMap);
                         try {
                             TransportProtos.ToRuleEngineMsg toRuleEngineMsg = msg.getValue();
+                            TenantId tenantId = new TenantId(new UUID(toRuleEngineMsg.getTenantIdMSB(), toRuleEngineMsg.getTenantIdLSB()));
                             log.trace("Forwarding message to rule engine {}", toRuleEngineMsg);
-                            if (toRuleEngineMsg.hasToRuleEngineMsg()) {
-                                forwardToRuleEngineActor(toRuleEngineMsg.getToRuleEngineMsg(), callback);
+                            if (toRuleEngineMsg.getTbMsg() != null && !toRuleEngineMsg.getTbMsg().isEmpty()) {
+                                forwardToRuleEngineActor(tenantId, toRuleEngineMsg.getTbMsg(), callback);
                             } else {
                                 callback.onSuccess();
                             }
@@ -122,16 +128,16 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
         });
     }
 
-    //TODO 2.5
-    private void forwardToRuleEngineActor(TransportProtos.TransportToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
-        log.info("Received RULE ENGINE msg: {}", toRuleEngineMsg);
+    private void forwardToRuleEngineActor(TenantId tenantId, ByteString tbMsgData, TbMsgCallback callback) {
+        TbMsg tbMsg = TbMsg.fromBytes(tbMsgData.toByteArray(), callback);
+        log.info("[{}] Received RULE ENGINE msg: {}", tbMsg.getType(), tbMsg);
+        actorContext.getAppActor().tell(new QueueToRuleEngineMsg(tenantId, tbMsg), ActorRef.noSender());
 //        if (statsEnabled) {
 //            stats.log(toDeviceActorMsg);
 //        }
-//        actorContext.getAppActor().tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback), ActorRef.noSender());
     }
 
-    @Scheduled(fixedDelayString = "${queue.core.stats.print_interval_ms}")
+    @Scheduled(fixedDelayString = "${queue.rule_engine.stats.print_interval_ms}")
     public void printStats() {
         if (statsEnabled) {
             stats.printStats();

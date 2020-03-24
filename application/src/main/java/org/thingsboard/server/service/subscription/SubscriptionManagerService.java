@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
-import org.thingsboard.server.service.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.List;
 

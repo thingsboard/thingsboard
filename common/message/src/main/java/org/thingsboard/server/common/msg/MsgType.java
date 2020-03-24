@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.msg;
 
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+
 /**
  * Created by ashvayka on 15.03.18.
  */
@@ -43,11 +45,11 @@ public enum MsgType {
     COMPONENT_LIFE_CYCLE_MSG,
 
     /**
-     * Misc messages from the REST API/SERVICE layer to the new rule engine.
+     * Misc messages consumed from the Queue and forwarded to Rule Engine Actor.
      *
-     * See {@link org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg}
+     * See {@link QueueToRuleEngineMsg}
      */
-    SERVICE_TO_RULE_ENGINE_MSG,
+    QUEUE_TO_RULE_ENGINE_MSG,
 
     /**
      * Message that is sent by RuleChainActor to RuleActor with command to process TbMsg.

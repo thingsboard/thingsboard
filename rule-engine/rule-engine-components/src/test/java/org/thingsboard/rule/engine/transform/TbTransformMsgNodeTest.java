@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.ScriptException;
@@ -62,8 +63,8 @@ public class TbTransformMsgNodeTest {
 
         RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
-        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}", ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, TbMsgDataType.JSON,rawJson, ruleChainId, ruleNodeId, null);
+        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, TbMsgDataType.JSON, "{new}", ruleChainId, ruleNodeId, null);
         mockJsExecutor();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFuture(transformedMsg));
 
@@ -84,7 +85,7 @@ public class TbTransformMsgNodeTest {
 
         RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId, null);
         mockJsExecutor();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("error")));
 

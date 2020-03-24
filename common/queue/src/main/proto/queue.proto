@@ -226,7 +226,6 @@ message TransportToRuleEngineMsg {
   PostAttributeMsg postAttributes = 3;
   ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 4;
   ToServerRpcRequestMsg toServerRPCCallRequest = 5;
-  SubscriptionInfoProto subscriptionInfo = 6;
 }
 
 message DeviceActorToTransportMsg {
@@ -365,7 +364,9 @@ message ToCoreMsg {
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
 message ToRuleEngineMsg {
-  TransportToRuleEngineMsg toRuleEngineMsg = 1;
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  bytes tbMsg = 3;
 }
 
 /* Messages that are handled by ThingsBoard Transport Service */

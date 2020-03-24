@@ -57,8 +57,9 @@ public class TbSynchronizationBeginNode implements TbNode {
         log.trace("Msg enters transaction - [{}][{}]", msg.getId(), msg.getType());
 
         TbMsgTransactionData transactionData = new TbMsgTransactionData(msg.getId(), msg.getOriginator());
+        //TODO 2.5: Callback?
         TbMsg tbMsg = new TbMsg(msg.getId(), msg.getType(), msg.getOriginator(), msg.getMetaData(), TbMsgDataType.JSON,
-                msg.getData(), transactionData, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition());
+                msg.getData(), transactionData, msg.getRuleChainId(), msg.getRuleNodeId(), null);
 
         ctx.getRuleChainTransactionService().beginTransaction(tbMsg, startMsg -> {
                     log.trace("Transaction starting...[{}][{}]", startMsg.getId(), startMsg.getType());

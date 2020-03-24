@@ -25,6 +25,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -38,7 +39,6 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.subscription.LocalSubscriptionService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import javax.annotation.PostConstruct;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.system;
+package org.thingsboard.server.common.msg.queue;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,13 +27,13 @@ import java.io.Serializable;
  * Created by ashvayka on 15.03.18.
  */
 @Data
-public final class ServiceToRuleEngineMsg implements TbActorMsg, Serializable {
+public final class QueueToRuleEngineMsg implements TbActorMsg {
 
     private final TenantId tenantId;
     private final TbMsg tbMsg;
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.SERVICE_TO_RULE_ENGINE_MSG;
+        return MsgType.QUEUE_TO_RULE_ENGINE_MSG;
     }
 }

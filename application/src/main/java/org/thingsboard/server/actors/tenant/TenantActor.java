@@ -25,7 +25,6 @@ import akka.actor.Terminated;
 import akka.japi.Function;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
@@ -37,17 +36,14 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import scala.concurrent.duration.Duration;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class TenantActor extends RuleChainManagerActor {
 
@@ -90,8 +86,8 @@ public class TenantActor extends RuleChainManagerActor {
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
                 break;
-            case SERVICE_TO_RULE_ENGINE_MSG:
-                onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
+            case QUEUE_TO_RULE_ENGINE_MSG:
+                onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
             case DEVICE_ACTOR_TO_RULE_ENGINE_MSG:
                 onDeviceActorToRuleEngineMsg((DeviceActorToRuleEngineMsg) msg);
@@ -114,11 +110,24 @@ public class TenantActor extends RuleChainManagerActor {
         return true;
     }
 
-    private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
-        if (ruleChainManager.getRootChainActor() != null) {
-            ruleChainManager.getRootChainActor().tell(msg, self());
+    private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
+        TbMsg tbMsg = msg.getTbMsg();
+        if (tbMsg.getRuleChainId() == null) {
+            if (ruleChainManager.getRootChainActor() != null) {
+                ruleChainManager.getRootChainActor().tell(msg, self());
+            } else {
+                tbMsg.getCallback().onFailure(new RuntimeException("No Root Rule Chain available!"));
+                log.info("[{}] No Root Chain: {}", tenantId, msg);
+            }
         } else {
-            log.info("[{}] No Root Chain: {}", tenantId, msg);
+            ActorRef ruleChainActor = ruleChainManager.get(tbMsg.getRuleChainId());
+            if (ruleChainActor != null) {
+                ruleChainActor.tell(msg, self());
+            } else {
+                log.trace("Received message for non-existing rule chain: [{}]", tbMsg.getRuleChainId());
+                //TODO: 3.1 Log it to dead letters queue;
+                tbMsg.getCallback().onSuccess();
+            }
         }
     }
 
@@ -172,7 +181,7 @@ public class TenantActor extends RuleChainManagerActor {
             if (removed) {
                 log.debug("[{}] Removed actor:", terminated);
             } else {
-                log.warn("[{}] Removed actor was not found in the device map!");
+                log.warn("Removed actor was not found in the device map!");
             }
         } else {
             throw new IllegalStateException("Remote actors are not supported!");

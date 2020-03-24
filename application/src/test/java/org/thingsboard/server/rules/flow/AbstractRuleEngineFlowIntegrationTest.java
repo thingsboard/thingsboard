@@ -16,9 +16,6 @@
 package org.thingsboard.server.rules.flow;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.Lists;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -30,25 +27,22 @@ import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.rule.RuleChainService;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -154,9 +148,9 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         TbMsg tbMsg = new TbMsg(UUIDs.timeBased(),
                 "CUSTOM",
                 device.getId(),
-                new TbMsgMetaData(),
-                "{}", null, null, 0L);
-        actorService.onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(savedTenant.getId(), tbMsg)));
+                new TbMsgMetaData(), TbMsgDataType.JSON,
+                "{}", null, null, null);
+        actorService.onMsg(new SendToClusterMsg(device.getId(), new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg)));
 
         Thread.sleep(3000);
 
@@ -270,8 +264,9 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
                 "CUSTOM",
                 device.getId(),
                 new TbMsgMetaData(),
-                "{}", null, null, 0L);
-        actorService.onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(savedTenant.getId(), tbMsg)));
+                TbMsgDataType.JSON,
+                "{}", null, null, null);
+        actorService.onMsg(new SendToClusterMsg(device.getId(), new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg)));
 
         Thread.sleep(3000);
 

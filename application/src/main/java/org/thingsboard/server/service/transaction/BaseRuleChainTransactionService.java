@@ -113,7 +113,7 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
 
     @Override
     public void onRemoteTransactionMsg(ServerAddress serverAddress, byte[] data) {
-        endLocalTransaction(TbMsg.fromBytes(data), msg -> {
+        endLocalTransaction(TbMsg.fromBytes(data, null), msg -> {
         }, error -> {
         });
     }

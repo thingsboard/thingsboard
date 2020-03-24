@@ -32,6 +32,7 @@ import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.ScriptException;
@@ -65,7 +66,7 @@ public class TbJsSwitchNodeTest {
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId, null);
         mockJsExecutor();
         when(scriptEngine.executeSwitch(msg)).thenReturn(Sets.newHashSet("one", "three"));
 

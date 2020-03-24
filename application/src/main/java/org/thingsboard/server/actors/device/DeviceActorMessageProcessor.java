@@ -65,12 +65,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.service.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
-import org.thingsboard.server.utils.JsonUtils;
+import org.thingsboard.server.common.transport.util.JsonUtils;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -224,6 +224,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void process(ActorContext context, TransportToDeviceActorMsgWrapper wrapper) {
+        //TODO 2.5
         boolean reportDeviceActivity = true;
         TransportToDeviceActorMsg msg = wrapper.getMsg();
         TbMsgCallback callback = wrapper.getCallback();
@@ -329,23 +330,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         return new HashSet<>(strings);
     }
 
-    private void handlePostAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, PostAttributeMsg postAttributes) {
-        JsonObject json = JsonUtils.getJsonObject(postAttributes.getKvList());
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData.copy(),
-                TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
-        pushToRuleEngine(context, tbMsg);
-    }
-
-    private void handlePostTelemetryRequest(ActorContext context, SessionInfoProto sessionInfo, PostTelemetryMsg postTelemetry) {
-        for (TsKvListProto tsKv : postTelemetry.getTsKvListList()) {
-            JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
-            TbMsgMetaData metaData = defaultMetaData.copy();
-            metaData.putValue("ts", tsKv.getTs() + "");
-            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
-            pushToRuleEngine(context, tbMsg);
-        }
-    }
-
     private void handleClientSideRPCRequest(ActorContext context, SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg request) {
         UUID sessionId = getSessionId(sessionInfo);
         JsonObject json = new JsonObject();
@@ -354,7 +338,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
         TbMsgMetaData requestMetaData = defaultMetaData.copy();
         requestMetaData.putValue("requestId", Integer.toString(request.getRequestId()));
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, requestMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
+        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, requestMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, null);
         context.parent().tell(new DeviceActorToRuleEngineMsg(context.self(), tbMsg), context.self());
 
         scheduleMsgWithDelay(context, new DeviceActorClientSideRpcTimeoutMsg(request.getRequestId(), systemContext.getClientSideRpcTimeout()), systemContext.getClientSideRpcTimeout());

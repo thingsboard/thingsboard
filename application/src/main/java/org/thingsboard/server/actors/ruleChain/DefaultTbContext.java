@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
@@ -47,12 +46,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.cluster.ServerType;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -71,7 +69,6 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import scala.concurrent.duration.Duration;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -146,23 +143,25 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(UUIDs.timeBased(), type, originator, metaData.copy(), data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0);
+        return new TbMsg(UUIDs.timeBased(), type, originator, metaData.copy(), TbMsgDataType.JSON, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(),null);
     }
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), origMsg.getDataType(), data, origMsg.getTransactionData(), origMsg.getRuleChainId(), origMsg.getRuleNodeId(), 0);
+        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), origMsg.getDataType(),
+                data, origMsg.getTransactionData(), origMsg.getRuleChainId(), origMsg.getRuleNodeId(), null);
     }
 
     @Override
     public void sendTbMsgToRuleEngine(TbMsg msg) {
-        mainCtx.getActorService().onMsg(new SendToClusterMsg(msg.getOriginator(), new ServiceToRuleEngineMsg(getTenantId(), msg)));
+        mainCtx.getActorService().onMsg(new SendToClusterMsg(msg.getOriginator(), new QueueToRuleEngineMsg(getTenantId(), msg)));
     }
 
     public TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId) {
         try {
             ObjectNode entityNode = mapper.valueToTree(customer);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, customer.getId(), getActionMetaData(ruleNodeId), mapper.writeValueAsString(entityNode), null, null, 0L);
+            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, customer.getId(),
+                    getActionMetaData(ruleNodeId), TbMsgDataType.JSON, mapper.writeValueAsString(entityNode), null, null, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process customer created msg: " + e);
         }
@@ -171,7 +170,8 @@ class DefaultTbContext implements TbContext {
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
         try {
             ObjectNode entityNode = mapper.valueToTree(device);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, device.getId(), getActionMetaData(ruleNodeId), mapper.writeValueAsString(entityNode), null, null, 0L);
+            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, device.getId(), getActionMetaData(ruleNodeId),
+                    TbMsgDataType.JSON, mapper.writeValueAsString(entityNode), null, null, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process device created msg: " + e);
         }
@@ -180,7 +180,8 @@ class DefaultTbContext implements TbContext {
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
         try {
             ObjectNode entityNode = mapper.valueToTree(asset);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, asset.getId(), getActionMetaData(ruleNodeId), mapper.writeValueAsString(entityNode), null, null, 0L);
+            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, asset.getId(), getActionMetaData(ruleNodeId),
+                    TbMsgDataType.JSON, mapper.writeValueAsString(entityNode), null, null, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process asset created msg: " + e);
         }
@@ -189,7 +190,8 @@ class DefaultTbContext implements TbContext {
     public TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
         try {
             ObjectNode entityNode = mapper.valueToTree(alarm);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, alarm.getId(), getActionMetaData(ruleNodeId), mapper.writeValueAsString(entityNode), null, null, 0L);
+            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, alarm.getId(), getActionMetaData(ruleNodeId),
+                    TbMsgDataType.JSON, mapper.writeValueAsString(entityNode), null, null, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process alarm created msg: " + e);
         }
