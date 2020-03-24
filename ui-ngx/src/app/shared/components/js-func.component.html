@@ -31,7 +31,7 @@
       <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
     </button>
   </div>
-  <div id="tb-javascript-panel" class="tb-js-func-panel" fxLayout="column" tb-toast toastTarget="jsFuncEditor">
+  <div id="tb-javascript-panel" class="tb-js-func-panel" fxLayout="column" tb-toast toastTarget="{{toastTargetId}}">
     <div #javascriptEditor id="tb-javascript-input" [ngClass]="{'fill-height': fillHeight}"></div>
   </div>
   <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
