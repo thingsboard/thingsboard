@@ -26,11 +26,13 @@
           <div class="tb-panel-title">{{ 'gateway.thingsboard' | translate | uppercase }}</div>
         </mat-panel-title>
       </mat-expansion-panel-header>
-<!--        <tb-device-gateway-select-->
-<!--          formControlName="gateway"-->
-<!--          required-->
-<!--        >-->
-<!--        </tb-device-gateway-select>-->
+        <tb-entity-gateway-select
+          formControlName="gateway"
+          [newGatewayType]="gatewayType"
+          (gatewayNameExist)="gatewayExist()"
+          required
+        >
+      </tb-entity-gateway-select>
       <div fxLayout="column">
         <mat-form-field fxFlex>
           <mat-label>{{'gateway.security-type' | translate }}</mat-label>
@@ -41,8 +43,7 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div fxLayout="row" class="gateway-form-row"
-           ngClass="{'gateway-config-row-vertical': changeAlignment}">
+      <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap">
         <mat-form-field fxFlex>
           <mat-label>{{ 'gateway.thingsboard-host' | translate }}</mat-label>
           <input matInput type="text" formControlName="host">
@@ -85,8 +86,7 @@
 
       <mat-checkbox formControlName="remoteConfiguration">{{ 'gateway.remote' | translate }}</mat-checkbox>
 
-      <div fxLayout="row" class="gateway-form-row"
-           ngClass="{'gateway-config-row-vertical': changeAlignment}">
+      <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap">
         <mat-form-field fxFlex>
           <mat-label>{{'gateway.remote-logging-level' | translate }}</mat-label>
           <mat-select formControlName="remoteLoggingLevel">
@@ -117,14 +117,14 @@
       <div fxLayout="column">
         <mat-form-field fxFlex>
           <mat-label>{{'gateway.storage-type' | translate }}</mat-label>
-          <mat-select formControlName="storageTypes">
+          <mat-select formControlName="storageType">
             <mat-option *ngFor="let storageType of storageTypes | keyvalue" [value]="storageType.key">
               {{ storageType.value.toString() | translate}}
             </mat-option>
           </mat-select>
         </mat-form-field>
 
-        <div fxLayout="row" class="gateway-form-row" ngClass="{'gateway-config-row-vertical': changeAlignment}">
+        <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap">
           <mat-form-field fxFlex>
             <mat-label>{{ 'gateway.storage-pack-size' | translate }}</mat-label>
             <input matInput type="number" formControlName="readRecordsCount">
@@ -141,7 +141,7 @@
 
           <mat-form-field fxFlex>
             <mat-label >
-              {{ (gatewayConfigurationGroup.get('storageTypes').value !== 'fileStorage' ? 'gateway.storage-max-records' : 'gateway.storage-max-file-records') | translate}}
+              {{ (gatewayConfigurationGroup.get('storageType').value !== 'file' ? 'gateway.storage-max-records' : 'gateway.storage-max-file-records') | translate}}
             </mat-label>
             <input matInput type="number" formControlName="maxRecordsCount">
             <mat-error *ngIf="gatewayConfigurationGroup.get('maxRecordsCount').hasError('required')" translate>
@@ -156,8 +156,7 @@
           </mat-form-field>
         </div>
 
-        <div fxLayout="row" class="gateway-form-row" *ngIf="gatewayConfigurationGroup.get('storageTypes').value == 'fileStorage'"
-             ngClass="{'gateway-config-row-vertical': vm.changeAlignment}">
+        <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap" *ngIf="gatewayConfigurationGroup.get('storageType').value == 'file'">
           <mat-form-field fxFlex>
             <mat-label>{{ 'gateway.storage-max-files' | translate }}</mat-label>
             <input matInput type="number" formControlName="maxFilesCount">
@@ -191,13 +190,12 @@
       </mat-expansion-panel-header>
 
       <div fxLayout="column" class="gateway-config">
-        <section fxFlex formArrayName="connectors"
-                 *ngFor="let connector of connectors.controls; let i = index;" >
-          <div [formGroupName]="i" fxLayout="row">
-            <div fxLayout="column" fxLayoutAlign="center start" class="gateway-config-row" >
+        <section formArrayName="connectors" *ngFor="let connector of connectors.controls; let i = index;">
+          <div [formGroupName]="i" fxLayout="row" fxLayoutAlign="space-between stretch" fxLayoutGap="8px">
+            <div fxLayout="column" fxLayoutAlign="center start">
               <mat-slide-toggle formControlName="enabled"></mat-slide-toggle>
             </div>
-            <div fxLayout="row" fxFlex class="gateway-config-row" [ngClass]="{'gateway-config-row-vertical': changeAlignment}">
+            <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap" fxFlex>
               <mat-form-field fxFlex>
                 <mat-label>{{'gateway.connector-type' | translate }}</mat-label>
                 <mat-select formControlName="configType" (selectionChange)="changeConnectorType(connector)">
@@ -218,8 +216,8 @@
                 </mat-error>
               </mat-form-field>
             </div>
-            <div fxLayout="row" fxLayoutAlign="end center" class="action-buttons"
-                 [ngClass]="{'gateway-config-row-vertical': changeAlignment}">
+            <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap"
+                 fxLayoutAlign="{{alignment == 'row' ? 'end center' : 'space-evenly center'}}" class="action-buttons">
               <button mat-icon-button (click)="openConfigDialog($event, i, connector.get('config').value, connector.get('name').value)"
                          matTooltip="{{ 'gateway.update-config' | translate }}"
                          matTooltipPosition="above"
@@ -234,9 +232,7 @@
             </div>
           </div>
         </section>
-        <span [fxShow]="!countConnectors"
-              fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
-              class="no-data-found">{{'gateway.no-connectors' | translate}}</span>
+        <span [fxShow]="!connectors.length" fxLayoutAlign="center center" class="no-data-found">{{'gateway.no-connectors' | translate}}</span>
         <div>
           <button mat-raised-button type="button" (click)="addNewConnector()"
                   matTooltip="{{ 'gateway.connector-add' | translate }}"

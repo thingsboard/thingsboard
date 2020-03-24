@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 :host{
-  .mat-expansion-panel {
-    .mat-expansion-panel-content {
-      font: inherit !important;
-    }
-  }
-
   .gateway-form {
     height: 100%;
     padding: 5px;
@@ -27,38 +21,21 @@
     overflow-y: auto;
     overflow-x: hidden;
 
-    .gateway-form-row{
-      &.gateway-config-row-vertical{
-        flex-direction: column;
-      }
-    }
-
     .form-action-buttons{
       padding-top: 8px;
     }
 
     .gateway-config {
-      span.no-data-found {
+      .no-data-found {
         position: relative;
         display: flex;
         height: 40px;
         text-transform: uppercase;
-
-        &.disabled {
-          color: rgba(0, 0, 0, .38);
-        }
-      }
-
-      .gateway-config-row{
-        &.gateway-config-row-vertical {
-          flex-direction: column;
-        }
-      }
-
-      .action-buttons.gateway-config-row-vertical {
-        flex-direction: column;
-        justify-content: space-evenly;
       }
     }
+  }
+
+  ::ng-deep .mat-form-field-infix {
+    width: auto !important;
   }
 }

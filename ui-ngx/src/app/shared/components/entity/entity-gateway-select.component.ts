@@ -30,17 +30,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { DeviceService } from '@core/http/device.service';
 
 @Component({
-  selector: 'tb-device-gateway-select',
-  templateUrl: './device-gateway-select.component.html',
-  styleUrls: ['./device-gateway-select.component.scss'],
+  selector: 'tb-entity-gateway-select',
+  templateUrl: './entity-gateway-select.component.html',
+  styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceGatewaySelectComponent),
+    useExisting: forwardRef(() => EntityGatewaySelectComponent),
     multi: true
   }]
 })
 
-export class DeviceGatewaySelectComponent implements ControlValueAccessor, OnInit {
+export class EntityGatewaySelectComponent implements ControlValueAccessor, OnInit {
   get required(): boolean {
     return this.requiredValue;
   }

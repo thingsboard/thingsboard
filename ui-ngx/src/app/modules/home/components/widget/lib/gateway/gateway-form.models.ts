@@ -23,19 +23,27 @@ export enum SecurityType {
   accessToken = 'accessToken'
 }
 
+export interface WidgetSetting {
+  widgetTitle: string;
+  archiveFileName: string;
+  gatewayType: string;
+  successfulSave: string;
+  gatewayNameExists: string;
+}
+
 export const CURRENT_CONFIGURATION_ATTRIBUTE = 'current_configuration';
 export const CONFIGURATION_DRAFT_ATTRIBUTE = 'configuration_drafts';
 export const CONFIGURATION_ATTRIBUTE = 'configuration';
 export const REMOTE_LOGGING_LEVEL_ATTRIBUTE = 'RemoteLoggingLevel';
 
-export const securityTypeTranslationMap = new Map<SecurityType, string>(
+export const SecurityTypeTranslationMap = new Map<SecurityType, string>(
   [
     [SecurityType.tls, 'gateway.security-types.tls'],
     [SecurityType.accessToken, 'gateway.security-types.access-token']
   ]
 );
 
-export enum gatewayLogLevel {
+export enum GatewayLogLevel {
   none = 'NONE',
   critical = 'CRITICAL',
   error = 'ERROR',
@@ -44,23 +52,28 @@ export enum gatewayLogLevel {
   debug = 'DEBUG'
 }
 
-export enum storageType {
-  memoryStorage = 'memoryStorage',
-  fileStorage = 'fileStorage'
+export enum StorageType {
+  memory = 'memory',
+  file = 'file'
 }
 
-export const storageTypeTranslationMap = new Map<storageType, string>(
+export const StorageTypeTranslationMap = new Map<StorageType, string>(
   [
-    [storageType.memoryStorage, 'gateway.storage-types.memory-storage'],
-    [storageType.fileStorage, 'gateway.storage-types.file-storage']
+    [StorageType.memory, 'gateway.storage-types.memory-storage'],
+    [StorageType.file, 'gateway.storage-types.file-storage']
   ]
 );
 
-export enum connectorType {
+export enum ConnectorType {
   mqtt= 'MQTT',
   modbus = 'Modbus',
   opc_ua = 'OPC-UA',
   ble = 'BLE'
+}
+
+export interface MainGatewaySetting {
+  thingsboard: GatewaySetting;
+  [key: string]: object;
 }
 
 export interface GatewaySetting {
@@ -108,15 +121,22 @@ export interface GatewaySettingStorageFile {
 export interface ConnectorConfig {
   configuration: string;
   name: string;
-  type: connectorType;
+  type: ConnectorType;
 }
 
 export interface ConnectorForm {
   config: object;
   name: string;
-  configType: connectorType;
+  configType: ConnectorType;
   enabled: boolean;
 }
+
+export const DEFAULT_CONNECTOR: ConnectorForm = {
+  config: {},
+  name: '',
+  configType: null,
+  enabled: false
+};
 
 export function ValidateJSON(control: AbstractControl): ValidationErrors | null {
   if (JSON.stringify(control.value) === JSON.stringify({})) {
@@ -148,11 +168,11 @@ export function generateYAMLConfigurationFile(gatewaySetting): string {
     config += '    cert: ' + gatewaySetting.certPath + '\n';
   }
   config += 'storage:\n';
-  if (gatewaySetting.storageType === storageType.memoryStorage) {
+  if (gatewaySetting.storageType === StorageType.memory) {
     config += '  type: memory\n';
     config += '  read_records_count: ' + gatewaySetting.readRecordsCount + '\n';
     config += '  max_records_count: ' + gatewaySetting.maxRecordsCount + '\n';
-  } else if (gatewaySetting.storageType === storageType.fileStorage) {
+  } else if (gatewaySetting.storageType === StorageType.file) {
     config += '  type: file\n';
     config += '  data_folder_path: ' + gatewaySetting.dataFolderPath + '\n';
     config += '  max_file_count: ' + gatewaySetting.maxFilesCount + '\n';

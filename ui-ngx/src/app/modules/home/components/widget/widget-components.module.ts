@@ -34,7 +34,7 @@ import { MultipleInputWidgetComponent } from './lib/multiple-input-widget.compon
 import { TripAnimationComponent } from './trip-animation/trip-animation.component';
 import { WebCameraInputWidgetComponent } from './lib/web-camera-input.component';
 import { GatewayFormComponent } from './lib/gateway/gateway-form.component';
-import { DeviceGatewaySelectComponent } from './lib/gateway/device-gateway-select.component';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 @NgModule({
   declarations:
@@ -50,8 +50,7 @@ import { DeviceGatewaySelectComponent } from './lib/gateway/device-gateway-selec
       MultipleInputWidgetComponent,
       TripAnimationComponent,
       WebCameraInputWidgetComponent,
-      GatewayFormComponent,
-      DeviceGatewaySelectComponent,
+      GatewayFormComponent
     ],
   imports: [
     CommonModule,
@@ -69,11 +68,11 @@ import { DeviceGatewaySelectComponent } from './lib/gateway/device-gateway-selec
     MultipleInputWidgetComponent,
     TripAnimationComponent,
     WebCameraInputWidgetComponent,
-    GatewayFormComponent,
-    DeviceGatewaySelectComponent,
+    GatewayFormComponent
   ],
   providers: [
-    CustomDialogService
+    CustomDialogService,
+    ImportExportService
   ]
 })
 export class WidgetComponentsModule { }

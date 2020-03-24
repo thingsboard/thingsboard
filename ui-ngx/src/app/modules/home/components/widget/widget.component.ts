@@ -706,6 +706,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
         this.cd.detectChanges();
       } catch (e) {
+        console.error(e);
         if (this.dynamicWidgetComponentRef) {
           this.dynamicWidgetComponentRef.destroy();
           this.dynamicWidgetComponentRef = null;
