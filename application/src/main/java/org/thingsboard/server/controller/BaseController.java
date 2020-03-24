@@ -67,6 +67,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -491,28 +492,10 @@ public abstract class BaseController {
         }
     }
 
-    ComponentDescriptor checkComponentDescriptorByClazz(String clazz) throws ThingsboardException {
-        try {
-            log.debug("[{}] Lookup component descriptor", clazz);
-            return checkNotNull(componentDescriptorService.getComponent(clazz));
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
-    List<ComponentDescriptor> checkComponentDescriptorsByType(ComponentType type) throws ThingsboardException {
-        try {
-            log.debug("[{}] Lookup component descriptors", type);
-            return componentDescriptorService.getComponents(type);
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
-    List<ComponentDescriptor> checkComponentDescriptorsByTypes(Set<ComponentType> types) throws ThingsboardException {
+    List<ComponentDescriptor> checkComponentDescriptorsByTypes(Set<ComponentType> types, RuleChainType ruleChainType) throws ThingsboardException {
         try {
             log.debug("[{}] Lookup component descriptors", types);
-            return componentDescriptorService.getComponents(types);
+            return componentDescriptorService.getComponents(types, ruleChainType);
         } catch (Exception e) {
             throw handleException(e, false);
         }

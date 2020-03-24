@@ -1,20 +1,22 @@
 {
   "ruleChain": {
     "additionalInfo": null,
-    "name": "Root Rule Chain",
-    "type": "SYSTEM",
+    "name": "Edge Root Rule Chain",
+    "type": "EDGE",
     "firstRuleNodeId": null,
     "root": true,
     "debugMode": false,
-    "configuration": null
+    "configuration": null,
+    "assignedEdges": [],
+    "assignedEdgesIds": []
   },
   "metadata": {
     "firstNodeIndex": 2,
     "nodes": [
       {
         "additionalInfo": {
-          "layoutX": 824,
-          "layoutY": 156
+          "layoutX": 823,
+          "layoutY": 157
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
@@ -25,7 +27,7 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 825,
+          "layoutX": 824,
           "layoutY": 52
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
@@ -61,8 +63,8 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 825,
-          "layoutY": 379
+          "layoutX": 824,
+          "layoutY": 378
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log Other",
@@ -73,8 +75,8 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 825,
-          "layoutY": 468
+          "layoutX": 824,
+          "layoutY": 466
         },
         "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
         "name": "RPC Call Request",
@@ -82,9 +84,31 @@
         "configuration": {
           "timeoutInSeconds": 60
         }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 1134,
+          "layoutY": 132
+        },
+        "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
+        "name": "Push to cloud",
+        "debugMode": false,
+        "configuration": {
+          "version": 0
+        }
       }
     ],
     "connections": [
+      {
+        "fromIndex": 0,
+        "toIndex": 6,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 6,
+        "type": "Success"
+      },
       {
         "fromIndex": 2,
         "toIndex": 4,
@@ -109,6 +133,11 @@
         "fromIndex": 2,
         "toIndex": 5,
         "type": "RPC Request to Device"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 6,
+        "type": "Success"
       }
     ],
     "ruleChainConnections": null

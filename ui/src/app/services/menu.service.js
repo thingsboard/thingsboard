@@ -231,12 +231,12 @@ function Menu(userService, $state, $rootScope) {
                                 {
                                     name: 'rulechain.system-rulechains',
                                     icon: 'settings_ethernet',
-                                    state: 'home.ruleChains'
+                                    state: 'home.ruleChains.system'
                                 },
                                 {
                                     name: 'rulechain.edge-rulechains',
                                     icon: 'router',
-                                    state: 'home.edgesRuleChains'
+                                    state: 'home.ruleChains.edge'
                                 }
                             ]
                         },

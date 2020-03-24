@@ -35,6 +35,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.filter.TbMsgTypeFilterNodeConfiguration;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Collections;
@@ -52,7 +53,9 @@ import java.util.List;
         nodeDescription = "Filter incoming messages by GPS based geofencing",
         nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns 'True' if they are inside configured perimeters, 'False' otherwise.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeGpsGeofencingConfig")
+        configDirective = "tbFilterNodeGpsGeofencingConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofencingFilterNodeConfiguration> {
 
     @Override

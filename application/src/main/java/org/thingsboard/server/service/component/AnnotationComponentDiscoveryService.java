@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 
 import javax.annotation.PostConstruct;
@@ -64,7 +65,9 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     private Map<String, ComponentDescriptor> components = new HashMap<>();
 
-    private Map<ComponentType, List<ComponentDescriptor>> componentsMap = new HashMap<>();
+    private Map<ComponentType, List<ComponentDescriptor>> systemComponentsMap = new HashMap<>();
+
+    private Map<ComponentType, List<ComponentDescriptor>> edgeComponentsMap = new HashMap<>();
 
     private ObjectMapper mapper = new ObjectMapper();
 
@@ -92,7 +95,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                     ComponentType type = ruleNodeAnnotation.type();
                     ComponentDescriptor component = scanAndPersistComponent(def, type);
                     components.put(component.getClazz(), component);
-                    componentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+                    putComponentIntoMaps(type, ruleNodeAnnotation, component);
                     break;
                 } catch (Exception e) {
                     log.trace("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
@@ -112,22 +115,22 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         }
     }
 
-    private void registerComponents(ComponentType type, Class<? extends Annotation> annotation) {
-        List<ComponentDescriptor> components = persist(getBeanDefinitions(annotation), type);
-        componentsMap.put(type, components);
-        registerComponents(components);
-    }
-
-    private void registerComponents(Collection<ComponentDescriptor> comps) {
-        comps.forEach(c -> components.put(c.getClazz(), c));
-    }
-
-    private List<ComponentDescriptor> persist(Set<BeanDefinition> filterDefs, ComponentType type) {
-        List<ComponentDescriptor> result = new ArrayList<>();
-        for (BeanDefinition def : filterDefs) {
-            result.add(scanAndPersistComponent(def, type));
+    private void putComponentIntoMaps(ComponentType type, RuleNode ruleNodeAnnotation, ComponentDescriptor component) {
+        if (ruleChainTypeContainsArray(RuleChainType.SYSTEM, ruleNodeAnnotation.ruleChainTypes())) {
+            systemComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
         }
-        return result;
+        if (ruleChainTypeContainsArray(RuleChainType.EDGE, ruleNodeAnnotation.ruleChainTypes())) {
+            edgeComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+        }
+    }
+
+    private boolean ruleChainTypeContainsArray(RuleChainType ruleChainType, RuleChainType[] array) {
+        for (RuleChainType tmp : array) {
+            if (ruleChainType.equals(tmp)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private ComponentDescriptor scanAndPersistComponent(BeanDefinition def, ComponentType type) {
@@ -221,25 +224,22 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     @Override
-    public List<ComponentDescriptor> getComponents(ComponentType type) {
-        if (componentsMap.containsKey(type)) {
-            return Collections.unmodifiableList(componentsMap.get(type));
+    public List<ComponentDescriptor> getComponents(Set<ComponentType> types, RuleChainType ruleChainType) {
+        if (RuleChainType.SYSTEM.equals(ruleChainType)) {
+            return getComponents(types, systemComponentsMap);
+        } else if (RuleChainType.EDGE.equals(ruleChainType)) {
+            return getComponents(types, edgeComponentsMap);
         } else {
-            return Collections.emptyList();
+            log.error("Unsupported rule chain type {}", ruleChainType);
+            throw new RuntimeException("Unsupported rule chain type " + ruleChainType);
         }
     }
 
-    @Override
-    public List<ComponentDescriptor> getComponents(Set<ComponentType> types) {
+    private List<ComponentDescriptor> getComponents(Set<ComponentType> types, Map<ComponentType, List<ComponentDescriptor>> componentsMap) {
         List<ComponentDescriptor> result = new ArrayList<>();
-        types.stream().filter(type -> componentsMap.containsKey(type)).forEach(type -> {
+        types.stream().filter(componentsMap::containsKey).forEach(type -> {
             result.addAll(componentsMap.get(type));
         });
         return Collections.unmodifiableList(result);
-    }
-
-    @Override
-    public Optional<ComponentDescriptor> getComponent(String clazz) {
-        return Optional.ofNullable(components.get(clazz));
     }
 }

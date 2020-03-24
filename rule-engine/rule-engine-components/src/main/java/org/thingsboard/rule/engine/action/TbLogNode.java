@@ -20,6 +20,7 @@ import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
@@ -36,7 +37,8 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeLogConfig",
-        icon = "menu"
+        icon = "menu",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
 )
 
 public class TbLogNode implements TbNode {

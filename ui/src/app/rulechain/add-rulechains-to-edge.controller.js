@@ -52,7 +52,7 @@ export default function AddRuleChainsToEdgeController(ruleChainService, $mdDialo
         fetchMoreItems_: function () {
             if (vm.ruleChains.hasNext && !vm.ruleChains.pending) {
                 vm.ruleChains.pending = true;
-                ruleChainService.getRuleChains(vm.ruleChains.nextPageLink).then(
+                ruleChainService.getEdgesRuleChains(vm.ruleChains.nextPageLink).then(
                     function success(ruleChains) {
                         vm.ruleChains.data = ruleChains.data;
                         vm.ruleChains.nextPageLink = ruleChains.nextPageLink;

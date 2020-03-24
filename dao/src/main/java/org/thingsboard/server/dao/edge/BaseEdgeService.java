@@ -216,7 +216,8 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
 
         dashboardService.unassignEdgeDashboards(tenantId, edgeId);
-        ruleChainService.unassignEdgeRuleChains(tenantId, edgeId);
+        // TODO: validate that rule chains are removed by deleteEntityRelations(tenantId, edgeId); call
+         ruleChainService.unassignEdgeRuleChains(tenantId, edgeId);
 
         List<Object> list = new ArrayList<>();
         list.add(edge.getTenantId());

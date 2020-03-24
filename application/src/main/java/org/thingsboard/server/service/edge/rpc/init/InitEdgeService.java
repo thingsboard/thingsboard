@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.component;
+package org.thingsboard.server.service.edge.rpc.init;
 
-import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
-import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
+import io.grpc.stub.StreamObserver;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 
-import java.util.List;
-import java.util.Set;
+public interface InitEdgeService {
 
-/**
- * @author Andrew Shvayka
- */
-public interface ComponentDiscoveryService {
+    void init(Edge edge, StreamObserver<ResponseMsg> outputStream);
 
-    void discoverComponents();
-
-    List<ComponentDescriptor> getComponents(Set<ComponentType> types, RuleChainType ruleChainType);
-
+    void initRuleChainMetadata(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg, StreamObserver<ResponseMsg> outputStream);
 }

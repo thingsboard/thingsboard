@@ -164,9 +164,9 @@ export default function RuleChainsController(ruleChainService, userService, edge
             });
             vm.ruleChainGridConfig.addItemActions.push({
                 onAction: function ($event) {
-                    importExport.importRuleChain($event).then(
+                    importExport.importRuleChain($event, types.systemRuleChainType).then(
                         function(ruleChainImport) {
-                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport});
+                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport, ruleChainType: types.systemRuleChainType});
                         }
                     );
                 },
@@ -199,6 +199,16 @@ export default function RuleChainsController(ruleChainService, userService, edge
                 name: function() { return $translate.instant('action.delete') },
                 details: function() { return $translate.instant('rulechain.delete') },
                 icon: "delete",
+                isEnabled: isNonRootRuleChain
+            });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    setDefaultRootEdgeRuleChain($event, item);
+                },
+                name: function() { return $translate.instant('rulechain.set-default-root-edge') },
+                details: function() { return $translate.instant('rulechain.set-default-root-edge') },
+                icon: "flag",
                 isEnabled: isNonRootRuleChain
             });
 
@@ -250,9 +260,9 @@ export default function RuleChainsController(ruleChainService, userService, edge
             });
             vm.ruleChainGridConfig.addItemActions.push({
                 onAction: function ($event) {
-                    importExport.importRuleChain($event).then(
+                    importExport.importRuleChain($event, types.edgeRuleChainType).then(
                         function(ruleChainImport) {
-                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport});
+                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport, ruleChainType: types.edgeRuleChainType});
                         }
                     );
                 },
@@ -366,7 +376,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
         } else if (vm.ruleChainsScope === 'edges') {
             $state.go('home.ruleChains.edge.ruleChain', {ruleChainId: ruleChain.id.id});
         } else {
-            $state.go('home.ruleChains.ruleChain', {ruleChainId: ruleChain.id.id});
+            $state.go('home.ruleChains.system.ruleChain', {ruleChainId: ruleChain.id.id});
         }
     }
 
@@ -423,6 +433,24 @@ export default function RuleChainsController(ruleChainService, userService, edge
                     }
                 );
             }
+        });
+    }
+
+    function setDefaultRootEdgeRuleChain($event, ruleChain) {
+        $event.stopPropagation();
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('rulechain.set-default-root-edge-rulechain-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.set-default-root-edge-rulechain-text'))
+            .ariaLabel($translate.instant('rulechain.set-root-rulechain-text'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            ruleChainService.setDefaultRootEdgeRuleChain(ruleChain.id.id).then(
+                () => {
+                    vm.grid.refreshList();
+                }
+            );
         });
     }
 
@@ -488,7 +516,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
             $event.stopPropagation();
         }
         var pageSize = 10;
-        ruleChainService.getRuleChains({limit: pageSize, textSearch: ''}).then(
+        ruleChainService.getEdgesRuleChains({limit: pageSize, textSearch: ''}).then(
             function success(_ruleChains) {
                 var ruleChains = {
                     pageSize: pageSize,

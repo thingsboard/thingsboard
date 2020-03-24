@@ -26,6 +26,7 @@ import org.thingsboard.rule.engine.util.EntitiesRelatedDeviceIdAsyncLoader;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
@@ -38,7 +39,9 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeDeviceAttributesConfig")
+        configDirective = "tbEnrichmentNodeDeviceAttributesConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDeviceAttrNodeConfiguration, DeviceId> {
 
     @Override
