@@ -41,6 +41,7 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Type } from '@angular/core';
 
+// @dynamic
 export class MapWidgetController implements MapWidgetInterface {
 
     constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
