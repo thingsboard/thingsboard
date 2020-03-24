@@ -80,6 +80,18 @@ export interface CsvColumnParam {
   sampleData: any;
 }
 
+export enum FileType {
+  zip = 'application/zip',
+  json = 'text/json'
+}
+
+export const FileTypeExtension = new Map<FileType, string>(
+  [
+    [FileType.zip, 'zip'],
+    [FileType.json, 'json'],
+  ]
+);
+
 export function convertCSVToJson(csvdata: string, config: CsvToJsonConfig,
                                  onError: (messageId: string, params?: any) => void): CsvToJsonResult | number {
   config = config || {};

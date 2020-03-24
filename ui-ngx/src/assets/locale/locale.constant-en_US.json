@@ -53,7 +53,8 @@
         "export": "Export",
         "share-via": "Share via {{provider}}",
         "continue": "Continue",
-        "discard-changes": "Discard Changes"
+        "discard-changes": "Discard Changes",
+        "download": "Download"
     },
     "aggregation": {
         "aggregation": "Aggregation",

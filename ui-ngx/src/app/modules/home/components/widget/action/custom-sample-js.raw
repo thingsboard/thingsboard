@@ -44,83 +44,58 @@
 /*=======================  Delete entity example  =======================*/
 /*=======================================================================*/
 //
-//var $injector = widgetContext.$scope.$injector;
-//var $mdDialog = $injector.get('$mdDialog'),
-//    $document = $injector.get('$document'),
-//    types = $injector.get('types'),
-//    assetService = $injector.get('assetService'),
-//    deviceService = $injector.get('deviceService')
-//    $rootScope = $injector.get('$rootScope'),
-//    $q = $injector.get('$q');
+//let $injector = widgetContext.$scope.$injector;
+//let dialogs = $injector.get(widgetContext.servicesMap.get('dialogs'));
+//let assetService = $injector.get(widgetContext.servicesMap.get('assetService'));
+//let deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));
 //
-//openDeleteEntityDialog();
+//openDeleteAssetDialog();
 //
-//function openDeleteEntityDialog() {
-//    var title = 'Delete ' + entityId.entityType
-//        .toLowerCase() + ' ' +
-//        entityName;
-//    var content = 'Are you sure you want to delete the ' +
-//        entityId.entityType.toLowerCase() + ' ' +
-//        entityName + '?';
-//    var confirm = $mdDialog.confirm()
-//        .targetEvent($event)
-//        .title(title)
-//        .htmlContent(content)
-//        .ariaLabel(title)
-//        .cancel('Cancel')
-//        .ok('Delete');
-//    $mdDialog.show(confirm).then(function() {
-//        deleteEntity();
-//    })
+//function openDeleteAssetDialog() {
+//    let title = "Are you sure you want to delete the " + entityId.entityType.toLowerCase() + " " + entityName +  "?";
+//    let content = "Be careful, after the confirmation, the asset and all related data will become unrecoverable!";
+//    dialogs.confirm(title, content, 'Cancel', 'Delete').subscribe(
+//        function next(result) {
+//            if (result) {
+//                deleteEntity();
+//            }
+//        }
+//    );
 //}
 //
 //function deleteEntity() {
-//    deleteEntityPromise(entityId).then(
-//        function success() {
-//            updateAliasData();
+//    deleteEntityObservable(entityId).subscribe(
+//        function next() {
+//            widgetContext.updateAliases();
 //        },
-//        function fail() {
+//        function error() {
 //            showErrorDialog();
 //        }
 //    );
 //}
 //
-//function deleteEntityPromise(entityId) {
-//    if (entityId.entityType == types.entityType.asset) {
+//function deleteEntityObservable(entityId) {
+//    if (entityId.entityType == "ASSET") {
 //        return assetService.deleteAsset(entityId.id);
-//    } else if (entityId.entityType == types.entityType.device) {
+//    } else if (entityId.entityType == "DEVICE") {
 //        return deviceService.deleteDevice(entityId.id);
 //    }
 //}
 //
-//function updateAliasData() {
-//    var aliasIds = [];
-//    for (var id in widgetContext.aliasController.resolvedAliases) {
-//        aliasIds.push(id);
-//    }
-//    var tasks = [];
-//    aliasIds.forEach(function(aliasId) {
-//        widgetContext.aliasController.setAliasUnresolved(aliasId);
-//        tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));
-//    });
-//    $q.all(tasks).then(function() {
-//        $rootScope.$broadcast('entityAliasesChanged', aliasIds);
-//    });
+//function deleteAsset() {
+//    assetService.deleteAsset(entityId.id).subscribe(
+//        function () {
+//            widgetContext.updateAliases();
+//        }
+//    );
 //}
 //
 //function showErrorDialog() {
-//    var title = 'Error';
-//    var content = 'An error occurred while deleting the entity. Please try again.';
-//    var alert = $mdDialog.alert()
-//        .title(title)
-//        .htmlContent(content)
-//        .ariaLabel(title)
-//        .parent(angular.element($document[0].body))
-//        .targetEvent($event)
-//        .multiple(true)
-//        .clickOutsideToClose(true)
-//        .ok('CLOSE');
-//    $mdDialog.show(alert);
+//    let title = 'Error';
+//    let content = 'An error occurred while deleting the entity. Please try again.';
+//    dialogs.alert(title, content, 'CLOSE').subscribe(
+//        function (result) {}
+//    );
 //}
 //
 /*=======================================================================*/

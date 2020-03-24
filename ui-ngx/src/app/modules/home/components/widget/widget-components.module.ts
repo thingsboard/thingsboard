@@ -33,6 +33,8 @@ import {
 import { MultipleInputWidgetComponent } from './lib/multiple-input-widget.component';
 import { TripAnimationComponent } from './trip-animation/trip-animation.component';
 import { WebCameraInputWidgetComponent } from './lib/web-camera-input.component';
+import { GatewayFormComponent } from './lib/gateway/gateway-form.component';
+import { DeviceGatewaySelectComponent } from './lib/gateway/device-gateway-select.component';
 
 @NgModule({
   declarations:
@@ -47,7 +49,9 @@ import { WebCameraInputWidgetComponent } from './lib/web-camera-input.component'
       DateRangeNavigatorPanelComponent,
       MultipleInputWidgetComponent,
       TripAnimationComponent,
-      WebCameraInputWidgetComponent
+      WebCameraInputWidgetComponent,
+      GatewayFormComponent,
+      DeviceGatewaySelectComponent,
     ],
   imports: [
     CommonModule,
@@ -64,7 +68,9 @@ import { WebCameraInputWidgetComponent } from './lib/web-camera-input.component'
     DateRangeNavigatorWidgetComponent,
     MultipleInputWidgetComponent,
     TripAnimationComponent,
-    WebCameraInputWidgetComponent
+    WebCameraInputWidgetComponent,
+    GatewayFormComponent,
+    DeviceGatewaySelectComponent,
   ],
   providers: [
     CustomDialogService
