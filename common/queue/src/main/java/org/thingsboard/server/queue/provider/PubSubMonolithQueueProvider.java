@@ -22,6 +22,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -29,54 +30,46 @@ import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.kafka.TBKafkaConsumerTemplate;
-import org.thingsboard.server.queue.kafka.TBKafkaProducerTemplate;
-import org.thingsboard.server.queue.kafka.TbKafkaSettings;
+import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
+import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
+import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='monolith'")
+@ConditionalOnExpression("'${queue.type:null}'=='pubsub' && '${service.type:null}'=='monolith'")
 public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEngineQueueProvider {
 
-    private final TbKafkaSettings kafkaSettings;
-    private final TbServiceInfoProvider serviceInfoProvider;
+    private final TbPubSubSettings pubSubSettings;
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueAdmin admin;
 
     private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> tbCoreProducer;
 
-    public PubSubMonolithQueueProvider(TbKafkaSettings kafkaSettings,
-                                       TbServiceInfoProvider serviceInfoProvider,
+    public PubSubMonolithQueueProvider(TbPubSubSettings pubSubSettings,
                                        TbQueueCoreSettings coreSettings,
                                        TbQueueRuleEngineSettings ruleEngineSettings,
                                        TbQueueTransportApiSettings transportApiSettings,
-                                       TbQueueTransportNotificationSettings transportNotificationSettings) {
-        this.kafkaSettings = kafkaSettings;
-        this.serviceInfoProvider = serviceInfoProvider;
+                                       TbQueueTransportNotificationSettings transportNotificationSettings,
+                                       TbQueueAdmin admin) {
+        this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.admin = admin;
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToTransportMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("monolith-transport-notifications-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(transportNotificationSettings.getNotificationsTopic());
-        return requestBuilder.build();
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, transportNotificationSettings.getNotificationsTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("monolith-rule-engine-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(ruleEngineSettings.getTopic());
-        return requestBuilder.build();
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, ruleEngineSettings.getTopic());
+
     }
 
     //TODO 2.5 Singleton
@@ -85,11 +78,8 @@ public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleE
         if (tbCoreProducer == null) {
             synchronized (this) {
                 if (tbCoreProducer == null) {
-                    TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-                    requestBuilder.settings(kafkaSettings);
-                    requestBuilder.clientId("monolith-core-" + serviceInfoProvider.getServiceId());
-                    requestBuilder.defaultTopic(coreSettings.getTopic());
-                    tbCoreProducer = requestBuilder.build();
+                    tbCoreProducer = new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
+
                 }
             }
         }
@@ -98,43 +88,24 @@ public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleE
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
-        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
-        consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(ruleEngineSettings.getTopic());
-        consumerBuilder.clientId("monolith-rule-engine-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("monolith-rule-engine-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
-        return consumerBuilder.build();
+        return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, ruleEngineSettings.getTopic(),
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> getToCoreMsgConsumer() {
-        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
-        consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(coreSettings.getTopic());
-        consumerBuilder.clientId("monolith-core-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("monolith-core-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
-        return consumerBuilder.build();
+        return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, coreSettings.getTopic(),
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> getTransportApiRequestConsumer() {
-        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<TransportApiRequestMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
-        consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(transportApiSettings.getRequestsTopic());
-        consumerBuilder.clientId("monolith-transport-api-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("monolith-transport-api-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
-        return consumerBuilder.build();
+        return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, transportApiSettings.getRequestsTopic(),
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiResponseProducer() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<TransportApiResponseMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("monolith-transport-api-producer-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(transportApiSettings.getResponsesTopic());
-        return requestBuilder.build();
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, transportApiSettings.getResponsesTopic());
     }
 }

@@ -18,11 +18,7 @@ package org.thingsboard.server.queue.pubsub;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
-import com.google.api.gax.core.CredentialsProvider;
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
@@ -35,17 +31,17 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueueProducer<T> {
 
     private final Gson gson = new Gson();
-    private final CredentialsProvider credProvider;
 
     private final String defaultTopic;
     private final TbQueueAdmin admin;
@@ -53,19 +49,12 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
 
     private final Map<String, Publisher> publisherMap = new ConcurrentHashMap<>();
 
+    private ExecutorService pubExecutor = Executors.newSingleThreadExecutor();
+
     public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic) {
         this.defaultTopic = defaultTopic;
         this.admin = admin;
         this.pubSubSettings = pubSubSettings;
-
-        try {
-            ServiceAccountCredentials credentials = ServiceAccountCredentials.fromStream(
-                    new ByteArrayInputStream(pubSubSettings.getServiceAccount().getBytes()));
-            this.credProvider = FixedCredentialsProvider.create(credentials);
-        } catch (IOException e) {
-            log.error("Failed to create PubSub credentials. [{}]", pubSubSettings, e);
-            throw new RuntimeException("Failed to create PubSub credentials.", e);
-        }
     }
 
     @Override
@@ -84,7 +73,8 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
         pubsubMessageBuilder.setData(getMsg(msg));
         pubsubMessageBuilder.putAttributes("headers", gson.toJson(msg.getHeaders().getData()));
 
-        ApiFuture<String> future = getOrCreatePublisher(tpi.getFullTopicName()).publish(pubsubMessageBuilder.build());
+        Publisher publisher = getOrCreatePublisher(tpi.getFullTopicName());
+        ApiFuture<String> future = publisher.publish(pubsubMessageBuilder.build());
 
         ApiFutures.addCallback(future, new ApiFutureCallback<String>() {
             public void onSuccess(String messageId) {
@@ -98,7 +88,7 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                     callback.onFailure(t);
                 }
             }
-        }, MoreExecutors.directExecutor());
+        }, pubExecutor);
     }
 
     @Override
@@ -113,11 +103,15 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                 }
             }
         });
+
+        if (pubExecutor != null) {
+            pubExecutor.shutdownNow();
+        }
     }
 
     private ByteString getMsg(T msg) {
         String json = gson.toJson(new DefaultTbQueueMsg(msg.getKey(), msg.getData()));
-        return ByteString.copyFromUtf8(gson.toJson(json));
+        return ByteString.copyFrom(json.getBytes());
     }
 
     private Publisher getOrCreatePublisher(String topic) {
@@ -127,12 +121,15 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
             try {
                 admin.createTopicIfNotExists(topic);
                 ProjectTopicName topicName = ProjectTopicName.of(pubSubSettings.getProjectId(), topic);
-                return publisherMap.put(topic, Publisher.newBuilder(topicName).setCredentialsProvider(credProvider).build());
+                Publisher publisher = Publisher.newBuilder(topicName).setCredentialsProvider(pubSubSettings.getCredentialsProvider()).build();
+                publisherMap.put(topic, publisher);
+                return publisher;
             } catch (IOException e) {
                 log.error("Failed to create topic [{}].", topic, e);
                 throw new RuntimeException("Failed to create topic.", e);
             }
         }
+
     }
 
 }

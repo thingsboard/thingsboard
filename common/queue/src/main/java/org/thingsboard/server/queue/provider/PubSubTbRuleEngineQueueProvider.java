@@ -20,76 +20,54 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.kafka.TBKafkaConsumerTemplate;
-import org.thingsboard.server.queue.kafka.TBKafkaProducerTemplate;
-import org.thingsboard.server.queue.kafka.TbKafkaSettings;
+import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
+import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
+import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='tb-rule-engine'")
+@ConditionalOnExpression("'${queue.type:null}'=='pubsub' && '${service.type:null}'=='tb-rule-engine'")
 public class PubSubTbRuleEngineQueueProvider implements TbRuleEngineQueueProvider {
 
-    private final TbKafkaSettings kafkaSettings;
-    private final TbServiceInfoProvider serviceInfoProvider;
+    private final TbPubSubSettings pubSubSettings;
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
-    private final TbQueueTransportApiSettings transportApiSettings;
-    private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueAdmin admin;
 
-    public PubSubTbRuleEngineQueueProvider(TbKafkaSettings kafkaSettings,
-                                           TbServiceInfoProvider serviceInfoProvider,
+    public PubSubTbRuleEngineQueueProvider(TbPubSubSettings pubSubSettings,
                                            TbQueueCoreSettings coreSettings,
                                            TbQueueRuleEngineSettings ruleEngineSettings,
-                                           TbQueueTransportApiSettings transportApiSettings,
-                                           TbQueueTransportNotificationSettings transportNotificationSettings) {
-        this.kafkaSettings = kafkaSettings;
-        this.serviceInfoProvider = serviceInfoProvider;
+                                           TbQueueAdmin admin) {
+        this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
-        this.transportApiSettings = transportApiSettings;
-        this.transportNotificationSettings = transportNotificationSettings;
+        this.admin = admin;
     }
+
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToTransportMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("tb-rule-engine-transport-notifications-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(coreSettings.getTopic());
-        return requestBuilder.build();
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("tb-rule-engine-to-rule-engine-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(coreSettings.getTopic());
-        return requestBuilder.build();
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
     }
+
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("tb-rule-engine-to-core-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(coreSettings.getTopic());
-        return requestBuilder.build();
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
+
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
-        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
-        consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(ruleEngineSettings.getTopic());
-        consumerBuilder.clientId("tb-rule-engine-rule-engine-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("tb-rule-engine-rule-engine-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
-        return consumerBuilder.build();
+        return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, ruleEngineSettings.getTopic(),
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 }
