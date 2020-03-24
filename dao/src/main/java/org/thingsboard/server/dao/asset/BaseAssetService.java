@@ -16,9 +16,9 @@
 package org.thingsboard.server.dao.asset;
 
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -64,7 +63,10 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.CacheConstants.ASSET_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-import static org.thingsboard.server.dao.service.Validator.*;
+import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
+import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service
 @Slf4j
@@ -301,9 +303,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 }
             }
             return Futures.successfulAsList(futures);
-        });
+        }, MoreExecutors.directExecutor());
         assets = Futures.transform(assets, assetList ->
-            assetList == null ? Collections.emptyList() : assetList.stream().filter(asset -> query.getAssetTypes().contains(asset.getType())).collect(Collectors.toList())
+                assetList == null ? Collections.emptyList() : assetList.stream().filter(asset -> query.getAssetTypes().contains(asset.getType())).collect(Collectors.toList()), MoreExecutors.directExecutor()
         );
         return assets;
     }
@@ -317,7 +319,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 assetTypes -> {
                     assetTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return assetTypes;
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -411,18 +413,18 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
             };
 
     private PaginatedRemover<TenantId, Asset> tenantAssetsRemover =
-        new PaginatedRemover<TenantId, Asset>() {
+            new PaginatedRemover<TenantId, Asset>() {
 
-            @Override
-            protected PageData<Asset> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                return assetDao.findAssetsByTenantId(id.getId(), pageLink);
-            }
+                @Override
+                protected PageData<Asset> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return assetDao.findAssetsByTenantId(id.getId(), pageLink);
+                }
 
-            @Override
-            protected void removeEntity(TenantId tenantId, Asset entity) {
-                deleteAsset(tenantId, new AssetId(entity.getId().getId()));
-            }
-        };
+                @Override
+                protected void removeEntity(TenantId tenantId, Asset entity) {
+                    deleteAsset(tenantId, new AssetId(entity.getId().getId()));
+                }
+            };
 
     private PaginatedRemover<CustomerId, Asset> customerAssetsUnasigner = new PaginatedRemover<CustomerId, Asset>() {
 

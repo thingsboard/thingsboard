@@ -168,7 +168,7 @@
                     class="tb-value-cell"
                     (click)="editAttribute($event, attribute)">
             <div fxLayout="row">
-              <span fxFlex>{{attribute.value}}</span>
+              <span fxFlex>{{attribute.value | tbJson}}</span>
               <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
                 <mat-icon>edit</mat-icon>
               </span>

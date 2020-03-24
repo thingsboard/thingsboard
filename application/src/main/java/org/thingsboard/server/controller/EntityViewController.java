@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -170,7 +171,7 @@ public class EntityViewController extends BaseController {
                     });
                 }
                 return null;
-            });
+            }, MoreExecutors.directExecutor());
         } else {
             return Futures.immediateFuture(null);
         }

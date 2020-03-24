@@ -51,6 +51,10 @@ let defaultDigitalGaugeOptions = Object.assign({}, canvasGauges.GenericOptions, 
 
         neonGlowBrightness: 0,
 
+        colorTicks: 'gray',
+        tickWidth: 4,
+        ticks: [],
+
         isMobile: false
 
 });
@@ -104,26 +108,39 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
         }
 
         var colorsCount = options.levelColors.length;
-        var inc = colorsCount > 1 ? (1 / (colorsCount - 1)) : 1;
+        const inc = colorsCount > 1 ? (1 / (colorsCount - 1)) : 1;
+        var isColorProperty = angular.isString(options.levelColors[0]);
+
         options.colorsRange = [];
         if (options.neonGlowBrightness) {
             options.neonColorsRange = [];
         }
-        for (var i = 0; i < options.levelColors.length; i++) {
-            var percentage = inc * i;
-            var tColor = tinycolor(options.levelColors[i]);
-            options.colorsRange[i] = {
-                pct: percentage,
-                color: tColor.toRgb(),
-                rgbString: tColor.toRgbString()
-            };
-            if (options.neonGlowBrightness) {
-                tColor = tinycolor(options.levelColors[i]).brighten(options.neonGlowBrightness);
-                options.neonColorsRange[i] = {
+
+        for (let i = 0; i < options.levelColors.length; i++) {
+            const levelColor = options.levelColors[i];
+            if (levelColor !== null) {
+                let percentage = isColorProperty ? inc * i : CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
+                let tColor = tinycolor(isColorProperty ? levelColor : levelColor.color);
+                options.colorsRange.push({
                     pct: percentage,
                     color: tColor.toRgb(),
                     rgbString: tColor.toRgbString()
-                };
+                });
+                if (options.neonGlowBrightness) {
+                    tColor = tinycolor(isColorProperty ? levelColor : levelColor.color).brighten(options.neonGlowBrightness);
+                    options.neonColorsRange.push({
+                        pct: percentage,
+                        color: tColor.toRgb(),
+                        rgbString: tColor.toRgbString()
+                    });
+                }
+            }
+        }
+
+        options.ticksValue = [];
+        for(let i = 0; i < options.ticks.length; i++){
+            if(options.ticks[i] !== null){
+                options.ticksValue.push(CanvasDigitalGauge.normalizeValue(options.ticks[i], options.minValue, options.maxValue))
             }
         }
 
@@ -135,6 +152,17 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
         }
 
         return canvasGauges.BaseGauge.configure(options);
+    }
+
+    static normalizeValue (value, min, max) {
+        let normalValue = (value - min) / (max - min);
+        if (normalValue <= 0) {
+            return 0;
+        }
+        if (normalValue >= 1) {
+            return 1;
+        }
+        return normalValue;
     }
 
     destroy() {
@@ -712,6 +740,48 @@ function drawBarGlow(context, startX, startY, endX, endY, color, strokeWidth, is
     context.stroke();
 }
 
+function drawTickArc(context, tickValues, Cx, Cy, Ri, Rm, Ro, startAngle, endAngle, color, tickWidth) {
+    if(!tickValues.length) {
+        return;
+    }
+
+    const strokeWidth = Ro - Ri;
+    context.beginPath();
+    context.lineWidth = tickWidth;
+    context.strokeStyle = color;
+    for (let i = 0; i < tickValues.length; i++) {
+        var angle = startAngle + tickValues[i] * endAngle;
+        var x1 = Cx + (Ri + strokeWidth) * Math.cos(angle);
+        var y1 = Cy + (Ri + strokeWidth) * Math.sin(angle);
+        var x2 = Cx + Ri * Math.cos(angle);
+        var y2 = Cy + Ri * Math.sin(angle);
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+    }
+    context.stroke();
+}
+
+function drawTickBar(context, tickValues, startX, startY, distanceBar, strokeWidth, isVertical, color, tickWidth) {
+    if(!tickValues.length) {
+        return;
+    }
+
+    context.beginPath();
+    context.lineWidth = tickWidth;
+    context.strokeStyle = color;
+    for (let i = 0; i < tickValues.length; i++) {
+        let tickValue = tickValues[i] * distanceBar;
+        if (isVertical) {
+            context.moveTo(startX - strokeWidth / 2, startY + tickValue - distanceBar);
+            context.lineTo(startX + strokeWidth / 2, startY + tickValue - distanceBar);
+        } else {
+            context.moveTo(startX + tickValue, startY);
+            context.lineTo(startX + tickValue, startY + strokeWidth);
+        }
+    }
+    context.stroke();
+}
+
 function drawProgress(context, options, progress) {
     var neonColor;
     if (options.neonGlowBrightness) {
@@ -742,6 +812,7 @@ function drawProgress(context, options, progress) {
         if (options.neonGlowBrightness && !options.isMobile) {
             drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, neonColor, progress, true, options.donutStartAngle, options.donutEndAngle);
         }
+        drawTickArc(context, options.ticksValue, Cx, Cy, Ri, Rm, Ro, options.donutStartAngle, options.donutEndAngle - options.donutStartAngle, options.colorTicks, options.tickWidth);
     } else if (options.gaugeType === 'arc') {
         if (options.neonGlowBrightness) {
             context.strokeStyle = neonColor;
@@ -752,6 +823,7 @@ function drawProgress(context, options, progress) {
         if (options.neonGlowBrightness && !options.isMobile) {
             drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, neonColor, progress, false);
         }
+        drawTickArc(context, options.ticksValue, Cx, Cy, Ri, Rm, Ro, Math.PI, Math.PI, options.colorTicks, options.tickWidth);
     } else if (options.gaugeType === 'horizontalBar') {
         if (options.neonGlowBrightness) {
             context.strokeStyle = neonColor;
@@ -764,6 +836,7 @@ function drawProgress(context, options, progress) {
             drawBarGlow(context, barLeft, barTop + strokeWidth/2, barLeft + (barRight-barLeft)*progress, barTop + strokeWidth/2,
                 neonColor, strokeWidth, false);
         }
+        drawTickBar(context, options.ticksValue, barLeft, barTop, barRight - barLeft, strokeWidth, false, options.colorTicks, options.tickWidth);
     } else if (options.gaugeType === 'verticalBar') {
         if (options.neonGlowBrightness) {
             context.strokeStyle = neonColor;
@@ -776,6 +849,7 @@ function drawProgress(context, options, progress) {
             drawBarGlow(context, baseX + width/2, barBottom, baseX + width/2, barBottom - (barBottom-barTop)*progress,
                 neonColor, strokeWidth, true);
         }
+        drawTickBar(context, options.ticksValue, baseX + width / 2, barTop, barTop - barBottom, strokeWidth, true, options.colorTicks, options.tickWidth);
     }
 }
 

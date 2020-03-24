@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.device;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hibernate.exception.ConstraintViolationException;
@@ -28,7 +29,13 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -328,7 +335,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 }
             }
             return Futures.successfulAsList(futures);
-        });
+        }, MoreExecutors.directExecutor());
 
         devices = Futures.transform(devices, new Function<List<Device>, List<Device>>() {
             @Nullable
@@ -336,7 +343,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             public List<Device> apply(@Nullable List<Device> deviceList) {
                 return deviceList == null ? Collections.emptyList() : deviceList.stream().filter(device -> query.getDeviceTypes().contains(device.getType())).collect(Collectors.toList());
             }
-        });
+        }, MoreExecutors.directExecutor());
 
         return devices;
     }
@@ -350,7 +357,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 deviceTypes -> {
                     deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return deviceTypes;
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -444,18 +451,18 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             };
 
     private PaginatedRemover<TenantId, Device> tenantDevicesRemover =
-        new PaginatedRemover<TenantId, Device>() {
+            new PaginatedRemover<TenantId, Device>() {
 
-            @Override
-            protected PageData<Device> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
-            }
+                @Override
+                protected PageData<Device> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
+                }
 
-            @Override
-            protected void removeEntity(TenantId tenantId, Device entity) {
-                deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
-            }
-        };
+                @Override
+                protected void removeEntity(TenantId tenantId, Device entity) {
+                    deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
+                }
+            };
 
     private PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<CustomerId, Device>() {
 

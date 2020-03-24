@@ -18,6 +18,7 @@ package org.thingsboard.server.service.script;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import delight.nashornsandbox.NashornSandbox;
 import delight.nashornsandbox.NashornSandboxes;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
@@ -28,20 +29,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -140,7 +138,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         if (maxRequestsTimeout > 0) {
             result = Futures.withTimeout(result, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
-        Futures.addCallback(result, evalCallback);
+        Futures.addCallback(result, evalCallback, MoreExecutors.directExecutor());
         return result;
     }
 
@@ -163,7 +161,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         if (maxRequestsTimeout > 0) {
             result = Futures.withTimeout(result, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
-        Futures.addCallback(result, invokeCallback);
+        Futures.addCallback(result, invokeCallback, MoreExecutors.directExecutor());
         return result;
     }
 

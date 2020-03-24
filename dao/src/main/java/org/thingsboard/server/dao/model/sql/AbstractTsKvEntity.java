@@ -36,6 +36,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLU
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.JSON_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
@@ -52,6 +53,10 @@ public abstract class AbstractTsKvEntity implements ToData<TsKvEntry> {
     @Id
     @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
     protected UUID entityId;
+
+    @Id
+    @Column(name = KEY_COLUMN)
+    protected int key;
 
     @Id
     @Column(name = TS_COLUMN)

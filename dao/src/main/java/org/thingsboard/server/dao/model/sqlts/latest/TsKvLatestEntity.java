@@ -69,10 +69,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 })
 public final class TsKvLatestEntity extends AbstractTsKvEntity {
 
-    @Id
-    @Column(name = KEY_COLUMN)
-    private int key;
-
     @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null || jsonValue != null;

@@ -18,6 +18,7 @@ package org.thingsboard.server.kafka;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -59,7 +60,7 @@ public class AsyncCallbackTemplate {
         if (executor != null) {
             Futures.addCallback(future, callback, executor);
         } else {
-            Futures.addCallback(future, callback);
+            Futures.addCallback(future, callback, MoreExecutors.directExecutor());
         }
     }
 

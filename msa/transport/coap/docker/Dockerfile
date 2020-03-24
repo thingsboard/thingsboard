@@ -25,4 +25,6 @@ RUN dpkg -i /tmp/${pkg.name}.deb
 
 RUN update-rc.d ${pkg.name} disable
 
+USER ${pkg.user}
+
 CMD ["start-tb-coap-transport.sh"]

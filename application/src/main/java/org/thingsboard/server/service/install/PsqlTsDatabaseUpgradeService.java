@@ -57,49 +57,46 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
     private static final String DROP_TABLE_TS_KV_OLD = DROP_TABLE + TS_KV_OLD;
     private static final String DROP_TABLE_TS_KV_LATEST_OLD = DROP_TABLE + TS_KV_LATEST_OLD;
 
-    private static final String DROP_FUNCTION_CHECK_VERSION = DROP_FUNCTION_IF_EXISTS + CHECK_VERSION;
-    private static final String DROP_FUNCTION_CREATE_PARTITION_TS_KV_TABLE = DROP_FUNCTION_IF_EXISTS + CREATE_PARTITION_TS_KV_TABLE;
-    private static final String DROP_FUNCTION_CREATE_NEW_TS_KV_LATEST_TABLE = DROP_FUNCTION_IF_EXISTS + CREATE_NEW_TS_KV_LATEST_TABLE;
-    private static final String DROP_FUNCTION_CREATE_PARTITIONS = DROP_FUNCTION_IF_EXISTS + CREATE_PARTITIONS;
-    private static final String DROP_FUNCTION_CREATE_TS_KV_DICTIONARY_TABLE = DROP_FUNCTION_IF_EXISTS + CREATE_TS_KV_DICTIONARY_TABLE;
-    private static final String DROP_FUNCTION_INSERT_INTO_DICTIONARY = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_DICTIONARY;
-    private static final String DROP_FUNCTION_INSERT_INTO_TS_KV = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_TS_KV;
-    private static final String DROP_FUNCTION_INSERT_INTO_TS_KV_LATEST = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_TS_KV_LATEST;
+    private static final String DROP_PROCEDURE_CREATE_PARTITION_TS_KV_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_PARTITION_TS_KV_TABLE;
+    private static final String DROP_PROCEDURE_CREATE_NEW_TS_KV_LATEST_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_NEW_TS_KV_LATEST_TABLE;
+    private static final String DROP_PROCEDURE_CREATE_PARTITIONS = DROP_PROCEDURE_IF_EXISTS + CREATE_PARTITIONS;
+    private static final String DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_TS_KV_DICTIONARY_TABLE;
+    private static final String DROP_PROCEDURE_INSERT_INTO_DICTIONARY = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_DICTIONARY;
+    private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV;
+    private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV_LATEST;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
         switch (fromVersion) {
             case "2.4.3":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Updating timeseries schema ...");
-                    log.info("Load upgrade functions ...");
-                    loadSql(conn);
+                    log.info("Check the current PostgreSQL version...");
                     boolean versionValid = checkVersion(conn);
                     if (!versionValid) {
-                        log.info("PostgreSQL version should be at least more than 10!");
-                        log.info("Please upgrade your PostgreSQL and restart the script!");
+                        throw new RuntimeException("PostgreSQL version should be at least more than 11, please upgrade your PostgreSQL and restart the script!");
                     } else {
                         log.info("PostgreSQL version is valid!");
-                        log.info("Updating schema ...");
-                        executeFunction(conn, CALL_CREATE_PARTITION_TS_KV_TABLE);
-                        executeFunction(conn, CALL_CREATE_PARTITIONS);
-                        executeFunction(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
-                        executeFunction(conn, CALL_INSERT_INTO_DICTIONARY);
-                        executeFunction(conn, CALL_INSERT_INTO_TS_KV);
-                        executeFunction(conn, CALL_CREATE_NEW_TS_KV_LATEST_TABLE);
-                        executeFunction(conn, CALL_INSERT_INTO_TS_KV_LATEST);
+                        log.info("Load upgrade functions ...");
+                        loadSql(conn);
+                        log.info("Updating timeseries schema ...");
+                        executeQuery(conn, CALL_CREATE_PARTITION_TS_KV_TABLE);
+                        executeQuery(conn, CALL_CREATE_PARTITIONS);
+                        executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
+                        executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
+                        executeQuery(conn, CALL_INSERT_INTO_TS_KV);
+                        executeQuery(conn, CALL_CREATE_NEW_TS_KV_LATEST_TABLE);
+                        executeQuery(conn, CALL_INSERT_INTO_TS_KV_LATEST);
 
-                        executeDropStatement(conn, DROP_TABLE_TS_KV_OLD);
-                        executeDropStatement(conn, DROP_TABLE_TS_KV_LATEST_OLD);
+                        executeQuery(conn, DROP_TABLE_TS_KV_OLD);
+                        executeQuery(conn, DROP_TABLE_TS_KV_LATEST_OLD);
 
-                        executeDropStatement(conn, DROP_FUNCTION_CHECK_VERSION);
-                        executeDropStatement(conn, DROP_FUNCTION_CREATE_PARTITION_TS_KV_TABLE);
-                        executeDropStatement(conn, DROP_FUNCTION_CREATE_PARTITIONS);
-                        executeDropStatement(conn, DROP_FUNCTION_CREATE_TS_KV_DICTIONARY_TABLE);
-                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_DICTIONARY);
-                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_TS_KV);
-                        executeDropStatement(conn, DROP_FUNCTION_CREATE_NEW_TS_KV_LATEST_TABLE);
-                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_TS_KV_LATEST);
+                        executeQuery(conn, DROP_PROCEDURE_CREATE_PARTITION_TS_KV_TABLE);
+                        executeQuery(conn, DROP_PROCEDURE_CREATE_PARTITIONS);
+                        executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE);
+                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_DICTIONARY);
+                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV);
+                        executeQuery(conn, DROP_PROCEDURE_CREATE_NEW_TS_KV_LATEST_TABLE);
+                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
 
                         executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN json_v json;");
                         executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");

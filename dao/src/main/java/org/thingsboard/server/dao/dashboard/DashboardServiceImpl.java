@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -33,7 +31,6 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
@@ -42,12 +39,9 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
-import org.thingsboard.server.dao.service.TimePaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
-import javax.annotation.Nullable;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -66,7 +60,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private TenantDao tenantDao;
-    
+
     @Autowired
     private CustomerDao customerDao;
 
@@ -107,7 +101,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         return dashboardDao.save(dashboard.getTenantId(), dashboard);
     }
-    
+
     @Override
     public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
@@ -323,11 +317,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                         }
                     }
                 }
-    };
-    
+            };
+
     private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =
             new PaginatedRemover<TenantId, DashboardInfo>() {
-        
+
         @Override
         protected PageData<DashboardInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
             return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
@@ -356,7 +350,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
             unassignDashboardFromCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer.getId());
         }
-        
+
     }
 
     private class CustomerDashboardsUpdater extends PaginatedRemover<Customer, DashboardInfo> {

@@ -64,7 +64,10 @@
   <div [ngClass]="dashboardClass" id="gridster-background" style="height: auto; min-height: 100%; display: inline;">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
       <gridster-item [item]="widget" class="tb-noselect" *ngFor="let widget of dashboardWidgets">
-        <div tb-fullscreen [fullscreen]="widget.isFullscreen" (fullscreenChanged)="onWidgetFullscreenChanged($event, widget)"
+        <div tb-fullscreen [fullscreen]="widget.isFullscreen"
+             [fullscreenBackgroundStyle]="dashboardStyle"
+             [fullscreenBackgroundImage]="backgroundImage"
+             (fullscreenChanged)="onWidgetFullscreenChanged($event, widget)"
              fxLayout="column"
              class="tb-widget"
              [ngClass]="{

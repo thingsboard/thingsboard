@@ -64,14 +64,26 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.common.data.DataConstants.*;
+import static org.thingsboard.server.common.data.DataConstants.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.CONNECT_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.DISCONNECT_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 /**
  * Created by ashvayka on 01.05.18.
@@ -401,7 +413,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 public void onFailure(Throwable t) {
                     log.warn("Failed to register device to the state service", t);
                 }
-            });
+            }, MoreExecutors.directExecutor());
         } else {
             sendDeviceEvent(device.getTenantId(), device.getId(), address.get(), true, false, false);
         }
@@ -456,10 +468,10 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
         if (persistToTelemetry) {
             ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
-            return Futures.transform(tsData, extractDeviceStateData(device));
+            return Futures.transform(tsData, extractDeviceStateData(device), MoreExecutors.directExecutor());
         } else {
             ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
-            return Futures.transform(attrData, extractDeviceStateData(device));
+            return Futures.transform(attrData, extractDeviceStateData(device), MoreExecutors.directExecutor());
         }
     }
 

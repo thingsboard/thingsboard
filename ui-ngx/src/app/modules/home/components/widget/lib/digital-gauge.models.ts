@@ -19,6 +19,28 @@ import { GaugeType } from '@home/components/widget/lib/canvas-digital-gauge';
 import { AnimationRule } from '@home/components/widget/lib/analogue-gauge.models';
 import { FontSettings } from '@home/components/widget/lib/settings.models';
 
+export interface AttributeSourceProperty {
+  valueSource: string;
+  entityAlias?: string;
+  attribute?: string;
+  value?: number;
+}
+
+export interface FixedLevelColors {
+  from?: AttributeSourceProperty;
+  to?: AttributeSourceProperty;
+  color: string;
+}
+
+export interface ColorLevelSetting {
+  value: number;
+  color: string;
+}
+
+export type colorLevel = Array<string | ColorLevelSetting>;
+
+export type attributesGaugeType = 'levelColors' | 'ticks';
+
 export interface DigitalGaugeSettings {
   minValue?: number;
   maxValue?: number;
@@ -38,7 +60,9 @@ export interface DigitalGaugeSettings {
   gaugeWidthScale?: number;
   defaultColor?: string;
   gaugeColor?: string;
-  levelColors?: string[];
+  useFixedLevelColor?: boolean;
+  levelColors?: colorLevel;
+  fixedLevelColors?: FixedLevelColors[];
   animation?: boolean;
   animationDuration?: number;
   animationRule?: AnimationRule;
@@ -50,6 +74,11 @@ export interface DigitalGaugeSettings {
   units?: string;
   hideValue?: boolean;
   hideMinMax?: boolean;
+  showTicks?: boolean;
+  ticksValue?: AttributeSourceProperty[];
+  ticks?: number[];
+  colorTicks?: string;
+  tickWidth?: number;
 }
 
 export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
@@ -147,12 +176,119 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
         type: 'string',
         default: null
       },
+      useFixedLevelColor: {
+        title: 'Use precise value for the color indicator',
+        type: 'boolean',
+        default: false
+      },
       levelColors: {
         title: 'Colors of indicator, from lower to upper',
         type: 'array',
         items: {
           title: 'Color',
           type: 'string'
+        }
+      },
+      fixedLevelColors: {
+        title: 'The colors for the indicator using boundary values',
+        type: 'array',
+        items: {
+          title: 'levelColor',
+          type: 'object',
+          properties: {
+            from: {
+              title: 'From',
+              type: 'object',
+              properties: {
+                valueSource: {
+                  title: '[From] Value source',
+                  type: 'string',
+                  default: 'predefinedValue'
+                },
+                entityAlias: {
+                  title: '[From] Source entity alias',
+                  type: 'string'
+                },
+                attribute: {
+                  title: '[From] Source entity attribute',
+                  type: 'string'
+                },
+                value: {
+                  title: '[From] Value (if predefined value is selected)',
+                  type: 'number'
+                }
+              }
+            },
+            to: {
+              title: 'To',
+              type: 'object',
+              properties: {
+                valueSource: {
+                  title: '[To] Value source',
+                  type: 'string',
+                  default: 'predefinedValue'
+                },
+                entityAlias: {
+                  title: '[To] Source entity alias',
+                  type: 'string'
+                },
+                attribute: {
+                  title: '[To] Source entity attribute',
+                  type: 'string'
+                },
+                value: {
+                  title: '[To] Value (if predefined value is selected)',
+                  type: 'number'
+                }
+              }
+            },
+            color: {
+              title: 'Color',
+              type: 'string'
+            }
+          }
+        }
+      },
+      showTicks: {
+        title: 'Show ticks',
+        type: 'boolean',
+        default: false
+      },
+      tickWidth: {
+        title: 'Width ticks',
+        type: 'number',
+        default: 4
+      },
+      colorTicks: {
+        title: 'Color ticks',
+        type: 'string',
+        default: '#666'
+      },
+      ticksValue: {
+        title: 'The ticks predefined value',
+        type: 'array',
+        items: {
+          title: 'tickValue',
+          type: 'object',
+          properties: {
+            valueSource: {
+              title: 'Value source',
+              type: 'string',
+              default: 'predefinedValue'
+            },
+            entityAlias: {
+              title: 'Source entity alias',
+              type: 'string'
+            },
+            attribute: {
+              title: 'Source entity attribute',
+              type: 'string'
+            },
+            value: {
+              title: 'Value (if predefined value is selected)',
+              type: 'number'
+            }
+          }
         }
       },
       animation: {
@@ -343,13 +479,95 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
       key: 'gaugeColor',
       type: 'color'
     },
+    'useFixedLevelColor',
     {
       key: 'levelColors',
+      condition: 'model.useFixedLevelColor !== true',
       items: [
         {
           key: 'levelColors[]',
           type: 'color'
         }
+      ]
+    },
+    {
+      key: 'fixedLevelColors',
+      condition: 'model.useFixedLevelColor === true',
+      items: [
+        {
+          key: 'fixedLevelColors[].from.valueSource',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'predefinedValue',
+              label: 'Predefined value (Default)'
+            },
+            {
+              value: 'entityAttribute',
+              label: 'Value taken from entity attribute'
+            }
+          ]
+        },
+        'fixedLevelColors[].from.value',
+        'fixedLevelColors[].from.entityAlias',
+        'fixedLevelColors[].from.attribute',
+        {
+          key: 'fixedLevelColors[].to.valueSource',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'predefinedValue',
+              label: 'Predefined value (Default)'
+            },
+            {
+              value: 'entityAttribute',
+              label: 'Value taken from entity attribute'
+            }
+          ]
+        },
+        'fixedLevelColors[].to.value',
+        'fixedLevelColors[].to.entityAlias',
+        'fixedLevelColors[].to.attribute',
+        {
+          key: 'fixedLevelColors[].color',
+          type: 'color'
+        }
+      ]
+    },
+    'showTicks',
+    {
+      key: 'tickWidth',
+      condition: 'model.showTicks === true'
+    },
+    {
+      key: 'colorTicks',
+      condition: 'model.showTicks === true',
+      type: 'color'
+    },
+    {
+      key: 'ticksValue',
+      condition: 'model.showTicks === true',
+      items: [
+        {
+          key: 'ticksValue[].valueSource',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'predefinedValue',
+              label: 'Predefined value (Default)'
+            },
+            {
+              value: 'entityAttribute',
+              label: 'Value taken from entity attribute'
+            }
+          ]
+        },
+        'ticksValue[].value',
+        'ticksValue[].entityAlias',
+        'ticksValue[].attribute'
       ]
     },
     'animation',
