@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.server.queue;
 
-import akka.actor.ActorRef;
-import lombok.Data;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
-/**
- * Created by ashvayka on 15.03.18.
- */
-@Data
-public final class DeviceActorToRuleEngineMsg implements TbActorMsg {
+import java.util.concurrent.atomic.AtomicInteger;
 
-    private final ActorRef callbackRef;
-    private final TbMsg tbMsg;
+public class TbQueueTbMsgCallbackWrapper implements TbQueueCallback {
+
+    private final TbMsgCallback tbMsgCallback;
+
+    public TbQueueTbMsgCallbackWrapper(TbMsgCallback tbMsgCallback) {
+        this.tbMsgCallback = tbMsgCallback;
+    }
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.DEVICE_ACTOR_TO_RULE_ENGINE_MSG;
+    public void onSuccess(TbQueueMsgMetadata metadata) {
+        tbMsgCallback.onSuccess();
+    }
+
+    @Override
+    public void onFailure(Throwable t) {
+        tbMsgCallback.onFailure(t);
     }
 }

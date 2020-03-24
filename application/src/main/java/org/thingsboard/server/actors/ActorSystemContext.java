@@ -63,7 +63,9 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.provider.TbRuleEngineQueueProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.ClusterRpcCallbackExecutorService;
@@ -150,6 +152,14 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private RuleChainService ruleChainService;
+
+    @Autowired
+    @Getter
+    private PartitionService partitionService;
+
+    @Autowired
+    @Getter
+    private TbRuleEngineQueueProvider ruleEngineQueueProvider;
 
     @Autowired
     @Getter

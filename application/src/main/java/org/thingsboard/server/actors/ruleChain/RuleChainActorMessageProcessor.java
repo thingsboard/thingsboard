@@ -18,11 +18,10 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import com.datastax.driver.core.utils.UUIDs;
-
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.EntityType;
@@ -37,10 +36,18 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.queue.MultipleTbQueueTbMsgCallbackWrapper;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.TbQueueTbMsgCallbackWrapper;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.ServiceType;
+import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,17 +63,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleChainId> {
 
-    private static final long DEFAULT_CLUSTER_PARTITION = 0L;
     private final ActorRef parent;
     private final ActorRef self;
     private final Map<RuleNodeId, RuleNodeCtx> nodeActors;
     private final Map<RuleNodeId, List<RuleNodeRelation>> nodeRoutes;
     private final RuleChainService service;
+    private final PartitionService partitionService;
+    private final TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> producer;
 
     private RuleNodeId firstId;
     private RuleNodeCtx firstNode;
     private boolean started;
-    private String ruleChainName;
 
     RuleChainActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, ActorSystemContext systemContext
             , ActorRef parent, ActorRef self) {
@@ -76,7 +83,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         this.nodeActors = new HashMap<>();
         this.nodeRoutes = new HashMap<>();
         this.service = systemContext.getRuleChainService();
-        this.ruleChainName = ruleChainId.toString();
+        this.partitionService = systemContext.getPartitionService();
+        this.producer = systemContext.getRuleEngineQueueProvider().getRuleEngineMsgProducer();
     }
 
     @Override
@@ -89,7 +97,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         if (!started) {
             RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
             if (ruleChain != null) {
-                ruleChainName = ruleChain.getName();
                 List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
                 log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
                 // Creating and starting the actors;
@@ -110,7 +117,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     public void onUpdate(ActorContext context) {
         RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
         if (ruleChain != null) {
-            ruleChainName = ruleChain.getName();
             List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
             log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
             for (RuleNode ruleNode : ruleNodeList) {
@@ -189,99 +195,111 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         state = ComponentLifecycleState.ACTIVE;
     }
 
-    void onServiceToRuleEngineMsg(QueueToRuleEngineMsg envelope) {
-        log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, envelope.getTbMsg().getId(), envelope.getTbMsg());
-        checkActive();
-        if (firstNode != null) {
-            log.trace("[{}][{}] Pushing message to first rule node", entityId, firstId);
-            pushMsgToNode(firstNode, enrichWithRuleChainId(envelope.getTbMsg()), "");
-        }
-    }
-
-    void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
-        checkActive();
-        if (firstNode != null) {
-            pushMsgToNode(firstNode, enrichWithRuleChainId(envelope.getTbMsg()), "");
+    void onQueueToRuleEngineMsg(QueueToRuleEngineMsg envelope) {
+        TbMsg msg = envelope.getTbMsg();
+        log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, msg.getId(), msg);
+        try {
+            checkActive();
+            RuleNodeId targetId = msg.getRuleNodeId();
+            RuleNodeCtx targetCtx;
+            if (targetId == null) {
+                targetCtx = firstNode;
+                msg = msg.copyWithRuleChainId(entityId);
+            } else {
+                targetCtx = nodeActors.get(targetId);
+            }
+            if (targetCtx != null) {
+                log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
+                pushMsgToNode(firstNode, msg, "");
+            } else {
+                log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
+                msg.getCallback().onSuccess();
+            }
+        } catch (Exception e) {
+            envelope.getTbMsg().getCallback().onFailure(e);
         }
     }
 
     void onRuleChainToRuleChainMsg(RuleChainToRuleChainMsg envelope) {
         checkActive();
-        if (envelope.isEnqueue()) {
-            if (firstNode != null) {
-                pushMsgToNode(firstNode, enrichWithRuleChainId(envelope.getMsg()), envelope.getFromRelationType());
-            }
+        if (firstNode != null) {
+            pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
         } else {
-            if (firstNode != null) {
-                pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
-            } else {
-//                TODO: Ack this message in Kafka
-//                TbMsg msg = envelope.getMsg();
-//                EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
-//                queue.ack(tenantId, envelope.getMsg(), ackId.getId(), msg.getClusterPartition());
-            }
+            envelope.getMsg().getCallback().onSuccess();
         }
     }
 
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
-        checkActive();
         TbMsg msg = envelope.getMsg();
-        EntityId originatorEntityId = msg.getOriginator();
-        //TODO 2.5
-//        Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(originatorEntityId);
-//        if (address.isPresent()) {
-//            onRemoteTellNext(address.get(), envelope);
-//        } else {
-            onLocalTellNext(envelope);
-//        }
-    }
-
-    private void onRemoteTellNext(ServerAddress serverAddress, RuleNodeToRuleChainTellNextMsg envelope) {
-        TbMsg msg = envelope.getMsg();
-        log.debug("Forwarding [{}] msg to remote server [{}] due to changed originator id: [{}]", msg.getId(), serverAddress, msg.getOriginator());
-        envelope = new RemoteToRuleChainTellNextMsg(envelope, tenantId, entityId);
-        //TODO 2.5
-//        systemContext.getRpcService().tell(systemContext.getEncodingService().convertToProtoDataMessage(serverAddress, envelope));
-    }
-
-    private void onLocalTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
-        TbMsg msg = envelope.getMsg();
-        RuleNodeId originatorNodeId = envelope.getOriginator();
-        List<RuleNodeRelation> relations = nodeRoutes.get(originatorNodeId).stream()
-                .filter(r -> contains(envelope.getRelationTypes(), r.getType()))
-                .collect(Collectors.toList());
-        int relationsCount = relations.size();
-        EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
-        if (relationsCount == 0) {
-            log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
-            if (ackId != null) {
-//                TODO: Ack this message in Kafka
-//                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
-            }
-        } else if (relationsCount == 1) {
-            for (RuleNodeRelation relation : relations) {
-                log.trace("[{}][{}][{}] Pushing message to single target: [{}]", tenantId, entityId, msg.getId(), relation.getOut());
-                pushToTarget(msg, relation.getOut(), relation.getType());
-            }
-        } else {
-            for (RuleNodeRelation relation : relations) {
-                EntityId target = relation.getOut();
-                log.trace("[{}][{}][{}] Pushing message to multiple targets: [{}]", tenantId, entityId, msg.getId(), relation.getOut());
-                switch (target.getEntityType()) {
-                    case RULE_NODE:
-                        enqueueAndForwardMsgCopyToNode(msg, target, relation.getType());
-                        break;
-                    case RULE_CHAIN:
-                        enqueueAndForwardMsgCopyToChain(msg, target, relation.getType());
-                        break;
+        try {
+            checkActive();
+            EntityId entityId = msg.getOriginator();
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
+            RuleNodeId originatorNodeId = envelope.getOriginator();
+            List<RuleNodeRelation> relations = nodeRoutes.get(originatorNodeId).stream()
+                    .filter(r -> contains(envelope.getRelationTypes(), r.getType()))
+                    .collect(Collectors.toList());
+            int relationsCount = relations.size();
+            if (relationsCount == 0) {
+                log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
+                //TODO 2.5: Maybe let's check that the output relation is not a Failure?
+                if (envelope.getRelationTypes().contains(TbRelationTypes.FAILURE)) {
+                    log.debug("[{}] Failure during message processing by Rule Node [{}]. Enable and see debug events for more info", entityId, envelope.getOriginator().getId());
+                    msg.getCallback().onFailure(new RuntimeException("Failure during message processing by Rule Node [" + envelope.getOriginator().getId().toString() + "]"));
+                } else {
+                    msg.getCallback().onSuccess();
+                }
+            } else if (relationsCount == 1) {
+                for (RuleNodeRelation relation : relations) {
+                    log.trace("[{}][{}][{}] Pushing message to single target: [{}]", tenantId, entityId, msg.getId(), relation.getOut());
+                    pushToTarget(tpi, msg, relation.getOut(), relation.getType());
+                }
+            } else {
+                MultipleTbQueueTbMsgCallbackWrapper callbackWrapper = new MultipleTbQueueTbMsgCallbackWrapper(relationsCount, msg.getCallback());
+                log.trace("[{}][{}][{}] Pushing message to multiple targets: [{}]", tenantId, entityId, msg.getId(), relations);
+                for (RuleNodeRelation relation : relations) {
+                    EntityId target = relation.getOut();
+                    putToQueue(tpi, msg, callbackWrapper, target);
                 }
             }
-            //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
-            if (ackId != null) {
-//                TODO: Ack this message in Kafka
-//                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
-            }
+        } catch (Exception e) {
+            msg.getCallback().onFailure(e);
         }
+    }
+
+    private void putToQueue(TopicPartitionInfo tpi, TbMsg msg, TbQueueCallback callbackWrapper, EntityId target) {
+        switch (target.getEntityType()) {
+            case RULE_NODE:
+                putToQueue(tpi, msg.copyWithRuleNodeId(entityId, new RuleNodeId(target.getId())), callbackWrapper);
+                break;
+            case RULE_CHAIN:
+                putToQueue(tpi, msg.copyWithRuleChainId(new RuleChainId(target.getId())), callbackWrapper);
+                break;
+        }
+    }
+
+    private void pushToTarget(TopicPartitionInfo tpi, TbMsg msg, EntityId target, String fromRelationType) {
+        if (tpi.isMyPartition()) {
+            switch (target.getEntityType()) {
+                case RULE_NODE:
+                    pushMsgToNode(nodeActors.get(new RuleNodeId(target.getId())), msg, fromRelationType);
+                    break;
+                case RULE_CHAIN:
+                    parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, msg, fromRelationType), self);
+                    break;
+            }
+        } else {
+            putToQueue(tpi, msg, new TbQueueTbMsgCallbackWrapper(msg.getCallback()), target);
+        }
+    }
+
+    private void putToQueue(TopicPartitionInfo tpi, TbMsg newMsg, TbQueueCallback callbackWrapper) {
+        ToRuleEngineMsg toQueueMsg = ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setTbMsg(ByteString.copyFrom(TbMsg.toByteArray(newMsg)))
+                .build();
+        producer.send(tpi, new TbProtoQueueMsg<>(newMsg.getId(), toQueueMsg), callbackWrapper);
     }
 
     private boolean contains(Set<String> relationTypes, String type) {
@@ -296,38 +314,10 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         return false;
     }
 
-    private void enqueueAndForwardMsgCopyToChain(TbMsg msg, EntityId target, String fromRelationType) {
-        RuleChainId targetRCId = new RuleChainId(target.getId());
-        TbMsg copyMsg = msg.copy(UUIDs.timeBased(), targetRCId, null, null);
-        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, copyMsg, fromRelationType, true), self);
-    }
-
-    private void enqueueAndForwardMsgCopyToNode(TbMsg msg, EntityId target, String fromRelationType) {
-        RuleNodeId targetId = new RuleNodeId(target.getId());
-        RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
-        TbMsg copy = msg.copy(UUIDs.timeBased(), entityId, targetId, null);
-        pushMsgToNode(targetNodeCtx, copy, fromRelationType);
-    }
-
-    private void pushToTarget(TbMsg msg, EntityId target, String fromRelationType) {
-        switch (target.getEntityType()) {
-            case RULE_NODE:
-                pushMsgToNode(nodeActors.get(new RuleNodeId(target.getId())), msg, fromRelationType);
-                break;
-            case RULE_CHAIN:
-                parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, msg, fromRelationType, false), self);
-                break;
-        }
-    }
-
     private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg, String fromRelationType) {
         if (nodeCtx != null) {
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg, fromRelationType), self);
         }
     }
 
-    private TbMsg enrichWithRuleChainId(TbMsg tbMsg) {
-        // We don't put firstNodeId because it may change over time;
-        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(), tbMsg.getDataType(), tbMsg.getData(), entityId, null, null);
-    }
 }

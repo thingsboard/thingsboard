@@ -331,18 +331,18 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void handleClientSideRPCRequest(ActorContext context, SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg request) {
-        UUID sessionId = getSessionId(sessionInfo);
-        JsonObject json = new JsonObject();
-        json.addProperty("method", request.getMethodName());
-        json.add("params", JsonUtils.parse(request.getParams()));
-
-        TbMsgMetaData requestMetaData = defaultMetaData.copy();
-        requestMetaData.putValue("requestId", Integer.toString(request.getRequestId()));
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, requestMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, null);
-        context.parent().tell(new DeviceActorToRuleEngineMsg(context.self(), tbMsg), context.self());
-
-        scheduleMsgWithDelay(context, new DeviceActorClientSideRpcTimeoutMsg(request.getRequestId(), systemContext.getClientSideRpcTimeout()), systemContext.getClientSideRpcTimeout());
-        toServerRpcPendingMap.put(request.getRequestId(), new ToServerRpcRequestMetadata(sessionId, getSessionType(sessionId), sessionInfo.getNodeId()));
+//        UUID sessionId = getSessionId(sessionInfo);
+//        JsonObject json = new JsonObject();
+//        json.addProperty("method", request.getMethodName());
+//        json.add("params", JsonUtils.parse(request.getParams()));
+//
+//        TbMsgMetaData requestMetaData = defaultMetaData.copy();
+//        requestMetaData.putValue("requestId", Integer.toString(request.getRequestId()));
+//        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, requestMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, null);
+//        context.parent().tell(new DeviceActorToRuleEngineMsg(context.self(), tbMsg), context.self());
+//
+//        scheduleMsgWithDelay(context, new DeviceActorClientSideRpcTimeoutMsg(request.getRequestId(), systemContext.getClientSideRpcTimeout()), systemContext.getClientSideRpcTimeout());
+//        toServerRpcPendingMap.put(request.getRequestId(), new ToServerRpcRequestMetadata(sessionId, getSessionType(sessionId), sessionInfo.getNodeId()));
     }
 
     private TransportProtos.SessionType getSessionType(UUID sessionId) {
@@ -370,10 +370,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         } else {
             log.debug("[{}][{}] Pending RPC request to server not found!", deviceId, requestId);
         }
-    }
-
-    private void pushToRuleEngine(ActorContext context, TbMsg tbMsg) {
-        context.parent().tell(new DeviceActorToRuleEngineMsg(context.self(), tbMsg), context.self());
     }
 
     void processAttributesUpdate(ActorContext context, DeviceAttributesEventNotificationMsg msg) {

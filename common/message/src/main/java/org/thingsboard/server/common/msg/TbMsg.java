@@ -19,6 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -35,7 +36,7 @@ import java.util.UUID;
  */
 @Data
 @Builder
-@AllArgsConstructor
+@Slf4j
 public final class TbMsg implements Serializable {
 
     private final UUID id;
@@ -53,6 +54,26 @@ public final class TbMsg implements Serializable {
     public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
         this(id, type, originator, metaData, dataType, data, new TbMsgTransactionData(id, originator), ruleChainId, ruleNodeId, callback);
+    }
+
+    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
+                 TbMsgTransactionData transactionData, RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
+        this.id = id;
+        this.type = type;
+        this.originator = originator;
+        this.metaData = metaData;
+        this.dataType = dataType;
+        this.data = data;
+        this.transactionData = transactionData;
+        this.ruleChainId = ruleChainId;
+        this.ruleNodeId = ruleNodeId;
+        if (callback != null) {
+            this.callback = callback;
+        } else {
+            log.warn("[{}] Created message with empty callback: {}", originator, type);
+            this.callback = TbMsgCallback.EMPTY;
+        }
+
     }
 
     public static byte[] toByteArray(TbMsg msg) {
@@ -116,8 +137,11 @@ public final class TbMsg implements Serializable {
         }
     }
 
-    public TbMsg copy(UUID newId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
-        return new TbMsg(newId, type, originator, metaData.copy(), dataType, data, transactionData, ruleChainId, ruleNodeId, callback);
+    public TbMsg copyWithRuleChainId(RuleChainId ruleChainId) {
+        return new TbMsg(this.id, this.type, this.originator, this.metaData, this.dataType, this.data, this.transactionData, ruleChainId, null, callback);
     }
 
+    public TbMsg copyWithRuleNodeId(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        return new TbMsg(this.id, this.type, this.originator, this.metaData, this.dataType, this.data, this.transactionData, ruleChainId, ruleNodeId, callback);
+    }
 }

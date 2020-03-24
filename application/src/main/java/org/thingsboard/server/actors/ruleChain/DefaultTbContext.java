@@ -65,6 +65,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.queue.discovery.ServiceType;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import scala.concurrent.duration.Duration;
 
@@ -118,10 +119,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public boolean isLocalEntity(EntityId entityId) {
-        //TODO 2.5
-//        Optional<ServerAddress> address = mainCtx.getRoutingService().resolveById(entityId);
-//        return !address.isPresent();
-        return true;
+        return mainCtx.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId).isMyPartition();
     }
 
     private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {
@@ -143,7 +141,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(UUIDs.timeBased(), type, originator, metaData.copy(), TbMsgDataType.JSON, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(),null);
+        return new TbMsg(UUIDs.timeBased(), type, originator, metaData.copy(), TbMsgDataType.JSON, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), null);
     }
 
     @Override

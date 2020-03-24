@@ -27,7 +27,6 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
-import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
@@ -89,9 +88,6 @@ public class TenantActor extends RuleChainManagerActor {
             case QUEUE_TO_RULE_ENGINE_MSG:
                 onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
-            case DEVICE_ACTOR_TO_RULE_ENGINE_MSG:
-                onDeviceActorToRuleEngineMsg((DeviceActorToRuleEngineMsg) msg);
-                break;
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
@@ -128,14 +124,6 @@ public class TenantActor extends RuleChainManagerActor {
                 //TODO: 3.1 Log it to dead letters queue;
                 tbMsg.getCallback().onSuccess();
             }
-        }
-    }
-
-    private void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg msg) {
-        if (ruleChainManager.getRootChainActor() != null) {
-            ruleChainManager.getRootChainActor().tell(msg, self());
-        } else {
-            log.info("[{}] No Root Chain: {}", tenantId, msg);
         }
     }
 

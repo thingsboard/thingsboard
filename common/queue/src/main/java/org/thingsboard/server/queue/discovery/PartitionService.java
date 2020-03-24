@@ -20,13 +20,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Once application is ready or cluster topology changes, this Service will produce {@link PartitionChangeEvent}
  */
 public interface PartitionService {
 
-    List<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType);
+    Set<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType);
 
     TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 

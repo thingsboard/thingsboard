@@ -102,7 +102,6 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
                         try {
                             TransportProtos.ToRuleEngineMsg toRuleEngineMsg = msg.getValue();
                             TenantId tenantId = new TenantId(new UUID(toRuleEngineMsg.getTenantIdMSB(), toRuleEngineMsg.getTenantIdLSB()));
-                            log.trace("Forwarding message to rule engine {}", toRuleEngineMsg);
                             if (toRuleEngineMsg.getTbMsg() != null && !toRuleEngineMsg.getTbMsg().isEmpty()) {
                                 forwardToRuleEngineActor(tenantId, toRuleEngineMsg.getTbMsg(), callback);
                             } else {
@@ -130,8 +129,8 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
 
     private void forwardToRuleEngineActor(TenantId tenantId, ByteString tbMsgData, TbMsgCallback callback) {
         TbMsg tbMsg = TbMsg.fromBytes(tbMsgData.toByteArray(), callback);
-        log.info("[{}] Received RULE ENGINE msg: {}", tbMsg.getType(), tbMsg);
         actorContext.getAppActor().tell(new QueueToRuleEngineMsg(tenantId, tbMsg), ActorRef.noSender());
+        //TODO: 2.5 before release.
 //        if (statsEnabled) {
 //            stats.log(toDeviceActorMsg);
 //        }

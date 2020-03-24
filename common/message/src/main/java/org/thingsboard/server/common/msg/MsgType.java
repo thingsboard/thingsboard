@@ -98,7 +98,6 @@ public enum MsgType {
     /**
      * Message that is sent from the Device Actor to Rule Engine. Requires acknowledgement
      */
-    DEVICE_ACTOR_TO_RULE_ENGINE_MSG,
 
     SESSION_TIMEOUT_MSG,
 

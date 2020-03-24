@@ -75,7 +75,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public void subscribe() {
-        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null));
+        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null, true));
         subscribed = false;
     }
 
