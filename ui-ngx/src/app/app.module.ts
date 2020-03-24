@@ -25,6 +25,21 @@ import { HomeModule } from '@home/home.module';
 
 import { AppComponent } from './app.component';
 import { DashboardRoutingModule } from '@modules/dashboard/dashboard-routing.module';
+import { RouterModule, Routes } from '@angular/router';
+
+const routes: Routes = [
+  { path: '**',
+    redirectTo: 'home'
+  }
+];
+
+@NgModule({
+  imports: [
+    RouterModule.forChild(routes)],
+  exports: [RouterModule]
+})
+export class PageNotFoundRoutingModule { }
+
 
 @NgModule({
   declarations: [
@@ -36,8 +51,9 @@ import { DashboardRoutingModule } from '@modules/dashboard/dashboard-routing.mod
     AppRoutingModule,
     CoreModule,
     LoginModule,
+    HomeModule,
     DashboardRoutingModule,
-    HomeModule
+    PageNotFoundRoutingModule
   ],
   providers: [],
   bootstrap: [AppComponent]
