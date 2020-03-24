@@ -164,7 +164,7 @@ public final class EdgeGrpcSession implements Cloneable {
     void processHandleMessages() throws ExecutionException, InterruptedException {
         Long queueStartTs = getQueueStartTs().get();
         // TODO: this 100 value must be changed properly
-        TimePageLink pageLink = new TimePageLink(30, queueStartTs + 1000);
+        TimePageLink pageLink = new TimePageLink(30, queueStartTs + 1000, null, true);
         TimePageData<Event> pageData;
         UUID ifOffset = null;
         do {
