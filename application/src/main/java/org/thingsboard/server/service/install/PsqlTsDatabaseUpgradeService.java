@@ -70,16 +70,15 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
         switch (fromVersion) {
             case "2.4.3":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Updating timeseries schema ...");
-                    log.info("Load upgrade functions ...");
-                    loadSql(conn);
+                    log.info("Check the current PostgreSQL version...");
                     boolean versionValid = checkVersion(conn);
                     if (!versionValid) {
-                        log.info("PostgreSQL version should be at least more than 11!");
-                        log.info("Please upgrade your PostgreSQL and restart the script!");
+                        throw new RuntimeException("PostgreSQL version should be at least more than 11, please upgrade your PostgreSQL and restart the script!");
                     } else {
                         log.info("PostgreSQL version is valid!");
-                        log.info("Updating schema ...");
+                        log.info("Load upgrade functions ...");
+                        loadSql(conn);
+                        log.info("Updating timeseries schema ...");
                         executeQuery(conn, CALL_CREATE_PARTITION_TS_KV_TABLE);
                         executeQuery(conn, CALL_CREATE_PARTITIONS);
                         executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
@@ -91,7 +90,6 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                         executeQuery(conn, DROP_TABLE_TS_KV_OLD);
                         executeQuery(conn, DROP_TABLE_TS_KV_LATEST_OLD);
 
-                        executeQuery(conn, DROP_PROCEDURE_CHECK_VERSION);
                         executeQuery(conn, DROP_PROCEDURE_CREATE_PARTITION_TS_KV_TABLE);
                         executeQuery(conn, DROP_PROCEDURE_CREATE_PARTITIONS);
                         executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE);
