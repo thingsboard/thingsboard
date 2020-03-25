@@ -41,8 +41,13 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import scala.concurrent.duration.Duration;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class TenantActor extends RuleChainManagerActor {
 
@@ -79,8 +84,21 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     protected boolean process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
-            case CLUSTER_EVENT_MSG:
-                broadcast(msg);
+            case PARTITION_CHANGE_MSG:
+                PartitionChangeMsg partitionChangeMsg = (PartitionChangeMsg) msg;
+                ServiceType serviceType = partitionChangeMsg.getServiceKey().getServiceType();
+                if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
+                    //To Rule Chain Actors
+                    broadcast(msg);
+                } else if (ServiceType.TB_CORE.equals(serviceType)) {
+                    //To Device Actors
+                    List<DeviceId> repartitionedDevices =
+                            deviceActors.keySet().stream().filter(deviceId -> !isMyPartition(deviceId)).collect(Collectors.toList());
+                    for (DeviceId deviceId : repartitionedDevices) {
+                        ActorRef deviceActor = deviceActors.remove(deviceId);
+                        context().stop(deviceActor);
+                    }
+                }
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
@@ -104,6 +122,10 @@ public class TenantActor extends RuleChainManagerActor {
                 return false;
         }
         return true;
+    }
+
+    private boolean isMyPartition(DeviceId deviceId) {
+        return systemContext.resolve(ServiceType.TB_CORE, tenantId, deviceId).isMyPartition();
     }
 
     private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
@@ -169,7 +191,7 @@ public class TenantActor extends RuleChainManagerActor {
             if (removed) {
                 log.debug("[{}] Removed actor:", terminated);
             } else {
-                log.warn("Removed actor was not found in the device map!");
+                log.debug("Removed actor was not found in the device map!");
             }
         } else {
             throw new IllegalStateException("Remote actors are not supported!");

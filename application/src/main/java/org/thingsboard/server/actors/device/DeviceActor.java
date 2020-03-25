@@ -22,6 +22,7 @@ import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
@@ -46,6 +47,11 @@ public class DeviceActor extends ContextAwareActor {
         } catch (Exception e) {
             log.warn("[{}][{}] Unknown failure", processor.tenantId, processor.deviceId, e);
         }
+    }
+
+    @Override
+    public void postStop() {
+
     }
 
     @Override

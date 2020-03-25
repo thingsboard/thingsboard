@@ -39,7 +39,9 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
 import scala.concurrent.duration.Duration;
@@ -81,7 +83,7 @@ public class AppActor extends RuleChainManagerActor {
             case SEND_TO_CLUSTER_MSG:
                 onPossibleClusterMsg((SendToClusterMsg) msg);
                 break;
-            case CLUSTER_EVENT_MSG:
+            case PARTITION_CHANGE_MSG:
                 broadcast(msg);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
@@ -131,7 +133,7 @@ public class AppActor extends RuleChainManagerActor {
 //            systemContext.getRpcService().tell(
 //                    systemContext.getEncodingService().convertToProtoDataMessage(address.get(), msg.getMsg()));
 //        } else {
-            self().tell(msg.getMsg(), ActorRef.noSender());
+        self().tell(msg.getMsg(), ActorRef.noSender());
 //        }
     }
 

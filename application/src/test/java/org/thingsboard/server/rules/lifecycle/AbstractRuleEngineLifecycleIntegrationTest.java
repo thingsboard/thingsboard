@@ -143,7 +143,8 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 TbMsgDataType.JSON,
                 "{}",
                 null, null, null);
-        actorService.onMsg(new SendToClusterMsg(device.getId(), new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg)));
+        //TODO 2.5
+//        actorService.onMsg(new SendToClusterMsg(device.getId(), new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg)));
 
         Thread.sleep(3000);
 

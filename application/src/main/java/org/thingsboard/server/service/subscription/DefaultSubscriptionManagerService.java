@@ -22,7 +22,6 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -34,21 +33,22 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateValueListProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
-import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
@@ -86,16 +86,16 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
     private TbServiceInfoProvider serviceInfoProvider;
 
     @Autowired
-    private TbCoreQueueProvider coreQueueProvider;
+    private TbQueueProducerProvider producerProvider;
 
     @Autowired
-    private LocalSubscriptionService localSubscriptionService;
+    private TbLocalSubscriptionService localSubscriptionService;
 
     @Autowired
     private DeviceStateService deviceStateService;
 
     @Autowired
-    private ActorService actorService;
+    private TbClusterService clusterService;
 
     private final Map<EntityId, Set<TbSubscription>> subscriptionsByEntityId = new ConcurrentHashMap<>();
     private final Map<String, Map<Integer, TbSubscription>> subscriptionsByWsSessionId = new ConcurrentHashMap<>();
@@ -104,13 +104,13 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
 
     private ExecutorService tsCallBackExecutor;
     private String serviceId;
-    private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> toCoreProducer;
+    private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNotificationsProducer;
 
     @PostConstruct
     public void initExecutor() {
         tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-sub-callback"));
         serviceId = serviceInfoProvider.getServiceId();
-        toCoreProducer = coreQueueProvider.getTbCoreMsgProducer();
+        toCoreNotificationsProducer = producerProvider.getTbCoreNotificationsMsgProducer();
     }
 
     @PreDestroy
@@ -241,9 +241,8 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     }
                 }
             } else if (TbAttributeSubscriptionScope.SHARED_SCOPE.name().equalsIgnoreCase(scope)) {
-                DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onUpdate(tenantId,
-                        new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, new ArrayList<>(attributes));
-                actorService.onMsg(notificationMsg);
+                clusterService.onToCoreMsg(DeviceAttributesEventNotificationMsg.onUpdate(tenantId,
+                        new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, new ArrayList<>(attributes)));
             }
         }
         callback.onSuccess();
@@ -263,7 +262,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                         localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbMsgCallback.EMPTY);
                     } else {
                         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
-                        toCoreProducer.send(tpi, toProto(s, subscriptionUpdate), null);
+                        toCoreNotificationsProducer.send(tpi, toProto(s, subscriptionUpdate), null);
                     }
                 }
             });
@@ -309,7 +308,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     });
                     if (!missedUpdates.isEmpty()) {
                         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
-                        toCoreProducer.send(tpi, toProto(subscription, missedUpdates), null);
+                        toCoreNotificationsProducer.send(tpi, toProto(subscription, missedUpdates), null);
                     }
                 },
                 e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);
@@ -333,7 +332,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     missedUpdates -> {
                         if (missedUpdates != null && !missedUpdates.isEmpty()) {
                             TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
-                            toCoreProducer.send(tpi, toProto(subscription, missedUpdates), null);
+                            toCoreNotificationsProducer.send(tpi, toProto(subscription, missedUpdates), null);
                         }
                     },
                     e -> log.error("Failed to fetch missed updates.", e),
@@ -341,7 +340,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
         }
     }
 
-    private TbProtoQueueMsg<ToCoreMsg> toProto(TbSubscription subscription, List<TsKvEntry> updates) {
+    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, List<TsKvEntry> updates) {
         TbSubscriptionUpdateProto.Builder builder = TbSubscriptionUpdateProto.newBuilder();
 
         builder.setSessionId(subscription.getSessionId());
@@ -367,7 +366,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
             builder.addData(dataBuilder.build());
         });
 
-        ToCoreMsg toCoreMsg = ToCoreMsg.newBuilder().setToLocalSubscriptionServiceMsg(
+        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(
                 LocalSubscriptionServiceMsgProto.newBuilder().setSubUpdate(builder.build()).build())
                 .build();
         return new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg);

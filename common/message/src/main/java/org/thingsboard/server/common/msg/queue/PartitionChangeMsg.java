@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.common.msg.queue;
 
-import org.thingsboard.server.common.data.Device;
+import lombok.Data;
+import lombok.Getter;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 
-public interface SessionMsgProcessor {
+import java.util.Set;
 
-    void onDeviceAdded(Device device);
+/**
+ * @author Andrew Shvayka
+ */
+@Data
+public final class PartitionChangeMsg implements TbActorMsg {
 
+    @Getter
+    private final ServiceKey serviceKey;
+    @Getter
+    private final Set<TopicPartitionInfo> partitions;
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.PARTITION_CHANGE_MSG;
+    }
 }

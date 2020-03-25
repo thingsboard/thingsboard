@@ -35,7 +35,7 @@ import java.util.Optional;
 public class ToDeviceRpcRequestActorMsg implements ToDeviceActorNotificationMsg {
 
     @Getter
-    private final ServerAddress serverAddress;
+    private final String serviceId;
     @Getter
     private final ToDeviceRpcRequest msg;
 

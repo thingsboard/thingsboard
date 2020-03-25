@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.AllArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 
 import java.util.Objects;
 

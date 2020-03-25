@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cluster;
+package org.thingsboard.server.service.rpc;
 
-import lombok.Data;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 
 /**
- * @author Andrew Shvayka
+ * Created by ashvayka on 16.04.18.
  */
-@Data
-public final class ClusterEventMsg implements TbActorMsg {
+public interface TbRuleEngineDeviceRpcService extends RuleEngineRpcService {
 
-    private final ServerAddress serverAddress;
-    private final boolean added;
+    /**
+     * Handles the RPC response from the Device Actor (Transport).
+     *
+     * @param response the RPC response
+     */
+    void processRpcResponseFromDevice(FromDeviceRpcResponse response);
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CLUSTER_EVENT_MSG;
-    }
 }

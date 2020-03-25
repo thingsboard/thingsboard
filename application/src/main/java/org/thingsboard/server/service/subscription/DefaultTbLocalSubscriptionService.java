@@ -33,10 +33,10 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
-import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class DefaultLocalSubscriptionService implements LocalSubscriptionService {
+public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionService {
 
     private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
     private final Map<String, Map<Integer, TbSubscription>> subscriptionsBySessionId = new ConcurrentHashMap<>();
@@ -68,7 +68,7 @@ public class DefaultLocalSubscriptionService implements LocalSubscriptionService
     private PartitionService partitionService;
 
     @Autowired
-    private TbCoreQueueProvider coreQueueProvider;
+    private TbQueueProducerProvider producerProvider;
 
     @Autowired
     @Lazy
@@ -80,7 +80,7 @@ public class DefaultLocalSubscriptionService implements LocalSubscriptionService
     @PostConstruct
     public void initExecutor() {
         wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ws-sub-callback"));
-        toCoreProducer = coreQueueProvider.getTbCoreMsgProducer();
+        toCoreProducer = producerProvider.getTbCoreMsgProducer();
     }
 
     @PreDestroy

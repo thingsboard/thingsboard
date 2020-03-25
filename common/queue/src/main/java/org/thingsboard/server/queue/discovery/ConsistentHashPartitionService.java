@@ -24,6 +24,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceKey;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 
@@ -156,8 +159,6 @@ public class ConsistentHashPartitionService implements PartitionService {
                 Set<TopicPartitionInfo> tpiList = partitions.stream()
                         .map(partition -> buildTopicPartitionInfo(serviceKey, partition))
                         .collect(Collectors.toSet());
-                // Adding notifications topic for every @TopicPartitionInfo list
-                tpiList.add(getNotificationsTopic(serviceKey.getServiceType(), serviceInfoProvider.getServiceId()));
                 applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceKey, tpiList));
             }
         });
@@ -184,6 +185,35 @@ public class ConsistentHashPartitionService implements PartitionService {
         }
     }
 
+    @Override
+    public Set<String> getAllServiceIds(ServiceType serviceType) {
+        Set<String> result = new HashSet<>();
+        ServiceInfo current = serviceInfoProvider.getServiceInfo();
+        if (current.getServiceTypesList().contains(serviceType.name())) {
+            result.add(current.getServiceId());
+        }
+        for (ServiceInfo serviceInfo : currentOtherServices) {
+            if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                result.add(serviceInfo.getServiceId());
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId) {
+        switch (serviceType) {
+            case TB_CORE:
+                return tbCoreNotificationTopics.computeIfAbsent(serviceId,
+                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
+            case TB_RULE_ENGINE:
+                return tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
+                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
+            default:
+                return buildNotificationsTopicPartitionInfo(serviceType, serviceId);
+        }
+    }
+
     private Map<ServiceKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
         final Map<ServiceKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {
@@ -196,22 +226,8 @@ public class ConsistentHashPartitionService implements PartitionService {
         return currentMap;
     }
 
-    @Override
-    public TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId) {
-        switch (serviceType) {
-            case TB_CORE:
-                return tbCoreNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildTopicPartitionInfo(serviceType, serviceId));
-            case TB_RULE_ENGINE:
-                return tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildTopicPartitionInfo(serviceType, serviceId));
-            default:
-                return buildTopicPartitionInfo(serviceType, serviceId);
-        }
-    }
-
-    private TopicPartitionInfo buildTopicPartitionInfo(ServiceType serviceType, String serviceId) {
-        return new TopicPartitionInfo(serviceType.name().toLowerCase() + "." + serviceId, null, null, false);
+    private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {
+        return new TopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
     }
 
     private TopicPartitionInfo buildTopicPartitionInfo(ServiceKey serviceKey, int partition) {

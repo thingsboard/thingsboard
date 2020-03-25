@@ -15,20 +15,18 @@
  */
 package org.thingsboard.server.queue.provider;
 
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 
 /**
- * Responsible for initialization of various Producers and Consumers used by TB Core Node.
- * Implementation Depends on the queue queue.type from yml or TB_QUEUE_TYPE environment variable
+ * Responsible for providing various Producers to other services.
  */
-public interface TbRuleEngineQueueProvider {
+public interface TbQueueProducerProvider {
 
     /**
      * Used to push messages to instances of TB Transport Service
@@ -59,24 +57,10 @@ public interface TbRuleEngineQueueProvider {
     TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer();
 
     /**
-     * Used to push notifications to other instances of TB Core Service
+     * Used to push messages to other instances of TB Core Service
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer();
-
-    /**
-     * Used to consume messages by TB Core Service
-     *
-     * @return
-     */
-    TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer();
-
-    /**
-     * Used to consume high priority messages by TB Core Service
-     *
-     * @return
-     */
-    TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getToRuleEngineNotificationsMsgConsumer();
+    TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer();
 
 }

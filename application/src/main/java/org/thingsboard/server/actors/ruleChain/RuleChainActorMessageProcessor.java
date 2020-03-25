@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -35,7 +34,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -45,9 +44,8 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueTbMsgCallbackWrapper;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,7 +80,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         this.nodeActors = new HashMap<>();
         this.nodeRoutes = new HashMap<>();
         this.service = systemContext.getRuleChainService();
-        this.producer = systemContext.getRuleEngineQueueProvider().getRuleEngineMsgProducer();
+        this.producer = systemContext.getProducerProvider().getRuleEngineMsgProducer();
     }
 
     @Override
@@ -153,8 +151,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     @Override
-    public void onClusterEventMsg(ClusterEventMsg msg) {
-
+    public void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        nodeActors.values().stream().map(RuleNodeCtx::getSelfActor).forEach(actorRef -> actorRef.tell(msg, self));
     }
 
     private ActorRef createRuleNodeActor(ActorContext context, RuleNode ruleNode) {

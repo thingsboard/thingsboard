@@ -39,10 +39,10 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
-import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -73,7 +73,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private TimeseriesService tsService;
 
     @Autowired
-    private TbCoreQueueProvider coreQueueProvider;
+    private TbQueueProducerProvider producerProvider;
 
     @Autowired
     private PartitionService partitionService;
@@ -90,7 +90,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     public void initExecutor() {
         tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-service-ts-callback"));
         wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-service-ws-callback"));
-        toCoreProducer = coreQueueProvider.getTbCoreMsgProducer();
+        toCoreProducer = producerProvider.getTbCoreMsgProducer();
     }
 
     @PreDestroy

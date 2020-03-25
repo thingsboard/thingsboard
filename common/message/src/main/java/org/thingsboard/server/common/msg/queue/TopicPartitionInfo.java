@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.common.msg.queue;
 
 import lombok.Builder;
 import lombok.Getter;

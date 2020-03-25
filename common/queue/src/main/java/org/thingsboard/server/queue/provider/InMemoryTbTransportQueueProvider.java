@@ -39,17 +39,17 @@ import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='in-memory' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
-public class InMemoryTransportQueueProvider implements TransportQueueProvider {
+public class InMemoryTbTransportQueueProvider implements TbTransportQueueProvider {
 
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings notificationSettings;
 
-    public InMemoryTransportQueueProvider(TbQueueCoreSettings coreSettings,
-                                          TbQueueRuleEngineSettings ruleEngineSettings,
-                                          TbQueueTransportApiSettings transportApiSettings,
-                                          TbQueueTransportNotificationSettings notificationSettings) {
+    public InMemoryTbTransportQueueProvider(TbQueueCoreSettings coreSettings,
+                                            TbQueueRuleEngineSettings ruleEngineSettings,
+                                            TbQueueTransportApiSettings transportApiSettings,
+                                            TbQueueTransportNotificationSettings notificationSettings) {
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;

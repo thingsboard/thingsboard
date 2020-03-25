@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import scala.concurrent.duration.Duration;
 
@@ -51,7 +52,8 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
                 processor.onRuleChainToRuleChainMsg((RuleChainToRuleChainMsg) msg);
                 break;
-            case CLUSTER_EVENT_MSG:
+            case PARTITION_CHANGE_MSG:
+                onClusterEventMsg((PartitionChangeMsg) msg);
                 break;
             case STATS_PERSIST_TICK_MSG:
                 onStatsPersistTick(id);

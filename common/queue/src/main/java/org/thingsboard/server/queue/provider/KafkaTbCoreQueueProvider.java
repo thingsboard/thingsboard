@@ -17,6 +17,14 @@ package org.thingsboard.server.queue.provider;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -24,11 +32,7 @@ import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.queue.kafka.TBKafkaProducerTemplate;
@@ -38,6 +42,7 @@ import org.thingsboard.server.queue.kafka.TbKafkaSettings;
 @ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='tb-core'")
 public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
 
+    private final PartitionService partitionService;
     private final TbKafkaSettings kafkaSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueCoreSettings coreSettings;
@@ -45,14 +50,13 @@ public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
-    private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> tbCoreProducer;
-
-    public KafkaTbCoreQueueProvider(TbKafkaSettings kafkaSettings,
-                                      TbServiceInfoProvider serviceInfoProvider,
-                                      TbQueueCoreSettings coreSettings,
-                                      TbQueueRuleEngineSettings ruleEngineSettings,
-                                      TbQueueTransportApiSettings transportApiSettings,
-                                      TbQueueTransportNotificationSettings transportNotificationSettings) {
+    public KafkaTbCoreQueueProvider(PartitionService partitionService, TbKafkaSettings kafkaSettings,
+                                    TbServiceInfoProvider serviceInfoProvider,
+                                    TbQueueCoreSettings coreSettings,
+                                    TbQueueRuleEngineSettings ruleEngineSettings,
+                                    TbQueueTransportApiSettings transportApiSettings,
+                                    TbQueueTransportNotificationSettings transportNotificationSettings) {
+        this.partitionService = partitionService;
         this.kafkaSettings = kafkaSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;
@@ -80,19 +84,30 @@ public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
     }
 
     @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
+        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-core-rule-engine-notifications-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(ruleEngineSettings.getTopic());
+        return requestBuilder.build();
+    }
+
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        if (tbCoreProducer == null) {
-            synchronized (this) {
-                if (tbCoreProducer == null) {
-                    TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-                    requestBuilder.settings(kafkaSettings);
-                    requestBuilder.clientId("tb-core-to-core-" + serviceInfoProvider.getServiceId());
-                    requestBuilder.defaultTopic(coreSettings.getTopic());
-                    tbCoreProducer = requestBuilder.build();
-                }
-            }
-        }
-        return tbCoreProducer;
+        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-core-to-core-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(coreSettings.getTopic());
+        return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
+        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreNotificationMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-core-to-core-notifications-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(coreSettings.getTopic());
+        return requestBuilder.build();
     }
 
     @Override
@@ -103,6 +118,17 @@ public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
         consumerBuilder.clientId("tb-core-consumer-" + serviceInfoProvider.getServiceId());
         consumerBuilder.groupId("tb-core-node-" + serviceInfoProvider.getServiceId());
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        return consumerBuilder.build();
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> getToCoreNotificationsMsgConsumer() {
+        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToCoreNotificationMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
+        consumerBuilder.settings(kafkaSettings);
+        consumerBuilder.topic(partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName());
+        consumerBuilder.clientId("tb-core-notifications-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("tb-core-notifications-node-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
         return consumerBuilder.build();
     }
 
@@ -125,4 +151,5 @@ public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
         requestBuilder.defaultTopic(coreSettings.getTopic());
         return requestBuilder.build();
     }
+
 }

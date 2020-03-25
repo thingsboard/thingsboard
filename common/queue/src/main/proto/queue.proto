@@ -337,6 +337,12 @@ message LocalSubscriptionServiceMsgProto {
   TbSubscriptionUpdateProto subUpdate = 1;
 }
 
+message FromDeviceRPCResponseProto {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  string response = 3;
+  int32 error = 4;
+}
 /**
  * Main messages;
  */
@@ -359,7 +365,14 @@ message ToCoreMsg {
   TransportToDeviceActorMsg toDeviceActorMsg = 1;
   DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
-  LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 4;
+  bytes toDeviceActorNotificationMsg = 4;
+}
+
+/* High priority messages with low latency are handled by ThingsBoard Core Service separately */
+message ToCoreNotificationMsg {
+  LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
+  FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+  bytes componentLifecycleMsg = 3;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -367,6 +380,11 @@ message ToRuleEngineMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   bytes tbMsg = 3;
+}
+
+message ToRuleEngineNotificationMsg {
+  bytes componentLifecycleMsg = 1;
+  FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
 }
 
 /* Messages that are handled by ThingsBoard Transport Service */

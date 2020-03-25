@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -48,9 +48,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -67,8 +65,8 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.ServiceType;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import scala.concurrent.duration.Duration;
 
@@ -155,12 +153,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void sendTbMsgToRuleEngine(TbMsg tbMsg) {
-        TenantId tenantId = getTenantId();
-        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, tenantId, tbMsg.getOriginator());
-        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder().setTbMsg(TbMsg.toByteString(tbMsg))
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
-        mainCtx.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), null);
+        mainCtx.getClusterService().onToRuleEngineMsg(getTenantId(), tbMsg.getOriginator(), tbMsg);
     }
 
     public TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId) {
@@ -351,36 +344,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public RuleEngineRpcService getRpcService() {
-        return new RuleEngineRpcService() {
-            @Override
-            public void sendRpcReply(DeviceId deviceId, int requestId, String body) {
-                mainCtx.getDeviceRpcService().sendReplyToRpcCallFromDevice(nodeCtx.getTenantId(), deviceId, requestId, body);
-            }
-
-            @Override
-            public void sendRpcRequest(RuleEngineDeviceRpcRequest src, Consumer<RuleEngineDeviceRpcResponse> consumer) {
-                ToDeviceRpcRequest request = new ToDeviceRpcRequest(src.getRequestUUID(), nodeCtx.getTenantId(), src.getDeviceId(),
-                        src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()));
-                mainCtx.getDeviceRpcService().forwardServerSideRPCRequestToDeviceActor(request, response -> {
-                    if (src.isRestApiCall()) {
-                        //TODO 2.5
-//                        ServerAddress requestOriginAddress;
-//                        if (!StringUtils.isEmpty(src.getOriginHost())) {
-//                            requestOriginAddress = new ServerAddress(src.getOriginHost(), src.getOriginPort(), ServerType.CORE);
-//                        } else {
-//                            requestOriginAddress = mainCtx.getRoutingService().getCurrentServer();
-//                        }
-//                        mainCtx.getDeviceRpcService().processResponseToServerSideRPCRequestFromRuleEngine(requestOriginAddress, response);
-                    }
-                    consumer.accept(RuleEngineDeviceRpcResponse.builder()
-                            .deviceId(src.getDeviceId())
-                            .requestId(src.getRequestId())
-                            .error(response.getError())
-                            .response(response.getResponse())
-                            .build());
-                });
-            }
-        };
+        return mainCtx.getTbRuleEngineDeviceRpcService();
     }
 
     @Override

@@ -17,6 +17,8 @@ package org.thingsboard.server.queue.discovery;
 
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.List;
@@ -39,11 +41,18 @@ public interface PartitionService {
     void recalculatePartitions(TransportProtos.ServiceInfo currentService, List<TransportProtos.ServiceInfo> otherServices);
 
     /**
+     * Get all active service ids by service type
+     * @param serviceType to filter the list of services
+     * @return list of all active services
+     */
+    Set<String> getAllServiceIds(ServiceType serviceType);
+
+    /**
      * Each Service should start a consumer for messages that target individual service instance based on serviceId.
      * This topic is likely to have single partition, and is always assigned to the service.
-     * @param tbCore
+     * @param serviceType
      * @param serviceId
      * @return
      */
-    TopicPartitionInfo getNotificationsTopic(ServiceType tbCore, String serviceId);
+    TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId);
 }

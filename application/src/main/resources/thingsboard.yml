@@ -540,6 +540,8 @@ queue:
     response_poll_interval: "${TB_QUEUE_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
   core:
     topic: "${TB_QUEUE_CORE_TOPIC:tb.core}"
+    # For high priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_CORE_NOTIFICATIONS_TOPIC:tb.rule-engine.notifications}"
     poll_interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     pack_processing_timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:60000}"
@@ -548,6 +550,8 @@ queue:
       print_interval_ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:10000}"
   rule_engine:
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb.rule-engine}"
+    # For high priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_RULE_ENGINE_NOTIFICATIONS_TOPIC:tb.rule-engine.notifications}"
     poll_interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_RULE_ENGINE_PARTITIONS:10}"
     pack_processing_timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:60000}"
@@ -561,6 +565,7 @@ queue:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:false}"
       print_interval_ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
   transport:
+    # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
     poll_interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
 

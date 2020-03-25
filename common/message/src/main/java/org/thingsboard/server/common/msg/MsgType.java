@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.msg;
 
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 
 /**
@@ -26,9 +27,9 @@ public enum MsgType {
     /**
      * ADDED/UPDATED/DELETED events for server nodes.
      *
-     * See {@link org.thingsboard.server.common.msg.cluster.ClusterEventMsg}
+     * See {@link PartitionChangeMsg}
      */
-    CLUSTER_EVENT_MSG,
+    PARTITION_CHANGE_MSG,
 
     APP_INIT_MSG,
 

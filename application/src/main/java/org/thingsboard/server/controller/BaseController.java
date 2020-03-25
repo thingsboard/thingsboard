@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -71,8 +70,6 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -93,13 +90,10 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
-import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -168,7 +162,7 @@ public abstract class BaseController {
     protected RuleChainService ruleChainService;
 
     @Autowired
-    protected ActorService actorService;
+    protected TbClusterService tbClusterService;
 
     @Autowired
     protected RelationService relationService;
@@ -195,7 +189,7 @@ public abstract class BaseController {
     protected PartitionService partitionService;
 
     @Autowired
-    protected TbCoreQueueProvider coreQueueProvider;
+    protected TbQueueProducerProvider producerProvider;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -674,12 +668,7 @@ public abstract class BaseController {
                 TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, entityId, metaData, TbMsgDataType.JSON
                         , json.writeValueAsString(entityNode)
                         , null, null, null);
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, user.getTenantId(), entityId);
-                TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
-                        .setTenantIdMSB(user.getTenantId().getId().getMostSignificantBits())
-                        .setTenantIdLSB(user.getTenantId().getId().getLeastSignificantBits())
-                        .setTbMsg(TbMsg.toByteString(tbMsg)).build();
-                coreQueueProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), null);
+                tbClusterService.onToRuleEngineMsg(user.getTenantId(), entityId, tbMsg);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }

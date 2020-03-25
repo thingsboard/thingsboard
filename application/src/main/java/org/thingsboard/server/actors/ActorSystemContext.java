@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,6 +45,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -63,14 +65,9 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
-import org.thingsboard.server.queue.provider.TbRuleEngineQueueProvider;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.ClusterRpcCallbackExecutorService;
@@ -78,7 +75,9 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
-import org.thingsboard.server.service.rpc.DeviceRpcService;
+import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
+import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
@@ -163,7 +162,11 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private TbRuleEngineQueueProvider ruleEngineQueueProvider;
+    private TbClusterService clusterService;
+
+    @Autowired
+    @Getter
+    private TbQueueProducerProvider producerProvider;
 
     @Autowired
     @Getter
@@ -196,10 +199,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;
-
-    @Autowired
-    @Getter
-    private DeviceRpcService deviceRpcService;
 
     @Autowired
     @Getter
@@ -245,6 +244,22 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TbCoreToTransportService tbCoreToTransportService;
+
+    /**
+     * The following Service will be null if we operate in tb-core mode
+     */
+    @Lazy
+    @Getter
+    @Autowired(required = false)
+    private TbRuleEngineDeviceRpcService tbRuleEngineDeviceRpcService;
+
+    /**
+     * The following Service will be null if we operate in tb-rule-engine mode
+     */
+    @Lazy
+    @Getter
+    @Autowired(required = false)
+    private TbCoreDeviceRpcService tbCoreDeviceRpcService;
 
     @Lazy
     @Autowired
@@ -404,14 +419,6 @@ public class ActorSystemContext {
 
     private JsonNode toBodyJson(String serviceId, String method, String body) {
         return mapper.createObjectNode().put("server", serviceId).put("method", method).put("error", body);
-    }
-
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> getTbCoreMsgProducer() {
-        return ruleEngineQueueProvider.getTbCoreMsgProducer();
-    }
-
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-        return ruleEngineQueueProvider.getRuleEngineMsgProducer();
     }
 
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {

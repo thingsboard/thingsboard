@@ -27,7 +27,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.Properties;
 import java.util.stream.Collectors;
