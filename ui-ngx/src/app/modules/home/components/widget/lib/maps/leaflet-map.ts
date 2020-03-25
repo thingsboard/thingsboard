@@ -170,8 +170,8 @@ export default abstract class LeafletMap {
                 this.map.setZoom(this.options.defaultZoomLevel, { animate: false });
                 this.map.panTo(bounds.getCenter(), { animate: false });
             } else {
-                this.map.once('zoomend', function () {
-                    if (!this.options.defaultZoomLevel && this.options.map.getZoom() > this.options.minZoomLevel) {
+                this.map.once('zoomend', () => {
+                    if (!this.options.defaultZoomLevel && this.map.getZoom() > this.options.minZoomLevel) {
                         this.map.setZoom(this.options.minZoomLevel, { animate: false });
                     }
                 });
