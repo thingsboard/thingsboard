@@ -20,6 +20,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
@@ -31,7 +32,9 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Filter incoming messages by message Originator Type",
         nodeDetails = "If Originator Type of incoming message is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeOriginatorTypeConfig")
+        configDirective = "tbFilterNodeOriginatorTypeConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbOriginatorTypeFilterNode implements TbNode {
 
     TbOriginatorTypeFilterNodeConfiguration config;

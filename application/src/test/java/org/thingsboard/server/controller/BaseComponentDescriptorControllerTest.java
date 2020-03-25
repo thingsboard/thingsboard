@@ -66,29 +66,16 @@ public abstract class BaseComponentDescriptorControllerTest extends AbstractCont
     }
 
     @Test
-    public void testGetByClazz() throws Exception {
-        ComponentDescriptor descriptor =
-                doGet("/api/component/" + TbJsFilterNode.class.getName(), ComponentDescriptor.class);
-
-        Assert.assertNotNull(descriptor);
-        Assert.assertNotNull(descriptor.getId());
-        Assert.assertNotNull(descriptor.getName());
-        Assert.assertEquals(ComponentScope.TENANT, descriptor.getScope());
-        Assert.assertEquals(ComponentType.FILTER, descriptor.getType());
-        Assert.assertEquals(descriptor.getClazz(), descriptor.getClazz());
-    }
-
-    @Test
     public void testGetByType() throws Exception {
         List<ComponentDescriptor> descriptors = readResponse(
-                doGet("/api/components/" + ComponentType.FILTER).andExpect(status().isOk()), new TypeReference<List<ComponentDescriptor>>() {
+                doGet("/api/components/SYSTEM?componentTypes={componentTypes}", ComponentType.FILTER).andExpect(status().isOk()), new TypeReference<List<ComponentDescriptor>>() {
                 });
 
         Assert.assertNotNull(descriptors);
         Assert.assertTrue(descriptors.size() >= AMOUNT_OF_DEFAULT_FILTER_NODES);
 
         for (ComponentType type : ComponentType.values()) {
-            doGet("/api/components/" + type).andExpect(status().isOk());
+            doGet("/api/components/SYSTEM?componentTypes={componentTypes}", type).andExpect(status().isOk());
         }
     }
 

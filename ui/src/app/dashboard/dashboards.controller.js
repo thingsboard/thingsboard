@@ -20,6 +20,8 @@ import dashboardCard from './dashboard-card.tpl.html';
 import addDashboardsToCustomerTemplate from './add-dashboards-to-customer.tpl.html';
 import makeDashboardPublicDialogTemplate from './make-dashboard-public-dialog.tpl.html';
 import manageAssignedCustomersTemplate from './manage-assigned-customers.tpl.html';
+import manageAssignedEdgesTemplate from './manage-assigned-edges.tpl.html';
+import addDashboardsToEdgeTemplate from './add-dashboards-to-edge.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -55,10 +57,11 @@ export function DashboardCardController(types) {
 }
 
 /*@ngInject*/
-export function DashboardsController(userService, dashboardService, customerService, importExport, types,
-                                             $state, $stateParams, $mdDialog, $document, $q, $translate) {
+export function DashboardsController(userService, dashboardService, customerService, importExport, edgeService,
+                                             $state, $stateParams, $mdDialog, $document, $q, $translate, types) {
 
     var customerId = $stateParams.customerId;
+    var edgeId = $stateParams.edgeId;
 
     var dashboardActionsList = [
         {
@@ -154,6 +157,17 @@ export function DashboardsController(userService, dashboardService, customerServ
             );
         }
 
+        if (edgeId) {
+            vm.edgeDashboardsTitle = $translate.instant('edge.dashboards');
+            edgeService.getEdge(edgeId).then(
+                function success(edge) {
+                    if (edge.customerId) {
+                        vm.edgeCustomerId = edge.customerId;
+                    }
+                }
+            )
+        }
+
         if (vm.dashboardsScope === 'tenant') {
             fetchDashboardsFunction = function (pageLink) {
                 return dashboardService.getTenantDashboards(pageLink);
@@ -208,6 +222,14 @@ export function DashboardsController(userService, dashboardService, customerServ
                     return dashboard;
                 }
             });
+            dashboardActionsList.push({
+                onAction: function ($event, item) {
+                    manageAssignedEdges($event, item);
+                },
+                name: function() { return $translate.instant('action.assign') },
+                details: function() { return $translate.instant('dashboard.manage-assigned-edges') },
+                icon: "wifi_tethering"
+            });
 
             /*dashboardActionsList.push({
                     onAction: function ($event, item) {
@@ -240,6 +262,32 @@ export function DashboardsController(userService, dashboardService, customerServ
                     name: function() { return $translate.instant('action.delete') },
                     details: function() { return $translate.instant('dashboard.delete') },
                     icon: "delete"
+                }
+            );
+
+            dashboardGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        assignDashboardsToEdges($event, items);
+                    },
+                    name: function() { return $translate.instant('dashboard.assign-dashboards') },
+                    details: function(selectedCount) {
+                        return $translate.instant('dashboard.assign-dashboards-to-edge-text', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "wifi_tethering"
+                }
+            );
+
+            dashboardGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        unassignDashboardsFromEdges($event, items);
+                    },
+                    name: function() { return $translate.instant('dashboard.unassign-dashboards') },
+                    details: function(selectedCount) {
+                        return $translate.instant('dashboard.unassign-dashboards-from-edge-action-text', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "portable_wifi_off"
                 }
             );
 
@@ -374,6 +422,60 @@ export function DashboardsController(userService, dashboardService, customerServ
             } else if (vm.dashboardsScope === 'customer_user') {
                 vm.dashboardGridConfig.addItemAction = {};
             }
+        } else if (vm.dashboardsScope === 'edge') {
+            fetchDashboardsFunction = function (pageLink) {
+                return dashboardService.getEdgeDashboards(edgeId, pageLink);
+            };
+            deleteDashboardFunction = function (dashboardId) {
+                return dashboardService.unassignDashboardFromEdge(edgeId, dashboardId);
+            };
+            refreshDashboardsParamsFunction = function () {
+                return {"edgeId": edgeId, "topIndex": vm.topIndex};
+            };
+
+            dashboardActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        exportDashboard($event, item);
+                    },
+                    name: function() { $translate.instant('action.export') },
+                    details: function() { return $translate.instant('dashboard.export') },
+                    icon: "file_download"
+                }
+            );
+
+            dashboardActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        unassignFromEdge($event, item, edgeId);
+                    },
+                    name: function() { return $translate.instant('action.unassign') },
+                    details: function() { return $translate.instant('dashboard.unassign-from-edge') },
+                    icon: "assignment_return"
+                }
+            );
+
+            dashboardGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        unassignDashboardsFromEdge($event, items, edgeId);
+                    },
+                    name: function() { return $translate.instant('dashboard.unassign-dashboards') },
+                    details: function(selectedCount) {
+                        return $translate.instant('dashboard.unassign-dashboards-from-edge-action-title', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "assignment_return"
+                }
+            );
+
+            vm.dashboardGridConfig.addItemAction = {
+                onAction: function ($event) {
+                    addDashboardsToEdge($event);
+                },
+                name: function() { return $translate.instant('dashboard.assign-dashboards') },
+                details: function() { return $translate.instant('dashboard.assign-new-dashboard') },
+                icon: "add"
+            };
         }
 
         vm.dashboardGridConfig.refreshParamsFunc = refreshDashboardsParamsFunction;
@@ -610,5 +712,126 @@ export function DashboardsController(userService, dashboardService, customerServ
         } else {
             $state.go('home.dashboards.dashboard', {dashboardId: dashboard.id.id});
         }
+    }
+
+    function manageAssignedEdges($event, dashboard) {
+        showManageAssignedEdgesDialog($event, [dashboard.id.id], 'manage', dashboard.assignedEdgesIds);
+    }
+
+    function assignDashboardsToEdges($event, items) {
+        var dashboardIds = [];
+        for (var id in items.selections) {
+            dashboardIds.push(id);
+        }
+        showManageAssignedEdgesDialog($event, dashboardIds, 'assign');
+    }
+
+    function unassignDashboardsFromEdges($event, items) {
+        var dashboardIds = [];
+        for (var id in items.selections) {
+            dashboardIds.push(id);
+        }
+        showManageAssignedEdgesDialog($event, dashboardIds, 'unassign');
+    }
+
+    function unassignDashboardsFromEdge($event, items, edgeId) {
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('dashboard.unassign-dashboards-title', {count: items.selectedCount}, 'messageformat'))
+            .htmlContent($translate.instant('dashboard.unassign-dashboards-from-edge-text'))
+            .ariaLabel($translate.instant('dashboard.unassign-dashboards'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            var tasks = [];
+            for (var id in items.selections) {
+                tasks.push(dashboardService.unassignDashboardFromEdge(edgeId, id));
+            }
+            $q.all(tasks).then(function () {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
+    function showManageAssignedEdgesDialog($event, dashboardIds, actionType, assignedEdges) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $mdDialog.show({
+            controller: 'ManageAssignedEdgesToDashboardController',
+            controllerAs: 'vm',
+            templateUrl: manageAssignedEdgesTemplate,
+            locals: {actionType: actionType, dashboardIds: dashboardIds, assignedEdges: assignedEdges},
+            parent: angular.element($document[0].body),
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function () {
+            vm.grid.refreshList();
+        }, function () {
+        });
+    }
+
+    function addDashboardsToEdge($event) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var pageSize = 10;
+        var fetchDashboardsPromise;
+        if (vm.edgeCustomerId.id === vm.types.id.nullUid) {
+            fetchDashboardsPromise = dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''});
+        } else {
+            fetchDashboardsPromise = dashboardService.getCustomerDashboards(vm.edgeCustomerId.id, {limit: pageSize, textSearch: ''});
+        }
+
+        fetchDashboardsPromise.then(
+            function success(_dashboards) {
+                var dashboards = {
+                    pageSize: pageSize,
+                    data: _dashboards.data,
+                    nextPageLink: _dashboards.nextPageLink,
+                    selections: {},
+                    selectedCount: 0,
+                    hasNext: _dashboards.hasNext,
+                    pending: false
+                };
+                if (dashboards.hasNext) {
+                    dashboards.nextPageLink.limit = pageSize;
+                }
+                $mdDialog.show({
+                    controller: 'AddDashboardsToEdgeController',
+                    controllerAs: 'vm',
+                    templateUrl: addDashboardsToEdgeTemplate,
+                    locals: {edgeId: edgeId, edgeCustomerId: vm.edgeCustomerId.id, dashboards: dashboards},
+                    parent: angular.element($document[0].body),
+                    fullscreen: true,
+                    targetEvent: $event
+                }).then(function () {
+                    vm.grid.refreshList();
+                }, function () {
+                });
+            },
+            function fail() {
+            });
+    }
+
+    function unassignFromEdge($event, dashboard, edgeId) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var title = $translate.instant('dashboard.unassign-dashboard-title', {dashboardTitle: dashboard.title});
+        var content = $translate.instant('dashboard.unassign-dashboard-from-edge-text');
+        var label = $translate.instant('dashboard.unassign-dashboard');
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title(title)
+            .htmlContent(content)
+            .ariaLabel(label)
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            dashboardService.unassignDashboardFromEdge(edgeId, dashboard.id.id).then(function success() {
+                vm.grid.refreshList();
+            });
+        });
     }
 }

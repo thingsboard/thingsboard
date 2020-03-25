@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.HashSet;
@@ -46,7 +47,8 @@ import java.util.HashSet;
                 "Alarm Originator found only in case original Originator is <code>Alarm</code> entity.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeChangeOriginatorConfig",
-        icon = "find_replace"
+        icon = "find_replace",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
 )
 public class TbChangeOriginatorNode extends TbAbstractTransformNode {
 

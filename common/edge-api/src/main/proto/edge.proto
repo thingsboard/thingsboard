@@ -24,7 +24,7 @@ package edge;
 // Interface exported by the ThingsBoard Edge Transport.
 service EdgeRpcService {
 
-    rpc handleMsgs(stream RequestMsg) returns (stream ResponseMsg) {}
+  rpc handleMsgs(stream RequestMsg) returns (stream ResponseMsg) {}
 
 }
 
@@ -32,59 +32,59 @@ service EdgeRpcService {
  * Data Structures;
  */
 message RequestMsg {
-    RequestMsgType msgType = 1;
-    ConnectRequestMsg connectRequestMsg = 2;
-    UplinkMsg uplinkMsg = 3;
+  RequestMsgType msgType = 1;
+  ConnectRequestMsg connectRequestMsg = 2;
+  UplinkMsg uplinkMsg = 3;
 }
 
 message ResponseMsg {
-    ConnectResponseMsg connectResponseMsg = 1;
-    UplinkResponseMsg uplinkResponseMsg = 2;
-    EntityUpdateMsg entityUpdateMsg = 3;
-    DownlinkMsg downlinkMsg = 4;
+  ConnectResponseMsg connectResponseMsg = 1;
+  UplinkResponseMsg uplinkResponseMsg = 2;
+  EntityUpdateMsg entityUpdateMsg = 3;
+  DownlinkMsg downlinkMsg = 4;
 }
 
 message EntityUpdateMsg {
-    DeviceUpdateMsg deviceUpdateMsg = 1;
-    RuleChainUpdateMsg ruleChainUpdateMsg = 2;
-    RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 3;
-    DashboardUpdateMsg dashboardUpdateMsg = 4;
-    AssetUpdateMsg assetUpdateMsg = 5;
-    EntityViewUpdateMsg entityViewUpdateMsg = 6;
-    AlarmUpdateMsg alarmUpdateMsg = 7;
-    UserUpdateMsg userUpdateMsg = 8;
-    CustomerUpdateMsg customerUpdateMsg = 9;
+  DeviceUpdateMsg deviceUpdateMsg = 1;
+  RuleChainUpdateMsg ruleChainUpdateMsg = 2;
+  RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 3;
+  DashboardUpdateMsg dashboardUpdateMsg = 4;
+  AssetUpdateMsg assetUpdateMsg = 5;
+  EntityViewUpdateMsg entityViewUpdateMsg = 6;
+  AlarmUpdateMsg alarmUpdateMsg = 7;
+  UserUpdateMsg userUpdateMsg = 8;
+  CustomerUpdateMsg customerUpdateMsg = 9;
 }
 
 enum RequestMsgType {
-    CONNECT_RPC_MESSAGE = 0;
-    UPLINK_RPC_MESSAGE = 1;
+  CONNECT_RPC_MESSAGE = 0;
+  UPLINK_RPC_MESSAGE = 1;
 }
 
 message ConnectRequestMsg {
-    string edgeRoutingKey = 1;
-    string edgeSecret = 2;
+  string edgeRoutingKey = 1;
+  string edgeSecret = 2;
 }
 
 enum ConnectResponseCode {
-    ACCEPTED = 0;
-    BAD_CREDENTIALS = 1;
-    SERVER_UNAVAILABLE = 2;
+  ACCEPTED = 0;
+  BAD_CREDENTIALS = 1;
+  SERVER_UNAVAILABLE = 2;
 }
 
 message ConnectResponseMsg {
-    ConnectResponseCode responseCode = 1;
-    string errorMsg = 2;
-    EdgeConfiguration configuration = 3;
+  ConnectResponseCode responseCode = 1;
+  string errorMsg = 2;
+  EdgeConfiguration configuration = 3;
 }
 
 message EdgeConfiguration {
-    int64 tenantIdMSB = 1;
-    int64 tenantIdLSB = 2;
-    string name = 5;
-    string routingKey = 6;
-    string type = 7;
-    string cloudType = 8;
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string name = 3;
+  string routingKey = 4;
+  string type = 5;
+  string cloudType = 6;
 }
 
 enum UpdateMsgType {
@@ -224,6 +224,11 @@ message UserUpdateMsg {
     string password = 13;
 }
 
+message RuleChainMetadataRequestMsg {
+  int64 ruleChainIdMSB = 1;
+  int64 ruleChainIdLSB = 2;
+}
+
 enum EntityType {
     DEVICE = 0;
     ASSET = 1;
@@ -234,18 +239,20 @@ enum EntityType {
  */
 
 message UplinkMsg {
-    int32 uplinkMsgId = 1;
-    repeated EntityDataProto entityData = 2;
-    repeated DeviceUpdateMsg deviceUpdateMsg = 3;
-    repeated AlarmUpdateMsg alarmUpdatemsg = 4;
+  int32 uplinkMsgId = 1;
+  repeated EntityDataProto entityData = 2;
+  repeated DeviceUpdateMsg deviceUpdateMsg = 3;
+  repeated AlarmUpdateMsg alarmUpdateMsg = 4;
+  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 5;
 }
 
 message UplinkResponseMsg {
-    bool success = 1;
-    string errorMsg = 2;
+  bool success = 1;
+  string errorMsg = 2;
 }
 
 message DownlinkMsg {
-    int32 downlinkMsgId = 1;
-    repeated EntityDataProto entityData = 2;
+  int32 downlinkMsgId = 1;
+  repeated EntityDataProto entityData = 2;
 }
+

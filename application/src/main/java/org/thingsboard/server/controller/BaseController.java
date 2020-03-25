@@ -60,6 +60,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -502,6 +503,18 @@ public abstract class BaseController {
         }
     }
 
+    Edge checkEdgeId(EdgeId edgeId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(edgeId, "Incorrect edgeId " + edgeId);
+            Edge edge = edgeService.findEdgeById(getTenantId(), edgeId);
+            checkNotNull(edge);
+            accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edgeId, edge);
+            return edge;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     DashboardInfo checkDashboardInfoId(DashboardId dashboardId, Operation operation) throws ThingsboardException {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
@@ -514,28 +527,10 @@ public abstract class BaseController {
         }
     }
 
-    ComponentDescriptor checkComponentDescriptorByClazz(String clazz) throws ThingsboardException {
-        try {
-            log.debug("[{}] Lookup component descriptor", clazz);
-            return checkNotNull(componentDescriptorService.getComponent(clazz));
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
-    List<ComponentDescriptor> checkComponentDescriptorsByType(ComponentType type) throws ThingsboardException {
-        try {
-            log.debug("[{}] Lookup component descriptors", type);
-            return componentDescriptorService.getComponents(type);
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
-    List<ComponentDescriptor> checkComponentDescriptorsByTypes(Set<ComponentType> types) throws ThingsboardException {
+    List<ComponentDescriptor> checkComponentDescriptorsByTypes(Set<ComponentType> types, RuleChainType ruleChainType) throws ThingsboardException {
         try {
             log.debug("[{}] Lookup component descriptors", types);
-            return componentDescriptorService.getComponents(types);
+            return componentDescriptorService.getComponents(types, ruleChainType);
         } catch (Exception e) {
             throw handleException(e, false);
         }
@@ -555,18 +550,6 @@ public abstract class BaseController {
         checkNotNull(ruleNode);
         checkRuleChain(ruleNode.getRuleChainId(), operation);
         return ruleNode;
-    }
-
-    Edge checkEdgeId(EdgeId edgeId, Operation operation) throws ThingsboardException {
-        try {
-            validateId(edgeId, "Incorrect edgeId " + edgeId);
-            Edge edge = edgeService.findEdgeById(getTenantId(), edgeId);
-            checkNotNull(edge);
-            accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edgeId, edge);
-            return edge;
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
     }
 
     protected String constructBaseUrl(HttpServletRequest request) {
@@ -682,7 +665,7 @@ public abstract class BaseController {
                     String strCustomerName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedCustomerId", strCustomerId);
                     metaData.putValue("unassignedCustomerName", strCustomerName);
-                } else if (actionType == ActionType.ASSIGNED_TO_EDGE) {
+                } if (actionType == ActionType.ASSIGNED_TO_EDGE) {
                     String strEdgeId = extractParameter(String.class, 1, additionalInfo);
                     metaData.putValue("assignedEdgeId", strEdgeId);
                 } else if (actionType == ActionType.UNASSIGNED_FROM_EDGE) {

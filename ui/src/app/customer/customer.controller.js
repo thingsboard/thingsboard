@@ -79,6 +79,20 @@ export default function CustomerController(customerService, $state, $stateParams
         },
         {
             onAction: function ($event, item) {
+                openCustomerEdges($event, item);
+            },
+            name: function() { return $translate.instant('edge.edges') },
+            details: function(customer) {
+                if (customer && customer.additionalInfo && customer.additionalInfo.isPublic) {
+                    return $translate.instant('customer.manage-public-edges')
+                } else {
+                    return $translate.instant('customer.manage-customer-edges')
+                }
+            },
+            icon: "wifi_tethering"
+        },
+        {
+            onAction: function ($event, item) {
                 vm.grid.deleteItem($event, item);
             },
             name: function() { return $translate.instant('action.delete') },
@@ -214,5 +228,12 @@ export default function CustomerController(customerService, $state, $stateParams
             $event.stopPropagation();
         }
         $state.go('home.customers.dashboards', {customerId: customer.id.id});
+    }
+
+    function openCustomerEdges($event, customer) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $state.go('home.customers.edges', {customerId: customer.id.id});
     }
 }

@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -56,7 +57,8 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "Changes message originator to related entity view and produces new messages according to count of updated entity views",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
-        icon = "content_copy"
+        icon = "content_copy",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
 )
 public class TbCopyAttributesToEntityViewNode implements TbNode {
 

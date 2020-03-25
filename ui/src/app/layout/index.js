@@ -55,6 +55,7 @@ import thingsboardEntityView from '../entity-view';
 import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
 import thingsboardRuleChain from '../rulechain';
+import thingsboardEdge from '../edge';
 
 import thingsboardJsonForm from '../jsonform';
 
@@ -100,7 +101,8 @@ export default angular.module('thingsboard.home', [
     thingsboardGatewayConfigSelect,
     thingsboardGatewayForm,
     thingsboardJsonObjectEdit,
-    thingsboardJsonContent
+    thingsboardJsonContent,
+    thingsboardEdge
 ])
     .config(HomeRoutes)
     .controller('HomeController', HomeController)

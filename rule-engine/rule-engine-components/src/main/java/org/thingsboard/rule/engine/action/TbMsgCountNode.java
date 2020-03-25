@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -42,7 +43,8 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         nodeDetails = "Count incoming messages for specified interval and produces POST_TELEMETRY_REQUEST msg with messages count",
         icon = "functions",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeMsgCountConfig"
+        configDirective = "tbActionNodeMsgCountConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
 )
 public class TbMsgCountNode implements TbNode {
 

@@ -86,9 +86,9 @@ public class EdgeController extends BaseController {
             Edge result = checkNotNull(edgeService.saveEdge(edge));
 
             if (created) {
-                RuleChain rootTenantRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
-                ruleChainService.assignRuleChainToEdge(tenantId, rootTenantRuleChain.getId(), result.getId());
-                edgeService.setRootRuleChain(tenantId, result, rootTenantRuleChain.getId());
+                RuleChain defaultRootEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenantId);
+                ruleChainService.assignRuleChainToEdge(tenantId, defaultRootEdgeRuleChain.getId(), result.getId());
+                edgeService.setRootRuleChain(tenantId, result, defaultRootEdgeRuleChain.getId());
             }
 
             logEntityAction(result.getId(), result, null, created ? ActionType.ADDED : ActionType.UPDATED, null);

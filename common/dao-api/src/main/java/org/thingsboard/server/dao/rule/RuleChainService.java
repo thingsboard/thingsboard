@@ -70,11 +70,15 @@ public interface RuleChainService {
 
     RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId);
 
-    RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId);
+    RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId, boolean remove);
 
     void unassignEdgeRuleChains(TenantId tenantId, EdgeId edgeId);
 
     void updateEdgeRuleChains(TenantId tenantId, EdgeId edgeId);
 
     PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
+
+    RuleChain getDefaultRootEdgeRuleChain(TenantId tenantId);
+
+    boolean setDefaultRootEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 }

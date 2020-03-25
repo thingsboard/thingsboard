@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -46,9 +45,6 @@ import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import scala.concurrent.duration.Duration;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class TenantActor extends RuleChainManagerActor {
 
@@ -148,7 +144,6 @@ public class TenantActor extends RuleChainManagerActor {
                 return;
             }
         }
-
         ActorRef target = getEntityActorRef(msg.getEntityId());
         if (target != null) {
             if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN && ruleChain != null) {

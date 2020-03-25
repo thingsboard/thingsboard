@@ -67,4 +67,5 @@ public class DataConstants {
     public static final String DURATION_MS_FIELD_NAME = "durationMs";
 
     public static final String EDGE_QUEUE_EVENT_TYPE = "EDGE_QUEUE";
+
 }

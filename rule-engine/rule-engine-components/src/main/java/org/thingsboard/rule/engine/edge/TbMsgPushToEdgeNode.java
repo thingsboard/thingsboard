@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 @Slf4j
 @RuleNode(
@@ -39,6 +40,11 @@ import org.thingsboard.server.common.msg.TbMsg;
 )
 public class TbMsgPushToEdgeNode implements TbNode {
 
+    private static final String CLOUD_MSG_SOURCE = "cloud";
+    private static final String EDGE_MSG_SOURCE = "edge";
+    private static final String MSG_SOURCE_KEY = "source";
+    private static final String TS_METADATA_KEY = "ts";
+
     private EmptyNodeConfiguration config;
 
     @Override
@@ -48,6 +54,13 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        if (EDGE_MSG_SOURCE.equalsIgnoreCase(msg.getMetaData().getValue(MSG_SOURCE_KEY))) {
+            return;
+        }
+        if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
+            msg.getMetaData().putValue(TS_METADATA_KEY, Long.toString(System.currentTimeMillis()));
+        }
+        msg.getMetaData().putValue(MSG_SOURCE_KEY, CLOUD_MSG_SOURCE);
         ctx.getEdgeService().pushEventToEdge(ctx.getTenantId(), msg, new PushToEdgeNodeCallback(ctx, msg));
     }
 

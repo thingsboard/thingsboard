@@ -774,7 +774,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             x = scrollLeft + scrollParent.width()/2;
             y = scrollTop + scrollParent.height()/2;
         }
-        var ruleNodes = itembuffer.pasteRuleNodes(x, y, event);
+        var ruleNodes = itembuffer.pasteRuleNodes(vm.ruleChain.type, x, y);
         if (ruleNodes) {
             vm.modelservice.deselectAll();
             var nodes = [];
@@ -972,7 +972,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         var nodes = [];
         for (var i=0;i<vm.ruleChainMetaData.nodes.length;i++) {
             var ruleNode = vm.ruleChainMetaData.nodes[i];
-            var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
+            var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type, vm.ruleChain.type);
             if (component) {
                 var icon = vm.types.ruleNodeType[component.type].icon;
                 var iconUrl = null;
@@ -1179,6 +1179,9 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     function saveRuleChain() {
         var saveRuleChainPromise;
         if (vm.isImport) {
+            if (angular.isUndefined(vm.ruleChain.type)) {
+                vm.ruleChain.type = types.systemRuleChainType;
+            }
             saveRuleChainPromise = ruleChainService.saveRuleChain(vm.ruleChain);
         } else {
             saveRuleChainPromise = $q.when(vm.ruleChain);
@@ -1266,7 +1269,11 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                             vm.isDirty = false;
                             vm.isImport = false;
                             $mdUtil.nextTick(() => {
-                                $state.go('home.ruleChains.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                if (vm.ruleChain.type === vm.types.systemRuleChainType) {
+                                    $state.go('home.ruleChains.system.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                } else {
+                                    $state.go('home.ruleChains.edge.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                }
                             });
                         } else {
                             prepareRuleChain();
@@ -1286,6 +1293,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         ruleNode.configuration = angular.copy(ruleNode.component.configurationDescriptor.nodeDefinition.defaultConfiguration);
 
         var ruleChainId = vm.ruleChain.id ? vm.ruleChain.id.id : null;
+        var ruleChainType = vm.ruleChain.type ? vm.ruleChain.type : types.systemRuleChainType;
 
         vm.enableHotKeys = false;
 
@@ -1294,7 +1302,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             controllerAs: 'vm',
             templateUrl: addRuleNodeTemplate,
             parent: angular.element($document[0].body),
-            locals: {ruleNode: ruleNode, ruleChainId: ruleChainId},
+            locals: {ruleNode: ruleNode, ruleChainId: ruleChainId, ruleChainType: ruleChainType},
             fullscreen: true,
             targetEvent: $event
         }).then(function (ruleNode) {
@@ -1365,13 +1373,14 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 }
 
 /*@ngInject*/
-export function AddRuleNodeController($scope, $mdDialog, ruleNode, ruleChainId, helpLinks) {
+export function AddRuleNodeController($scope, $mdDialog, ruleNode, ruleChainId, ruleChainType, helpLinks) {
 
     var vm = this;
 
     vm.helpLinks = helpLinks;
     vm.ruleNode = ruleNode;
     vm.ruleChainId = ruleChainId;
+    vm.ruleChainType = ruleChainType;
 
     vm.add = add;
     vm.cancel = cancel;

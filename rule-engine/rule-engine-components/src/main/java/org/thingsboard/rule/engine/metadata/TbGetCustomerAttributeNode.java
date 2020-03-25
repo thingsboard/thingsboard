@@ -22,6 +22,7 @@ import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 
 @RuleNode(
         type = ComponentType.ENRICHMENT,
@@ -33,7 +34,9 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
                 "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.temperature</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
+        configDirective = "tbEnrichmentNodeCustomerAttributesConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {
 
     @Override

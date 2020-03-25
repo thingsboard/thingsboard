@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 
 @Slf4j
 @RuleNode(
@@ -35,7 +36,9 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
                 "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.temperature</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeTenantAttributesConfig")
+        configDirective = "tbEnrichmentNodeTenantAttributesConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
 
     @Override

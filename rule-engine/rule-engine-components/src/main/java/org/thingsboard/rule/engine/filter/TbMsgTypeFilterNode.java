@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 /**
@@ -33,7 +34,9 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Filter incoming messages by Message Type",
         nodeDetails = "If incoming MessageType is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeMessageTypeConfig")
+        configDirective = "tbFilterNodeMessageTypeConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbMsgTypeFilterNode implements TbNode {
 
     TbMsgTypeFilterNodeConfiguration config;

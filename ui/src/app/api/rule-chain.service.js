@@ -19,7 +19,7 @@ export default angular.module('thingsboard.api.ruleChain', [])
 /*@ngInject*/
 function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, componentDescriptorService) {
 
-    var ruleNodeComponents = null;
+    var ruleNodeComponents = {};
 
     var service = {
         getRuleChains: getRuleChains,
@@ -35,12 +35,20 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         ruleNodeAllowCustomLinks: ruleNodeAllowCustomLinks,
         resolveTargetRuleChains: resolveTargetRuleChains,
         testScript: testScript,
-        getLatestRuleNodeDebugInput: getLatestRuleNodeDebugInput
+        getLatestRuleNodeDebugInput: getLatestRuleNodeDebugInput,
+        updateRuleChainEdges: updateRuleChainEdges,
+        addRuleChainEdges: addRuleChainEdges,
+        removeRuleChainEdges: removeRuleChainEdges,
+        getEdgeRuleChains: getEdgeRuleChains,
+        getEdgesRuleChains: getEdgesRuleChains,
+        assignRuleChainToEdge: assignRuleChainToEdge,
+        unassignRuleChainFromEdge: unassignRuleChainFromEdge,
+        setDefaultRootEdgeRuleChain: setDefaultRootEdgeRuleChain
     };
 
     return service;
 
-    function getRuleChains (pageLink, config) {
+    function getRuleChains(pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/ruleChains?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -52,8 +60,11 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
         }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
+        }
         $http.get(url, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareRuleChains(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -64,7 +75,7 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         var deferred = $q.defer();
         var url = '/api/ruleChain/' + ruleChainId;
         $http.get(url, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareRuleChain(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -74,8 +85,8 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
     function saveRuleChain(ruleChain) {
         var deferred = $q.defer();
         var url = '/api/ruleChain';
-        $http.post(url, ruleChain).then(function success(response) {
-            deferred.resolve(response.data);
+        $http.post(url, cleanRuleChain(ruleChain)).then(function success(response) {
+            deferred.resolve(prepareRuleChain(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -143,20 +154,20 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return component.configurationDescriptor.nodeDefinition.customRelations;
     }
 
-    function getRuleNodeComponents() {
+    function getRuleNodeComponents(ruleChainType) {
         var deferred = $q.defer();
-        if (ruleNodeComponents) {
-            deferred.resolve(ruleNodeComponents);
+        if (ruleNodeComponents[ruleChainType]) {
+            deferred.resolve(ruleNodeComponents[ruleChainType]);
         } else {
-            loadRuleNodeComponents().then(
+            loadRuleNodeComponents(ruleChainType).then(
                 (components) => {
                     resolveRuleNodeComponentsUiResources(components).then(
                         (components) => {
-                            ruleNodeComponents = components;
-                            ruleNodeComponents.push(
+                            ruleNodeComponents[ruleChainType] = components;
+                            ruleNodeComponents[ruleChainType].push(
                                 types.ruleChainNodeComponent
                             );
-                            ruleNodeComponents.sort(
+                            ruleNodeComponents[ruleChainType].sort(
                                 (comp1, comp2) => {
                                     var result = comp1.type.localeCompare(comp2.type);
                                     if (result == 0) {
@@ -165,7 +176,7 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
                                     return result;
                                 }
                             );
-                            deferred.resolve(ruleNodeComponents);
+                            deferred.resolve(ruleNodeComponents[ruleChainType]);
                         },
                         () => {
                             deferred.reject();
@@ -222,8 +233,8 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
-    function getRuleNodeComponentByClazz(clazz) {
-        var res = $filter('filter')(ruleNodeComponents, {clazz: clazz}, true);
+    function getRuleNodeComponentByClazz(clazz, ruleNodeType) {
+        var res = $filter('filter')(ruleNodeComponents[ruleNodeType], {clazz: clazz}, true);
         if (res && res.length) {
             return res[0];
         }
@@ -262,7 +273,7 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         var deferred = $q.defer();
         getRuleChain(ruleChainId, {ignoreErrors: true}).then(
             (ruleChain) => {
-                deferred.resolve(ruleChain);
+                deferred.resolve(prepareRuleChain(ruleChain));
             },
             () => {
                 deferred.resolve({
@@ -273,8 +284,8 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
-    function loadRuleNodeComponents() {
-        return componentDescriptorService.getComponentDescriptorsByTypes(types.ruleNodeTypeComponentTypes);
+    function loadRuleNodeComponents(ruleChainType) {
+        return componentDescriptorService.getComponentDescriptorsByTypes(types.ruleNodeTypeComponentTypes, ruleChainType);
     }
 
     function testScript(inputParams) {
@@ -299,4 +310,123 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
+    function updateRuleChainEdges(ruleChainId, edgeIds) {
+        var deferred = $q.defer();
+        var url = '/api/ruleChain/' + ruleChainId + '/edges';
+        $http.post(url, edgeIds).then(function success(response) {
+            deferred.resolve(prepareRuleChain(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function addRuleChainEdges(ruleChainId, edgeIds) {
+        var deferred = $q.defer();
+        var url = '/api/ruleChain/' + ruleChainId + '/edges/add';
+        $http.post(url, edgeIds).then(function success(response) {
+            deferred.resolve(prepareRuleChain(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function removeRuleChainEdges(ruleChainId, edgeIds) {
+        var deferred = $q.defer();
+        var url = '/api/ruleChain/' + ruleChainId + '/edges/remove';
+        $http.post(url, edgeIds).then(function success(response) {
+            deferred.resolve(prepareRuleChain(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getEdgesRuleChains(pageLink, config) {
+        return getRuleChains(pageLink, config, types.edgeRuleChainType);
+    }
+
+    function getEdgeRuleChains(edgeId, pageLink, config) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/ruleChains?limit=' + pageLink.limit;
+        if (angular.isDefined(pageLink.idOffset)) {
+            url += '&offset=' + pageLink.idOffset;
+        }
+        $http.get(url, config).then(function success(response) {
+            response.data = prepareRuleChains(response.data);
+            if (pageLink.textSearch) {
+                response.data.data = $filter('filter')(response.data.data, {title: pageLink.textSearch});
+            }
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function assignRuleChainToEdge(edgeId, ruleChainId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/ruleChain/' + ruleChainId;
+        $http.post(url, null).then(function success(response) {
+            deferred.resolve(prepareRuleChain(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function unassignRuleChainFromEdge(edgeId, ruleChainId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/ruleChain/' + ruleChainId;
+        $http.delete(url).then(function success(response) {
+            deferred.resolve(prepareRuleChain(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function setDefaultRootEdgeRuleChain(ruleChainId) {
+        var deferred = $q.defer();
+        var url = '/api/ruleChain/' + ruleChainId + '/defaultRootEdge';
+        $http.post(url).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function prepareRuleChains(ruleChainsData) {
+        if (ruleChainsData.data) {
+            for (var i = 0; i < ruleChainsData.data.length; i++) {
+                ruleChainsData.data[i] = prepareRuleChain(ruleChainsData.data[i]);
+            }
+        }
+        return ruleChainsData;
+    }
+
+    function prepareRuleChain(ruleChain) {
+        ruleChain.assignedEdgesText = "";
+        ruleChain.assignedEdgesIds = [];
+
+        if (ruleChain.assignedEdges && ruleChain.assignedEdges.length) {
+            var assignedEdgesTitles = [];
+            for (var j = 0; j < ruleChain.assignedEdges.length; j++) {
+                var assignedEdge = ruleChain.assignedEdges[j];
+                ruleChain.assignedEdgesIds.push(assignedEdge.edgeId.id);
+                assignedEdgesTitles.push(assignedEdge.title);
+            }
+            ruleChain.assignedEdgesText = assignedEdgesTitles.join(', ');
+        }
+
+        return ruleChain;
+    }
+
+    function cleanRuleChain(ruleChain) {
+        delete ruleChain.assignedEdgesText;
+        delete ruleChain.assignedEdgesIds;
+        return ruleChain;
+    }
 }

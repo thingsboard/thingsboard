@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
@@ -35,7 +36,8 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "Pushes messages to cloud. This node is used only on Edge instances to push messages from Edge to Cloud.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbNodeEmptyConfig",
-        icon = "cloud_upload"
+        icon = "cloud_upload",
+        ruleChainTypes = RuleChainType.EDGE
 )
 public class TbMsgPushToCloudNode implements TbNode {
 

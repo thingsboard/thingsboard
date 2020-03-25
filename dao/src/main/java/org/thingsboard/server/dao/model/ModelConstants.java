@@ -345,6 +345,7 @@ public class ModelConstants {
     public static final String RULE_CHAIN_ASSIGNED_EDGES_PROPERTY = "assigned_edges";
 
     public static final String RULE_CHAIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_chain_by_tenant_and_search_text";
+    public static final String RULE_CHAIN_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_chain_by_tenant_by_type_and_search_text";
 
     /**
      * Cassandra rule node constants.

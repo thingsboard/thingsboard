@@ -23,6 +23,7 @@ import com.datastax.driver.core.utils.UUIDs;
 
 import java.util.Optional;
 
+import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import com.google.common.util.concurrent.FutureCallback;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -31,6 +32,7 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;

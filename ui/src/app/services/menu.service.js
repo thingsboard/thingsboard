@@ -156,9 +156,24 @@ function Menu(userService, $state, $rootScope) {
                         },
                         {
                             name: 'rulechain.rulechains',
-                            type: 'link',
+                            type: 'toggle',
                             state: 'home.ruleChains',
-                            icon: 'settings_ethernet'
+                            height: '80px',
+                            icon: 'settings_ethernet',
+                            pages: [
+                                {
+                                    name: 'rulechain.system-rulechains',
+                                    type: 'link',
+                                    state: 'home.ruleChains.system',
+                                    icon: 'settings_ethernet'
+                                },
+                                {
+                                    name: 'rulechain.edge-rulechains',
+                                    type: 'link',
+                                    state: 'home.ruleChains.edge',
+                                    icon: 'router'
+                                }
+                            ]
                         },
                         {
                             name: 'customer.customers',
@@ -185,6 +200,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'view_quilt'
                         },
                         {
+                            name: 'edge.edges',
+                            type: 'link',
+                            state: 'home.edges',
+                            icon: 'router'
+                        },
+                        {
                             name: 'widget.widget-library',
                             type: 'link',
                             state: 'home.widgets-bundles',
@@ -208,9 +229,14 @@ function Menu(userService, $state, $rootScope) {
                             name: 'rulechain.management',
                             places: [
                                 {
-                                    name: 'rulechain.rulechains',
+                                    name: 'rulechain.system-rulechains',
                                     icon: 'settings_ethernet',
-                                    state: 'home.ruleChains'
+                                    state: 'home.ruleChains.system'
+                                },
+                                {
+                                    name: 'rulechain.edge-rulechains',
+                                    icon: 'router',
+                                    state: 'home.ruleChains.edge'
                                 }
                             ]
                         },
@@ -251,6 +277,16 @@ function Menu(userService, $state, $rootScope) {
                                         name: 'entity-view.entity-views',
                                         icon: 'view_quilt',
                                         state: 'home.entityViews'
+                                    }
+                                ]
+                            },
+                            {
+                                name: 'edge.management',
+                                places: [
+                                    {
+                                        name: 'edge.edges',
+                                        icon: 'router',
+                                        state: 'home.edges'
                                     }
                                 ]
                             },
@@ -307,6 +343,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'view_quilt'
                         },
                         {
+                            name: 'edge.edges',
+                            type: 'link',
+                            state: 'home.edges',
+                            icon: 'router'
+                        },
+                        {
                             name: 'dashboard.dashboards',
                             type: 'link',
                             state: 'home.dashboards',
@@ -341,6 +383,16 @@ function Menu(userService, $state, $rootScope) {
                                     name: 'entity-view.entity-views',
                                     icon: 'view_quilt',
                                     state: 'home.entityViews'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'edge.management',
+                            places: [
+                                {
+                                    name: 'edge.edges',
+                                    icon: 'router',
+                                    state: 'home.edges'
                                 }
                             ]
                         },
