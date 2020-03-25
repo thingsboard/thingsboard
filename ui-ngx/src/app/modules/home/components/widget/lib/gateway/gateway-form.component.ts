@@ -24,28 +24,20 @@ import { UtilsService } from '@core/services/utils.service';
 import {
   CONFIGURATION_ATTRIBUTE,
   CONFIGURATION_DRAFT_ATTRIBUTE,
-  ConnectorConfig,
-  ConnectorForm,
   ConnectorType,
+  createFormConfig,
   CURRENT_CONFIGURATION_ATTRIBUTE,
   DEFAULT_CONNECTOR,
+  gatewayConfigJSON,
+  GatewayFormConnectorModel,
+  GatewayFormModels,
   GatewayLogLevel,
-  GatewaySetting,
-  GatewaySettingStorage,
-  GatewaySettingStorageFile,
-  GatewaySettingStorageMemory,
-  GatewaySettingThingsboard,
-  generateConfigConnectorFiles,
-  generateFileName,
+  generateConnectorConfigFiles,
   generateLogConfigFile,
-  generateYAMLConfigurationFile,
+  generateYAMLConfigFile,
+  getDraftConnectorsJSON,
   getEntityId,
-  getLogsConfig,
-  MainGatewaySetting,
   REMOTE_LOGGING_LEVEL_ATTRIBUTE,
-  Security,
-  SecurityCertificate,
-  SecurityToken,
   SecurityType,
   SecurityTypeTranslationMap,
   StorageType,
@@ -161,7 +153,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
     });
   }
 
-  private updateWidgetDisplaying() {
+  private updateWidgetDisplaying(): void {
     if(this.ctx.$container && this.ctx.$container[0].offsetWidth <= 425){
       this.layoutGap = '0';
       this.alignment = 'column';
@@ -180,7 +172,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
     return this.attributeService.saveEntityAttributes(getEntityId(gatewayId), attributeScope, [attributes]);
   }
 
-  private createConnector(setting: ConnectorForm = DEFAULT_CONNECTOR): void {
+  private createConnector(setting: GatewayFormConnectorModel = DEFAULT_CONNECTOR): void {
     this.connectors.push(this.fb.group({
       enabled: [setting.enabled],
       configType: [setting.configType, [Validators.required]],
@@ -230,7 +222,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
           this.deviceService.getDeviceCredentials(gatewayId).pipe(tap(deviceCredential => {
             this.getFormField('accessToken').patchValue(deviceCredential.credentialsId);
           })),
-          ...this.getAttributes(gatewayId)]).subscribe(value => {
+          ...this.getAttributes(gatewayId)]).subscribe(() => {
           this.gatewayConfigurationGroup.markAsPristine();
           this.ctx.detectChanges();
         });
@@ -245,10 +237,10 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
   }
 
   exportConfig(): void {
-    const gatewayConfiguration = this.gatewayConfigurationGroup.value;
+    const gatewayConfiguration: GatewayFormModels = this.gatewayConfigurationGroup.value;
     const filesZip: any = {};
-    filesZip['tb_gateway.yaml'] = generateYAMLConfigurationFile(gatewayConfiguration);
-    generateConfigConnectorFiles(filesZip, gatewayConfiguration.connectors);
+    filesZip['tb_gateway.yaml'] = generateYAMLConfigFile(gatewayConfiguration);
+    generateConnectorConfigFiles(filesZip, gatewayConfiguration.connectors);
     generateLogConfigFile(filesZip, gatewayConfiguration.remoteLoggingLevel, gatewayConfiguration.remoteLoggingPathToLogs);
     this.importExport.exportJSZip(filesZip, this.archiveFileName);
     this.saveAttribute(
@@ -290,18 +282,17 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
     );
   }
 
-  private generateConnectorName(name: string, index: number = 0): string {
+  private createConnectorName(connectors: GatewayFormConnectorModel[], name: string, index: number = 0): string {
     const newKeyName = index ? name + index : name;
-    const indexRes = this.gatewayConfigurationGroup.value.connectors.findIndex((element) => element.name === newKeyName);
-    return indexRes === -1 ? newKeyName : this.generateConnectorName(name, ++index);
+    const indexRes = connectors.findIndex((element) => element.name === newKeyName);
+    return indexRes === -1 ? newKeyName : this.createConnectorName(connectors, name, ++index);
   }
 
-  private validateConnectorName(name, connectorIndex, index = 0): string {
-    const currentConnectors =  this.gatewayConfigurationGroup.value.connectors;
-    for (let i = 0; i < currentConnectors.length; i++) {
+  private validateConnectorName(connectors: GatewayFormConnectorModel[], name: string, connectorIndex: number, index = 0): string {
+    for (let i = 0; i < connectors.length; i++) {
       const nameEq = (index === 0) ? name : name + index;
-      if (i !== connectorIndex && currentConnectors[i].name === nameEq) {
-        this.validateConnectorName(name, connectorIndex, ++index);
+      if (i !== connectorIndex && connectors[i].name === nameEq) {
+        this.validateConnectorName(connectors, name, connectorIndex, ++index);
       }
     }
     return (index === 0) ? name : name + index;
@@ -310,24 +301,26 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
   changeConnectorType(connector: AbstractControl): void {
     if (!connector.get('name').value) {
       const typeConnector = connector.get('configType').value;
-      connector.get('name').patchValue(this.generateConnectorName(ConnectorType[typeConnector]));
+      const connectors = this.gatewayConfigurationGroup.value.connectors;
+      connector.get('name').patchValue(this.createConnectorName(connectors, ConnectorType[typeConnector]));
     }
   }
 
   changeConnectorName(connector: AbstractControl, index: number): void {
-    connector.get('name').patchValue(this.validateConnectorName(connector.get('name').value, index));
+    const connectors = this.gatewayConfigurationGroup.value.connectors;
+    connector.get('name').patchValue(this.validateConnectorName(connectors, connector.get('name').value, index));
   }
 
   save(): void {
-    const gatewayConfiguration = this.gatewayConfigurationGroup.value;
+    const gatewayConfiguration: GatewayFormModels = this.gatewayConfigurationGroup.value;
     forkJoin([
       this.saveAttribute(
         CONFIGURATION_ATTRIBUTE,
-        window.btoa(JSON.stringify(this.getGatewayConfigJSON(gatewayConfiguration))),
+        window.btoa(JSON.stringify(gatewayConfigJSON(gatewayConfiguration))),
         AttributeScope.SHARED_SCOPE),
       this.saveAttribute(
         CONFIGURATION_DRAFT_ATTRIBUTE,
-        window.btoa(JSON.stringify(this.getDraftConnectorsJSON(gatewayConfiguration.connectors))),
+        window.btoa(JSON.stringify(getDraftConnectorsJSON(gatewayConfiguration.connectors))),
         AttributeScope.SERVER_SCOPE),
       this.saveAttribute(
         REMOTE_LOGGING_LEVEL_ATTRIBUTE,
@@ -345,8 +338,8 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
     tasks.push(forkJoin([this.getAttribute(CURRENT_CONFIGURATION_ATTRIBUTE, AttributeScope.CLIENT_SCOPE, gatewayId),
       this.getAttribute(CONFIGURATION_DRAFT_ATTRIBUTE, AttributeScope.SERVER_SCOPE, gatewayId)]).pipe(
         tap(([currentConfig, draftConfig]) => {
-          this.processCurrentConfiguration(currentConfig);
-          this.processConfigurationDrafts(draftConfig);
+          this.setFormGatewaySettings(currentConfig);
+          this.setFormConnectorsDraft(draftConfig);
         })
       )
     );
@@ -356,108 +349,11 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
     return tasks;
   }
 
-  private getAttribute(attributeName: string, attributeScope: AttributeScope, gatewayId: string) {
+  private getAttribute(attributeName: string, attributeScope: AttributeScope, gatewayId: string): Observable<Array<AttributeData>> {
     return this.attributeService.getEntityAttributes(getEntityId(gatewayId), attributeScope, [attributeName]);
   }
 
-  private getDraftConnectorsJSON(currentConnectors: any) {
-    const draftConnectors = {};
-    for(const connector of currentConnectors){
-      if (!connector.enabled) {
-        draftConnectors[connector.name] = {
-          connector: connector.configType,
-          config: connector.config
-        };
-      }
-    }
-    return draftConnectors;
-  }
-
-  private getGatewayConfigJSON(gatewayConfiguration: any): MainGatewaySetting {
-    const gatewayConfig = {
-      thingsboard: this.gatewayMainConfigJSON(gatewayConfiguration)
-    };
-    this.gatewayConnectorConfigJSON(gatewayConfig, gatewayConfiguration.connectors);
-    return gatewayConfig;
-  }
-
-  private gatewayMainConfigJSON(gatewayConfiguration: any): GatewaySetting {
-    let security: Security;
-    if (gatewayConfiguration.securityType === SecurityType.accessToken) {
-      security = {
-        accessToken: (gatewayConfiguration.accessToken) ? gatewayConfiguration.accessToken : ''
-      }
-    } else {
-      security = {
-        caCert: gatewayConfiguration.caCertPath,
-        privateKey: gatewayConfiguration.privateKeyPath,
-        cert: gatewayConfiguration.certPath
-      }
-    }
-    const thingsboard: GatewaySettingThingsboard = {
-      host: gatewayConfiguration.host,
-      remoteConfiguration: gatewayConfiguration.remoteConfiguration,
-      port: gatewayConfiguration.port,
-      security
-    };
-
-    let storage: GatewaySettingStorage;
-    if (gatewayConfiguration.storageType === StorageType.memory) {
-      storage = {
-        type: StorageType.memory,
-        read_records_count: gatewayConfiguration.readRecordsCount,
-        max_records_count: gatewayConfiguration.maxRecordsCount
-      };
-    } else if (gatewayConfiguration.storageType === StorageType.file) {
-      storage = {
-        type: StorageType.file,
-        data_folder_path: gatewayConfiguration.dataFolderPath,
-        max_file_count: gatewayConfiguration.maxFilesCount,
-        max_read_records_count: gatewayConfiguration.readRecordsCount,
-        max_records_per_file: gatewayConfiguration.maxRecordsCount
-      };
-    }
-
-    const connectors: Array<ConnectorConfig> = [];
-    for (const connector of gatewayConfiguration.connectors) {
-      if (connector.enabled) {
-        const connectorConfig: ConnectorConfig = {
-          configuration: generateFileName(connector.name),
-          name: connector.name,
-          type: connector.configType
-        };
-        connectors.push(connectorConfig);
-      }
-    }
-
-    const configuration =  {
-      thingsboard,
-      connectors,
-      storage,
-      logs: window.btoa(getLogsConfig(gatewayConfiguration.remoteLoggingLevel, gatewayConfiguration.remoteLoggingPathToLogs))
-    };
-
-    return configuration
-  }
-
-  private gatewayConnectorConfigJSON(gatewayConfiguration, currentConnectors): void {
-    for (const connector of currentConnectors) {
-      if (connector.enabled) {
-        const typeConnector = connector.configType;
-        if (!Array.isArray(gatewayConfiguration[typeConnector])) {
-          gatewayConfiguration[typeConnector] = [];
-        }
-
-        const connectorConfig = {
-          name: connector.name,
-          config: connector.config
-        };
-        gatewayConfiguration[typeConnector].push(connectorConfig);
-      }
-    }
-  }
-
-  private processCurrentConfiguration(response: Array<AttributeData>): void {
+  private setFormGatewaySettings(response: Array<AttributeData>): void {
     this.connectors.clear();
     if (response.length > 0) {
       const attribute = JSON.parse(window.atob(response[0].value));
@@ -465,7 +361,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
         const keyValue = attribute[attributeKey];
         if (attributeKey === 'thingsboard') {
           if (keyValue !== null && Object.keys(keyValue).length > 0) {
-            this.setConfigGateway(keyValue);
+            this.gatewayConfigurationGroup.patchValue(createFormConfig(keyValue));
           }
         } else {
           for (const connector of Object.keys(keyValue)) {
@@ -473,7 +369,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
             if (Object.prototype.hasOwnProperty.call(keyValue[connector], 'name')) {
               name = keyValue[connector].name;
             }
-            const newConnector: ConnectorForm = {
+            const newConnector: GatewayFormConnectorModel = {
               enabled: true,
               configType: (attributeKey as ConnectorType),
               config: keyValue[connector].config,
@@ -486,11 +382,11 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
     }
   }
 
-  private processConfigurationDrafts(response: Array<AttributeData>): void {
+  private setFormConnectorsDraft(response: Array<AttributeData>): void {
     if (response.length > 0) {
       const attribute = JSON.parse(window.atob(response[0].value));
       for (const connectorName of Object.keys(attribute)) {
-        const newConnector: ConnectorForm = {
+        const newConnector: GatewayFormConnectorModel = {
           enabled: false,
           configType: (attribute[connectorName].connector as ConnectorType),
           config: attribute[connectorName].config,
@@ -498,41 +394,6 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
         };
         this.createConnector(newConnector);
       }
-    }
-  }
-
-  private setConfigGateway(keyValue: GatewaySetting): void {
-    if (Object.prototype.hasOwnProperty.call(keyValue, 'thingsboard')) {
-      const formSetting: any = {};
-      formSetting.host = keyValue.thingsboard.host;
-      formSetting.port = keyValue.thingsboard.port;
-      formSetting.remoteConfiguration = keyValue.thingsboard.remoteConfiguration;
-      if (Object.prototype.hasOwnProperty.call(keyValue.thingsboard.security, SecurityType.accessToken)) {
-        formSetting.securityType = SecurityType.accessToken;
-        formSetting.accessToken = (keyValue.thingsboard.security as SecurityToken).accessToken;
-      } else {
-        formSetting.securityType = SecurityType.tls;
-        formSetting.caCertPath = (keyValue.thingsboard.security as SecurityCertificate).caCert;
-        formSetting.privateKeyPath = (keyValue.thingsboard.security as SecurityCertificate).privateKey;
-        formSetting.certPath = (keyValue.thingsboard.security as SecurityCertificate).cert;
-      }
-      this.gatewayConfigurationGroup.patchValue(formSetting);
-    }
-
-    if (Object.prototype.hasOwnProperty.call(keyValue, 'storage') && Object.prototype.hasOwnProperty.call(keyValue.storage, 'type')) {
-      const formSetting: any = {};
-      if (keyValue.storage.type === StorageType.memory) {
-        formSetting.storageType = StorageType.memory;
-        formSetting.readRecordsCount = (keyValue.storage as GatewaySettingStorageMemory).read_records_count;
-        formSetting.maxRecordsCount = (keyValue.storage as GatewaySettingStorageMemory).max_records_count;
-      } else if (keyValue.storage.type === StorageType.file) {
-        formSetting.storageType = StorageType.file;
-        formSetting.dataFolderPath = (keyValue.storage as GatewaySettingStorageFile).data_folder_path;
-        formSetting.maxFilesCount = (keyValue.storage as GatewaySettingStorageFile).max_file_count;
-        formSetting.readRecordsCount = (keyValue.storage as GatewaySettingStorageMemory).read_records_count;
-        formSetting.maxRecordsCount = (keyValue.storage as GatewaySettingStorageMemory).max_records_count;
-      }
-      this.gatewayConfigurationGroup.patchValue(formSetting);
     }
   }
 
