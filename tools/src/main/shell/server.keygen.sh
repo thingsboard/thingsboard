@@ -23,7 +23,7 @@ usage() {
     echo "    -d | --dir directory              Server keystore directory, where the generated keystore file will be copied. If specified, overrides the value from the properties file"
     echo "                                      Default value is SERVER_KEYSTORE_DIR property from properties file"
     echo "    -p | --props | --properties file  Properties file. default value is ./keygen.properties"
-	echo "    -h | --help | ?                   Show this message"
+    echo "    -h | --help | ?                   Show this message"
 }
 
 COPY=true;
