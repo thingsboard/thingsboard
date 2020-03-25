@@ -113,7 +113,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.fb.control(this.action.type, [Validators.required]));
     this.updateActionTypeFormGroup(this.action.type, this.action);
     this.widgetActionFormGroup.get('type').valueChanges.subscribe((type: WidgetActionType) => {
-      this.updateActionTypeFormGroup(type, this.action);
+      this.updateActionTypeFormGroup(type);
     });
     this.widgetActionFormGroup.get('actionSourceId').valueChanges.subscribe(() => {
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
