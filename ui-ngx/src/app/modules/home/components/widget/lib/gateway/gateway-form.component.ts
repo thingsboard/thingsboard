@@ -59,6 +59,7 @@ import { forkJoin, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 
+// @dynamic
 @Component({
   selector: 'tb-gateway-form',
   templateUrl: './gateway-form.component.html',
