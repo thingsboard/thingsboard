@@ -44,7 +44,7 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { ImportWidgetResult, WidgetsBundleItem } from './import-export.models';
+import { FileType, FileTypeExtension, ImportWidgetResult, WidgetsBundleItem } from './import-export.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
@@ -54,6 +54,7 @@ import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entit
 import { RequestConfig } from '@core/http/http-utils';
 import { RuleChain, RuleChainImport, RuleChainMetaData } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
+import * as JSZip from 'jszip';
 
 // @dynamic
 @Injectable()
@@ -79,7 +80,7 @@ export class ImportExportService {
       (dashboard) => {
         let name = dashboard.title;
         name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToPc(this.prepareDashboardExport(dashboard), name + '.json');
+        this.exportToFile(this.prepareDashboardExport(dashboard), name, FileType.json);
       },
       (e) => {
         this.handleExportError(e, 'dashboard.export-failed-error');
@@ -136,7 +137,7 @@ export class ImportExportService {
     const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
     let name = widgetItem.widget.config.title;
     name = name.toLowerCase().replace(/\W/g, '_');
-    this.exportToPc(this.prepareExport(widgetItem), name + '.json');
+    this.exportToFile(this.prepareExport(widgetItem), name, FileType.json);
   }
 
   public importWidget(dashboard: Dashboard, targetState: string,
@@ -235,7 +236,7 @@ export class ImportExportService {
         }
         let name = widgetType.name;
         name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToPc(this.prepareExport(widgetType), name + '.json');
+        this.exportToFile(this.prepareExport(widgetType), name, FileType.json);
       },
       (e) => {
         this.handleExportError(e, 'widget-type.export-failed-error');
@@ -281,7 +282,7 @@ export class ImportExportService {
             }
             let name = widgetsBundle.title;
             name = name.toLowerCase().replace(/\W/g, '_');
-            this.exportToPc(widgetsBundleItem, name + '.json');
+            this.exportToFile(widgetsBundleItem, name, FileType.json);
           },
           (e) => {
             this.handleExportError(e, 'widgets-bundle.export-failed-error');
@@ -383,7 +384,7 @@ export class ImportExportService {
     ).subscribe((ruleChainExport) => {
         let name = ruleChainExport.ruleChain.name;
         name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToPc(ruleChainExport, name + '.json');
+        this.exportToFile(ruleChainExport, name, FileType.json);
     },
       (e) => {
         this.handleExportError(e, 'rulechain.export-failed-error');
@@ -412,6 +413,19 @@ export class ImportExportService {
         return of(null);
       })
     );
+  }
+
+  public exportJSZip(data: object, filename: string) {
+    const jsZip: JSZip = new JSZip();
+    for (const keyName in data) {
+      if (data.hasOwnProperty(keyName)) {
+        const valueData = data[keyName];
+        jsZip.file(keyName, valueData);
+      }
+    }
+    jsZip.generateAsync({type: 'blob'}).then(content => {
+      this.exportToFile(content, filename, FileType.zip);
+    });
   }
 
   private prepareRuleChain(ruleChain: RuleChain): RuleChain {
@@ -673,18 +687,19 @@ export class ImportExportService {
     ));
   }
 
-  private exportToPc(data: any, filename: string) {
+  private exportToFile(data: any, filename: string, fileType: FileType) {
     if (!data) {
       console.error('No data');
       return;
     }
     if (!filename) {
-      filename = 'download.json';
+      filename = 'download';
     }
-    if (isObject(data)) {
-      data = JSON.stringify(data, null,  2);
+    filename += '.' + FileTypeExtension.get(fileType);
+    if (fileType === FileType.json && isObject(data)) {
+      data = JSON.stringify(data, null, 2);
     }
-    const blob = new Blob([data], {type: 'text/json'});
+    const blob = new Blob([data], {type: fileType});
     if (this.window.navigator && this.window.navigator.msSaveOrOpenBlob) {
       this.window.navigator.msSaveOrOpenBlob(blob, filename);
     } else {
@@ -692,7 +707,7 @@ export class ImportExportService {
       const a = this.document.createElement('a');
       a.download = filename;
       a.href = URL.createObjectURL(blob);
-      a.dataset.downloadurl = ['text/json', a.download, a.href].join(':');
+      a.dataset.downloadurl = [fileType, a.download, a.href].join(':');
       // @ts-ignore
       e.initEvent('click', true, false, this.window,
         0, 0, 0, 0, 0, false, false, false, false, 0, null);
