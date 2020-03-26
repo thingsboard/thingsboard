@@ -20,7 +20,7 @@ usage() {
     echo "and imports server public key to client keystore"
     echo "usage: ./client.keygen.sh [-p file]"
     echo "    -p | --props | --properties file  Properties file. default value is ./keygen.properties"
-	echo "    -h | --help  | ?                  Show this message"
+    echo "    -h | --help  | ?                  Show this message"
 }
 
 PROPERTIES_FILE=keygen.properties
