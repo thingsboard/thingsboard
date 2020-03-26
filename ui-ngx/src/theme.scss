@@ -61,40 +61,16 @@ $tb-mat-indigo: (
 $tb-primary: mat-palette($tb-mat-indigo);
 $tb-accent: mat-palette($mat-deep-orange);
 
-// Background palette for light themes.
-$tb-light-theme-background: (
-  status-bar: map_get($mat-grey, 300),
-  app-bar:    map_get($mat-grey, 100),
-  background: #eee, // map_get($mat-grey, 50),
-  hover:      rgba(black, 0.04),
-  card:       white,
-  dialog:     white,
-  disabled-button: rgba(black, 0.12),
-  raised-button: white,
-  focused-button: $dark-focused,
-  selected-button: map_get($mat-grey, 300),
-  selected-disabled-button: map_get($mat-grey, 400),
-  disabled-button-toggle: map_get($mat-grey, 200),
-  unselected-chip: map_get($mat-grey, 300),
-  disabled-list-option: map_get($mat-grey, 200),
-  tooltip: map_get($mat-grey, 700)
-);
+$background: (background: map_get($mat-grey, 200));
 
-@function get-tb-light-theme($primary, $accent, $warn: mat-palette($mat-red)) {
-  @return (
-    primary: $primary,
-    accent: $accent,
-    warn: $warn,
-    is-dark: false,
-    foreground: $mat-light-theme-foreground,
-    background: $tb-light-theme-background,
-  );
-}
+$tb-theme-background: map_merge($mat-light-theme-background, $background);
 
-$tb-theme: get-tb-light-theme(
+$tb-mat-theme: mat-light-theme(
     $tb-primary,
     $tb-accent
 );
+
+$tb-theme: map_merge($tb-mat-theme, (background: $tb-theme-background));
 
 $primary: mat-color($tb-primary);
 $accent: mat-color($tb-accent);
