@@ -1,21 +1,9 @@
-/*================================================================================*/
-/*=======================  New TB 3.0 / Angular 8 Example  =======================*/
-/*================================================================================*/
-/*
-.edit-entity-form mat-form-field {
-    padding-right: 10px;
-}
-*/
 /*=======================================================================*/
 /*==========  There are two examples: for edit and add entity  ==========*/
 /*=======================================================================*/
 /*========================  Edit entity example  ========================*/
 /*=======================================================================*/
 /*
-.edit-entity-form md-input-container {
-    padding-right: 10px;
-}
-
 .edit-entity-form .boolean-value-input {
     padding-left: 5px;
 }
@@ -41,6 +29,10 @@
     white-space: nowrap;
 }
 
+.relations-list .mat-form-field-infix {
+    width: auto !important;
+}
+
 .relations-list .body {
     padding-right: 5px;
     padding-bottom: 15px;
@@ -56,26 +48,14 @@
     padding-left: 5px;
 }
 
-.relations-list .body md-autocomplete-wrap md-input-container {
-    height: 30px;
-}
-
 .relations-list .body .md-button {
     margin: 0;
-}
-
-.relations-list.old-relations tb-entity-select tb-entity-autocomplete button {
-    display: none;
 }
 */
 /*========================================================================*/
 /*=========================  Add entity example  =========================*/
 /*========================================================================*/
 /*
-.add-entity-form md-input-container {
-    padding-right: 10px;
-}
-
 .add-entity-form .boolean-value-input {
     padding-left: 5px;
 }
@@ -101,6 +81,10 @@
     white-space: nowrap;
 }
 
+.relations-list .mat-form-field-infix {
+    width: auto !important;
+}
+
 .relations-list .body {
     padding-right: 5px;
     padding-bottom: 15px;
@@ -114,10 +98,6 @@
 .relations-list .body .cell {
     padding-right: 5px;
     padding-left: 5px;
-}
-
-.relations-list .body md-autocomplete-wrap md-input-container {
-    height: 30px;
 }
 
 .relations-list .body .md-button {

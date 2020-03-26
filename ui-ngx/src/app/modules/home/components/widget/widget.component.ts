@@ -97,11 +97,14 @@ import { DatePipe } from '@angular/common';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
+import { EntityRelationService } from '@app/core/http/entity-relation.service';
 
 const ServicesMap = new Map<string, Type<any>>();
 ServicesMap.set('deviceService', DeviceService);
 ServicesMap.set('assetService', AssetService);
 ServicesMap.set('attributeService', AttributeService);
+ServicesMap.set('entityRelationService', EntityRelationService);
+ServicesMap.set('entityService', EntityService);
 ServicesMap.set('dialogs', DialogService);
 ServicesMap.set('customDialog', CustomDialogService);
 ServicesMap.set('date', DatePipe);
@@ -1011,7 +1014,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               'entityName', 'additionalParams', 'entityLabel', customFunction);
             customActionFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
           } catch (e) {
-            //
+            console.error(e);
           }
         }
         break;
@@ -1036,7 +1039,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
                   'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
                 customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
               } catch (e) {
-                //
+                console.error(e);
               }
             }
           },
