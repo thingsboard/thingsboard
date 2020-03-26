@@ -44,7 +44,7 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { FileType, FileTypeExtension, ImportWidgetResult, WidgetsBundleItem } from './import-export.models';
+import { FileType, ImportWidgetResult, JSON_TYPE, WidgetsBundleItem, ZIP_TYPE } from './import-export.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
@@ -80,7 +80,7 @@ export class ImportExportService {
       (dashboard) => {
         let name = dashboard.title;
         name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToFile(this.prepareDashboardExport(dashboard), name, FileType.json);
+        this.exportToPc(this.prepareDashboardExport(dashboard), name);
       },
       (e) => {
         this.handleExportError(e, 'dashboard.export-failed-error');
@@ -137,7 +137,7 @@ export class ImportExportService {
     const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
     let name = widgetItem.widget.config.title;
     name = name.toLowerCase().replace(/\W/g, '_');
-    this.exportToFile(this.prepareExport(widgetItem), name, FileType.json);
+    this.exportToPc(this.prepareExport(widgetItem), name);
   }
 
   public importWidget(dashboard: Dashboard, targetState: string,
@@ -236,7 +236,7 @@ export class ImportExportService {
         }
         let name = widgetType.name;
         name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToFile(this.prepareExport(widgetType), name, FileType.json);
+        this.exportToPc(this.prepareExport(widgetType), name);
       },
       (e) => {
         this.handleExportError(e, 'widget-type.export-failed-error');
@@ -282,7 +282,7 @@ export class ImportExportService {
             }
             let name = widgetsBundle.title;
             name = name.toLowerCase().replace(/\W/g, '_');
-            this.exportToFile(widgetsBundleItem, name, FileType.json);
+            this.exportToPc(widgetsBundleItem, name);
           },
           (e) => {
             this.handleExportError(e, 'widgets-bundle.export-failed-error');
@@ -384,7 +384,7 @@ export class ImportExportService {
     ).subscribe((ruleChainExport) => {
         let name = ruleChainExport.ruleChain.name;
         name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToFile(ruleChainExport, name, FileType.json);
+        this.exportToPc(ruleChainExport, name);
     },
       (e) => {
         this.handleExportError(e, 'rulechain.export-failed-error');
@@ -424,7 +424,7 @@ export class ImportExportService {
       }
     }
     jsZip.generateAsync({type: 'blob'}).then(content => {
-      this.exportToFile(content, filename, FileType.zip);
+      this.downloadFile(content, filename, ZIP_TYPE);
     });
   }
 
@@ -687,19 +687,27 @@ export class ImportExportService {
     ));
   }
 
-  private exportToFile(data: any, filename: string, fileType: FileType) {
+  private exportToPc(data: any, filename: string) {
     if (!data) {
       console.error('No data');
       return;
     }
+    this.exportJson(data, filename);
+  }
+
+  private exportJson(data: any, filename: string) {
+    if (isObject(data)) {
+      data = JSON.stringify(data, null,  2);
+    }
+    this.downloadFile(data, filename, JSON_TYPE);
+  }
+
+  private downloadFile(data: any, filename: string, fileType: FileType) {
     if (!filename) {
       filename = 'download';
     }
-    filename += '.' + FileTypeExtension.get(fileType);
-    if (fileType === FileType.json && isObject(data)) {
-      data = JSON.stringify(data, null, 2);
-    }
-    const blob = new Blob([data], {type: fileType});
+    filename += '.' + fileType.extension;
+    const blob = new Blob([data], {type: fileType.mimeType});
     if (this.window.navigator && this.window.navigator.msSaveOrOpenBlob) {
       this.window.navigator.msSaveOrOpenBlob(blob, filename);
     } else {
@@ -707,7 +715,7 @@ export class ImportExportService {
       const a = this.document.createElement('a');
       a.download = filename;
       a.href = URL.createObjectURL(blob);
-      a.dataset.downloadurl = [fileType, a.download, a.href].join(':');
+      a.dataset.downloadurl = [fileType.mimeType, a.download, a.href].join(':');
       // @ts-ignore
       e.initEvent('click', true, false, this.window,
         0, 0, 0, 0, 0, false, false, false, false, 0, null);

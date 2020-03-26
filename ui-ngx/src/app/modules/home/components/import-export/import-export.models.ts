@@ -80,17 +80,20 @@ export interface CsvColumnParam {
   sampleData: any;
 }
 
-export enum FileType {
-  zip = 'application/zip',
-  json = 'text/json'
+export interface FileType {
+  mimeType: string;
+  extension: string;
 }
 
-export const FileTypeExtension = new Map<FileType, string>(
-  [
-    [FileType.zip, 'zip'],
-    [FileType.json, 'json'],
-  ]
-);
+export const JSON_TYPE: FileType = {
+  mimeType: 'text/json',
+  extension: 'json'
+};
+
+export const ZIP_TYPE: FileType = {
+  mimeType: 'application/zip',
+  extension: 'zip'
+};
 
 export function convertCSVToJson(csvdata: string, config: CsvToJsonConfig,
                                  onError: (messageId: string, params?: any) => void): CsvToJsonResult | number {
