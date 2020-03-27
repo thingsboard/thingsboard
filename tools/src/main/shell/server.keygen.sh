@@ -71,7 +71,7 @@ while :
             echo "Done"
             exit 0
             ;;
-        [yY]|[yY][eE]|[yY][eE]|[sS]|[yY]|"")
+        [yY]|[yY][eE]|[yY][eE][sS]|"")
             echo "Cleaning up files"
             rm -rf $SERVER_FILE_PREFIX.jks
             rm -rf $SERVER_FILE_PREFIX.pub.pem
@@ -129,7 +129,7 @@ if [[ $COPY = true ]]; then
                 [nN]|[nN][oO])
                     break
                     ;;
-                [yY]|[yY][eE]|[yY][eE]|[sS]|[yY]|"")
+                [yY]|[yY][eE]|[yY][eE][sS]|"")
                     read -p "(Default: $SERVER_KEYSTORE_DIR): " dir
                      if [[ !  -z  $dir  ]]; then
                         DESTINATION=$dir;

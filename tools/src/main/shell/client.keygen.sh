@@ -55,7 +55,7 @@ while :
             echo "Done"
             exit 0
             ;;
-        [yY]|[yY][eE]|[yY][eE]|[sS]|[yY]|"")
+        [yY]|[yY][eE]|[yY][eE][sS]|"")
             echo "Cleaning up files"
             rm -rf $CLIENT_FILE_PREFIX.jks
             rm -rf $CLIENT_FILE_PREFIX.pub.pem
