@@ -51,11 +51,14 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
 public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
+
+    private static final int MAX_NUM_MSGS = 10;
 
     private final Gson gson = new Gson();
     private final TbQueueAdmin admin;
@@ -64,11 +67,12 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     private final TbQueueMsgDecoder<T> decoder;
     private final TbAwsSqsSettings sqsSettings;
 
-    private final List<AwsSqsMsgWrapper> messageList = new CopyOnWriteArrayList<>();
+    private final List<AwsSqsMsgWrapper> pendingMessages = new CopyOnWriteArrayList<>();
     private volatile boolean subscribed;
     private volatile Set<String> queueUrls;
     private volatile Set<TopicPartitionInfo> partitions;
     private ListeningExecutorService consumerExecutor;
+    private volatile boolean stopped = false;
 
     public TbAwsSqsConsumerTemplate(TbQueueAdmin admin, TbAwsSqsSettings sqsSettings, String topic, TbQueueMsgDecoder<T> decoder) {
         this.admin = admin;
@@ -104,6 +108,8 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     @Override
     public void unsubscribe() {
+        stopped = true;
+
         if (sqsClient != null) {
             sqsClient.shutdown();
         }
@@ -123,17 +129,13 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
         } else {
             if (!subscribed) {
                 List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
-                queueUrls = topicNames.stream().map(topic -> {
-                            admin.createTopicIfNotExists(topic);
-                            return getQueueUrl(topic);
-                        }
-                ).collect(Collectors.toSet());
-                consumerExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(queueUrls.size() * sqsSettings.getThreadsPerTopic()));
+                queueUrls = topicNames.stream().map(this::getQueueUrl).collect(Collectors.toSet());
+                consumerExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(queueUrls.size() * sqsSettings.getThreadsPerTopic() + 1));
                 subscribed = true;
             }
 
-            if (!messageList.isEmpty()) {
-                log.warn("Present {} non committed messages.", messageList.size());
+            if (!pendingMessages.isEmpty()) {
+                log.warn("Present {} non committed messages.", pendingMessages.size());
                 return Collections.emptyList();
             }
 
@@ -155,7 +157,12 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                         }).filter(Objects::nonNull)
                         .collect(Collectors.toList());
             } catch (InterruptedException | ExecutionException e) {
-                log.error("Failed to pool messages.", e);
+                if (stopped) {
+                    log.info("[{}] Aws SQS consumer is stopped.", topic);
+                    return Collections.emptyList();
+                } else {
+                    log.error("Failed to pool messages.", e);
+                }
             }
         }
         return Collections.emptyList();
@@ -163,36 +170,37 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     private ListenableFuture<List<Message>> poll(String url, long durationInMillis) {
         List<ListenableFuture<List<Message>>> result = new ArrayList<>();
+
         for (int i = 0; i < sqsSettings.getThreadsPerTopic(); i++) {
             result.add(consumerExecutor.submit(() -> {
                 ReceiveMessageRequest request = new ReceiveMessageRequest();
                 request
-                        .withWaitTimeSeconds((int) (durationInMillis / 1000))
+                        .withWaitTimeSeconds((int) TimeUnit.MILLISECONDS.toSeconds(durationInMillis))
                         .withMessageAttributeNames("headers")
                         .withQueueUrl(url)
-                        .withMaxNumberOfMessages(10);
+                        .withMaxNumberOfMessages(MAX_NUM_MSGS);
                 return sqsClient.receiveMessage(request).getMessages();
             }));
         }
         return Futures.transform(Futures.allAsList(result), list -> {
             if (!CollectionUtils.isEmpty(list)) {
                 return list.stream()
-                        .flatMap(l -> {
-                            if (!l.isEmpty()) {
-                                messageList.add(new AwsSqsMsgWrapper(url, l));
-                                return l.stream();
+                        .flatMap(messageList -> {
+                            if (!messageList.isEmpty()) {
+                                this.pendingMessages.add(new AwsSqsMsgWrapper(url, messageList));
+                                return messageList.stream();
                             }
                             return Stream.empty();
                         })
                         .collect(Collectors.toList());
             }
             return Collections.emptyList();
-        });
+        }, consumerExecutor);
     }
 
     @Override
     public void commit() {
-        messageList.forEach(msg ->
+        pendingMessages.forEach(msg ->
                 consumerExecutor.submit(() -> {
                     List<DeleteMessageBatchRequestEntry> entries = msg.getMessages()
                             .stream()
@@ -201,7 +209,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                     sqsClient.deleteMessageBatch(msg.getUrl(), entries);
                 }));
 
-        messageList.clear();
+        pendingMessages.clear();
     }
 
     public T decode(Message message) throws InvalidProtocolBufferException {
@@ -226,6 +234,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     }
 
     private String getQueueUrl(String topic) {
+        admin.createTopicIfNotExists(topic);
         return sqsClient.getQueueUrl(topic.replaceAll("\\.", "_") + ".fifo").getQueueUrl();
     }
 }

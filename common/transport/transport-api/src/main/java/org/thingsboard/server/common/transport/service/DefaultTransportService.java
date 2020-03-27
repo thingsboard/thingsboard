@@ -180,6 +180,10 @@ public class DefaultTransportService implements TransportService {
         if (transportApiRequestTemplate != null) {
             transportApiRequestTemplate.stop();
         }
+
+        if (transportNotificationsConsumer != null) {
+            transportNotificationsConsumer.unsubscribe();
+        }
     }
 
     @Override
