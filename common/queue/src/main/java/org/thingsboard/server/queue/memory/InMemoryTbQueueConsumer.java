@@ -17,7 +17,7 @@ package org.thingsboard.server.queue.memory;
 
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.List;
 import java.util.Set;

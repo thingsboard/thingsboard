@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.server.common.msg.queue;
 
-import akka.actor.ActorRef;
-import lombok.Data;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.TbMsg;
+public enum ServiceType {
+    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR;
 
-/**
- * Created by ashvayka on 15.03.18.
- */
-@Data
-public final class DeviceActorToRuleEngineMsg implements TbActorMsg {
-
-    private final ActorRef callbackRef;
-    private final TbMsg tbMsg;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.DEVICE_ACTOR_TO_RULE_ENGINE_MSG;
+    public static ServiceType of(String serviceType) {
+        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
     }
 }

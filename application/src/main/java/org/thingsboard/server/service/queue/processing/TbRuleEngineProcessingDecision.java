@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.service.queue.processing;
 
-public enum ServiceType {
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR;
+import lombok.Data;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
-    }
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+
+@Data
+public class TbRuleEngineProcessingDecision {
+
+    private final boolean commit;
+    private final ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> reprocessMap;
+
 }

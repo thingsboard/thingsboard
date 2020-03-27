@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
+import org.thingsboard.server.common.msg.queue.ServiceKey;
 
 import java.util.Set;
 

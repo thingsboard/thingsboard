@@ -95,7 +95,7 @@ public class TenantController extends BaseController {
             checkTenantId(tenantId, Operation.DELETE);
             tenantService.deleteTenant(tenantId);
 
-            actorService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
+            tbClusterService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);
         }

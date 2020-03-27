@@ -23,10 +23,10 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -43,8 +43,8 @@ public class DefaultTbCoreToTransportService implements TbCoreToTransportService
     @Value("${queue.transport.notifications_topic}")
     private String notificationsTopic;
 
-    public DefaultTbCoreToTransportService(TbCoreQueueProvider tbCoreQueueProvider) {
-        this.tbTransportProducer = tbCoreQueueProvider.getTransportNotificationsMsgProducer();
+    public DefaultTbCoreToTransportService(TbQueueProducerProvider tbQueueProducerProvider) {
+        this.tbTransportProducer = tbQueueProducerProvider.getTransportNotificationsMsgProducer();
     }
 
     @Override

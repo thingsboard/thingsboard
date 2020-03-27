@@ -49,19 +49,17 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
-import org.thingsboard.server.service.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
@@ -105,30 +103,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
     public static final List<String> PERSISTENT_ATTRIBUTES = Arrays.asList(ACTIVITY_STATE, LAST_CONNECT_TIME,
             LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT);
 
-    @Autowired
-    private TenantService tenantService;
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
-    private TimeseriesService tsService;
-
-    @Autowired
-    @Lazy
-    private ActorService actorService;
-
-    @Autowired
-    private TbCoreQueueProvider queueProvider;
-
-    @Autowired
-    private PartitionService partitionService;
-
-    @Autowired
-    private TelemetrySubscriptionService tsSubService;
+    private final TenantService tenantService;
+    private final DeviceService deviceService;
+    private final AttributesService attributesService;
+    private final TimeseriesService tsService;
+    private final TbQueueProducerProvider producerProvider;
+    private final PartitionService partitionService;
+    private final TelemetrySubscriptionService tsSubService;
 
     @Value("${state.defaultInactivityTimeoutInSec}")
     @Getter
@@ -153,6 +134,18 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, Long> deviceLastReportedActivity = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, Long> deviceLastSavedActivity = new ConcurrentHashMap<>();
+
+    public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
+                                     AttributesService attributesService, TimeseriesService tsService,
+                                     TbQueueProducerProvider producerProvider, PartitionService partitionService, TelemetrySubscriptionService tsSubService) {
+        this.tenantService = tenantService;
+        this.deviceService = deviceService;
+        this.attributesService = attributesService;
+        this.tsService = tsService;
+        this.producerProvider = producerProvider;
+        this.partitionService = partitionService;
+        this.tsSubService = tsSubService;
+    }
 
     @PostConstruct
     public void init() {
@@ -428,7 +421,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         builder.setUpdated(updated);
         builder.setDeleted(deleted);
         TransportProtos.DeviceStateServiceMsgProto msg = builder.build();
-        queueProvider.getTbCoreMsgProducer().send(tpi, new TbProtoQueueMsg<>(deviceId.getId(),
+        producerProvider.getTbCoreMsgProducer().send(tpi, new TbProtoQueueMsg<>(deviceId.getId(),
                 TransportProtos.ToCoreMsg.newBuilder().setDeviceStateServiceMsg(msg).build()), null);
     }
 
@@ -501,8 +494,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
         try {
             TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
                     , json.writeValueAsString(state)
-                    , null, null, 0L);
-            actorService.onMsg(new SendToClusterMsg(stateData.getDeviceId(), new ServiceToRuleEngineMsg(stateData.getTenantId(), tbMsg)));
+                    , null, null, null);
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, stateData.getTenantId(), stateData.getDeviceId());
+            TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                    .setTenantIdMSB(stateData.getTenantId().getId().getMostSignificantBits())
+                    .setTenantIdLSB(stateData.getTenantId().getId().getLeastSignificantBits())
+                    .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+            producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
         }

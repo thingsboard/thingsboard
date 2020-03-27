@@ -15,11 +15,19 @@
  */
 package org.thingsboard.server.common.transport.service;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
@@ -35,9 +43,9 @@ import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
-import org.thingsboard.server.queue.provider.TransportQueueProvider;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.queue.provider.TbTransportQueueProvider;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -45,7 +53,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportToRuleEngineMsg;
 import org.thingsboard.server.queue.common.AsyncCallbackTemplate;
 
 import javax.annotation.PostConstruct;
@@ -60,6 +67,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by ashvayka on 17.10.18.
@@ -82,7 +90,8 @@ public class DefaultTransportService implements TransportService {
     @Value("${queue.transport.poll_interval}")
     private int notificationsPollDuration;
 
-    private final TransportQueueProvider queueProvider;
+    private final Gson gson = new Gson();
+    private final TbTransportQueueProvider queueProvider;
     private final PartitionService partitionService;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
@@ -101,7 +110,7 @@ public class DefaultTransportService implements TransportService {
     private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
     private volatile boolean stopped = false;
 
-    public DefaultTransportService(TransportQueueProvider queueProvider, PartitionService partitionService) {
+    public DefaultTransportService(TbTransportQueueProvider queueProvider, PartitionService partitionService) {
         this.queueProvider = queueProvider;
         this.partitionService = partitionService;
     }
@@ -224,8 +233,19 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            sendToRuleEngine(sessionInfo, TransportToRuleEngineMsg.newBuilder().setSessionInfo(sessionInfo).
-                    setPostTelemetry(msg).build(), callback);
+            TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
+            DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+            MsgPackCallback packCallback = new MsgPackCallback(msg.getTsKvListCount(), callback);
+            for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
+                TbMsgMetaData metaData = new TbMsgMetaData();
+                metaData.putValue("deviceName", sessionInfo.getDeviceName());
+                metaData.putValue("deviceType", sessionInfo.getDeviceType());
+                metaData.putValue("ts", tsKv.getTs() + "");
+                JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
+                TbMsg tbMsg = new TbMsg(UUID.randomUUID(), SessionMsgType.POST_TELEMETRY_REQUEST.name(),
+                        deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, TbMsgCallback.EMPTY);
+                sendToRuleEngine(tenantId, tbMsg, packCallback);
+            }
         }
     }
 
@@ -233,8 +253,15 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            sendToRuleEngine(sessionInfo, TransportToRuleEngineMsg.newBuilder().setSessionInfo(sessionInfo).
-                    setPostAttributes(msg).build(), callback);
+            TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
+            DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+            JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
+            TbMsgMetaData metaData = new TbMsgMetaData();
+            metaData.putValue("deviceName", sessionInfo.getDeviceName());
+            metaData.putValue("deviceType", sessionInfo.getDeviceType());
+            TbMsg tbMsg = new TbMsg(UUID.randomUUID(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, metaData,
+                    TbMsgDataType.JSON, gson.toJson(json), null, null, TbMsgCallback.EMPTY);
+            sendToRuleEngine(tenantId, tbMsg, new TransportTbQueueCallback(callback));
         }
     }
 
@@ -281,8 +308,8 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            sendToRuleEngine(sessionInfo, TransportToRuleEngineMsg.newBuilder().setSessionInfo(sessionInfo).
-                    setToServerRPCCallRequest(msg).build(), callback);
+//            sendToRuleEngine(sessionInfo, TransportToRuleEngineMsg.newBuilder().setSessionInfo(sessionInfo).
+//                    setToServerRPCCallRequest(msg).build(), new TransportTbQueueCallback(callback));
         }
     }
 
@@ -458,12 +485,12 @@ public class DefaultTransportService implements TransportService {
                         new TransportTbQueueCallback(callback) : null);
     }
 
-    protected void sendToRuleEngine(TransportProtos.SessionInfoProto sessionInfo, TransportToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(sessionInfo), getDeviceId(sessionInfo));
-        ruleEngineMsgProducer.send(tpi,
-                new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
-                        ToRuleEngineMsg.newBuilder().setToRuleEngineMsg(toRuleEngineMsg).build()), callback != null ?
-                        new TransportTbQueueCallback(callback) : null);
+    protected void sendToRuleEngine(TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, tbMsg.getOriginator());
+        ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder().setTbMsg(TbMsg.toByteString(tbMsg))
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
+        ruleEngineMsgProducer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);
     }
 
     private class TransportTbQueueCallback implements TbQueueCallback {
@@ -481,6 +508,28 @@ public class DefaultTransportService implements TransportService {
         @Override
         public void onFailure(Throwable t) {
             DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onError(t));
+        }
+    }
+
+    private class MsgPackCallback implements TbQueueCallback {
+        private final AtomicInteger msgCount;
+        private final TransportServiceCallback<Void> callback;
+
+        public MsgPackCallback(Integer msgCount, TransportServiceCallback<Void> callback) {
+            this.msgCount = new AtomicInteger(msgCount);
+            this.callback = callback;
+        }
+
+        @Override
+        public void onSuccess(TbQueueMsgMetadata metadata) {
+            if (msgCount.decrementAndGet() <= 0) {
+                callback.onSuccess(null);
+            }
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            callback.onError(t);
         }
     }
 }

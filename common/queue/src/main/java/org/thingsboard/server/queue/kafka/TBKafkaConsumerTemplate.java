@@ -22,9 +22,9 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -75,7 +75,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public void subscribe() {
-        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null));
+        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null, true));
         subscribed = false;
     }
 

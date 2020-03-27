@@ -17,10 +17,10 @@ package org.thingsboard.server.service.subscription;
 
 import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
-import org.thingsboard.server.service.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 
-public interface LocalSubscriptionService {
+public interface TbLocalSubscriptionService {
 
     void addSubscription(TbSubscription subscription);
 

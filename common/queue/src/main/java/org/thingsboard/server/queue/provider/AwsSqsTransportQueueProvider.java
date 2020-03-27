@@ -36,7 +36,7 @@ import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='aws-sqs' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
-public class AwsSqsTransportQueueProvider implements TransportQueueProvider {
+public class AwsSqsTransportQueueProvider implements TbTransportQueueProvider {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbAwsSqsSettings sqsSettings;

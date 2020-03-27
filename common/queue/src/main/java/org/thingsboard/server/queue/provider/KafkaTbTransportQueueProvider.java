@@ -41,7 +41,7 @@ import org.thingsboard.server.queue.kafka.TbKafkaSettings;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='kafka' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
-public class KafkaTransportQueueProvider implements TransportQueueProvider {
+public class KafkaTbTransportQueueProvider implements TbTransportQueueProvider {
 
     private final TbKafkaSettings kafkaSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
@@ -50,12 +50,12 @@ public class KafkaTransportQueueProvider implements TransportQueueProvider {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
-    public KafkaTransportQueueProvider(TbKafkaSettings kafkaSettings,
-                                       TbServiceInfoProvider serviceInfoProvider,
-                                       TbQueueCoreSettings coreSettings,
-                                       TbQueueRuleEngineSettings ruleEngineSettings,
-                                       TbQueueTransportApiSettings transportApiSettings,
-                                       TbQueueTransportNotificationSettings transportNotificationSettings) {
+    public KafkaTbTransportQueueProvider(TbKafkaSettings kafkaSettings,
+                                         TbServiceInfoProvider serviceInfoProvider,
+                                         TbQueueCoreSettings coreSettings,
+                                         TbQueueRuleEngineSettings ruleEngineSettings,
+                                         TbQueueTransportApiSettings transportApiSettings,
+                                         TbQueueTransportNotificationSettings transportNotificationSettings) {
         this.kafkaSettings = kafkaSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;

@@ -58,7 +58,7 @@ public class TbSendRPCReplyNode implements TbNode {
         } else if (StringUtils.isEmpty(msg.getData())) {
             ctx.tellFailure(msg, new RuntimeException("Request body is empty!"));
         } else {
-            ctx.getRpcService().sendRpcReply(new DeviceId(msg.getOriginator().getId()), Integer.parseInt(requestIdStr), msg.getData());
+            ctx.getRpcService().sendRpcReplyToDevice(new DeviceId(msg.getOriginator().getId()), Integer.parseInt(requestIdStr), msg.getData());
         }
     }
 

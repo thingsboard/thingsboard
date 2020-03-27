@@ -49,7 +49,7 @@ import org.thingsboard.server.service.security.ValidationResult;
 import org.thingsboard.server.service.security.ValidationResultCode;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.subscription.LocalSubscriptionService;
+import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.subscription.TbAttributeSubscription;
 import org.thingsboard.server.service.subscription.TbTimeseriesSubscription;
@@ -98,7 +98,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     private final ConcurrentMap<String, WsSessionMetaData> wsSessionsMap = new ConcurrentHashMap<>();
 
     @Autowired
-    private LocalSubscriptionService subService;
+    private TbLocalSubscriptionService subService;
 
     @Autowired
     private TelemetryWebSocketMsgEndpoint msgEndpoint;

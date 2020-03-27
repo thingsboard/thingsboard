@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.system;
+package org.thingsboard.server.common.msg.queue;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.TbMsg;
+public interface TbMsgCallback {
 
-import java.io.Serializable;
+    TbMsgCallback EMPTY = new TbMsgCallback() {
 
-/**
- * Created by ashvayka on 15.03.18.
- */
-@Data
-public final class ServiceToRuleEngineMsg implements TbActorMsg, Serializable {
+        @Override
+        public void onSuccess() {
 
-    private final TenantId tenantId;
-    private final TbMsg tbMsg;
+        }
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.SERVICE_TO_RULE_ENGINE_MSG;
-    }
+        @Override
+        public void onFailure(Throwable t) {
+
+        }
+    };
+
+    void onSuccess();
+
+    void onFailure(Throwable t);
+
 }

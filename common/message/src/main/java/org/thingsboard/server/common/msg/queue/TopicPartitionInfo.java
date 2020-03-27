@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.common.msg.queue;
 
 import lombok.Builder;
+import lombok.Getter;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
@@ -26,13 +27,17 @@ public class TopicPartitionInfo {
     private final String topic;
     private final TenantId tenantId;
     private final Integer partition;
+    @Getter
     private final String fullTopicName;
+    @Getter
+    private final boolean myPartition;
 
     @Builder
-    public TopicPartitionInfo(String topic, TenantId tenantId, Integer partition) {
+    public TopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartition) {
         this.topic = topic;
         this.tenantId = tenantId;
         this.partition = partition;
+        this.myPartition = myPartition;
         String tmp = topic;
         if (tenantId != null) {
             tmp += "." + tenantId.getId().toString();
@@ -40,7 +45,6 @@ public class TopicPartitionInfo {
         if (partition != null) {
             tmp += "." + partition;
         }
-
         this.fullTopicName = tmp;
     }
 
@@ -54,10 +58,6 @@ public class TopicPartitionInfo {
 
     public Optional<Integer> getPartition() {
         return Optional.ofNullable(partition);
-    }
-
-    public String getFullTopicName() {
-        return fullTopicName;
     }
 
     @Override

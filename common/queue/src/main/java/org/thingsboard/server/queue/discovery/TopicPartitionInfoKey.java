@@ -15,33 +15,30 @@
  */
 package org.thingsboard.server.queue.discovery;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 
 import java.util.Objects;
 
-public class ServiceKey {
-    @Getter
-    private final ServiceType serviceType;
-    @Getter
-    private final TenantId tenantId;
-
-    public ServiceKey(ServiceType serviceType, TenantId tenantId) {
-        this.serviceType = serviceType;
-        this.tenantId = tenantId;
-    }
+@AllArgsConstructor
+public class TopicPartitionInfoKey {
+    private ServiceType serviceType;
+    private TenantId isolatedTenantId;
+    private int partition;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ServiceKey that = (ServiceKey) o;
-        return serviceType == that.serviceType &&
-                Objects.equals(tenantId, that.tenantId);
+        TopicPartitionInfoKey that = (TopicPartitionInfoKey) o;
+        return partition == that.partition &&
+                serviceType == that.serviceType &&
+                Objects.equals(isolatedTenantId, that.isolatedTenantId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(serviceType, tenantId);
+        return Objects.hash(serviceType, isolatedTenantId, partition);
     }
 }

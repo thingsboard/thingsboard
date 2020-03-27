@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue;
+package org.thingsboard.server.service.rpc;
 
-public interface TbMsgCallback {
+import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 
-    TbMsgCallback EMPTY = new TbMsgCallback() {
+/**
+ * Created by ashvayka on 16.04.18.
+ */
+public interface TbRuleEngineDeviceRpcService extends RuleEngineRpcService {
 
-        @Override
-        public void onSuccess() {
-
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-
-        }
-    };
-
-    void onSuccess();
-
-    void onFailure(Throwable t);
+    /**
+     * Handles the RPC response from the Device Actor (Transport).
+     *
+     * @param response the RPC response
+     */
+    void processRpcResponseFromDevice(FromDeviceRpcResponse response);
 
 }

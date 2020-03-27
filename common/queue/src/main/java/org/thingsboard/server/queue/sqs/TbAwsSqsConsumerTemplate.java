@@ -32,13 +32,13 @@ import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -66,8 +66,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     private volatile Set<TopicPartitionInfo> partitions;
     private ListeningExecutorService consumerExecutor;
 
-    private final int maxMessagesPool = 100;
-
     public TbAwsSqsConsumerTemplate(TbQueueAdmin admin, TbAwsSqsSettings sqsSettings, String topic, TbQueueMsgDecoder<T> decoder) {
         this.admin = admin;
         this.decoder = decoder;
@@ -89,7 +87,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     @Override
     public void subscribe() {
-        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null));
+        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null, true));
         subscribed = false;
     }
 

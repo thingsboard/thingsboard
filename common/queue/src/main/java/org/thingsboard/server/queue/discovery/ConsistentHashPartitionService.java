@@ -24,6 +24,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceKey;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 
@@ -32,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +69,7 @@ public class ConsistentHashPartitionService implements PartitionService {
     private ConcurrentMap<ServiceKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
     //TODO: Fetch this from the database, together with size of partitions for each service for each tenant.
     private ConcurrentMap<TenantId, Set<ServiceType>> isolatedTenants = new ConcurrentHashMap<>();
+    private ConcurrentMap<TopicPartitionInfoKey, TopicPartitionInfo> tpiCache = new ConcurrentHashMap<>();
 
     private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
     private Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
@@ -87,12 +92,12 @@ public class ConsistentHashPartitionService implements PartitionService {
     }
 
     @Override
-    public List<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType) {
+    public Set<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType) {
         ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
         TenantId tenantId = getSystemOrIsolatedTenantId(currentService);
         ServiceKey serviceKey = new ServiceKey(serviceType, tenantId);
         List<Integer> partitions = myPartitions.get(serviceKey);
-        List<TopicPartitionInfo> topicPartitions = new ArrayList<>();
+        Set<TopicPartitionInfo> topicPartitions = new LinkedHashSet<>();
         for (Integer partition : partitions) {
             TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
             tpi.topic(partitionTopics.get(serviceType));
@@ -112,7 +117,9 @@ public class ConsistentHashPartitionService implements PartitionService {
                 .putLong(entityId.getId().getMostSignificantBits())
                 .putLong(entityId.getId().getLeastSignificantBits()).hash().asInt();
         int partition = Math.abs(hash % partitionSizes.get(serviceType));
-        return buildTopicPartitionInfo(serviceType, tenantId, partition);
+        boolean isolatedTenant = isIsolated(serviceType, tenantId);
+        TopicPartitionInfoKey cacheKey = new TopicPartitionInfoKey(serviceType, isolatedTenant ? tenantId : null, partition);
+        return tpiCache.computeIfAbsent(cacheKey, key -> buildTopicPartitionInfo(serviceType, tenantId, partition));
     }
 
     @Override
@@ -152,12 +159,10 @@ public class ConsistentHashPartitionService implements PartitionService {
                 Set<TopicPartitionInfo> tpiList = partitions.stream()
                         .map(partition -> buildTopicPartitionInfo(serviceKey, partition))
                         .collect(Collectors.toSet());
-                // Adding notifications topic for every @TopicPartitionInfo list
-                tpiList.add(getNotificationsTopic(serviceKey.getServiceType(), serviceInfoProvider.getServiceId()));
                 applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceKey, tpiList));
             }
-
         });
+        tpiCache.clear();
 
         if (currentOtherServices == null) {
             currentOtherServices = new ArrayList<>(otherServices);
@@ -180,6 +185,35 @@ public class ConsistentHashPartitionService implements PartitionService {
         }
     }
 
+    @Override
+    public Set<String> getAllServiceIds(ServiceType serviceType) {
+        Set<String> result = new HashSet<>();
+        ServiceInfo current = serviceInfoProvider.getServiceInfo();
+        if (current.getServiceTypesList().contains(serviceType.name())) {
+            result.add(current.getServiceId());
+        }
+        for (ServiceInfo serviceInfo : currentOtherServices) {
+            if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                result.add(serviceInfo.getServiceId());
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId) {
+        switch (serviceType) {
+            case TB_CORE:
+                return tbCoreNotificationTopics.computeIfAbsent(serviceId,
+                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
+            case TB_RULE_ENGINE:
+                return tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
+                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
+            default:
+                return buildNotificationsTopicPartitionInfo(serviceType, serviceId);
+        }
+    }
+
     private Map<ServiceKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
         final Map<ServiceKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {
@@ -192,22 +226,8 @@ public class ConsistentHashPartitionService implements PartitionService {
         return currentMap;
     }
 
-    @Override
-    public TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId) {
-        switch (serviceType) {
-            case TB_CORE:
-                return tbCoreNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildTopicPartitionInfo(serviceType, serviceId));
-            case TB_RULE_ENGINE:
-                return tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildTopicPartitionInfo(serviceType, serviceId));
-            default:
-                return buildTopicPartitionInfo(serviceType, serviceId);
-        }
-    }
-
-    private TopicPartitionInfo buildTopicPartitionInfo(ServiceType serviceType, String serviceId) {
-        return new TopicPartitionInfo(serviceType.name().toLowerCase() + "." + serviceId, null, null);
+    private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {
+        return new TopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
     }
 
     private TopicPartitionInfo buildTopicPartitionInfo(ServiceKey serviceKey, int partition) {
@@ -215,14 +235,27 @@ public class ConsistentHashPartitionService implements PartitionService {
     }
 
     private TopicPartitionInfo buildTopicPartitionInfo(ServiceType serviceType, TenantId tenantId, int partition) {
-        boolean isolated = isolatedTenants.get(tenantId) != null && isolatedTenants.get(tenantId).contains(serviceType);
         TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
         tpi.topic(partitionTopics.get(serviceType));
         tpi.partition(partition);
-        if (isolated) {
+        ServiceKey myPartitionsSearchKey;
+        if (isIsolated(serviceType, tenantId)) {
             tpi.tenantId(tenantId);
+            myPartitionsSearchKey = new ServiceKey(serviceType, tenantId);
+        } else {
+            myPartitionsSearchKey = new ServiceKey(serviceType, new TenantId(TenantId.NULL_UUID));
+        }
+        List<Integer> partitions = myPartitions.get(myPartitionsSearchKey);
+        if (partitions != null) {
+            tpi.myPartition(partitions.contains(partition));
+        } else {
+            tpi.myPartition(false);
         }
         return tpi.build();
+    }
+
+    private boolean isIsolated(ServiceType serviceType, TenantId tenantId) {
+        return isolatedTenants.get(tenantId) != null && isolatedTenants.get(tenantId).contains(serviceType);
     }
 
     private void logServiceInfo(TransportProtos.ServiceInfo server) {

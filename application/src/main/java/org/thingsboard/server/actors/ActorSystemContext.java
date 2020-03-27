@@ -45,6 +45,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -63,7 +65,9 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.ClusterRpcCallbackExecutorService;
@@ -71,7 +75,9 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
-import org.thingsboard.server.service.rpc.DeviceRpcService;
+import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
+import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
@@ -152,6 +158,17 @@ public class ActorSystemContext {
     private RuleChainService ruleChainService;
 
     @Autowired
+    private PartitionService partitionService;
+
+    @Autowired
+    @Getter
+    private TbClusterService clusterService;
+
+    @Autowired
+    @Getter
+    private TbQueueProducerProvider producerProvider;
+
+    @Autowired
     @Getter
     private TimeseriesService tsService;
 
@@ -182,10 +199,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;
-
-    @Autowired
-    @Getter
-    private DeviceRpcService deviceRpcService;
 
     @Autowired
     @Getter
@@ -231,6 +244,22 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TbCoreToTransportService tbCoreToTransportService;
+
+    /**
+     * The following Service will be null if we operate in tb-core mode
+     */
+    @Lazy
+    @Getter
+    @Autowired(required = false)
+    private TbRuleEngineDeviceRpcService tbRuleEngineDeviceRpcService;
+
+    /**
+     * The following Service will be null if we operate in tb-rule-engine mode
+     */
+    @Lazy
+    @Getter
+    @Autowired(required = false)
+    private TbCoreDeviceRpcService tbCoreDeviceRpcService;
 
     @Lazy
     @Autowired
@@ -392,6 +421,9 @@ public class ActorSystemContext {
         return mapper.createObjectNode().put("server", serviceId).put("method", method).put("error", body);
     }
 
+    public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
+        return partitionService.resolve(serviceType, tenantId, entityId);
+    }
 
     public String getServerAddress() {
         return serviceInfoProvider.getServiceId();

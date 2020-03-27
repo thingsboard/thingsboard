@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cluster;
+package org.thingsboard.server.queue;
 
-import lombok.Data;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
-/**
- * @author Andrew Shvayka
- */
-@Data
-public final class ClusterEventMsg implements TbActorMsg {
+import java.util.concurrent.atomic.AtomicInteger;
 
-    private final ServerAddress serverAddress;
-    private final boolean added;
+public class TbQueueTbMsgCallbackWrapper implements TbQueueCallback {
+
+    private final TbMsgCallback tbMsgCallback;
+
+    public TbQueueTbMsgCallbackWrapper(TbMsgCallback tbMsgCallback) {
+        this.tbMsgCallback = tbMsgCallback;
+    }
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.CLUSTER_EVENT_MSG;
+    public void onSuccess(TbQueueMsgMetadata metadata) {
+        tbMsgCallback.onSuccess();
+    }
+
+    @Override
+    public void onFailure(Throwable t) {
+        tbMsgCallback.onFailure(t);
     }
 }

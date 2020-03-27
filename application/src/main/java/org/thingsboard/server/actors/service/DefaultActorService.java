@@ -32,17 +32,16 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.app.AppInitMsg;
 import org.thingsboard.server.actors.stats.StatsActor;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -61,19 +60,13 @@ public class DefaultActorService implements ActorService {
     public static final String CORE_DISPATCHER_NAME = "core-dispatcher";
     public static final String SYSTEM_RULE_DISPATCHER_NAME = "system-rule-dispatcher";
     public static final String TENANT_RULE_DISPATCHER_NAME = "rule-dispatcher";
-    public static final String RPC_DISPATCHER_NAME = "rpc-dispatcher";
 
     @Autowired
     private ActorSystemContext actorContext;
 
-    @Autowired
-    private DeviceStateService deviceStateService;
-
     private ActorSystem system;
 
     private ActorRef appActor;
-
-    private ActorRef rpcManagerActor;
 
     @PostConstruct
     public void initActorSystem() {
@@ -97,6 +90,12 @@ public class DefaultActorService implements ActorService {
         appActor.tell(new AppInitMsg(), ActorRef.noSender());
     }
 
+    @EventListener(PartitionChangeEvent.class)
+    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
+        log.info("Received partition change event.");
+        this.appActor.tell(new PartitionChangeMsg(partitionChangeEvent.getServiceKey(), partitionChangeEvent.getPartitions()), ActorRef.noSender());
+    }
+
     @PreDestroy
     public void stopActorSystem() {
         Future<Terminated> status = system.terminate();
@@ -108,68 +107,10 @@ public class DefaultActorService implements ActorService {
         }
     }
 
-    @Override
-    public void onMsg(TbActorMsg msg) {
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
-    //TODO 2.5
-//    @Override
-//    public void onServerAdded(ServerInstance server) {
-//        log.trace("Processing onServerAdded msg: {}", server);
-//        broadcast(new ClusterEventMsg(server.getServerAddress(), true));
-//    }
-//
-//    @Override
-//    public void onServerUpdated(ServerInstance server) {
-//        //Do nothing
-//    }
-//
-//    @Override
-//    public void onServerRemoved(ServerInstance server) {
-//        log.trace("Processing onServerRemoved msg: {}", server);
-//        broadcast(new ClusterEventMsg(server.getServerAddress(), false));
-//    }
-
-    @Override
-    public void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state) {
-        log.trace("[{}] Processing {} state change event: {}", tenantId, entityId.getEntityType(), state);
-        broadcast(new ComponentLifecycleMsg(tenantId, entityId, state));
-    }
-
-    @Override
-    public void onCredentialsUpdate(TenantId tenantId, DeviceId deviceId) {
-        DeviceCredentialsUpdateNotificationMsg msg = new DeviceCredentialsUpdateNotificationMsg(tenantId, deviceId);
-        appActor.tell(new SendToClusterMsg(deviceId, msg), ActorRef.noSender());
-    }
-
-    @Override
-    public void onDeviceNameOrTypeUpdate(TenantId tenantId, DeviceId deviceId, String deviceName, String deviceType) {
-        log.trace("[{}] Processing onDeviceNameOrTypeUpdate event, deviceName: {}, deviceType: {}", deviceId, deviceName, deviceType);
-        DeviceNameOrTypeUpdateMsg msg = new DeviceNameOrTypeUpdateMsg(tenantId, deviceId, deviceName, deviceType);
-        appActor.tell(new SendToClusterMsg(deviceId, msg), ActorRef.noSender());
-    }
-
-    public void broadcast(ToAllNodesMsg msg) {
-        actorContext.getEncodingService().encode(msg);
-        //TODO 2.5
-//        rpcService.broadcast(new RpcBroadcastMsg(ClusterAPIProtos.ClusterMessage
-//                .newBuilder()
-//                .setPayload(ByteString
-//                        .copyFrom(actorContext.getEncodingService().encode(msg)))
-//                .setMessageType(CLUSTER_ACTOR_MESSAGE)
-//                .build()));
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
-    private void broadcast(ClusterEventMsg msg) {
-        this.appActor.tell(msg, ActorRef.noSender());
-        this.rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
     @Value("${cluster.stats.enabled:false}")
     private boolean statsEnabled;
 
+    //TODO 2.5
     private final AtomicInteger sentClusterMsgs = new AtomicInteger(0);
     private final AtomicInteger receivedClusterMsgs = new AtomicInteger(0);
 
@@ -258,8 +199,4 @@ public class DefaultActorService implements ActorService {
 //        rpcManagerActor.tell(msg, ActorRef.noSender());
 //    }
 
-    @Override
-    public void onDeviceAdded(Device device) {
-        deviceStateService.onDeviceAdded(device);
-    }
 }

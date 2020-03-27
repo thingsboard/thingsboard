@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 
 /**
  * Responsible for initialization of various Producers and Consumers used by TB Core Node.
@@ -43,6 +45,13 @@ public interface TbRuleEngineQueueProvider {
     TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer();
 
     /**
+     * Used to push notifications to instances of TB RuleEngine Service
+     *
+     * @return
+     */
+    TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer();
+
+    /**
      * Used to push messages to other instances of TB Core Service
      *
      * @return
@@ -50,10 +59,24 @@ public interface TbRuleEngineQueueProvider {
     TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer();
 
     /**
+     * Used to push notifications to other instances of TB Core Service
+     *
+     * @return
+     */
+    TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer();
+
+    /**
      * Used to consume messages by TB Core Service
      *
      * @return
      */
     TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer();
+
+    /**
+     * Used to consume high priority messages by TB Core Service
+     *
+     * @return
+     */
+    TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getToRuleEngineNotificationsMsgConsumer();
 
 }

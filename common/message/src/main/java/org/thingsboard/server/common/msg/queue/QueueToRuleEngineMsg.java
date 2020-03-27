@@ -13,12 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.common.msg.queue;
 
-import org.thingsboard.server.common.data.Device;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbMsg;
 
-public interface SessionMsgProcessor {
+import java.io.Serializable;
 
-    void onDeviceAdded(Device device);
+/**
+ * Created by ashvayka on 15.03.18.
+ */
+@Data
+public final class QueueToRuleEngineMsg implements TbActorMsg {
 
+    private final TenantId tenantId;
+    private final TbMsg tbMsg;
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.QUEUE_TO_RULE_ENGINE_MSG;
+    }
 }
