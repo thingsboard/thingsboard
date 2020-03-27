@@ -20,9 +20,9 @@
      [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center" class="tb-json-object-toolbar">
     <label class="tb-title no-padding"
-           ng-class="{'tb-required': required,
-                      'tb-readonly': readonly,
-                      'tb-error': !objectValid}">{{ label }}</label>
+           [ngClass]="{'tb-required': required,
+                       'tb-readonly': readonly,
+                       'tb-error': !objectValid}">{{ label }}</label>
     <span fxFlex></span>
     <button type="button"
             mat-button *ngIf="!readonly" class="tidy" (click)="beautifyJSON()">
