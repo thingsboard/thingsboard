@@ -36,6 +36,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 
 import javax.annotation.PostConstruct;
@@ -54,7 +55,7 @@ import java.util.function.Consumer;
  */
 @Service
 @Slf4j
-@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@TbMonolithOrCoreComponent
 public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
     private static final ObjectMapper json = new ObjectMapper();
@@ -79,7 +80,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         this.actorContext = actorContext;
     }
 
-    @Autowired
+    @Autowired(required = false)
     public void setTbRuleEngineRpcService(Optional<TbRuleEngineDeviceRpcService> tbRuleEngineRpcService) {
         this.tbRuleEngineRpcService = tbRuleEngineRpcService;
     }

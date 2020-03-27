@@ -24,23 +24,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
 
 
 @RestController
+@TbMonolithOrCoreComponent
 @RequestMapping("/api")
 public class EntityRelationController extends BaseController {
 

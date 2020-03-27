@@ -43,6 +43,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.TenantRateLimitException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.ValidationCallback;
 import org.thingsboard.server.service.security.ValidationResult;
@@ -83,6 +84,7 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 27.03.18.
  */
 @Service
+@TbMonolithOrCoreComponent
 @Slf4j
 public class DefaultTelemetryWebSocketService implements TelemetryWebSocketService {
 

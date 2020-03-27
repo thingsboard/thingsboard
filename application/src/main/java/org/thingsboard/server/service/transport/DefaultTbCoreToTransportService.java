@@ -27,6 +27,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -35,7 +36,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Slf4j
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@TbMonolithOrCoreComponent
 public class DefaultTbCoreToTransportService implements TbCoreToTransportService {
 
     private final TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> tbTransportProducer;

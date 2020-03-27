@@ -45,6 +45,7 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueProvider;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -92,6 +93,7 @@ public class DefaultTransportService implements TransportService {
 
     private final Gson gson = new Gson();
     private final TbTransportQueueProvider queueProvider;
+    private final TbQueueProducerProvider producerProvider;
     private final PartitionService partitionService;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
@@ -110,8 +112,9 @@ public class DefaultTransportService implements TransportService {
     private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
     private volatile boolean stopped = false;
 
-    public DefaultTransportService(TbTransportQueueProvider queueProvider, PartitionService partitionService) {
+    public DefaultTransportService(TbTransportQueueProvider queueProvider, TbQueueProducerProvider producerProvider, PartitionService partitionService) {
         this.queueProvider = queueProvider;
+        this.producerProvider = producerProvider;
         this.partitionService = partitionService;
     }
 
@@ -126,8 +129,8 @@ public class DefaultTransportService implements TransportService {
         this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
         this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
         transportApiRequestTemplate = queueProvider.getTransportApiRequestTemplate();
-        ruleEngineMsgProducer = queueProvider.getRuleEngineMsgProducer();
-        tbCoreMsgProducer = queueProvider.getTbCoreMsgProducer();
+        ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
+        tbCoreMsgProducer = producerProvider.getTbCoreMsgProducer();
         transportNotificationsConsumer = queueProvider.getTransportNotificationsConsumer();
         transportNotificationsConsumer.subscribe();
         transportApiRequestTemplate.init();

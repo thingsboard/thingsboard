@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.transport;
+package org.thingsboard.server.queue.util;
 
-import org.thingsboard.server.queue.TbQueueMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.queue.kafka.TbKafkaDecoder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import java.io.IOException;
-
-/**
- * Created by ashvayka on 05.10.18.
- */
-public class ToRuleEngineMsgDecoder implements TbKafkaDecoder<ToRuleEngineMsg> {
-
-    @Override
-    public ToRuleEngineMsg decode(TbQueueMsg msg) throws IOException {
-        return ToRuleEngineMsg.parseFrom(msg.getData());
-    }
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine'")
+public @interface TbMonolithOrRuleEngineComponent {
 }

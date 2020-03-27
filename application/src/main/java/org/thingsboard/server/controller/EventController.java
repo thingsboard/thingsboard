@@ -31,9 +31,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
 @RestController
+@TbMonolithOrCoreComponent
 @RequestMapping("/api")
 public class EventController extends BaseController {
 

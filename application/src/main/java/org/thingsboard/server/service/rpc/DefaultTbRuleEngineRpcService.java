@@ -17,8 +17,6 @@ package org.thingsboard.server.service.rpc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RpcError;
@@ -31,6 +29,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.util.TbMonolithOrRuleEngineComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 
 import javax.annotation.PostConstruct;
@@ -45,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine'")
+@TbMonolithOrRuleEngineComponent
 @Slf4j
 public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcService {
 
@@ -67,7 +66,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         this.serviceInfoProvider = serviceInfoProvider;
     }
 
-    @Autowired
+    @Autowired(required = false)
     public void setTbCoreRpcService(Optional<TbCoreDeviceRpcService> tbCoreRpcService) {
         this.tbCoreRpcService = tbCoreRpcService;
     }

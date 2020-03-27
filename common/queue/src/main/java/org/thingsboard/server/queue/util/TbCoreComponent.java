@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.transport;
+package org.thingsboard.server.queue.util;
 
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.queue.kafka.TbKafkaEncoder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-/**
- * Created by ashvayka on 05.10.18.
- */
-public class ToTransportMsgEncoder implements TbKafkaEncoder<ToTransportMsg> {
-    @Override
-    public byte[] encode(ToTransportMsg value) {
-        return value.toByteArray();
-    }
+@ConditionalOnExpression("'${service.type:null}'=='tb-core'")
+public @interface TbCoreComponent {
 }

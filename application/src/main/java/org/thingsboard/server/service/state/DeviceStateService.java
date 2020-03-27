@@ -35,7 +35,7 @@ public interface DeviceStateService extends ApplicationListener<PartitionChangeE
 
     void onDeviceConnect(DeviceId deviceId);
 
-    void onDeviceActivity(DeviceId deviceId);
+    void onDeviceActivity(DeviceId deviceId, long lastReportedActivityTime);
 
     void onDeviceDisconnect(DeviceId deviceId);
 

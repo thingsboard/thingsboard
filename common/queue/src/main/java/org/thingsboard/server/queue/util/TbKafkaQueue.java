@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.executors;
+package org.thingsboard.server.queue.util;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-@Component
-public class ClusterRpcCallbackExecutorService extends AbstractListeningExecutor {
-
-    @Value("${actors.cluster.grpc_callback_thread_pool_size}")
-    private int grpcCallbackExecutorThreadPoolSize;
-
-    @Override
-    protected int getThreadPollSize() {
-        return grpcCallbackExecutorThreadPoolSize;
-    }
-
+@ConditionalOnExpression("'${queue.type:null}'=='kafka'")
+public @interface TbKafkaQueue {
 }

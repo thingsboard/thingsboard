@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.config.WebSocketConfiguration;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.telemetry.SessionEvent;
@@ -52,6 +53,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
+@TbMonolithOrCoreComponent
 @Slf4j
 public class TbWebSocketHandler extends TextWebSocketHandler implements TelemetryWebSocketMsgEndpoint {
 
@@ -63,7 +65,6 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
     @Value("${server.ws.send_timeout:5000}")
     private long sendTimeout;
-
     @Value("${server.ws.limits.max_sessions_per_tenant:0}")
     private int maxSessionsPerTenant;
     @Value("${server.ws.limits.max_sessions_per_customer:0}")

@@ -33,12 +33,14 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
 @RestController
+@TbMonolithOrCoreComponent
 @RequestMapping("/api")
 public class WidgetsBundleController extends BaseController {
 

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,6 +42,7 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.rpc.RpcRequest;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.LocalRequestMetaData;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
@@ -60,6 +60,7 @@ import java.util.UUID;
  * Created by ashvayka on 22.03.18.
  */
 @RestController
+@TbMonolithOrCoreComponent
 @RequestMapping(TbUrlConstants.RPC_URL_PREFIX)
 @Slf4j
 public class RpcController extends BaseController {

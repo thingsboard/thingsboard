@@ -60,6 +60,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
@@ -89,6 +90,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
  * Created by ashvayka on 01.05.18.
  */
 @Service
+@TbMonolithOrCoreComponent
 @Slf4j
 public class DefaultDeviceStateService implements DeviceStateService {
 
@@ -109,7 +111,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private final TimeseriesService tsService;
     private final TbQueueProducerProvider producerProvider;
     private final PartitionService partitionService;
-    private final TelemetrySubscriptionService tsSubService;
+
+    private TelemetrySubscriptionService tsSubService;
 
     @Value("${state.defaultInactivityTimeoutInSec}")
     @Getter
@@ -137,13 +140,17 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
                                      AttributesService attributesService, TimeseriesService tsService,
-                                     TbQueueProducerProvider producerProvider, PartitionService partitionService, TelemetrySubscriptionService tsSubService) {
+                                     TbQueueProducerProvider producerProvider, PartitionService partitionService) {
         this.tenantService = tenantService;
         this.deviceService = deviceService;
         this.attributesService = attributesService;
         this.tsService = tsService;
         this.producerProvider = producerProvider;
         this.partitionService = partitionService;
+    }
+
+    @Autowired
+    public void setTsSubService(TelemetrySubscriptionService tsSubService) {
         this.tsSubService = tsSubService;
     }
 
@@ -188,9 +195,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     @Override
-    public void onDeviceActivity(DeviceId deviceId) {
-        deviceLastReportedActivity.put(deviceId, System.currentTimeMillis());
-        long lastReportedActivity = deviceLastReportedActivity.getOrDefault(deviceId, 0L);
+    public void onDeviceActivity(DeviceId deviceId, long lastReportedActivity) {
+        deviceLastReportedActivity.put(deviceId, lastReportedActivity);
         long lastSavedActivity = deviceLastSavedActivity.getOrDefault(deviceId, 0L);
         if (lastReportedActivity > 0 && lastReportedActivity > lastSavedActivity) {
             DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
@@ -494,7 +500,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         try {
             TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
                     , json.writeValueAsString(state)
-                    , null, null, null);
+                    , null, null, TbMsgCallback.EMPTY);
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, stateData.getTenantId(), stateData.getDeviceId());
             TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                     .setTenantIdMSB(stateData.getTenantId().getId().getMostSignificantBits())

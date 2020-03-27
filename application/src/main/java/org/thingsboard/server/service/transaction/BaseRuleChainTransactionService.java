@@ -24,6 +24,8 @@ import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
+import org.thingsboard.server.queue.util.TbMonolithOrRuleEngineComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import javax.annotation.PostConstruct;
@@ -44,11 +46,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 @Service
+@TbMonolithOrRuleEngineComponent
 @Slf4j
 public class BaseRuleChainTransactionService implements RuleChainTransactionService {
 
-    @Autowired
-    private DbCallbackExecutorService callbackExecutor;
+    private final DbCallbackExecutorService callbackExecutor;
 
     @Value("${actors.rule.transaction.queue_size}")
     private int finalQueueSize;
@@ -60,6 +62,10 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
     private final Queue<TbTransactionTask> timeoutQueue = new ConcurrentLinkedQueue<>();
 
     private ExecutorService timeoutExecutor;
+
+    public BaseRuleChainTransactionService(DbCallbackExecutorService callbackExecutor) {
+        this.callbackExecutor = callbackExecutor;
+    }
 
     @PostConstruct
     public void init() {

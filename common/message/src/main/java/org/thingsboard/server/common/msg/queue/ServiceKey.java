@@ -16,10 +16,12 @@
 package org.thingsboard.server.common.msg.queue;
 
 import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 
+@ToString
 public class ServiceKey {
     @Getter
     private final ServiceType serviceType;

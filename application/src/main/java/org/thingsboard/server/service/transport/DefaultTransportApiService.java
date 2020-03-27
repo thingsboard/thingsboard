@@ -41,6 +41,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponse
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -52,6 +53,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Slf4j
 @Service
+@TbMonolithOrCoreComponent
 public class DefaultTransportApiService implements TransportApiService {
 
     private static final ObjectMapper mapper = new ObjectMapper();

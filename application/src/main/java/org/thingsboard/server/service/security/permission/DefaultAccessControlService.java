@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.*;
