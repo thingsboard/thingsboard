@@ -36,4 +36,7 @@ public class TbAwsSqsSettings {
     @Value("${queue.aws_sqs.region}")
     private String region;
 
+    @Value("${queue.aws_sqs.threads_per_topic:1}")
+    private int threadsPerTopic;
+
 }

@@ -18,8 +18,8 @@ package org.thingsboard.server.queue.sqs;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
@@ -32,6 +32,7 @@ import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -41,6 +42,7 @@ import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -50,15 +52,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
 
     private final Gson gson = new Gson();
     private final TbQueueAdmin admin;
-    private final AmazonSQSAsync sqsClient;
+    private final AmazonSQS sqsClient;
     private final String topic;
     private final TbQueueMsgDecoder<T> decoder;
+    private final TbAwsSqsSettings sqsSettings;
 
     private final List<AwsSqsMsgWrapper> messageList = new CopyOnWriteArrayList<>();
     private volatile boolean subscribed;
@@ -70,11 +74,12 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
         this.admin = admin;
         this.decoder = decoder;
         this.topic = topic;
+        this.sqsSettings = sqsSettings;
 
         AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
         AWSStaticCredentialsProvider credProvider = new AWSStaticCredentialsProvider(awsCredentials);
 
-        this.sqsClient = AmazonSQSAsyncClientBuilder.standard()
+        this.sqsClient = AmazonSQSClientBuilder.standard()
                 .withCredentials(credProvider)
                 .withRegion(sqsSettings.getRegion())
                 .build();
@@ -123,7 +128,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                             return getQueueUrl(topic);
                         }
                 ).collect(Collectors.toSet());
-                consumerExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(queueUrls.size()));
+                consumerExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(queueUrls.size() * sqsSettings.getThreadsPerTopic()));
                 subscribed = true;
             }
 
@@ -132,40 +137,57 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                 return Collections.emptyList();
             }
 
-            List<ListenableFuture<AwsSqsMsgWrapper>> futureList = queueUrls.stream().map(url -> consumerExecutor.submit(() -> {
+            List<ListenableFuture<List<Message>>> futureList = queueUrls
+                    .stream()
+                    .map(url -> poll(url, durationInMillis))
+                    .collect(Collectors.toList());
+            ListenableFuture<List<List<Message>>> futureResult = Futures.allAsList(futureList);
+            try {
+                return futureResult.get().stream()
+                        .flatMap(List::stream)
+                        .map(msg -> {
+                            try {
+                                return decode(msg);
+                            } catch (IOException e) {
+                                log.error("Failed to decode message: [{}]", msg);
+                                return null;
+                            }
+                        }).filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("Failed to pool messages.", e);
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private ListenableFuture<List<Message>> poll(String url, long durationInMillis) {
+        List<ListenableFuture<List<Message>>> result = new ArrayList<>();
+        for (int i = 0; i < sqsSettings.getThreadsPerTopic(); i++) {
+            result.add(consumerExecutor.submit(() -> {
                 ReceiveMessageRequest request = new ReceiveMessageRequest();
                 request
                         .withWaitTimeSeconds((int) (durationInMillis / 1000))
                         .withMessageAttributeNames("headers")
                         .withQueueUrl(url)
                         .withMaxNumberOfMessages(10);
-                return new AwsSqsMsgWrapper(url, sqsClient.receiveMessage(request).getMessages());
-            })).collect(Collectors.toList());
-            ListenableFuture<List<AwsSqsMsgWrapper>> futureResult = Futures.allAsList(futureList);
-            try {
-                List<AwsSqsMsgWrapper> messages =
-                        futureResult.get().stream()
-                                .filter(msg -> !msg.getMessages().isEmpty())
-                                .collect(Collectors.toList());
-                if (messages.size() > 0) {
-                    messageList.addAll(messages);
-                    return messages.stream()
-                            .flatMap(msg -> msg.getMessages().stream())
-                            .map(msg -> {
-                                try {
-                                    return decode(msg);
-                                } catch (IOException e) {
-                                    log.error("Failed to decode message: [{}]", msg);
-                                    return null;
-                                }
-                            }).filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-                }
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("Failed to pool messages.", e);
-            }
+                return sqsClient.receiveMessage(request).getMessages();
+            }));
         }
-        return Collections.emptyList();
+        return Futures.transform(Futures.allAsList(result), list -> {
+            if (!CollectionUtils.isEmpty(list)) {
+                return list.stream()
+                        .flatMap(l -> {
+                            if (!l.isEmpty()) {
+                                messageList.add(new AwsSqsMsgWrapper(url, l));
+                                return l.stream();
+                            }
+                            return Stream.empty();
+                        })
+                        .collect(Collectors.toList());
+            }
+            return Collections.emptyList();
+        });
     }
 
     @Override
