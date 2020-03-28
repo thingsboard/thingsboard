@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.security.device;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsFilter;
@@ -24,10 +23,10 @@ import org.thingsboard.server.common.transport.auth.DeviceAuthResult;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Service
-@TbMonolithOrCoreComponent
+@TbCoreComponent
 @Slf4j
 public class DefaultDeviceAuthService implements DeviceAuthService {
 

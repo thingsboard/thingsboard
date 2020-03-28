@@ -17,6 +17,6 @@ package org.thingsboard.server.queue.util;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-@ConditionalOnExpression("'${service.type:null}'=='tb-rule-engine'")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine'")
 public @interface TbRuleEngineComponent {
 }

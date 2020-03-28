@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -36,12 +37,9 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.queue.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
-import org.thingsboard.server.queue.util.TbKafkaQueue;
-import org.thingsboard.server.queue.util.TbMonolithComponent;
 
 @Component
-@TbMonolithComponent
-@TbKafkaQueue
+@ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='monolith'")
 public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEngineQueueProvider {
 
     private final PartitionService partitionService;

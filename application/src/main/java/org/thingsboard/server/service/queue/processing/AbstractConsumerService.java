@@ -117,15 +117,17 @@ public abstract class AbstractConsumerService<T extends com.google.protobuf.Gene
                     }
                     nfConsumer.commit();
                 } catch (Exception e) {
-                    log.warn("Failed to obtain notifications from queue.", e);
-                    try {
-                        Thread.sleep(getNotificationPollDuration());
-                    } catch (InterruptedException e2) {
-                        log.trace("Failed to wait until the server has capacity to handle new notifications", e2);
+                    if (!stopped) {
+                        log.warn("Failed to obtain notifications from queue.", e);
+                        try {
+                            Thread.sleep(getNotificationPollDuration());
+                        } catch (InterruptedException e2) {
+                            log.trace("Failed to wait until the server has capacity to handle new notifications", e2);
+                        }
                     }
                 }
             }
-            log.info("Tb Core Notifications Consumer stopped.");
+            log.info("TB Notifications Consumer stopped.");
         });
     }
 
@@ -134,12 +136,6 @@ public abstract class AbstractConsumerService<T extends com.google.protobuf.Gene
     @PreDestroy
     public void destroy() {
         stopped = true;
-        if (mainConsumer != null) {
-            mainConsumer.unsubscribe();
-        }
-        if (nfConsumer != null) {
-            nfConsumer.unsubscribe();
-        }
         if (mainConsumerExecutor != null) {
             mainConsumerExecutor.shutdownNow();
         }

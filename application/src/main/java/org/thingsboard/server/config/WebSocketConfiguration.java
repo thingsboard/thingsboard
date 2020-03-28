@@ -32,13 +32,13 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.controller.plugin.TbWebSocketHandler;
-import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Map;
 
 @Configuration
-@TbMonolithOrCoreComponent
+@TbCoreComponent
 @EnableWebSocket
 public class WebSocketConfiguration implements WebSocketConfigurer {
 

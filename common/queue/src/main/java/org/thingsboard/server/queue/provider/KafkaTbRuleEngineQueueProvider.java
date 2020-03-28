@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -34,12 +35,9 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.queue.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
-import org.thingsboard.server.queue.util.TbKafkaQueue;
-import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
 @Component
-@TbKafkaQueue
-@TbRuleEngineComponent
+@ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='tb-rule-engine'")
 public class KafkaTbRuleEngineQueueProvider implements TbRuleEngineQueueProvider {
 
     private final PartitionService partitionService;

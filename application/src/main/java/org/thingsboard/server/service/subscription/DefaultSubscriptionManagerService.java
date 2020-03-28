@@ -48,7 +48,7 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -71,7 +71,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Slf4j
-@TbMonolithOrCoreComponent
+@TbCoreComponent
 @Service
 public class DefaultSubscriptionManagerService implements SubscriptionManagerService {
 

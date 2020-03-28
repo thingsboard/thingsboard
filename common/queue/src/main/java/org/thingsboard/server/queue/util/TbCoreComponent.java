@@ -17,6 +17,6 @@ package org.thingsboard.server.queue.util;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-@ConditionalOnExpression("'${service.type:null}'=='tb-core'")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public @interface TbCoreComponent {
 }

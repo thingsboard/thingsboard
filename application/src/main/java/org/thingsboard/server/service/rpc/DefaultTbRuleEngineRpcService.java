@@ -29,7 +29,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.util.TbMonolithOrRuleEngineComponent;
+import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 
 import javax.annotation.PostConstruct;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Service
-@TbMonolithOrRuleEngineComponent
+@TbRuleEngineComponent
 @Slf4j
 public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcService {
 

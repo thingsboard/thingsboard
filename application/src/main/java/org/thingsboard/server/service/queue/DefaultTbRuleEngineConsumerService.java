@@ -32,7 +32,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueProvider;
-import org.thingsboard.server.queue.util.TbMonolithOrRuleEngineComponent;
+import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
@@ -52,7 +52,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@TbMonolithOrRuleEngineComponent
+@TbRuleEngineComponent
 @Slf4j
 public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineMsg, ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
 
@@ -128,14 +128,17 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                     }
                     mainConsumer.commit();
                 } catch (Exception e) {
-                    log.warn("Failed to process messages from queue.", e);
-                    try {
-                        Thread.sleep(pollDuration);
-                    } catch (InterruptedException e2) {
-                        log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+                    if (!stopped) {
+                        log.warn("Failed to process messages from queue.", e);
+                        try {
+                            Thread.sleep(pollDuration);
+                        } catch (InterruptedException e2) {
+                            log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+                        }
                     }
                 }
             }
+            log.info("TB Rule Engine Consumer stopped.");
         });
     }
 

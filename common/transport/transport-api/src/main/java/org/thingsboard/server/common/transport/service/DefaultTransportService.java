@@ -150,11 +150,13 @@ public class DefaultTransportService implements TransportService {
                     });
                     transportNotificationsConsumer.commit();
                 } catch (Exception e) {
-                    log.warn("Failed to obtain messages from queue.", e);
-                    try {
-                        Thread.sleep(notificationsPollDuration);
-                    } catch (InterruptedException e2) {
-                        log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+                    if (!stopped) {
+                        log.warn("Failed to obtain messages from queue.", e);
+                        try {
+                            Thread.sleep(notificationsPollDuration);
+                        } catch (InterruptedException e2) {
+                            log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+                        }
                     }
                 }
             }

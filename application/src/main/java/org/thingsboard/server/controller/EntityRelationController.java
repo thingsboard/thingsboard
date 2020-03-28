@@ -33,14 +33,14 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
 
 
 @RestController
-@TbMonolithOrCoreComponent
+@TbCoreComponent
 @RequestMapping("/api")
 public class EntityRelationController extends BaseController {
 

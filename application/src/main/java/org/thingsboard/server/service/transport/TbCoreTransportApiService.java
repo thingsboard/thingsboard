@@ -29,7 +29,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.queue.util.TbMonolithOrCoreComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -40,7 +39,7 @@ import java.util.concurrent.*;
  */
 @Slf4j
 @Service
-@TbMonolithOrCoreComponent
+@TbCoreComponent
 public class TbCoreTransportApiService {
 
     private final TbCoreQueueProvider tbCoreQueueProvider;
