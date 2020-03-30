@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.queue.sqs;
 
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import com.google.gson.annotations.Expose;
+import lombok.Data;
+import org.thingsboard.server.queue.TbQueueMsg;
+import org.thingsboard.server.queue.TbQueueMsgHeaders;
 
-public interface TbQueueProducer<T extends TbQueueMsg> {
+import java.util.UUID;
 
-    void init();
+@Data
+public class TbAwsSqsMsg implements TbQueueMsg {
+    private final UUID key;
+    private final byte[] data;
 
-    String getDefaultTopic();
+    public TbAwsSqsMsg(UUID key, byte[] data) {
+        this.key = key;
+        this.data = data;
+    }
 
-    void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback);
+    @Expose(serialize = false, deserialize = false)
+    private TbQueueMsgHeaders headers;
 
-    void stop();
 }

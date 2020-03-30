@@ -136,6 +136,15 @@ public abstract class AbstractConsumerService<T extends com.google.protobuf.Gene
     @PreDestroy
     public void destroy() {
         stopped = true;
+
+        if (mainConsumer != null) {
+            mainConsumer.unsubscribe();
+        }
+
+        if (nfConsumer != null) {
+            nfConsumer.unsubscribe();
+        }
+
         if (mainConsumerExecutor != null) {
             mainConsumerExecutor.shutdownNow();
         }

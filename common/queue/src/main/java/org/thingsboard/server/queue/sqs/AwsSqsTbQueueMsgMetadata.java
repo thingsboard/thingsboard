@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.queue.sqs;
 
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import com.amazonaws.http.SdkHttpMetadata;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 
-public interface TbQueueProducer<T extends TbQueueMsg> {
+@Data
+@AllArgsConstructor
+public class AwsSqsTbQueueMsgMetadata implements TbQueueMsgMetadata {
 
-    void init();
-
-    String getDefaultTopic();
-
-    void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback);
-
-    void stop();
+    private final SdkHttpMetadata metadata;
 }

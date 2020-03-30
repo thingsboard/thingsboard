@@ -138,6 +138,9 @@ public class DefaultTransportService implements TransportService {
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<ToTransportMsg>> records = transportNotificationsConsumer.poll(notificationsPollDuration);
+                    if (records.size() == 0) {
+                        continue;
+                    }
                     records.forEach(record -> {
                         try {
                             ToTransportMsg toTransportMsg = record.getValue();
@@ -170,6 +173,10 @@ public class DefaultTransportService implements TransportService {
             perDeviceLimits.clear();
         }
         stopped = true;
+
+        if (transportNotificationsConsumer != null) {
+            transportNotificationsConsumer.unsubscribe();
+        }
         if (schedulerExecutor != null) {
             schedulerExecutor.shutdownNow();
         }

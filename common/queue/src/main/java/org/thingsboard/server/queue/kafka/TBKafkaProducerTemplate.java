@@ -84,4 +84,9 @@ public class TBKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
             }
         });
     }
+
+    @Override
+    public void stop() {
+
+    }
 }

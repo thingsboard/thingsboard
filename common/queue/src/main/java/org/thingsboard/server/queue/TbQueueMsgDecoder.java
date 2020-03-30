@@ -15,15 +15,10 @@
  */
 package org.thingsboard.server.queue;
 
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.thingsboard.server.queue.TbQueueMsg;
 
-public interface TbQueueProducer<T extends TbQueueMsg> {
+public interface TbQueueMsgDecoder<T extends TbQueueMsg> {
 
-    void init();
-
-    String getDefaultTopic();
-
-    void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback);
-
-    void stop();
+    T decode(TbQueueMsg msg) throws InvalidProtocolBufferException;
 }

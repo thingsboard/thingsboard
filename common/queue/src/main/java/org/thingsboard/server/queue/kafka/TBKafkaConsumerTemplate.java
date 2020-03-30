@@ -22,9 +22,9 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -96,7 +96,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
         } else {
             if (!subscribed) {
                 List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
-                topicNames.forEach(this::createTopicIfNotExists);
+                topicNames.forEach(admin::createTopicIfNotExists);
                 consumer.subscribe(topicNames);
                 subscribed = true;
             }
@@ -130,7 +130,4 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
         return decoder.decode(new KafkaTbQueueMsg(record));
     }
 
-    private void createTopicIfNotExists(String topic) {
-        admin.createTopicIfNotExists(topic);
-    }
 }
