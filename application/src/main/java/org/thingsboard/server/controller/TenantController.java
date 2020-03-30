@@ -34,11 +34,13 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
 public class TenantController extends BaseController {
@@ -95,7 +97,7 @@ public class TenantController extends BaseController {
             checkTenantId(tenantId, Operation.DELETE);
             tenantService.deleteTenant(tenantId);
 
-            actorService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
+            tbClusterService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);
         }

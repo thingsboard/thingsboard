@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.executors;
+package org.thingsboard.server.service.queue.processing;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.AbstractListeningExecutor;
+public interface TbRuleEngineProcessingStrategy {
 
-@Component
-public class ClusterRpcCallbackExecutorService extends AbstractListeningExecutor {
-
-    @Value("${actors.cluster.grpc_callback_thread_pool_size}")
-    private int grpcCallbackExecutorThreadPoolSize;
-
-    @Override
-    protected int getThreadPollSize() {
-        return grpcCallbackExecutorThreadPoolSize;
-    }
+    TbRuleEngineProcessingDecision analyze(TbRuleEngineProcessingResult result);
 
 }

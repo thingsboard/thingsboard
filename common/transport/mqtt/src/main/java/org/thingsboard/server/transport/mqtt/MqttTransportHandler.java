@@ -410,13 +410,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void processDisconnect(ChannelHandlerContext ctx) {
         ctx.close();
         log.info("[{}] Client disconnected!", sessionId);
-        if (deviceSessionCtx.isConnected()) {
-            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
-            transportService.deregisterSession(sessionInfo);
-            if (gatewaySessionHandler != null) {
-                gatewaySessionHandler.onGatewayDisconnect();
-            }
-        }
+        doDisconnect();
     }
 
     private MqttConnAckMessage createMqttConnAckMsg(MqttConnectReturnCode returnCode) {
@@ -485,9 +479,17 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     @Override
     public void operationComplete(Future<? super Void> future) throws Exception {
+        doDisconnect();
+    }
+
+    private void doDisconnect() {
         if (deviceSessionCtx.isConnected()) {
             transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
             transportService.deregisterSession(sessionInfo);
+            if (gatewaySessionHandler != null) {
+                gatewaySessionHandler.onGatewayDisconnect();
+            }
+            deviceSessionCtx.setDisconnected();
         }
     }
 

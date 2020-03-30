@@ -13,35 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.service.subscription;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 
-public class ServiceKey {
-    @Getter
-    private final ServiceType serviceType;
-    @Getter
-    private final TenantId tenantId;
+@Data
+@AllArgsConstructor
+public abstract class TbSubscription {
 
-    public ServiceKey(ServiceType serviceType, TenantId tenantId) {
-        this.serviceType = serviceType;
-        this.tenantId = tenantId;
-    }
+    private final String serviceId;
+    private final String sessionId;
+    private final int subscriptionId;
+    private final TenantId tenantId;
+    private final EntityId entityId;
+    private final TbSubscriptionType type;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ServiceKey that = (ServiceKey) o;
-        return serviceType == that.serviceType &&
-                Objects.equals(tenantId, that.tenantId);
+        TbSubscription that = (TbSubscription) o;
+        return subscriptionId == that.subscriptionId &&
+                sessionId.equals(that.sessionId) &&
+                tenantId.equals(that.tenantId) &&
+                entityId.equals(that.entityId) &&
+                type == that.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(serviceType, tenantId);
+        return Objects.hash(sessionId, subscriptionId, tenantId, entityId, type);
     }
 }

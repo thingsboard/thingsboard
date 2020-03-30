@@ -13,27 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.system;
+package org.thingsboard.server.queue.util;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.TbMsg;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import java.io.Serializable;
-
-/**
- * Created by ashvayka on 15.03.18.
- */
-@Data
-public final class ServiceToRuleEngineMsg implements TbActorMsg, Serializable {
-
-    private final TenantId tenantId;
-    private final TbMsg tbMsg;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.SERVICE_TO_RULE_ENGINE_MSG;
-    }
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine'")
+public @interface TbRuleEngineComponent {
 }

@@ -22,17 +22,24 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueueProducer<T> {
@@ -41,6 +48,7 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     private final Gson gson = new Gson();
     private final Map<String, String> queueUrlMap = new ConcurrentHashMap<>();
     private final TbQueueAdmin admin;
+    private ListeningExecutorService producerExecutor;
 
     public TbAwsSqsProducerTemplate(TbQueueAdmin admin, TbAwsSqsSettings sqsSettings, String defaultTopic) {
         this.admin = admin;
@@ -53,6 +61,8 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                 .withCredentials(credProvider)
                 .withRegion(sqsSettings.getRegion())
                 .build();
+
+        producerExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
     @Override
@@ -79,14 +89,30 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
 
         sendMsgRequest.withMessageAttributes(attributes);
         sendMsgRequest.withMessageGroupId(msg.getKey().toString());
-        sqsClient.sendMessage(sendMsgRequest);
-        if (callback != null) {
-            callback.onSuccess(null);
-        }
+        ListenableFuture<SendMessageResult> future = producerExecutor.submit(() -> sqsClient.sendMessage(sendMsgRequest));
+
+        Futures.addCallback(future, new FutureCallback<SendMessageResult>() {
+            @Override
+            public void onSuccess(SendMessageResult result) {
+                if (callback != null) {
+                    callback.onSuccess(new AwsSqsTbQueueMsgMetadata(result.getSdkHttpMetadata()));
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                if (callback != null) {
+                    callback.onFailure(t);
+                }
+            }
+        });
     }
 
     @Override
     public void stop() {
+        if (producerExecutor != null) {
+            producerExecutor.shutdownNow();
+        }
         if (sqsClient != null) {
             sqsClient.shutdown();
         }

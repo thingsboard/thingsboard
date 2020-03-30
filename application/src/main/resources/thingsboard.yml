@@ -181,32 +181,30 @@ cassandra:
 
 # SQL configuration parameters
 sql:
-    # Specify batch size for persisting attribute updates
-    attributes:
-      batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
-      batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
-      stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
-    ts:
-      batch_size: "${SQL_TS_BATCH_SIZE:10000}"
-      batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
-      stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
-    ts_latest:
-      batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
-      batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
-      stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
-    # Specify whether to remove null characters from strValue of attributes and timeseries before insert
-    remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
-    postgres:
-      # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
-      ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
-    timescale:
-      # Specify Interval size for new data chunks storage.
-      chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
+  # Specify batch size for persisting attribute updates
+  attributes:
+    batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
+    batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
+    stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
+  ts:
+    batch_size: "${SQL_TS_BATCH_SIZE:10000}"
+    batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
+    stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
+  ts_latest:
+    batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
+    batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
+    stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
+  # Specify whether to remove null characters from strValue of attributes and timeseries before insert
+  remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
+  postgres:
+    # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
+    ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
+  timescale:
+    # Specify Interval size for new data chunks storage.
+    chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
 
 # Actor system parameters
 actors:
-  cluster:
-    grpc_callback_thread_pool_size: "${ACTORS_CLUSTER_GRPC_CALLBACK_THREAD_POOL_SIZE:10}"
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}"
   session:
@@ -330,19 +328,19 @@ updates:
 
 # spring CORS configuration
 spring.mvc.cors:
-   mappings:
-     # Intercept path
-      "[/api/**]":
-         #Comma-separated list of origins to allow. '*' allows all origins. When not set,CORS support is disabled.
-         allowed-origins: "*"
-         #Comma-separated list of methods to allow. '*' allows all methods.
-         allowed-methods: "*"
-         #Comma-separated list of headers to allow in a request. '*' allows all headers.
-         allowed-headers: "*"
-         #How long, in seconds, the response from a pre-flight request can be cached by clients.
-         max-age: "1800"
-         #Set whether credentials are supported. When not set, credentials are not supported.
-         allow-credentials: "true"
+  mappings:
+    # Intercept path
+    "[/api/**]":
+      #Comma-separated list of origins to allow. '*' allows all origins. When not set,CORS support is disabled.
+      allowed-origins: "*"
+      #Comma-separated list of methods to allow. '*' allows all methods.
+      allowed-methods: "*"
+      #Comma-separated list of headers to allow in a request. '*' allows all headers.
+      allowed-headers: "*"
+      #How long, in seconds, the response from a pre-flight request can be cached by clients.
+      max-age: "1800"
+      #Set whether credentials are supported. When not set, credentials are not supported.
+      allow-credentials: "true"
 
 # spring serve gzip compressed static resources
 spring.resources.chain:
@@ -370,7 +368,7 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
-      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:50}"
+      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:5}"
 
 # Audit log parameters
 audit-log:
@@ -412,7 +410,7 @@ audit-log:
 state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
-  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
+  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:true}"
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
@@ -531,6 +529,8 @@ queue:
     access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
     secret_access_key: "${TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY:YOUR_SECRET}"
     region: "${TB_QUEUE_AWS_SQS_REGION:YOUR_REGION}"
+    threads_per_topic: "${TB_QUEUE_AWS_SQS_THREADS_PER_TOPIC:1}"
+    visibility_timeout: "${TB_QUEUE_AWS_SQS_VISIBILITY_TIMEOUT:30}" #in seconds
   pubsub:
     project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
     service_account: "${TB_QUEUE_PUBSUB_SERVICE_ACCOUNT:YOUR_SERVICE_ACCOUNT}"
@@ -558,10 +558,17 @@ queue:
     poll_interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_RULE_ENGINE_PARTITIONS:10}"
     pack_processing_timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    strategy:
+      type: "${TB_QUEUE_RULE_ENGINE_STRATEGY_TYPE:RETRY_FAILED_AND_TIMED_OUT}" # SKIP_ALL_FAILURES, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+      # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+      retries: "${TB_QUEUE_RULE_ENGINE_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
+      failure_percentage: "${TB_QUEUE_RULE_ENGINE_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
+      pause_between_retries: "${TB_QUEUE_RULE_ENGINE_STRATEGY_RETRY_PAUSE:3}"# Time in seconds to wait in consumer thread before retries;
     stats:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:false}"
       print_interval_ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
   transport:
+    # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
     poll_interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
 
@@ -570,3 +577,4 @@ service:
   # Unique id for this service (autogenerated if empty)
   id: "${TB_SERVICE_ID:}"
   tenant_id: "${TB_SERVICE_TENANT_ID:}" # empty or specific tenant id.
+

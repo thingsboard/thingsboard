@@ -13,12 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.common.msg.queue;
 
-public enum ServiceType {
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbMsg;
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
+import java.io.Serializable;
+
+/**
+ * Created by ashvayka on 15.03.18.
+ */
+@Data
+public final class QueueToRuleEngineMsg implements TbActorMsg {
+
+    private final TenantId tenantId;
+    private final TbMsg tbMsg;
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.QUEUE_TO_RULE_ENGINE_MSG;
     }
 }

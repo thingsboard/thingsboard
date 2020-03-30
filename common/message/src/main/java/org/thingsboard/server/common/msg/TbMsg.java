@@ -15,14 +15,18 @@
  */
 package org.thingsboard.server.common.msg;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
@@ -32,7 +36,8 @@ import java.util.UUID;
  * Created by ashvayka on 13.01.18.
  */
 @Data
-@AllArgsConstructor
+@Builder
+@Slf4j
 public final class TbMsg implements Serializable {
 
     private final UUID id;
@@ -42,29 +47,37 @@ public final class TbMsg implements Serializable {
     private final TbMsgDataType dataType;
     private final String data;
     private final TbMsgTransactionData transactionData;
-
-    //The following fields are not persisted to DB, because they can always be recovered from the context;
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
-    private final long clusterPartition;
+    //This field is not serialized because we use queues and there is no need to do it
+    private final TbMsgCallback callback;
 
-    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, String data,
-                 RuleChainId ruleChainId, RuleNodeId ruleNodeId, long clusterPartition) {
+    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
+                 RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
+        this(id, type, originator, metaData, dataType, data, new TbMsgTransactionData(id, originator), ruleChainId, ruleNodeId, callback);
+    }
+
+    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
+                 TbMsgTransactionData transactionData, RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
         this.id = id;
         this.type = type;
         this.originator = originator;
         this.metaData = metaData;
+        this.dataType = dataType;
         this.data = data;
-        this.dataType = TbMsgDataType.JSON;
-        this.transactionData = new TbMsgTransactionData(id, originator);
+        this.transactionData = transactionData;
         this.ruleChainId = ruleChainId;
         this.ruleNodeId = ruleNodeId;
-        this.clusterPartition = clusterPartition;
+        if (callback != null) {
+            this.callback = callback;
+        } else {
+            log.warn("[{}] Created message with empty callback: {}", originator, type);
+            this.callback = TbMsgCallback.EMPTY;
+        }
     }
 
-    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
-                 RuleChainId ruleChainId, RuleNodeId ruleNodeId, long clusterPartition) {
-        this(id, type, originator, metaData, dataType, data, new TbMsgTransactionData(id, originator), ruleChainId, ruleNodeId, clusterPartition);
+    public static ByteString toByteString(TbMsg msg) {
+        return ByteString.copyFrom(toByteArray(msg));
     }
 
     public static byte[] toByteArray(TbMsg msg) {
@@ -105,36 +118,34 @@ public final class TbMsg implements Serializable {
 
     }
 
-    public static ByteBuffer toBytes(TbMsg msg) {
-        return ByteBuffer.wrap(toByteArray(msg));
-    }
-
-    public static TbMsg fromBytes(byte[] data) {
-        return fromBytes(ByteBuffer.wrap(data));
-    }
-
-    public static TbMsg fromBytes(ByteBuffer buffer) {
+    public static TbMsg fromBytes(byte[] data, TbMsgCallback callback) {
         try {
-            MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(buffer.array());
+            MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(data);
             TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
             EntityId transactionEntityId = EntityIdFactory.getByTypeAndUuid(proto.getTransactionData().getEntityType(),
                     new UUID(proto.getTransactionData().getEntityIdMSB(), proto.getTransactionData().getEntityIdLSB()));
             TbMsgTransactionData transactionData = new TbMsgTransactionData(UUID.fromString(proto.getTransactionData().getId()), transactionEntityId);
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-            RuleChainId ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
+            RuleChainId ruleChainId = null;
             RuleNodeId ruleNodeId = null;
+            if (proto.getRuleChainIdMSB() != 0L && proto.getRuleChainIdLSB() != 0L) {
+                ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
+            }
             if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
                 ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
             }
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
-            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData(), transactionData, ruleChainId, ruleNodeId, proto.getClusterPartition());
+            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData(), transactionData, ruleChainId, ruleNodeId, callback);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
     }
 
-    public TbMsg copy(UUID newId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, long clusterPartition) {
-        return new TbMsg(newId, type, originator, metaData.copy(), dataType, data, transactionData, ruleChainId, ruleNodeId, clusterPartition);
+    public TbMsg copyWithRuleChainId(RuleChainId ruleChainId) {
+        return new TbMsg(this.id, this.type, this.originator, this.metaData, this.dataType, this.data, this.transactionData, ruleChainId, null, callback);
     }
 
+    public TbMsg copyWithRuleNodeId(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        return new TbMsg(this.id, this.type, this.originator, this.metaData, this.dataType, this.data, this.transactionData, ruleChainId, ruleNodeId, callback);
+    }
 }

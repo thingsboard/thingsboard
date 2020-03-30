@@ -21,6 +21,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.QueueAttributeName;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
 import java.util.HashMap;
@@ -28,26 +29,37 @@ import java.util.Map;
 
 public class TbAwsSqsAdmin implements TbQueueAdmin {
 
-    private final AmazonSQS sqsClient;
-    final Map<String, String> attributes = new HashMap<>();
+    private final TbAwsSqsSettings sqsSettings;
+    private final Map<String, String> attributes = new HashMap<>();
+    private final AWSStaticCredentialsProvider credProvider;
 
     public TbAwsSqsAdmin(TbAwsSqsSettings sqsSettings) {
-        AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
-        AWSStaticCredentialsProvider credProvider = new AWSStaticCredentialsProvider(awsCredentials);
+        this.sqsSettings = sqsSettings;
 
-        this.sqsClient = AmazonSQSClientBuilder.standard()
-                .withCredentials(credProvider)
-                .withRegion(sqsSettings.getRegion())
-                .build();
+        AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
+        this.credProvider = new AWSStaticCredentialsProvider(awsCredentials);
+
         attributes.put("FifoQueue", "true");
         attributes.put("ContentBasedDeduplication", "true");
+        attributes.put(QueueAttributeName.VisibilityTimeout.toString(), sqsSettings.getVisibilityTimeout());
     }
 
     @Override
     public void createTopicIfNotExists(String topic) {
+        AmazonSQS sqsClient = AmazonSQSClientBuilder.standard()
+                .withCredentials(credProvider)
+                .withRegion(sqsSettings.getRegion())
+                .build();
+
         final CreateQueueRequest createQueueRequest =
                 new CreateQueueRequest(topic.replaceAll("\\.", "_") + ".fifo")
                         .withAttributes(attributes);
-        sqsClient.createQueue(createQueueRequest);
+        try {
+            sqsClient.createQueue(createQueueRequest);
+        } finally {
+            if (sqsClient != null) {
+                sqsClient.shutdown();
+            }
+        }
     }
 }

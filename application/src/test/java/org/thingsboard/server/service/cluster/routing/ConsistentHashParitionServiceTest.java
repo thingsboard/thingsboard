@@ -26,9 +26,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.discovery.ConsistentHashPartitionService;
-import org.thingsboard.server.queue.discovery.ServiceType;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;

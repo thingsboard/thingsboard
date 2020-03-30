@@ -17,13 +17,19 @@ package org.thingsboard.server.queue.provider;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.queue.*;
-
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueCoreSettings;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
 import org.thingsboard.server.queue.sqs.TbAwsSqsConsumerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
@@ -33,16 +39,23 @@ import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 @ConditionalOnExpression("'${queue.type:null}'=='aws-sqs' && '${service.type:null}'=='tb-rule-engine'")
 public class AwsSqsTbRuleEngineQueueProvider implements TbRuleEngineQueueProvider {
 
-    private final TbAwsSqsSettings sqsSettings;
+    private final PartitionService partitionService;
     private final TbQueueCoreSettings coreSettings;
+    private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
+    private final TbAwsSqsSettings sqsSettings;
     private final TbQueueAdmin admin;
 
-    public AwsSqsTbRuleEngineQueueProvider(TbAwsSqsSettings sqsSettings, TbQueueCoreSettings coreSettings, TbQueueRuleEngineSettings ruleEngineSettings) {
-        this.sqsSettings = sqsSettings;
+    public AwsSqsTbRuleEngineQueueProvider(PartitionService partitionService, TbQueueCoreSettings coreSettings,
+                                           TbQueueRuleEngineSettings ruleEngineSettings,
+                                           TbServiceInfoProvider serviceInfoProvider,
+                                           TbAwsSqsSettings sqsSettings) {
+        this.partitionService = partitionService;
         this.coreSettings = coreSettings;
+        this.serviceInfoProvider = serviceInfoProvider;
         this.ruleEngineSettings = ruleEngineSettings;
-        this.admin = new TbAwsSqsAdmin(sqsSettings);
+        this.sqsSettings = sqsSettings;
+        admin = new TbAwsSqsAdmin(sqsSettings);
     }
 
     @Override
@@ -56,12 +69,29 @@ public class AwsSqsTbRuleEngineQueueProvider implements TbRuleEngineQueueProvide
     }
 
     @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
+        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, ruleEngineSettings.getTopic());
+    }
+
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
+        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
         return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
         return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, ruleEngineSettings.getTopic(), msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> getToRuleEngineNotificationsMsgConsumer() {
+        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings,
+                partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 }

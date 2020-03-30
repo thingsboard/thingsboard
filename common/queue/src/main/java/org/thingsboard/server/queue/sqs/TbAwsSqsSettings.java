@@ -36,4 +36,9 @@ public class TbAwsSqsSettings {
     @Value("${queue.aws_sqs.region}")
     private String region;
 
+    @Value("${queue.aws_sqs.threads_per_topic}")
+    private int threadsPerTopic;
+
+    @Value("${queue.aws_sqs.visibility_timeout}")
+    private String visibilityTimeout;
 }

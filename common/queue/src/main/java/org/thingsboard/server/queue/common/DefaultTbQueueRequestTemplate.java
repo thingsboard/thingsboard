@@ -28,7 +28,7 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.List;
 import java.util.UUID;
@@ -147,11 +147,18 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     @Override
     public void stop() {
         stopped = true;
+
+        if (responseTemplate != null) {
+            responseTemplate.unsubscribe();
+        }
+
+        if (requestTemplate != null) {
+            requestTemplate.stop();
+        }
+
         if (internalExecutor) {
             executor.shutdownNow();
         }
-        responseTemplate.unsubscribe();
-        requestTemplate.stop();
     }
 
     @Override

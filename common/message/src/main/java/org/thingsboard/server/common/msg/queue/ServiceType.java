@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.common.msg.queue;
 
-import org.thingsboard.server.common.data.Device;
+public enum ServiceType {
+    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR;
 
-public interface SessionMsgProcessor {
-
-    void onDeviceAdded(Device device);
-
+    public static ServiceType of(String serviceType) {
+        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
+    }
 }

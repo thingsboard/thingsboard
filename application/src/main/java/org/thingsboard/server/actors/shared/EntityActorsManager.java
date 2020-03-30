@@ -24,9 +24,11 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.ruleChain.RuleChainActor;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -82,6 +84,10 @@ public abstract class EntityActorsManager<T extends EntityId, A extends UntypedA
 
     public void remove(T id) {
         actors.remove(id);
+    }
+
+    public ActorRef get(T id) {
+        return actors.get(id);
     }
 
 }

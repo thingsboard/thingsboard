@@ -66,7 +66,8 @@ class TbRedisQueueProcessor {
                 if (listOperations.size(redisKey) > 0) {
                     List<Object> list = listOperations.range(redisKey, -10, -1);
                     list.forEach(obj -> {
-                        TbMsg msg = TbMsg.fromBytes((byte[]) obj);
+                        //TODO 2.5: Callback?
+                        TbMsg msg = TbMsg.fromBytes((byte[]) obj, null);
                         log.debug("Trying to send the message: {}", msg);
                         listOperations.remove(redisKey, -1, obj);
                         httpClient.processMessage(ctx, msg, this);

@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.transport;
+package org.thingsboard.server.queue;
 
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.queue.kafka.TbKafkaEncoder;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
-/**
- * Created by ashvayka on 05.10.18.
- */
-public class ToTransportMsgEncoder implements TbKafkaEncoder<ToTransportMsg> {
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class TbQueueTbMsgCallbackWrapper implements TbQueueCallback {
+
+    private final TbMsgCallback tbMsgCallback;
+
+    public TbQueueTbMsgCallbackWrapper(TbMsgCallback tbMsgCallback) {
+        this.tbMsgCallback = tbMsgCallback;
+    }
+
     @Override
-    public byte[] encode(ToTransportMsg value) {
-        return value.toByteArray();
+    public void onSuccess(TbQueueMsgMetadata metadata) {
+        tbMsgCallback.onSuccess();
+    }
+
+    @Override
+    public void onFailure(Throwable t) {
+        tbMsgCallback.onFailure(t);
     }
 }

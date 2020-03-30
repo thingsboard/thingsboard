@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.queue;
 
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.List;
 import java.util.Set;

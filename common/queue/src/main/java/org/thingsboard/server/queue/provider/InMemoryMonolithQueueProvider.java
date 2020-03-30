@@ -18,6 +18,13 @@ package org.thingsboard.server.queue.provider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -25,11 +32,6 @@ import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueConsumer;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
 
@@ -86,5 +88,25 @@ public class InMemoryMonolithQueueProvider implements TbCoreQueueProvider, TbRul
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiResponseProducer() {
         return new InMemoryTbQueueProducer<>(transportApiSettings.getResponsesTopic());
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
+        return new InMemoryTbQueueProducer<>(ruleEngineSettings.getTopic() + ".notifications");
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
+        return new InMemoryTbQueueProducer<>(coreSettings.getTopic() + ".notifications");
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> getToCoreNotificationsMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(coreSettings.getTopic() + ".notifications");
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getToRuleEngineNotificationsMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(ruleEngineSettings.getTopic() + ".notifications");
     }
 }

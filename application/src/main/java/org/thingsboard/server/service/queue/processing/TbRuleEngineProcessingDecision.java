@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.transport;
+package org.thingsboard.server.service.queue.processing;
 
-import org.thingsboard.server.queue.TbQueueMsg;
+import lombok.Data;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.queue.kafka.TbKafkaDecoder;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
 
-/**
- * Created by ashvayka on 05.10.18.
- */
-public class ToRuleEngineMsgDecoder implements TbKafkaDecoder<ToRuleEngineMsg> {
+@Data
+public class TbRuleEngineProcessingDecision {
 
-    @Override
-    public ToRuleEngineMsg decode(TbQueueMsg msg) throws IOException {
-        return ToRuleEngineMsg.parseFrom(msg.getData());
-    }
+    private final boolean commit;
+    private final ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> reprocessMap;
+
 }
