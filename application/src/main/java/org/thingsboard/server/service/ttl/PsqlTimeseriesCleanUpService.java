@@ -35,11 +35,10 @@ public class PsqlTimeseriesCleanUpService extends TimeseriesCleanUpServiceImpl {
     public void cleanUp() {
         if (ttlTaskExecutionEnabled) {
             try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                long totalDeviceTelemetryRemoved = executeQuery(conn, "call cleanup_devices_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
-                long totalAssetTelemetryRemoved = executeQuery(conn, "call cleanup_assets_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
-                long totalCustomerTelemetryRemoved = executeQuery(conn, "call cleanup_customers_timeseries_by_ttl(" + systemTtl + ", 0);");
+                long totalEntitiesTelemetryRemoved = executeQuery(conn, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
                 long totalPartitionsRemoved = executeQuery(conn, "call drop_empty_partitions(0);");
-                log.info("Telemetry deleted stats by TTL: devices [{}], assets [{}], customers [{}], partitions [{}]", totalDeviceTelemetryRemoved, totalAssetTelemetryRemoved, totalCustomerTelemetryRemoved, totalPartitionsRemoved);
+                log.info("Total telemetry deleted stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
+                log.info("Total empty timeseries partitions deleted: [{}]", totalPartitionsRemoved);
             } catch (SQLException e) {
                 log.error("SQLException occurred during TTL task execution ", e);
             }

@@ -35,10 +35,8 @@ public class TimescaleTimeseriesCleanUpService extends TimeseriesCleanUpServiceI
     public void cleanUp() {
         if (ttlTaskExecutionEnabled) {
             try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                long totalDeviceTelemetryRemoved = executeQuery(conn, "call cleanup_devices_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
-                long totalAssetTelemetryRemoved = executeQuery(conn, "call cleanup_assets_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
-                long totalCustomerTelemetryRemoved = executeQuery(conn, "call cleanup_customers_timeseries_by_ttl(" + systemTtl + ", 0);");
-                log.info("Telemetry deleted stats by TTL: devices [{}], assets [{}], customers [{}]", totalDeviceTelemetryRemoved, totalAssetTelemetryRemoved, totalCustomerTelemetryRemoved);
+                long totalEntitiesTelemetryRemoved = executeQuery(conn, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
+                log.info("Total telemetry deleted stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
             } catch (SQLException e) {
                 log.error("SQLException occurred during TTL task execution ", e);
             }

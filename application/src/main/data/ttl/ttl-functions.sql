@@ -22,7 +22,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_from_ts_kv(entity_id uuid, ttl bigint, OUT deleted integer) AS
+CREATE OR REPLACE FUNCTION delete_from_ts_kv(entity_id uuid, ttl bigint,
+                                             OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
@@ -31,138 +32,90 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE cleanup_devices_timeseries_by_ttl(IN null_uuid varchar(31), IN system_ttl bigint, INOUT deleted bigint)
+CREATE OR REPLACE PROCEDURE cleanup_timeseries_by_ttl(IN null_uuid varchar(31), IN system_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS
 $$
 DECLARE
-    query_cursor CURSOR FOR SELECT device.id          as device_id,
-                                   device.tenant_id   as tenant_id,
-                                   device.customer_id as customer_id
-                            FROM device;
-    device_record RECORD;
-    ttl           bigint;
+    tenant_cursor CURSOR FOR select tenant.id as tenant_id
+                             from tenant;
+    tenant_id_record   varchar;
+    customer_id_record varchar;
+    entity_id_record   uuid;
+    tenant_ttl         bigint;
+    customer_ttl       bigint;
+    deleted_per_entity bigint;
 BEGIN
-    OPEN query_cursor;
-    FETCH query_cursor INTO device_record;
+    OPEN tenant_cursor;
+    FETCH tenant_cursor INTO tenant_id_record;
     WHILE FOUND
         LOOP
-            IF device_record.customer_id = null_uuid THEN
-                SELECT coalesce(attribute_kv.long_v, 0) AS ttl
-                FROM attribute_kv
-                WHERE attribute_kv.entity_id = device_record.tenant_id
-                  AND attribute_kv.attribute_key = 'TTL'
-                INTO ttl;
-            ELSE
-                SELECT coalesce(attribute_kv.long_v, 0) AS ttl
-                FROM attribute_kv
-                WHERE attribute_kv.entity_id = device_record.customer_id
-                  AND attribute_kv.attribute_key = 'TTL'
-                INTO ttl;
-                IF ttl IS NULL THEN
-                    SELECT coalesce(attribute_kv.long_v, 0) AS ttl
-                    FROM attribute_kv
-                    WHERE attribute_kv.entity_id = device_record.tenant_id
-                      AND attribute_kv.attribute_key = 'TTL'
-                    INTO ttl;
-                END IF;
+            EXECUTE format(
+                    'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = %L',
+                    tenant_id_record, 'TTL') INTO tenant_ttl;
+            if tenant_ttl IS NULL THEN
+                tenant_ttl = system_ttl;
             END IF;
-            IF ttl IS NULL THEN
-                ttl = system_ttl;
+            IF tenant_ttl > 0 THEN
+                FOR entity_id_record IN
+                    SELECT to_uuid(device.id)
+                    FROM device
+                    WHERE device.tenant_id = tenant_id_record
+                      and device.customer_id = null_uuid
+                    LOOP
+                        deleted_per_entity = delete_from_ts_kv(entity_id_record, tenant_ttl);
+                        deleted := deleted + deleted_per_entity;
+                        RAISE NOTICE '% telemetry removed for device with id: % and tenant_id: %', deleted_per_entity, entity_id_record, tenant_id_record;
+                    END LOOP;
+                FOR entity_id_record IN
+                    SELECT to_uuid(asset.id)
+                    FROM asset
+                    WHERE asset.tenant_id = tenant_id_record
+                      AND asset.customer_id = null_uuid
+                    LOOP
+                        deleted_per_entity = delete_from_ts_kv(entity_id_record, tenant_ttl);
+                        deleted := deleted + deleted_per_entity;
+                        RAISE NOTICE '% telemetry removed for asset with id: % and tenant_id: %', deleted_per_entity, entity_id_record, tenant_id_record;
+                    END LOOP;
             END IF;
-            IF ttl > 0 THEN
-                deleted := deleted + delete_from_ts_kv(to_uuid(device_record.device_id), ttl);
-            END IF;
-            FETCH query_cursor INTO device_record;
+            FOR customer_id_record IN
+                SELECT customer.id AS customer_id FROM customer WHERE customer.tenant_id = tenant_id_record
+                LOOP
+                    EXECUTE format(
+                            'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = %L',
+                            customer_id_record, 'TTL') INTO customer_ttl;
+                    IF customer_ttl IS NULL THEN
+                        customer_ttl = tenant_ttl;
+                    END IF;
+                    IF customer_ttl > 0 THEN
+                        deleted_per_entity = delete_from_ts_kv(to_uuid(customer_id_record), customer_ttl);
+                        deleted := deleted + deleted_per_entity;
+                        RAISE NOTICE '% telemetry removed for customer with id: % and tenant_id: %', deleted_per_entity, customer_id_record, tenant_id_record;
+                        FOR entity_id_record IN
+                            SELECT to_uuid(device.id)
+                            FROM device
+                            WHERE device.tenant_id = tenant_id_record
+                              and device.customer_id = customer_id_record
+                            LOOP
+                                deleted_per_entity = delete_from_ts_kv(entity_id_record, customer_ttl);
+                                deleted := deleted + deleted_per_entity;
+                                RAISE NOTICE '% telemetry removed for device with id: % and tenant_id: % and customer_id: %', deleted_per_entity, entity_id_record, tenant_id_record, customer_id_record;
+                            END LOOP;
+                        FOR entity_id_record IN
+                            SELECT to_uuid(asset.id)
+                            FROM asset
+                            WHERE asset.tenant_id = tenant_id_record
+                              and asset.customer_id = customer_id_record
+                            LOOP
+                                deleted_per_entity = delete_from_ts_kv(entity_id_record, customer_ttl);
+                                deleted := deleted + deleted_per_entity;
+                                RAISE NOTICE '% telemetry removed for asset with id: % and tenant_id: % and customer_id: %', deleted_per_entity, entity_id_record, tenant_id_record, customer_id_record;
+                            END LOOP;
+                    END IF;
+                END LOOP;
+            FETCH tenant_cursor INTO tenant_id_record;
         END LOOP;
-    RAISE NOTICE '% records have been removed from ts_kv!', deleted;
 END
 $$;
-
-CREATE OR REPLACE PROCEDURE cleanup_assets_timeseries_by_ttl(IN null_uuid varchar(31), IN system_ttl bigint, INOUT deleted bigint)
-    LANGUAGE plpgsql AS
-$$
-DECLARE
-    query_cursor CURSOR FOR SELECT asset.id          as asset_id,
-                                   asset.tenant_id   as tenant_id,
-                                   asset.customer_id as customer_id
-                            FROM asset;
-    asset_record RECORD;
-    ttl          bigint;
-BEGIN
-    OPEN query_cursor;
-    FETCH query_cursor INTO asset_record;
-    WHILE FOUND
-        LOOP
-            IF asset_record.customer_id = null_uuid THEN
-                SELECT coalesce(attribute_kv.long_v, 0) AS ttl
-                FROM attribute_kv
-                WHERE attribute_kv.entity_id = asset_record.tenant_id
-                  AND attribute_kv.attribute_key = 'TTL'
-                INTO ttl;
-            ELSE
-                SELECT coalesce(attribute_kv.long_v, 0) AS ttl
-                FROM attribute_kv
-                WHERE attribute_kv.entity_id = asset_record.customer_id
-                  AND attribute_kv.attribute_key = 'TTL'
-                INTO ttl;
-                IF ttl IS NULL THEN
-                    SELECT coalesce(attribute_kv.long_v, 0) AS ttl
-                    FROM attribute_kv
-                    WHERE attribute_kv.entity_id = asset_record.tenant_id
-                      AND attribute_kv.attribute_key = 'TTL'
-                    INTO ttl;
-                END IF;
-            END IF;
-            IF ttl IS NULL THEN
-                ttl = system_ttl;
-            END IF;
-            IF ttl > 0 THEN
-                deleted := deleted + delete_from_ts_kv(to_uuid(asset_record.asset_id), ttl);
-            END IF;
-            FETCH query_cursor INTO asset_record;
-        END LOOP;
-    RAISE NOTICE '% records have been removed from ts_kv!', deleted;
-END
-$$;
-
-CREATE OR REPLACE PROCEDURE cleanup_customers_timeseries_by_ttl(IN system_ttl bigint, INOUT deleted bigint)
-    LANGUAGE plpgsql AS
-$$
-DECLARE
-    query_cursor CURSOR FOR SELECT customer.id        as customer_id,
-                                   customer.tenant_id as tenant_id
-                            FROM customer;
-    customer_record RECORD;
-    ttl             bigint;
-BEGIN
-    OPEN query_cursor;
-    FETCH query_cursor INTO customer_record;
-    WHILE FOUND
-        LOOP
-            SELECT coalesce(attribute_kv.long_v, 0) AS ttl
-            FROM attribute_kv
-            WHERE attribute_kv.entity_id = customer_record.customer_id
-              AND attribute_kv.attribute_key = 'TTL'
-            INTO ttl;
-            IF ttl IS NULL THEN
-                SELECT coalesce(attribute_kv.long_v, 0) AS ttl
-                FROM attribute_kv
-                WHERE attribute_kv.entity_id = customer_record.tenant_id
-                  AND attribute_kv.attribute_key = 'TTL'
-                INTO ttl;
-            END IF;
-            IF ttl IS NULL THEN
-                ttl = system_ttl;
-            END IF;
-            IF ttl > 0 THEN
-                deleted := deleted + delete_from_ts_kv(to_uuid(customer_record.customer_id), ttl);
-            END IF;
-            FETCH query_cursor INTO customer_record;
-        END LOOP;
-    RAISE NOTICE '% records have been removed from ts_kv!', deleted;
-END
-$$;
-
 
 CREATE OR REPLACE PROCEDURE drop_empty_partitions(INOUT deleted bigint)
     LANGUAGE plpgsql AS
@@ -174,7 +127,7 @@ DECLARE
                                    AND tablename like 'ts_kv_' || '%'
                                    AND tablename != 'ts_kv_latest'
                                    AND tablename != 'ts_kv_dictionary';
-    partition_name varchar;
+    partition_name    varchar;
     validation_record RECORD;
 
 BEGIN
