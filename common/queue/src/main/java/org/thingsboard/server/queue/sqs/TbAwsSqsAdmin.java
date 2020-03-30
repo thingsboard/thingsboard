@@ -21,6 +21,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.QueueAttributeName;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
 import java.util.HashMap;
@@ -40,6 +41,7 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
 
         attributes.put("FifoQueue", "true");
         attributes.put("ContentBasedDeduplication", "true");
+        attributes.put(QueueAttributeName.VisibilityTimeout.toString(), sqsSettings.getVisibilityTimeout());
     }
 
     @Override

@@ -62,7 +62,7 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                 .withRegion(sqsSettings.getRegion())
                 .build();
 
-        producerExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+        producerExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
     @Override

@@ -147,11 +147,18 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     @Override
     public void stop() {
         stopped = true;
+
+        if (responseTemplate != null) {
+            responseTemplate.unsubscribe();
+        }
+
+        if (requestTemplate != null) {
+            requestTemplate.stop();
+        }
+
         if (internalExecutor) {
             executor.shutdownNow();
         }
-        responseTemplate.unsubscribe();
-        requestTemplate.stop();
     }
 
     @Override

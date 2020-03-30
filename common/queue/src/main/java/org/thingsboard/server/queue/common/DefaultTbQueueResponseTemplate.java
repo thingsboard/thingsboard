@@ -18,12 +18,12 @@ package org.thingsboard.server.queue.common;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.InterruptException;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueHandler;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.List;
 import java.util.UUID;
@@ -151,17 +151,17 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
 
     public void stop() {
         stopped = true;
-        if (timeoutExecutor != null) {
-            timeoutExecutor.shutdownNow();
-        }
-        if (loopExecutor != null) {
-            loopExecutor.shutdownNow();
-        }
         if (requestTemplate != null) {
             requestTemplate.unsubscribe();
         }
         if (responseTemplate != null) {
             responseTemplate.stop();
+        }
+        if (timeoutExecutor != null) {
+            timeoutExecutor.shutdownNow();
+        }
+        if (loopExecutor != null) {
+            loopExecutor.shutdownNow();
         }
     }
 

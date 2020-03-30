@@ -68,10 +68,10 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     private final TbAwsSqsSettings sqsSettings;
 
     private final List<AwsSqsMsgWrapper> pendingMessages = new CopyOnWriteArrayList<>();
-    private volatile boolean subscribed;
     private volatile Set<String> queueUrls;
     private volatile Set<TopicPartitionInfo> partitions;
     private ListeningExecutorService consumerExecutor;
+    private volatile boolean subscribed;
     private volatile boolean stopped = false;
 
     public TbAwsSqsConsumerTemplate(TbQueueAdmin admin, TbAwsSqsSettings sqsSettings, String topic, TbQueueMsgDecoder<T> decoder) {
@@ -141,7 +141,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
             List<ListenableFuture<List<Message>>> futureList = queueUrls
                     .stream()
-                    .map(url -> poll(url, durationInMillis))
+                    .map(url -> poll(url, (int) TimeUnit.MILLISECONDS.toSeconds(durationInMillis)))
                     .collect(Collectors.toList());
             ListenableFuture<List<List<Message>>> futureResult = Futures.allAsList(futureList);
             try {
@@ -159,23 +159,22 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             } catch (InterruptedException | ExecutionException e) {
                 if (stopped) {
                     log.info("[{}] Aws SQS consumer is stopped.", topic);
-                    return Collections.emptyList();
                 } else {
-                    log.error("Failed to pool messages.", e);
+                    log.error("Failed to pool messages.",  e);
                 }
             }
         }
         return Collections.emptyList();
     }
 
-    private ListenableFuture<List<Message>> poll(String url, long durationInMillis) {
+    private ListenableFuture<List<Message>> poll(String url, int waitTimeSeconds) {
         List<ListenableFuture<List<Message>>> result = new ArrayList<>();
 
         for (int i = 0; i < sqsSettings.getThreadsPerTopic(); i++) {
             result.add(consumerExecutor.submit(() -> {
                 ReceiveMessageRequest request = new ReceiveMessageRequest();
                 request
-                        .withWaitTimeSeconds((int) TimeUnit.MILLISECONDS.toSeconds(durationInMillis))
+                        .withWaitTimeSeconds(waitTimeSeconds)
                         .withMessageAttributeNames("headers")
                         .withQueueUrl(url)
                         .withMaxNumberOfMessages(MAX_NUM_MSGS);
