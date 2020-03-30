@@ -70,7 +70,6 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
-import org.thingsboard.server.service.executors.ClusterRpcCallbackExecutorService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
@@ -124,10 +123,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DataDecodingEncodingService encodingService;
-
-    @Autowired
-    @Getter
-    private DeviceAuthService deviceAuthService;
 
     @Autowired
     @Getter
@@ -214,10 +209,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private ClusterRpcCallbackExecutorService clusterRpcCallbackExecutor;
-
-    @Autowired
-    @Getter
     private DbCallbackExecutorService dbCallbackExecutor;
 
     @Autowired
@@ -232,37 +223,34 @@ public class ActorSystemContext {
     @Getter
     private MailService mailService;
 
-    @Autowired
+    //TODO: separate context for TbCore and TbRuleEngine
+    @Autowired(required = false)
     @Getter
     private DeviceStateService deviceStateService;
 
-    @Autowired
+    @Autowired(required = false)
     @Getter
     private DeviceSessionCacheService deviceSessionCacheService;
 
-    @Lazy
-    @Autowired
+    @Autowired(required = false)
     @Getter
     private TbCoreToTransportService tbCoreToTransportService;
 
     /**
      * The following Service will be null if we operate in tb-core mode
      */
-    @Lazy
-    @Getter
     @Autowired(required = false)
+    @Getter
     private TbRuleEngineDeviceRpcService tbRuleEngineDeviceRpcService;
 
     /**
      * The following Service will be null if we operate in tb-rule-engine mode
      */
-    @Lazy
-    @Getter
     @Autowired(required = false)
+    @Getter
     private TbCoreDeviceRpcService tbCoreDeviceRpcService;
 
-    @Lazy
-    @Autowired
+    @Autowired(required = false)
     @Getter
     private RuleChainTransactionService ruleChainTransactionService;
 

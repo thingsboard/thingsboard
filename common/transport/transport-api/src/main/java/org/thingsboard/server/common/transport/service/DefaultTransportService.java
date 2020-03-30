@@ -22,22 +22,31 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.transport.util.JsonUtils;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.TbQueueRequestTemplate;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.util.JsonUtils;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.provider.TbTransportQueueProvider;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -45,15 +54,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
-import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.AsyncCallbackTemplate;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.provider.TbTransportQueueProvider;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -92,6 +93,7 @@ public class DefaultTransportService implements TransportService {
 
     private final Gson gson = new Gson();
     private final TbTransportQueueProvider queueProvider;
+    private final TbQueueProducerProvider producerProvider;
     private final PartitionService partitionService;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
@@ -110,8 +112,9 @@ public class DefaultTransportService implements TransportService {
     private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
     private volatile boolean stopped = false;
 
-    public DefaultTransportService(TbTransportQueueProvider queueProvider, PartitionService partitionService) {
+    public DefaultTransportService(TbTransportQueueProvider queueProvider, TbQueueProducerProvider producerProvider, PartitionService partitionService) {
         this.queueProvider = queueProvider;
+        this.producerProvider = producerProvider;
         this.partitionService = partitionService;
     }
 
@@ -126,8 +129,8 @@ public class DefaultTransportService implements TransportService {
         this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
         this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
         transportApiRequestTemplate = queueProvider.getTransportApiRequestTemplate();
-        ruleEngineMsgProducer = queueProvider.getRuleEngineMsgProducer();
-        tbCoreMsgProducer = queueProvider.getTbCoreMsgProducer();
+        ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
+        tbCoreMsgProducer = producerProvider.getTbCoreMsgProducer();
         transportNotificationsConsumer = queueProvider.getTransportNotificationsConsumer();
         transportNotificationsConsumer.subscribe();
         transportApiRequestTemplate.init();
@@ -150,11 +153,13 @@ public class DefaultTransportService implements TransportService {
                     });
                     transportNotificationsConsumer.commit();
                 } catch (Exception e) {
-                    log.warn("Failed to obtain messages from queue.", e);
-                    try {
-                        Thread.sleep(notificationsPollDuration);
-                    } catch (InterruptedException e2) {
-                        log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+                    if (!stopped) {
+                        log.warn("Failed to obtain messages from queue.", e);
+                        try {
+                            Thread.sleep(notificationsPollDuration);
+                        } catch (InterruptedException e2) {
+                            log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+                        }
                     }
                 }
             }

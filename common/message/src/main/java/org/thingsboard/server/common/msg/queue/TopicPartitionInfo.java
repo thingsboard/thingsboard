@@ -17,11 +17,13 @@ package org.thingsboard.server.common.msg.queue;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 import java.util.Optional;
 
+@ToString
 public class TopicPartitionInfo {
 
     private final String topic;

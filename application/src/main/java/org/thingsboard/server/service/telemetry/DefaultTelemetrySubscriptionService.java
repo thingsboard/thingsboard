@@ -51,6 +51,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -66,25 +67,31 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
 
-    @Autowired
-    private AttributesService attrService;
-
-    @Autowired
-    private TimeseriesService tsService;
-
-    @Autowired
-    private TbQueueProducerProvider producerProvider;
-
-    @Autowired
-    private PartitionService partitionService;
-
-    @Autowired
-    private SubscriptionManagerService subscriptionManagerService;
+    private final AttributesService attrService;
+    private final TimeseriesService tsService;
+    private final TbQueueProducerProvider producerProvider;
+    private final PartitionService partitionService;
+    private Optional<SubscriptionManagerService> subscriptionManagerService;
 
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> toCoreProducer;
 
     private ExecutorService tsCallBackExecutor;
     private ExecutorService wsCallBackExecutor;
+
+    public DefaultTelemetrySubscriptionService(AttributesService attrService,
+                                               TimeseriesService tsService,
+                                               TbQueueProducerProvider producerProvider,
+                                               PartitionService partitionService) {
+        this.attrService = attrService;
+        this.tsService = tsService;
+        this.producerProvider = producerProvider;
+        this.partitionService = partitionService;
+    }
+
+    @Autowired(required = false)
+    public void setSubscriptionManagerService(Optional<SubscriptionManagerService> subscriptionManagerService) {
+        this.subscriptionManagerService = subscriptionManagerService;
+    }
 
     @PostConstruct
     public void initExecutor() {
@@ -158,7 +165,11 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
-            subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, TbMsgCallback.EMPTY);
+            if (subscriptionManagerService.isPresent()) {
+                subscriptionManagerService.get().onAttributesUpdate(tenantId, entityId, scope, attributes, TbMsgCallback.EMPTY);
+            } else {
+                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+            }
         } else {
             TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
             toCoreProducer.send(tpi, new TbProtoQueueMsg<>(entityId.getId(), toCoreMsg), null);
@@ -168,7 +179,11 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
-            subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, ts, TbMsgCallback.EMPTY);
+            if (subscriptionManagerService.isPresent()) {
+                subscriptionManagerService.get().onTimeSeriesUpdate(tenantId, entityId, ts, TbMsgCallback.EMPTY);
+            } else {
+                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+            }
         } else {
             TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
             toCoreProducer.send(tpi, new TbProtoQueueMsg<>(entityId.getId(), toCoreMsg), null);

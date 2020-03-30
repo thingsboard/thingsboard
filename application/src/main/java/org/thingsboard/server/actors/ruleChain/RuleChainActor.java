@@ -53,7 +53,7 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
                 processor.onRuleChainToRuleChainMsg((RuleChainToRuleChainMsg) msg);
                 break;
             case PARTITION_CHANGE_MSG:
-                onClusterEventMsg((PartitionChangeMsg) msg);
+                processor.onPartitionChangeMsg((PartitionChangeMsg) msg);
                 break;
             case STATS_PERSIST_TICK_MSG:
                 onStatsPersistTick(id);

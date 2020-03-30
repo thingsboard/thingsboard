@@ -55,6 +55,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -68,6 +69,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class RuleChainController extends BaseController {
 

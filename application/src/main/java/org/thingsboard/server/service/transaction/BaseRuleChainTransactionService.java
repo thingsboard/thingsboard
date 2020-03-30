@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.transaction;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -24,11 +23,11 @@ import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -44,11 +43,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 @Service
+@TbRuleEngineComponent
 @Slf4j
 public class BaseRuleChainTransactionService implements RuleChainTransactionService {
 
-    @Autowired
-    private DbCallbackExecutorService callbackExecutor;
+    private final DbCallbackExecutorService callbackExecutor;
 
     @Value("${actors.rule.transaction.queue_size}")
     private int finalQueueSize;
@@ -60,6 +59,10 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
     private final Queue<TbTransactionTask> timeoutQueue = new ConcurrentLinkedQueue<>();
 
     private ExecutorService timeoutExecutor;
+
+    public BaseRuleChainTransactionService(DbCallbackExecutorService callbackExecutor) {
+        this.callbackExecutor = callbackExecutor;
+    }
 
     @PostConstruct
     public void init() {

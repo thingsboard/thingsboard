@@ -28,6 +28,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -38,9 +39,8 @@ import java.util.concurrent.*;
  */
 @Slf4j
 @Service
-//TODO 2.5: This Confitional annotation should be removed, and Service renamed to something meaningful
-//@ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
-public class RemoteTransportApiService {
+@TbCoreComponent
+public class TbCoreTransportApiService {
 
     private final TbCoreQueueProvider tbCoreQueueProvider;
     private final TransportApiService transportApiService;
@@ -58,7 +58,7 @@ public class RemoteTransportApiService {
     private TbQueueResponseTemplate<TbProtoQueueMsg<TransportApiRequestMsg>,
             TbProtoQueueMsg<TransportApiResponseMsg>> transportApiTemplate;
 
-    public RemoteTransportApiService(TbCoreQueueProvider tbCoreQueueProvider, TransportApiService transportApiService) {
+    public TbCoreTransportApiService(TbCoreQueueProvider tbCoreQueueProvider, TransportApiService transportApiService) {
         this.tbCoreQueueProvider = tbCoreQueueProvider;
         this.transportApiService = transportApiService;
     }

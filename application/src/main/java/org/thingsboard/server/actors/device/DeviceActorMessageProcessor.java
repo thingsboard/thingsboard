@@ -212,8 +212,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void process(ActorContext context, TransportToDeviceActorMsgWrapper wrapper) {
-        //TODO 2.5
-        boolean reportDeviceActivity = true;
         TransportToDeviceActorMsg msg = wrapper.getMsg();
         TbMsgCallback callback = wrapper.getCallback();
         if (msg.hasSessionEvent()) {
@@ -225,35 +223,16 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (msg.hasSubscribeToRPC()) {
             processSubscriptionCommands(context, msg.getSessionInfo(), msg.getSubscribeToRPC());
         }
-//        if (msg.hasPostAttributes()) {
-//            handlePostAttributesRequest(context, msg.getSessionInfo(), msg.getPostAttributes());
-//            reportDeviceActivity = true;
-//        }
-//        if (msg.hasPostTelemetry()) {
-//            handlePostTelemetryRequest(context, msg.getSessionInfo(), msg.getPostTelemetry());
-//            reportDeviceActivity = true;
-//        }
         if (msg.hasGetAttributes()) {
             handleGetAttributesRequest(context, msg.getSessionInfo(), msg.getGetAttributes());
         }
         if (msg.hasToDeviceRPCCallResponse()) {
             processRpcResponses(context, msg.getSessionInfo(), msg.getToDeviceRPCCallResponse());
         }
-//        if (msg.hasToServerRPCCallRequest()) {
-//            handleClientSideRPCRequest(context, msg.getSessionInfo(), msg.getToServerRPCCallRequest());
-//            reportDeviceActivity = true;
-//        }
         if (msg.hasSubscriptionInfo()) {
             handleSessionActivity(context, msg.getSessionInfo(), msg.getSubscriptionInfo());
         }
-        if (reportDeviceActivity) {
-            reportLogicalDeviceActivity();
-        }
         callback.onSuccess();
-    }
-
-    private void reportLogicalDeviceActivity() {
-        systemContext.getDeviceStateService().onDeviceActivity(deviceId);
     }
 
     private void reportSessionOpen() {
@@ -469,6 +448,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             if (sessions.size() == 1) {
                 reportSessionOpen();
             }
+            systemContext.getDeviceStateService().onDeviceActivity(deviceId, System.currentTimeMillis());
             dumpSessions();
         } else if (msg.getEvent() == SessionEvent.CLOSED) {
             log.debug("[{}] Canceling subscriptions for closed session [{}]", deviceId, sessionId);
@@ -496,6 +476,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (subscriptionInfo.getRpcSubscription()) {
             rpcSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
         }
+        systemContext.getDeviceStateService().onDeviceActivity(deviceId, subscriptionInfo.getLastActivityTime());
         dumpSessions();
     }
 

@@ -53,6 +53,8 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
             case STATS_PERSIST_TICK_MSG:
                 onStatsPersistTick(id);
                 break;
+            case PARTITION_CHANGE_MSG:
+                break;
             default:
                 return false;
         }
