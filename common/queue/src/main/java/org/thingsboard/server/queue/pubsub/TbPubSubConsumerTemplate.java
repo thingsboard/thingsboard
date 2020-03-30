@@ -31,6 +31,7 @@ import com.google.pubsub.v1.PullResponse;
 import com.google.pubsub.v1.ReceivedMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
@@ -38,7 +39,6 @@ import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -101,7 +101,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     @Override
     public void subscribe() {
-        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null));
+        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null, true));
         subscribed = false;
     }
 
@@ -171,7 +171,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             String subscriptionName = ProjectSubscriptionName.format(pubSubSettings.getProjectId(), subscriptionId);
             PullRequest pullRequest =
                     PullRequest.newBuilder()
-                            .setMaxMessages(1000)
+//                            .setMaxMessages(1000)
 //                            .setReturnImmediately(false) // return immediately if messages are not available
                             .setSubscription(subscriptionName)
                             .build();

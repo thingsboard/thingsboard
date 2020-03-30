@@ -24,12 +24,12 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicPartitionInfo;
 
 import java.io.IOException;
 import java.util.Map;
@@ -49,7 +49,7 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
 
     private final Map<String, Publisher> publisherMap = new ConcurrentHashMap<>();
 
-    private ExecutorService pubExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService pubExecutor = Executors.newCachedThreadPool();
 
     public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic) {
         this.defaultTopic = defaultTopic;

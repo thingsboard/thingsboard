@@ -17,8 +17,11 @@ package org.thingsboard.server.queue.provider;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
@@ -28,6 +31,8 @@ import org.thingsboard.server.queue.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
@@ -40,18 +45,21 @@ public class PubSubTbCoreQueueProvider implements TbCoreQueueProvider {
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueAdmin admin;
-
-    private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> tbCoreProducer;
+    private final PartitionService partitionService;
+    private final TbServiceInfoProvider serviceInfoProvider;
 
     public PubSubTbCoreQueueProvider(TbPubSubSettings pubSubSettings,
                                      TbQueueCoreSettings coreSettings,
                                      TbQueueTransportApiSettings transportApiSettings,
-                                     TbQueueAdmin admin) {
+                                     TbQueueAdmin admin,
+                                     PartitionService partitionService,
+                                     TbServiceInfoProvider serviceInfoProvider) {
         this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
-
         this.admin = admin;
+        this.partitionService = partitionService;
+        this.serviceInfoProvider = serviceInfoProvider;
     }
 
     @Override
@@ -65,21 +73,31 @@ public class PubSubTbCoreQueueProvider implements TbCoreQueueProvider {
     }
 
     @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
+    }
+
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        if (tbCoreProducer == null) {
-            synchronized (this) {
-                if (tbCoreProducer == null) {
-                    tbCoreProducer = new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
-                }
-            }
-        }
-        return tbCoreProducer;
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
+        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> getToCoreMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, coreSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> getToCoreNotificationsMsgConsumer() {
+        return new TbPubSubConsumerTemplate<>(admin, pubSubSettings,
+                partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override

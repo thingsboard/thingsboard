@@ -30,7 +30,6 @@ import org.thingsboard.server.queue.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -48,21 +47,18 @@ public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
-    private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
     public KafkaTbCoreQueueProvider(PartitionService partitionService, TbKafkaSettings kafkaSettings,
                                     TbServiceInfoProvider serviceInfoProvider,
                                     TbQueueCoreSettings coreSettings,
                                     TbQueueRuleEngineSettings ruleEngineSettings,
-                                    TbQueueTransportApiSettings transportApiSettings,
-                                    TbQueueTransportNotificationSettings transportNotificationSettings) {
+                                    TbQueueTransportApiSettings transportApiSettings) {
         this.partitionService = partitionService;
         this.kafkaSettings = kafkaSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
-        this.transportNotificationSettings = transportNotificationSettings;
     }
 
     @Override

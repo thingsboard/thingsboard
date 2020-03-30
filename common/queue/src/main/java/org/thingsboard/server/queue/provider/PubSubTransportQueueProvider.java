@@ -41,7 +41,7 @@ import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='pubsub' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
-public class PubSubTransportQueueProvider implements TransportQueueProvider {
+public class PubSubTransportQueueProvider implements TbTransportQueueProvider {
 
     private final TbPubSubSettings pubSubSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
