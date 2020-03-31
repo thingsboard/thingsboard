@@ -6,9 +6,7 @@
     "firstRuleNodeId": null,
     "root": true,
     "debugMode": false,
-    "configuration": null,
-    "assignedEdges": [],
-    "assignedEdgesIds": []
+    "configuration": null
   },
   "metadata": {
     "firstNodeIndex": 2,
