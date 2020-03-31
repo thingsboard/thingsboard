@@ -296,15 +296,15 @@ public class EntityRelationController extends BaseController {
         }
     }
 
-    private <T extends EntityRelation> List<T> filterRelationsByReadPermission(List<T> infosByQuery) {
-        return infosByQuery.stream().filter(infoByQuery -> {
+    private <T extends EntityRelation> List<T> filterRelationsByReadPermission(List<T> relationsByQuery) {
+        return relationsByQuery.stream().filter(relationByQuery -> {
             try {
-                checkEntityId(infoByQuery.getTo(), Operation.READ);
+                checkEntityId(relationByQuery.getTo(), Operation.READ);
             } catch (ThingsboardException e) {
                 return false;
             }
             try {
-                checkEntityId(infoByQuery.getFrom(), Operation.READ);
+                checkEntityId(relationByQuery.getFrom(), Operation.READ);
             } catch (ThingsboardException e) {
                 return false;
             }
