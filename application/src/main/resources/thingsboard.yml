@@ -517,7 +517,7 @@ swagger:
   version: "${SWAGGER_VERSION:2.0}"
 
 queue:
-  type: "${TB_QUEUE_TYPE:in-memory}" # kafka or in-memory or aws-sqs
+  type: "${TB_QUEUE_TYPE:in-memory}" # kafka or in-memory or aws-sqs or pubsub
   kafka:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
     acks: "${TB_KAFKA_ACKS:all}"
