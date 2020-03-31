@@ -35,6 +35,7 @@ import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.pubsub.TbPubSubAdmin;
 import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
@@ -59,7 +60,6 @@ public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleE
                                        TbQueueRuleEngineSettings ruleEngineSettings,
                                        TbQueueTransportApiSettings transportApiSettings,
                                        TbQueueTransportNotificationSettings transportNotificationSettings,
-                                       TbQueueAdmin admin,
                                        PartitionService partitionService,
                                        TbServiceInfoProvider serviceInfoProvider) {
         this.pubSubSettings = pubSubSettings;
@@ -67,7 +67,7 @@ public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleE
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
-        this.admin = admin;
+        this.admin = new TbPubSubAdmin(pubSubSettings);
         this.partitionService = partitionService;
         this.serviceInfoProvider = serviceInfoProvider;
     }

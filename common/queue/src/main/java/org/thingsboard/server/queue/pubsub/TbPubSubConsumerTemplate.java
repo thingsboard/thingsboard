@@ -69,7 +69,9 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     private ExecutorService consumerExecutor;
     private final SubscriberStub subscriber;
+    private volatile boolean stopped;
 
+    private volatile int messagesPerTopic;
 
     public TbPubSubConsumerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String topic, TbQueueMsgDecoder<T> decoder) {
         this.admin = admin;
@@ -83,7 +85,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                             .setCredentialsProvider(pubSubSettings.getCredentialsProvider())
                             .setTransportChannelProvider(
                                     SubscriberStubSettings.defaultGrpcTransportProviderBuilder()
-                                            .setMaxInboundMessageSize(20 << 20)// 20MB
+                                            .setMaxInboundMessageSize(pubSubSettings.getMaxMsgSize())
                                             .build())
                             .build();
 
@@ -92,6 +94,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             log.error("Failed to create subscriber.", e);
             throw new RuntimeException("Failed to create subscriber.", e);
         }
+        stopped = false;
     }
 
     @Override
@@ -113,6 +116,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     @Override
     public void unsubscribe() {
+        stopped = true;
         if (consumerExecutor != null) {
             consumerExecutor.shutdownNow();
         }
@@ -135,27 +139,30 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                 subscriptionNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toSet());
                 subscriptionNames.forEach(admin::createTopicIfNotExists);
                 consumerExecutor = Executors.newFixedThreadPool(subscriptionNames.size());
+                messagesPerTopic = pubSubSettings.getMaxMessages()/subscriptionNames.size();
                 subscribed = true;
             }
             List<ReceivedMessage> messages;
             try {
                 messages = receiveMessages();
+                if (!messages.isEmpty()) {
+                    List<T> result = new ArrayList<>();
+                    messages.forEach(msg -> {
+                        try {
+                            result.add(decode(msg.getMessage()));
+                        } catch (InvalidProtocolBufferException e) {
+                            log.error("Failed decode record: [{}]", msg);
+                        }
+                    });
+                    return result;
+                }
             } catch (ExecutionException | InterruptedException e) {
-                log.error("Failed to receive messages", e);
-                throw new RuntimeException("Failed to receive messages.", e);
+                if (stopped) {
+                    log.info("[{}] Pub/Sub consumer is stopped.", topic);
+                } else {
+                    log.error("Failed to receive messages", e);
+                }
             }
-            if (!messages.isEmpty()) {
-                List<T> result = new ArrayList<>();
-                messages.forEach(msg -> {
-                    try {
-                        result.add(decode(msg.getMessage()));
-                    } catch (InvalidProtocolBufferException e) {
-                        log.error("Failed decode record: [{}]", msg);
-                    }
-                });
-                return result;
-            }
-
         }
         return Collections.emptyList();
     }
@@ -171,8 +178,8 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             String subscriptionName = ProjectSubscriptionName.format(pubSubSettings.getProjectId(), subscriptionId);
             PullRequest pullRequest =
                     PullRequest.newBuilder()
-//                            .setMaxMessages(1000)
-//                            .setReturnImmediately(false) // return immediately if messages are not available
+                            .setMaxMessages(messagesPerTopic)
+                            .setReturnImmediately(false) // return immediately if messages are not available
                             .setSubscription(subscriptionName)
                             .build();
 

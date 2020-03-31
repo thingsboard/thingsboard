@@ -34,6 +34,7 @@ import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.pubsub.TbPubSubAdmin;
 import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
@@ -56,15 +57,14 @@ public class PubSubTransportQueueProvider implements TbTransportQueueProvider {
                                         TbQueueCoreSettings coreSettings,
                                         TbQueueRuleEngineSettings ruleEngineSettings,
                                         TbQueueTransportApiSettings transportApiSettings,
-                                        TbQueueTransportNotificationSettings transportNotificationSettings,
-                                        TbQueueAdmin admin) {
+                                        TbQueueTransportNotificationSettings transportNotificationSettings) {
         this.pubSubSettings = pubSubSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
-        this.admin = admin;
+        this.admin = new TbPubSubAdmin(pubSubSettings);
     }
 
     @Override

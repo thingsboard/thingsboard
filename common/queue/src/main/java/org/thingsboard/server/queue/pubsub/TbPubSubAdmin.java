@@ -28,26 +28,18 @@ import com.google.pubsub.v1.PushConfig;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-@ConditionalOnExpression("'${queue.type:null}'=='pubsub'")
-@Component
 public class TbPubSubAdmin implements TbQueueAdmin {
 
     private final TbPubSubSettings pubSubSettings;
     private final SubscriptionAdminSettings subscriptionAdminSettings;
     private final TopicAdminSettings topicAdminSettings;
-    private final Lock topicLock = new ReentrantLock();
-    private final Lock subscriptionLock = new ReentrantLock();
     private final Set<String> topicSet = ConcurrentHashMap.newKeySet();
     private final Set<String> subscriptionSet = ConcurrentHashMap.newKeySet();
 
@@ -67,62 +59,20 @@ public class TbPubSubAdmin implements TbQueueAdmin {
             log.error("Failed to create SubscriptionAdminSettings");
             throw new RuntimeException("Failed to create SubscriptionAdminSettings.");
         }
-    }
-
-    @Override
-    public void createTopicIfNotExists(String partition) {
-        String topicId = partition;
-        String subscriptionId = partition;
-        ProjectTopicName topicName = ProjectTopicName.of(pubSubSettings.getProjectId(), topicId);
-
-        if (topicSet.contains(topicId)) {
-            createSubscriptionIfNotExists(subscriptionId, topicName);
-            return;
-        }
-
-        topicLock.lock();
-        if (topicSet.contains(topicId)) {
-            createSubscriptionIfNotExists(subscriptionId, topicName);
-            return;
-        }
 
         try (TopicAdminClient topicAdminClient = TopicAdminClient.create(topicAdminSettings)) {
             ListTopicsRequest listTopicsRequest =
                     ListTopicsRequest.newBuilder().setProject(ProjectName.format(pubSubSettings.getProjectId())).build();
             TopicAdminClient.ListTopicsPagedResponse response = topicAdminClient.listTopics(listTopicsRequest);
-            Iterable<Topic> topics = response.iterateAll();
-            for (Topic topic : topics) {
-                if (topic.getName().equals(topicName.toString())) {
-                    topicSet.add(topicId);
-                    createSubscriptionIfNotExists(subscriptionId, topicName);
-                    return;
-                }
+            for (Topic topic : response.iterateAll()) {
+                topicSet.add(topic.getName());
             }
-            topicAdminClient.createTopic(topicName);
-            topicSet.add(topicId);
-            createSubscriptionIfNotExists(subscriptionId, topicName);
         } catch (IOException e) {
-            log.error("Failed to create topic: [{}].", topicId, e);
-            throw new RuntimeException("Failed to create topic.", e);
-        } finally {
-            topicLock.unlock();
-        }
-    }
-
-    private void createSubscriptionIfNotExists(String subscriptionId, ProjectTopicName topicName) {
-        if (subscriptionSet.contains(subscriptionId)) {
-            return;
-        }
-
-        subscriptionLock.lock();
-        if (subscriptionSet.contains(subscriptionId)) {
-            return;
+            log.error("Failed to get topics.", e);
+            throw new RuntimeException("Failed to get topics.", e);
         }
 
         try (SubscriptionAdminClient subscriptionAdminClient = SubscriptionAdminClient.create(subscriptionAdminSettings)) {
-            ProjectSubscriptionName subscriptionName =
-                    ProjectSubscriptionName.of(pubSubSettings.getProjectId(), subscriptionId);
-
 
             ListSubscriptionsRequest listSubscriptionsRequest =
                     ListSubscriptionsRequest.newBuilder()
@@ -132,20 +82,75 @@ public class TbPubSubAdmin implements TbQueueAdmin {
                     subscriptionAdminClient.listSubscriptions(listSubscriptionsRequest);
 
             for (Subscription subscription : response.iterateAll()) {
+                subscriptionSet.add(subscription.getName());
+            }
+        } catch (IOException e) {
+            log.error("Failed to get subscriptions.", e);
+            throw new RuntimeException("Failed to get subscriptions.", e);
+        }
+    }
+
+    @Override
+    public void createTopicIfNotExists(String partition) {
+        ProjectTopicName topicName = ProjectTopicName.of(pubSubSettings.getProjectId(), partition);
+
+        if (topicSet.contains(topicName.toString())) {
+            createSubscriptionIfNotExists(partition, topicName);
+            return;
+        }
+
+        try (TopicAdminClient topicAdminClient = TopicAdminClient.create(topicAdminSettings)) {
+            ListTopicsRequest listTopicsRequest =
+                    ListTopicsRequest.newBuilder().setProject(ProjectName.format(pubSubSettings.getProjectId())).build();
+            TopicAdminClient.ListTopicsPagedResponse response = topicAdminClient.listTopics(listTopicsRequest);
+            for (Topic topic : response.iterateAll()) {
+                if (topic.getName().contains(topicName.toString())) {
+                    topicSet.add(topic.getName());
+                    createSubscriptionIfNotExists(partition, topicName);
+                    return;
+                }
+            }
+
+            topicAdminClient.createTopic(topicName);
+            topicSet.add(topicName.toString());
+            log.info("Created new topic: [{}]", topicName.toString());
+            createSubscriptionIfNotExists(partition, topicName);
+        } catch (IOException e) {
+            log.error("Failed to create topic: [{}].", topicName.toString(), e);
+            throw new RuntimeException("Failed to create topic.", e);
+        }
+    }
+
+    private void createSubscriptionIfNotExists(String partition, ProjectTopicName topicName) {
+        ProjectSubscriptionName subscriptionName =
+                ProjectSubscriptionName.of(pubSubSettings.getProjectId(), partition);
+
+        if (subscriptionSet.contains(subscriptionName.toString())) {
+            return;
+        }
+
+        try (SubscriptionAdminClient subscriptionAdminClient = SubscriptionAdminClient.create(subscriptionAdminSettings)) {
+            ListSubscriptionsRequest listSubscriptionsRequest =
+                    ListSubscriptionsRequest.newBuilder()
+                            .setProject(ProjectName.of(pubSubSettings.getProjectId()).toString())
+                            .build();
+            SubscriptionAdminClient.ListSubscriptionsPagedResponse response =
+                    subscriptionAdminClient.listSubscriptions(listSubscriptionsRequest);
+
+            for (Subscription subscription : response.iterateAll()) {
                 if (subscription.getName().equals(subscriptionName.toString())) {
-                    subscriptionSet.add(subscriptionId);
+                    subscriptionSet.add(subscription.getName());
                     return;
                 }
             }
 
             subscriptionAdminClient.createSubscription(
-                    subscriptionName, topicName, PushConfig.getDefaultInstance(), 0).getName();
-            subscriptionSet.add(subscriptionId);
+                    subscriptionName, topicName, PushConfig.getDefaultInstance(), pubSubSettings.getAckDeadline()).getName();
+            subscriptionSet.add(subscriptionName.toString());
+            log.info("Created new subscription: [{}]", subscriptionName.toString());
         } catch (IOException e) {
-            log.error("Failed to create subscription: [{}].", subscriptionId, e);
+            log.error("Failed to create subscription: [{}].", subscriptionName.toString(), e);
             throw new RuntimeException("Failed to create subscription.", e);
-        } finally {
-            subscriptionLock.unlock();
         }
     }
 
