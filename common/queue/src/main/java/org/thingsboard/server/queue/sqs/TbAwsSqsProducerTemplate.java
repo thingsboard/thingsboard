@@ -35,6 +35,7 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -79,7 +80,7 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
         SendMessageRequest sendMsgRequest = new SendMessageRequest();
         sendMsgRequest.withQueueUrl(getQueueUrl(tpi.getFullTopicName()));
-        sendMsgRequest.withMessageBody(gson.toJson(new TbAwsSqsMsg(msg.getKey(), msg.getData())));
+        sendMsgRequest.withMessageBody(gson.toJson(new DefaultTbQueueMsg(msg.getKey(), msg.getData())));
 
         Map<String, MessageAttributeValue> attributes = new HashMap<>();
 

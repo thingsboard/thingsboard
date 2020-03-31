@@ -63,7 +63,7 @@
         <mail.version>1.4.3</mail.version>
         <curator.version>4.2.0</curator.version>
         <zookeeper.version>3.5.5</zookeeper.version>
-        <protobuf.version>3.6.1</protobuf.version>
+        <protobuf.version>3.9.1</protobuf.version>
         <grpc.version>1.22.1</grpc.version>
         <lombok.version>1.16.18</lombok.version>
         <paho.client.version>1.1.0</paho.client.version>
@@ -93,6 +93,7 @@
         <antlr.version>2.7.7</antlr.version>
         <snakeyaml.version>1.23</snakeyaml.version>
         <amazonaws.sqs.version>1.11.747</amazonaws.sqs.version>
+        <pubsub.client.version>1.84.0</pubsub.client.version>
         <passay.version>1.5.0</passay.version>
         <ua-parser.version>1.4.3</ua-parser.version>
     </properties>
@@ -888,10 +889,15 @@
                 <version>${jts.version}</version>
             </dependency>
             <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-sqs</artifactId>
-            <version>${amazonaws.sqs.version}</version>
-        </dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-java-sdk-sqs</artifactId>
+                <version>${amazonaws.sqs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>google-cloud-pubsub</artifactId>
+                <version>${pubsub.client.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
                 <artifactId>passay</artifactId>

@@ -39,6 +39,7 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.TbQueueMsgHeaders;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
 
 import java.io.IOException;
@@ -212,7 +213,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     }
 
     public T decode(Message message) throws InvalidProtocolBufferException {
-        TbAwsSqsMsg msg = gson.fromJson(message.getBody(), TbAwsSqsMsg.class);
+        DefaultTbQueueMsg msg = gson.fromJson(message.getBody(), DefaultTbQueueMsg.class);
         TbQueueMsgHeaders headers = new DefaultTbQueueMsgHeaders();
         Map<String, byte[]> headerMap = gson.fromJson(message.getMessageAttributes().get("headers").getStringValue(), new TypeToken<Map<String, byte[]>>() {
         }.getType());
