@@ -91,7 +91,6 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public List<T> poll(long durationInMillis) {
-
         if (!subscribed && partitions == null) {
             try {
                 Thread.sleep(durationInMillis);
