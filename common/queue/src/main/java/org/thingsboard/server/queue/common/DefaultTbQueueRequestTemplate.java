@@ -96,7 +96,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                         continue;
                     }
                     responses.forEach(response -> {
-                        log.trace("Received response to Kafka Template request: {}", response);
+                        log.trace("Received response to Queue Template request: {}", response);
                         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
                         UUID requestId;
                         if (requestIdHeader == null) {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.sqs;
+package org.thingsboard.server.queue.common;
 
 import com.google.gson.annotations.Expose;
 import lombok.Data;
@@ -23,16 +23,15 @@ import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import java.util.UUID;
 
 @Data
-public class TbAwsSqsMsg implements TbQueueMsg {
+public class DefaultTbQueueMsg implements TbQueueMsg {
     private final UUID key;
     private final byte[] data;
 
-    public TbAwsSqsMsg(UUID key, byte[] data) {
+    public DefaultTbQueueMsg(UUID key, byte[] data) {
         this.key = key;
         this.data = data;
     }
 
     @Expose(serialize = false, deserialize = false)
     private TbQueueMsgHeaders headers;
-
 }
