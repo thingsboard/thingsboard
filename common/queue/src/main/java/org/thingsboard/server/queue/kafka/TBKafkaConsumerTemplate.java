@@ -91,14 +91,15 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public List<T> poll(long durationInMillis) {
-        try {
-            if (!subscribed && partitions == null) {
-                try {
-                    Thread.sleep(durationInMillis);
-                } catch (InterruptedException e) {
-                    log.debug("Failed to await subscription", e);
-                }
-            } else {
+
+        if (!subscribed && partitions == null) {
+            try {
+                Thread.sleep(durationInMillis);
+            } catch (InterruptedException e) {
+                log.debug("Failed to await subscription", e);
+            }
+        } else {
+            try {
                 consumerLock.lock();
 
                 if (!subscribed) {
@@ -120,9 +121,9 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
                     });
                     return result;
                 }
+            } finally {
+                consumerLock.unlock();
             }
-        } finally {
-            consumerLock.unlock();
         }
         return Collections.emptyList();
     }
