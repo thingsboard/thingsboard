@@ -92,7 +92,6 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
     @Override
     public List<T> poll(long durationInMillis) {
         try {
-            consumerLock.lock();
             if (!subscribed && partitions == null) {
                 try {
                     Thread.sleep(durationInMillis);
@@ -100,6 +99,8 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
                     log.debug("Failed to await subscription", e);
                 }
             } else {
+                consumerLock.lock();
+
                 if (!subscribed) {
                     List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
                     topicNames.forEach(admin::createTopicIfNotExists);
