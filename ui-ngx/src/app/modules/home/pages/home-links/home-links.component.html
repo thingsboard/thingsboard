@@ -24,11 +24,11 @@
       <mat-card-content>
         <mat-grid-list rowHeight="170px" [cols]="section.places.length">
           <mat-grid-tile *ngFor="let place of section.places">
-            <button mat-button mat-raised-button color="primary" class="tb-card-button" routerLink="{{place.path}}">
+            <a mat-raised-button color="primary" class="tb-card-button" routerLink="{{place.path}}">
               <mat-icon *ngIf="!place.isMdiIcon" class="material-icons tb-mat-96">{{place.icon}}</mat-icon>
               <mat-icon *ngIf="place.isMdiIcon" class="tb-mat-96" [svgIcon]="place.icon"></mat-icon>
               <span translate>{{place.name}}</span>
-            </button>
+            </a>
           </mat-grid-tile>
         </mat-grid-list>
       </mat-card-content>
