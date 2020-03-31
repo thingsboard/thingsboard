@@ -76,11 +76,11 @@ queue:
     secret_access_key: "${TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY:YOUR_SECRET}"
     region: "${TB_QUEUE_AWS_SQS_REGION:YOUR_REGION}"
     threads_per_topic: "${TB_QUEUE_AWS_SQS_THREADS_PER_TOPIC:1}"
-    visibility_timeout: "${TB_QUEUE_AWS_SQS_VISIBILITY_TIMEOUT:30}" #in seconds
+    visibility_timeout: "${TB_QUEUE_AWS_SQS_VISIBILITY_TIMEOUT:30}" #In seconds. If messages wont commit in this time, messages will poll again
   pubsub:
     project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
     service_account: "${TB_QUEUE_PUBSUB_SERVICE_ACCOUNT:YOUR_SERVICE_ACCOUNT}"
-    ack_deadline: "${TB_QUEUE_PUBSUB_ACK_DEADLINE:30}" #in seconds
+    ack_deadline: "${TB_QUEUE_PUBSUB_ACK_DEADLINE:30}" #In seconds. If messages wont commit in this time, messages will poll again
     max_msg_size: "${TB_QUEUE_PUBSUB_MAX_MSG_SIZE:1048576}" #in bytes
     max_messages: "${TB_QUEUE_PUBSUB_MAX_MESSAGES:1000}"
   partitions:
