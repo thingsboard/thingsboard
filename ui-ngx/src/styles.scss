@@ -474,7 +474,8 @@ mat-label {
   }
 
   .mat-form-field{
-    .mat-icon{
+    .mat-icon {
+      vertical-align: bottom;
       margin-right: 4px;
       margin-left: 4px;
     }
