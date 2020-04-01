@@ -445,10 +445,10 @@ mat-label {
   }
 
   .layout-padding, .layout-padding > * {
-    @media #{$mat-lt-md} {
+    @media #{$mat-lt-sm} {
       padding: 4px;
     }
-    @media #{$mat-gt-sm} {
+    @media #{$mat-gt-xs} {
       padding: 8px;
     }
   }
@@ -471,6 +471,13 @@ mat-label {
 
   mat-form-field.mat-block {
     display: block;
+  }
+
+  .mat-form-field{
+    .mat-icon{
+      margin-right: 4px;
+      margin-left: 4px;
+    }
   }
 
   button.mat-menu-item {
@@ -684,7 +691,7 @@ mat-label {
   }
 
   .mat-icon {
-    vertical-align: middle;
+    vertical-align: bottom;
     box-sizing: content-box;
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
