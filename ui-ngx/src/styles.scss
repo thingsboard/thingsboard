@@ -691,7 +691,7 @@ mat-label {
   }
 
   .mat-icon {
-    vertical-align: bottom;
+    vertical-align: middle;
     box-sizing: content-box;
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
