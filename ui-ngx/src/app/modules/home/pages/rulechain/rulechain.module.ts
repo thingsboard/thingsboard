@@ -14,14 +14,18 @@
 /// limitations under the License.
 ///
 
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {SharedModule} from '@shared/shared.module';
-import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.component';
-import {RuleChainRoutingModule} from '@modules/home/pages/rulechain/rulechain-routing.module';
-import {HomeComponentsModule} from '@modules/home/components/home-components.module';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SharedModule } from '@shared/shared.module';
+import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.component';
+import { RuleChainRoutingModule } from '@modules/home/pages/rulechain/rulechain-routing.module';
+import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
-import { RuleChainPageComponent, AddRuleNodeLinkDialogComponent, AddRuleNodeDialogComponent } from './rulechain-page.component';
+import {
+  AddRuleNodeDialogComponent,
+  AddRuleNodeLinkDialogComponent,
+  RuleChainPageComponent
+} from './rulechain-page.component';
 import { RuleNodeComponent } from '@home/pages/rulechain/rulenode.component';
 import { FC_NODE_COMPONENT_CONFIG } from 'ngx-flowchart/dist/ngx-flowchart';
 import { RuleNodeDetailsComponent } from './rule-node-details.component';

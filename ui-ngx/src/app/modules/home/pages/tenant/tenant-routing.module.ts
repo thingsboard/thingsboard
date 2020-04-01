@@ -14,21 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Injectable, NgModule } from '@angular/core';
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
 
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
 import { TenantsTableConfigResolver } from '@modules/home/pages/tenant/tenants-table-config.resolver';
-import { ProfileComponent } from '@modules/home/pages/profile/profile.component';
-import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { Customer } from '@shared/models/customer.model';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { forkJoin, Observable, throwError } from 'rxjs';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { catchError, finalize, map, tap } from 'rxjs/operators';
-import {UsersTableConfigResolver} from '../user/users-table-config.resolver';
+import { UsersTableConfigResolver } from '../user/users-table-config.resolver';
 
 const routes: Routes = [
   {

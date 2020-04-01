@@ -17,14 +17,11 @@
 import { Injectable, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 
-import {EntitiesTableComponent} from '../../components/entity/entities-table.component';
-import {Authority} from '@shared/models/authority.enum';
-import {DashboardsTableConfigResolver} from './dashboards-table-config.resolver';
+import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
+import { Authority } from '@shared/models/authority.enum';
+import { DashboardsTableConfigResolver } from './dashboards-table-config.resolver';
 import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
-import { widgetTypesBreadcumbLabelFunction } from '@home/pages/widget/widget-library-routing.module';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { WidgetService } from '@core/http/widget.service';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
