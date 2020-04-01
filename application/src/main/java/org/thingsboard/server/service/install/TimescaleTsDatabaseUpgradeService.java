@@ -103,8 +103,8 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
                         }
-                        executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN json_v json;");
-                        executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");
+                        executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN IF NOT EXISTS json_v json;");
+                        executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN IF NOT EXISTS json_v json;");
 
                         log.info("Load TTL functions ...");
                         loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
