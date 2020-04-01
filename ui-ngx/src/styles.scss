@@ -235,6 +235,14 @@ label {
   user-select: none;
 }
 
+.tb-readonly-label {
+  color: rgba(0, 0, 0, .54);
+}
+
+.tb-disabled-label {
+  color: rgba(0, 0, 0, .44);
+}
+
 div {
   &.tb-small {
     font-size: 14px;
