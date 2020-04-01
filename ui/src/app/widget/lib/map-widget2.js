@@ -616,7 +616,7 @@ export default class TbMapWidgetV2 {
 							locationChanged = true;
 						}
 					}
-				} else {
+				} else if (latData.length > 0 && lngData.length > 0) {
 					// Create or update marker
 					lat = latData[latData.length - 1][1];
 					lng = lngData[lngData.length - 1][1];
