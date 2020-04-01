@@ -16,18 +16,10 @@
 package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.thingsboard.server.dao.util.PsqlTsAnyDao;
-import org.thingsboard.server.service.install.InstallScripts;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -36,40 +28,36 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 
 @PsqlTsAnyDao
-@Service
 @Slf4j
-public abstract class TimeseriesCleanUpServiceImpl implements TimeseriesCleanUpService {
-
-    private static final String TTL_FUNCTIONS = "ttl-functions.sql";
-
-    @Value("${sql.ttl.enabled}")
-    protected boolean ttlTaskExecutionEnabled;
+public abstract class AbstractTimeseriesCleanUpService {
 
     @Value("${sql.ttl.ts_key_value_ttl}")
     protected long systemTtl;
 
+    @Value("${sql.ttl.enabled}")
+    private boolean ttlTaskExecutionEnabled;
+
     @Value("${spring.datasource.url}")
-    protected String dbUrl;
+    private String dbUrl;
 
     @Value("${spring.datasource.username}")
-    protected String dbUserName;
+    private String dbUserName;
 
     @Value("${spring.datasource.password}")
-    protected String dbPassword;
+    private String dbPassword;
 
-    @Autowired
-    private InstallScripts installScripts;
-
-    @PostConstruct
-    public void init() {
+    @Scheduled(fixedDelayString = "${sql.ttl.execution_interval_ms}")
+    public void cleanUp() {
         if (ttlTaskExecutionEnabled) {
             try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                loadTTLFunctions(conn);
+                doCleanUp(conn);
             } catch (SQLException e) {
-                log.error("SQLException occurred during establishing connection to DataBase: ", e);
+                log.error("SQLException occurred during TTL task execution ", e);
             }
         }
     }
+
+    protected abstract void doCleanUp(Connection connection);
 
     protected long executeQuery(Connection conn, String query) {
         long removed = 0L;
@@ -98,15 +86,4 @@ public abstract class TimeseriesCleanUpServiceImpl implements TimeseriesCleanUpS
         }
     }
 
-    private void loadTTLFunctions(Connection conn) {
-        Path ttlFunctionsFile = Paths.get(installScripts.getDataDir(), "ttl", TTL_FUNCTIONS);
-        try {
-            log.info("Creating TTL functions...");
-            String sql = new String(Files.readAllBytes(ttlFunctionsFile), StandardCharsets.UTF_8);
-            conn.createStatement().execute(sql);
-            log.info("TTL functions successfully created!");
-        } catch (SQLException | IOException e) {
-            log.info("Failed to create TTL functions due to: {}", e.getMessage());
-        }
-    }
 }

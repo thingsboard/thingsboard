@@ -16,30 +16,20 @@
 package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 @TimescaleDBTsDao
 @Service
 @Slf4j
-public class TimescaleTimeseriesCleanUpService extends TimeseriesCleanUpServiceImpl {
+public class TimescaleTimeseriesCleanUpService extends AbstractTimeseriesCleanUpService {
 
-    @Scheduled(fixedDelayString = "${sql.ttl.execution_interval_ms}")
     @Override
-    public void cleanUp() {
-        if (ttlTaskExecutionEnabled) {
-            try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                long totalEntitiesTelemetryRemoved = executeQuery(conn, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
-                log.info("Total telemetry deleted stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
-            } catch (SQLException e) {
-                log.error("SQLException occurred during TTL task execution ", e);
-            }
-        }
+    protected void doCleanUp(Connection connection) {
+        long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
+        log.info("Total telemetry removed stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
     }
 }

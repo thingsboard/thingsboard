@@ -16,32 +16,26 @@
 package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.PsqlTsDao;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 @PsqlTsDao
 @Service
 @Slf4j
-public class PsqlTimeseriesCleanUpService extends TimeseriesCleanUpServiceImpl {
+public class PsqlTimeseriesCleanUpService extends AbstractTimeseriesCleanUpService {
 
-    @Scheduled(fixedDelayString = "${sql.ttl.execution_interval_ms}")
+    @Value("${sql.postgres.ts_key_value_partitioning}")
+    private String partitionType;
+
     @Override
-    public void cleanUp() {
-        if (ttlTaskExecutionEnabled) {
-            try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                long totalEntitiesTelemetryRemoved = executeQuery(conn, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
-                long totalPartitionsRemoved = executeQuery(conn, "call drop_empty_partitions(0);");
-                log.info("Total telemetry deleted stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
-                log.info("Total empty timeseries partitions deleted: [{}]", totalPartitionsRemoved);
-            } catch (SQLException e) {
-                log.error("SQLException occurred during TTL task execution ", e);
-            }
-        }
+    protected void doCleanUp(Connection connection) {
+            long totalPartitionsRemoved = executeQuery(connection, "call drop_partitions_by_max_ttl('" + partitionType + "'," + systemTtl + ", 0);");
+            log.info("Total partitions removed by TTL: [{}]", totalPartitionsRemoved);
+            long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
+            log.info("Total telemetry removed stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
     }
 }
