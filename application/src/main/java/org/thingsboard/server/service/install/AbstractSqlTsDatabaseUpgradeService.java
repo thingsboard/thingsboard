@@ -47,7 +47,7 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
     @Autowired
     protected InstallScripts installScripts;
 
-    protected abstract void loadSql(Connection conn);
+    protected abstract void loadSql(Connection conn, String fileName);
 
     protected void loadFunctions(Path sqlFile, Connection conn) throws Exception {
         String sql = new String(Files.readAllBytes(sqlFile), StandardCharsets.UTF_8);
@@ -68,6 +68,20 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
             log.info("Failed to check current PostgreSQL version due to: {}", e.getMessage());
         }
         return versionValid;
+    }
+
+    protected boolean isOldSchema(Connection conn) {
+        boolean isOldSchema = true;
+        try {
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public' AND tablename like 'ts_kv' || '%';");
+            resultSet.next();
+            isOldSchema = resultSet.getInt(1) < 3;
+            statement.close();
+        } catch (Exception e) {
+            log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
+        }
+        return isOldSchema;
     }
 
     protected void executeQuery(Connection conn, String query) {
