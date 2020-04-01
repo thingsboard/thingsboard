@@ -105,7 +105,10 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         }
                         executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN json_v json;");
                         executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");
+
+                        log.info("Load TTL functions ...");
                         loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
+
                         log.info("schema timescale updated!");
                     }
                 }
@@ -120,7 +123,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
         Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.3", fileName);
         try {
             loadFunctions(schemaUpdateFile, conn);
-            log.info("Upgrade functions successfully loaded!");
+            log.info("Functions successfully loaded!");
         } catch (Exception e) {
             log.info("Failed to load PostgreSQL upgrade functions due to: {}", e.getMessage());
         }
