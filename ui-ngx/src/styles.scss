@@ -475,7 +475,6 @@ mat-label {
 
   .mat-form-field{
     .mat-icon {
-      vertical-align: bottom;
       margin-right: 4px;
       margin-left: 4px;
     }
@@ -484,7 +483,6 @@ mat-label {
   button.mat-menu-item {
     overflow: hidden;
     fill: #737373;
-    display: block;
     .tb-alt-text {
       float: right;
     }
@@ -692,7 +690,7 @@ mat-label {
   }
 
   .mat-icon {
-    vertical-align: middle;
+    vertical-align: bottom;
     box-sizing: content-box;
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
