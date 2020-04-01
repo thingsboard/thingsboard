@@ -364,7 +364,8 @@
         "password": "Contraseña",
         "enter-username": "Introduzca nombre de usuario",
         "enter-password": "Introduzca contraseña",
-        "enter-search": "Introduzca búsqueda"
+        "enter-search": "Introduzca búsqueda",
+        "created-time": "Tiempo de creación"
     },
     "content-type": {
         "json": "Json",

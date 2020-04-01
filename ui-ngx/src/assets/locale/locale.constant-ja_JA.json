@@ -326,8 +326,9 @@
 		"password": "パスワード",
 		"enter-username": "ユーザーネームを入力してください",
 		"enter-password": "パスワードを入力する",
-		"enter-search": "検索を入力"
-	},
+		"enter-search": "検索を入力",
+    "created-time": "作成時刻"
+  },
 	"content-type": {
 		"json": "Json",
 		"text": "テキスト",

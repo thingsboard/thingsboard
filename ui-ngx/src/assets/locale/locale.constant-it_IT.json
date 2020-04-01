@@ -361,7 +361,8 @@
         "password": "Password",
         "enter-username": "Inserisci nome utente",
         "enter-password": "Inserisci password",
-        "enter-search": "Cerca ..."
+        "enter-search": "Cerca ...",
+        "created-time": "Orario di creazione"
     },
     "content-type": {
         "json": "Json",

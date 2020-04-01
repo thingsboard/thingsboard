@@ -135,7 +135,7 @@
           </div>
         </mat-toolbar>
         <div fxFlex class="table-container">
-          <mat-table [dataSource]="dataSource" [trackBy]="trackByEntityId"
+          <table mat-table [dataSource]="dataSource" [trackBy]="trackByEntityId"
                      matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
             <ng-container matColumnDef="select" sticky>
               <mat-header-cell *matHeaderCellDef style="width: 30px;">
@@ -187,7 +187,7 @@
                                                                     maxWidth: (cellActionDescriptors.length * 40) + 'px',
                                                                     width: (cellActionDescriptors.length * 40) + 'px' }">
                 <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
-                  <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                  <button mat-icon-button [disabled]="isLoading$ | async"
                           [fxShow]="actionDescriptor.isEnabled(entity)" *ngFor="let actionDescriptor of cellActionDescriptors"
                           matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
                           matTooltipPosition="above"
@@ -197,7 +197,7 @@
                   </button>
                 </div>
                 <div fxHide fxShow.lt-lg *ngIf="cellActionDescriptors.length">
-                  <button mat-button mat-icon-button
+                  <button mat-icon-button
                           (click)="$event.stopPropagation()"
                           [matMenuTriggerFor]="cellActionsMenu">
                     <mat-icon class="material-icons">more_vert</mat-icon>
@@ -220,7 +220,7 @@
                                  'mat-selected': dataSource.selection.isSelected(entity),
                                  'tb-current-entity': dataSource.isCurrentEntity(entity)}"
                      *matRowDef="let entity; columns: displayedColumns;" (click)="onRowClick($event, entity)"></mat-row>
-          </mat-table>
+          </table>
           <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async)"
                 fxLayoutAlign="center center"
                 class="no-data-found" translate>{{ translations.noEntities }}</span>
