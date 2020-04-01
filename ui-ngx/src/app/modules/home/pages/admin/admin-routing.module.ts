@@ -15,13 +15,13 @@
 ///
 
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
-import {GeneralSettingsComponent} from '@modules/home/pages/admin/general-settings.component';
-import {SecuritySettingsComponent} from '@modules/home/pages/admin/security-settings.component';
+import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
+import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 
 const routes: Routes = [
   {
