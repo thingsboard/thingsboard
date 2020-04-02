@@ -319,6 +319,7 @@
 
   .tb-context-menu-header {
     display: flex;
+    box-sizing: content-box;
     flex-direction: row;
     height: 36px;
     min-height: 36px;
