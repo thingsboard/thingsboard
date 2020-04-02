@@ -22,8 +22,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_device_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
-                                                    OUT deleted bigint) AS
+CREATE OR REPLACE FUNCTION delete_device_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+                                                            OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
@@ -32,8 +32,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_asset_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
-                                                   OUT deleted bigint) AS
+CREATE OR REPLACE FUNCTION delete_asset_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+                                                           OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
@@ -42,13 +42,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_customer_from_ts_kv(tenant_id varchar, ttl bigint,
-                                                      OUT deleted bigint) AS
+CREATE OR REPLACE FUNCTION delete_customer_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+                                                              OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
-            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(customer.id) as entity_id FROM customer WHERE tenant_id = %L) AND ts < EXTRACT(EPOCH FROM current_timestamp) * 1000 - %L::bigint * 1000 RETURNING *) SELECT count(*) FROM deleted',
-            tenant_id, ttl) into deleted;
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(customer.id) as entity_id FROM customer WHERE tenant_id = %L and id = %L) AND ts < EXTRACT(EPOCH FROM current_timestamp) * 1000 - %L::bigint * 1000 RETURNING *) SELECT count(*) FROM deleted',
+            tenant_id, customer_id, ttl) into deleted;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -76,15 +76,12 @@ BEGIN
                 tenant_ttl := system_ttl;
             END IF;
             IF tenant_ttl > 0 THEN
-                deleted_for_entities := delete_device_from_ts_kv(tenant_id_record, null_uuid, tenant_ttl);
+                deleted_for_entities := delete_device_records_from_ts_kv(tenant_id_record, null_uuid, tenant_ttl);
                 deleted := deleted + deleted_for_entities;
                 RAISE NOTICE '% telemetry removed for devices where tenant_id = %', deleted_for_entities, tenant_id_record;
-                deleted_for_entities := delete_asset_from_ts_kv(tenant_id_record, null_uuid, tenant_ttl);
+                deleted_for_entities := delete_asset_records_from_ts_kv(tenant_id_record, null_uuid, tenant_ttl);
                 deleted := deleted + deleted_for_entities;
                 RAISE NOTICE '% telemetry removed for assets where tenant_id = %', deleted_for_entities, tenant_id_record;
-                deleted_for_entities := delete_customer_from_ts_kv(tenant_id_record, tenant_ttl);
-                deleted := deleted + deleted_for_entities;
-                RAISE NOTICE '% telemetry removed for customers where tenant_id = %', deleted_for_entities, tenant_id_record;
             END IF;
             FOR customer_id_record IN
                 SELECT customer.id AS customer_id FROM customer WHERE customer.tenant_id = tenant_id_record
@@ -96,12 +93,15 @@ BEGIN
                         customer_ttl := tenant_ttl;
                     END IF;
                     IF customer_ttl > 0 THEN
+                        deleted_for_entities := delete_customer_records_from_ts_kv(tenant_id_record, customer_id_record, customer_ttl);
+                        deleted := deleted + deleted_for_entities;
+                        RAISE NOTICE '% telemetry removed for customer with id = % where tenant_id = %', deleted_for_entities, customer_id_record, tenant_id_record;
                         deleted_for_entities :=
-                                delete_device_from_ts_kv(tenant_id_record, customer_id_record, customer_ttl);
+                                delete_device_records_from_ts_kv(tenant_id_record, customer_id_record, customer_ttl);
                         deleted := deleted + deleted_for_entities;
                         RAISE NOTICE '% telemetry removed for devices where tenant_id = % and customer_id = %', deleted_for_entities, tenant_id_record, customer_id_record;
-                        deleted_for_entities := delete_asset_from_ts_kv(tenant_id_record, customer_id_record,
-                                                                        customer_ttl);
+                        deleted_for_entities := delete_asset_records_from_ts_kv(tenant_id_record, customer_id_record,
+                                                                                customer_ttl);
                         deleted := deleted + deleted_for_entities;
                         RAISE NOTICE '% telemetry removed for assets where tenant_id = % and customer_id = %', deleted_for_entities, tenant_id_record, customer_id_record;
                     END IF;
