@@ -477,7 +477,6 @@ mat-label {
 
   .mat-form-field{
     .mat-icon {
-      vertical-align: bottom;
       margin-right: 4px;
       margin-left: 4px;
     }
@@ -486,7 +485,6 @@ mat-label {
   button.mat-menu-item {
     overflow: hidden;
     fill: #737373;
-    display: block;
     .tb-alt-text {
       float: right;
     }
@@ -618,7 +616,7 @@ mat-label {
     display: table-cell;
     box-sizing: content-box;
     line-break: unset;
-    width: 0px;
+    width: 0;
     overflow: hidden;
     vertical-align: middle;
     border-width: 0;
@@ -626,6 +624,7 @@ mat-label {
     border-bottom-color: rgba(0, 0, 0, 0.12);
     border-style: solid;
     text-overflow: ellipsis;
+    touch-action: auto !important;
     &:last-child {
       padding: 0 12px 0 0;
     }
@@ -645,6 +644,7 @@ mat-label {
   .mat-header-cell {
     white-space: nowrap;
     button.mat-sort-header-button {
+      display: block;
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
@@ -694,7 +694,7 @@ mat-label {
   }
 
   .mat-icon {
-    vertical-align: middle;
+    vertical-align: bottom;
     box-sizing: content-box;
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);

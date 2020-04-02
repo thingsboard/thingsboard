@@ -18,7 +18,7 @@
 <div>
   <mat-card class="profile-card">
     <mat-card-title>
-      <div fxLayout="row">
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px">
         <div fxFlex fxLayout="column">
           <span class="mat-headline" translate>profile.profile</span>
           <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>

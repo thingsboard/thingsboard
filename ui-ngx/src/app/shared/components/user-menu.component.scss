@@ -18,7 +18,6 @@
     line-height: 1.5;
 
     span {
-      text-align: left;
       text-transform: none;
     }
 
@@ -42,6 +41,7 @@
     height: 36px;
     margin: auto 8px;
     font-size: 36px;
+    cursor: default;
   }
 }
 

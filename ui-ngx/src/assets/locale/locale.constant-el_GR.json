@@ -378,7 +378,8 @@
     "password": "Κωδικός πρόσβασης",
     "enter-username": "Εισάγετε Όνομα χρήστη",
     "enter-password": "Εισάγετε Κωδικό πρόσβασης",
-    "enter-search": "Αναζήτηση"
+    "enter-search": "Αναζήτηση",
+    "created-time": "Δημιουργήθηκε"
   },
   "converter": {
     "converter": "Μετατροπέας δεδομένων",

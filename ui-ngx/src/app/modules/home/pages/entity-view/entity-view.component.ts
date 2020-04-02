@@ -14,20 +14,19 @@
 /// limitations under the License.
 ///
 
-import {Component} from '@angular/core';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {EntityComponent} from '../../components/entity/entity.component';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {EntityType} from '@shared/models/entity-type.models';
-import {NULL_UUID} from '@shared/models/id/has-uuid';
-import {ActionNotificationShow} from '@core/notification/notification.actions';
-import {TranslateService} from '@ngx-translate/core';
-import {EntityViewInfo} from '@app/shared/models/entity-view.models';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
-import {DataKeyType} from '@shared/models/telemetry/telemetry.models';
-import {EntityId} from '@app/shared/models/id/entity-id';
+import { Component } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { EntityComponent } from '../../components/entity/entity.component';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { EntityType } from '@shared/models/entity-type.models';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { TranslateService } from '@ngx-translate/core';
+import { EntityViewInfo } from '@app/shared/models/entity-view.models';
+import { Observable } from 'rxjs';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { EntityId } from '@app/shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-entity-view',

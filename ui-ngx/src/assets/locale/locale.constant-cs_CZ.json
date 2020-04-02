@@ -336,7 +336,8 @@
         "password": "Heslo",
         "enter-username": "Zadejte uživatelské jméno",
         "enter-password": "Zadejte heslo",
-        "enter-search": "Zadejte hledaný řetězec"
+        "enter-search": "Zadejte hledaný řetězec",
+        "created-time": "Datum vytvoření"
     },
     "content-type": {
         "json": "JSON",

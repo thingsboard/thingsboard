@@ -347,7 +347,8 @@
         "enter-search": "Entrez la recherche",
         "enter-username": "Entrez le nom d'utilisateur",
         "password": "Mot de passe",
-        "username": "Nom d'utilisateur"
+        "username": "Nom d'utilisateur",
+        "created-time": "Heure de création"
     },
     "confirm-on-exit": {
         "html-message": "Vous avez des modifications non enregistrées. <br/> Êtes-vous sûr de vouloir quitter cette page?",
