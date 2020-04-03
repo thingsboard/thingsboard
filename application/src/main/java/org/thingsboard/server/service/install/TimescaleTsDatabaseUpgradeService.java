@@ -39,7 +39,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     private long chunkTimeInterval;
 
     private static final String LOAD_FUNCTIONS_SQL = "schema_update_timescale_ts.sql";
-    private static final String LOAD_TTL_FUNCTIONS_SQL = "schema_update_timescale_ttl.sql";
+    private static final String LOAD_TTL_FUNCTIONS_SQL = "schema_update_ttl.sql";
 
     private static final String TENANT_TS_KV_OLD_TABLE = "tenant_ts_kv_old;";
 

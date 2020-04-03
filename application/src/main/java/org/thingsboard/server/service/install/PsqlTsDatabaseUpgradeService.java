@@ -34,7 +34,8 @@ import java.sql.DriverManager;
 public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
 
     private static final String LOAD_FUNCTIONS_SQL = "schema_update_psql_ts.sql";
-    private static final String LOAD_TTL_FUNCTIONS_SQL = "schema_update_psql_ttl.sql";
+    private static final String LOAD_TTL_FUNCTIONS_SQL = "schema_update_ttl.sql";
+    private static final String LOAD_DROP_PARTITIONS_FUNCTIONS_SQL = "schema_update_psql_drop_partitions.sql";
 
     private static final String TS_KV_OLD = "ts_kv_old;";
     private static final String TS_KV_LATEST_OLD = "ts_kv_latest_old;";
@@ -105,6 +106,8 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
 
                         log.info("Load TTL functions ...");
                         loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
+                        log.info("Load Drop Partitions functions ...");
+                        loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
 
                         log.info("schema timeseries updated!");
                     }
