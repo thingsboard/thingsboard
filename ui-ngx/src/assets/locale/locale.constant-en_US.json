@@ -247,7 +247,6 @@
         "no-asset-types-matching": "No asset types matching '{{entitySubtype}}' were found.",
         "asset-type-list-empty": "No asset types selected.",
         "asset-types": "Asset types",
-        "created-time": "Created time",
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
