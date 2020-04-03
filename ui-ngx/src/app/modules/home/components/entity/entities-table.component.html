@@ -188,7 +188,8 @@
                                                                     width: (cellActionDescriptors.length * 40) + 'px' }">
                 <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-icon-button [disabled]="isLoading$ | async"
-                          [fxShow]="actionDescriptor.isEnabled(entity)" *ngFor="let actionDescriptor of cellActionDescriptors"
+                          [style.visibility]="actionDescriptor.isEnabled(entity) ? 'visible' : 'hidden'"
+                          *ngFor="let actionDescriptor of cellActionDescriptors"
                           matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
                           matTooltipPosition="above"
                           (click)="actionDescriptor.onAction($event, entity)">
