@@ -17,9 +17,6 @@
 import { Widget, WidgetType } from '@app/shared/models/widget.models';
 import { DashboardLayoutId } from '@shared/models/dashboard.models';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { ActionType } from '@shared/models/audit-log.models';
-import { RuleChain, RuleChainMetaData } from '@shared/models/rule-chain.models';
 
 export interface ImportWidgetResult {
   widget: Widget;
