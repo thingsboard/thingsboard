@@ -105,32 +105,8 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQue
             }
         } else {
             if (!subscribed) {
-                messagesPerQueue = serviceBusSettings.getMaxMessages() / partitions.size();
-                List<CompletableFuture<CoreMessageReceiver>> receiverFutures = partitions.stream()
-                        .map(TopicPartitionInfo::getFullTopicName)
-                        .map(queue -> {
-                            MessagingFactory factory;
-                            try {
-                                factory = MessagingFactory.createFromConnectionStringBuilder(createConnection(queue));
-                            } catch (InterruptedException | ExecutionException e) {
-                                log.error("Failed to create factory for the queue [{}]", queue);
-                                throw new RuntimeException("Failed to create the factory", e);
-                            }
-
-                            return CoreMessageReceiver.create(factory, queue, queue, 0,
-                                    new SettleModePair(SenderSettleMode.UNSETTLED, ReceiverSettleMode.SECOND),
-                                    MessagingEntityType.QUEUE);
-                        }).collect(Collectors.toList());
-
-                try {
-                    receivers = new HashSet<>(fromList(receiverFutures).get());
-                } catch (InterruptedException | ExecutionException e) {
-                    if (stopped) {
-                        log.info("[{}] Service Bus consumer is stopped.", topic);
-                    } else {
-                        log.error("Failed to create receivers", e);
-                    }
-                }
+                createReceivers();
+                messagesPerQueue = receivers.size() / partitions.size();
                 subscribed = true;
             }
 
@@ -170,6 +146,43 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQue
         return Collections.emptyList();
     }
 
+    private void createReceivers() {
+        List<CompletableFuture<CoreMessageReceiver>> receiverFutures = partitions.stream()
+                .map(TopicPartitionInfo::getFullTopicName)
+                .map(queue -> {
+                    MessagingFactory factory;
+                    try {
+                        factory = MessagingFactory.createFromConnectionStringBuilder(createConnection(queue));
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.error("Failed to create factory for the queue [{}]", queue);
+                        throw new RuntimeException("Failed to create the factory", e);
+                    }
+
+                    return CoreMessageReceiver.create(factory, queue, queue, 0,
+                            new SettleModePair(SenderSettleMode.UNSETTLED, ReceiverSettleMode.SECOND),
+                            MessagingEntityType.QUEUE);
+                }).collect(Collectors.toList());
+
+        try {
+            receivers = new HashSet<>(fromList(receiverFutures).get());
+        } catch (InterruptedException | ExecutionException e) {
+            if (stopped) {
+                log.info("[{}] Service Bus consumer is stopped.", topic);
+            } else {
+                log.error("Failed to create receivers", e);
+            }
+        }
+    }
+
+    private ConnectionStringBuilder createConnection(String queue) {
+        admin.createTopicIfNotExists(queue);
+        return new ConnectionStringBuilder(
+                serviceBusSettings.getNamespaceName(),
+                queue,
+                serviceBusSettings.getSasKeyName(),
+                serviceBusSettings.getSasKey());
+    }
+
     private <V> CompletableFuture<List<V>> fromList(List<CompletableFuture<V>> futures) {
         CompletableFuture<Collection<V>>[] arrayFuture = new CompletableFuture[futures.size()];
         futures.toArray(arrayFuture);
@@ -192,15 +205,6 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQue
     private T decode(MessageWithDeliveryTag data) throws InvalidProtocolBufferException {
         DefaultTbQueueMsg msg = gson.fromJson(new String(((Data) data.getMessage().getBody()).getValue().getArray()), DefaultTbQueueMsg.class);
         return decoder.decode(msg);
-    }
-
-    private ConnectionStringBuilder createConnection(String queue) {
-        admin.createTopicIfNotExists(queue);
-        return new ConnectionStringBuilder(
-                serviceBusSettings.getNamespaceName(),
-                queue,
-                serviceBusSettings.getSasKeyName(),
-                serviceBusSettings.getSasKey());
     }
 
 }
