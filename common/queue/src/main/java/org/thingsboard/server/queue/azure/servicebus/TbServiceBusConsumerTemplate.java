@@ -120,7 +120,6 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQue
                             return CoreMessageReceiver.create(factory, queue, queue, 0,
                                     new SettleModePair(SenderSettleMode.UNSETTLED, ReceiverSettleMode.SECOND),
                                     MessagingEntityType.QUEUE);
-
                         }).collect(Collectors.toList());
 
                 try {
@@ -138,9 +137,10 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQue
             List<CompletableFuture<Collection<MessageWithDeliveryTag>>> messageFutures =
                     receivers.stream()
                             .map(receiver -> receiver
-                                    .receiveAsync(messagesPerQueue, Duration.ofMillis(durationInMillis)).whenComplete((res, err) -> {
-                                        if (!CollectionUtils.isEmpty(res)) {
-                                            pendingMessages.put(receiver, res);
+                                    .receiveAsync(messagesPerQueue, Duration.ofMillis(durationInMillis))
+                                    .whenComplete((messages, err) -> {
+                                        if (!CollectionUtils.isEmpty(messages)) {
+                                            pendingMessages.put(receiver, messages);
                                         } else if (err != null) {
                                             log.error("Failed to receive messages.", err);
                                         }
@@ -150,15 +150,10 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQue
                 return fromList(messageFutures)
                         .get()
                         .stream()
-                        .flatMap(list -> {
-                            if (!CollectionUtils.isEmpty(list)) {
-                                return list.stream();
-                            }
-                            return Stream.empty();
-                        })
-                        .map(msg -> {
+                        .flatMap(messages -> CollectionUtils.isEmpty(messages) ? Stream.empty() : messages.stream())
+                        .map(message -> {
                             try {
-                                return decode(msg);
+                                return decode(message);
                             } catch (InvalidProtocolBufferException e) {
                                 log.error("Failed to parse message.", e);
                                 throw new RuntimeException("Failed to parse message.", e);

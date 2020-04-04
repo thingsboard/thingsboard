@@ -30,12 +30,12 @@ import org.thingsboard.server.queue.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.azure.servicebus.TbServiceBusConsumerTemplate;
 import org.thingsboard.server.queue.azure.servicebus.TbServiceBusProducerTemplate;
 import org.thingsboard.server.queue.azure.servicebus.TbServiceBusSettings;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='service-bus' && '${service.type:null}'=='tb-core'")
@@ -47,8 +47,6 @@ public class ServiceBusTbCoreQueueProvider implements TbCoreQueueProvider {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final PartitionService partitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
-
-
     private final TbQueueAdmin admin;
 
     public ServiceBusTbCoreQueueProvider(TbServiceBusSettings serviceBusSettings,

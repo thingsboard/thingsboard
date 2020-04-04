@@ -53,8 +53,6 @@ public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleE
     private final PartitionService partitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
 
-    private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> tbCoreProducer;
-
     public PubSubMonolithQueueProvider(TbPubSubSettings pubSubSettings,
                                        TbQueueCoreSettings coreSettings,
                                        TbQueueRuleEngineSettings ruleEngineSettings,

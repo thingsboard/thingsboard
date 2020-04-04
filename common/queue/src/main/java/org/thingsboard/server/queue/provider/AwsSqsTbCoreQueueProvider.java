@@ -48,8 +48,6 @@ public class AwsSqsTbCoreQueueProvider implements TbCoreQueueProvider {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final PartitionService partitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
-
-
     private final TbQueueAdmin admin;
 
     public AwsSqsTbCoreQueueProvider(TbAwsSqsSettings sqsSettings,
