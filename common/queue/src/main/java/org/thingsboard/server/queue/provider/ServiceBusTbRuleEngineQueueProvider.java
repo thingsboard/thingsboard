@@ -30,68 +30,68 @@ import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.eventhub.TbEventHubsAdmin;
-import org.thingsboard.server.queue.eventhub.TbEventHubsConsumerTemplate;
-import org.thingsboard.server.queue.eventhub.TbEventHubsProducerTemplate;
-import org.thingsboard.server.queue.eventhub.TbEventHubsSettings;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusConsumerTemplate;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusProducerTemplate;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusSettings;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='eventhubs' && '${service.type:null}'=='tb-rule-engine'")
-public class EventHubTbRuleEngineQueueProvider implements TbRuleEngineQueueProvider {
+@ConditionalOnExpression("'${queue.type:null}'=='service-bus' && '${service.type:null}'=='tb-rule-engine'")
+public class ServiceBusTbRuleEngineQueueProvider implements TbRuleEngineQueueProvider {
 
     private final PartitionService partitionService;
     private final TbQueueCoreSettings coreSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
-    private final TbEventHubsSettings eventHubsSettings;
+    private final TbServiceBusSettings serviceBusSettings;
     private final TbQueueAdmin admin;
 
-    public EventHubTbRuleEngineQueueProvider(PartitionService partitionService, TbQueueCoreSettings coreSettings,
-                                             TbQueueRuleEngineSettings ruleEngineSettings,
-                                             TbServiceInfoProvider serviceInfoProvider,
-                                             TbEventHubsSettings eventHubsSettings) {
+    public ServiceBusTbRuleEngineQueueProvider(PartitionService partitionService, TbQueueCoreSettings coreSettings,
+                                               TbQueueRuleEngineSettings ruleEngineSettings,
+                                               TbServiceInfoProvider serviceInfoProvider,
+                                               TbServiceBusSettings serviceBusSettings,
+                                               TbQueueAdmin admin) {
         this.partitionService = partitionService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.ruleEngineSettings = ruleEngineSettings;
-        this.eventHubsSettings = eventHubsSettings;
-        admin = new TbEventHubsAdmin(eventHubsSettings);
+        this.serviceBusSettings = serviceBusSettings;
+        this.admin = admin;
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, ruleEngineSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
-        return new TbEventHubsConsumerTemplate<>(admin, eventHubsSettings, ruleEngineSettings.getTopic(),
+        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings, ruleEngineSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> getToRuleEngineNotificationsMsgConsumer() {
-        return new TbEventHubsConsumerTemplate<>(admin, eventHubsSettings,
+        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }

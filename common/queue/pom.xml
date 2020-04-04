@@ -62,7 +62,7 @@
         </dependency>
         <dependency>
             <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-eventhubs</artifactId>
+            <artifactId>azure-servicebus</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

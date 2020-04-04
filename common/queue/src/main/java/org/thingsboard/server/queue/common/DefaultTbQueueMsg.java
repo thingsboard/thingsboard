@@ -25,7 +25,7 @@ import java.util.UUID;
 public class DefaultTbQueueMsg implements TbQueueMsg {
     private final UUID key;
     private final byte[] data;
-    private TbQueueMsgHeaders headers;
+    private DefaultTbQueueMsgHeaders headers;
 
 
     public DefaultTbQueueMsg(UUID key, byte[] data) {
@@ -36,7 +36,9 @@ public class DefaultTbQueueMsg implements TbQueueMsg {
     public DefaultTbQueueMsg(TbQueueMsg msg) {
         this.key = msg.getKey();
         this.data = msg.getData();
-        this.headers = msg.getHeaders();
+        DefaultTbQueueMsgHeaders headers = new DefaultTbQueueMsgHeaders();
+        msg.getHeaders().getData().forEach(headers::put);
+        this.headers = headers;
     }
 
 }

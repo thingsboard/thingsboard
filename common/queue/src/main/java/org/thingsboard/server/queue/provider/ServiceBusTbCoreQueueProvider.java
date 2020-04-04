@@ -33,16 +33,15 @@ import org.thingsboard.server.queue.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.eventhub.TbEventHubsAdmin;
-import org.thingsboard.server.queue.eventhub.TbEventHubsConsumerTemplate;
-import org.thingsboard.server.queue.eventhub.TbEventHubsProducerTemplate;
-import org.thingsboard.server.queue.eventhub.TbEventHubsSettings;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusConsumerTemplate;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusProducerTemplate;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusSettings;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='eventhubs' && '${service.type:null}'=='tb-core'")
-public class EventHubTbCoreQueueProvider implements TbCoreQueueProvider {
+@ConditionalOnExpression("'${queue.type:null}'=='service-bus' && '${service.type:null}'=='tb-core'")
+public class ServiceBusTbCoreQueueProvider implements TbCoreQueueProvider {
 
-    private final TbEventHubsSettings eventHubsSettings;
+    private final TbServiceBusSettings serviceBusSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
@@ -52,67 +51,68 @@ public class EventHubTbCoreQueueProvider implements TbCoreQueueProvider {
 
     private final TbQueueAdmin admin;
 
-    public EventHubTbCoreQueueProvider(TbEventHubsSettings eventHubsSettings,
-                                       TbQueueCoreSettings coreSettings,
-                                       TbQueueTransportApiSettings transportApiSettings,
-                                       TbQueueRuleEngineSettings ruleEngineSettings,
-                                       PartitionService partitionService,
-                                       TbServiceInfoProvider serviceInfoProvider) {
-        this.eventHubsSettings = eventHubsSettings;
+    public ServiceBusTbCoreQueueProvider(TbServiceBusSettings serviceBusSettings,
+                                         TbQueueCoreSettings coreSettings,
+                                         TbQueueTransportApiSettings transportApiSettings,
+                                         TbQueueRuleEngineSettings ruleEngineSettings,
+                                         PartitionService partitionService,
+                                         TbServiceInfoProvider serviceInfoProvider,
+                                         TbQueueAdmin admin) {
+        this.serviceBusSettings = serviceBusSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.partitionService = partitionService;
         this.serviceInfoProvider = serviceInfoProvider;
-        this.admin = new TbEventHubsAdmin(eventHubsSettings);
+        this.admin = admin;
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, ruleEngineSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> getToCoreMsgConsumer() {
-        return new TbEventHubsConsumerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic(),
+        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> getToCoreNotificationsMsgConsumer() {
-        return new TbEventHubsConsumerTemplate<>(admin, eventHubsSettings,
+        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> getTransportApiRequestConsumer() {
-        return new TbEventHubsConsumerTemplate<>(admin, eventHubsSettings, transportApiSettings.getRequestsTopic(),
+        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings, transportApiSettings.getRequestsTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiResponseProducer() {
-        return new TbEventHubsProducerTemplate<>(admin, eventHubsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 }
