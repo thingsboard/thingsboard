@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<form (ngSubmit)="add()" style="width: 600px;">
+<form (ngSubmit)="add()" style="min-width: 450px;">
   <mat-toolbar color="primary">
     <h2 translate>user.add</h2>
     <span fxFlex></span>
     <div [tb-help]="'user'"></div>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
