@@ -56,6 +56,9 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.WIDGETS_BUNDLE);
     this.config.entityResources = entityTypeResources.get(EntityType.WIDGETS_BUNDLE);
 
+    this.config.entityTitle = (widgetsBundle) => widgetsBundle ?
+      widgetsBundle.title : '';
+
     this.config.columns.push(
       new DateEntityTableColumn<WidgetsBundle>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<WidgetsBundle>('title', 'widgets-bundle.title', '100%'),

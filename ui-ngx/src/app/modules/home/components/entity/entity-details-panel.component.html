@@ -16,7 +16,7 @@
 
 -->
 <tb-details-panel fxFlex
-                   [headerTitle]="entity?.name"
+                   [headerTitle]="entitiesTableConfig.entityTitle(entity)"
                    headerSubtitle="{{ translations.details | translate }}"
                    [isReadOnly]="entitiesTableConfig.detailsReadonly(entity)"
                    [isEdit]="isEditValue"
