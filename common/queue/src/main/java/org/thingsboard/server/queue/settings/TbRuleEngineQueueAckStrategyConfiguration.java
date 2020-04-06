@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.queue.settings;
 
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import lombok.Data;
 
-import java.util.concurrent.atomic.AtomicInteger;
+@Data
+public class TbRuleEngineQueueAckStrategyConfiguration {
 
-public class TbQueueTbMsgCallbackWrapper implements TbQueueCallback {
+//    @Value("${type}")
+    private String type;
+//    @Value("${retries:3}")
+    private int retries;
+//    @Value("${failure_percentage:0}")
+    private double failurePercentage;
+//    @Value("${pause_between_retries:3}")
+    private long pauseBetweenRetries;
 
-    private final TbMsgCallback tbMsgCallback;
-
-    public TbQueueTbMsgCallbackWrapper(TbMsgCallback tbMsgCallback) {
-        this.tbMsgCallback = tbMsgCallback;
-    }
-
-    @Override
-    public void onSuccess(TbQueueMsgMetadata metadata) {
-        tbMsgCallback.onSuccess();
-    }
-
-    @Override
-    public void onFailure(Throwable t) {
-        tbMsgCallback.onFailure(t);
-    }
 }

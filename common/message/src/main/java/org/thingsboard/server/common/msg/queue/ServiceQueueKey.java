@@ -13,32 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.common.msg.queue;
 
-import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
 
 import java.util.Objects;
 
-@AllArgsConstructor
-public class TopicPartitionInfoKey {
-    private ServiceQueue serviceQueue;
-    private TenantId isolatedTenantId;
-    private int partition;
+@ToString
+public class ServiceQueueKey {
+    @Getter
+    private final ServiceQueue serviceQueue;
+
+    @Getter
+    private final TenantId tenantId;
+
+    public ServiceQueueKey(ServiceQueue serviceQueue, TenantId tenantId) {
+        this.serviceQueue = serviceQueue;
+        this.tenantId = tenantId;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TopicPartitionInfoKey that = (TopicPartitionInfoKey) o;
-        return partition == that.partition &&
-                serviceQueue.equals(that.serviceQueue) &&
-                Objects.equals(isolatedTenantId, that.isolatedTenantId);
+        ServiceQueueKey that = (ServiceQueueKey) o;
+        return serviceQueue.equals(that.serviceQueue) &&
+                Objects.equals(tenantId, that.tenantId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(serviceQueue, isolatedTenantId, partition);
+        return Objects.hash(serviceQueue, tenantId);
+    }
+
+    public ServiceType getServiceType() {
+        return serviceQueue.getType();
     }
 }

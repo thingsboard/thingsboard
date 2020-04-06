@@ -19,12 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -41,7 +41,7 @@ import org.thingsboard.server.queue.kafka.TbKafkaSettings;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='kafka' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
-public class KafkaTbTransportQueueProvider implements TbTransportQueueProvider {
+public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
 
     private final TbKafkaSettings kafkaSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
@@ -50,12 +50,12 @@ public class KafkaTbTransportQueueProvider implements TbTransportQueueProvider {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
-    public KafkaTbTransportQueueProvider(TbKafkaSettings kafkaSettings,
-                                         TbServiceInfoProvider serviceInfoProvider,
-                                         TbQueueCoreSettings coreSettings,
-                                         TbQueueRuleEngineSettings ruleEngineSettings,
-                                         TbQueueTransportApiSettings transportApiSettings,
-                                         TbQueueTransportNotificationSettings transportNotificationSettings) {
+    public KafkaTbTransportQueueFactory(TbKafkaSettings kafkaSettings,
+                                        TbServiceInfoProvider serviceInfoProvider,
+                                        TbQueueCoreSettings coreSettings,
+                                        TbQueueRuleEngineSettings ruleEngineSettings,
+                                        TbQueueTransportApiSettings transportApiSettings,
+                                        TbQueueTransportNotificationSettings transportNotificationSettings) {
         this.kafkaSettings = kafkaSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;
@@ -65,7 +65,7 @@ public class KafkaTbTransportQueueProvider implements TbTransportQueueProvider {
     }
 
     @Override
-    public TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiRequestTemplate() {
+    public TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiRequestTemplate() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<TransportApiRequestMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("transport-api-request-" + serviceInfoProvider.getServiceId());
@@ -90,7 +90,7 @@ public class KafkaTbTransportQueueProvider implements TbTransportQueueProvider {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("transport-node-rule-engine-"+ serviceInfoProvider.getServiceId());
@@ -99,7 +99,7 @@ public class KafkaTbTransportQueueProvider implements TbTransportQueueProvider {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("transport-node-core-" + serviceInfoProvider.getServiceId());
@@ -108,7 +108,7 @@ public class KafkaTbTransportQueueProvider implements TbTransportQueueProvider {
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsConsumer() {
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToTransportMsg>> responseBuilder = TBKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
         responseBuilder.topic(transportNotificationSettings.getNotificationsTopic() + "." + serviceInfoProvider.getServiceId());

@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.telemetry;
+package org.thingsboard.server.queue.common;
 
-import com.google.common.util.concurrent.FutureCallback;
-import lombok.Data;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 
-import javax.annotation.Nullable;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Created by ashvayka on 02.04.18.
- */
-@Data
-class TelemetryNodeCallback implements FutureCallback<Void> {
-    private final TbContext ctx;
-    private final TbMsg msg;
+public class TbQueueTbMsgCallbackWrapper implements TbQueueCallback {
+
+    private final TbMsgCallback tbMsgCallback;
+
+    public TbQueueTbMsgCallbackWrapper(TbMsgCallback tbMsgCallback) {
+        this.tbMsgCallback = tbMsgCallback;
+    }
 
     @Override
-    public void onSuccess(@Nullable Void result) {
-        ctx.tellSuccess(msg);
+    public void onSuccess(TbQueueMsgMetadata metadata) {
+        tbMsgCallback.onSuccess();
     }
 
     @Override
     public void onFailure(Throwable t) {
-        ctx.tellFailure(msg, t);
+        tbMsgCallback.onFailure(t);
     }
 }

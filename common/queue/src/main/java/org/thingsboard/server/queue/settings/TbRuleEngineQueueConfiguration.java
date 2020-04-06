@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.queue.settings;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 @Data
-@Component
-public class TbQueueRuleEngineSettings {
+public class TbRuleEngineQueueConfiguration {
 
-    @Value("${queue.rule_engine.topic}")
+    private String name;
     private String topic;
-
-    @Value("${queue.rule_engine.partitions}")
+    private int pollInterval;
     private int partitions;
+    private String packProcessingTimeout;
+    private TbRuleEngineQueueAckStrategyConfiguration ackStrategy;
+
 }

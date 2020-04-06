@@ -17,7 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
-import org.thingsboard.server.common.msg.queue.ServiceKey;
+import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 
 import java.util.Set;
 
@@ -25,10 +25,10 @@ import java.util.Set;
 public class ClusterTopologyChangeEvent extends ApplicationEvent {
 
     @Getter
-    private final Set<ServiceKey> serviceKeys;
+    private final Set<ServiceQueueKey> serviceQueueKeys;
 
-    public ClusterTopologyChangeEvent(Object source, Set<ServiceKey> serviceKeys) {
+    public ClusterTopologyChangeEvent(Object source, Set<ServiceQueueKey> serviceQueueKeys) {
         super(source);
-        this.serviceKeys = serviceKeys;
+        this.serviceQueueKeys = serviceQueueKeys;
     }
 }

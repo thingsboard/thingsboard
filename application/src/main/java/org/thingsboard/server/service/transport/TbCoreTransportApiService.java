@@ -27,7 +27,7 @@ import org.thingsboard.server.queue.common.DefaultTbQueueResponseTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
-import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
+import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
@@ -42,7 +42,7 @@ import java.util.concurrent.*;
 @TbCoreComponent
 public class TbCoreTransportApiService {
 
-    private final TbCoreQueueProvider tbCoreQueueProvider;
+    private final TbCoreQueueFactory tbCoreQueueFactory;
     private final TransportApiService transportApiService;
 
     @Value("${queue.transport_api.max_pending_requests:10000}")
@@ -58,16 +58,16 @@ public class TbCoreTransportApiService {
     private TbQueueResponseTemplate<TbProtoQueueMsg<TransportApiRequestMsg>,
             TbProtoQueueMsg<TransportApiResponseMsg>> transportApiTemplate;
 
-    public TbCoreTransportApiService(TbCoreQueueProvider tbCoreQueueProvider, TransportApiService transportApiService) {
-        this.tbCoreQueueProvider = tbCoreQueueProvider;
+    public TbCoreTransportApiService(TbCoreQueueFactory tbCoreQueueFactory, TransportApiService transportApiService) {
+        this.tbCoreQueueFactory = tbCoreQueueFactory;
         this.transportApiService = transportApiService;
     }
 
     @PostConstruct
     public void init() {
         this.transportCallbackExecutor = Executors.newWorkStealingPool(maxCallbackThreads);
-        TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> producer = tbCoreQueueProvider.getTransportApiResponseProducer();
-        TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> consumer = tbCoreQueueProvider.getTransportApiRequestConsumer();
+        TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> producer = tbCoreQueueFactory.createTransportApiResponseProducer();
+        TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> consumer = tbCoreQueueFactory.createTransportApiRequestConsumer();
 
         DefaultTbQueueResponseTemplate.DefaultTbQueueResponseTemplateBuilder
                 <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> builder = DefaultTbQueueResponseTemplate.builder();

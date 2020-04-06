@@ -29,70 +29,70 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponse
  * Responsible for initialization of various Producers and Consumers used by TB Core Node.
  * Implementation Depends on the queue queue.type from yml or TB_QUEUE_TYPE environment variable
  */
-public interface TbCoreQueueProvider {
+public interface TbCoreQueueFactory {
 
     /**
      * Used to push messages to instances of TB Transport Service
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer();
+    TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer();
 
     /**
      * Used to push messages to instances of TB RuleEngine Service
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer();
+    TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer();
 
     /**
      * Used to push notifications to instances of TB RuleEngine Service
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer();
+    TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer();
 
     /**
      * Used to push messages to other instances of TB Core Service
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer();
+    TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer();
 
     /**
      * Used to push notifications to other instances of TB Core Service
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer();
+    TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer();
 
     /**
      * Used to consume messages by TB Core Service
      *
      * @return
      */
-    TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> getToCoreMsgConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> createToCoreMsgConsumer();
 
     /**
      * Used to consume high priority messages by TB Core Service
      *
      * @return
      */
-    TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> getToCoreNotificationsMsgConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer();
 
     /**
      * Used to consume Transport API Calls
      *
      * @return
      */
-    TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> getTransportApiRequestConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> createTransportApiRequestConsumer();
 
     /**
      * Used to push replies to Transport API Calls
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiResponseProducer();
+    TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiResponseProducer();
 
 
 }

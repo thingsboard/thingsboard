@@ -169,9 +169,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         entityNode.put("params", msg.getBody().getParams());
 
         try {
-            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), metaData, TbMsgDataType.JSON
-                    , json.writeValueAsString(entityNode)
-                    , null, null, null);
+            TbMsg tbMsg = TbMsg.newMsg(DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
             clusterService.onToRuleEngineMsg(msg.getTenantId(), msg.getDeviceId(), tbMsg);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

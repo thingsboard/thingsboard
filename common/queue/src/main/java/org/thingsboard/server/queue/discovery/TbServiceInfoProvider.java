@@ -15,14 +15,9 @@
  */
 package org.thingsboard.server.queue.discovery;
 
-import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 
-import java.util.List;
-
 public interface TbServiceInfoProvider {
-
-    List<ServiceType> getSupportedServiceTypes();
 
     String getServiceId();
 

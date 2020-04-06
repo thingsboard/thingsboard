@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.queue.common;
 
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

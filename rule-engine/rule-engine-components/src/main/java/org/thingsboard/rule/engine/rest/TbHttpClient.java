@@ -113,7 +113,7 @@ class TbHttpClient {
                         queueProcessor.resetCounter();
                     }
                     TbMsg next = processResponse(ctx, msg, responseEntity);
-                    ctx.tellNext(next, TbRelationTypes.SUCCESS);
+                    ctx.tellSuccess(next);
                 } else {
                     if (config.isUseRedisQueueForMsgPersistence()) {
                         processHttpClientError(responseEntity.getStatusCode(), msg, queueProcessor);

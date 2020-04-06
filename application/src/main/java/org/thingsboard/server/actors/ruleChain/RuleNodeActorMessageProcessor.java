@@ -40,7 +40,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private final RuleChainService service;
     private RuleNode ruleNode;
     private TbNode tbNode;
-    private TbContext defaultCtx;
+    private DefaultTbContext defaultCtx;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, ActorSystemContext systemContext
             , ActorRef parent, ActorRef self) {
