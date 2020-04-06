@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { User } from '@shared/models/user.model';
-import { selectAuth, selectUserDetails } from '@core/auth/auth.selectors';
+import { selectAuth } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
 import { isUndefined } from '@core/utils';

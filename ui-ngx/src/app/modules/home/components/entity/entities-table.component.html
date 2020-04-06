@@ -33,7 +33,7 @@
   </mat-drawer>
   <mat-drawer-content>
     <div class="mat-padding tb-entity-table tb-absolute-fill">
-      <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
+      <div fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
         <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
             <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
@@ -41,10 +41,9 @@
             <tb-timewindow *ngIf="entitiesTableConfig.useTimePageLink" [(ngModel)]="timewindow"
                             (ngModelChange)="onTimewindowChange()"
                             asButton historyOnly></tb-timewindow>
-            <span fxFlex *ngIf="!entitiesTableConfig.headerComponent ||
-                                entitiesTableConfig.useTimePageLink"></span>
+            <span fxFlex *ngIf="!entitiesTableConfig.headerComponent || entitiesTableConfig.useTimePageLink"></span>
             <div [fxShow]="addEnabled()">
-              <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+              <button mat-icon-button [disabled]="isLoading$ | async"
                       *ngIf="!entitiesTableConfig.addActionDescriptors.length; else addActions"
                       (click)="addEntity($event)"
                       matTooltip="{{ translations.add | translate }}"
@@ -52,7 +51,7 @@
                 <mat-icon>add</mat-icon>
               </button>
               <ng-template #addActions>
-                <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                <button mat-icon-button [disabled]="isLoading$ | async"
                         *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else addActionsMenu"
                         [fxShow]="entitiesTableConfig.addActionDescriptors[0].isEnabled()"
                         (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
@@ -61,7 +60,7 @@
                   <mat-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</mat-icon>
                 </button>
                 <ng-template #addActionsMenu>
-                  <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                  <button mat-icon-button [disabled]="isLoading$ | async"
                           matTooltip="{{ translations.add | translate }}"
                           matTooltipPosition="above"
                           [matMenuTriggerFor]="addActionsMenu">
@@ -79,20 +78,20 @@
                 </ng-template>
               </ng-template>
             </div>
-            <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+            <button mat-icon-button [disabled]="isLoading$ | async"
                     [fxShow]="actionDescriptor.isEnabled()" *ngFor="let actionDescriptor of headerActionDescriptors"
                     matTooltip="{{ actionDescriptor.name }}"
                     matTooltipPosition="above"
                     (click)="actionDescriptor.onAction($event)">
               <mat-icon>{{actionDescriptor.icon}}</mat-icon>
             </button>
-            <button mat-button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
+            <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
                     matTooltip="{{ 'action.refresh' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>refresh</mat-icon>
             </button>
             <button *ngIf="entitiesTableConfig.searchEnabled"
-                    mat-button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
+                    mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
                     matTooltip="{{ translations.search | translate }}"
                     matTooltipPosition="above">
               <mat-icon>search</mat-icon>
@@ -101,7 +100,7 @@
         </mat-toolbar>
         <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode && dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
-            <button mat-button mat-icon-button
+            <button mat-icon-button
                     matTooltip="{{ translations.search | translate }}"
                     matTooltipPosition="above">
               <mat-icon>search</mat-icon>
@@ -112,7 +111,7 @@
                      [(ngModel)]="pageLink.textSearch"
                      placeholder="{{ translations.search | translate }}"/>
             </mat-form-field>
-            <button mat-button mat-icon-button (click)="exitFilterMode()"
+            <button mat-icon-button (click)="exitFilterMode()"
                     matTooltip="{{ 'action.close' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>close</mat-icon>
@@ -125,7 +124,7 @@
                       {{ translate.get(translations.selectedEntities, {count: dataSource.selection.selected.length}) | async }}
                     </span>
             <span fxFlex></span>
-            <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+            <button mat-icon-button [disabled]="isLoading$ | async"
                     [fxShow]="actionDescriptor.isEnabled" *ngFor="let actionDescriptor of groupActionDescriptors"
                     matTooltip="{{ actionDescriptor.name }}"
                     matTooltipPosition="above"
@@ -167,7 +166,7 @@
               <mat-header-cell *matHeaderCellDef [ngStyle]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
               <mat-cell *matCellDef="let entity; let row = index"
                         [ngStyle]="cellStyle(entity, column, row)">
-                <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                <button mat-icon-button [disabled]="isLoading$ | async"
                         [fxShow]="column.actionDescriptor.isEnabled(entity)"
                         matTooltip="{{ column.actionDescriptor.nameFunction ? column.actionDescriptor.nameFunction(entity) : column.actionDescriptor.name }}"
                         matTooltipPosition="above"

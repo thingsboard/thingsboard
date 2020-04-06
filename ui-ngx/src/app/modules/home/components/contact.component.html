@@ -18,7 +18,7 @@
 <section [formGroup]="parentForm">
   <mat-form-field class="mat-block">
     <mat-label translate>contact.country</mat-label>
-    <mat-select matInput formControlName="country">
+    <mat-select formControlName="country">
       <mat-option *ngFor="let country of countries" [value]="country">
         {{ country }}
       </mat-option>

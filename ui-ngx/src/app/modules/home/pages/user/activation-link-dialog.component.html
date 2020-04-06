@@ -16,7 +16,7 @@
 
 -->
 <form style="min-width: 400px;">
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar color="primary">
     <h2 translate>user.activation-link</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -29,11 +29,11 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content tb-toast toastTarget="activationLinkDialogContent">
-    <div class="mat-content mat-padding" fxLayout="column">
+    <div class="mat-content" fxLayout="column">
       <span [innerHTML]="'user.activation-link-text' | translate: {activationLink: activationLink}"></span>
       <div fxLayout="row" fxLayoutAlign="start center">
         <pre class="tb-highlight" fxFlex><code>{{ activationLink }}</code></pre>
-        <button mat-button mat-icon-button
+        <button mat-icon-button
                 color="primary"
                 ngxClipboard
                 cbContent="{{ activationLink }}"
@@ -45,10 +45,8 @@
       </div>
     </div>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
+  <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             cdkFocusInitial
             [disabled]="(isLoading$ | async)"

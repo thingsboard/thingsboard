@@ -679,18 +679,18 @@ mat-label {
   }
 
   .mat-toolbar-tools {
-    font-size: 20px;
+    //font-size: 20px;
     letter-spacing: .005em;
-    box-sizing: border-box;
+    //box-sizing: border-box;
     font-weight: 400;
     display: flex;
     align-items: center;
     flex-direction: row;
     width: 100%;
-    height: 64px;
-    max-height: 64px;
+    //height: 64px;
+    //max-height: 64px;
     padding: 0 16px;
-    margin: 0;
+    //margin: 0;
   }
 
   .mat-icon {
@@ -782,6 +782,11 @@ mat-label {
 
   .mat-toolbar {
     line-height: normal;
+
+    h1, h2, h3, h4, h5, h6 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 
   mat-toolbar *, mat-toolbar :after, mat-toolbar :before {
@@ -817,6 +822,9 @@ mat-label {
       .mat-dialog-actions {
         margin-bottom: 0;
         padding: 8px 8px 8px 16px;
+        button:last-of-type{
+          margin-right: 20px;
+        }
       }
     }
   }
@@ -843,7 +851,7 @@ mat-label {
   }
 
   .tb-fullscreen-dialog {
-    @media #{$mat-lt-md} {
+    @media #{$mat-lt-sm} {
       min-height: 100%;
       min-width: 100%;
       max-width: none !important;
@@ -904,6 +912,7 @@ mat-label {
     display: flex;
     height: calc(100% - 60px);
     text-transform: uppercase;
+    text-align: center;
   }
 
 

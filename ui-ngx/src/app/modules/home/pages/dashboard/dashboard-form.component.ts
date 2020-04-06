@@ -14,21 +14,20 @@
 /// limitations under the License.
 ///
 
-import {Component} from '@angular/core';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {EntityComponent} from '../../components/entity/entity.component';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {ActionNotificationShow} from '@core/notification/notification.actions';
-import {TranslateService} from '@ngx-translate/core';
+import { Component } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { EntityComponent } from '../../components/entity/entity.component';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { TranslateService } from '@ngx-translate/core';
 import {
   Dashboard,
-  isPublicDashboard,
   getDashboardAssignedCustomersText,
   isCurrentPublicDashboardCustomer,
-  DashboardInfo
+  isPublicDashboard
 } from '@shared/models/dashboard.models';
-import {DashboardService} from '@core/http/dashboard.service';
+import { DashboardService } from '@core/http/dashboard.service';
 
 @Component({
   selector: 'tb-dashboard-form',

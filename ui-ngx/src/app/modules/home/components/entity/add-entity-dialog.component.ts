@@ -14,20 +14,19 @@
 /// limitations under the License.
 ///
 
-import {Component, ComponentFactoryResolver, Inject, OnInit, SkipSelf, ViewChild} from '@angular/core';
+import { Component, ComponentFactoryResolver, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import {PageComponent} from '@shared/components/page.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {FormControl, FormGroupDirective, NgForm} from '@angular/forms';
-import {EntityTypeResource, EntityTypeTranslation} from '@shared/models/entity-type.models';
-import {BaseData, HasId} from '@shared/models/base-data';
-import {EntityId} from '@shared/models/id/entity-id';
-import {TbAnchorComponent} from '@shared/components/tb-anchor.component';
-import {EntityComponent} from './entity.component';
-import {EntityTableConfig} from '@home/models/entity/entities-table-config.models';
-import {AddEntityDialogData} from '@home/models/entity/entity-component.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { FormControl, FormGroupDirective, NgForm } from '@angular/forms';
+import { EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
+import { BaseData, HasId } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
+import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import { EntityComponent } from './entity.component';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { AddEntityDialogData } from '@home/models/entity/entity-component.models';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 

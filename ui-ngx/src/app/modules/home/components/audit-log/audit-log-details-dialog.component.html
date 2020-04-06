@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-toolbar fxLayout="row" color="primary">
+<mat-toolbar color="primary">
   <h2 translate>audit-log.audit-log-details</h2>
   <span fxFlex></span>
   <button mat-button mat-icon-button
@@ -33,10 +33,8 @@
   <div #failureDetailsEditor [fxShow]="displayFailureDetails" class="tb-audit-log-failure-details">
   </div>
 </div>
-<div mat-dialog-actions fxLayout="row">
-  <span fxFlex></span>
+<div mat-dialog-actions fxLayoutAlign="end center">
   <button mat-button color="primary"
-          style="margin-right: 20px;"
           type="button"
           [disabled]="(isLoading$ | async)"
           [mat-dialog-close]="false" cdkFocusInitial>

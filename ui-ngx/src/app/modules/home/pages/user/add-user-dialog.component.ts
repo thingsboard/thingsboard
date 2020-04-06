@@ -16,7 +16,6 @@
 
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { NgForm } from '@angular/forms';
@@ -30,7 +29,7 @@ import {
   ActivationLinkDialogComponent,
   ActivationLinkDialogData
 } from '@modules/home/pages/user/activation-link-dialog.component';
-import {TenantId} from '@app/shared/models/id/tenant-id';
+import { TenantId } from '@app/shared/models/id/tenant-id';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 
@@ -42,7 +41,8 @@ export interface AddUserDialogData {
 
 @Component({
   selector: 'tb-add-user-dialog',
-  templateUrl: './add-user-dialog.component.html'
+  templateUrl: './add-user-dialog.component.html',
+  styleUrls: ['./add-user-dialog.component.scss']
 })
 export class AddUserDialogComponent extends DialogComponent<AddUserDialogComponent, User> implements OnInit {
 
