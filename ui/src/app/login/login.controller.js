@@ -32,8 +32,7 @@ export default function LoginController(toast, loginService, userService, types,
 
     vm.login = login;
 
-    if (angular.isDefined($stateParams.username) && $stateParams.username &&
-        angular.isDefined($stateParams.password) && $stateParams.password) {
+    if ($stateParams.username && $stateParams.password) {
         vm.user.name = $stateParams.username;
         vm.user.password = $stateParams.password;
         doLogin();
