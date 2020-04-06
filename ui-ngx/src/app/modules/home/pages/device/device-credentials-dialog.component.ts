@@ -14,18 +14,14 @@
 /// limitations under the License.
 ///
 
-import {Component, OnInit, SkipSelf, Inject} from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { PageComponent } from '@shared/components/page.component';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators} from '@angular/forms';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { TranslateService } from '@ngx-translate/core';
-import { AuthService } from '@core/auth/auth.service';
-import {DeviceService} from '@core/http/device.service';
-import {DeviceCredentials, DeviceCredentialsType, credentialTypeNames} from '@shared/models/device.models';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { DeviceService } from '@core/http/device.service';
+import { credentialTypeNames, DeviceCredentials, DeviceCredentialsType } from '@shared/models/device.models';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 

@@ -19,8 +19,12 @@ import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Va
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityType } from '@shared/models/entity-type.models';
-import { CsvColumnParam, ImportEntityColumnType, importEntityColumnTypeTranslations,
-         importEntityObjectColumns } from '@home/components/import-export/import-export.models';
+import {
+  CsvColumnParam,
+  ImportEntityColumnType,
+  importEntityColumnTypeTranslations,
+  importEntityObjectColumns
+} from '@home/components/import-export/import-export.models';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 
@@ -50,8 +54,6 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
   dataSource = new CsvColumnsDatasource();
 
   displayedColumns = ['order', 'sampleData', 'type', 'key'];
-
-  importEntityColumnType = ImportEntityColumnType;
 
   columnTypes: AssignmentColumnType[] = [];
 
@@ -138,12 +140,10 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
   }
 
   public isColumnTypeDiffers(columnType: ImportEntityColumnType): boolean {
-    return columnType !== ImportEntityColumnType.name &&
-      columnType !== ImportEntityColumnType.type &&
-      columnType !== ImportEntityColumnType.label &&
-      columnType !== ImportEntityColumnType.accessToken &&
-      columnType !== ImportEntityColumnType.isGateway &&
-      columnType !== ImportEntityColumnType.description;
+    return columnType === ImportEntityColumnType.clientAttribute ||
+      columnType === ImportEntityColumnType.sharedAttribute ||
+      columnType === ImportEntityColumnType.serverAttribute ||
+      columnType === ImportEntityColumnType.timeseries;
   }
 
   private columnValid(column: CsvColumnParam): boolean {

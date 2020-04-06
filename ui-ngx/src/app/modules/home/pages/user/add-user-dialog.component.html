@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<form (ngSubmit)="add()" style="width: 600px;">
-  <mat-toolbar fxLayout="row" color="primary">
+<form (ngSubmit)="add()" style="min-width: 450px;">
+  <mat-toolbar color="primary">
     <h2 translate>user.add</h2>
     <span fxFlex></span>
     <div [tb-help]="'user'"></div>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -33,22 +33,20 @@
     <tb-user></tb-user>
     <mat-form-field class="mat-block">
       <mat-label translate>user.activation-method</mat-label>
-      <mat-select matInput [ngModelOptions]="{standalone: true}" [(ngModel)]="activationMethod">
+      <mat-select [ngModelOptions]="{standalone: true}" [(ngModel)]="activationMethod">
         <mat-option *ngFor="let activationMethod of activationMethods" [value]="activationMethod">
           {{ activationMethodTranslations.get(activationMethodEnum[activationMethod]) | translate }}
         </mat-option>
       </mat-select>
     </mat-form-field>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty">
       {{ 'action.add' | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             cdkFocusInitial
             [disabled]="(isLoading$ | async)"
