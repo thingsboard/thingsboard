@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,18 +34,18 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
-import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.queue.common.MultipleTbQueueTbMsgCallbackWrapper;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.common.TbQueueTbMsgCallbackWrapper;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.MultipleTbQueueTbMsgCallbackWrapper;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.TbQueueTbMsgCallbackWrapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -194,25 +194,29 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     void onQueueToRuleEngineMsg(QueueToRuleEngineMsg envelope) {
         TbMsg msg = envelope.getTbMsg();
         log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, msg.getId(), msg);
-        try {
-            checkActive();
-            RuleNodeId targetId = msg.getRuleNodeId();
-            RuleNodeCtx targetCtx;
-            if (targetId == null) {
-                targetCtx = firstNode;
-                msg = msg.copyWithRuleChainId(entityId);
-            } else {
-                targetCtx = nodeActors.get(targetId);
+        if (envelope.getRelationTypes() == null) {
+            try {
+                checkActive();
+                RuleNodeId targetId = msg.getRuleNodeId();
+                RuleNodeCtx targetCtx;
+                if (targetId == null) {
+                    targetCtx = firstNode;
+                    msg = msg.copyWithRuleChainId(entityId);
+                } else {
+                    targetCtx = nodeActors.get(targetId);
+                }
+                if (targetCtx != null) {
+                    log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
+                    pushMsgToNode(targetCtx, msg, "");
+                } else {
+                    log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
+                    msg.getCallback().onSuccess();
+                }
+            } catch (Exception e) {
+                envelope.getTbMsg().getCallback().onFailure(e);
             }
-            if (targetCtx != null) {
-                log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
-                pushMsgToNode(firstNode, msg, "");
-            } else {
-                log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
-                msg.getCallback().onSuccess();
-            }
-        } catch (Exception e) {
-            envelope.getTbMsg().getCallback().onFailure(e);
+        } else {
+            onTellNext(envelope.getTbMsg(), envelope.getTbMsg().getRuleNodeId(), envelope.getRelationTypes());
         }
     }
 
@@ -226,22 +230,24 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
-        TbMsg msg = envelope.getMsg();
+        onTellNext(envelope.getMsg(), envelope.getOriginator(), envelope.getRelationTypes());
+    }
+
+    private void onTellNext(TbMsg msg, RuleNodeId originatorNodeId, Set<String> relationTypes) {
         try {
             checkActive();
             EntityId entityId = msg.getOriginator();
             TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
-            RuleNodeId originatorNodeId = envelope.getOriginator();
             List<RuleNodeRelation> relations = nodeRoutes.get(originatorNodeId).stream()
-                    .filter(r -> contains(envelope.getRelationTypes(), r.getType()))
+                    .filter(r -> contains(relationTypes, r.getType()))
                     .collect(Collectors.toList());
             int relationsCount = relations.size();
             if (relationsCount == 0) {
                 log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
-                if (envelope.getRelationTypes().contains(TbRelationTypes.FAILURE)) {
-                    log.debug("[{}] Failure during message processing by Rule Node [{}]. Enable and see debug events for more info", entityId, envelope.getOriginator().getId());
+                if (relationTypes.contains(TbRelationTypes.FAILURE)) {
+                    log.debug("[{}] Failure during message processing by Rule Node [{}]. Enable and see debug events for more info", entityId, originatorNodeId.getId());
                     //TODO 2.5: Introduce our own RuleEngineFailureException to track what is wrong
-                    msg.getCallback().onFailure(new RuntimeException("Failure during message processing by Rule Node [" + envelope.getOriginator().getId().toString() + "]"));
+                    msg.getCallback().onFailure(new RuntimeException("Failure during message processing by Rule Node [" + originatorNodeId.getId().toString() + "]"));
                 } else {
                     msg.getCallback().onSuccess();
                 }
