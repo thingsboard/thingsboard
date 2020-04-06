@@ -16,7 +16,7 @@
 
 -->
 <form>
-  <mat-toolbar color="primary">
+  <mat-toolbar fxLayout="row" color="primary">
     <h2 translate>{{ importTitle }}</h2>
     <span fxFlex></span>
     <div [tb-help]="'entitiesImport'"></div>
@@ -76,18 +76,19 @@
             </div>
           </fieldset>
         </form>
-        <div fxLayout="row" fxLayoutGap="20px">
+        <div fxLayout="row wrap" fxLayoutAlign="space-between center">
           <button mat-button
                   [disabled]="(isLoading$ | async)"
                   (click)="previousStep()">{{ 'action.back' | translate }}</button>
-          <span fxFlex></span>
-          <button mat-button
-                  [disabled]="(isLoading$ | async)"
-                  (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-          <button mat-raised-button
-                  [disabled]="(isLoading$ | async)"
-                  color="primary"
-                  (click)="nextStep(3)">{{ 'action.continue' | translate }}</button>
+          <div fxLayout="row wrap" fxLayoutGap="20px">
+            <button mat-button
+                    [disabled]="(isLoading$ | async)"
+                    (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+            <button mat-raised-button
+                    [disabled]="(isLoading$ | async)"
+                    color="primary"
+                    (click)="nextStep(3)">{{ 'action.continue' | translate }}</button>
+          </div>
         </div>
       </mat-step>
       <mat-step [stepControl]="columnTypesFormGroup">
@@ -95,18 +96,19 @@
           <ng-template matStepLabel>{{ 'import.stepper-text.column-type' | translate }}</ng-template>
           <tb-table-columns-assignment formControlName="columnsParam" [entityType]="entityType"></tb-table-columns-assignment>
         </form>
-        <div fxLayout="row" fxLayoutGap="20px">
+        <div fxLayout="row wrap" fxLayoutAlign="space-between center">
           <button mat-button
                   [disabled]="(isLoading$ | async)"
                   (click)="previousStep()">{{ 'action.back' | translate }}</button>
-          <span fxFlex></span>
-          <button mat-button
-                  [disabled]="(isLoading$ | async)"
-                  (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-          <button mat-raised-button
-                  [disabled]="(isLoading$ | async) || columnTypesFormGroup.invalid || !columnTypesFormGroup.dirty"
-                  color="primary"
-                  (click)="nextStep(4)">{{ 'action.continue' | translate }}</button>
+          <div fxLayout="row wrap" fxLayoutGap="20px">
+            <button mat-button
+                    [disabled]="(isLoading$ | async)"
+                    (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+            <button mat-raised-button
+                    [disabled]="(isLoading$ | async) || columnTypesFormGroup.invalid || !columnTypesFormGroup.dirty"
+                    color="primary"
+                    (click)="nextStep(4)">{{ 'action.continue' | translate }}</button>
+          </div>
         </div>
       </mat-step>
       <mat-step>
