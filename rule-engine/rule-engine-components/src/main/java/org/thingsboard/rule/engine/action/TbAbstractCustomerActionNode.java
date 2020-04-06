@@ -63,7 +63,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(processCustomerAction(ctx, msg),
-                m -> ctx.tellNext(msg, "Success"),
+                m -> ctx.tellSuccess(msg),
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 

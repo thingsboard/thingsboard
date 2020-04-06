@@ -64,8 +64,7 @@ public class TbKafkaNode implements TbNode {
         properties.put(ProducerConfig.LINGER_MS_CONFIG, config.getLinger());
         properties.put(ProducerConfig.BUFFER_MEMORY_CONFIG, config.getBufferMemory());
         if (config.getOtherProperties() != null) {
-            config.getOtherProperties()
-                    .forEach((k,v) -> properties.put(k, v));
+            config.getOtherProperties().forEach(properties::put);
         }
         try {
             this.producer = new KafkaProducer<>(properties);
@@ -75,7 +74,7 @@ public class TbKafkaNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(config.getTopicPattern(), msg.getMetaData());
         try {
             producer.send(new ProducerRecord<>(topic, msg.getData()),

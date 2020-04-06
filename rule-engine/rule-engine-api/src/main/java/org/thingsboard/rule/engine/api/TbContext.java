@@ -60,6 +60,15 @@ public interface TbContext {
      */
 
     /**
+     * Indicates that message was successfully processed by the rule node.
+     * Sends message to all Rule Nodes in the Rule Chain
+     * that are connected to the current Rule Node using "Success" relationType.
+     *
+     * @param msg
+     */
+    void tellSuccess(TbMsg msg);
+
+    /**
      * Sends message to all Rule Nodes in the Rule Chain
      * that are connected to the current Rule Node using specified relationType.
      *

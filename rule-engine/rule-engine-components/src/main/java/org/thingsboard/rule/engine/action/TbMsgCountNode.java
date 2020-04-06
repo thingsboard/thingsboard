@@ -77,7 +77,7 @@ public class TbMsgCountNode implements TbNode {
 
             //TODO 2.5: Callback?
             TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), metaData, gson.toJson(telemetryJson));
-            ctx.enqueueForTellNext(tbMsg, SUCCESS, null, null);
+            ctx.enqueueForTellNext(tbMsg, SUCCESS);
             scheduleTickMsg(ctx);
         } else {
             messagesProcessed.incrementAndGet();

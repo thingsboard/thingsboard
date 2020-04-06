@@ -91,6 +91,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public void tellSuccess(TbMsg msg) {
+        tellNext(msg, Collections.singleton(TbRelationTypes.SUCCESS), null);
+    }
+
+    @Override
     public void tellNext(TbMsg msg, String relationType) {
         tellNext(msg, Collections.singleton(relationType), null);
     }

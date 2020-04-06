@@ -68,6 +68,8 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated");
                     } else if (alarmResult.isCleared) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
+                    } else {
+                        ctx.tellSuccess(msg);
                     }
                 },
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
