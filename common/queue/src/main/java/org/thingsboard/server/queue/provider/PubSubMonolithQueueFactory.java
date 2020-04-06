@@ -27,11 +27,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -39,10 +39,11 @@ import org.thingsboard.server.queue.pubsub.TbPubSubAdmin;
 import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
+import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='pubsub' && '${service.type:null}'=='monolith'")
-public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEngineQueueProvider {
+public class PubSubMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngineQueueFactory {
 
     private final TbPubSubSettings pubSubSettings;
     private final TbQueueCoreSettings coreSettings;
@@ -55,13 +56,13 @@ public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleE
 
     private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> tbCoreProducer;
 
-    public PubSubMonolithQueueProvider(TbPubSubSettings pubSubSettings,
-                                       TbQueueCoreSettings coreSettings,
-                                       TbQueueRuleEngineSettings ruleEngineSettings,
-                                       TbQueueTransportApiSettings transportApiSettings,
-                                       TbQueueTransportNotificationSettings transportNotificationSettings,
-                                       PartitionService partitionService,
-                                       TbServiceInfoProvider serviceInfoProvider) {
+    public PubSubMonolithQueueFactory(TbPubSubSettings pubSubSettings,
+                                      TbQueueCoreSettings coreSettings,
+                                      TbQueueRuleEngineSettings ruleEngineSettings,
+                                      TbQueueTransportApiSettings transportApiSettings,
+                                      TbQueueTransportNotificationSettings transportNotificationSettings,
+                                      PartitionService partitionService,
+                                      TbServiceInfoProvider serviceInfoProvider) {
         this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
@@ -73,65 +74,65 @@ public class PubSubMonolithQueueProvider implements TbCoreQueueProvider, TbRuleE
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
         return new TbPubSubProducerTemplate<>(admin, pubSubSettings, transportNotificationSettings.getNotificationsTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
         return new TbPubSubProducerTemplate<>(admin, pubSubSettings, ruleEngineSettings.getTopic());
 
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
         return new TbPubSubProducerTemplate<>(admin, pubSubSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
         return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
         return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(TbRuleEngineQueueConfiguration configuration) {
         return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, ruleEngineSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getToRuleEngineNotificationsMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createToRuleEngineNotificationsMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(admin, pubSubSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> getToCoreMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> createToCoreMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, coreSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> getToCoreNotificationsMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(admin, pubSubSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> getTransportApiRequestConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> createTransportApiRequestConsumer() {
         return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, transportApiSettings.getRequestsTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiResponseProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiResponseProducer() {
         return new TbPubSubProducerTemplate<>(admin, pubSubSettings, transportApiSettings.getResponsesTopic());
     }
 }

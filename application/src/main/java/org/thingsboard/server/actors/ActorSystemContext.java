@@ -31,7 +31,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -48,7 +47,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
-import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -413,7 +411,12 @@ public class ActorSystemContext {
         return partitionService.resolve(serviceType, tenantId, entityId);
     }
 
-    public String getServerAddress() {
+    public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
+        return partitionService.resolve(serviceType, queueName, tenantId, entityId);
+    }
+
+
+    public String getServiceId() {
         return serviceInfoProvider.getServiceId();
     }
 
@@ -445,7 +448,7 @@ public class ActorSystemContext {
 
                 ObjectNode node = mapper.createObjectNode()
                         .put("type", type)
-                        .put("server", getServerAddress())
+                        .put("server", getServiceId())
                         .put("entityId", tbMsg.getOriginator().getId().toString())
                         .put("entityName", tbMsg.getOriginator().getEntityType().name())
                         .put("msgId", tbMsg.getId().toString())
@@ -505,7 +508,7 @@ public class ActorSystemContext {
 
         ObjectNode node = mapper.createObjectNode()
                 //todo: what fields are needed here?
-                .put("server", getServerAddress())
+                .put("server", getServiceId())
                 .put("message", "Reached debug mode rate limit!");
 
         if (error != null) {

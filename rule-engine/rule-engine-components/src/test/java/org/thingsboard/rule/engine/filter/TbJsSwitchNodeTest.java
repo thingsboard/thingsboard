@@ -66,7 +66,7 @@ public class TbJsSwitchNodeTest {
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
         mockJsExecutor();
         when(scriptEngine.executeSwitch(msg)).thenReturn(Sets.newHashSet("one", "three"));
 

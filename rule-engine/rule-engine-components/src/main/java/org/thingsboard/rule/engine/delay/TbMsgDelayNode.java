@@ -73,7 +73,7 @@ public class TbMsgDelayNode implements TbNode {
                 TbMsg tickMsg = ctx.newMsg(TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), msg.getId().toString());
                 ctx.tellSelf(tickMsg, getDelay(msg));
             } else {
-                ctx.tellNext(msg, FAILURE, new RuntimeException("Max limit of pending messages reached!"));
+                ctx.tellFailure(msg, new RuntimeException("Max limit of pending messages reached!"));
             }
         }
     }

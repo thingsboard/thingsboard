@@ -105,7 +105,7 @@ class TbRedisQueueProcessor {
     }
 
     private String constructRedisKey() {
-        return ctx.getServerAddress() + ctx.getSelfId();
+        return ctx.getServiceId() + ctx.getSelfId();
     }
 
     private int validateMaxQueueSize() {

@@ -23,8 +23,8 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.queue.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -36,17 +36,17 @@ import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='aws-sqs' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
-public class AwsSqsTransportQueueProvider implements TbTransportQueueProvider {
+public class AwsSqsTransportQueueFactory implements TbTransportQueueFactory {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbAwsSqsSettings sqsSettings;
     private final TbQueueAdmin admin;
     private final TbServiceInfoProvider serviceInfoProvider;
 
-    public AwsSqsTransportQueueProvider(TbQueueTransportApiSettings transportApiSettings,
-                                        TbQueueTransportNotificationSettings transportNotificationSettings,
-                                        TbAwsSqsSettings sqsSettings,
-                                        TbServiceInfoProvider serviceInfoProvider) {
+    public AwsSqsTransportQueueFactory(TbQueueTransportApiSettings transportApiSettings,
+                                       TbQueueTransportNotificationSettings transportNotificationSettings,
+                                       TbAwsSqsSettings sqsSettings,
+                                       TbServiceInfoProvider serviceInfoProvider) {
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.sqsSettings = sqsSettings;
@@ -55,7 +55,7 @@ public class AwsSqsTransportQueueProvider implements TbTransportQueueProvider {
     }
 
     @Override
-    public TbQueueRequestTemplate<TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg>, TbProtoQueueMsg<TransportProtos.TransportApiResponseMsg>> getTransportApiRequestTemplate() {
+    public TbQueueRequestTemplate<TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg>, TbProtoQueueMsg<TransportProtos.TransportApiResponseMsg>> createTransportApiRequestTemplate() {
         TbAwsSqsProducerTemplate<TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg>> producerTemplate =
                 new TbAwsSqsProducerTemplate<>(admin, sqsSettings, transportApiSettings.getRequestsTopic());
 
@@ -76,17 +76,17 @@ public class AwsSqsTransportQueueProvider implements TbTransportQueueProvider {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> getRuleEngineMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> createRuleEngineMsgProducer() {
         return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, transportApiSettings.getRequestsTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> getTbCoreMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> createTbCoreMsgProducer() {
         return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, transportApiSettings.getRequestsTopic());
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> getTransportNotificationsConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> createTransportNotificationsConsumer() {
         return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, transportNotificationSettings.getNotificationsTopic() + "_" + serviceInfoProvider.getServiceId(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToTransportMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }

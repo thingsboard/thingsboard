@@ -29,9 +29,9 @@ import java.util.Set;
  */
 public interface PartitionService {
 
-    Set<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType);
-
     TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
+
+    TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId);
 
     /**
      * Received from the Discovery service when network topology is changed.

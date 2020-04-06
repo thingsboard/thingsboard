@@ -15,35 +15,48 @@
  */
 package org.thingsboard.server.common.msg.queue;
 
-import lombok.Getter;
 import lombok.ToString;
-import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 
 @ToString
-public class ServiceKey {
-    @Getter
-    private final ServiceType serviceType;
-    @Getter
-    private final TenantId tenantId;
+public class ServiceQueue {
 
-    public ServiceKey(ServiceType serviceType, TenantId tenantId) {
-        this.serviceType = serviceType;
-        this.tenantId = tenantId;
+    public static final String MAIN = "Main";
+
+    private final ServiceType type;
+    private final String queue;
+
+    public ServiceQueue(ServiceType type) {
+        this.type = type;
+        this.queue = MAIN;
+    }
+
+    public ServiceQueue(ServiceType type, String queue) {
+        this.type = type;
+        this.queue = queue;
+    }
+
+    public ServiceType getType() {
+        return type;
+    }
+
+    public String getQueue() {
+        return queue;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ServiceKey that = (ServiceKey) o;
-        return serviceType == that.serviceType &&
-                Objects.equals(tenantId, that.tenantId);
+        ServiceQueue that = (ServiceQueue) o;
+        return type == that.type &&
+                queue.equals(that.queue);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(serviceType, tenantId);
+        return Objects.hash(type, queue);
     }
+
 }

@@ -145,11 +145,10 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Thread.sleep(1000);
 
         // Pushing Message to the system
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(),
+        TbMsg tbMsg = TbMsg.newMsg(
                 "CUSTOM",
                 device.getId(),
-                new TbMsgMetaData(), TbMsgDataType.JSON,
-                "{}", null, null, null);
+                new TbMsgMetaData(), TbMsgDataType.JSON, "{}");
         //TODO 2.5
 //        actorService.onMsg(new SendToClusterMsg(device.getId(), new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg)));
 
@@ -261,12 +260,12 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Thread.sleep(1000);
 
         // Pushing Message to the system
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(),
+        TbMsg tbMsg = TbMsg.newMsg(
                 "CUSTOM",
                 device.getId(),
                 new TbMsgMetaData(),
                 TbMsgDataType.JSON,
-                "{}", null, null, null);
+                "{}");
         //TODO 2.5
 //        actorService.onMsg(new SendToClusterMsg(device.getId(), new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg)));
 

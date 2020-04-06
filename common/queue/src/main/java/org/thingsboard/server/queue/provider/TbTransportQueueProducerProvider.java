@@ -28,19 +28,19 @@ import javax.annotation.PostConstruct;
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
 public class TbTransportQueueProducerProvider implements TbQueueProducerProvider {
 
-    private final TbTransportQueueProvider tbQueueProvider;
+    private final TbTransportQueueFactory tbQueueProvider;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> toTransport;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toRuleEngine;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> toTbCore;
 
-    public TbTransportQueueProducerProvider(TbTransportQueueProvider tbQueueProvider) {
+    public TbTransportQueueProducerProvider(TbTransportQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
     }
 
     @PostConstruct
     public void init() {
-        this.toTbCore = tbQueueProvider.getTbCoreMsgProducer();
-        this.toRuleEngine = tbQueueProvider.getRuleEngineMsgProducer();
+        this.toTbCore = tbQueueProvider.createTbCoreMsgProducer();
+        this.toRuleEngine = tbQueueProvider.createRuleEngineMsgProducer();
     }
 
     @Override

@@ -26,21 +26,22 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.queue.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
+import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='monolith'")
-public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEngineQueueProvider {
+public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngineQueueFactory {
 
     private final PartitionService partitionService;
     private final TbKafkaSettings kafkaSettings;
@@ -50,12 +51,12 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
-    public KafkaMonolithQueueProvider(PartitionService partitionService, TbKafkaSettings kafkaSettings,
-                                      TbServiceInfoProvider serviceInfoProvider,
-                                      TbQueueCoreSettings coreSettings,
-                                      TbQueueRuleEngineSettings ruleEngineSettings,
-                                      TbQueueTransportApiSettings transportApiSettings,
-                                      TbQueueTransportNotificationSettings transportNotificationSettings) {
+    public KafkaMonolithQueueFactory(PartitionService partitionService, TbKafkaSettings kafkaSettings,
+                                     TbServiceInfoProvider serviceInfoProvider,
+                                     TbQueueCoreSettings coreSettings,
+                                     TbQueueRuleEngineSettings ruleEngineSettings,
+                                     TbQueueTransportApiSettings transportApiSettings,
+                                     TbQueueTransportNotificationSettings transportNotificationSettings) {
         this.partitionService = partitionService;
         this.kafkaSettings = kafkaSettings;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -66,7 +67,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToTransportMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("monolith-transport-notifications-" + serviceInfoProvider.getServiceId());
@@ -75,7 +76,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("monolith-rule-engine-" + serviceInfoProvider.getServiceId());
@@ -84,7 +85,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("monolith-rule-engine-notifications-" + serviceInfoProvider.getServiceId());
@@ -93,7 +94,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("monolith-core-" + serviceInfoProvider.getServiceId());
@@ -102,7 +103,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreNotificationMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("monolith-core-notifications-" + serviceInfoProvider.getServiceId());
@@ -111,18 +112,19 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(TbRuleEngineQueueConfiguration configuration) {
+        String queueName = configuration.getName();
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(ruleEngineSettings.getTopic());
-        consumerBuilder.clientId("monolith-rule-engine-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("monolith-rule-engine-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.clientId("re-" + queueName + "-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("re-" + queueName + "-consumer-" + serviceInfoProvider.getServiceId());
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
         return consumerBuilder.build();
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getToRuleEngineNotificationsMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createToRuleEngineNotificationsMsgConsumer() {
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName());
@@ -133,7 +135,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> getToCoreMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> createToCoreMsgConsumer() {
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(coreSettings.getTopic());
@@ -144,7 +146,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> getToCoreNotificationsMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToCoreNotificationMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName());
@@ -155,7 +157,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> getTransportApiRequestConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> createTransportApiRequestConsumer() {
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<TransportApiRequestMsg>> consumerBuilder = TBKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(transportApiSettings.getRequestsTopic());
@@ -166,7 +168,7 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiResponseProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiResponseProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<TransportApiResponseMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("monolith-transport-api-producer-" + serviceInfoProvider.getServiceId());

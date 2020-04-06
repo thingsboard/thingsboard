@@ -68,7 +68,7 @@ public class TbMsgCountNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (msg.getType().equals(TB_MSG_COUNT_NODE_MSG) && msg.getId().equals(nextTickId)) {
             JsonObject telemetryJson = new JsonObject();
-            telemetryJson.addProperty(this.telemetryPrefix + "_" + ctx.getNodeId(), messagesProcessed.longValue());
+            telemetryJson.addProperty(this.telemetryPrefix + "_" + ctx.getServiceId(), messagesProcessed.longValue());
 
             messagesProcessed = new AtomicLong(0);
 
@@ -76,11 +76,12 @@ public class TbMsgCountNode implements TbNode {
             metaData.putValue("delta", Long.toString(System.currentTimeMillis() - lastScheduledTs + delay));
 
             //TODO 2.5: Callback?
-            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), metaData, TbMsgDataType.JSON, gson.toJson(telemetryJson), null, null, null);
-            ctx.tellNext(tbMsg, SUCCESS);
+            TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), metaData, gson.toJson(telemetryJson));
+            ctx.enqueueForTellNext(tbMsg, SUCCESS, null, null);
             scheduleTickMsg(ctx);
         } else {
             messagesProcessed.incrementAndGet();
+            ctx.ack(msg);
         }
     }
 

@@ -22,12 +22,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -37,18 +36,17 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -63,10 +61,11 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import scala.concurrent.duration.Duration;
 
@@ -78,6 +77,7 @@ import java.util.function.Consumer;
 /**
  * Created by ashvayka on 19.03.18.
  */
+@Slf4j
 class DefaultTbContext implements TbContext {
 
     public final static ObjectMapper mapper = new ObjectMapper();
@@ -100,11 +100,6 @@ class DefaultTbContext implements TbContext {
         tellNext(msg, relationTypes, null);
     }
 
-    @Override
-    public void tellNext(TbMsg msg, String relationType, Throwable th) {
-        tellNext(msg, Collections.singleton(relationType), th);
-    }
-
     private void tellNext(TbMsg msg, Set<String> relationTypes, Throwable th) {
         if (nodeCtx.getSelf().isDebugMode()) {
             relationTypes.forEach(relationType -> mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, relationType, th));
@@ -116,6 +111,77 @@ class DefaultTbContext implements TbContext {
     public void tellSelf(TbMsg msg, long delayMs) {
         //TODO: add persistence layer
         scheduleMsgWithDelay(new RuleNodeToSelfMsg(msg), delayMs, nodeCtx.getSelfActor());
+    }
+
+    @Override
+    public void enqueue(TbMsg tbMsg, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        enqueue(tpi, tbMsg, onFailure, onSuccess);
+    }
+
+    @Override
+    public void enqueue(TbMsg tbMsg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, queueName, getTenantId(), tbMsg.getOriginator());
+        enqueue(tpi, tbMsg, onFailure, onSuccess);
+    }
+
+    private void enqueue(TopicPartitionInfo tpi, TbMsg tbMsg, Consumer<Throwable> onFailure, Runnable onSuccess) {
+        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(getTenantId().getId().getLeastSignificantBits())
+                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+        mainCtx.getProducerProvider().getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), new SimpleTbQueueCallback(onSuccess, onFailure));
+    }
+
+    @Override
+    public void enqueueForTellNext(TbMsg tbMsg, String relationType) {
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        enqueueForTellNext(tpi, tbMsg, Collections.singleton(relationType), null, null);
+    }
+
+    @Override
+    public void enqueueForTellNext(TbMsg tbMsg, Set<String> relationTypes) {
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        enqueueForTellNext(tpi, tbMsg, relationTypes, null, null);
+    }
+
+    @Override
+    public void enqueueForTellNext(TbMsg tbMsg, String relationType, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        enqueueForTellNext(tpi, tbMsg, Collections.singleton(relationType), onSuccess, onFailure);
+    }
+
+    @Override
+    public void enqueueForTellNext(TbMsg tbMsg, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        enqueueForTellNext(tpi, tbMsg, relationTypes, onSuccess, onFailure);
+    }
+
+    @Override
+    public void enqueueForTellNext(TbMsg tbMsg, String queueName, String relationType, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        enqueueForTellNext(tpi, tbMsg, Collections.singleton(relationType), onSuccess, onFailure);
+    }
+
+    @Override
+    public void enqueueForTellNext(TbMsg tbMsg, String queueName, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, queueName, getTenantId(), tbMsg.getOriginator());
+        enqueueForTellNext(tpi, tbMsg, relationTypes, onSuccess, onFailure);
+    }
+
+    private void enqueueForTellNext(TopicPartitionInfo tpi, TbMsg tbMsg, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(getTenantId().getId().getLeastSignificantBits())
+                .setTbMsg(TbMsg.toByteString(tbMsg))
+                .addAllRelationTypes(relationTypes)
+                .build();
+        mainCtx.getProducerProvider().getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), new SimpleTbQueueCallback(onSuccess, onFailure));
+    }
+
+    @Override
+    public void ack(TbMsg tbMsg) {
+        tbMsg.getCallback().onSuccess();
     }
 
     @Override
@@ -135,67 +201,43 @@ class DefaultTbContext implements TbContext {
         nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), Collections.singleton(TbRelationTypes.FAILURE), msg), nodeCtx.getSelfActor());
     }
 
-    @Override
     public void updateSelf(RuleNode self) {
         nodeCtx.setSelf(self);
     }
 
     @Override
     public TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(UUIDs.timeBased(), type, originator, metaData.copy(), TbMsgDataType.JSON, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), null);
+        return TbMsg.newMsg(type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
     }
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), origMsg.getDataType(),
-                data, origMsg.getTransactionData(), origMsg.getRuleChainId(), origMsg.getRuleNodeId(), null);
-    }
-
-    @Override
-    public void sendTbMsgToRuleEngine(TbMsg tbMsg) {
-        mainCtx.getClusterService().onToRuleEngineMsg(getTenantId(), tbMsg.getOriginator(), tbMsg);
+        return TbMsg.transformMsg(origMsg, type, originator, metaData, data);
     }
 
     public TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId) {
-        try {
-            ObjectNode entityNode = mapper.valueToTree(customer);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, customer.getId(),
-                    getActionMetaData(ruleNodeId), TbMsgDataType.JSON, mapper.writeValueAsString(entityNode), null, null, null);
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process customer created msg: " + e);
-        }
+        return entityCreatedMsg(customer, customer.getId(), ruleNodeId);
     }
 
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
-        try {
-            ObjectNode entityNode = mapper.valueToTree(device);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, device.getId(), getActionMetaData(ruleNodeId),
-                    TbMsgDataType.JSON, mapper.writeValueAsString(entityNode), null, null, null);
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process device created msg: " + e);
-        }
+        return entityCreatedMsg(device, device.getId(), ruleNodeId);
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
-        try {
-            ObjectNode entityNode = mapper.valueToTree(asset);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, asset.getId(), getActionMetaData(ruleNodeId),
-                    TbMsgDataType.JSON, mapper.writeValueAsString(entityNode), null, null, null);
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process asset created msg: " + e);
-        }
+        return entityCreatedMsg(asset, asset.getId(), ruleNodeId);
     }
 
     public TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
-        try {
-            ObjectNode entityNode = mapper.valueToTree(alarm);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, alarm.getId(), getActionMetaData(ruleNodeId),
-                    TbMsgDataType.JSON, mapper.writeValueAsString(entityNode), null, null, null);
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process alarm created msg: " + e);
-        }
+        return entityCreatedMsg(alarm, alarm.getId(), ruleNodeId);
     }
 
+    public <E, I extends EntityId> TbMsg entityCreatedMsg(E entity, I id, RuleNodeId ruleNodeId) {
+        try {
+            return TbMsg.newMsg(DataConstants.ENTITY_CREATED, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " created msg: " + e);
+        }
+    }
 
     @Override
     public RuleNodeId getSelfId() {
@@ -254,7 +296,7 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public String getNodeId() {
+    public String getServiceId() {
         return mainCtx.getServiceInfoProvider().getServiceId();
     }
 
@@ -362,10 +404,6 @@ class DefaultTbContext implements TbContext {
         return mainCtx.getRedisTemplate();
     }
 
-    @Override
-    public String getServerAddress() {
-        return mainCtx.getServerAddress();
-    }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {
         TbMsgMetaData metaData = new TbMsgMetaData();
@@ -373,4 +411,29 @@ class DefaultTbContext implements TbContext {
         return metaData;
     }
 
+    private class SimpleTbQueueCallback implements TbQueueCallback {
+        private final Runnable onSuccess;
+        private final Consumer<Throwable> onFailure;
+
+        public SimpleTbQueueCallback(Runnable onSuccess, Consumer<Throwable> onFailure) {
+            this.onSuccess = onSuccess;
+            this.onFailure = onFailure;
+        }
+
+        @Override
+        public void onSuccess(TbQueueMsgMetadata metadata) {
+            if (onSuccess != null) {
+                onSuccess.run();
+            }
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            if (onFailure != null) {
+                onFailure.accept(t);
+            } else {
+                log.debug("[{}] Failed to put item into queue", nodeCtx.getTenantId(), t);
+            }
+        }
+    }
 }

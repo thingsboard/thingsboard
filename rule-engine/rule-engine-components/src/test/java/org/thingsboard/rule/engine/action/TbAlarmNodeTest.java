@@ -101,7 +101,7 @@ public class TbAlarmNodeTest {
     public void newAlarmCanBeCreated() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
@@ -143,7 +143,7 @@ public class TbAlarmNodeTest {
     public void buildDetailsThrowsException() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFailedFuture(new NotImplementedException("message")));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
@@ -166,7 +166,7 @@ public class TbAlarmNodeTest {
     public void ifAlarmClearedCreateNew() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         Alarm clearedAlarm = Alarm.builder().status(CLEARED_ACK).build();
 
@@ -211,7 +211,7 @@ public class TbAlarmNodeTest {
     public void alarmCanBeUpdated() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).status(ACTIVE_UNACK).severity(WARNING).endTs(oldEndDate).build();
@@ -258,7 +258,7 @@ public class TbAlarmNodeTest {
     public void alarmCanBeCleared() throws ScriptException, IOException {
         initWithClearAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg( "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).status(ACTIVE_UNACK).severity(WARNING).endTs(oldEndDate).build();

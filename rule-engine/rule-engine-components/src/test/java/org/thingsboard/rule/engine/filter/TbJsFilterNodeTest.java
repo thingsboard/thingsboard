@@ -59,7 +59,7 @@ public class TbJsFilterNodeTest {
     @Test
     public void falseEvaluationDoNotSendMsg() throws TbNodeException, ScriptException {
         initWithScript();
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg("USER", null, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         mockJsExecutor();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(false));
 
@@ -72,7 +72,7 @@ public class TbJsFilterNodeTest {
     public void exceptionInJsThrowsException() throws TbNodeException, ScriptException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg("USER", null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         mockJsExecutor();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFailedFuture(new ScriptException("error")));
 
@@ -85,7 +85,7 @@ public class TbJsFilterNodeTest {
     public void metadataConditionCanBeTrue() throws TbNodeException, ScriptException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         mockJsExecutor();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(true));
 

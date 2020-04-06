@@ -24,7 +24,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.ServiceKey;
+import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
+import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -53,10 +54,6 @@ public class ConsistentHashPartitionService implements PartitionService {
     private String coreTopic;
     @Value("${queue.core.partitions:100}")
     private Integer corePartitions;
-    @Value("${queue.rule_engine.topic}")
-    private String ruleEngineTopic;
-    @Value("${queue.rule_engine.partitions:100}")
-    private Integer ruleEnginePartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
     @Value("${queue.partitions.virtual_nodes_size:16}")
@@ -64,9 +61,9 @@ public class ConsistentHashPartitionService implements PartitionService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
-    private final ConcurrentMap<ServiceType, String> partitionTopics = new ConcurrentHashMap<>();
-    private final ConcurrentMap<ServiceType, Integer> partitionSizes = new ConcurrentHashMap<>();
-    private ConcurrentMap<ServiceKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<ServiceQueue, String> partitionTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<ServiceQueue, Integer> partitionSizes = new ConcurrentHashMap<>();
+    private ConcurrentMap<ServiceQueueKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
     //TODO: Fetch this from the database, together with size of partitions for each service for each tenant.
     private ConcurrentMap<TenantId, Set<ServiceType>> isolatedTenants = new ConcurrentHashMap<>();
     private ConcurrentMap<TopicPartitionInfoKey, TopicPartitionInfo> tpiCache = new ConcurrentHashMap<>();
@@ -85,49 +82,53 @@ public class ConsistentHashPartitionService implements PartitionService {
     @PostConstruct
     public void init() {
         this.hashFunction = forName(hashFunctionName);
-        partitionSizes.put(ServiceType.TB_CORE, corePartitions);
-        partitionSizes.put(ServiceType.TB_RULE_ENGINE, ruleEnginePartitions);
-        partitionTopics.put(ServiceType.TB_CORE, coreTopic);
-        partitionTopics.put(ServiceType.TB_RULE_ENGINE, ruleEngineTopic);
+        partitionSizes.put(new ServiceQueue(ServiceType.TB_CORE), corePartitions);
+        partitionTopics.put(new ServiceQueue(ServiceType.TB_CORE), coreTopic);
     }
 
-    @Override
-    public Set<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType) {
-        ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
-        TenantId tenantId = getSystemOrIsolatedTenantId(currentService);
-        ServiceKey serviceKey = new ServiceKey(serviceType, tenantId);
-        List<Integer> partitions = myPartitions.get(serviceKey);
-        Set<TopicPartitionInfo> topicPartitions = new LinkedHashSet<>();
-        for (Integer partition : partitions) {
-            TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
-            tpi.topic(partitionTopics.get(serviceType));
-            tpi.partition(partition);
-            if (!tenantId.isNullUid()) {
-                tpi.tenantId(tenantId);
-            }
-            topicPartitions.add(tpi.build());
-        }
-        return topicPartitions;
-    }
+//    public Set<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType) {
+//        ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
+//        TenantId tenantId = getSystemOrIsolatedTenantId(currentService);
+//        ServiceQueueKey serviceQueueKey = new ServiceQueueKey(serviceType, tenantId);
+//        List<Integer> partitions = myPartitions.get(serviceQueueKey);
+//        Set<TopicPartitionInfo> topicPartitions = new LinkedHashSet<>();
+//        for (Integer partition : partitions) {
+//            TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
+//            tpi.topic(partitionTopics.get(serviceType));
+//            tpi.partition(partition);
+//            if (!tenantId.isNullUid()) {
+//                tpi.tenantId(tenantId);
+//            }
+//            topicPartitions.add(tpi.build());
+//        }
+//        return topicPartitions;
+//    }
 
-    //TODO 2.5 This should return cached TopicPartitionInfo objects instead of creating new one every time.
     @Override
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
+        return resolve(new ServiceQueue(serviceType), tenantId, entityId);
+    }
+
+    @Override
+    public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
+        return resolve(new ServiceQueue(serviceType, queueName), tenantId, entityId);
+    }
+
+    private TopicPartitionInfo resolve(ServiceQueue serviceQueue, TenantId tenantId, EntityId entityId) {
         int hash = hashFunction.newHasher()
                 .putLong(entityId.getId().getMostSignificantBits())
                 .putLong(entityId.getId().getLeastSignificantBits()).hash().asInt();
-        int partition = Math.abs(hash % partitionSizes.get(serviceType));
-        boolean isolatedTenant = isIsolated(serviceType, tenantId);
-        TopicPartitionInfoKey cacheKey = new TopicPartitionInfoKey(serviceType, isolatedTenant ? tenantId : null, partition);
-        return tpiCache.computeIfAbsent(cacheKey, key -> buildTopicPartitionInfo(serviceType, tenantId, partition));
+        int partition = Math.abs(hash % partitionSizes.get(serviceQueue));
+        boolean isolatedTenant = isIsolated(serviceQueue, tenantId);
+        TopicPartitionInfoKey cacheKey = new TopicPartitionInfoKey(serviceQueue, isolatedTenant ? tenantId : null, partition);
+        return tpiCache.computeIfAbsent(cacheKey, key -> buildTopicPartitionInfo(serviceQueue, tenantId, partition));
     }
 
     @Override
     public void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
         logServiceInfo(currentService);
         otherServices.forEach(this::logServiceInfo);
-
-        Map<ServiceKey, ConsistentHashCircle<ServiceInfo>> circles = new HashMap<>();
+        Map<ServiceQueueKey, ConsistentHashCircle<ServiceInfo>> circles = new HashMap<>();
         addNode(circles, currentService);
         for (ServiceInfo other : otherServices) {
             TenantId tenantId = getSystemOrIsolatedTenantId(other);
@@ -140,26 +141,26 @@ public class ConsistentHashPartitionService implements PartitionService {
 
             }
         }
-        ConcurrentMap<ServiceKey, List<Integer>> oldPartitions = myPartitions;
+        ConcurrentMap<ServiceQueueKey, List<Integer>> oldPartitions = myPartitions;
         TenantId myTenantId = getSystemOrIsolatedTenantId(currentService);
         myPartitions = new ConcurrentHashMap<>();
         partitionSizes.forEach((type, size) -> {
-            ServiceKey myServiceKey = new ServiceKey(type, myTenantId);
+            ServiceQueueKey myServiceQueueKey = new ServiceQueueKey(type, myTenantId);
             for (int i = 0; i < size; i++) {
-                ServiceInfo serviceInfo = resolveByPartitionIdx(circles.get(myServiceKey), i);
+                ServiceInfo serviceInfo = resolveByPartitionIdx(circles.get(myServiceQueueKey), i);
                 if (currentService.equals(serviceInfo)) {
-                    ServiceKey serviceKey = new ServiceKey(type, getSystemOrIsolatedTenantId(serviceInfo));
-                    myPartitions.computeIfAbsent(serviceKey, key -> new ArrayList<>()).add(i);
+                    ServiceQueueKey serviceQueueKey = new ServiceQueueKey(type, getSystemOrIsolatedTenantId(serviceInfo));
+                    myPartitions.computeIfAbsent(serviceQueueKey, key -> new ArrayList<>()).add(i);
                 }
             }
         });
-        myPartitions.forEach((serviceKey, partitions) -> {
-            if (!partitions.equals(oldPartitions.get(serviceKey))) {
-                log.info("[{}] NEW PARTITIONS: {}", serviceKey, partitions);
+        myPartitions.forEach((serviceQueueKey, partitions) -> {
+            if (!partitions.equals(oldPartitions.get(serviceQueueKey))) {
+                log.info("[{}] NEW PARTITIONS: {}", serviceQueueKey, partitions);
                 Set<TopicPartitionInfo> tpiList = partitions.stream()
-                        .map(partition -> buildTopicPartitionInfo(serviceKey, partition))
+                        .map(partition -> buildTopicPartitionInfo(serviceQueueKey, partition))
                         .collect(Collectors.toSet());
-                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceKey, tpiList));
+                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceQueueKey, tpiList));
             }
         });
         tpiCache.clear();
@@ -167,14 +168,13 @@ public class ConsistentHashPartitionService implements PartitionService {
         if (currentOtherServices == null) {
             currentOtherServices = new ArrayList<>(otherServices);
         } else {
-            Set<ServiceKey> changes = new HashSet<>();
-            Map<ServiceKey, List<ServiceInfo>> currentMap = getServiceKeyListMap(currentOtherServices);
-            Map<ServiceKey, List<ServiceInfo>> newMap = getServiceKeyListMap(otherServices);
+            Set<ServiceQueueKey> changes = new HashSet<>();
+            Map<ServiceQueueKey, List<ServiceInfo>> currentMap = getServiceKeyListMap(currentOtherServices);
+            Map<ServiceQueueKey, List<ServiceInfo>> newMap = getServiceKeyListMap(otherServices);
             currentOtherServices = otherServices;
             currentMap.forEach((key, list) -> {
                 if (!list.equals(newMap.get(key))) {
                     changes.add(key);
-
                 }
             });
             currentMap.keySet().forEach(newMap::remove);
@@ -214,13 +214,20 @@ public class ConsistentHashPartitionService implements PartitionService {
         }
     }
 
-    private Map<ServiceKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
-        final Map<ServiceKey, List<ServiceInfo>> currentMap = new HashMap<>();
+    private Map<ServiceQueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
+        final Map<ServiceQueueKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {
             for (String serviceTypeStr : serviceInfo.getServiceTypesList()) {
                 ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
-                ServiceKey serviceKey = new ServiceKey(serviceType, getSystemOrIsolatedTenantId(serviceInfo));
-                currentMap.computeIfAbsent(serviceKey, key -> new ArrayList<>()).add(serviceInfo);
+                if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
+                    for (TransportProtos.QueueInfo queue : serviceInfo.getRuleEngineQueuesList()) {
+                        ServiceQueueKey serviceQueueKey = new ServiceQueueKey(new ServiceQueue(serviceType, queue.getName()), getSystemOrIsolatedTenantId(serviceInfo));
+                        currentMap.computeIfAbsent(serviceQueueKey, key -> new ArrayList<>()).add(serviceInfo);
+                    }
+                } else {
+                    ServiceQueueKey serviceQueueKey = new ServiceQueueKey(new ServiceQueue(serviceType), getSystemOrIsolatedTenantId(serviceInfo));
+                    currentMap.computeIfAbsent(serviceQueueKey, key -> new ArrayList<>()).add(serviceInfo);
+                }
             }
         });
         return currentMap;
@@ -230,20 +237,20 @@ public class ConsistentHashPartitionService implements PartitionService {
         return new TopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
     }
 
-    private TopicPartitionInfo buildTopicPartitionInfo(ServiceKey serviceKey, int partition) {
-        return buildTopicPartitionInfo(serviceKey.getServiceType(), serviceKey.getTenantId(), partition);
+    private TopicPartitionInfo buildTopicPartitionInfo(ServiceQueueKey serviceQueueKey, int partition) {
+        return buildTopicPartitionInfo(serviceQueueKey.getServiceQueue(), serviceQueueKey.getTenantId(), partition);
     }
 
-    private TopicPartitionInfo buildTopicPartitionInfo(ServiceType serviceType, TenantId tenantId, int partition) {
+    private TopicPartitionInfo buildTopicPartitionInfo(ServiceQueue serviceQueue, TenantId tenantId, int partition) {
         TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
-        tpi.topic(partitionTopics.get(serviceType));
+        tpi.topic(partitionTopics.get(serviceQueue));
         tpi.partition(partition);
-        ServiceKey myPartitionsSearchKey;
-        if (isIsolated(serviceType, tenantId)) {
+        ServiceQueueKey myPartitionsSearchKey;
+        if (isIsolated(serviceQueue, tenantId)) {
             tpi.tenantId(tenantId);
-            myPartitionsSearchKey = new ServiceKey(serviceType, tenantId);
+            myPartitionsSearchKey = new ServiceQueueKey(serviceQueue, tenantId);
         } else {
-            myPartitionsSearchKey = new ServiceKey(serviceType, new TenantId(TenantId.NULL_UUID));
+            myPartitionsSearchKey = new ServiceQueueKey(serviceQueue, new TenantId(TenantId.NULL_UUID));
         }
         List<Integer> partitions = myPartitions.get(myPartitionsSearchKey);
         if (partitions != null) {
@@ -254,8 +261,8 @@ public class ConsistentHashPartitionService implements PartitionService {
         return tpi.build();
     }
 
-    private boolean isIsolated(ServiceType serviceType, TenantId tenantId) {
-        return isolatedTenants.get(tenantId) != null && isolatedTenants.get(tenantId).contains(serviceType);
+    private boolean isIsolated(ServiceQueue serviceQueue, TenantId tenantId) {
+        return isolatedTenants.get(tenantId) != null && isolatedTenants.get(tenantId).contains(serviceQueue.getType());
     }
 
     private void logServiceInfo(TransportProtos.ServiceInfo server) {
@@ -271,13 +278,24 @@ public class ConsistentHashPartitionService implements PartitionService {
         return new TenantId(new UUID(serviceInfo.getTenantIdMSB(), serviceInfo.getTenantIdLSB()));
     }
 
-    private void addNode(Map<ServiceKey, ConsistentHashCircle<ServiceInfo>> circles, ServiceInfo instance) {
+    private void addNode(Map<ServiceQueueKey, ConsistentHashCircle<ServiceInfo>> circles, ServiceInfo instance) {
         TenantId tenantId = getSystemOrIsolatedTenantId(instance);
         for (String serviceTypeStr : instance.getServiceTypesList()) {
             ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
-            ServiceKey serviceKey = new ServiceKey(serviceType, tenantId);
-            for (int i = 0; i < virtualNodesSize; i++) {
-                circles.computeIfAbsent(serviceKey, key -> new ConsistentHashCircle<>()).put(hash(instance, i).asLong(), instance);
+            if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
+                for (TransportProtos.QueueInfo queue : instance.getRuleEngineQueuesList()) {
+                    ServiceQueueKey serviceQueueKey = new ServiceQueueKey(new ServiceQueue(serviceType, queue.getName()), tenantId);
+                    partitionSizes.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queue.getName()), queue.getPartitions());
+                    partitionTopics.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queue.getName()), queue.getTopic());
+                    for (int i = 0; i < virtualNodesSize; i++) {
+                        circles.computeIfAbsent(serviceQueueKey, key -> new ConsistentHashCircle<>()).put(hash(instance, i).asLong(), instance);
+                    }
+                }
+            } else {
+                ServiceQueueKey serviceQueueKey = new ServiceQueueKey(new ServiceQueue(serviceType), tenantId);
+                for (int i = 0; i < virtualNodesSize; i++) {
+                    circles.computeIfAbsent(serviceQueueKey, key -> new ConsistentHashCircle<>()).put(hash(instance, i).asLong(), instance);
+                }
             }
         }
     }

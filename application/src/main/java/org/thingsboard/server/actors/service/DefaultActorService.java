@@ -26,21 +26,11 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.app.AppInitMsg;
 import org.thingsboard.server.actors.stats.StatsActor;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
@@ -93,7 +83,7 @@ public class DefaultActorService implements ActorService {
     @EventListener(PartitionChangeEvent.class)
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         log.info("Received partition change event.");
-        this.appActor.tell(new PartitionChangeMsg(partitionChangeEvent.getServiceKey(), partitionChangeEvent.getPartitions()), ActorRef.noSender());
+        this.appActor.tell(new PartitionChangeMsg(partitionChangeEvent.getServiceQueueKey(), partitionChangeEvent.getPartitions()), ActorRef.noSender());
     }
 
     @PreDestroy

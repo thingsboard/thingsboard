@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.queue.settings;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,12 +21,11 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-public class TbQueueTransportNotificationSettings {
+public class TbQueueCoreSettings {
 
-    @Value("${queue.transport.notifications_topic}")
-    private String notificationsTopic;
+    @Value("${queue.core.topic}")
+    private String topic;
 
-    @Value("${queue.transport.poll_interval}")
-    private long transportPollInterval;
-
+    @Value("${queue.core.partitions}")
+    private int partitions;
 }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.state;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
@@ -296,7 +295,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     @Override
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceKey().getServiceType())) {
+        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
             synchronized (this) {
                 if (!clusterUpdatePending) {
                     clusterUpdatePending = true;
@@ -496,9 +495,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private void pushRuleEngineMessage(DeviceStateData stateData, String msgType) {
         DeviceState state = stateData.getState();
         try {
-            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
-                    , json.writeValueAsString(state)
-                    , null, null, TbMsgCallback.EMPTY);
+            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
+                    , json.writeValueAsString(state));
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, stateData.getTenantId(), stateData.getDeviceId());
             TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                     .setTenantIdMSB(stateData.getTenantId().getId().getMostSignificantBits())

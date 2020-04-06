@@ -320,7 +320,7 @@ public class RuleChainController extends BaseController {
             ScriptEngine engine = null;
             try {
                 engine = new RuleNodeJsScriptEngine(jsInvokeService, getCurrentUser().getId(), script, argNames);
-                TbMsg inMsg = new TbMsg(UUIDs.timeBased(), msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data, null, null, null);
+                TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
                 switch (scriptType) {
                     case "update":
                         output = msgToOutput(engine.executeUpdate(inMsg));

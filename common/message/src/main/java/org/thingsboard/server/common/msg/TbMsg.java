@@ -52,13 +52,34 @@ public final class TbMsg implements Serializable {
     //This field is not serialized because we use queues and there is no need to do it
     private final TbMsgCallback callback;
 
-    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
-                 RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
+    public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
+        return new TbMsg(UUID.randomUUID(), type, originator, metaData.copy(), TbMsgDataType.JSON, data, null, null, TbMsgCallback.EMPTY);
+    }
+
+    public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        return new TbMsg(UUID.randomUUID(), type, originator, metaData.copy(), TbMsgDataType.JSON, data, ruleChainId, ruleNodeId, TbMsgCallback.EMPTY);
+    }
+
+    public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data) {
+        return new TbMsg(UUID.randomUUID(), type, originator, metaData.copy(), dataType, data, null, null, TbMsgCallback.EMPTY);
+    }
+
+    public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        return new TbMsg(UUID.randomUUID(), type, originator, metaData.copy(), dataType, data, ruleChainId, ruleNodeId, TbMsgCallback.EMPTY);
+    }
+
+    public static TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
+        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), origMsg.getDataType(),
+                data, origMsg.getTransactionData(), origMsg.getRuleChainId(), origMsg.getRuleNodeId(), origMsg.getCallback());
+    }
+
+    private TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
+                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
         this(id, type, originator, metaData, dataType, data, new TbMsgTransactionData(id, originator), ruleChainId, ruleNodeId, callback);
     }
 
-    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
-                 TbMsgTransactionData transactionData, RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
+    private TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
+                  TbMsgTransactionData transactionData, RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgCallback callback) {
         this.id = id;
         this.type = type;
         this.originator = originator;
@@ -115,7 +136,6 @@ public final class TbMsg implements Serializable {
         builder.setDataType(msg.getDataType().ordinal());
         builder.setData(msg.getData());
         return builder.build().toByteArray();
-
     }
 
     public static TbMsg fromBytes(byte[] data, TbMsgCallback callback) {

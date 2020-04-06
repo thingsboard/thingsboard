@@ -20,12 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.queue.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.TbQueueTransportNotificationSettings;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
+import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -39,17 +39,17 @@ import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='in-memory' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
-public class InMemoryTbTransportQueueProvider implements TbTransportQueueProvider {
+public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory {
 
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings notificationSettings;
 
-    public InMemoryTbTransportQueueProvider(TbQueueCoreSettings coreSettings,
-                                            TbQueueRuleEngineSettings ruleEngineSettings,
-                                            TbQueueTransportApiSettings transportApiSettings,
-                                            TbQueueTransportNotificationSettings notificationSettings) {
+    public InMemoryTbTransportQueueFactory(TbQueueCoreSettings coreSettings,
+                                           TbQueueRuleEngineSettings ruleEngineSettings,
+                                           TbQueueTransportApiSettings transportApiSettings,
+                                           TbQueueTransportNotificationSettings notificationSettings) {
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
@@ -57,7 +57,7 @@ public class InMemoryTbTransportQueueProvider implements TbTransportQueueProvide
     }
 
     @Override
-    public TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiRequestTemplate() {
+    public TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiRequestTemplate() {
         InMemoryTbQueueProducer<TbProtoQueueMsg<TransportApiRequestMsg>> producer = new InMemoryTbQueueProducer<>(transportApiSettings.getRequestsTopic());
         InMemoryTbQueueConsumer<TbProtoQueueMsg<TransportApiResponseMsg>> consumer = new InMemoryTbQueueConsumer<>(transportApiSettings.getResponsesTopic());
 
@@ -73,17 +73,17 @@ public class InMemoryTbTransportQueueProvider implements TbTransportQueueProvide
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
         return new InMemoryTbQueueProducer<>(ruleEngineSettings.getTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
         return new InMemoryTbQueueProducer<>(coreSettings.getTopic());
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsConsumer() {
         return new InMemoryTbQueueConsumer<>(notificationSettings.getNotificationsTopic());
     }
 }

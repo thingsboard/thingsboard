@@ -22,6 +22,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * Created by ashvayka on 15.03.18.
@@ -31,9 +32,14 @@ public final class QueueToRuleEngineMsg implements TbActorMsg {
 
     private final TenantId tenantId;
     private final TbMsg tbMsg;
+    private final Set<String> relationTypes;
 
     @Override
     public MsgType getMsgType() {
         return MsgType.QUEUE_TO_RULE_ENGINE_MSG;
+    }
+
+    public boolean isTellNext() {
+        return relationTypes != null && !relationTypes.isEmpty();
     }
 }

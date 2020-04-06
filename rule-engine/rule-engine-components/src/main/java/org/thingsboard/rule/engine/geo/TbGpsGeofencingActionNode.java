@@ -66,7 +66,7 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
         EntityGeofencingState entityState = entityStates.computeIfAbsent(msg.getOriginator(), key -> {
             try {
                 Optional<AttributeKvEntry> entry = ctx.getAttributesService()
-                        .find(ctx.getTenantId(), msg.getOriginator(), DataConstants.SERVER_SCOPE, ctx.getNodeId())
+                        .find(ctx.getTenantId(), msg.getOriginator(), DataConstants.SERVER_SCOPE, ctx.getServiceId())
                         .get(1, TimeUnit.MINUTES);
                 if (entry.isPresent()) {
                     JsonObject element = parser.parse(entry.get().getValueAsString()).getAsJsonObject();
@@ -108,7 +108,7 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
         object.addProperty("inside", entityState.isInside());
         object.addProperty("stateSwitchTime", entityState.getStateSwitchTime());
         object.addProperty("stayed", entityState.isStayed());
-        AttributeKvEntry entry = new BaseAttributeKvEntry(new StringDataEntry(ctx.getNodeId(), gson.toJson(object)), System.currentTimeMillis());
+        AttributeKvEntry entry = new BaseAttributeKvEntry(new StringDataEntry(ctx.getServiceId(), gson.toJson(object)), System.currentTimeMillis());
         List<AttributeKvEntry> attributeKvEntryList = Collections.singletonList(entry);
         ctx.getAttributesService().save(ctx.getTenantId(), entityId, DataConstants.SERVER_SCOPE, attributeKvEntryList);
     }
