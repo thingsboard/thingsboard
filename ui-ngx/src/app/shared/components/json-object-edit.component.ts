@@ -111,7 +111,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
       mode: 'ace/mode/json',
       showGutter: true,
       showPrintMargin: false,
-      readOnly: this.readonly
+      readOnly: this.disabled || this.readonly
     };
 
     const advancedOptions = {
@@ -161,6 +161,9 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.jsonEditor) {
+      this.jsonEditor.setReadOnly(this.disabled || this.readonly);
+    }
   }
 
   public validate(c: FormControl) {
@@ -172,7 +175,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   validateOnSubmit(): void {
-    if (!this.readonly) {
+    if (!this.disabled && !this.readonly) {
       this.cleanupJsonErrors();
       if (!this.objectValid) {
         this.store.dispatch(new ActionNotificationShow(

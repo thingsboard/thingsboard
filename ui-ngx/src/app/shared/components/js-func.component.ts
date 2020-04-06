@@ -185,6 +185,9 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.jsEditor) {
+      this.jsEditor.setReadOnly(this.disabled);
+    }
   }
 
   public validate(c: FormControl) {

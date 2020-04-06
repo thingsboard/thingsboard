@@ -25,11 +25,11 @@
                        'tb-error': !objectValid}">{{ label }}</label>
     <span fxFlex></span>
     <button type="button"
-            mat-button *ngIf="!readonly" class="tidy" (click)="beautifyJSON()">
+            mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="beautifyJSON()">
       {{'js-func.tidy' | translate }}
     </button>
     <button type="button"
-            mat-button *ngIf="!readonly" class="tidy" (click)="minifyJSON()">
+            mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="minifyJSON()">
       {{'js-func.mini' | translate }}
     </button>
     <button mat-button mat-icon-button (click)="fullscreen = !fullscreen"
