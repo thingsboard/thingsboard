@@ -15,6 +15,7 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ComponentFactoryResolver,
@@ -23,28 +24,24 @@ import {
   OnDestroy,
   OnInit,
   Output,
-  ViewChild,
-  ViewChildren,
   QueryList,
-  ContentChildren, AfterViewInit
+  ViewChild,
+  ViewChildren
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { BaseData, HasId } from '@shared/models/base-data';
-import {
-  EntityType,
-  EntityTypeResource,
-  EntityTypeTranslation
-} from '@shared/models/entity-type.models';
+import { EntityType, EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { NgForm } from '@angular/forms';
 import { EntityComponent } from './entity.component';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { Subscription } from 'rxjs';
-import { MatTabGroup, MatTab } from '@angular/material/tabs';
+import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
+import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 
 @Component({
   selector: 'tb-entity-details-panel',
@@ -84,7 +81,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
 
   translations: EntityTypeTranslation;
   resources: EntityTypeResource;
-  entity: BaseData<HasId>;
+  entity: BaseData<HasId> | WidgetsBundle;
 
   private currentEntityId: HasId;
   private entityActionSubscription: Subscription;
