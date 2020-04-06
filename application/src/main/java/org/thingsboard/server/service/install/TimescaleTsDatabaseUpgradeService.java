@@ -80,7 +80,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         throw new RuntimeException("PostgreSQL version should be at least more than 11, please upgrade your PostgreSQL and restart the script!");
                     } else {
                         log.info("PostgreSQL version is valid!");
-                        if (isOldSchema(conn)) {
+                        if (isOldSchema(conn, 2004003)) {
                             log.info("Load upgrade functions ...");
                             loadSql(conn, LOAD_FUNCTIONS_SQL);
                             log.info("Updating timescale schema ...");
@@ -102,13 +102,15 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_DICTIONARY);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
+
+                            executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN IF NOT EXISTS json_v json;");
+                            executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN IF NOT EXISTS json_v json;");
                         }
-                        executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN IF NOT EXISTS json_v json;");
-                        executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN IF NOT EXISTS json_v json;");
 
                         log.info("Load TTL functions ...");
                         loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
 
+                        executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005000");
                         log.info("schema timescale updated!");
                     }
                 }

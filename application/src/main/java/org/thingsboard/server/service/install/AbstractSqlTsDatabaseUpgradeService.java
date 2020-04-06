@@ -70,15 +70,21 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
         return versionValid;
     }
 
-    protected boolean isOldSchema(Connection conn) {
+    protected boolean isOldSchema(Connection conn, long fromVersion) {
         boolean isOldSchema = true;
         try {
             Statement statement = conn.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public' AND tablename like 'ts_kv' || '%';");
-            resultSet.next();
-            isOldSchema = resultSet.getInt(1) < 3;
+            statement.execute("CREATE TABLE IF NOT EXISTS tb_schema_settings ( schema_version bigint NOT NULL, CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version));");
+            Thread.sleep(1000);
+            ResultSet resultSet = statement.executeQuery("SELECT schema_version FROM tb_schema_settings;");
+            if (resultSet.next()) {
+                isOldSchema = resultSet.getLong(1) <= fromVersion;
+            } else {
+                resultSet.close();
+                statement.execute("INSERT INTO tb_schema_settings (schema_version) VALUES (" + fromVersion + ")");
+            }
             statement.close();
-        } catch (Exception e) {
+        } catch (InterruptedException | SQLException e) {
             log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
         }
         return isOldSchema;
