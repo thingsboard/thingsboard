@@ -41,7 +41,6 @@ import { EntityAction } from '@home/models/entity/entity-component.models';
 import { Subscription } from 'rxjs';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 
 @Component({
   selector: 'tb-entity-details-panel',
@@ -81,7 +80,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
 
   translations: EntityTypeTranslation;
   resources: EntityTypeResource;
-  entity: BaseData<HasId> | WidgetsBundle;
+  entity: BaseData<HasId>;
 
   private currentEntityId: HasId;
   private entityActionSubscription: Subscription;
