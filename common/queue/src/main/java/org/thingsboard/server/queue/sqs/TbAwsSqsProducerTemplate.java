@@ -20,7 +20,6 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.google.common.util.concurrent.FutureCallback;
@@ -37,7 +36,6 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -82,13 +80,6 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
         sendMsgRequest.withQueueUrl(getQueueUrl(tpi.getFullTopicName()));
         sendMsgRequest.withMessageBody(gson.toJson(new DefaultTbQueueMsg(msg.getKey(), msg.getData())));
 
-        Map<String, MessageAttributeValue> attributes = new HashMap<>();
-
-        attributes.put("headers", new MessageAttributeValue()
-                .withStringValue(gson.toJson(msg.getHeaders().getData()))
-                .withDataType("String"));
-
-        sendMsgRequest.withMessageAttributes(attributes);
         sendMsgRequest.withMessageGroupId(msg.getKey().toString());
         ListenableFuture<SendMessageResult> future = producerExecutor.submit(() -> sqsClient.sendMessage(sendMsgRequest));
 

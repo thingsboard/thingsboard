@@ -18,32 +18,30 @@ package org.thingsboard.server.queue.provider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusConsumerTemplate;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusProducerTemplate;
+import org.thingsboard.server.queue.azure.servicebus.TbServiceBusSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
-import org.thingsboard.server.queue.sqs.TbAwsSqsConsumerTemplate;
-import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
-import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='aws-sqs' && '${service.type:null}'=='tb-core'")
-public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
+@ConditionalOnExpression("'${queue.type:null}'=='service-bus' && '${service.type:null}'=='tb-core'")
+public class ServiceBusTbCoreQueueProvider implements TbCoreQueueFactory {
 
-    private final TbAwsSqsSettings sqsSettings;
+    private final TbServiceBusSettings serviceBusSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
@@ -51,67 +49,68 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueAdmin admin;
 
-    public AwsSqsTbCoreQueueFactory(TbAwsSqsSettings sqsSettings,
-                                    TbQueueCoreSettings coreSettings,
-                                    TbQueueTransportApiSettings transportApiSettings,
-                                    TbQueueRuleEngineSettings ruleEngineSettings,
-                                    PartitionService partitionService,
-                                    TbServiceInfoProvider serviceInfoProvider) {
-        this.sqsSettings = sqsSettings;
+    public ServiceBusTbCoreQueueProvider(TbServiceBusSettings serviceBusSettings,
+                                         TbQueueCoreSettings coreSettings,
+                                         TbQueueTransportApiSettings transportApiSettings,
+                                         TbQueueRuleEngineSettings ruleEngineSettings,
+                                         PartitionService partitionService,
+                                         TbServiceInfoProvider serviceInfoProvider,
+                                         TbQueueAdmin admin) {
+        this.serviceBusSettings = serviceBusSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.partitionService = partitionService;
         this.serviceInfoProvider = serviceInfoProvider;
-        this.admin = new TbAwsSqsAdmin(sqsSettings);
+        this.admin = admin;
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, ruleEngineSettings.getTopic());
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> createToCoreMsgConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, coreSettings.getTopic(),
+        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings,
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
+        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> createTransportApiRequestConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, transportApiSettings.getRequestsTopic(),
+        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings, transportApiSettings.getRequestsTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiResponseProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
     }
 }
