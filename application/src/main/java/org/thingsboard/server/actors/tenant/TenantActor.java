@@ -86,7 +86,7 @@ public class TenantActor extends RuleChainManagerActor {
         switch (msg.getMsgType()) {
             case PARTITION_CHANGE_MSG:
                 PartitionChangeMsg partitionChangeMsg = (PartitionChangeMsg) msg;
-                ServiceType serviceType = partitionChangeMsg.getServiceKey().getServiceType();
+                ServiceType serviceType = partitionChangeMsg.getServiceQueueKey().getServiceType();
                 if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
                     //To Rule Chain Actors
                     broadcast(msg);

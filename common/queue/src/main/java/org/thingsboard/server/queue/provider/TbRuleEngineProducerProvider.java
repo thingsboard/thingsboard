@@ -27,7 +27,7 @@ import javax.annotation.PostConstruct;
 @ConditionalOnExpression("'${service.type:null}'=='tb-rule-engine'")
 public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
 
-    private final TbRuleEngineQueueProvider tbQueueProvider;
+    private final TbRuleEngineQueueFactory tbQueueProvider;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> toTransport;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toRuleEngine;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> toTbCore;
@@ -35,17 +35,17 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> toTbCoreNotifications;
 
 
-    public TbRuleEngineProducerProvider(TbRuleEngineQueueProvider tbQueueProvider) {
+    public TbRuleEngineProducerProvider(TbRuleEngineQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
     }
 
     @PostConstruct
     public void init() {
-        this.toTbCore = tbQueueProvider.getTbCoreMsgProducer();
-        this.toTransport = tbQueueProvider.getTransportNotificationsMsgProducer();
-        this.toRuleEngine = tbQueueProvider.getRuleEngineMsgProducer();
-        this.toRuleEngineNotifications = tbQueueProvider.getRuleEngineNotificationsMsgProducer();
-        this.toTbCoreNotifications = tbQueueProvider.getTbCoreNotificationsMsgProducer();
+        this.toTbCore = tbQueueProvider.createTbCoreMsgProducer();
+        this.toTransport = tbQueueProvider.createTransportNotificationsMsgProducer();
+        this.toRuleEngine = tbQueueProvider.createRuleEngineMsgProducer();
+        this.toRuleEngineNotifications = tbQueueProvider.createRuleEngineNotificationsMsgProducer();
+        this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
     }
 
     @Override

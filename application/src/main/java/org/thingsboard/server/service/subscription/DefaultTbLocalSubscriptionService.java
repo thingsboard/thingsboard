@@ -95,7 +95,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @Override
     @EventListener(PartitionChangeEvent.class)
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceKey().getServiceType())) {
+        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
             currentPartitions.clear();
             currentPartitions.addAll(partitionChangeEvent.getPartitions());
         }
@@ -104,7 +104,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @Override
     @EventListener(ClusterTopologyChangeEvent.class)
     public void onApplicationEvent(ClusterTopologyChangeEvent event) {
-        if (event.getServiceKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getServiceType()))) {
+        if (event.getServiceQueueKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getServiceType()))) {
             /*
              * If the cluster topology has changed, we need to push all current subscriptions to SubscriptionManagerService again.
              * Otherwise, the SubscriptionManagerService may "forget" those subscriptions in case of restart.

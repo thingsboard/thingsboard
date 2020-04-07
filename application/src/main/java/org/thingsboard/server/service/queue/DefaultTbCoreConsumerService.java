@@ -36,8 +36,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdatePr
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
+import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.provider.TbCoreQueueProvider;
+import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
+import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
@@ -63,27 +65,28 @@ import java.util.stream.Collectors;
 @Service
 @TbCoreComponent
 @Slf4j
-public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCoreMsg, ToCoreNotificationMsg> implements TbCoreConsumerService {
+public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCoreNotificationMsg> implements TbCoreConsumerService {
 
-    @Value("${queue.core.poll_interval}")
+    @Value("${queue.core.poll-interval}")
     private long pollDuration;
-    @Value("${queue.core.pack_processing_timeout}")
+    @Value("${queue.core.pack-processing-timeout}")
     private long packProcessingTimeout;
     @Value("${queue.core.stats.enabled:false}")
     private boolean statsEnabled;
 
+    private final TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> mainConsumer;
     private final DeviceStateService stateService;
     private final TbLocalSubscriptionService localSubscriptionService;
     private final SubscriptionManagerService subscriptionManagerService;
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
     private final TbCoreConsumerStats stats = new TbCoreConsumerStats();
 
-    public DefaultTbCoreConsumerService(TbCoreQueueProvider tbCoreQueueProvider, ActorSystemContext actorContext,
+    public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         DeviceStateService stateService, TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
                                         TbCoreDeviceRpcService tbCoreDeviceRpcService) {
-        super(actorContext, encodingService,
-                tbCoreQueueProvider.getToCoreMsgConsumer(), tbCoreQueueProvider.getToCoreNotificationsMsgConsumer());
+        super(actorContext, encodingService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+        this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
         this.subscriptionManagerService = subscriptionManagerService;
@@ -96,8 +99,16 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @Override
-    protected void launchMainConsumer() {
-        mainConsumerExecutor.execute(() -> {
+    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
+        if (partitionChangeEvent.getServiceType().equals(getServiceType())) {
+            log.info("Subscribing to partitions: {}", partitionChangeEvent.getPartitions());
+            this.mainConsumer.subscribe(partitionChangeEvent.getPartitions());
+        }
+    }
+
+    @Override
+    protected void launchMainConsumers() {
+        consumersExecutor.submit(() -> {
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<ToCoreMsg>> msgs = mainConsumer.poll(pollDuration);
@@ -171,7 +182,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @Override
-    protected void handleNotification(UUID id, TbProtoQueueMsg<ToCoreNotificationMsg> msg, TbMsgCallback callback) throws Exception {
+    protected void handleNotification(UUID id, TbProtoQueueMsg<ToCoreNotificationMsg> msg, TbMsgCallback callback) {
         ToCoreNotificationMsg toCoreMsg = msg.getValue();
         if (toCoreMsg.hasToLocalSubscriptionServiceMsg()) {
             log.trace("[{}] Forwarding message to local subscription service {}", id, toCoreMsg.getToLocalSubscriptionServiceMsg());
@@ -197,7 +208,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         callback.onSuccess();
     }
 
-    @Scheduled(fixedDelayString = "${queue.core.stats.print_interval_ms}")
+    @Scheduled(fixedDelayString = "${queue.core.stats.print-interval-ms}")
     public void printStats() {
         if (statsEnabled) {
             stats.printStats();
@@ -255,4 +266,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         log.warn("Message not handled: {}", msg);
         callback.onFailure(new RuntimeException("Message not handled!"));
     }
+
+    @Override
+    protected void stopMainConsumers() {
+        if (mainConsumer != null) {
+            mainConsumer.unsubscribe();
+        }
+    }
+
 }

@@ -42,35 +42,26 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
-public abstract class AbstractConsumerService<T extends com.google.protobuf.GeneratedMessageV3, N extends com.google.protobuf.GeneratedMessageV3> implements ApplicationListener<PartitionChangeEvent> {
+public abstract class AbstractConsumerService<N extends com.google.protobuf.GeneratedMessageV3> implements ApplicationListener<PartitionChangeEvent> {
 
-    protected volatile ExecutorService mainConsumerExecutor;
-    private volatile ExecutorService notificationsConsumerExecutor;
+    protected volatile ExecutorService consumersExecutor;
+    protected volatile ExecutorService notificationsConsumerExecutor;
     protected volatile boolean stopped = false;
 
     protected final ActorSystemContext actorContext;
     protected final DataDecodingEncodingService encodingService;
-    protected final TbQueueConsumer<TbProtoQueueMsg<T>> mainConsumer;
+
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
-    public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService, TbQueueConsumer<TbProtoQueueMsg<T>> mainConsumer, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+    public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
-        this.mainConsumer = mainConsumer;
         this.nfConsumer = nfConsumer;
     }
 
     public void init(String mainConsumerThreadName, String nfConsumerThreadName) {
-        this.mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(mainConsumerThreadName));
+        this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(mainConsumerThreadName));
         this.notificationsConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(nfConsumerThreadName));
-    }
-
-    @Override
-    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (partitionChangeEvent.getServiceKey().getServiceType() == getServiceType()) {
-            log.info("Subscribing to partitions: {}", partitionChangeEvent.getPartitions());
-            this.mainConsumer.subscribe(partitionChangeEvent.getPartitions());
-        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -78,19 +69,21 @@ public abstract class AbstractConsumerService<T extends com.google.protobuf.Gene
         log.info("Subscribing to notifications: {}", nfConsumer.getTopic());
         this.nfConsumer.subscribe();
         launchNotificationsConsumer();
-        launchMainConsumer();
+        launchMainConsumers();
     }
 
     protected abstract ServiceType getServiceType();
 
-    protected abstract void launchMainConsumer();
+    protected abstract void launchMainConsumers();
+
+    protected abstract void stopMainConsumers();
 
     protected abstract long getNotificationPollDuration();
 
     protected abstract long getNotificationPackProcessingTimeout();
 
     protected void launchNotificationsConsumer() {
-        notificationsConsumerExecutor.execute(() -> {
+        notificationsConsumerExecutor.submit(() -> {
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<N>> msgs = nfConsumer.poll(getNotificationPollDuration());
@@ -137,16 +130,14 @@ public abstract class AbstractConsumerService<T extends com.google.protobuf.Gene
     public void destroy() {
         stopped = true;
 
-        if (mainConsumer != null) {
-            mainConsumer.unsubscribe();
-        }
+        stopMainConsumers();
 
         if (nfConsumer != null) {
             nfConsumer.unsubscribe();
         }
 
-        if (mainConsumerExecutor != null) {
-            mainConsumerExecutor.shutdownNow();
+        if (consumersExecutor != null) {
+            consumersExecutor.shutdownNow();
         }
         if (notificationsConsumerExecutor != null) {
             notificationsConsumerExecutor.shutdownNow();

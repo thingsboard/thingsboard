@@ -25,7 +25,6 @@
         </encoder>
     </appender>
 
-    <logger name="org.springframework.boot.autoconfigure.logging" level="DEBUG" />
     <logger name="org.thingsboard.server" level="INFO" />
     <logger name="akka" level="INFO" />
     <logger name="org.thingsboard.server.service.queue" level="TRACE" />

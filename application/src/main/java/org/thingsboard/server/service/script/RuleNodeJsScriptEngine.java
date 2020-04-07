@@ -94,7 +94,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             String newData = data != null ? data : msg.getData();
             TbMsgMetaData newMetadata = metadata != null ? new TbMsgMetaData(metadata) : msg.getMetaData().copy();
             String newMessageType = !StringUtils.isEmpty(messageType) ? messageType : msg.getType();
-            return new TbMsg(msg.getId(), newMessageType, msg.getOriginator(), newMetadata, msg.getDataType(), newData, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getCallback());
+            return TbMsg.transformMsg(msg, newMessageType, msg.getOriginator(), newMetadata, newData);
         } catch (Throwable th) {
             th.printStackTrace();
             throw new RuntimeException("Failed to unbind message data from javascript result", th);

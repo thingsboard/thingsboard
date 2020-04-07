@@ -23,9 +23,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -46,7 +44,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.queue.provider.TbTransportQueueProvider;
+import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -92,7 +90,7 @@ public class DefaultTransportService implements TransportService {
     private int notificationsPollDuration;
 
     private final Gson gson = new Gson();
-    private final TbTransportQueueProvider queueProvider;
+    private final TbTransportQueueFactory queueProvider;
     private final TbQueueProducerProvider producerProvider;
     private final PartitionService partitionService;
 
@@ -112,7 +110,7 @@ public class DefaultTransportService implements TransportService {
     private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
     private volatile boolean stopped = false;
 
-    public DefaultTransportService(TbTransportQueueProvider queueProvider, TbQueueProducerProvider producerProvider, PartitionService partitionService) {
+    public DefaultTransportService(TbTransportQueueFactory queueProvider, TbQueueProducerProvider producerProvider, PartitionService partitionService) {
         this.queueProvider = queueProvider;
         this.producerProvider = producerProvider;
         this.partitionService = partitionService;
@@ -128,10 +126,10 @@ public class DefaultTransportService implements TransportService {
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("transport-scheduler"));
         this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
         this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
-        transportApiRequestTemplate = queueProvider.getTransportApiRequestTemplate();
+        transportApiRequestTemplate = queueProvider.createTransportApiRequestTemplate();
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
         tbCoreMsgProducer = producerProvider.getTbCoreMsgProducer();
-        transportNotificationsConsumer = queueProvider.getTransportNotificationsConsumer();
+        transportNotificationsConsumer = queueProvider.createTransportNotificationsConsumer();
         transportNotificationsConsumer.subscribe();
         transportApiRequestTemplate.init();
         mainConsumerExecutor.execute(() -> {
@@ -251,8 +249,7 @@ public class DefaultTransportService implements TransportService {
                 metaData.putValue("deviceType", sessionInfo.getDeviceType());
                 metaData.putValue("ts", tsKv.getTs() + "");
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
-                TbMsg tbMsg = new TbMsg(UUID.randomUUID(), SessionMsgType.POST_TELEMETRY_REQUEST.name(),
-                        deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, TbMsgCallback.EMPTY);
+                TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, metaData, gson.toJson(json));
                 sendToRuleEngine(tenantId, tbMsg, packCallback);
             }
         }
@@ -268,8 +265,7 @@ public class DefaultTransportService implements TransportService {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
-            TbMsg tbMsg = new TbMsg(UUID.randomUUID(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, metaData,
-                    TbMsgDataType.JSON, gson.toJson(json), null, null, TbMsgCallback.EMPTY);
+            TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, metaData, gson.toJson(json));
             sendToRuleEngine(tenantId, tbMsg, new TransportTbQueueCallback(callback));
         }
     }

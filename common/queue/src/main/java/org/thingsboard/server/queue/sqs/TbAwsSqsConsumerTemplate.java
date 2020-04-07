@@ -23,7 +23,6 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -38,15 +37,12 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
-import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
-import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -161,7 +157,7 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                 if (stopped) {
                     log.info("[{}] Aws SQS consumer is stopped.", topic);
                 } else {
-                    log.error("Failed to pool messages.",  e);
+                    log.error("Failed to pool messages.", e);
                 }
             }
         }
@@ -214,11 +210,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     public T decode(Message message) throws InvalidProtocolBufferException {
         DefaultTbQueueMsg msg = gson.fromJson(message.getBody(), DefaultTbQueueMsg.class);
-        TbQueueMsgHeaders headers = new DefaultTbQueueMsgHeaders();
-        Map<String, byte[]> headerMap = gson.fromJson(message.getMessageAttributes().get("headers").getStringValue(), new TypeToken<Map<String, byte[]>>() {
-        }.getType());
-        headerMap.forEach(headers::put);
-        msg.setHeaders(headers);
         return decoder.decode(msg);
     }
 

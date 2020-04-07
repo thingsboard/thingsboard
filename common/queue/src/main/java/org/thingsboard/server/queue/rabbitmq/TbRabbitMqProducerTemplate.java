@@ -81,7 +81,7 @@ public class TbRabbitMqProducerTemplate<T extends TbQueueMsg> implements TbQueue
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
         AMQP.BasicProperties properties = new AMQP.BasicProperties();
         try {
-            channel.basicPublish(rabbitMqSettings.getExchangeName(), tpi.getFullTopicName(), properties, gson.toJson(new DefaultTbQueueMsg(msg.getKey(), msg.getData())).getBytes());
+            channel.basicPublish(rabbitMqSettings.getExchangeName(), tpi.getFullTopicName(), properties, gson.toJson(new DefaultTbQueueMsg(msg)).getBytes());
             if (callback != null) {
                 callback.onSuccess(null);
             }

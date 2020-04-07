@@ -99,7 +99,7 @@ public class TbPubSubNode implements TbNode {
         ApiFutures.addCallback(messageIdFuture, new ApiFutureCallback<String>() {
                     public void onSuccess(String messageId) {
                         TbMsg next = processPublishResult(ctx, msg, messageId);
-                        ctx.tellNext(next, TbRelationTypes.SUCCESS);
+                        ctx.tellSuccess(next);
                     }
 
                     public void onFailure(Throwable t) {

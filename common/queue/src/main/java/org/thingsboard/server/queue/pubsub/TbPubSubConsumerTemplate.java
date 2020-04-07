@@ -20,7 +20,6 @@ import com.google.api.core.ApiFutures;
 import com.google.cloud.pubsub.v1.stub.GrpcSubscriberStub;
 import com.google.cloud.pubsub.v1.stub.SubscriberStub;
 import com.google.cloud.pubsub.v1.stub.SubscriberStubSettings;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.pubsub.v1.AcknowledgeRequest;
@@ -36,15 +35,12 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
-import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
-import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -139,7 +135,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                 subscriptionNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toSet());
                 subscriptionNames.forEach(admin::createTopicIfNotExists);
                 consumerExecutor = Executors.newFixedThreadPool(subscriptionNames.size());
-                messagesPerTopic = pubSubSettings.getMaxMessages()/subscriptionNames.size();
+                messagesPerTopic = pubSubSettings.getMaxMessages() / subscriptionNames.size();
                 subscribed = true;
             }
             List<ReceivedMessage> messages;
@@ -217,11 +213,6 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
 
     public T decode(PubsubMessage message) throws InvalidProtocolBufferException {
         DefaultTbQueueMsg msg = gson.fromJson(message.getData().toStringUtf8(), DefaultTbQueueMsg.class);
-        TbQueueMsgHeaders headers = new DefaultTbQueueMsgHeaders();
-        Map<String, byte[]> headerMap = gson.fromJson(message.getAttributesMap().get("headers"), new TypeToken<Map<String, byte[]>>() {
-        }.getType());
-        headerMap.forEach(headers::put);
-        msg.setHeaders(headers);
         return decoder.decode(msg);
     }
 

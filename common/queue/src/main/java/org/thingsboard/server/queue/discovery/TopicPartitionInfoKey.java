@@ -17,13 +17,13 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.AllArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.ServiceQueue;
 
 import java.util.Objects;
 
 @AllArgsConstructor
 public class TopicPartitionInfoKey {
-    private ServiceType serviceType;
+    private ServiceQueue serviceQueue;
     private TenantId isolatedTenantId;
     private int partition;
 
@@ -33,12 +33,12 @@ public class TopicPartitionInfoKey {
         if (o == null || getClass() != o.getClass()) return false;
         TopicPartitionInfoKey that = (TopicPartitionInfoKey) o;
         return partition == that.partition &&
-                serviceType == that.serviceType &&
+                serviceQueue.equals(that.serviceQueue) &&
                 Objects.equals(isolatedTenantId, that.isolatedTenantId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(serviceType, isolatedTenantId, partition);
+        return Objects.hash(serviceQueue, isolatedTenantId, partition);
     }
 }

@@ -97,7 +97,7 @@ public class TbMsgGeneratorNode implements TbNode {
             withCallback(generate(ctx),
                     m -> {
                         if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
-                            ctx.tellNext(m, SUCCESS);
+                            ctx.enqueueForTellNext(m, SUCCESS);
                             scheduleTickMsg(ctx);
                             currentMsgCount++;
                         }

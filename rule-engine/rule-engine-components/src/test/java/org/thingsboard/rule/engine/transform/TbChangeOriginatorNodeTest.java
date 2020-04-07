@@ -92,7 +92,7 @@ public class TbChangeOriginatorNodeTest {
         RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(),eq( assetId))).thenReturn(Futures.immediateFuture(asset));
@@ -120,7 +120,7 @@ public class TbChangeOriginatorNodeTest {
         RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(asset));
@@ -147,7 +147,7 @@ public class TbChangeOriginatorNodeTest {
         RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId, null);
+        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(null));

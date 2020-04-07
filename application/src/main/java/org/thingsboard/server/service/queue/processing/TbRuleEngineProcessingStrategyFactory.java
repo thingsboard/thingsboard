@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.settings.TbRuleEngineQueueAckStrategyConfiguration;
+import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,30 +32,20 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbRuleEngineProcessingStrategyFactory {
 
-    @Value("${queue.rule_engine.strategy.type}")
-    private String strategyType;
-    @Value("${queue.rule_engine.strategy.retries:3}")
-    private int maxRetries;
-    @Value("${queue.rule_engine.strategy.failure_percentage:0}")
-    private double maxAllowedFailurePercentage;
-    @Value("${queue.rule_engine.strategy.pause_between_retries:3}")
-    private long pauseBetweenRetries;
-
-
-    public TbRuleEngineProcessingStrategy newInstance() {
-        switch (strategyType) {
+    public TbRuleEngineProcessingStrategy newInstance(TbRuleEngineQueueAckStrategyConfiguration configuration) {
+        switch (configuration.getType()) {
             case "SKIP_ALL":
                 return new SkipStrategy();
             case "RETRY_ALL":
-                return new RetryStrategy(true, true, true, maxRetries, maxAllowedFailurePercentage, pauseBetweenRetries);
+                return new RetryStrategy(true, true, true, configuration);
             case "RETRY_FAILED":
-                return new RetryStrategy(false, true, false, maxRetries, maxAllowedFailurePercentage, pauseBetweenRetries);
+                return new RetryStrategy(false, true, false, configuration);
             case "RETRY_TIMED_OUT":
-                return new RetryStrategy(false, false, true, maxRetries, maxAllowedFailurePercentage, pauseBetweenRetries);
+                return new RetryStrategy(false, false, true, configuration);
             case "RETRY_FAILED_AND_TIMED_OUT":
-                return new RetryStrategy(false, true, true, maxRetries, maxAllowedFailurePercentage, pauseBetweenRetries);
+                return new RetryStrategy(false, true, true, configuration);
             default:
-                throw new RuntimeException("TbRuleEngineProcessingStrategy with type " + strategyType + " is not supported!");
+                throw new RuntimeException("TbRuleEngineProcessingStrategy with type " + configuration.getType() + " is not supported!");
         }
     }
 
@@ -68,13 +60,13 @@ public class TbRuleEngineProcessingStrategyFactory {
         private int initialTotalCount;
         private int retryCount;
 
-        public RetryStrategy(boolean retrySuccessful, boolean retryFailed, boolean retryTimeout, int maxRetries, double maxAllowedFailurePercentage, long pauseBetweenRetries) {
+        public RetryStrategy(boolean retrySuccessful, boolean retryFailed, boolean retryTimeout, TbRuleEngineQueueAckStrategyConfiguration configuration) {
             this.retrySuccessful = retrySuccessful;
             this.retryFailed = retryFailed;
             this.retryTimeout = retryTimeout;
-            this.maxRetries = maxRetries;
-            this.maxAllowedFailurePercentage = maxAllowedFailurePercentage;
-            this.pauseBetweenRetries = pauseBetweenRetries;
+            this.maxRetries = configuration.getRetries();
+            this.maxAllowedFailurePercentage = configuration.getFailurePercentage();
+            this.pauseBetweenRetries = configuration.getPauseBetweenRetries();
         }
 
         @Override
