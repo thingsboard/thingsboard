@@ -46,7 +46,7 @@ public abstract class AbstractTimeseriesCleanUpService {
     @Value("${spring.datasource.password}")
     private String dbPassword;
 
-    @Scheduled(fixedDelayString = "${sql.ttl.execution_interval_ms}")
+    @Scheduled(initialDelayString = "${sql.ttl.execution_interval_ms}", fixedDelayString = "${sql.ttl.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled) {
             try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
