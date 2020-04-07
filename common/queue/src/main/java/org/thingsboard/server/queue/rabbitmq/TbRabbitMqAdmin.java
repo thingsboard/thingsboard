@@ -14,24 +14,45 @@
  * limitations under the License.
  */
 package org.thingsboard.server.queue.rabbitmq;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
+@Slf4j
 public class TbRabbitMqAdmin implements TbQueueAdmin {
 
     private final TbRabbitMqSettings rabbitMqSettings;
-    private final Map<String, String> attributes = new HashMap<>();
+    private final Channel channel;
 
     public TbRabbitMqAdmin(TbRabbitMqSettings rabbitMqSettings) {
         this.rabbitMqSettings = rabbitMqSettings;
+        Connection connection;
+        try {
+            connection = rabbitMqSettings.getConnectionFactory().newConnection();
+        } catch (IOException | TimeoutException e) {
+            log.error("Failed to create connection.", e);
+            throw new RuntimeException("Failed to create connection.", e);
+        }
 
+        try {
+            channel = connection.createChannel();
+        } catch (IOException e) {
+            log.error("Failed to create chanel.", e);
+            throw new RuntimeException("Failed to create chanel.", e);
+        }
     }
 
     @Override
     public void createTopicIfNotExists(String topic) {
-
+        try {
+            channel.queueDeclare(topic, false, false, false, null);
+        } catch (IOException e) {
+            log.error("Failed to bind queue: [{}]", topic, e);
+        }
     }
 }

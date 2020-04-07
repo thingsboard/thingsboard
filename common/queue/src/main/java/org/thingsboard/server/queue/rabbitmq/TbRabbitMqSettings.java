@@ -15,37 +15,55 @@
  */
 package org.thingsboard.server.queue.rabbitmq;
 
+import com.rabbitmq.client.ConnectionFactory;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 @Slf4j
 @ConditionalOnExpression("'${queue.type:null}'=='rabbitmq'")
 @Component
 @Data
 public class TbRabbitMqSettings {
-    @Value("${queue.rabbitmq.exchange_name}")
+    @Value("${queue.rabbitmq.exchange_name:}")
     private String exchangeName;
-    @Value("${queue.rabbitmq.touting_key}")
+    @Value("${queue.rabbitmq.touting_key:}")
     private String routingKey;
-    @Value("${queue.rabbitmq.message_properties}")
-    private String messageProperties;
-    @Value("${queue.rabbitmq.host}")
+    //    @Value("${queue.rabbitmq.message_properties}")
+//    private String messageProperties;
+    @Value("${queue.rabbitmq.host:localhost}")
     private String host;
-    @Value("${queue.rabbitmq.port}")
+    @Value("${queue.rabbitmq.port:-1}")
     private int port;
-    @Value("${queue.rabbitmq.virtual_host}")
+    @Value("${queue.rabbitmq.virtual_host:/}")
     private String virtualHost;
-    @Value("${queue.rabbitmq.username}")
+    @Value("${queue.rabbitmq.username:admin}")
     private String username;
-    @Value("${queue.rabbitmq.password}")
+    @Value("${queue.rabbitmq.password:password}")
     private String password;
-    @Value("${queue.rabbitmq.automatic_recovery_enabled}")
+    @Value("${queue.rabbitmq.automatic_recovery_enabled:false}")
     private boolean automaticRecoveryEnabled;
-    @Value("${queue.rabbitmq.connection_timeout}")
+    @Value("${queue.rabbitmq.connection_timeout:60000}")
     private int connectionTimeout;
-    @Value("${queue.rabbitmq.handshake_timeout}")
+    @Value("${queue.rabbitmq.handshake_timeout:10000}")
     private int handshakeTimeout;
+
+    private ConnectionFactory connectionFactory;
+
+    @PostConstruct
+    private void init() {
+        connectionFactory = new ConnectionFactory();
+        connectionFactory.setHost(host);
+        connectionFactory.setPort(port);
+        connectionFactory.setVirtualHost(virtualHost);
+        connectionFactory.setUsername(username);
+        connectionFactory.setPassword(password);
+        connectionFactory.setAutomaticRecoveryEnabled(automaticRecoveryEnabled);
+        connectionFactory.setConnectionTimeout(connectionTimeout);
+        connectionFactory.setHandshakeTimeout(handshakeTimeout);
+    }
 }

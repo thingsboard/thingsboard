@@ -17,16 +17,24 @@ package org.thingsboard.server.queue.rabbitmq;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.gson.Gson;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.GetResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,17 +47,34 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
     private final String topic;
     private final TbQueueMsgDecoder<T> decoder;
     private final TbRabbitMqSettings rabbitMqSettings;
+    private final Channel channel;
 
     private volatile Set<TopicPartitionInfo> partitions;
     private ListeningExecutorService consumerExecutor;
     private volatile boolean subscribed;
     private volatile boolean stopped = false;
+    private volatile Set<String> queues;
 
     public TbRabbitMqConsumerTemplate(TbQueueAdmin admin, TbRabbitMqSettings rabbitMqSettings, String topic, TbQueueMsgDecoder<T> decoder) {
         this.admin = admin;
         this.decoder = decoder;
         this.topic = topic;
         this.rabbitMqSettings = rabbitMqSettings;
+
+        Connection connection;
+        try {
+            connection = rabbitMqSettings.getConnectionFactory().newConnection();
+        } catch (IOException | TimeoutException e) {
+            log.error("Failed to create connection.", e);
+            throw new RuntimeException("Failed to create connection.", e);
+        }
+
+        try {
+            channel = connection.createChannel();
+        } catch (IOException e) {
+            log.error("Failed to create chanel.", e);
+            throw new RuntimeException("Failed to create chanel.", e);
+        }
     }
 
     @Override
@@ -88,10 +113,38 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
             }
         } else {
             if (!subscribed) {
-                List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+                queues = partitions.stream()
+                        .map(TopicPartitionInfo::getFullTopicName)
+                        .collect(Collectors.toSet());
+
+                queues.forEach(admin::createTopicIfNotExists);
+
+                try {
+                    channel.basicQos(100);
+                } catch (IOException e) {
+                    log.error("Failed to subscribe.");
+                    throw new RuntimeException("Failed to subscribe.", e);
+                }
+
 
                 subscribed = true;
             }
+
+            return queues.stream().map(queue -> {
+                try {
+                    return channel.basicGet(queue, false);
+                } catch (IOException e) {
+                    log.error("Failed to get messages from queue: [{}]", queue);
+                    throw new RuntimeException("Failed to get messages from queue.", e);
+                }
+            }).filter(Objects::nonNull).map(message -> {
+                try {
+                    return decode(message);
+                } catch (InvalidProtocolBufferException e) {
+                    log.error("Failed to decode message: [{}].", message);
+                    throw new RuntimeException("Failed to decode message.", e);
+                }
+            }).collect(Collectors.toList());
 
         }
         return Collections.emptyList();
@@ -99,7 +152,15 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
 
     @Override
     public void commit() {
-
+        try {
+            channel.basicAck(0, true);
+        } catch (IOException e) {
+            log.error("Failed to ack messages.", e);
+        }
     }
 
+    public T decode(GetResponse message) throws InvalidProtocolBufferException {
+        DefaultTbQueueMsg msg = gson.fromJson(new String(message.getBody()), DefaultTbQueueMsg.class);
+        return decoder.decode(msg);
+    }
 }
