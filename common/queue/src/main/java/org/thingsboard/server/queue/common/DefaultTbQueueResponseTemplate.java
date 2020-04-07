@@ -17,7 +17,6 @@ package org.thingsboard.server.queue.common;
 
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.errors.InterruptException;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueHandler;
@@ -88,6 +87,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                     List<Request> requests = requestTemplate.poll(pollInterval);
 
                     if (requests.isEmpty()) {
+                        Thread.sleep(pollInterval);
                         continue;
                     }
 
@@ -133,7 +133,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                         }
                     });
                     requestTemplate.commit();
-                } catch (InterruptException ie) {
+                } catch (InterruptedException ie) {
                     if (!stopped) {
                         log.warn("Fetching data from queue was interrupted.", ie);
                     }

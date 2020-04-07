@@ -18,20 +18,26 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
+@Component
+@ConditionalOnExpression("'${queue.type:null}'=='rabbitmq'")
 public class TbRabbitMqAdmin implements TbQueueAdmin {
 
     private final TbRabbitMqSettings rabbitMqSettings;
     private final Channel channel;
+    private final Connection connection;
 
     public TbRabbitMqAdmin(TbRabbitMqSettings rabbitMqSettings) {
         this.rabbitMqSettings = rabbitMqSettings;
-        Connection connection;
+
         try {
             connection = rabbitMqSettings.getConnectionFactory().newConnection();
         } catch (IOException | TimeoutException e) {
@@ -53,6 +59,24 @@ public class TbRabbitMqAdmin implements TbQueueAdmin {
             channel.queueDeclare(topic, false, false, false, null);
         } catch (IOException e) {
             log.error("Failed to bind queue: [{}]", topic, e);
+        }
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (channel != null) {
+            try {
+                channel.close();
+            } catch (IOException | TimeoutException e) {
+                log.error("Failed to close Chanel.", e);
+            }
+        }
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (IOException e) {
+                log.error("Failed to close Connection.", e);
+            }
         }
     }
 }

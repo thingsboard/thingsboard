@@ -94,6 +94,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         for (TbRuleEngineQueueConfiguration configuration : ruleEngineSettings.getQueues()) {
             consumers.computeIfAbsent(configuration.getName(), queueName -> tbRuleEngineQueueFactory.createToRuleEngineMsgConsumer(configuration));
         }
+
+        ruleEngineSettings.getQueues().forEach(config -> consumerConfigurations.put(config.getName(), config));
     }
 
     @Override
@@ -121,6 +123,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 try {
                     List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs = consumer.poll(pollDuration);
                     if (msgs.isEmpty()) {
+                        Thread.sleep(pollDuration);
                         continue;
                     }
                     TbRuleEngineProcessingStrategy strategy = factory.newInstance(configuration.getAckStrategy());

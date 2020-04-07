@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.queue.rabbitmq;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rabbitmq.client.Channel;
@@ -40,19 +39,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
 
-    private static final int MAX_NUM_MSGS = 10;
-
     private final Gson gson = new Gson();
     private final TbQueueAdmin admin;
     private final String topic;
     private final TbQueueMsgDecoder<T> decoder;
     private final TbRabbitMqSettings rabbitMqSettings;
     private final Channel channel;
+    private final Connection connection;
 
     private volatile Set<TopicPartitionInfo> partitions;
-    private ListeningExecutorService consumerExecutor;
     private volatile boolean subscribed;
-    private volatile boolean stopped = false;
     private volatile Set<String> queues;
 
     public TbRabbitMqConsumerTemplate(TbQueueAdmin admin, TbRabbitMqSettings rabbitMqSettings, String topic, TbQueueMsgDecoder<T> decoder) {
@@ -60,8 +56,6 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
         this.decoder = decoder;
         this.topic = topic;
         this.rabbitMqSettings = rabbitMqSettings;
-
-        Connection connection;
         try {
             connection = rabbitMqSettings.getConnectionFactory().newConnection();
         } catch (IOException | TimeoutException e) {
@@ -96,10 +90,19 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
 
     @Override
     public void unsubscribe() {
-        stopped = true;
-
-        if (consumerExecutor != null) {
-            consumerExecutor.shutdownNow();
+        if (channel != null) {
+            try {
+                channel.close();
+            } catch (IOException | TimeoutException e) {
+                log.error("Failed to close the channel.");
+            }
+        }
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (IOException e) {
+                log.error("Failed to close the connection.");
+            }
         }
     }
 
@@ -118,15 +121,6 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
                         .collect(Collectors.toSet());
 
                 queues.forEach(admin::createTopicIfNotExists);
-
-                try {
-                    channel.basicQos(100);
-                } catch (IOException e) {
-                    log.error("Failed to subscribe.");
-                    throw new RuntimeException("Failed to subscribe.", e);
-                }
-
-
                 subscribed = true;
             }
 

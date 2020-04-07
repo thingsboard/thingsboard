@@ -31,25 +31,21 @@ import javax.annotation.PostConstruct;
 public class TbRabbitMqSettings {
     @Value("${queue.rabbitmq.exchange_name:}")
     private String exchangeName;
-    @Value("${queue.rabbitmq.touting_key:}")
-    private String routingKey;
-    //    @Value("${queue.rabbitmq.message_properties}")
-//    private String messageProperties;
-    @Value("${queue.rabbitmq.host:localhost}")
+    @Value("${queue.rabbitmq.host:}")
     private String host;
-    @Value("${queue.rabbitmq.port:-1}")
+    @Value("${queue.rabbitmq.port:}")
     private int port;
-    @Value("${queue.rabbitmq.virtual_host:/}")
+    @Value("${queue.rabbitmq.virtual_host:}")
     private String virtualHost;
-    @Value("${queue.rabbitmq.username:admin}")
+    @Value("${queue.rabbitmq.username:}")
     private String username;
-    @Value("${queue.rabbitmq.password:password}")
+    @Value("${queue.rabbitmq.password:}")
     private String password;
-    @Value("${queue.rabbitmq.automatic_recovery_enabled:false}")
+    @Value("${queue.rabbitmq.automatic_recovery_enabled:}")
     private boolean automaticRecoveryEnabled;
-    @Value("${queue.rabbitmq.connection_timeout:60000}")
+    @Value("${queue.rabbitmq.connection_timeout:}")
     private int connectionTimeout;
-    @Value("${queue.rabbitmq.handshake_timeout:10000}")
+    @Value("${queue.rabbitmq.handshake_timeout:}")
     private int handshakeTimeout;
 
     private ConnectionFactory connectionFactory;

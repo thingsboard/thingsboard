@@ -30,8 +30,6 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
 import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 
@@ -43,15 +41,13 @@ public class TbRabbitMqProducerTemplate<T extends TbQueueMsg> implements TbQueue
     private final TbRabbitMqSettings rabbitMqSettings;
     private ListeningExecutorService producerExecutor;
     private final Channel channel;
-    private final Set<String> queues = ConcurrentHashMap.newKeySet();
+    private final Connection connection;
 
     public TbRabbitMqProducerTemplate(TbQueueAdmin admin, TbRabbitMqSettings rabbitMqSettings, String defaultTopic) {
         this.admin = admin;
         this.defaultTopic = defaultTopic;
         this.rabbitMqSettings = rabbitMqSettings;
         producerExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
-
-        Connection connection;
         try {
             connection = rabbitMqSettings.getConnectionFactory().newConnection();
         } catch (IOException | TimeoutException e) {
@@ -98,12 +94,18 @@ public class TbRabbitMqProducerTemplate<T extends TbQueueMsg> implements TbQueue
         if (producerExecutor != null) {
             producerExecutor.shutdownNow();
         }
-
         if (channel != null) {
             try {
                 channel.close();
             } catch (IOException | TimeoutException e) {
                 log.error("Failed to close the channel.");
+            }
+        }
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (IOException e) {
+                log.error("Failed to close the connection.");
             }
         }
     }

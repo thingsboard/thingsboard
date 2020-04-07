@@ -137,6 +137,7 @@ public class DefaultTransportService implements TransportService {
                 try {
                     List<TbProtoQueueMsg<ToTransportMsg>> records = transportNotificationsConsumer.poll(notificationsPollDuration);
                     if (records.size() == 0) {
+                        Thread.sleep(notificationsPollDuration);
                         continue;
                     }
                     records.forEach(record -> {

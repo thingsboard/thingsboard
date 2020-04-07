@@ -30,7 +30,6 @@ import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqAdmin;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
@@ -40,21 +39,22 @@ import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSetting
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='rabbitmq' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
-public class RabbitMqTransportQueueProvider implements TbTransportQueueFactory {
+public class RabbitMqTransportQueueFactory implements TbTransportQueueFactory {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbRabbitMqSettings rabbitMqSettings;
     private final TbQueueAdmin admin;
     private final TbServiceInfoProvider serviceInfoProvider;
 
-    public RabbitMqTransportQueueProvider(TbQueueTransportApiSettings transportApiSettings,
-                                          TbQueueTransportNotificationSettings transportNotificationSettings,
-                                          TbRabbitMqSettings rabbitMqSettings,
-                                          TbServiceInfoProvider serviceInfoProvider) {
+    public RabbitMqTransportQueueFactory(TbQueueTransportApiSettings transportApiSettings,
+                                         TbQueueTransportNotificationSettings transportNotificationSettings,
+                                         TbRabbitMqSettings rabbitMqSettings,
+                                         TbServiceInfoProvider serviceInfoProvider,
+                                         TbQueueAdmin admin) {
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.rabbitMqSettings = rabbitMqSettings;
-        admin = new TbRabbitMqAdmin(rabbitMqSettings);
+        this.admin = admin;
         this.serviceInfoProvider = serviceInfoProvider;
     }
 

@@ -29,7 +29,6 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqAdmin;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
@@ -39,7 +38,7 @@ import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='rabbitmq' && '${service.type:null}'=='tb-rule-engine'")
-public class RabbitMqTbRuleEngineQueueProvider implements TbRuleEngineQueueFactory {
+public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
 
     private final PartitionService partitionService;
     private final TbQueueCoreSettings coreSettings;
@@ -48,16 +47,17 @@ public class RabbitMqTbRuleEngineQueueProvider implements TbRuleEngineQueueFacto
     private final TbRabbitMqSettings rabbitMqSettings;
     private final TbQueueAdmin admin;
 
-    public RabbitMqTbRuleEngineQueueProvider(PartitionService partitionService, TbQueueCoreSettings coreSettings,
-                                             TbQueueRuleEngineSettings ruleEngineSettings,
-                                             TbServiceInfoProvider serviceInfoProvider,
-                                             TbRabbitMqSettings rabbitMqSettings) {
+    public RabbitMqTbRuleEngineQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
+                                            TbQueueRuleEngineSettings ruleEngineSettings,
+                                            TbServiceInfoProvider serviceInfoProvider,
+                                            TbRabbitMqSettings rabbitMqSettings,
+                                            TbQueueAdmin admin) {
         this.partitionService = partitionService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.ruleEngineSettings = ruleEngineSettings;
         this.rabbitMqSettings = rabbitMqSettings;
-        admin = new TbRabbitMqAdmin(rabbitMqSettings);
+        this.admin = admin;
     }
 
     @Override

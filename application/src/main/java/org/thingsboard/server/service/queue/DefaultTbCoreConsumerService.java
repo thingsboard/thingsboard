@@ -113,6 +113,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 try {
                     List<TbProtoQueueMsg<ToCoreMsg>> msgs = mainConsumer.poll(pollDuration);
                     if (msgs.isEmpty()) {
+                        Thread.sleep(pollDuration);
                         continue;
                     }
                     ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> pendingMap = msgs.stream().collect(

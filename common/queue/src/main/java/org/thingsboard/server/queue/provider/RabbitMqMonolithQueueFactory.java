@@ -25,7 +25,6 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqAdmin;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
@@ -49,11 +48,12 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     private final TbQueueAdmin admin;
 
     public RabbitMqMonolithQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
-                                         TbQueueRuleEngineSettings ruleEngineSettings,
-                                         TbServiceInfoProvider serviceInfoProvider,
-                                         TbQueueTransportApiSettings transportApiSettings,
-                                         TbQueueTransportNotificationSettings transportNotificationSettings,
-                                         TbRabbitMqSettings rabbitMqSettings) {
+                                        TbQueueRuleEngineSettings ruleEngineSettings,
+                                        TbServiceInfoProvider serviceInfoProvider,
+                                        TbQueueTransportApiSettings transportApiSettings,
+                                        TbQueueTransportNotificationSettings transportNotificationSettings,
+                                        TbRabbitMqSettings rabbitMqSettings,
+                                        TbQueueAdmin admin) {
         this.partitionService = partitionService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -61,7 +61,7 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.rabbitMqSettings = rabbitMqSettings;
-        admin = new TbRabbitMqAdmin(rabbitMqSettings);
+        this.admin = admin;
     }
 
     @Override
