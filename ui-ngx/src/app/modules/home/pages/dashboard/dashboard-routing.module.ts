@@ -43,7 +43,8 @@ export class DashboardResolver implements Resolve<Dashboard> {
   }
 }
 
-export const dashboardBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate, component) => component.dashboard.title);
+export const dashboardBreadcumbLabelFunction: BreadCrumbLabelFunction<DashboardPageComponent>
+  = ((route, translate, component) => component.dashboard.title);
 
 const routes: Routes = [
   {
@@ -74,7 +75,7 @@ const routes: Routes = [
           breadcrumb: {
             labelFunction: dashboardBreadcumbLabelFunction,
             icon: 'dashboard'
-          } as BreadCrumbConfig,
+          } as BreadCrumbConfig<DashboardPageComponent>,
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
           title: 'dashboard.dashboard',
           widgetEditMode: false

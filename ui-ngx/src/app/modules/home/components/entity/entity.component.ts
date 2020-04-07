@@ -15,18 +15,22 @@
 ///
 
 import { BaseData, HasId } from '@shared/models/base-data';
-import { FormGroup, NgForm } from '@angular/forms';
+import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { EventEmitter, Input, OnInit, Output, ViewChild, Directive } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { PageLink } from '@shared/models/page/page-link';
 
 @Directive()
-export abstract class EntityComponent<T extends BaseData<HasId>> extends PageComponent implements OnInit {
+export abstract class EntityComponent<T extends BaseData<HasId>,
+  P extends PageLink = PageLink,
+  L extends BaseData<HasId> = T,
+  C extends EntityTableConfig<T, P, L> = EntityTableConfig<T, P, L>>
+  extends PageComponent implements OnInit {
 
-  entityValue: T;
   entityForm: FormGroup;
 
   @ViewChild('entityNgForm', {static: true}) entityNgForm: NgForm;
@@ -51,7 +55,8 @@ export abstract class EntityComponent<T extends BaseData<HasId>> extends PageCom
   set entity(entity: T) {
     this.entityValue = entity;
     if (this.entityForm) {
-      this.entityForm.reset();
+      this.entityForm.reset(undefined, {emitEvent: false});
+      this.entityForm.markAsPristine();
       this.updateForm(entity);
     }
   }
@@ -60,18 +65,18 @@ export abstract class EntityComponent<T extends BaseData<HasId>> extends PageCom
     return this.entityValue;
   }
 
-  @Input()
-  entitiesTableConfig: EntityTableConfig<T>;
-
   @Output()
   entityAction = new EventEmitter<EntityAction<T>>();
 
-  protected constructor(protected store: Store<AppState>) {
+  protected constructor(protected store: Store<AppState>,
+                        protected fb: FormBuilder,
+                        protected entityValue: T,
+                        protected entitiesTableConfig: C) {
     super(store);
+    this.entityForm = this.buildForm(this.entityValue);
   }
 
   ngOnInit() {
-    this.entityForm = this.buildForm(this.entityValue);
   }
 
   onEntityAction($event: Event, action: string) {
@@ -96,7 +101,7 @@ export abstract class EntityComponent<T extends BaseData<HasId>> extends PageCom
   }
 
   entityFormValue() {
-    const formValue = this.entityForm ? {...this.entityForm.value} : {};
+    const formValue = this.entityForm ? {...this.entityForm.getRawValue()} : {};
     return this.prepareFormValue(formValue);
   }
 

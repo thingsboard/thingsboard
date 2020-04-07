@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -27,6 +27,7 @@ import { EntityViewInfo } from '@app/shared/models/entity-view.models';
 import { Observable } from 'rxjs';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
   selector: 'tb-entity-view',
@@ -50,8 +51,10 @@ export class EntityViewComponent extends EntityComponent<EntityViewInfo> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
+              @Inject('entity') protected entityValue: EntityViewInfo,
+              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<EntityViewInfo>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, fb, entityValue, entitiesTableConfig);
   }
 
   ngOnInit() {

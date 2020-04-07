@@ -16,10 +16,10 @@
 
 import {
   AfterViewInit,
-  ChangeDetectionStrategy,
+  ChangeDetectionStrategy, ChangeDetectorRef,
   Component,
   ComponentFactoryResolver,
-  EventEmitter,
+  EventEmitter, Injector,
   Input,
   OnDestroy,
   OnInit,
@@ -41,6 +41,7 @@ import { EntityAction } from '@home/models/entity/entity-component.models';
 import { Subscription } from 'rxjs';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-details-panel',
@@ -79,13 +80,16 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   @ViewChildren(MatTab) inclusiveTabs: QueryList<MatTab>;
 
   translations: EntityTypeTranslation;
-  resources: EntityTypeResource;
+  resources: EntityTypeResource<BaseData<HasId>>;
   entity: BaseData<HasId>;
+  editingEntity: BaseData<HasId>;
 
   private currentEntityId: HasId;
   private entityActionSubscription: Subscription;
 
   constructor(protected store: Store<AppState>,
+              private injector: Injector,
+              private cd: ChangeDetectorRef,
               private componentFactoryResolver: ComponentFactoryResolver) {
     super(store);
   }
@@ -127,15 +131,32 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
     const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityComponent);
     const viewContainerRef = this.entityDetailsFormAnchor.viewContainerRef;
     viewContainerRef.clear();
-    const componentRef = viewContainerRef.createComponent(componentFactory);
+    const injector: Injector = Injector.create(
+      {
+        providers: [
+          {
+            provide: 'entity',
+            useValue: this.entity
+          },
+          {
+            provide: 'entitiesTableConfig',
+            useValue: this.entitiesTableConfig
+          }
+        ],
+        parent: this.injector
+      }
+    );
+    const componentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
     this.entityComponent = componentRef.instance;
     this.entityComponent.isEdit = this.isEdit;
-    this.entityComponent.entitiesTableConfig = this.entitiesTableConfig;
     this.detailsForm = this.entityComponent.entityNgForm;
     this.entityActionSubscription = this.entityComponent.entityAction.subscribe((action) => {
       this.entityAction.emit(action);
     });
     this.buildEntityTabsComponent();
+    this.entityComponent.entityForm.valueChanges.subscribe(() => {
+      this.cd.detectChanges();
+    });
   }
 
   buildEntityTabsComponent() {
@@ -147,7 +168,12 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
       this.entityTabsComponent = componentTabsRef.instance;
       this.entityTabsComponent.isEdit = this.isEdit;
       this.entityTabsComponent.entitiesTableConfig = this.entitiesTableConfig;
+      this.entityTabsComponent.detailsForm = this.detailsForm;
     }
+  }
+
+  hideDetailsTabs(): boolean {
+    return this.isEditValue && this.entitiesTableConfig.hideDetailsTabsOnEdit;
   }
 
   reload(): void {
@@ -175,13 +201,28 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
         this.entityTabsComponent.entity = this.entity;
       }
     } else {
-      this.selectedTab = 0;
+      this.editingEntity = deepClone(this.entity);
+      this.entityComponent.entity = this.editingEntity;
+      if (this.entityTabsComponent) {
+        this.entityTabsComponent.entity = this.editingEntity;
+      }
+      if (this.entitiesTableConfig.hideDetailsTabsOnEdit) {
+        this.selectedTab = 0;
+      }
+    }
+  }
+
+  helpLinkId(): string {
+    if (this.resources.helpLinkIdForEntity && this.entityComponent.entityForm) {
+      return this.resources.helpLinkIdForEntity(this.entityComponent.entityForm.getRawValue());
+    } else {
+      return this.resources.helpLinkId;
     }
   }
 
   saveEntity() {
     if (this.detailsForm.valid) {
-      const editingEntity = {...this.entity, ...this.entityComponent.entityFormValue()};
+      const editingEntity = {...this.editingEntity, ...this.entityComponent.entityFormValue()};
       this.entitiesTableConfig.saveEntity(editingEntity).subscribe(
         (entity) => {
           this.entity = entity;
