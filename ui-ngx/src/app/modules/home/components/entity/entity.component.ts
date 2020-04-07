@@ -24,6 +24,7 @@ import { EntityAction } from '@home/models/entity/entity-component.models';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { PageLink } from '@shared/models/page/page-link';
 
+// @dynamic
 @Directive()
 export abstract class EntityComponent<T extends BaseData<HasId>,
   P extends PageLink = PageLink,
