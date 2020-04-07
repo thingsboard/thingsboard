@@ -36,8 +36,8 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
   public currentEntity: T = null;
 
   constructor(private fetchFunction: EntitiesFetchFunction<T, P>,
-              private selectionEnabledFunction: EntityBooleanFunction<T>,
-              private dataLoadedFunction: () => void) {}
+              protected selectionEnabledFunction: EntityBooleanFunction<T>,
+              protected dataLoadedFunction: () => void) {}
 
   connect(collectionViewer: CollectionViewer): Observable<T[] | ReadonlyArray<T>> {
     return this.entitiesSubject.asObservable();

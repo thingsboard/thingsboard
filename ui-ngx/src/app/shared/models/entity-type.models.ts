@@ -15,6 +15,7 @@
 ///
 
 import {TenantId} from './id/tenant-id';
+import { BaseData, HasId } from '@shared/models/base-data';
 
 ///
 /// Copyright © 2016-2019 The Thingsboard Authors
@@ -63,8 +64,9 @@ export interface EntityTypeTranslation {
   search?: string;
 }
 
-export interface EntityTypeResource {
+export interface EntityTypeResource<T> {
   helpLinkId: string;
+  helpLinkIdForEntity?(entity: T): string;
 }
 
 export const entityTypeTranslations = new Map<EntityType | AliasEntityType, EntityTypeTranslation>(
@@ -223,7 +225,7 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
   ]
 );
 
-export const entityTypeResources = new Map<EntityType, EntityTypeResource>(
+export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseData<HasId>>>(
   [
     [
       EntityType.TENANT,

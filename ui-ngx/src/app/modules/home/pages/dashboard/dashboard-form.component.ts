@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -28,6 +28,7 @@ import {
   isPublicDashboard
 } from '@shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
   selector: 'tb-dashboard-form',
@@ -45,8 +46,10 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               private dashboardService: DashboardService,
+              @Inject('entity') protected entityValue: Dashboard,
+              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<Dashboard>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, fb, entityValue, entitiesTableConfig);
   }
 
   ngOnInit() {
@@ -103,7 +106,9 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
   }
 
   private updateFields(entity: Dashboard): void {
-    this.assignedCustomersText = getDashboardAssignedCustomersText(entity);
-    this.publicLink = this.dashboardService.getPublicDashboardLink(entity);
+    if (entity) {
+      this.assignedCustomersText = getDashboardAssignedCustomersText(entity);
+      this.publicLink = this.dashboardService.getPublicDashboardLink(entity);
+    }
   }
 }

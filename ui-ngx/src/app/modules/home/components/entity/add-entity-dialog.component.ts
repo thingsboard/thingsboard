@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ComponentFactoryResolver, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, ComponentFactoryResolver, Inject, Injector, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -29,6 +29,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { AddEntityDialogData } from '@home/models/entity/entity-component.models';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'tb-add-entity-dialog',
@@ -44,7 +45,7 @@ export class AddEntityDialogComponent extends
 
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
   translations: EntityTypeTranslation;
-  resources: EntityTypeResource;
+  resources: EntityTypeResource<BaseData<HasId>>;
   entity: BaseData<EntityId>;
 
   submitted = false;
@@ -56,6 +57,7 @@ export class AddEntityDialogComponent extends
               @Inject(MAT_DIALOG_DATA) public data: AddEntityDialogData<BaseData<HasId>>,
               public dialogRef: MatDialogRef<AddEntityDialogComponent, BaseData<HasId>>,
               private componentFactoryResolver: ComponentFactoryResolver,
+              private injector: Injector,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher) {
     super(store, router, dialogRef);
   }
@@ -68,12 +70,33 @@ export class AddEntityDialogComponent extends
     const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityComponent);
     const viewContainerRef = this.entityDetailsFormAnchor.viewContainerRef;
     viewContainerRef.clear();
-    const componentRef = viewContainerRef.createComponent(componentFactory);
+    const injector: Injector = Injector.create(
+      {
+        providers: [
+          {
+            provide: 'entity',
+            useValue: this.entity
+          },
+          {
+            provide: 'entitiesTableConfig',
+            useValue: this.entitiesTableConfig
+          }
+        ],
+        parent: this.injector
+      }
+    );
+    const componentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
     this.entityComponent = componentRef.instance;
     this.entityComponent.isEdit = true;
-    this.entityComponent.entitiesTableConfig = this.entitiesTableConfig;
-    this.entityComponent.entity = this.entity;
     this.detailsForm = this.entityComponent.entityNgForm;
+  }
+
+  helpLinkId(): string {
+    if (this.resources.helpLinkIdForEntity && this.entityComponent.entityForm) {
+      return this.resources.helpLinkIdForEntity(this.entityComponent.entityForm.getRawValue());
+    } else {
+      return this.resources.helpLinkId;
+    }
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {

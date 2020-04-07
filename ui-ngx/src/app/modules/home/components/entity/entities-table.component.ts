@@ -20,8 +20,8 @@ import {
   Component,
   ComponentFactoryResolver,
   ElementRef,
-  Input,
-  OnInit,
+  Input, OnChanges,
+  OnInit, SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -51,7 +51,7 @@ import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
 import { AddEntityDialogComponent } from './add-entity-dialog.component';
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
-import { historyInterval, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
+import { DAY, historyInterval, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isUndefined } from '@core/utils';
@@ -62,7 +62,7 @@ import { isDefined, isUndefined } from '@core/utils';
   styleUrls: ['./entities-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntitiesTableComponent extends PageComponent implements AfterViewInit, OnInit {
+export class EntitiesTableComponent extends PageComponent implements AfterViewInit, OnInit, OnChanges {
 
   @Input()
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
@@ -112,7 +112,27 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   }
 
   ngOnInit() {
-    this.entitiesTableConfig = this.entitiesTableConfig || this.route.snapshot.data.entitiesTableConfig;
+    if (this.entitiesTableConfig) {
+      this.init(this.entitiesTableConfig);
+    } else {
+      this.init(this.route.snapshot.data.entitiesTableConfig);
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'entitiesTableConfig' && change.currentValue) {
+          this.init(change.currentValue);
+        }
+      }
+    }
+  }
+
+  private init(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
+    this.isDetailsOpen = false;
+    this.entitiesTableConfig = entitiesTableConfig;
     if (this.entitiesTableConfig.headerComponent) {
       const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.headerComponent);
       const viewContainerRef = this.entityTableHeaderAnchor.viewContainerRef;
@@ -138,16 +158,15 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
           onAction: ($event, entity) => this.deleteEntity($event, entity)
         }
       );
+      this.groupActionDescriptors.push(
+        {
+          name: this.translate.instant('action.delete'),
+          icon: 'delete',
+          isEnabled: true,
+          onAction: ($event, entities) => this.deleteEntities($event, entities)
+        }
+      );
     }
-
-    this.groupActionDescriptors.push(
-      {
-        name: this.translate.instant('action.delete'),
-        icon: 'delete',
-        isEnabled: this.entitiesTableConfig.entitiesDeleteEnabled,
-        onAction: ($event, entities) => this.deleteEntities($event, entities)
-      }
-    );
 
     const enabledGroupActionDescriptors =
       this.groupActionDescriptors.filter((descriptor) => descriptor.isEnabled);
@@ -156,24 +175,25 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
     this.columnsUpdated();
 
-    const sortOrder: SortOrder = { property: this.entitiesTableConfig.defaultSortOrder.property,
-                                   direction: this.entitiesTableConfig.defaultSortOrder.direction };
+    let sortOrder: SortOrder = null;
+    if (this.entitiesTableConfig.defaultSortOrder) {
+      sortOrder = {
+        property: this.entitiesTableConfig.defaultSortOrder.property,
+        direction: this.entitiesTableConfig.defaultSortOrder.direction
+      };
+    }
 
     if (this.entitiesTableConfig.useTimePageLink) {
-      this.timewindow = historyInterval(24 * 60 * 60 * 1000);
+      this.timewindow = historyInterval(DAY);
       const currentTime = Date.now();
       this.pageLink = new TimePageLink(10, 0, null, sortOrder,
         currentTime - this.timewindow.history.timewindowMs, currentTime);
     } else {
       this.pageLink = new PageLink(10, 0, null, sortOrder);
     }
-    this.dataSource = new EntitiesDataSource<BaseData<HasId>>(
-      this.entitiesTableConfig.entitiesFetchFunction,
-      this.entitiesTableConfig.entitySelectionEnabled,
-      () => {
-        this.dataLoaded();
-      }
-    );
+    this.dataSource = this.entitiesTableConfig.dataSource(() => {
+      this.dataLoaded();
+    });
     if (this.entitiesTableConfig.onLoadAction) {
       this.entitiesTableConfig.onLoadAction(this.route);
     }
@@ -214,8 +234,14 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     }
     this.pageLink.page = this.paginator.pageIndex;
     this.pageLink.pageSize = this.paginator.pageSize;
-    this.pageLink.sortOrder.property = this.sort.active;
-    this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
+    if (this.sort.active) {
+      this.pageLink.sortOrder = {
+        property: this.sort.active,
+        direction: Direction[this.sort.direction.toUpperCase()]
+      };
+    } else {
+      this.pageLink.sortOrder = null;
+    }
     if (this.entitiesTableConfig.useTimePageLink) {
       const timePageLink = this.pageLink as TimePageLink;
       if (this.timewindow.history.historyType === HistoryWindowType.LAST_INTERVAL) {

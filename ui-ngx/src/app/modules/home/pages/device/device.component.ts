@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -26,6 +26,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceService } from '@core/http/device.service';
 import { ClipboardService } from 'ngx-clipboard';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
   selector: 'tb-device',
@@ -42,8 +43,10 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
               protected translate: TranslateService,
               private deviceService: DeviceService,
               private clipboardService: ClipboardService,
+              @Inject('entity') protected entityValue: DeviceInfo,
+              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<DeviceInfo>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, fb, entityValue, entitiesTableConfig);
   }
 
   ngOnInit() {

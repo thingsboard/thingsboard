@@ -65,7 +65,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   buildBreadCrumbs(route: ActivatedRouteSnapshot, breadcrumbs: Array<BreadCrumb> = []): Array<BreadCrumb> {
     let newBreadcrumbs = breadcrumbs;
     if (route.routeConfig && route.routeConfig.data) {
-      const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig;
+      const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig<any>;
       if (breadcrumbConfig && !breadcrumbConfig.skip) {
         let label;
         let labelFunction;

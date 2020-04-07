@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -24,6 +24,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { AssetInfo } from '@app/shared/models/asset.models';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
   selector: 'tb-asset',
@@ -38,8 +39,10 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
+              @Inject('entity') protected entityValue: AssetInfo,
+              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<AssetInfo>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, fb, entityValue, entitiesTableConfig);
   }
 
   ngOnInit() {

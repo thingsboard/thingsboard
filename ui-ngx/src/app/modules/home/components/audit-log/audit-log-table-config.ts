@@ -68,7 +68,7 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
       search: 'audit-log.search'
     };
     this.entityResources = {
-    } as EntityTypeResource;
+    } as EntityTypeResource<AuditLog>;
 
     this.entitiesFetchFunction = pageLink => this.fetchAuditLogs(pageLink);
 

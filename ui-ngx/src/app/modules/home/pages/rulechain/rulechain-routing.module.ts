@@ -126,7 +126,8 @@ export class RuleChainImportGuard implements CanActivate {
 
 }
 
-export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate, component) => {
+export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction<RuleChainPageComponent>
+  = ((route, translate, component) => {
   let label: string = component.ruleChain.name;
   if (component.ruleChain.root) {
     label += ` (${translate.instant('rulechain.root')})`;
@@ -134,7 +135,8 @@ export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route,
   return label;
 });
 
-export const importRuleChainBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate, component) => {
+export const importRuleChainBreadcumbLabelFunction: BreadCrumbLabelFunction<RuleChainPageComponent> =
+  ((route, translate, component) => {
   return `${translate.instant('rulechain.import')}: ${component.ruleChain.name}`;
 });
 
@@ -167,7 +169,7 @@ const routes: Routes = [
           breadcrumb: {
             labelFunction: ruleChainBreadcumbLabelFunction,
             icon: 'settings_ethernet'
-          } as BreadCrumbConfig,
+          } as BreadCrumbConfig<RuleChainPageComponent>,
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
           import: false
@@ -187,7 +189,7 @@ const routes: Routes = [
           breadcrumb: {
             labelFunction: importRuleChainBreadcumbLabelFunction,
             icon: 'settings_ethernet'
-          } as BreadCrumbConfig,
+          } as BreadCrumbConfig<RuleChainPageComponent>,
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
           import: true
