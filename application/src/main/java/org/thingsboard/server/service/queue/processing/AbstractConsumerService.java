@@ -88,7 +88,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                 try {
                     List<TbProtoQueueMsg<N>> msgs = nfConsumer.poll(getNotificationPollDuration());
                     if (msgs.isEmpty()) {
-                        Thread.sleep(getNotificationPollDuration());
                         continue;
                     }
                     ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = msgs.stream().collect(

@@ -123,7 +123,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 try {
                     List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs = consumer.poll(pollDuration);
                     if (msgs.isEmpty()) {
-                        Thread.sleep(pollDuration);
                         continue;
                     }
                     TbRuleEngineProcessingStrategy strategy = factory.newInstance(configuration.getAckStrategy());

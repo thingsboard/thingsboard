@@ -87,7 +87,6 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                     List<Request> requests = requestTemplate.poll(pollInterval);
 
                     if (requests.isEmpty()) {
-                        Thread.sleep(pollInterval);
                         continue;
                     }
 
@@ -133,10 +132,6 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                         }
                     });
                     requestTemplate.commit();
-                } catch (InterruptedException ie) {
-                    if (!stopped) {
-                        log.warn("Fetching data from queue was interrupted.", ie);
-                    }
                 } catch (Throwable e) {
                     log.warn("Failed to obtain messages from queue.", e);
                     try {

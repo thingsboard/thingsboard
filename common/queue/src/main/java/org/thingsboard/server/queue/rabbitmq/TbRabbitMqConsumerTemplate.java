@@ -50,6 +50,7 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
     private volatile Set<TopicPartitionInfo> partitions;
     private volatile boolean subscribed;
     private volatile Set<String> queues;
+    private volatile boolean stopped;
 
     public TbRabbitMqConsumerTemplate(TbQueueAdmin admin, TbRabbitMqSettings rabbitMqSettings, String topic, TbQueueMsgDecoder<T> decoder) {
         this.admin = admin;
@@ -69,6 +70,7 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
             log.error("Failed to create chanel.", e);
             throw new RuntimeException("Failed to create chanel.", e);
         }
+        stopped = false;
     }
 
     @Override
@@ -90,6 +92,7 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
 
     @Override
     public void unsubscribe() {
+        stopped = true;
         if (channel != null) {
             try {
                 channel.close();
@@ -124,22 +127,32 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
                 subscribed = true;
             }
 
-            return queues.stream().map(queue -> {
-                try {
-                    return channel.basicGet(queue, false);
-                } catch (IOException e) {
-                    log.error("Failed to get messages from queue: [{}]", queue);
-                    throw new RuntimeException("Failed to get messages from queue.", e);
-                }
-            }).filter(Objects::nonNull).map(message -> {
-                try {
-                    return decode(message);
-                } catch (InvalidProtocolBufferException e) {
-                    log.error("Failed to decode message: [{}].", message);
-                    throw new RuntimeException("Failed to decode message.", e);
-                }
-            }).collect(Collectors.toList());
-
+            List<T> result = queues.stream()
+                    .map(queue -> {
+                        try {
+                            return channel.basicGet(queue, false);
+                        } catch (IOException e) {
+                            log.error("Failed to get messages from queue: [{}]", queue);
+                            throw new RuntimeException("Failed to get messages from queue.", e);
+                        }
+                    }).filter(Objects::nonNull).map(message -> {
+                        try {
+                            return decode(message);
+                        } catch (InvalidProtocolBufferException e) {
+                            log.error("Failed to decode message: [{}].", message);
+                            throw new RuntimeException("Failed to decode message.", e);
+                        }
+                    }).collect(Collectors.toList());
+            if (result.size() > 0) {
+                return result;
+            }
+        }
+        try {
+            Thread.sleep(durationInMillis);
+        } catch (InterruptedException e) {
+            if (!stopped) {
+                log.error("Failed to wait.", e);
+            }
         }
         return Collections.emptyList();
     }

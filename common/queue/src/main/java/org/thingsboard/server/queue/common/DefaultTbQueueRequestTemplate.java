@@ -92,7 +92,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                     if (responses.size() > 0) {
                         log.trace("Polling responses completed, consumer records count [{}]", responses.size());
                     } else {
-                        Thread.sleep(pollInterval);
                         continue;
                     }
                     responses.forEach(response -> {
@@ -127,10 +126,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                             }
                         });
                         nextCleanupMs = tickTs + maxRequestTimeout;
-                    }
-                } catch (InterruptedException ie) {
-                    if (!stopped) {
-                        log.warn("Fetching data from consumer was interrupted.", ie);
                     }
                 } catch (Throwable e) {
                     log.warn("Failed to obtain responses from queue.", e);
