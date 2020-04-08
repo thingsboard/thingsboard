@@ -35,9 +35,9 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: Customer,
-              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<Customer>,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Customer>,
               protected fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfig);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   hideDelete() {

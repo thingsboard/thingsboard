@@ -44,9 +44,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
               private deviceService: DeviceService,
               private clipboardService: ClipboardService,
               @Inject('entity') protected entityValue: DeviceInfo,
-              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<DeviceInfo>,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceInfo>,
               public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfig);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   ngOnInit() {

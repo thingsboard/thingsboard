@@ -42,9 +42,9 @@ export class UserComponent extends EntityComponent<User> {
 
   constructor(protected store: Store<AppState>,
               @Inject('entity') protected entityValue: User,
-              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<User>,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
               public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfig);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   hideDelete() {

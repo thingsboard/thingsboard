@@ -39,6 +39,7 @@ export type EntityByIdOperation<T extends BaseData<HasId>> = (id: HasUUID) => Ob
 export type EntityIdOneWayOperation = (id: HasUUID) => Observable<any>;
 export type EntityActionFunction<T extends BaseData<HasId>> = (action: EntityAction<T>) => boolean;
 export type CreateEntityOperation<T extends BaseData<HasId>> = () => Observable<T>;
+export type EntityRowClickFunction<T extends BaseData<HasId>> = (event: Event, entity: T) => boolean;
 
 export type CellContentFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string;
 export type CellTooltipFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string | undefined;
@@ -147,12 +148,14 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entityTabsComponent: Type<EntityTabsComponent<T, P, L>>;
   addDialogStyle = {};
   defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.ASC};
+  displayPagination = true;
+  defaultPageSize = 10;
   columns: Array<EntityColumn<L>> = [];
   cellActionDescriptors: Array<CellActionDescriptor<L>> = [];
   groupActionDescriptors: Array<GroupActionDescriptor<L>> = [];
   headerActionDescriptors: Array<HeaderActionDescriptor> = [];
   addActionDescriptors: Array<HeaderActionDescriptor> = [];
-  headerComponent: Type<EntityTableHeaderComponent<L>>;
+  headerComponent: Type<EntityTableHeaderComponent<T, P, L>>;
   addEntity: CreateEntityOperation<T> = null;
   dataSource: (dataLoadedFunction: () => void) => EntitiesDataSource<L> = (dataLoadedFunction: () => void) => {
     return new EntitiesDataSource(this.entitiesFetchFunction, this.entitySelectionEnabled, dataLoadedFunction);
@@ -169,6 +172,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   deleteEntity: EntityIdOneWayOperation = () => of();
   entitiesFetchFunction: EntitiesFetchFunction<L, P> = () => of(emptyPageData<L>());
   onEntityAction: EntityActionFunction<T> = () => false;
+  handleRowClick: EntityRowClickFunction<L> = () => false;
   entityTitle: EntityStringFunction<T> = (entity) => entity?.name;
 }
 

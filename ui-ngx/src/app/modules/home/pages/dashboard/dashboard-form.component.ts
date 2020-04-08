@@ -47,9 +47,9 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
               protected translate: TranslateService,
               private dashboardService: DashboardService,
               @Inject('entity') protected entityValue: Dashboard,
-              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<Dashboard>,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Dashboard>,
               public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfig);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   ngOnInit() {

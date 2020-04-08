@@ -19,6 +19,8 @@ import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { getDescendantProp, isObject } from '@core/utils';
 import { SortDirection } from '@angular/material/sort';
 
+export const MAX_SAFE_PAGE_SIZE = 2147483647;
+
 export type PageLinkSearchFunction<T> = (entity: T, textSearch: string) => boolean;
 
 const defaultPageLinkSearchFunction: PageLinkSearchFunction<any> =

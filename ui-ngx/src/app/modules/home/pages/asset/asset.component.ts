@@ -40,9 +40,9 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: AssetInfo,
-              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<AssetInfo>,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<AssetInfo>,
               public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfig);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   ngOnInit() {

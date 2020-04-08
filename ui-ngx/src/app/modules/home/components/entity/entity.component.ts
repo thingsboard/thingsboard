@@ -39,6 +39,15 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   isEditValue: boolean;
 
   @Input()
+  set entitiesTableConfig(entitiesTableConfig: C) {
+    this.entitiesTableConfigValue = entitiesTableConfig;
+  }
+
+  get entitiesTableConfig(): C {
+    return this.entitiesTableConfigValue;
+  }
+
+  @Input()
   set isEdit(isEdit: boolean) {
     this.isEditValue = isEdit;
     this.updateFormState();
@@ -72,7 +81,7 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   protected constructor(protected store: Store<AppState>,
                         protected fb: FormBuilder,
                         protected entityValue: T,
-                        protected entitiesTableConfig: C) {
+                        protected entitiesTableConfigValue: C) {
     super(store);
     this.entityForm = this.buildForm(this.entityValue);
   }

@@ -25,7 +25,7 @@
     <tb-entity-details-panel
       [entitiesTableConfig]="entitiesTableConfig"
       [entityId]="dataSource.currentEntity?.id"
-      (closeEntityDetails)="isDetailsOpen = false"
+      (closeEntityDetails)="isDetailsOpen = false; detailsPanelOpened.emit(isDetailsOpen);"
       (entityUpdated)="onEntityUpdated($event)"
       (entityAction)="onEntityAction($event)"
     >
@@ -227,11 +227,12 @@
                 fxLayoutAlign="center center"
                 class="no-data-found" translate>{{ translations.noEntities }}</span>
         </div>
-        <mat-divider></mat-divider>
-        <mat-paginator [length]="dataSource.total() | async"
+        <mat-divider *ngIf="displayPagination"></mat-divider>
+        <mat-paginator *ngIf="displayPagination"
+                       [length]="dataSource.total() | async"
                        [pageIndex]="pageLink.page"
                        [pageSize]="pageLink.pageSize"
-                       [pageSizeOptions]="[10, 20, 30]"></mat-paginator>
+                       [pageSizeOptions]="pageSizeOptions"></mat-paginator>
       </div>
     </div>
   </mat-drawer-content>

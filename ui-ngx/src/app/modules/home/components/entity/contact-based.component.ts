@@ -29,8 +29,8 @@ export abstract class ContactBasedComponent<T extends ContactBased<HasId>> exten
   protected constructor(protected store: Store<AppState>,
                         protected fb: FormBuilder,
                         protected entityValue: T,
-                        protected entitiesTableConfig: EntityTableConfig<T>) {
-    super(store, fb, entityValue, entitiesTableConfig);
+                        protected entitiesTableConfigValue: EntityTableConfig<T>) {
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   buildForm(entity: T): FormGroup {

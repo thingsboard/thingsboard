@@ -51,8 +51,6 @@ import { deepClone } from '@core/utils';
 })
 export class EntityDetailsPanelComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  @Input() entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
-
   @Output()
   closeEntityDetails = new EventEmitter<void>();
 
@@ -66,6 +64,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   entityTabsComponent: EntityTabsComponent<BaseData<HasId>>;
   detailsForm: NgForm;
 
+  entitiesTableConfigValue: EntityTableConfig<BaseData<HasId>>;
   isEditValue = false;
   selectedTab = 0;
 
@@ -102,9 +101,26 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
     }
   }
 
+  @Input()
+  set entitiesTableConfig(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
+    this.entitiesTableConfigValue = entitiesTableConfig;
+    if (this.entityComponent) {
+      this.entityComponent.entitiesTableConfig = entitiesTableConfig;
+    }
+    if (this.entityTabsComponent) {
+      this.entityTabsComponent.entitiesTableConfig = entitiesTableConfig;
+    }
+  }
+
+  get entitiesTableConfig(): EntityTableConfig<BaseData<HasId>> {
+    return this.entitiesTableConfigValue;
+  }
+
   set isEdit(val: boolean) {
     this.isEditValue = val;
-    this.entityComponent.isEdit = val;
+    if (this.entityComponent) {
+      this.entityComponent.isEdit = val;
+    }
     if (this.entityTabsComponent) {
       this.entityTabsComponent.isEdit = val;
     }

@@ -34,9 +34,9 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: Tenant,
-              @Inject('entitiesTableConfig') protected entitiesTableConfig: EntityTableConfig<Tenant>,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Tenant>,
               protected fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfig);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   hideDelete() {
