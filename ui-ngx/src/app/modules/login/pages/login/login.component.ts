@@ -47,8 +47,7 @@ export class LoginComponent extends PageComponent implements OnInit {
 
   ngOnInit() {
     if (this.route.snapshot.queryParams["username"] && this.route.snapshot.queryParams["password"]) {
-      this.loginFormGroup.value.username = this.route.snapshot.queryParams["username"];
-      this.loginFormGroup.value.password = this.route.snapshot.queryParams["password"];
+      this.loginFormGroup.setValue({username: this.route.snapshot.queryParams["username"], password: this.route.snapshot.queryParams["password"]});
       this.login();
     }
   }
