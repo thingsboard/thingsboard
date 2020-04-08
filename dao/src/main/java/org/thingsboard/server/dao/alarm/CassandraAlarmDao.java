@@ -20,6 +20,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -82,10 +83,10 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
     @Override
     public Boolean deleteAlarm(TenantId tenantId, Alarm alarm) {
         Statement delete = QueryBuilder.delete().all().from(getColumnFamilyName()).where(eq(ModelConstants.ID_PROPERTY, alarm.getId().getId()))
-            .and(eq(ALARM_TENANT_ID_PROPERTY, tenantId.getId()))
-            .and(eq(ALARM_ORIGINATOR_ID_PROPERTY, alarm.getOriginator().getId()))
-            .and(eq(ALARM_ORIGINATOR_TYPE_PROPERTY, alarm.getOriginator().getEntityType()))
-            .and(eq(ALARM_TYPE_PROPERTY, alarm.getType()));
+                .and(eq(ALARM_TENANT_ID_PROPERTY, tenantId.getId()))
+                .and(eq(ALARM_ORIGINATOR_ID_PROPERTY, alarm.getOriginator().getId()))
+                .and(eq(ALARM_ORIGINATOR_TYPE_PROPERTY, alarm.getOriginator().getEntityType()))
+                .and(eq(ALARM_TYPE_PROPERTY, alarm.getType()));
         log.debug("Remove request: {}", delete.toString());
         return executeWrite(tenantId, delete).wasApplied();
     }
@@ -122,10 +123,10 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
             for (EntityRelation relation : input) {
                 alarmFutures.add(Futures.transform(
                         findAlarmByIdAsync(tenantId, relation.getTo().getId()),
-                        AlarmInfo::new));
+                        AlarmInfo::new, MoreExecutors.directExecutor()));
             }
             return Futures.successfulAsList(alarmFutures);
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override

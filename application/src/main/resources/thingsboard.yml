@@ -202,6 +202,10 @@ sql:
   timescale:
     # Specify Interval size for new data chunks storage.
     chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
+  ttl:
+    enabled: "${SQL_TTL_ENABLED:true}"
+    execution_interval_ms: "${SQL_TTL_EXECUTION_INTERVAL:86400000}" # Number of miliseconds
+    ts_key_value_ttl: "${SQL_TTL_TS_KEY_VALUE_TTL:0}" # Number of seconds
 
 # Actor system parameters
 actors:

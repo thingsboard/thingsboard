@@ -37,6 +37,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -167,7 +168,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findByFrom(getTenantId(), entityId, typeGroup));
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByFrom(getTenantId(), entityId, typeGroup)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -185,7 +186,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findInfoByFrom(getTenantId(), entityId, typeGroup).get());
+            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByFrom(getTenantId(), entityId, typeGroup).get()));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -205,7 +206,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findByFromAndType(getTenantId(), entityId, strRelationType, typeGroup));
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByFromAndType(getTenantId(), entityId, strRelationType, typeGroup)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -223,7 +224,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findByTo(getTenantId(), entityId, typeGroup));
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByTo(getTenantId(), entityId, typeGroup)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -241,7 +242,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findInfoByTo(getTenantId(), entityId, typeGroup).get());
+            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByTo(getTenantId(), entityId, typeGroup).get()));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -261,7 +262,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findByToAndType(getTenantId(), entityId, strRelationType, typeGroup));
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByToAndType(getTenantId(), entityId, strRelationType, typeGroup)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -276,7 +277,7 @@ public class EntityRelationController extends BaseController {
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            return checkNotNull(relationService.findByQuery(getTenantId(), query).get());
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByQuery(getTenantId(), query).get()));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -291,10 +292,26 @@ public class EntityRelationController extends BaseController {
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            return checkNotNull(relationService.findInfoByQuery(getTenantId(), query).get());
+            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByQuery(getTenantId(), query).get()));
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private <T extends EntityRelation> List<T> filterRelationsByReadPermission(List<T> relationsByQuery) {
+        return relationsByQuery.stream().filter(relationByQuery -> {
+            try {
+                checkEntityId(relationByQuery.getTo(), Operation.READ);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+            try {
+                checkEntityId(relationByQuery.getFrom(), Operation.READ);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
     }
 
     private RelationTypeGroup parseRelationTypeGroup(String strRelationTypeGroup, RelationTypeGroup defaultValue) {

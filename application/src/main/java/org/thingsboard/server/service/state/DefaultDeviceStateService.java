@@ -272,7 +272,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                                 log.warn("Failed to register device to the state service", t);
                                 callback.onFailure(t);
                             }
-                        });
+                        }, MoreExecutors.directExecutor());
                     } else if (proto.getUpdated()) {
                         DeviceStateData stateData = getOrFetchDeviceStateData(device.getId());
                         if (stateData != null) {
@@ -347,7 +347,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                                     }
                                     return null;
                                 }
-                            });
+                            }, MoreExecutors.directExecutor());
                             fetchFutures.add(future);
                         }
                     }
@@ -440,10 +440,10 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
         if (persistToTelemetry) {
             ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
-            return Futures.transform(tsData, extractDeviceStateData(device));
+            return Futures.transform(tsData, extractDeviceStateData(device), MoreExecutors.directExecutor());
         } else {
             ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
-            return Futures.transform(attrData, extractDeviceStateData(device));
+            return Futures.transform(attrData, extractDeviceStateData(device), MoreExecutors.directExecutor());
         }
     }
 

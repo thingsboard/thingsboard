@@ -16,15 +16,29 @@
 package org.thingsboard.rule.engine.kafka;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.*;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @RuleNode(
@@ -45,8 +59,11 @@ public class TbKafkaNode implements TbNode {
     private static final String PARTITION = "partition";
     private static final String TOPIC = "topic";
     private static final String ERROR = "error";
+    public static final String TB_MSG_MD_PREFIX = "tb_msg_md_";
 
     private TbKafkaNodeConfiguration config;
+    private boolean addMetadataKeyValuesAsKafkaHeaders;
+    private Charset toBytesCharset;
 
     private Producer<?, String> producer;
 
@@ -66,6 +83,8 @@ public class TbKafkaNode implements TbNode {
         if (config.getOtherProperties() != null) {
             config.getOtherProperties().forEach(properties::put);
         }
+        addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
+        toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
         try {
             this.producer = new KafkaProducer<>(properties);
         } catch (Exception e) {
@@ -77,16 +96,16 @@ public class TbKafkaNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(config.getTopicPattern(), msg.getMetaData());
         try {
-            producer.send(new ProducerRecord<>(topic, msg.getData()),
-                    (metadata, e) -> {
-                        if (metadata != null) {
-                            TbMsg next = processResponse(ctx, msg, metadata);
-                            ctx.tellNext(next, TbRelationTypes.SUCCESS);
-                        } else {
-                            TbMsg next = processException(ctx, msg, e);
-                            ctx.tellFailure(next, e);
-                        }
-                    });
+            if (!addMetadataKeyValuesAsKafkaHeaders) {
+                producer.send(new ProducerRecord<>(topic, msg.getData()),
+                        (metadata, e) -> processRecord(ctx, msg, metadata, e));
+            } else {
+                Headers headers = new RecordHeaders();
+                msg.getMetaData().values().forEach((key, value) -> headers.add(new RecordHeader(TB_MSG_MD_PREFIX + key, value.getBytes(toBytesCharset))));
+                producer.send(new ProducerRecord<>(topic, null, null, null, msg.getData(), headers),
+                        (metadata, e) -> processRecord(ctx, msg, metadata, e));
+            }
+
         } catch (Exception e) {
             ctx.tellFailure(msg, e);
         }
@@ -100,6 +119,16 @@ public class TbKafkaNode implements TbNode {
             } catch (Exception e) {
                 log.error("Failed to close producer during destroy()", e);
             }
+        }
+    }
+
+    private void processRecord(TbContext ctx, TbMsg msg, RecordMetadata metadata, Exception e) {
+        if (metadata != null) {
+            TbMsg next = processResponse(ctx, msg, metadata);
+            ctx.tellNext(next, TbRelationTypes.SUCCESS);
+        } else {
+            TbMsg next = processException(ctx, msg, e);
+            ctx.tellFailure(next, e);
         }
     }
 

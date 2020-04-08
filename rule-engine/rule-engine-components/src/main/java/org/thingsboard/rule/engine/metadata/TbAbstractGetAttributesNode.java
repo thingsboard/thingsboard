@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParseException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -121,7 +122,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 }
             }
             return null;
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<Void> putLatestTelemetry(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap) {
@@ -151,7 +152,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 }
             });
             return null;
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     private void putValueWithTs(TbMsg msg, TsKvEntry r) {

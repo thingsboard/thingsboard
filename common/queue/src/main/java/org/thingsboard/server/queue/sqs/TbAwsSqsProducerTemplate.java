@@ -97,7 +97,7 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                     callback.onFailure(t);
                 }
             }
-        });
+        }, producerExecutor);
     }
 
     @Override

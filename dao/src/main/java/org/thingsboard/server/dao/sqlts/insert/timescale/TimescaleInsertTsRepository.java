@@ -37,8 +37,8 @@ import java.util.List;
 public class TimescaleInsertTsRepository extends AbstractInsertRepository implements InsertTsRepository<TimescaleTsKvEntity> {
 
     private static final String INSERT_OR_UPDATE =
-            "INSERT INTO tenant_ts_kv (tenant_id, entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
-                    "ON CONFLICT (tenant_id, entity_id, key, ts) DO UPDATE SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json);";
+            "INSERT INTO ts_kv (entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) VALUES(?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
+                    "ON CONFLICT (entity_id, key, ts) DO UPDATE SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json);";
 
     @Override
     public void saveOrUpdate(List<EntityContainer<TimescaleTsKvEntity>> entities) {
@@ -46,41 +46,40 @@ public class TimescaleInsertTsRepository extends AbstractInsertRepository implem
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 TimescaleTsKvEntity tsKvEntity = entities.get(i).getEntity();
-                ps.setObject(1, tsKvEntity.getTenantId());
-                ps.setObject(2, tsKvEntity.getEntityId());
-                ps.setInt(3, tsKvEntity.getKey());
-                ps.setLong(4, tsKvEntity.getTs());
+                ps.setObject(1, tsKvEntity.getEntityId());
+                ps.setInt(2, tsKvEntity.getKey());
+                ps.setLong(3, tsKvEntity.getTs());
 
                 if (tsKvEntity.getBooleanValue() != null) {
-                    ps.setBoolean(5, tsKvEntity.getBooleanValue());
-                    ps.setBoolean(10, tsKvEntity.getBooleanValue());
+                    ps.setBoolean(4, tsKvEntity.getBooleanValue());
+                    ps.setBoolean(9, tsKvEntity.getBooleanValue());
                 } else {
-                    ps.setNull(5, Types.BOOLEAN);
-                    ps.setNull(10, Types.BOOLEAN);
+                    ps.setNull(4, Types.BOOLEAN);
+                    ps.setNull(9, Types.BOOLEAN);
                 }
 
-                ps.setString(6, replaceNullChars(tsKvEntity.getStrValue()));
-                ps.setString(11, replaceNullChars(tsKvEntity.getStrValue()));
+                ps.setString(5, replaceNullChars(tsKvEntity.getStrValue()));
+                ps.setString(10, replaceNullChars(tsKvEntity.getStrValue()));
 
 
                 if (tsKvEntity.getLongValue() != null) {
-                    ps.setLong(7, tsKvEntity.getLongValue());
-                    ps.setLong(12, tsKvEntity.getLongValue());
+                    ps.setLong(6, tsKvEntity.getLongValue());
+                    ps.setLong(11, tsKvEntity.getLongValue());
                 } else {
-                    ps.setNull(7, Types.BIGINT);
-                    ps.setNull(12, Types.BIGINT);
+                    ps.setNull(6, Types.BIGINT);
+                    ps.setNull(11, Types.BIGINT);
                 }
 
                 if (tsKvEntity.getDoubleValue() != null) {
-                    ps.setDouble(8, tsKvEntity.getDoubleValue());
-                    ps.setDouble(13, tsKvEntity.getDoubleValue());
+                    ps.setDouble(7, tsKvEntity.getDoubleValue());
+                    ps.setDouble(12, tsKvEntity.getDoubleValue());
                 } else {
-                    ps.setNull(8, Types.DOUBLE);
-                    ps.setNull(13, Types.DOUBLE);
+                    ps.setNull(7, Types.DOUBLE);
+                    ps.setNull(12, Types.DOUBLE);
                 }
 
-                ps.setString(9, replaceNullChars(tsKvEntity.getJsonValue()));
-                ps.setString(14, replaceNullChars(tsKvEntity.getJsonValue()));
+                ps.setString(8, replaceNullChars(tsKvEntity.getJsonValue()));
+                ps.setString(13, replaceNullChars(tsKvEntity.getJsonValue()));
             }
 
             @Override

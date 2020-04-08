@@ -14,33 +14,9 @@
 -- limitations under the License.
 --
 
--- select check_version();
+-- call create_partition_ts_kv_table();
 
-CREATE OR REPLACE FUNCTION check_version() RETURNS boolean AS $$
-DECLARE
-    current_version integer;
-    valid_version boolean;
-BEGIN
-    RAISE NOTICE 'Check the current installed PostgreSQL version...';
-    SELECT current_setting('server_version_num') INTO current_version;
-    IF current_version < 100000 THEN
-        valid_version := FALSE;
-    ELSE
-        valid_version := TRUE;
-    END IF;
-    IF valid_version = FALSE THEN
-        RAISE NOTICE 'Postgres version should be at least more than 10!';
-    ELSE
-        RAISE NOTICE 'PostgreSQL version is valid!';
-        RAISE NOTICE 'Schema update started...';
-    END IF;
-    RETURN valid_version;
-END;
-$$ LANGUAGE 'plpgsql';
-
--- select create_partition_ts_kv_table();
-
-CREATE OR REPLACE FUNCTION create_partition_ts_kv_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_partition_ts_kv_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   ALTER TABLE ts_kv
@@ -57,11 +33,11 @@ BEGIN
   ALTER TABLE ts_kv
     ALTER COLUMN key TYPE integer USING key::integer;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select create_new_ts_kv_latest_table();
+-- call create_new_ts_kv_latest_table();
 
-CREATE OR REPLACE FUNCTION create_new_ts_kv_latest_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_new_ts_kv_latest_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   ALTER TABLE ts_kv_latest
@@ -81,13 +57,13 @@ BEGIN
   ALTER TABLE ts_kv_latest
     ADD CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key);
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
 
--- select create_partitions();
+-- call create_partitions();
 
-CREATE OR REPLACE FUNCTION create_partitions() RETURNS VOID AS
-$$
+CREATE OR REPLACE PROCEDURE create_partitions() LANGUAGE plpgsql AS $$
+
 DECLARE
     partition_date varchar;
     from_ts        bigint;
@@ -111,11 +87,11 @@ BEGIN
 
     CLOSE key_cursor;
 END;
-$$ language 'plpgsql';
+$$;
 
--- select create_ts_kv_dictionary_table();
+-- call create_ts_kv_dictionary_table();
 
-CREATE OR REPLACE FUNCTION create_ts_kv_dictionary_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_ts_kv_dictionary_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   CREATE TABLE IF NOT EXISTS ts_kv_dictionary
@@ -125,12 +101,12 @@ BEGIN
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
   );
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select insert_into_dictionary();
+-- call insert_into_dictionary();
 
-CREATE OR REPLACE FUNCTION insert_into_dictionary() RETURNS VOID AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_dictionary() LANGUAGE plpgsql AS $$
+
 DECLARE
     insert_record RECORD;
     key_cursor CURSOR FOR SELECT DISTINCT key
@@ -150,28 +126,27 @@ BEGIN
     END LOOP;
     CLOSE key_cursor;
 END;
-$$ language 'plpgsql';
+$$;
 
--- select insert_into_ts_kv();
+-- call insert_into_ts_kv();
 
-CREATE OR REPLACE FUNCTION insert_into_ts_kv() RETURNS void AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv() LANGUAGE plpgsql AS $$
 DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
     insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(first_part_uuid, '-', second_part_uuid, '-1', third_part_uuid, '-', fourth_part_uuid, '-', fifth_part_uuid)::uuid AS entity_id,
+    insert_cursor CURSOR FOR SELECT CONCAT(entity_id_uuid_first_part, '-', entity_id_uuid_second_part, '-1', entity_id_uuid_third_part, '-', entity_id_uuid_fourth_part, '-', entity_id_uuid_fifth_part)::uuid AS entity_id,
                                     ts_kv_records.key                                                         AS key,
                                     ts_kv_records.ts                                                          AS ts,
                                     ts_kv_records.bool_v                                                      AS bool_v,
                                     ts_kv_records.str_v                                                       AS str_v,
                                     ts_kv_records.long_v                                                      AS long_v,
                                     ts_kv_records.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS first_part_uuid,
-                                          SUBSTRING(entity_id, 4, 4)  AS second_part_uuid,
-                                          SUBSTRING(entity_id, 1, 3)  AS third_part_uuid,
-                                          SUBSTRING(entity_id, 16, 4) AS fourth_part_uuid,
-                                          SUBSTRING(entity_id, 20)    AS fifth_part_uuid,
+                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS entity_id_uuid_first_part,
+                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_uuid_second_part,
+                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_uuid_third_part,
+                                          SUBSTRING(entity_id, 16, 4) AS entity_id_uuid_fourth_part,
+                                          SUBSTRING(entity_id, 20)    AS entity_id_uuid_fifth_part,
                                           key_id                      AS key,
                                           ts,
                                           bool_v,
@@ -198,28 +173,27 @@ BEGIN
     END LOOP;
     CLOSE insert_cursor;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select insert_into_ts_kv_latest();
+-- call insert_into_ts_kv_latest();
 
-CREATE OR REPLACE FUNCTION insert_into_ts_kv_latest() RETURNS void AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest() LANGUAGE plpgsql AS $$
 DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
     insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(first_part_uuid, '-', second_part_uuid, '-1', third_part_uuid, '-', fourth_part_uuid, '-', fifth_part_uuid)::uuid AS entity_id,
+    insert_cursor CURSOR FOR SELECT CONCAT(entity_id_uuid_first_part, '-', entity_id_uuid_second_part, '-1', entity_id_uuid_third_part, '-', entity_id_uuid_fourth_part, '-', entity_id_uuid_fifth_part)::uuid AS entity_id,
                                     ts_kv_latest_records.key                                                         AS key,
                                     ts_kv_latest_records.ts                                                          AS ts,
                                     ts_kv_latest_records.bool_v                                                      AS bool_v,
                                     ts_kv_latest_records.str_v                                                       AS str_v,
                                     ts_kv_latest_records.long_v                                                      AS long_v,
                                     ts_kv_latest_records.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS first_part_uuid,
-                                          SUBSTRING(entity_id, 4, 4)  AS second_part_uuid,
-                                          SUBSTRING(entity_id, 1, 3)  AS third_part_uuid,
-                                          SUBSTRING(entity_id, 16, 4) AS fourth_part_uuid,
-                                          SUBSTRING(entity_id, 20)    AS fifth_part_uuid,
+                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS entity_id_uuid_first_part,
+                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_uuid_second_part,
+                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_uuid_third_part,
+                                          SUBSTRING(entity_id, 16, 4) AS entity_id_uuid_fourth_part,
+                                          SUBSTRING(entity_id, 20)    AS entity_id_uuid_fifth_part,
                                           key_id                      AS key,
                                           ts,
                                           bool_v,
@@ -246,6 +220,6 @@ BEGIN
     END LOOP;
     CLOSE insert_cursor;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
 

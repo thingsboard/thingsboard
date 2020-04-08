@@ -18,6 +18,7 @@ package org.thingsboard.server.service.script;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -158,7 +159,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 }
                 kafkaFailedMsgs.incrementAndGet();
             }
-        });
+        }, MoreExecutors.directExecutor());
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsCompileResponse compilationResult = response.getValue().getCompileResponse();
             UUID compiledScriptId = new UUID(compilationResult.getScriptIdMSB(), compilationResult.getScriptIdLSB());
@@ -170,7 +171,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 log.debug("[{}] Failed to compile script due to [{}]: {}", compiledScriptId, compilationResult.getErrorCode().name(), compilationResult.getErrorDetails());
                 throw new RuntimeException(compilationResult.getErrorDetails());
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -209,7 +210,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 }
                 kafkaFailedMsgs.incrementAndGet();
             }
-        });
+        }, MoreExecutors.directExecutor());
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
             if (invokeResult.getSuccess()) {
@@ -218,7 +219,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
                 throw new RuntimeException(invokeResult.getErrorDetails());
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override

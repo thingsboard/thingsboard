@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +96,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
 
     @Override
     public ListenableFuture<Void> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        return getRemoveLatestFuture(tenantId, entityId, query);
+        return getRemoveLatestFuture(entityId, query);
     }
 
     @Override
@@ -124,9 +125,9 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     }
 
     @Override
-    protected ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+    protected ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, ReadTsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
-            return findAllAsyncWithLimit(tenantId, entityId, query);
+            return findAllAsyncWithLimit(entityId, query);
         } else {
             long stepTs = query.getStartTs();
             List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
@@ -134,7 +135,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 long startTs = stepTs;
                 long endTs = stepTs + query.getInterval();
                 long ts = startTs + (endTs - startTs) / 2;
-                futures.add(findAndAggregateAsync(tenantId, entityId, query.getKey(), startTs, endTs, ts, query.getAggregation()));
+                futures.add(findAndAggregateAsync(entityId, query.getKey(), startTs, endTs, ts, query.getAggregation()));
                 stepTs = endTs;
             }
             return getTskvEntriesFuture(Futures.allAsList(futures));
@@ -142,7 +143,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     }
 
     @Override
-    protected ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+    protected ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
         Integer keyId = getOrSaveKeyId(query.getKey());
         List<TsKvEntity> tsKvEntities = tsKvRepository.findAllWithLimit(
                 entityId.getId(),
@@ -156,9 +157,9 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
     }
 
-    protected ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
+    private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
-        switchAggregation(tenantId, entityId, key, startTs, endTs, aggregation, entitiesFutures);
+        switchAggregation(entityId, key, startTs, endTs, aggregation, entitiesFutures);
         return Futures.transform(setFutures(entitiesFutures), entity -> {
             if (entity != null && entity.isNotEmpty()) {
                 entity.setEntityId(entityId.getId());
@@ -168,32 +169,32 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
             } else {
                 return Optional.empty();
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
-    protected void switchAggregation(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void switchAggregation(EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         switch (aggregation) {
             case AVG:
-                findAvg(tenantId, entityId, key, startTs, endTs, entitiesFutures);
+                findAvg(entityId, key, startTs, endTs, entitiesFutures);
                 break;
             case MAX:
-                findMax(tenantId, entityId, key, startTs, endTs, entitiesFutures);
+                findMax(entityId, key, startTs, endTs, entitiesFutures);
                 break;
             case MIN:
-                findMin(tenantId, entityId, key, startTs, endTs, entitiesFutures);
+                findMin(entityId, key, startTs, endTs, entitiesFutures);
                 break;
             case SUM:
-                findSum(tenantId, entityId, key, startTs, endTs, entitiesFutures);
+                findSum(entityId, key, startTs, endTs, entitiesFutures);
                 break;
             case COUNT:
-                findCount(tenantId, entityId, key, startTs, endTs, entitiesFutures);
+                findCount(entityId, key, startTs, endTs, entitiesFutures);
                 break;
             default:
                 throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
         }
     }
 
-    protected void findCount(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findCount(
                 entityId.getId(),
@@ -202,7 +203,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 endTs));
     }
 
-    protected void findSum(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findSum(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findSum(
                 entityId.getId(),
@@ -211,7 +212,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 endTs));
     }
 
-    protected void findMin(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findMin(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findStringMin(
                 entityId.getId(),
@@ -225,7 +226,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 endTs));
     }
 
-    protected void findMax(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findMax(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findStringMax(
                 entityId.getId(),
@@ -239,7 +240,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 endTs));
     }
 
-    protected void findAvg(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findAvg(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findAvg(
                 entityId.getId(),
