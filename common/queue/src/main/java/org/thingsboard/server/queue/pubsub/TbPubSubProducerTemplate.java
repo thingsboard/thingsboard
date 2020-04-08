@@ -71,7 +71,6 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
         PubsubMessage.Builder pubsubMessageBuilder = PubsubMessage.newBuilder();
         pubsubMessageBuilder.setData(getMsg(msg));
-        pubsubMessageBuilder.putAttributes("headers", gson.toJson(msg.getHeaders().getData()));
 
         Publisher publisher = getOrCreatePublisher(tpi.getFullTopicName());
         ApiFuture<String> future = publisher.publish(pubsubMessageBuilder.build());
@@ -110,7 +109,7 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     }
 
     private ByteString getMsg(T msg) {
-        String json = gson.toJson(new DefaultTbQueueMsg(msg.getKey(), msg.getData()));
+        String json = gson.toJson(new DefaultTbQueueMsg(msg));
         return ByteString.copyFrom(json.getBytes());
     }
 
