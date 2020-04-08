@@ -41,7 +41,7 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -166,7 +166,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onAttributesUpdate(tenantId, entityId, scope, attributes, TbMsgCallback.EMPTY);
+                subscriptionManagerService.get().onAttributesUpdate(tenantId, entityId, scope, attributes, TbCallback.EMPTY);
             } else {
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");
             }
@@ -180,7 +180,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onTimeSeriesUpdate(tenantId, entityId, ts, TbMsgCallback.EMPTY);
+                subscriptionManagerService.get().onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY);
             } else {
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");
             }

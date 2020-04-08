@@ -16,31 +16,39 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.RuleNodeException;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
-public class MsgPackCallback<T> implements TbMsgCallback {
+public class TbMsgPackCallback<T> implements TbMsgCallback {
     private final CountDownLatch processingTimeoutLatch;
     private final ConcurrentMap<UUID, T> ackMap;
     private final ConcurrentMap<UUID, T> successMap;
     private final ConcurrentMap<UUID, T> failedMap;
     private final UUID id;
+    private final TenantId tenantId;
+    private final ConcurrentMap<TenantId, RuleEngineException> firstExceptions;
 
-    public MsgPackCallback(UUID id, CountDownLatch processingTimeoutLatch,
-                           ConcurrentMap<UUID, T> ackMap,
-                           ConcurrentMap<UUID, T> successMap,
-                           ConcurrentMap<UUID, T> failedMap) {
+    public TbMsgPackCallback(UUID id, TenantId tenantId,
+                             CountDownLatch processingTimeoutLatch,
+                             ConcurrentMap<UUID, T> ackMap,
+                             ConcurrentMap<UUID, T> successMap,
+                             ConcurrentMap<UUID, T> failedMap,
+                             ConcurrentMap<TenantId, RuleEngineException> firstExceptions) {
         this.id = id;
+        this.tenantId = tenantId;
         this.processingTimeoutLatch = processingTimeoutLatch;
         this.ackMap = ackMap;
         this.successMap = successMap;
         this.failedMap = failedMap;
+        this.firstExceptions = firstExceptions;
     }
 
     @Override
@@ -56,11 +64,12 @@ public class MsgPackCallback<T> implements TbMsgCallback {
     }
 
     @Override
-    public void onFailure(Throwable t) {
-        log.trace("[{}] ON FAILURE", id);
+    public void onFailure(RuleEngineException e) {
+        log.trace("[{}] ON FAILURE", id, e);
         T msg = ackMap.remove(id);
         if (msg != null) {
             failedMap.put(id, msg);
+            firstExceptions.putIfAbsent(tenantId, e);
         }
         if (ackMap.isEmpty()) {
             processingTimeoutLatch.countDown();

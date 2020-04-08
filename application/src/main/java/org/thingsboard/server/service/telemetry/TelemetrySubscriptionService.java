@@ -17,11 +17,7 @@ package org.thingsboard.server.service.telemetry;
 
 import org.springframework.context.ApplicationListener;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionState;
 
 /**
  * Created by ashvayka on 27.03.18.

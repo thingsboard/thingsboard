@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -123,7 +123,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
     }
 
     @Override
-    public void addSubscription(TbSubscription subscription, TbMsgCallback callback) {
+    public void addSubscription(TbSubscription subscription, TbCallback callback) {
         log.trace("[{}][{}][{}] Registering remote subscription for entity [{}]",
                 subscription.getServiceId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, subscription.getTenantId(), subscription.getEntityId());
@@ -151,7 +151,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
     }
 
     @Override
-    public void cancelSubscription(String sessionId, int subscriptionId, TbMsgCallback callback) {
+    public void cancelSubscription(String sessionId, int subscriptionId, TbCallback callback) {
         log.debug("[{}][{}] Going to remove subscription.", sessionId, subscriptionId);
         Map<Integer, TbSubscription> sessionSubscriptions = subscriptionsByWsSessionId.get(sessionId);
         if (sessionSubscriptions != null) {
@@ -189,7 +189,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
     }
 
     @Override
-    public void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbMsgCallback callback) {
+    public void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbCallback callback) {
         onLocalSubUpdate(entityId,
                 s -> {
                     if (TbSubscriptionType.TIMESERIES.equals(s.getType())) {
@@ -213,7 +213,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
     }
 
     @Override
-    public void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbMsgCallback callback) {
+    public void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbCallback callback) {
         onLocalSubUpdate(entityId,
                 s -> {
                     if (TbSubscriptionType.ATTRIBUTES.equals(s.getType())) {
@@ -261,7 +261,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                 if (subscriptionUpdate != null && !subscriptionUpdate.isEmpty()) {
                     if (serviceId.equals(s.getServiceId())) {
                         SubscriptionUpdate update = new SubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
-                        localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbMsgCallback.EMPTY);
+                        localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                     } else {
                         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
                         toCoreNotificationsProducer.send(tpi, toProto(s, subscriptionUpdate), null);

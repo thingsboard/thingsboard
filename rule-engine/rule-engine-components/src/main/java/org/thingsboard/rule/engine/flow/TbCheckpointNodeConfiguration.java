@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cluster;
+package org.thingsboard.rule.engine.flow;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class SendToClusterMsg implements TbActorMsg {
+public class TbCheckpointNodeConfiguration implements NodeConfiguration<TbCheckpointNodeConfiguration> {
 
-    private TbActorMsg msg;
-    private EntityId entityId;
-
-    public SendToClusterMsg(EntityId entityId, TbActorMsg msg) {
-        this.entityId = entityId;
-        this.msg = msg;
-    }
-
+    private String queueName;
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.SEND_TO_CLUSTER_MSG;
+    public TbCheckpointNodeConfiguration defaultConfiguration() {
+        TbCheckpointNodeConfiguration configuration = new TbCheckpointNodeConfiguration();
+        configuration.setQueueName("HighPriority");
+        return configuration;
     }
 }

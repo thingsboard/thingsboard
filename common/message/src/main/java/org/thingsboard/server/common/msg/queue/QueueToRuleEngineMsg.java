@@ -33,6 +33,7 @@ public final class QueueToRuleEngineMsg implements TbActorMsg {
     private final TenantId tenantId;
     private final TbMsg tbMsg;
     private final Set<String> relationTypes;
+    private final String failureMessage;
 
     @Override
     public MsgType getMsgType() {

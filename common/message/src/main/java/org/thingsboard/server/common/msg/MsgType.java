@@ -34,11 +34,6 @@ public enum MsgType {
     APP_INIT_MSG,
 
     /**
-     * All messages, could be send  to cluster
-    */
-    SEND_TO_CLUSTER_MSG,
-
-    /**
      * ADDED/UPDATED/DELETED events for main entities.
      *
      * See {@link org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg}

@@ -92,10 +92,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         try {
             SessionMetaData sessionMd = internalSessionMap.get(session.getId());
             if (sessionMd != null) {
-                log.info("[{}][{}] Processing {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message.getPayload());
+                log.trace("[{}][{}] Processing {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message.getPayload());
                 webSocketService.handleWebSocketMsg(sessionMd.sessionRef, message.getPayload());
             } else {
-                log.warn("[{}] Failed to find session", session.getId());
+                log.trace("[{}] Failed to find session", session.getId());
                 session.close(CloseStatus.SERVER_ERROR.withReason("Session not found!"));
             }
         } catch (IOException e) {
@@ -139,7 +139,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         if (sessionMd != null) {
             processInWebSocketService(sessionMd.sessionRef, SessionEvent.onError(tError));
         } else {
-            log.warn("[{}] Failed to find session", session.getId());
+            log.trace("[{}] Failed to find session", session.getId());
         }
         log.trace("[{}] Session transport error", session.getId(), tError);
     }

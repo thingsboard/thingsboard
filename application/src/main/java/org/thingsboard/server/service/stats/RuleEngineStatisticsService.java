@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.service.stats;
 
-import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 
-import java.util.function.Consumer;
+public interface RuleEngineStatisticsService {
 
-public interface RuleChainTransactionService {
-
-    void beginTransaction(TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure);
-
-    void endTransaction(TbMsg msg, Consumer<TbMsg> onSuccess, Consumer<Throwable> onFailure);
-
+    void reportQueueStats(long ts, TbRuleEngineConsumerStats stats);
 }

@@ -22,6 +22,7 @@ import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
@@ -30,9 +31,9 @@ import scala.concurrent.duration.Duration;
 
 public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMessageProcessor> {
 
-    private RuleChainActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId) {
-        super(systemContext, tenantId, ruleChainId);
-        setProcessor(new RuleChainActorMessageProcessor(tenantId, ruleChainId, systemContext,
+    private RuleChainActor(ActorSystemContext systemContext, TenantId tenantId, RuleChain ruleChain) {
+        super(systemContext, tenantId, ruleChain.getId());
+        setProcessor(new RuleChainActorMessageProcessor(tenantId, ruleChain, systemContext,
                 context().parent(), context().self()));
     }
 
@@ -46,7 +47,6 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
                 processor.onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
             case RULE_TO_RULE_CHAIN_TELL_NEXT_MSG:
-            case REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG:
                 processor.onTellNext((RuleNodeToRuleChainTellNextMsg) msg);
                 break;
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
@@ -68,17 +68,17 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
         private static final long serialVersionUID = 1L;
 
         private final TenantId tenantId;
-        private final RuleChainId ruleChainId;
+        private final RuleChain ruleChain;
 
-        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId pluginId) {
+        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChain ruleChain) {
             super(context);
             this.tenantId = tenantId;
-            this.ruleChainId = pluginId;
+            this.ruleChain = ruleChain;
         }
 
         @Override
         public RuleChainActor create() {
-            return new RuleChainActor(context, tenantId, ruleChainId);
+            return new RuleChainActor(context, tenantId, ruleChain);
         }
     }
 

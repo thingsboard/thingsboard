@@ -15,38 +15,119 @@
  */
 package org.thingsboard.server.service.queue;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.RuleNodeException;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
+@Data
 public class TbRuleEngineConsumerStats {
 
-    private final AtomicInteger totalCounter = new AtomicInteger(0);
-    private final AtomicInteger postTelemetryCounter = new AtomicInteger(0);
-    private final AtomicInteger postAttributesCounter = new AtomicInteger(0);
-    private final AtomicInteger toServerRPCCallRequestCounter = new AtomicInteger(0);
+    public static final String TOTAL_MSGS = "totalMsgs";
+    public static final String SUCCESSFUL_MSGS = "successfulMsgs";
+    public static final String TMP_TIMEOUT = "tmpTimeout";
+    public static final String TMP_FAILED = "tmpFailed";
+    public static final String TIMEOUT_MSGS = "timeoutMsgs";
+    public static final String FAILED_MSGS = "failedMsgs";
+    public static final String SUCCESSFUL_ITERATIONS = "successfulIterations";
+    public static final String FAILED_ITERATIONS = "failedIterations";
 
-    public void log(TransportProtos.TransportToRuleEngineMsg msg) {
-        totalCounter.incrementAndGet();
-        if (msg.hasPostTelemetry()) {
-            postTelemetryCounter.incrementAndGet();
+    private final AtomicInteger totalMsgCounter = new AtomicInteger(0);
+    private final AtomicInteger successMsgCounter = new AtomicInteger(0);
+    private final AtomicInteger tmpTimeoutMsgCounter = new AtomicInteger(0);
+    private final AtomicInteger tmpFailedMsgCounter = new AtomicInteger(0);
+
+    private final AtomicInteger timeoutMsgCounter = new AtomicInteger(0);
+    private final AtomicInteger failedMsgCounter = new AtomicInteger(0);
+
+    private final AtomicInteger successIterationsCounter = new AtomicInteger(0);
+    private final AtomicInteger failedIterationsCounter = new AtomicInteger(0);
+
+    private final Map<String, AtomicInteger> counters = new HashMap<>();
+    private final ConcurrentMap<UUID, TbTenantRuleEngineStats> tenantStats = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, RuleEngineException> tenantExceptions = new ConcurrentHashMap<>();
+
+    private final String queueName;
+
+    public TbRuleEngineConsumerStats(String queueName) {
+        this.queueName = queueName;
+        counters.put(TOTAL_MSGS, totalMsgCounter);
+        counters.put(SUCCESSFUL_MSGS, successMsgCounter);
+        counters.put(TIMEOUT_MSGS, timeoutMsgCounter);
+        counters.put(FAILED_MSGS, failedMsgCounter);
+
+        counters.put(TMP_TIMEOUT, tmpTimeoutMsgCounter);
+        counters.put(TMP_FAILED, tmpFailedMsgCounter);
+        counters.put(SUCCESSFUL_ITERATIONS, successIterationsCounter);
+        counters.put(FAILED_ITERATIONS, failedIterationsCounter);
+    }
+
+    public void log(TbRuleEngineProcessingResult msg, boolean finalIterationForPack) {
+        int success = msg.getSuccessMap().size();
+        int pending = msg.getPendingMap().size();
+        int failed = msg.getFailureMap().size();
+        totalMsgCounter.addAndGet(success + pending + failed);
+        successMsgCounter.addAndGet(success);
+        msg.getSuccessMap().values().forEach(m -> getTenantStats(m).logSuccess());
+        if (finalIterationForPack) {
+            if (pending > 0 || failed > 0) {
+                timeoutMsgCounter.addAndGet(pending);
+                failedMsgCounter.addAndGet(failed);
+                if (pending > 0) {
+                    msg.getPendingMap().values().forEach(m -> getTenantStats(m).logTimeout());
+                }
+                if (failed > 0) {
+                    msg.getFailureMap().values().forEach(m -> getTenantStats(m).logFailed());
+                }
+                failedIterationsCounter.incrementAndGet();
+            } else {
+                successIterationsCounter.incrementAndGet();
+            }
+        } else {
+            failedIterationsCounter.incrementAndGet();
+            tmpTimeoutMsgCounter.addAndGet(pending);
+            tmpFailedMsgCounter.addAndGet(failed);
+            if (pending > 0) {
+                msg.getPendingMap().values().forEach(m -> getTenantStats(m).logTmpTimeout());
+            }
+            if (failed > 0) {
+                msg.getFailureMap().values().forEach(m -> getTenantStats(m).logTmpFailed());
+            }
         }
-        if (msg.hasPostAttributes()) {
-            postAttributesCounter.incrementAndGet();
-        }
-        if (msg.hasToServerRPCCallRequest()) {
-            toServerRPCCallRequestCounter.incrementAndGet();
-        }
+        msg.getExceptionsMap().forEach(tenantExceptions::putIfAbsent);
+    }
+
+    private TbTenantRuleEngineStats getTenantStats(TbProtoQueueMsg<ToRuleEngineMsg> m) {
+        ToRuleEngineMsg reMsg = m.getValue();
+        return tenantStats.computeIfAbsent(new UUID(reMsg.getTenantIdMSB(), reMsg.getTenantIdLSB()), TbTenantRuleEngineStats::new);
     }
 
     public void printStats() {
-        int total = totalCounter.getAndSet(0);
+        int total = totalMsgCounter.get();
         if (total > 0) {
-            log.info("Transport total [{}] telemetry [{}] attributes [{}] toServerRpc [{}]",
-                    total, postTelemetryCounter.getAndSet(0),
-                    postAttributesCounter.getAndSet(0), toServerRPCCallRequestCounter.getAndSet(0));
+            StringBuilder stats = new StringBuilder();
+            counters.forEach((label, value) -> {
+                stats.append(label).append(" = [").append(value.get()).append("] ");
+            });
+            log.info("[{}] Stats: {}", queueName, stats);
         }
+    }
+
+    public void reset() {
+        counters.values().forEach(counter -> counter.set(0));
+        tenantStats.clear();
+        tenantExceptions.clear();
     }
 }

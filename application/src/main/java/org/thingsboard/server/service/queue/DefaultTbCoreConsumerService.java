@@ -25,7 +25,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
@@ -120,8 +120,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> failedMap = new ConcurrentHashMap<>();
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
                     pendingMap.forEach((id, msg) -> {
-                        log.info("[{}] Creating main callback for message: {}", id, msg.getValue());
-                        TbMsgCallback callback = new MsgPackCallback<>(id, processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>(), failedMap);
+                        log.trace("[{}] Creating main callback for message: {}", id, msg.getValue());
+                        TbCallback callback = new TbPackCallback<>(id, processingTimeoutLatch, pendingMap, failedMap);
                         try {
                             ToCoreMsg toCoreMsg = msg.getValue();
                             if (toCoreMsg.hasToSubscriptionMgrMsg()) {
@@ -182,7 +182,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @Override
-    protected void handleNotification(UUID id, TbProtoQueueMsg<ToCoreNotificationMsg> msg, TbMsgCallback callback) {
+    protected void handleNotification(UUID id, TbProtoQueueMsg<ToCoreNotificationMsg> msg, TbCallback callback) {
         ToCoreNotificationMsg toCoreMsg = msg.getValue();
         if (toCoreMsg.hasToLocalSubscriptionServiceMsg()) {
             log.trace("[{}] Forwarding message to local subscription service {}", id, toCoreMsg.getToLocalSubscriptionServiceMsg());
@@ -200,7 +200,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         }
     }
 
-    private void forwardToCoreRpcService(FromDeviceRPCResponseProto proto, TbMsgCallback callback) {
+    private void forwardToCoreRpcService(FromDeviceRPCResponseProto proto, TbCallback callback) {
         RpcError error = proto.getError() > 0 ? RpcError.values()[proto.getError()] : null;
         FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB())
                 , proto.getResponse(), error);
@@ -215,7 +215,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         }
     }
 
-    private void forwardToLocalSubMgrService(LocalSubscriptionServiceMsgProto msg, TbMsgCallback callback) {
+    private void forwardToLocalSubMgrService(LocalSubscriptionServiceMsgProto msg, TbCallback callback) {
         if (msg.hasSubUpdate()) {
             localSubscriptionService.onSubscriptionUpdate(msg.getSubUpdate().getSessionId(), TbSubscriptionUtils.fromProto(msg.getSubUpdate()), callback);
         } else {
@@ -223,7 +223,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         }
     }
 
-    private void forwardToSubMgrService(SubscriptionMgrMsgProto msg, TbMsgCallback callback) {
+    private void forwardToSubMgrService(SubscriptionMgrMsgProto msg, TbCallback callback) {
         if (msg.hasAttributeSub()) {
             subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getAttributeSub()), callback);
         } else if (msg.hasTelemetrySub()) {
@@ -248,21 +248,21 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         }
     }
 
-    private void forwardToStateService(DeviceStateServiceMsgProto deviceStateServiceMsg, TbMsgCallback callback) {
+    private void forwardToStateService(DeviceStateServiceMsgProto deviceStateServiceMsg, TbCallback callback) {
         if (statsEnabled) {
             stats.log(deviceStateServiceMsg);
         }
         stateService.onQueueMsg(deviceStateServiceMsg, callback);
     }
 
-    private void forwardToDeviceActor(TransportToDeviceActorMsg toDeviceActorMsg, TbMsgCallback callback) {
+    private void forwardToDeviceActor(TransportToDeviceActorMsg toDeviceActorMsg, TbCallback callback) {
         if (statsEnabled) {
             stats.log(toDeviceActorMsg);
         }
         actorContext.getAppActor().tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback), ActorRef.noSender());
     }
 
-    private void throwNotHandled(Object msg, TbMsgCallback callback) {
+    private void throwNotHandled(Object msg, TbCallback callback) {
         log.warn("Message not handled: {}", msg);
         callback.onFailure(new RuntimeException("Message not handled!"));
     }

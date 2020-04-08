@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 
 /**
  * Created by ashvayka on 01.05.18.
@@ -41,6 +41,6 @@ public interface DeviceStateService extends ApplicationListener<PartitionChangeE
 
     void onDeviceInactivityTimeoutUpdate(DeviceId deviceId, long inactivityTimeout);
 
-    void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto serverAddress, TbMsgCallback bytes);
+    void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto serverAddress, TbCallback bytes);
 
 }

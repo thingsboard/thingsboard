@@ -30,7 +30,6 @@ import org.thingsboard.server.actors.device.DeviceActorCreator;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.actors.shared.rulechain.TenantRuleChainManager;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -43,6 +42,7 @@ import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import scala.concurrent.duration.Duration;
 
@@ -51,12 +51,12 @@ import java.util.stream.Collectors;
 
 public class TenantActor extends RuleChainManagerActor {
 
-    private final TenantId tenantId;
     private final BiMap<DeviceId, ActorRef> deviceActors;
+    private boolean isRuleEngine;
+    private boolean isCore;
 
     private TenantActor(ActorSystemContext systemContext, TenantId tenantId) {
-        super(systemContext, new TenantRuleChainManager(systemContext, tenantId));
-        this.tenantId = tenantId;
+        super(systemContext, tenantId);
         this.deviceActors = HashBiMap.create();
     }
 
@@ -69,7 +69,11 @@ public class TenantActor extends RuleChainManagerActor {
     public void preStart() {
         log.info("[{}] Starting tenant actor.", tenantId);
         try {
-            initRuleChains();
+            isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
+            isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
+            if (isRuleEngine) {
+                initRuleChains();
+            }
             log.info("[{}] Tenant actor started.", tenantId);
         } catch (Exception e) {
             log.warn("[{}] Unknown failure", tenantId, e);
@@ -115,7 +119,6 @@ public class TenantActor extends RuleChainManagerActor {
                 onToDeviceActorMsg((DeviceAwareMsg) msg);
                 break;
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
-            case REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG:
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
             default:
@@ -129,16 +132,19 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
+        if (!isRuleEngine) {
+            log.warn("RECEIVED INVALID MESSAGE: {}", msg);
+        }
         TbMsg tbMsg = msg.getTbMsg();
         if (tbMsg.getRuleChainId() == null) {
-            if (ruleChainManager.getRootChainActor() != null) {
-                ruleChainManager.getRootChainActor().tell(msg, self());
+            if (getRootChainActor() != null) {
+                getRootChainActor().tell(msg, self());
             } else {
-                tbMsg.getCallback().onFailure(new RuntimeException("No Root Rule Chain available!"));
+                tbMsg.getCallback().onFailure(new RuleEngineException("No Root Rule Chain available!"));
                 log.info("[{}] No Root Chain: {}", tenantId, msg);
             }
         } else {
-            ActorRef ruleChainActor = ruleChainManager.get(tbMsg.getRuleChainId());
+            ActorRef ruleChainActor = get(tbMsg.getRuleChainId());
             if (ruleChainActor != null) {
                 ruleChainActor.tell(msg, self());
             } else {
@@ -150,24 +156,29 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onRuleChainMsg(RuleChainAwareMsg msg) {
-        ruleChainManager.getOrCreateActor(context(), msg.getRuleChainId()).tell(msg, self());
+        getOrCreateActor(context(), msg.getRuleChainId()).tell(msg, self());
     }
 
     private void onToDeviceActorMsg(DeviceAwareMsg msg) {
+        if (!isCore) {
+            log.warn("RECEIVED INVALID MESSAGE: {}", msg);
+        }
         getOrCreateDeviceActor(msg.getDeviceId()).tell(msg, ActorRef.noSender());
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        ActorRef target = getEntityActorRef(msg.getEntityId());
-        if (target != null) {
-            if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
-                RuleChain ruleChain = systemContext.getRuleChainService().
-                        findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
-                ruleChainManager.visit(ruleChain, target);
+        if (isRuleEngine) {
+            ActorRef target = getEntityActorRef(msg.getEntityId());
+            if (target != null) {
+                if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+                    RuleChain ruleChain = systemContext.getRuleChainService().
+                            findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
+                    visit(ruleChain, target);
+                }
+                target.tell(msg, ActorRef.noSender());
+            } else {
+                log.debug("[{}] Invalid component lifecycle msg: {}", tenantId, msg);
             }
-            target.tell(msg, ActorRef.noSender());
-        } else {
-            log.debug("[{}] Invalid component lifecycle msg: {}", tenantId, msg);
         }
     }
 
@@ -214,15 +225,12 @@ public class TenantActor extends RuleChainManagerActor {
         }
     }
 
-    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), new Function<Throwable, SupervisorStrategy.Directive>() {
-        @Override
-        public SupervisorStrategy.Directive apply(Throwable t) {
-            log.warn("[{}] Unknown failure", tenantId, t);
-            if (t instanceof ActorInitializationException) {
-                return SupervisorStrategy.stop();
-            } else {
-                return SupervisorStrategy.resume();
-            }
+    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), t -> {
+        log.warn("[{}] Unknown failure", tenantId, t);
+        if (t instanceof ActorInitializationException) {
+            return SupervisorStrategy.stop();
+        } else {
+            return SupervisorStrategy.resume();
         }
     });
 

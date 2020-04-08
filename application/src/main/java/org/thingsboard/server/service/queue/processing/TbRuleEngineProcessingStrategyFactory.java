@@ -32,24 +32,25 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbRuleEngineProcessingStrategyFactory {
 
-    public TbRuleEngineProcessingStrategy newInstance(TbRuleEngineQueueAckStrategyConfiguration configuration) {
+    public TbRuleEngineProcessingStrategy newInstance(String name, TbRuleEngineQueueAckStrategyConfiguration configuration) {
         switch (configuration.getType()) {
             case "SKIP_ALL":
-                return new SkipStrategy();
+                return new SkipStrategy(name);
             case "RETRY_ALL":
-                return new RetryStrategy(true, true, true, configuration);
+                return new RetryStrategy(name, true, true, true, configuration);
             case "RETRY_FAILED":
-                return new RetryStrategy(false, true, false, configuration);
+                return new RetryStrategy(name, false, true, false, configuration);
             case "RETRY_TIMED_OUT":
-                return new RetryStrategy(false, false, true, configuration);
+                return new RetryStrategy(name, false, false, true, configuration);
             case "RETRY_FAILED_AND_TIMED_OUT":
-                return new RetryStrategy(false, true, true, configuration);
+                return new RetryStrategy(name, false, true, true, configuration);
             default:
                 throw new RuntimeException("TbRuleEngineProcessingStrategy with type " + configuration.getType() + " is not supported!");
         }
     }
 
     private static class RetryStrategy implements TbRuleEngineProcessingStrategy {
+        private final String queueName;
         private final boolean retrySuccessful;
         private final boolean retryFailed;
         private final boolean retryTimeout;
@@ -60,7 +61,8 @@ public class TbRuleEngineProcessingStrategyFactory {
         private int initialTotalCount;
         private int retryCount;
 
-        public RetryStrategy(boolean retrySuccessful, boolean retryFailed, boolean retryTimeout, TbRuleEngineQueueAckStrategyConfiguration configuration) {
+        public RetryStrategy(String queueName, boolean retrySuccessful, boolean retryFailed, boolean retryTimeout, TbRuleEngineQueueAckStrategyConfiguration configuration) {
+            this.queueName = queueName;
             this.retrySuccessful = retrySuccessful;
             this.retryFailed = retryFailed;
             this.retryTimeout = retryTimeout;
@@ -80,10 +82,10 @@ public class TbRuleEngineProcessingStrategyFactory {
                 retryCount++;
                 double failedCount = result.getFailureMap().size() + result.getPendingMap().size();
                 if (maxRetries > 0 && retryCount > maxRetries) {
-                    log.info("Skip reprocess of the rule engine pack due to max retries");
+                    log.info("[{}] Skip reprocess of the rule engine pack due to max retries", queueName);
                     return new TbRuleEngineProcessingDecision(true, null);
                 } else if (maxAllowedFailurePercentage > 0 && (failedCount / initialTotalCount) > maxAllowedFailurePercentage) {
-                    log.info("Skip reprocess of the rule engine pack due to max allowed failure percentage");
+                    log.info("[{}] Skip reprocess of the rule engine pack due to max allowed failure percentage", queueName);
                     return new TbRuleEngineProcessingDecision(true, null);
                 } else {
                     ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toReprocess = new ConcurrentHashMap<>(initialTotalCount);
@@ -96,8 +98,7 @@ public class TbRuleEngineProcessingStrategyFactory {
                     if (retrySuccessful) {
                         result.getSuccessMap().forEach(toReprocess::put);
                     }
-                    log.info("Going to reprocess {} messages", toReprocess.size());
-                    //TODO: 2.5 Log most popular rule nodes by error count;
+                    log.info("[{}] Going to reprocess {} messages", queueName, toReprocess.size());
                     if (log.isTraceEnabled()) {
                         toReprocess.forEach((id, msg) -> log.trace("Going to reprocess [{}]: {}", id, msg.getValue()));
                     }
@@ -116,9 +117,15 @@ public class TbRuleEngineProcessingStrategyFactory {
 
     private static class SkipStrategy implements TbRuleEngineProcessingStrategy {
 
+        private final String queueName;
+
+        public SkipStrategy(String name) {
+            this.queueName = name;
+        }
+
         @Override
         public TbRuleEngineProcessingDecision analyze(TbRuleEngineProcessingResult result) {
-            log.info("Skip reprocess of the rule engine pack");
+            log.info("[{}] Reprocessing skipped for {} failed and {} timeout messages", queueName, result.getFailureMap().size(), result.getPendingMap().size());
             return new TbRuleEngineProcessingDecision(true, null);
         }
     }

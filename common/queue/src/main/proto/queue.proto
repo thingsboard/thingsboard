@@ -388,6 +388,7 @@ message ToRuleEngineMsg {
   int64 tenantIdLSB = 2;
   bytes tbMsg = 3;
   repeated string relationTypes = 4;
+  string failureMessage = 5;
 }
 
 message ToRuleEngineNotificationMsg {

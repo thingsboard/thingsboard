@@ -86,24 +86,6 @@ public class ConsistentHashPartitionService implements PartitionService {
         partitionTopics.put(new ServiceQueue(ServiceType.TB_CORE), coreTopic);
     }
 
-//    public Set<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType) {
-//        ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
-//        TenantId tenantId = getSystemOrIsolatedTenantId(currentService);
-//        ServiceQueueKey serviceQueueKey = new ServiceQueueKey(serviceType, tenantId);
-//        List<Integer> partitions = myPartitions.get(serviceQueueKey);
-//        Set<TopicPartitionInfo> topicPartitions = new LinkedHashSet<>();
-//        for (Integer partition : partitions) {
-//            TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
-//            tpi.topic(partitionTopics.get(serviceType));
-//            tpi.partition(partition);
-//            if (!tenantId.isNullUid()) {
-//                tpi.tenantId(tenantId);
-//            }
-//            topicPartitions.add(tpi.build());
-//        }
-//        return topicPartitions;
-//    }
-
     @Override
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
         return resolve(new ServiceQueue(serviceType), tenantId, entityId);
@@ -131,15 +113,7 @@ public class ConsistentHashPartitionService implements PartitionService {
         Map<ServiceQueueKey, ConsistentHashCircle<ServiceInfo>> circles = new HashMap<>();
         addNode(circles, currentService);
         for (ServiceInfo other : otherServices) {
-            TenantId tenantId = getSystemOrIsolatedTenantId(other);
             addNode(circles, other);
-            if (!tenantId.isNullUid()) {
-                isolatedTenants.putIfAbsent(tenantId, new HashSet<>());
-                for (String serviceType : other.getServiceTypesList()) {
-                    isolatedTenants.get(tenantId).add(ServiceType.valueOf(serviceType.toUpperCase()));
-                }
-
-            }
         }
         ConcurrentMap<ServiceQueueKey, List<Integer>> oldPartitions = myPartitions;
         TenantId myTenantId = getSystemOrIsolatedTenantId(currentService);
@@ -214,6 +188,11 @@ public class ConsistentHashPartitionService implements PartitionService {
         }
     }
 
+    @Override
+    public Set<TenantId> getIsolatedTenants(ServiceType serviceType) {
+        throw new RuntimeException("Not Implemented!");
+    }
+
     private Map<ServiceQueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
         final Map<ServiceQueueKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {
@@ -280,6 +259,12 @@ public class ConsistentHashPartitionService implements PartitionService {
 
     private void addNode(Map<ServiceQueueKey, ConsistentHashCircle<ServiceInfo>> circles, ServiceInfo instance) {
         TenantId tenantId = getSystemOrIsolatedTenantId(instance);
+        if (!tenantId.isNullUid()) {
+            isolatedTenants.putIfAbsent(tenantId, new HashSet<>());
+            for (String serviceType : instance.getServiceTypesList()) {
+                isolatedTenants.get(tenantId).add(ServiceType.valueOf(serviceType.toUpperCase()));
+            }
+        }
         for (String serviceTypeStr : instance.getServiceTypesList()) {
             ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
             if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {

@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.queue.processing;
 
 import lombok.Getter;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
@@ -25,24 +27,28 @@ import java.util.concurrent.ConcurrentMap;
 public class TbRuleEngineProcessingResult {
 
     @Getter
-    private boolean success;
+    private final boolean success;
     @Getter
-    private boolean timeout;
+    private final boolean timeout;
     @Getter
-    private ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pendingMap;
+    private final ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pendingMap;
     @Getter
-    private ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> successMap;
+    private final ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> successMap;
     @Getter
-    private ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> failureMap;
+    private final ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> failureMap;
+    @Getter
+    private final ConcurrentMap<TenantId, RuleEngineException> exceptionsMap;
 
     public TbRuleEngineProcessingResult(boolean timeout,
                                         ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pendingMap,
                                         ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> successMap,
-                                        ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> failureMap) {
+                                        ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> failureMap,
+                                        ConcurrentMap<TenantId, RuleEngineException> exceptionsMap) {
         this.timeout = timeout;
         this.pendingMap = pendingMap;
         this.successMap = successMap;
         this.failureMap = failureMap;
+        this.exceptionsMap = exceptionsMap;
         this.success = !timeout && pendingMap.isEmpty() && failureMap.isEmpty();
     }
 }

@@ -34,6 +34,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -58,6 +59,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
 
     private List<ServiceType> serviceTypes;
     private ServiceInfo serviceInfo;
+    private TenantId isolatedTenant;
 
     @PostConstruct
     public void init() {
@@ -80,6 +82,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         UUID tenantId;
         if (!StringUtils.isEmpty(tenantIdStr)) {
             tenantId = UUID.fromString(tenantIdStr);
+            isolatedTenant = new TenantId(tenantId);
         } else {
             tenantId = TenantId.NULL_UUID;
         }
@@ -102,5 +105,15 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Override
     public ServiceInfo getServiceInfo() {
         return serviceInfo;
+    }
+
+    @Override
+    public boolean isService(ServiceType serviceType) {
+        return serviceTypes.contains(serviceType);
+    }
+
+    @Override
+    public Optional<TenantId> getIsolatedTenant() {
+        return Optional.ofNullable(isolatedTenant);
     }
 }

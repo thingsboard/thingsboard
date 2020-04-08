@@ -35,7 +35,7 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
@@ -135,7 +135,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         if (currentPartitions.contains(tpi)) {
             // Subscription is managed on the same server;
             if (pushToLocalService) {
-                subscriptionManagerService.addSubscription(subscription, TbMsgCallback.EMPTY);
+                subscriptionManagerService.addSubscription(subscription, TbCallback.EMPTY);
             }
         } else {
             // Push to the queue;
@@ -145,7 +145,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     @Override
-    public void onSubscriptionUpdate(String sessionId, SubscriptionUpdate update, TbMsgCallback callback) {
+    public void onSubscriptionUpdate(String sessionId, SubscriptionUpdate update, TbCallback callback) {
         TbSubscription subscription = subscriptionsBySessionId
                 .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
         if (subscription != null) {
@@ -177,7 +177,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, subscription.getTenantId(), subscription.getEntityId());
                 if (currentPartitions.contains(tpi)) {
                     // Subscription is managed on the same server;
-                    subscriptionManagerService.cancelSubscription(sessionId, subscriptionId, TbMsgCallback.EMPTY);
+                    subscriptionManagerService.cancelSubscription(sessionId, subscriptionId, TbCallback.EMPTY);
                 } else {
                     // Push to the queue;
                     TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toCloseSubscriptionProto(subscription);

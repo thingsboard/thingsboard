@@ -25,13 +25,13 @@ public interface TbMsgCallback {
         }
 
         @Override
-        public void onFailure(Throwable t) {
+        public void onFailure(RuleEngineException e) {
 
         }
     };
 
     void onSuccess();
 
-    void onFailure(Throwable t);
+    void onFailure(RuleEngineException e);
 
 }

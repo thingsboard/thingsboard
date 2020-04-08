@@ -116,8 +116,7 @@ public class TbSendRPCRequestNode implements TbNode {
                     ctx.enqueueForTellNext(next, TbRelationTypes.SUCCESS);
                 } else {
                     TbMsg next = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));
-                    ctx.tellFailure(next, new RuntimeException(ruleEngineDeviceRpcResponse.getError().get().name()));
-                    ctx.enqueueForTellNext(next, TbRelationTypes.FAILURE);
+                    ctx.enqueueForTellFailure(next, ruleEngineDeviceRpcResponse.getError().get().name());
                 }
             });
             ctx.ack(msg);

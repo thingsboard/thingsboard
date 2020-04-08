@@ -23,7 +23,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -37,9 +37,9 @@ public class TransportToDeviceActorMsgWrapper implements TbActorMsg, DeviceAware
     private final TenantId tenantId;
     private final DeviceId deviceId;
     private final TransportToDeviceActorMsg msg;
-    private final TbMsgCallback callback;
+    private final TbCallback callback;
 
-    public TransportToDeviceActorMsgWrapper(TransportToDeviceActorMsg msg, TbMsgCallback callback) {
+    public TransportToDeviceActorMsgWrapper(TransportToDeviceActorMsg msg, TbCallback callback) {
         this.msg = msg;
         this.callback = callback;
         this.tenantId = new TenantId(new UUID(msg.getSessionInfo().getTenantIdMSB(), msg.getSessionInfo().getTenantIdLSB()));

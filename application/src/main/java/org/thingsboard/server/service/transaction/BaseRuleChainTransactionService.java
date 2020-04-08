@@ -22,7 +22,6 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
@@ -112,13 +111,6 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
 //        } else {
             endLocalTransaction(msg, onSuccess, onFailure);
 //        }
-    }
-
-    @Override
-    public void onRemoteTransactionMsg(ServerAddress serverAddress, byte[] data) {
-        endLocalTransaction(TbMsg.fromBytes(data, null), msg -> {
-        }, error -> {
-        });
     }
 
     private void addMsgToQueues(BlockingQueue<TbTransactionTask> queue, TbTransactionTask transactionTask) {
@@ -230,9 +222,4 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
         callbackExecutor.executeAsync(task);
     }
 
-    private void sendTransactionEventToRemoteServer(TbMsg msg, ServerAddress address) {
-        log.trace("[{}][{}] Originator is monitored on other server: {}", msg.getTransactionData().getOriginatorId(), msg.getTransactionData().getTransactionId(), address);
-        //TODO 2.5
-//        clusterRpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TRANSACTION_SERVICE_MESSAGE, TbMsg.toByteArray(msg));
-    }
 }

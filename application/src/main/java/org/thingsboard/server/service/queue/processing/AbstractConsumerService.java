@@ -22,12 +22,12 @@ import org.springframework.context.event.EventListener;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
-import org.thingsboard.server.service.queue.MsgPackCallback;
+import org.thingsboard.server.service.queue.TbPackCallback;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
@@ -95,8 +95,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     ConcurrentMap<UUID, TbProtoQueueMsg<N>> failedMap = new ConcurrentHashMap<>();
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
                     pendingMap.forEach((id, msg) -> {
-                        log.info("[{}] Creating notification callback for message: {}", id, msg.getValue());
-                        TbMsgCallback callback = new MsgPackCallback<>(id, processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>(), failedMap);
+                        log.trace("[{}] Creating notification callback for message: {}", id, msg.getValue());
+                        TbCallback callback = new TbPackCallback<>(id, processingTimeoutLatch, pendingMap, failedMap);
                         try {
                             handleNotification(id, msg, callback);
                         } catch (Throwable e) {
@@ -124,7 +124,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         });
     }
 
-    protected abstract void handleNotification(UUID id, TbProtoQueueMsg<N> msg, TbMsgCallback callback) throws Exception;
+    protected abstract void handleNotification(UUID id, TbProtoQueueMsg<N> msg, TbCallback callback) throws Exception;
 
     @PreDestroy
     public void destroy() {

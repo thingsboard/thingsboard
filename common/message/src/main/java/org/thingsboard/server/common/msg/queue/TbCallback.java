@@ -13,11 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cluster;
+package org.thingsboard.server.common.msg.queue;
 
-/**
- * Created by ashvayka on 23.09.18.
- */
-public enum ServerType {
-    CORE
+public interface TbCallback {
+
+    TbCallback EMPTY = new TbCallback() {
+
+        @Override
+        public void onSuccess() {
+
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+
+        }
+    };
+
+    void onSuccess();
+
+    void onFailure(Throwable t);
+
 }

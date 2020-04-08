@@ -21,18 +21,18 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 
 import java.util.List;
 
 public interface SubscriptionManagerService extends ApplicationListener<PartitionChangeEvent> {
 
-    void addSubscription(TbSubscription subscription, TbMsgCallback callback);
+    void addSubscription(TbSubscription subscription, TbCallback callback);
 
-    void cancelSubscription(String sessionId, int subscriptionId, TbMsgCallback callback);
+    void cancelSubscription(String sessionId, int subscriptionId, TbCallback callback);
 
-    void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbMsgCallback callback);
+    void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbCallback callback);
 
-    void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbMsgCallback callback);
+    void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbCallback callback);
 
 }
