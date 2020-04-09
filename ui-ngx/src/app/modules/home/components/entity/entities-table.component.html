@@ -36,12 +36,14 @@
       <div fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
         <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
-            <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
-            <tb-anchor #entityTableHeader></tb-anchor>
-            <tb-timewindow *ngIf="entitiesTableConfig.useTimePageLink" [(ngModel)]="timewindow"
-                            (ngModelChange)="onTimewindowChange()"
-                            asButton historyOnly></tb-timewindow>
-            <span fxFlex *ngIf="!entitiesTableConfig.headerComponent || entitiesTableConfig.useTimePageLink"></span>
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
+              <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
+              <tb-anchor #entityTableHeader></tb-anchor>
+              <tb-timewindow *ngIf="entitiesTableConfig.useTimePageLink" [(ngModel)]="timewindow"
+                              (ngModelChange)="onTimewindowChange()"
+                              asButton historyOnly></tb-timewindow>
+            </div>
+            <span fxFlex></span>
             <div [fxShow]="addEnabled()">
               <button mat-icon-button [disabled]="isLoading$ | async"
                       *ngIf="!entitiesTableConfig.addActionDescriptors.length; else addActions"
@@ -120,9 +122,9 @@
         </mat-toolbar>
         <mat-toolbar *ngIf="entitiesTableConfig.selectionEnabled" class="mat-table-toolbar" color="primary" [fxShow]="!dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
-                    <span>
-                      {{ translate.get(translations.selectedEntities, {count: dataSource.selection.selected.length}) | async }}
-                    </span>
+            <span class="tb-entity-table-info">
+              {{ translations.selectedEntities | translate:{count: dataSource.selection.selected.length} }}
+            </span>
             <span fxFlex></span>
             <button mat-icon-button [disabled]="isLoading$ | async"
                     [fxShow]="actionDescriptor.isEnabled" *ngFor="let actionDescriptor of groupActionDescriptors"
