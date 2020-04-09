@@ -157,7 +157,8 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   addActionDescriptors: Array<HeaderActionDescriptor> = [];
   headerComponent: Type<EntityTableHeaderComponent<T, P, L>>;
   addEntity: CreateEntityOperation<T> = null;
-  dataSource: (dataLoadedFunction: () => void) => EntitiesDataSource<L> = (dataLoadedFunction: () => void) => {
+  dataSource: (dataLoadedFunction: (col?: number, row?: number) => void)
+    => EntitiesDataSource<L> = (dataLoadedFunction: (col?: number, row?: number) => void) => {
     return new EntitiesDataSource(this.entitiesFetchFunction, this.entitySelectionEnabled, dataLoadedFunction);
   };
   detailsReadonly: EntityBooleanFunction<T> = () => false;

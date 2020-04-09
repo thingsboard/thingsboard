@@ -279,6 +279,10 @@ export class TelemetrySubscriber {
 
   public unsubscribe() {
     this.telemetryService.unsubscribe(this);
+    this.complete();
+  }
+
+  public complete() {
     this.dataSubject.complete();
     this.reconnectSubject.complete();
   }

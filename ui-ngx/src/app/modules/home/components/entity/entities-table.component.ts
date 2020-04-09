@@ -16,7 +16,7 @@
 
 import {
   AfterViewInit,
-  ChangeDetectionStrategy,
+  ChangeDetectionStrategy, ChangeDetectorRef,
   Component,
   ComponentFactoryResolver,
   ElementRef, EventEmitter,
@@ -115,6 +115,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
               public dialog: MatDialog,
               private dialogService: DialogService,
               private domSanitizer: DomSanitizer,
+              private cd: ChangeDetectorRef,
               private componentFactoryResolver: ComponentFactoryResolver) {
     super(store);
   }
@@ -204,9 +205,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       this.pageLink = new PageLink(10, 0, null, sortOrder);
     }
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : MAX_SAFE_PAGE_SIZE;
-    this.dataSource = this.entitiesTableConfig.dataSource(() => {
-      this.dataLoaded();
-    });
+    this.dataSource = this.entitiesTableConfig.dataSource(this.dataLoaded.bind(this));
     if (this.entitiesTableConfig.onLoadAction) {
       this.entitiesTableConfig.onLoadAction(this.route);
     }
@@ -262,6 +261,11 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     return this.entitiesTableConfig.addEnabled;
   }
 
+  clearSelection() {
+    this.dataSource.selection.clear();
+    this.cd.detectChanges();
+  }
+
   updateData(closeDetails: boolean = true) {
     if (closeDetails) {
       this.isDetailsOpen = false;
@@ -294,11 +298,15 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     this.dataSource.loadEntities(this.pageLink);
   }
 
-  private dataLoaded() {
-    this.headerCellStyleCache.length = 0;
-    this.cellContentCache.length = 0;
-    this.cellTooltipCache.length = 0;
-    this.cellStyleCache.length = 0;
+  private dataLoaded(col?: number, row?: number) {
+    if (isFinite(col) && isFinite(row)) {
+      this.clearCellCache(col, row);
+    } else {
+      this.headerCellStyleCache.length = 0;
+      this.cellContentCache.length = 0;
+      this.cellTooltipCache.length = 0;
+      this.cellStyleCache.length = 0;
+    }
   }
 
   onRowClick($event: Event, entity) {
@@ -483,6 +491,13 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       this.headerCellStyleCache[index] = res;
     }
     return res;
+  }
+
+  clearCellCache(col: number, row: number) {
+    const index = row * this.entitiesTableConfig.columns.length + col;
+    this.cellContentCache[index] = undefined;
+    this.cellTooltipCache[index] = undefined;
+    this.cellStyleCache[index] = undefined;
   }
 
   cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number) {
