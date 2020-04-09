@@ -19,7 +19,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
-import org.thingsboard.server.common.msg.queue.RuleNodeException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
@@ -77,7 +76,7 @@ public class TbRuleEngineConsumerStats {
     public void log(TbRuleEngineProcessingResult msg, boolean finalIterationForPack) {
         int success = msg.getSuccessMap().size();
         int pending = msg.getPendingMap().size();
-        int failed = msg.getFailureMap().size();
+        int failed = msg.getFailedMap().size();
         totalMsgCounter.addAndGet(success + pending + failed);
         successMsgCounter.addAndGet(success);
         msg.getSuccessMap().values().forEach(m -> getTenantStats(m).logSuccess());
@@ -89,7 +88,7 @@ public class TbRuleEngineConsumerStats {
                     msg.getPendingMap().values().forEach(m -> getTenantStats(m).logTimeout());
                 }
                 if (failed > 0) {
-                    msg.getFailureMap().values().forEach(m -> getTenantStats(m).logFailed());
+                    msg.getFailedMap().values().forEach(m -> getTenantStats(m).logFailed());
                 }
                 failedIterationsCounter.incrementAndGet();
             } else {
@@ -103,7 +102,7 @@ public class TbRuleEngineConsumerStats {
                 msg.getPendingMap().values().forEach(m -> getTenantStats(m).logTmpTimeout());
             }
             if (failed > 0) {
-                msg.getFailureMap().values().forEach(m -> getTenantStats(m).logTmpFailed());
+                msg.getFailedMap().values().forEach(m -> getTenantStats(m).logTmpFailed());
             }
         }
         msg.getExceptionsMap().forEach(tenantExceptions::putIfAbsent);
