@@ -17,7 +17,6 @@ package org.thingsboard.server.queue.common;
 
 import lombok.Data;
 import org.thingsboard.server.queue.TbQueueMsg;
-import org.thingsboard.server.queue.TbQueueMsgHeaders;
 
 import java.util.UUID;
 
@@ -25,13 +24,7 @@ import java.util.UUID;
 public class DefaultTbQueueMsg implements TbQueueMsg {
     private final UUID key;
     private final byte[] data;
-    private DefaultTbQueueMsgHeaders headers;
-
-
-    public DefaultTbQueueMsg(UUID key, byte[] data) {
-        this.key = key;
-        this.data = data;
-    }
+    private final DefaultTbQueueMsgHeaders headers;
 
     public DefaultTbQueueMsg(TbQueueMsg msg) {
         this.key = msg.getKey();

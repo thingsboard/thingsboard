@@ -78,7 +78,7 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
         SendMessageRequest sendMsgRequest = new SendMessageRequest();
         sendMsgRequest.withQueueUrl(getQueueUrl(tpi.getFullTopicName()));
-        sendMsgRequest.withMessageBody(gson.toJson(new DefaultTbQueueMsg(msg.getKey(), msg.getData())));
+        sendMsgRequest.withMessageBody(gson.toJson(new DefaultTbQueueMsg(msg)));
 
         sendMsgRequest.withMessageGroupId(msg.getKey().toString());
         ListenableFuture<SendMessageResult> future = producerExecutor.submit(() -> sqsClient.sendMessage(sendMsgRequest));

@@ -119,6 +119,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         if (submitExecutor != null) {
             submitExecutor.shutdownNow();
         }
+
+        ruleEngineSettings.getQueues().forEach(config -> consumerConfigurations.put(config.getName(), config));
     }
 
     @Override
