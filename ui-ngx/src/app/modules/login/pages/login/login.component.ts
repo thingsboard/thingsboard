@@ -23,7 +23,7 @@ import { FormBuilder } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Constants } from '@shared/models/constants';
 import { Router } from '@angular/router';
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'tb-login',
@@ -46,8 +46,9 @@ export class LoginComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.route.snapshot.queryParams["username"] && this.route.snapshot.queryParams["password"]) {
-      this.loginFormGroup.setValue({username: this.route.snapshot.queryParams["username"], password: this.route.snapshot.queryParams["password"]});
+    if (this.route.snapshot.queryParams.username && this.route.snapshot.queryParams.password) {
+      this.loginFormGroup.setValue({username: this.route.snapshot.queryParams.username,
+        password: this.route.snapshot.queryParams.password});
       this.login();
     }
   }
