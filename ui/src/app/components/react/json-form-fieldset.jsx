@@ -19,7 +19,7 @@ class ThingsboardFieldSet extends React.Component {
 
     render() {
         let forms = this.props.form.items.map(function(form, index){
-            return this.props.builder(form, this.props.groupId, this.props.model, index, this.props.onChange, this.props.onColorClick, this.props.onIconClick, this.props.onToggleFullscreen, this.props.mapper, this.props.builder);
+            return this.props.builder(form, this.props.model, index, this.props.onChange, this.props.onColorClick, this.props.onIconClick, this.props.onToggleFullscreen, this.props.mapper, this.props.builder);
         }.bind(this));
 
         return (
