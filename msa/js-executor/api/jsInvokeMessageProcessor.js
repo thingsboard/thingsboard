@@ -19,6 +19,7 @@ const COMPILATION_ERROR = 0;
 const RUNTIME_ERROR = 1;
 const TIMEOUT_ERROR = 2;
 const UNRECOGNIZED = -1;
+let headers;
 
 const config = require('config'),
       logger = require('../config/logger')._logger('JsInvokeMessageProcessor'),
@@ -43,6 +44,7 @@ JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
     var responseTopic;
     try {
         var request = JSON.parse(message.value.toString('utf8'));
+        headers = message.headers;
         var buf = message.headers['requestId'];
         requestId = Utils.UUIDFromBuffer(buf);
         buf = message.headers['responseTopic'];
@@ -148,7 +150,8 @@ JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseT
             messages: [
                 {
                     key: scriptId,
-                    value: rawResponse
+                    value: rawResponse,
+                    headers: headers
                 }
             ]
         }
