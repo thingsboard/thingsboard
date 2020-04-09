@@ -36,6 +36,7 @@ import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -65,6 +66,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Getter
     @Value("${js.remote.max_errors}")
     private int maxErrors;
+
+    @Value("${js.remote.max_black_list_duration_sec:60}")
+    private int maxBlackListDurationSec;
 
     @Value("${js.remote.stats.enabled:false}")
     private boolean statsEnabled;
@@ -205,6 +209,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
             @Override
             public void onFailure(Throwable t) {
+                onScriptExecutionError(scriptId);
                 if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
                     kafkaTimeoutMsgs.incrementAndGet();
                 }
@@ -216,6 +221,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
             if (invokeResult.getSuccess()) {
                 return invokeResult.getResult();
             } else {
+                onScriptExecutionError(scriptId);
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
                 throw new RuntimeException(invokeResult.getErrorDetails());
             }
@@ -243,6 +249,11 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         } else {
             log.debug("[{}] Failed to release script due", compiledScriptId);
         }
+    }
+
+    @Override
+    protected long getMaxBlacklistDuration() {
+        return TimeUnit.SECONDS.toMillis(maxBlackListDurationSec);
     }
 
 }
