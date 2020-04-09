@@ -298,7 +298,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.attributeScope === LatestTelemetry.LATEST_TELEMETRY){
+    if (this.isClientSideTelemetryTypeMap.get(this.attributeScope)) {
       return;
     }
     const target = $event.target || $event.srcElement || $event.currentTarget;
