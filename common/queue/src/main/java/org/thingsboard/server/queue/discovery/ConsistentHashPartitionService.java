@@ -99,7 +99,14 @@ public class ConsistentHashPartitionService implements PartitionService {
         int hash = hashFunction.newHasher()
                 .putLong(entityId.getId().getMostSignificantBits())
                 .putLong(entityId.getId().getLeastSignificantBits()).hash().asInt();
-        int partition = Math.abs(hash % partitionSizes.get(serviceQueue));
+        Integer partitionSize = partitionSizes.get(serviceQueue);
+        int partition;
+        if (partitionSize != null) {
+            partition = Math.abs(hash % partitionSize);
+        } else {
+            //TODO: In 2.6/3.1 this should not happen because all Rule Engine Queues will be in the DB and we always know their partition sizes.
+            partition = 0;
+        }
         boolean isolatedTenant = isIsolated(serviceQueue, tenantId);
         TopicPartitionInfoKey cacheKey = new TopicPartitionInfoKey(serviceQueue, isolatedTenant ? tenantId : null, partition);
         return tpiCache.computeIfAbsent(cacheKey, key -> buildTopicPartitionInfo(serviceQueue, tenantId, partition));
