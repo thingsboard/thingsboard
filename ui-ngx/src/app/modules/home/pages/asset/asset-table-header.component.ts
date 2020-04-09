@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import {Component} from '@angular/core';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {EntityTableHeaderComponent} from '../../components/entity/entity-table-header.component';
-import {EntityType} from '@shared/models/entity-type.models';
-import {AssetInfo} from '@shared/models/asset.models';
+import { Component } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { EntityTableHeaderComponent } from '../../components/entity/entity-table-header.component';
+import { EntityType } from '@shared/models/entity-type.models';
+import { AssetInfo } from '@shared/models/asset.models';
 
 @Component({
   selector: 'tb-asset-table-header',
