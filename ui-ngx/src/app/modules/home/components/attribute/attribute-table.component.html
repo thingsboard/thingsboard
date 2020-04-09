@@ -81,9 +81,8 @@
     <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="mode === 'default' && !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools" fxLayout.xs="row wrap">
         <span class="tb-entity-table-info">
-          {{ translate.get(
-          attributeScope === latestTelemetryTypes.LATEST_TELEMETRY ? 'attribute.selected-telemetry':'attribute.selected-attributes',
-          {count: dataSource.selection.selected.length}) | async }}
+          {{ (attributeScope === latestTelemetryTypes.LATEST_TELEMETRY ?
+                'attribute.selected-telemetry' : 'attribute.selected-attributes') | translate:{count: dataSource.selection.selected.length} }}
         </span>
         <span fxFlex></span>
         <button [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)"
