@@ -18,7 +18,7 @@
 <div fxLayout="column" [formGroup]="entityFilterFormGroup" class="tb-entity-filter">
   <mat-form-field class="mat-block">
     <mat-label translate>alias.filter-type</mat-label>
-    <mat-select required matInput formControlName="type">
+    <mat-select required formControlName="type">
       <mat-option *ngFor="let type of aliasFilterTypes" [value]="type">
         {{aliasFilterTypeTranslations.get(type) | translate}}
       </mat-option>

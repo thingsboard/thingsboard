@@ -771,6 +771,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Jeden uzel pravidla} other {Seznam # uzlů pravidel} }",
         "rulenode-name-starts-with": "Uzly pravidel, jejichž název začíná '{{prefix}}'",
         "type-current-customer": "Stávající zákazník",
+        "type-current-tenant": "Stávající tenant",
         "search": "Vyhledat entity",
         "selected-entities": "{ count, plural, 1 {1 entita} other {# entit} } zvoleno",
         "entity-name": "Název entity",

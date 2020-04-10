@@ -480,6 +480,7 @@ export class EntityService {
         entityTypes.push(EntityType.DASHBOARD);
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
+          entityTypes.push(AliasEntityType.CURRENT_TENANT);
         }
         break;
       case Authority.CUSTOMER_USER:
@@ -1065,6 +1066,10 @@ export class EntityService {
       if (authUser.authority === Authority.CUSTOMER_USER) {
         entityId.id = authUser.customerId;
       }
+    } else if (entityType === AliasEntityType.CURRENT_TENANT){
+      const authUser =  getCurrentAuthUser(this.store);
+      entityId.entityType = EntityType.TENANT;
+      entityId.id = authUser.tenantId;
     }
     return entityId;
   }

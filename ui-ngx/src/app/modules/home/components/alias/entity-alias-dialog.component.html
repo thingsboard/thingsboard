@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form #entityAliasForm="ngForm" [formGroup]="entityAliasFormGroup" (ngSubmit)="save()" style="width: 600px;">
-  <mat-toolbar fxLayout="row" color="primary">
+<form #entityAliasForm="ngForm" [formGroup]="entityAliasFormGroup" (ngSubmit)="save()" style="min-width: 550px;">
+  <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'alias.add' : 'alias.edit') | translate }}</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button

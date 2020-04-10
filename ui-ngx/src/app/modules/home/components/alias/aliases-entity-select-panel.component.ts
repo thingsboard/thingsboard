@@ -14,11 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, InjectionToken, OnInit } from '@angular/core';
-import { Timewindow } from '@shared/models/time/time.models';
+import { Component, Inject, InjectionToken } from '@angular/core';
 import { AliasInfo, IAliasController } from '@core/api/widget-api.models';
-import { PageComponent } from '@shared/components/page.component';
-import { TIMEWINDOW_PANEL_DATA, TimewindowPanelData } from '@shared/components/time/timewindow-panel.component';
 import { deepClone } from '@core/utils';
 
 export const ALIASES_ENTITY_SELECT_PANEL_DATA = new InjectionToken<any>('AliasesEntitySelectPanelData');
