@@ -184,11 +184,11 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
     }
 
     private ListenableFuture<Optional<Event>> saveAsync(TenantId tenantId, EventEntity entity, boolean ifNotExists, int ttl) {
-        if (entity.getId() == null) {
-            entity.setId(UUIDs.timeBased());
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUIDs.timeBased());
         }
         Insert insert = QueryBuilder.insertInto(getColumnFamilyName())
-                .value(ModelConstants.ID_PROPERTY, entity.getId())
+                .value(ModelConstants.ID_PROPERTY, entity.getUuid())
                 .value(ModelConstants.EVENT_TENANT_ID_PROPERTY, entity.getTenantId())
                 .value(ModelConstants.EVENT_ENTITY_TYPE_PROPERTY, entity.getEntityType())
                 .value(ModelConstants.EVENT_ENTITY_ID_PROPERTY, entity.getEntityId())

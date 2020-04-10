@@ -141,11 +141,11 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
         }
     }
 
-    public UUID getId() {
+    public UUID getUuid() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 

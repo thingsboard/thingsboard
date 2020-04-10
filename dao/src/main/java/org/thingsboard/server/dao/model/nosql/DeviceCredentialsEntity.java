@@ -74,11 +74,11 @@ public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentia
         this.credentialsValue = deviceCredentials.getCredentialsValue(); 
     }
     
-    public UUID getId() {
+    public UUID getUuid() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 

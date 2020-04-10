@@ -114,7 +114,7 @@ public final class AlarmEntity extends BaseSqlEntity<Alarm> implements BaseEntit
 
     public AlarmEntity(Alarm alarm) {
         if (alarm.getId() != null) {
-            this.setId(alarm.getId().getId());
+            this.setUuid(alarm.getId().getId());
         }
         if (alarm.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(alarm.getTenantId().getId());
