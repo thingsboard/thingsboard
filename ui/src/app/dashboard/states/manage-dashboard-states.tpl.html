@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-dialog aria-label="{{ 'dashboard.manage-states' | translate }}" style="width: 620px;">
+<md-dialog aria-label="{{ 'dashboard.manage-states' | translate }}" style="min-width: 600px;">
     <form name="theForm" ng-submit="vm.save()">
         <md-toolbar>
             <div class="md-toolbar-tools">
@@ -72,7 +72,7 @@
                         </md-toolbar>
                         <md-table-container>
                             <table md-table>
-                                <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
+                                <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                                     <tr md-row>
                                         <th md-column md-order-by="name"><span translate>dashboard.state-name</span></th>
                                         <th md-column md-order-by="id"><span translate>dashboard.state-id</span></th>
