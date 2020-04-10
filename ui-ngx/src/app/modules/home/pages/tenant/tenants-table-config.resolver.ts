@@ -27,14 +27,9 @@ import {
 import { TenantService } from '@core/http/tenant.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import {
-  EntityType,
-  entityTypeResources,
-  entityTypeTranslations
-} from '@shared/models/entity-type.models';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { TenantComponent } from '@modules/home/pages/tenant/tenant.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { User } from '@shared/models/user.model';
 import { TenantTabsComponent } from '@home/pages/tenant/tenant-tabs.component';
 
 @Injectable()
