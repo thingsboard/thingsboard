@@ -17,7 +17,7 @@
 import { BaseData, HasId } from '@shared/models/base-data';
 import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { EventEmitter, Input, OnInit, Output, ViewChild, Directive } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityAction } from '@home/models/entity/entity-component.models';
@@ -25,7 +25,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { PageLink } from '@shared/models/page/page-link';
 
 // @dynamic
-@Directive()
+@Component({})
 export abstract class EntityComponent<T extends BaseData<HasId>,
   P extends PageLink = PageLink,
   L extends BaseData<HasId> = T,
