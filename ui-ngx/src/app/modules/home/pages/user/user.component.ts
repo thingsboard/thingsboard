@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, Optional } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -41,8 +41,8 @@ export class UserComponent extends EntityComponent<User> {
   );
 
   constructor(protected store: Store<AppState>,
-              @Inject('entity') protected entityValue: User,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
+              @Optional() @Inject('entity') protected entityValue: User,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
               public fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
   }

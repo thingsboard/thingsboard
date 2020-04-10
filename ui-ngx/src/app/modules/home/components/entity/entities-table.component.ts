@@ -110,7 +110,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   private viewInited = false;
 
   constructor(protected store: Store<AppState>,
-              private route: ActivatedRoute,
+              public route: ActivatedRoute,
               public translate: TranslateService,
               public dialog: MatDialog,
               private dialogService: DialogService,
