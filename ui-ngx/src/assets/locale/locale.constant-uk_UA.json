@@ -943,6 +943,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Одне правило} other {Список # правил} }",
         "rulenode-name-starts-with": "Список правил, імена яких починаються '{{prefix}}'",
         "type-current-customer": "Поточний клієнт",
+        "type-current-tenant": "Поточний власник",
         "search": "Пошук сутностей",
         "selected-entities": "{ count, plural, 1 {1 сутність} other {# сутності} } вибрано",
         "entity-name": "Ім'я сутності",

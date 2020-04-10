@@ -68,7 +68,7 @@ export class CreatePasswordComponent extends PageComponent implements OnInit, On
     } else {
       this.authService.activate(
         this.activateToken,
-        this.createPassword.get('password').value).subscribe();
+        this.createPassword.get('password').value, true).subscribe();
     }
   }
 }

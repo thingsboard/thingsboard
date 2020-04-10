@@ -29,6 +29,7 @@ import {
 } from '@shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-dashboard-form',
@@ -106,7 +107,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
   }
 
   private updateFields(entity: Dashboard): void {
-    if (entity) {
+    if (entity && !isEqual(entity, {})) {
       this.assignedCustomersText = getDashboardAssignedCustomersText(entity);
       this.publicLink = this.dashboardService.getPublicDashboardLink(entity);
     }

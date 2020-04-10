@@ -125,9 +125,12 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.name).disabled = isSelectName;
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.type).disabled = isSelectType;
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.label).disabled = isSelectLabel;
-    this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.isGateway).disabled = isSelectGateway;
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.description).disabled = isSelectDescription;
 
+    const isGatewayColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.isGateway);
+    if (isGatewayColumnType) {
+      isGatewayColumnType.disabled = isSelectGateway;
+    }
     const accessTokenColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.accessToken);
     if (accessTokenColumnType) {
       accessTokenColumnType.disabled = isSelectCredentials;

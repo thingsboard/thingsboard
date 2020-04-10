@@ -49,7 +49,8 @@ export enum EntityType {
 }
 
 export enum AliasEntityType {
-  CURRENT_CUSTOMER = 'CURRENT_CUSTOMER'
+  CURRENT_CUSTOMER = 'CURRENT_CUSTOMER',
+  CURRENT_TENANT = 'CURRENT_TENANT'
 }
 
 export interface EntityTypeTranslation {
@@ -218,8 +219,15 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       AliasEntityType.CURRENT_CUSTOMER,
       {
-        type: 'entity.type-entity-view',
+        type: 'entity.type-current-customer',
         list: 'entity.type-current-customer'
+      }
+    ],
+    [
+      AliasEntityType.CURRENT_TENANT,
+      {
+        type: 'entity.type-current-tenant',
+        list: 'entity.type-current-tenant'
       }
     ]
   ]

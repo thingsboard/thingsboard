@@ -810,6 +810,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Одно правило} other {Список из # правил} }",
         "rulenode-name-starts-with": "Правила, чьи названия начинаются с '{{prefix}}'",
         "type-current-customer": "Текущий клиент",
+        "type-current-tenant": "Текущий владелец",
         "search": "Поиск объектов",
         "selected-entities": "Выбран(ы) { count, plural, 1 {1 объект} few {# объекта} other {# объектов} }",
         "entity-name": "Название объекта",
