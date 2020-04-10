@@ -128,7 +128,8 @@ export class AuthService {
   }
 
   public activate(activateToken: string, password: string, sendActivationMail: boolean): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>('/api/noauth/activate?sendActivationMail=' + sendActivationMail, {activateToken, password}, defaultHttpOptions()).pipe(
+    return this.http.post<LoginResponse>(`/api/noauth/activate?sendActivationMail=${sendActivationMail}`,
+      {activateToken, password}, defaultHttpOptions()).pipe(
       tap((loginResponse: LoginResponse) => {
           this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
         }
