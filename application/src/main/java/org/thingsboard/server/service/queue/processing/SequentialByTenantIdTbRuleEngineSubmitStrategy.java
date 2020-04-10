@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.common;
+package org.thingsboard.server.service.queue.processing;
 
-import lombok.Data;
-import org.thingsboard.server.queue.TbQueueMsg;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.UUID;
 
-@Data
-public class DefaultTbQueueMsg implements TbQueueMsg {
-    private final UUID key;
-    private final byte[] data;
-    private final DefaultTbQueueMsgHeaders headers;
+public class SequentialByTenantIdTbRuleEngineSubmitStrategy extends SequentialByEntityIdTbRuleEngineSubmitStrategy {
 
-    public DefaultTbQueueMsg(TbQueueMsg msg) {
-        this.key = msg.getKey();
-        this.data = msg.getData();
-        DefaultTbQueueMsgHeaders headers = new DefaultTbQueueMsgHeaders();
-        msg.getHeaders().getData().forEach(headers::put);
-        this.headers = headers;
+    public SequentialByTenantIdTbRuleEngineSubmitStrategy(String queueName) {
+        super(queueName);
     }
 
+    @Override
+    protected EntityId getEntityId(TransportProtos.ToRuleEngineMsg msg) {
+        return new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+
+    }
 }

@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -334,7 +335,6 @@ public class ActorSystemContext {
     @Setter
     private ActorSystem actorSystem;
 
-    @Getter
     @Setter
     private ActorRef appActor;
 
@@ -360,6 +360,8 @@ public class ActorSystemContext {
     public ActorSystemContext() {
         config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());
     }
+
+
 
     public Scheduler getScheduler() {
         return actorSystem.scheduler();
@@ -535,4 +537,7 @@ public class ActorSystemContext {
         return Exception.class.isInstance(error) ? (Exception) error : new Exception(error);
     }
 
+    public void tell(TbActorMsg tbActorMsg, ActorRef sender) {
+        appActor.tell(tbActorMsg, sender);
+    }
 }

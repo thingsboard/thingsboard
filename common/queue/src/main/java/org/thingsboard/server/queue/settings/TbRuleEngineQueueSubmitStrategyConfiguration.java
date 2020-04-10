@@ -18,11 +18,9 @@ package org.thingsboard.server.queue.settings;
 import lombok.Data;
 
 @Data
-public class TbRuleEngineQueueAckStrategyConfiguration {
+public class TbRuleEngineQueueSubmitStrategyConfiguration {
 
     private String type;
-    private int retries;
-    private double failurePercentage;
-    private long pauseBetweenRetries;
+    private int batchSize;
 
 }

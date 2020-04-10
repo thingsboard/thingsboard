@@ -16,12 +16,10 @@
 package org.thingsboard.server.service.queue.processing;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueAckStrategyConfiguration;
-import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,10 +75,10 @@ public class TbRuleEngineProcessingStrategyFactory {
                 return new TbRuleEngineProcessingDecision(true, null);
             } else {
                 if (retryCount == 0) {
-                    initialTotalCount = result.getPendingMap().size() + result.getFailureMap().size() + result.getSuccessMap().size();
+                    initialTotalCount = result.getPendingMap().size() + result.getFailedMap().size() + result.getSuccessMap().size();
                 }
                 retryCount++;
-                double failedCount = result.getFailureMap().size() + result.getPendingMap().size();
+                double failedCount = result.getFailedMap().size() + result.getPendingMap().size();
                 if (maxRetries > 0 && retryCount > maxRetries) {
                     log.info("[{}] Skip reprocess of the rule engine pack due to max retries", queueName);
                     return new TbRuleEngineProcessingDecision(true, null);
@@ -90,7 +88,7 @@ public class TbRuleEngineProcessingStrategyFactory {
                 } else {
                     ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toReprocess = new ConcurrentHashMap<>(initialTotalCount);
                     if (retryFailed) {
-                        result.getFailureMap().forEach(toReprocess::put);
+                        result.getFailedMap().forEach(toReprocess::put);
                     }
                     if (retryTimeout) {
                         result.getPendingMap().forEach(toReprocess::put);
@@ -125,7 +123,7 @@ public class TbRuleEngineProcessingStrategyFactory {
 
         @Override
         public TbRuleEngineProcessingDecision analyze(TbRuleEngineProcessingResult result) {
-            log.info("[{}] Reprocessing skipped for {} failed and {} timeout messages", queueName, result.getFailureMap().size(), result.getPendingMap().size());
+            log.info("[{}] Reprocessing skipped for {} failed and {} timeout messages", queueName, result.getFailedMap().size(), result.getPendingMap().size());
             return new TbRuleEngineProcessingDecision(true, null);
         }
     }

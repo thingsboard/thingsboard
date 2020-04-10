@@ -18,30 +18,31 @@ package org.thingsboard.server.queue.provider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.azure.servicebus.TbServiceBusConsumerTemplate;
-import org.thingsboard.server.queue.azure.servicebus.TbServiceBusProducerTemplate;
-import org.thingsboard.server.queue.azure.servicebus.TbServiceBusSettings;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='service-bus' && '${service.type:null}'=='tb-core'")
-public class ServiceBusTbCoreQueueProvider implements TbCoreQueueFactory {
+@ConditionalOnExpression("'${queue.type:null}'=='rabbitmq' && '${service.type:null}'=='tb-core'")
+public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
 
-    private final TbServiceBusSettings serviceBusSettings;
+    private final TbRabbitMqSettings rabbitMqSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
@@ -49,14 +50,14 @@ public class ServiceBusTbCoreQueueProvider implements TbCoreQueueFactory {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueAdmin admin;
 
-    public ServiceBusTbCoreQueueProvider(TbServiceBusSettings serviceBusSettings,
-                                         TbQueueCoreSettings coreSettings,
-                                         TbQueueTransportApiSettings transportApiSettings,
-                                         TbQueueRuleEngineSettings ruleEngineSettings,
-                                         PartitionService partitionService,
-                                         TbServiceInfoProvider serviceInfoProvider,
-                                         TbQueueAdmin admin) {
-        this.serviceBusSettings = serviceBusSettings;
+    public RabbitMqTbCoreQueueFactory(TbRabbitMqSettings rabbitMqSettings,
+                                      TbQueueCoreSettings coreSettings,
+                                      TbQueueTransportApiSettings transportApiSettings,
+                                      TbQueueRuleEngineSettings ruleEngineSettings,
+                                      PartitionService partitionService,
+                                      TbServiceInfoProvider serviceInfoProvider,
+                                      TbQueueAdmin admin) {
+        this.rabbitMqSettings = rabbitMqSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
         this.ruleEngineSettings = ruleEngineSettings;
@@ -67,50 +68,50 @@ public class ServiceBusTbCoreQueueProvider implements TbCoreQueueFactory {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, ruleEngineSettings.getTopic());
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> createToCoreMsgConsumer() {
-        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic(),
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
-        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings,
+    public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> createTransportApiRequestConsumer() {
-        return new TbServiceBusConsumerTemplate<>(admin, serviceBusSettings, transportApiSettings.getRequestsTopic(),
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings, transportApiSettings.getRequestsTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiResponseProducer() {
-        return new TbServiceBusProducerTemplate<>(admin, serviceBusSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 }

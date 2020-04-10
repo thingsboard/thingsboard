@@ -27,52 +27,26 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
-public class TbMsgPackCallback<T> implements TbMsgCallback {
-    private final CountDownLatch processingTimeoutLatch;
-    private final ConcurrentMap<UUID, T> ackMap;
-    private final ConcurrentMap<UUID, T> successMap;
-    private final ConcurrentMap<UUID, T> failedMap;
+public class TbMsgPackCallback implements TbMsgCallback {
     private final UUID id;
     private final TenantId tenantId;
-    private final ConcurrentMap<TenantId, RuleEngineException> firstExceptions;
+    private final ProcessingAttemptContext ctx;
 
-    public TbMsgPackCallback(UUID id, TenantId tenantId,
-                             CountDownLatch processingTimeoutLatch,
-                             ConcurrentMap<UUID, T> ackMap,
-                             ConcurrentMap<UUID, T> successMap,
-                             ConcurrentMap<UUID, T> failedMap,
-                             ConcurrentMap<TenantId, RuleEngineException> firstExceptions) {
+    public TbMsgPackCallback(UUID id, TenantId tenantId, ProcessingAttemptContext ctx) {
         this.id = id;
         this.tenantId = tenantId;
-        this.processingTimeoutLatch = processingTimeoutLatch;
-        this.ackMap = ackMap;
-        this.successMap = successMap;
-        this.failedMap = failedMap;
-        this.firstExceptions = firstExceptions;
+        this.ctx = ctx;
     }
 
     @Override
     public void onSuccess() {
         log.trace("[{}] ON SUCCESS", id);
-        T msg = ackMap.remove(id);
-        if (msg != null) {
-            successMap.put(id, msg);
-        }
-        if (msg != null && ackMap.isEmpty()) {
-            processingTimeoutLatch.countDown();
-        }
+        ctx.onSuccess(id);
     }
 
     @Override
     public void onFailure(RuleEngineException e) {
         log.trace("[{}] ON FAILURE", id, e);
-        T msg = ackMap.remove(id);
-        if (msg != null) {
-            failedMap.put(id, msg);
-            firstExceptions.putIfAbsent(tenantId, e);
-        }
-        if (ackMap.isEmpty()) {
-            processingTimeoutLatch.countDown();
-        }
+        ctx.onFailure(tenantId, id, e);
     }
 }

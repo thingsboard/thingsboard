@@ -25,6 +25,7 @@ public class TbRuleEngineQueueConfiguration {
     private int pollInterval;
     private int partitions;
     private String packProcessingTimeout;
-    private TbRuleEngineQueueAckStrategyConfiguration ackStrategy;
+    private TbRuleEngineQueueSubmitStrategyConfiguration submitStrategy;
+    private TbRuleEngineQueueAckStrategyConfiguration processingStrategy;
 
 }

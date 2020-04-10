@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.errors.InterruptException;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -28,7 +28,6 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.List;
 import java.util.UUID;
@@ -127,10 +126,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                             }
                         });
                         nextCleanupMs = tickTs + maxRequestTimeout;
-                    }
-                } catch (InterruptException ie) {
-                    if (!stopped) {
-                        log.warn("Fetching data from kafka was interrupted.", ie);
                     }
                 } catch (Throwable e) {
                     log.warn("Failed to obtain responses from queue.", e);

@@ -18,29 +18,25 @@ package org.thingsboard.server.queue.provider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
-import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
-import org.thingsboard.server.queue.sqs.TbAwsSqsConsumerTemplate;
-import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
-import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='aws-sqs' && '${service.type:null}'=='monolith'")
-public class AwsSqsMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngineQueueFactory {
+@ConditionalOnExpression("'${queue.type:null}'=='rabbitmq' && '${service.type:null}'=='monolith'")
+public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngineQueueFactory {
 
     private final PartitionService partitionService;
     private final TbQueueCoreSettings coreSettings;
@@ -48,89 +44,85 @@ public class AwsSqsMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEng
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
-    private final TbAwsSqsSettings sqsSettings;
+    private final TbRabbitMqSettings rabbitMqSettings;
     private final TbQueueAdmin admin;
 
-    public AwsSqsMonolithQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
-                                      TbQueueRuleEngineSettings ruleEngineSettings,
-                                      TbServiceInfoProvider serviceInfoProvider,
-                                      TbQueueTransportApiSettings transportApiSettings,
-                                      TbQueueTransportNotificationSettings transportNotificationSettings,
-                                      TbAwsSqsSettings sqsSettings) {
+    public RabbitMqMonolithQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
+                                        TbQueueRuleEngineSettings ruleEngineSettings,
+                                        TbServiceInfoProvider serviceInfoProvider,
+                                        TbQueueTransportApiSettings transportApiSettings,
+                                        TbQueueTransportNotificationSettings transportNotificationSettings,
+                                        TbRabbitMqSettings rabbitMqSettings,
+                                        TbQueueAdmin admin) {
         this.partitionService = partitionService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
-        this.sqsSettings = sqsSettings;
-        admin = new TbAwsSqsAdmin(sqsSettings);
+        this.rabbitMqSettings = rabbitMqSettings;
+        this.admin = admin;
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> createTransportNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, transportNotificationSettings.getNotificationsTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, transportNotificationSettings.getNotificationsTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, ruleEngineSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, ruleEngineSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> createToRuleEngineMsgConsumer(TbRuleEngineQueueConfiguration configuration) {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, ruleEngineSettings.getTopic(),
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings, ruleEngineSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> createToRuleEngineNotificationsMsgConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings,
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> createToCoreMsgConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, coreSettings.getTopic(),
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings,
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg>> createTransportApiRequestConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, transportApiSettings.getRequestsTopic(),
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings, transportApiSettings.getRequestsTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.TransportApiResponseMsg>> createTransportApiResponseProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, transportApiSettings.getResponsesTopic());
-    }
-
-    @Override
-    public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
-        return null;
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, transportApiSettings.getResponsesTopic());
     }
 }

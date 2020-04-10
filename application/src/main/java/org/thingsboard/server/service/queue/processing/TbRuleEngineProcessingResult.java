@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.service.queue.ProcessingAttemptContext;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
@@ -31,24 +32,27 @@ public class TbRuleEngineProcessingResult {
     @Getter
     private final boolean timeout;
     @Getter
-    private final ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pendingMap;
-    @Getter
-    private final ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> successMap;
-    @Getter
-    private final ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> failureMap;
-    @Getter
-    private final ConcurrentMap<TenantId, RuleEngineException> exceptionsMap;
+    private final ProcessingAttemptContext ctx;
 
-    public TbRuleEngineProcessingResult(boolean timeout,
-                                        ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pendingMap,
-                                        ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> successMap,
-                                        ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> failureMap,
-                                        ConcurrentMap<TenantId, RuleEngineException> exceptionsMap) {
+    public TbRuleEngineProcessingResult(boolean timeout, ProcessingAttemptContext ctx) {
         this.timeout = timeout;
-        this.pendingMap = pendingMap;
-        this.successMap = successMap;
-        this.failureMap = failureMap;
-        this.exceptionsMap = exceptionsMap;
-        this.success = !timeout && pendingMap.isEmpty() && failureMap.isEmpty();
+        this.ctx = ctx;
+        this.success = !timeout && ctx.getPendingMap().isEmpty() && ctx.getFailedMap().isEmpty();
+    }
+
+    public ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> getPendingMap() {
+        return ctx.getPendingMap();
+    }
+
+    public ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> getSuccessMap() {
+        return ctx.getSuccessMap();
+    }
+
+    public ConcurrentMap<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> getFailedMap() {
+        return ctx.getFailedMap();
+    }
+
+    public ConcurrentMap<TenantId, RuleEngineException> getExceptionsMap() {
+        return ctx.getExceptionsMap();
     }
 }

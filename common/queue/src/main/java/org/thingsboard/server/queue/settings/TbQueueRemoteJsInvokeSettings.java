@@ -16,13 +16,27 @@
 package org.thingsboard.server.queue.settings;
 
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Data
-public class TbRuleEngineQueueAckStrategyConfiguration {
+@Component
+public class TbQueueRemoteJsInvokeSettings {
+    @Value("${js.remote.request_topic}")
+    private String requestTopic;
 
-    private String type;
-    private int retries;
-    private double failurePercentage;
-    private long pauseBetweenRetries;
+    @Value("${js.remote.response_topic_prefix}")
+    private String responseTopic;
 
+    @Value("${js.remote.max_pending_requests}")
+    private long maxPendingRequests;
+
+    @Value("${js.remote.response_poll_interval}")
+    private int responsePollInterval;
+
+    @Value("${js.remote.response_auto_commit_interval}")
+    private int autoCommitInterval;
+
+    @Value("${js.remote.max_requests_timeout}")
+    private long maxRequestsTimeout;
 }

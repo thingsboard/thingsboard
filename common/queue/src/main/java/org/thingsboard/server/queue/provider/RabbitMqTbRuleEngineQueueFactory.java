@@ -18,7 +18,6 @@ package org.thingsboard.server.queue.provider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -27,84 +26,75 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
-import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
-import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
+import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='pubsub' && '${service.type:null}'=='tb-rule-engine'")
-public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
+@ConditionalOnExpression("'${queue.type:null}'=='rabbitmq' && '${service.type:null}'=='tb-rule-engine'")
+public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
 
-    private final TbPubSubSettings pubSubSettings;
-    private final TbQueueCoreSettings coreSettings;
-    private final TbQueueRuleEngineSettings ruleEngineSettings;
-    private final TbQueueAdmin admin;
     private final PartitionService partitionService;
+    private final TbQueueCoreSettings coreSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
+    private final TbQueueRuleEngineSettings ruleEngineSettings;
+    private final TbRabbitMqSettings rabbitMqSettings;
+    private final TbQueueAdmin admin;
 
-    public PubSubTbRuleEngineQueueFactory(TbPubSubSettings pubSubSettings,
-                                          TbQueueCoreSettings coreSettings,
-                                          TbQueueRuleEngineSettings ruleEngineSettings,
-                                          TbQueueAdmin admin,
-                                          PartitionService partitionService,
-                                          TbServiceInfoProvider serviceInfoProvider) {
-        this.pubSubSettings = pubSubSettings;
-        this.coreSettings = coreSettings;
-        this.ruleEngineSettings = ruleEngineSettings;
-        this.admin = admin;
+    public RabbitMqTbRuleEngineQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
+                                            TbQueueRuleEngineSettings ruleEngineSettings,
+                                            TbServiceInfoProvider serviceInfoProvider,
+                                            TbRabbitMqSettings rabbitMqSettings,
+                                            TbQueueAdmin admin) {
         this.partitionService = partitionService;
+        this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
+        this.ruleEngineSettings = ruleEngineSettings;
+        this.rabbitMqSettings = rabbitMqSettings;
+        this.admin = admin;
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, ruleEngineSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
-
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(admin, pubSubSettings, coreSettings.getTopic());
+        return new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(TbRuleEngineQueueConfiguration configuration) {
-        return new TbPubSubConsumerTemplate<>(admin, pubSubSettings, ruleEngineSettings.getTopic(),
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings, ruleEngineSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createToRuleEngineNotificationsMsgConsumer() {
-        return new TbPubSubConsumerTemplate<>(admin, pubSubSettings,
+        return new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
-    }
-
-    @Override
-    public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
-        return null;
     }
 }

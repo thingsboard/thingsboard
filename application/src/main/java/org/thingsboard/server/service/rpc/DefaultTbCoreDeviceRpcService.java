@@ -123,7 +123,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         log.trace("[{}][{}] Processing local rpc call to device actor [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
         UUID requestId = request.getId();
         localToDeviceRpcRequests.put(requestId, rpcMsg);
-        actorContext.getAppActor().tell(rpcMsg, ActorRef.noSender());
+        actorContext.tell(rpcMsg, ActorRef.noSender());
         scheduleToDeviceTimeout(request, requestId);
     }
 
