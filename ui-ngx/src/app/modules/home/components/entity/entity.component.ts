@@ -17,7 +17,7 @@
 import { BaseData, HasId } from '@shared/models/base-data';
 import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Directive, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityAction } from '@home/models/entity/entity-component.models';
@@ -25,7 +25,8 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { PageLink } from '@shared/models/page/page-link';
 
 // @dynamic
-@Component({})
+@Directive()
+// tslint:disable-next-line:directive-class-suffix
 export abstract class EntityComponent<T extends BaseData<HasId>,
   P extends PageLink = PageLink,
   L extends BaseData<HasId> = T,
