@@ -109,9 +109,7 @@ export default function queueTypeList($compile, $templateCache, $q, $filter, que
                     queuePromise.then(
                         function success(queueArr) {
                             scope.queues = [];
-                            console.log(queueArr, 'queueArr');//eslint-disable-line
                             queueArr.data.forEach(function (queue) {
-
                                 scope.queues.push(queue);
                             });
                             deferred.resolve(scope.queues);
