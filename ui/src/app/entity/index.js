@@ -33,7 +33,6 @@ import AttributeTableDirective from './attribute/attribute-table.directive';
 import RelationFiltersDirective from './relation/relation-filters.directive';
 import RelationTableDirective from './relation/relation-table.directive';
 import RelationTypeAutocompleteDirective from './relation/relation-type-autocomplete.directive';
-import queueTypeList from "../queue/que-type-list.directive";
 
 export default angular.module('thingsboard.entity', [])
     .controller('EntityAliasesController', EntityAliasesController)
@@ -55,6 +54,5 @@ export default angular.module('thingsboard.entity', [])
     .directive('tbAttributeTable', AttributeTableDirective)
     .directive('tbRelationFilters', RelationFiltersDirective)
     .directive('tbRelationTable', RelationTableDirective)
-    .directive('tbQueueTypeList', queueTypeList)
     .directive('tbRelationTypeAutocomplete', RelationTypeAutocompleteDirective)
     .name;

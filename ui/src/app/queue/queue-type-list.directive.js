@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './queque-type-list.scss';
+import './queue-type-list.scss';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -22,7 +22,7 @@ import queueTypeListTemplate from './queue-type-list.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function queueTypeList($compile, $templateCache, $q, $filter, queueService) {
+export default function QueueTypeList($compile, $templateCache, $q, $filter, queueService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(queueTypeListTemplate);

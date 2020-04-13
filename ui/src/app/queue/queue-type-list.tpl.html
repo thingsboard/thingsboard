@@ -30,14 +30,14 @@
                  ng-blur="queue = queueSearchText"
                  md-menu-class="tb-queue-autocomplete"
                  md-clear-button="true"
-                 placeholder="'Select queue'"
-                 md-floating-label="Queue">
+                 placeholder="'Select queue name'"
+                 md-floating-label="Queue Name">
     <md-item-template>
         <div class="tb-queue-item">
             <span md-highlight-text="queueSearchText" md-highlight-flags="^i">{{item}}</span>
         </div>
     </md-item-template>
     <div ng-messages="theForm.queue.$error">
-        <div translate ng-message="required">Queue is required!</div>
+        <div translate ng-message="required">Queue name is required!</div>
     </div>
 </md-autocomplete>
