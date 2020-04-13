@@ -73,16 +73,6 @@ public class TenantController extends BaseController {
         try {
             boolean newTenant = tenant.getId() == null;
 
-            if (!newTenant) {
-                Tenant oldTenant = tenantService.findTenantById(tenant.getTenantId());
-                if (oldTenant.isIsolatedTbCore() != tenant.isIsolatedTbCore()) {
-                    throw new ThingsboardException("Field isolatedTbCore from Tenant can't be changed.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-                }
-                if (oldTenant.isIsolatedTbRuleEngine() != tenant.isIsolatedTbRuleEngine()) {
-                    throw new ThingsboardException("Field isolatedTbRuleEngine from Tenant can't be changed.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-                }
-            }
-
             Operation operation = newTenant ? Operation.CREATE : Operation.WRITE;
 
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation,
