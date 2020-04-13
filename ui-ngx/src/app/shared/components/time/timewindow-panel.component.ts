@@ -14,28 +14,16 @@
 /// limitations under the License.
 ///
 
+import { Component, Inject, InjectionToken, OnInit, ViewContainerRef } from '@angular/core';
 import {
-  Component,
-  Inject,
-  InjectionToken,
-  OnInit,
-  ViewChild,
-  ViewContainerRef
-} from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
-import {
-  Aggregation,
   aggregationTranslations,
-  AggregationType, DAY,
-  HistoryWindow,
+  AggregationType,
+  DAY,
   HistoryWindowType,
-  IntervalWindow,
   Timewindow,
   TimewindowType
 } from '@shared/models/time/time.models';
-import { DatePipe } from '@angular/common';
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { OverlayRef } from '@angular/cdk/overlay';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';

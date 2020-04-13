@@ -16,7 +16,7 @@
 
 -->
 <section fxLayout="column" fxLayoutAlign="start start">
-  <section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="16px">
+  <section fxLayout="row" fxLayout.xs="row wrap" fxLayoutAlign="start start" fxLayoutGap="16px">
     <mat-form-field>
       <mat-placeholder translate>datetime.date-from</mat-placeholder>
       <mat-datetimepicker-toggle [for]="startDatePicker" matPrefix></mat-datetimepicker-toggle>
@@ -30,7 +30,7 @@
       <input matInput [disabled]="disabled" [(ngModel)]="startDate" [matDatetimepicker]="startTimePicker" (ngModelChange)="onStartDateChange()">
     </mat-form-field>
   </section>
-  <section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="16px">
+  <section fxLayout="row" fxLayout.xs="row wrap" fxLayoutAlign="start start" fxLayoutGap="16px">
     <mat-form-field>
       <mat-placeholder translate>datetime.date-to</mat-placeholder>
       <mat-datetimepicker-toggle [for]="endDatePicker" matPrefix></mat-datetimepicker-toggle>
