@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 public interface TbClusterService {
@@ -31,6 +32,8 @@ public interface TbClusterService {
     void onToCoreMsg(String targetServiceId, FromDeviceRpcResponse response);
 
     void onToRuleEngineMsg(String targetServiceId, FromDeviceRpcResponse response);
+
+    void onToTransportMsg(String targetServiceId, ToTransportMsg response);
 
     void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 

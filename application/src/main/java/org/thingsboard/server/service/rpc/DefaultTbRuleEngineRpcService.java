@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
@@ -51,6 +52,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     private final PartitionService partitionService;
     private final TbClusterService clusterService;
     private final TbServiceInfoProvider serviceInfoProvider;
+
 
     private final ConcurrentMap<UUID, Consumer<FromDeviceRpcResponse>> toDeviceRpcRequests = new ConcurrentHashMap<>();
 
@@ -85,8 +87,16 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     }
 
     @Override
-    public void sendRpcReplyToDevice(DeviceId deviceId, int requestId, String body) {
-//        TODO 2.5
+    public void sendRpcReplyToDevice(String serviceId, UUID sessionId, int requestId, String body) {
+        TransportProtos.ToServerRpcResponseMsg responseMsg = TransportProtos.ToServerRpcResponseMsg.newBuilder()
+                .setRequestId(requestId)
+                .setPayload(body).build();
+        TransportProtos.ToTransportMsg msg = TransportProtos.ToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setToServerResponse(responseMsg)
+                .build();
+        clusterService.onToTransportMsg(serviceId, msg);
     }
 
     @Override

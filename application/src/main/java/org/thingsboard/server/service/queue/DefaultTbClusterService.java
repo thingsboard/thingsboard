@@ -37,6 +37,7 @@ import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -100,7 +101,12 @@ public class DefaultTbClusterService implements TbClusterService {
         response.getResponse().ifPresent(builder::setResponse);
         ToRuleEngineNotificationMsg msg = ToRuleEngineNotificationMsg.newBuilder().setFromDeviceRpcResponse(builder).build();
         producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(response.getId(), msg), null);
+    }
 
+    @Override
+    public void onToTransportMsg(String serviceId, ToTransportMsg response) {
+        TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_TRANSPORT, serviceId);
+        producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), response), null);
     }
 
     @Override

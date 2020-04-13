@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.timeout;
+package org.thingsboard.server.common.transport.service;
 
-import org.thingsboard.server.common.msg.MsgType;
+import lombok.Data;
 
-/**
- * @author Andrew Shvayka
- */
-public final class DeviceActorClientSideRpcTimeoutMsg extends TimeoutMsg<Integer> {
+import java.util.UUID;
 
-    public DeviceActorClientSideRpcTimeoutMsg(Integer id, long timeout) {
-        super(id, timeout);
-    }
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG;
-    }
+@Data
+public class RpcRequestMetadata {
+    private final UUID sessionId;
+    private final int requestId;
 }

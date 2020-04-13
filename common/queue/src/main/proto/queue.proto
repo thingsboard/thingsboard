@@ -245,16 +245,6 @@ message TransportToRuleEngineMsg {
   ToServerRpcRequestMsg toServerRPCCallRequest = 5;
 }
 
-message DeviceActorToTransportMsg {
-  int64 sessionIdMSB = 1;
-  int64 sessionIdLSB = 2;
-  SessionCloseNotificationProto sessionCloseNotification = 3;
-  GetAttributeResponseMsg getAttributesResponse = 4;
-  AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
-  ToDeviceRpcRequestMsg toDeviceRequest = 6;
-  ToServerRpcResponseMsg toServerResponse = 7;
-}
-
 /**
  * TB Core Data Structures
  */
@@ -410,5 +400,11 @@ message ToRuleEngineNotificationMsg {
 
 /* Messages that are handled by ThingsBoard Transport Service */
 message ToTransportMsg {
-  DeviceActorToTransportMsg toDeviceSessionMsg = 1;
+    int64 sessionIdMSB = 1;
+    int64 sessionIdLSB = 2;
+    SessionCloseNotificationProto sessionCloseNotification = 3;
+    GetAttributeResponseMsg getAttributesResponse = 4;
+    AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
+    ToDeviceRpcRequestMsg toDeviceRequest = 6;
+    ToServerRpcResponseMsg toServerResponse = 7;
 }

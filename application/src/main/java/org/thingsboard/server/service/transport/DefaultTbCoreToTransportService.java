@@ -18,13 +18,14 @@ package org.thingsboard.server.service.transport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -38,28 +39,26 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @TbCoreComponent
 public class DefaultTbCoreToTransportService implements TbCoreToTransportService {
 
+    private final PartitionService partitionService;
     private final TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> tbTransportProducer;
 
-    @Value("${queue.transport.notifications_topic}")
-    private String notificationsTopic;
-
-    public DefaultTbCoreToTransportService(TbQueueProducerProvider tbQueueProducerProvider) {
+    public DefaultTbCoreToTransportService(PartitionService partitionService, TbQueueProducerProvider tbQueueProducerProvider) {
+        this.partitionService = partitionService;
         this.tbTransportProducer = tbQueueProducerProvider.getTransportNotificationsMsgProducer();
     }
 
     @Override
-    public void process(String nodeId, DeviceActorToTransportMsg msg) {
+    public void process(String nodeId, ToTransportMsg msg) {
         process(nodeId, msg, null, null);
     }
 
     @Override
-    public void process(String nodeId, DeviceActorToTransportMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        String topic = notificationsTopic + "." + nodeId;
+    public void process(String nodeId, ToTransportMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_TRANSPORT, nodeId);
         UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
-        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build();
-        log.trace("[{}][{}] Pushing session data to topic: {}", topic, sessionId, transportMsg);
-        TbProtoQueueMsg<ToTransportMsg> queueMsg = new TbProtoQueueMsg<>(NULL_UUID, transportMsg);
-        tbTransportProducer.send(TopicPartitionInfo.builder().topic(topic).build(), queueMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
+        log.trace("[{}][{}] Pushing session data to topic: {}", tpi.getFullTopicName(), sessionId, msg);
+        TbProtoQueueMsg<ToTransportMsg> queueMsg = new TbProtoQueueMsg<>(NULL_UUID, msg);
+        tbTransportProducer.send(tpi, queueMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
     }
 
     private static class QueueCallbackAdaptor implements TbQueueCallback {

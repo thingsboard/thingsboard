@@ -221,6 +221,8 @@ public class DeviceApiController {
                         .setDeviceIdLSB(deviceInfoProto.getDeviceIdLSB())
                         .setSessionIdMSB(sessionId.getMostSignificantBits())
                         .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                        .setDeviceName(msg.getDeviceInfo().getDeviceName())
+                        .setDeviceType(msg.getDeviceInfo().getDeviceType())
                         .build();
                 onSuccess.accept(sessionInfo);
             } else {
