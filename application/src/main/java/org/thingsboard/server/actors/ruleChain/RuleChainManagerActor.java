@@ -72,11 +72,11 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
         }
     }
 
-    public ActorRef getOrCreateActor(ActorContext context, RuleChainId ruleChainId) {
+    public ActorRef getOrCreateActor(akka.actor.ActorContext context, RuleChainId ruleChainId) {
         return getOrCreateActor(context, ruleChainId, eId -> ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, eId));
     }
 
-    public ActorRef getOrCreateActor(ActorContext context, RuleChainId ruleChainId, Function<RuleChainId, RuleChain> provider) {
+    public ActorRef getOrCreateActor(akka.actor.ActorContext context, RuleChainId ruleChainId, Function<RuleChainId, RuleChain> provider) {
         return actors.computeIfAbsent(ruleChainId, eId -> {
             RuleChain ruleChain = provider.apply(eId);
             return context.actorOf(Props.create(new RuleChainActor.ActorCreator(systemContext, tenantId, ruleChain))

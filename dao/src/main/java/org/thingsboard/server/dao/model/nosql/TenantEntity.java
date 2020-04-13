@@ -118,12 +118,12 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         this.isolatedTbCore = tenant.isIsolatedTbCore();
         this.isolatedTbRuleEngine = tenant.isIsolatedTbRuleEngine();
     }
-
-    public UUID getId() {
+    
+    public UUID getUuid() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 

@@ -151,12 +151,12 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     }
 
     private Optional<ComponentDescriptor> saveIfNotExist(TenantId tenantId, ComponentDescriptorEntity entity) {
-        if (entity.getId() == null) {
-            entity.setId(UUIDs.timeBased());
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUIDs.timeBased());
         }
 
         ResultSet rs = executeRead(tenantId, QueryBuilder.insertInto(getColumnFamilyName())
-                .value(ModelConstants.ID_PROPERTY, entity.getId())
+                .value(ModelConstants.ID_PROPERTY, entity.getUuid())
                 .value(ModelConstants.COMPONENT_DESCRIPTOR_NAME_PROPERTY, entity.getName())
                 .value(ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY, entity.getClazz())
                 .value(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, entity.getType())
