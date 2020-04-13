@@ -54,6 +54,14 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void onToRuleEngineMsg(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
+        if (tenantId.isNullUid()) {
+            if (entityId.getEntityType().equals(EntityType.TENANT)) {
+                tenantId = new TenantId(entityId.getId());
+            } else {
+                log.warn("[{}][{}] Received invalid message: {}", tenantId, entityId, tbMsg);
+                return;
+            }
+        }
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())

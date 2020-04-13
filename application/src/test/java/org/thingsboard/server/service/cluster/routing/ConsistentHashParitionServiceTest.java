@@ -30,6 +30,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +50,7 @@ public class ConsistentHashParitionServiceTest {
     private ConsistentHashPartitionService clusterRoutingService;
 
     private TbServiceInfoProvider discoveryService;
+    private TenantRoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
 
     private String hashFunctionName = "murmur3_128";
@@ -59,7 +61,8 @@ public class ConsistentHashParitionServiceTest {
     public void setup() throws Exception {
         discoveryService = mock(TbServiceInfoProvider.class);
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
-        clusterRoutingService = new ConsistentHashPartitionService(discoveryService, applicationEventPublisher);
+        routingInfoService = mock(TenantRoutingInfoService.class);
+        clusterRoutingService = new ConsistentHashPartitionService(discoveryService, routingInfoService, applicationEventPublisher);
         ReflectionTestUtils.setField(clusterRoutingService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(clusterRoutingService, "corePartitions", 3);
         ReflectionTestUtils.setField(clusterRoutingService, "ruleEngineTopic", "tb.rule-engine");

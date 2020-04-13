@@ -22,21 +22,21 @@ import org.springframework.stereotype.Component;
 @Data
 @Component
 public class TbQueueRemoteJsInvokeSettings {
-    @Value("${js.remote.request_topic}")
+    @Value("${queue.js.request_topic}")
     private String requestTopic;
 
-    @Value("${js.remote.response_topic_prefix}")
+    @Value("${queue.js.response_topic_prefix}")
     private String responseTopic;
 
-    @Value("${js.remote.max_pending_requests}")
+    @Value("${queue.js.max_pending_requests}")
     private long maxPendingRequests;
 
-    @Value("${js.remote.response_poll_interval}")
+    @Value("${queue.js.response_poll_interval}")
     private int responsePollInterval;
 
-    @Value("${js.remote.response_auto_commit_interval}")
+    @Value("${queue.js.response_auto_commit_interval}")
     private int autoCommitInterval;
 
-    @Value("${js.remote.max_requests_timeout}")
+    @Value("${queue.js.max_requests_timeout}")
     private long maxRequestsTimeout;
 }

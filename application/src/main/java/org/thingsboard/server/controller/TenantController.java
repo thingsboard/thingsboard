@@ -76,7 +76,6 @@ public class TenantController extends BaseController {
 
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation,
                     tenant.getId(), tenant);
-
             tenant = checkNotNull(tenantService.saveTenant(tenant));
             if (newTenant) {
                 installScripts.createDefaultRuleChains(tenant.getId());
@@ -96,7 +95,6 @@ public class TenantController extends BaseController {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             checkTenantId(tenantId, Operation.DELETE);
             tenantService.deleteTenant(tenantId);
-
             tbClusterService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);
