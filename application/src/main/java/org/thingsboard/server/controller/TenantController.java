@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -71,6 +72,16 @@ public class TenantController extends BaseController {
     public Tenant saveTenant(@RequestBody Tenant tenant) throws ThingsboardException {
         try {
             boolean newTenant = tenant.getId() == null;
+
+            if (!newTenant) {
+                Tenant oldTenant = tenantService.findTenantById(tenant.getTenantId());
+                if (oldTenant.isIsolatedTbCore() != tenant.isIsolatedTbCore()) {
+                    throw new ThingsboardException("Field isolatedTbCore from Tenant can't be changed.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                }
+                if (oldTenant.isIsolatedTbRuleEngine() != tenant.isIsolatedTbRuleEngine()) {
+                    throw new ThingsboardException("Field isolatedTbRuleEngine from Tenant can't be changed.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                }
+            }
 
             Operation operation = newTenant ? Operation.CREATE : Operation.WRITE;
 
