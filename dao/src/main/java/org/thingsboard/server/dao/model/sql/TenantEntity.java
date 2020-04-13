@@ -72,6 +72,12 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
     @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
+    @Column(name = ModelConstants.TENANT_ISOLATED_TB_CORE)
+    private boolean isolatedTbCore;
+
+    @Column(name = ModelConstants.TENANT_ISOLATED_TB_RULE_ENGINE)
+    private boolean isolatedTbRuleEngine;
+
     @Type(type = "json")
     @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
@@ -95,6 +101,8 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         this.phone = tenant.getPhone();
         this.email = tenant.getEmail();
         this.additionalInfo = tenant.getAdditionalInfo();
+        this.isolatedTbCore = tenant.isIsolatedTbCore();
+        this.isolatedTbRuleEngine = tenant.isIsolatedTbRuleEngine();
     }
 
     @Override
@@ -126,6 +134,8 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         tenant.setPhone(phone);
         tenant.setEmail(email);
         tenant.setAdditionalInfo(additionalInfo);
+        tenant.setIsolatedTbCore(isolatedTbCore);
+        tenant.setIsolatedTbRuleEngine(isolatedTbRuleEngine);
         return tenant;
     }
 
