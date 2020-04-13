@@ -35,7 +35,7 @@
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty">
+            [disabled]="(isLoading$ | async) || detailsForm?.invalid || !detailsForm?.dirty">
       {{ 'action.add' | translate }}
     </button>
     <button mat-button color="primary"

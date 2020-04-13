@@ -61,8 +61,19 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     }
   }
 
+  private lastChild(route: ActivatedRouteSnapshot) {
+    let child = route;
+    while (child.firstChild !== null) {
+      child = child.firstChild;
+    }
+    return child;
+  }
 
-  buildBreadCrumbs(route: ActivatedRouteSnapshot, breadcrumbs: Array<BreadCrumb> = []): Array<BreadCrumb> {
+  buildBreadCrumbs(route: ActivatedRouteSnapshot, breadcrumbs: Array<BreadCrumb> = [],
+                   lastChild?: ActivatedRouteSnapshot): Array<BreadCrumb> {
+    if (!lastChild) {
+      lastChild = this.lastChild(route);
+    }
     let newBreadcrumbs = breadcrumbs;
     if (route.routeConfig && route.routeConfig.data) {
       const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig<any>;
@@ -72,7 +83,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
         let ignoreTranslate;
         if (breadcrumbConfig.labelFunction) {
           labelFunction = () => {
-            return breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue);
+            return breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue, lastChild.data);
           };
           ignoreTranslate = true;
         } else {
@@ -96,7 +107,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
       }
     }
     if (route.firstChild) {
-      return this.buildBreadCrumbs(route.firstChild, newBreadcrumbs);
+      return this.buildBreadCrumbs(route.firstChild, newBreadcrumbs, lastChild);
     }
     return newBreadcrumbs;
   }

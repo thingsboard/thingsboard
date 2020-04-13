@@ -41,7 +41,7 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
 
   @Input()
   set entitiesTableConfig(entitiesTableConfig: C) {
-    this.entitiesTableConfigValue = entitiesTableConfig;
+    this.setEntitiesTableConfig(entitiesTableConfig);
   }
 
   get entitiesTableConfig(): C {
@@ -118,6 +118,10 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
 
   prepareFormValue(formValue: any): any {
     return formValue;
+  }
+
+  protected setEntitiesTableConfig(entitiesTableConfig: C) {
+    this.entitiesTableConfigValue = entitiesTableConfig;
   }
 
   abstract buildForm(entity: T): FormGroup;
