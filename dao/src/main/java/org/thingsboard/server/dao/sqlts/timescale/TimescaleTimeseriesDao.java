@@ -109,8 +109,8 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 keyId,
                 query.getStartTs(),
                 query.getEndTs(),
-                new PageRequest(0, query.getLimit(),
-                        new Sort(Sort.Direction.fromString(
+                PageRequest.of(0, query.getLimit(),
+                        Sort.by(Sort.Direction.fromString(
                                 query.getOrderBy()), "ts")));
         timescaleTsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(strKey));
         return Futures.immediateFuture(DaoUtil.convertDataList(timescaleTsKvEntities));

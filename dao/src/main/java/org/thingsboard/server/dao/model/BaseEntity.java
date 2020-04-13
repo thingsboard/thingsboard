@@ -19,8 +19,8 @@ import java.util.UUID;
 
 public interface BaseEntity<D> extends ToData<D> {
 
-    UUID getId();
+    UUID getUuid();
 
-    void setId(UUID id);
+    void setUuid(UUID id);
 
 }

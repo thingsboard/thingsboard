@@ -58,8 +58,8 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         setSearchText(entity);
         log.debug("Saving entity {}", entity);
-        if (entity.getId() == null) {
-            entity.setId(UUIDs.timeBased());
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUIDs.timeBased());
         }
         entity = getCrudRepository().save(entity);
         return DaoUtil.getData(entity);

@@ -21,7 +21,6 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -30,10 +29,12 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public final class InMemoryStorage {
     private static InMemoryStorage instance;
-    private final Map<String, BlockingQueue<TbQueueMsg>> storage;
+    private final ConcurrentHashMap<String, BlockingQueue<TbQueueMsg>> storage;
+    private volatile boolean stopped;
 
     private InMemoryStorage() {
         storage = new ConcurrentHashMap<>();
+        stopped = false;
     }
 
     public static InMemoryStorage getInstance() {
@@ -67,19 +68,20 @@ public final class InMemoryStorage {
                         entities.add((T) other);
                     }
                 }
+                if (entities.size() > 0) {
+                    storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).addAll(entities);
+                }
                 return entities;
             } catch (InterruptedException e) {
-                log.warn("Queue was interrupted", e);
-                return Collections.emptyList();
+                if (!stopped) {
+                    log.warn("Queue was interrupted", e);
+                }
             }
         }
         return Collections.emptyList();
     }
 
-    public void commit(String topic) {
-        //TODO: 2.5 Until someone calls commit you should not allow to poll new elements.
-        if (storage.containsKey(topic)) {
-//            storage.get(topic).remove();
-        }
+    public void stop() {
+        stopped = true;
     }
 }

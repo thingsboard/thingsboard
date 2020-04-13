@@ -290,6 +290,20 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                     log.info("Attributes updated.");
                 } catch (InvalidQueryException e) {
                 }
+
+                String updateTenantCoreTableStmt = "alter table tenant add isolated_tb_core boolean";
+                String updateTenantRuleEngineTableStmt = "alter table tenant add isolated_tb_rule_engine boolean";
+
+                try {
+                    log.info("Updating tenant...");
+                    cluster.getSession().execute(updateTenantCoreTableStmt);
+                    Thread.sleep(2500);
+
+                    cluster.getSession().execute(updateTenantRuleEngineTableStmt);
+                    Thread.sleep(2500);
+                    log.info("Tenant updated.");
+                } catch (InvalidQueryException e) {
+                }
                 log.info("Schema updated.");
                 break;
             default:
