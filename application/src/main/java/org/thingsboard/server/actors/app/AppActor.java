@@ -39,9 +39,12 @@ import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
 import scala.concurrent.duration.Duration;
+
+import java.util.Optional;
 
 public class AppActor extends ContextAwareActor {
 
@@ -68,7 +71,7 @@ public class AppActor extends ContextAwareActor {
     @Override
     protected boolean process(TbActorMsg msg) {
         if (!ruleChainsInitialized) {
-            initRuleChainsAndTenantActors();
+            initTenantActors();
             ruleChainsInitialized = true;
             if (msg.getMsgType() != MsgType.APP_INIT_MSG) {
                 log.warn("Rule Chains initialized by unexpected message: {}", msg);
@@ -100,15 +103,30 @@ public class AppActor extends ContextAwareActor {
         return true;
     }
 
-    private void initRuleChainsAndTenantActors() {
+    private void initTenantActors() {
         log.info("Starting main system actor.");
         try {
-            if (systemContext.isTenantComponentsInitEnabled()) {
-                PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
-                for (Tenant tenant : tenantIterator) {
+            // This Service may be started for specific tenant only.
+            Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
+            if (isolatedTenantId.isPresent()) {
+                Tenant tenant = systemContext.getTenantService().findTenantById(isolatedTenantId.get());
+                if (tenant != null) {
                     log.debug("[{}] Creating tenant actor", tenant.getId());
                     getOrCreateTenantActor(tenant.getId());
                     log.debug("Tenant actor created.");
+                } else {
+                    log.error("[{}] Tenant with such ID does not exist", isolatedTenantId.get());
+                }
+            } else if (systemContext.isTenantComponentsInitEnabled()) {
+                PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
+                boolean isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
+                boolean isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
+                for (Tenant tenant : tenantIterator) {
+                    if (isCore || (isRuleEngine && !tenant.isIsolatedTbRuleEngine())) {
+                        log.debug("[{}] Creating tenant actor", tenant.getId());
+                        getOrCreateTenantActor(tenant.getId());
+                        log.debug("[{}] Tenant actor created.", tenant.getId());
+                    }
                 }
             }
             log.info("Main system actor started.");

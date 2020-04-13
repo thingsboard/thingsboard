@@ -158,6 +158,16 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
   DeviceInfoProto deviceInfo = 1;
 }
 
+message GetTenantRoutingInfoRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+}
+
+message GetTenantRoutingInfoResponseMsg {
+  bool isolatedTbCore = 1;
+  bool isolatedTbRuleEngine = 2;
+}
+
 message SessionCloseNotificationProto {
   string message = 1;
 }
@@ -359,12 +369,14 @@ message TransportApiRequestMsg {
   ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
+  GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
 message TransportApiResponseMsg {
   ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
+  GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

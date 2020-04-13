@@ -60,11 +60,12 @@ public class ConsistentHashPartitionService implements PartitionService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
+    private final TenantRoutingInfoService tenantRoutingInfoService;
     private final ConcurrentMap<ServiceQueue, String> partitionTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<ServiceQueue, Integer> partitionSizes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, TenantRoutingInfo> tenantRoutingInfoMap = new ConcurrentHashMap<>();
+
     private ConcurrentMap<ServiceQueueKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
-    //TODO: Fetch this from the database, together with size of partitions for each service for each tenant.
-    private ConcurrentMap<TenantId, Set<ServiceType>> isolatedTenants = new ConcurrentHashMap<>();
     private ConcurrentMap<TopicPartitionInfoKey, TopicPartitionInfo> tpiCache = new ConcurrentHashMap<>();
 
     private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
@@ -73,8 +74,9 @@ public class ConsistentHashPartitionService implements PartitionService {
 
     private HashFunction hashFunction;
 
-    public ConsistentHashPartitionService(TbServiceInfoProvider serviceInfoProvider, ApplicationEventPublisher applicationEventPublisher) {
+    public ConsistentHashPartitionService(TbServiceInfoProvider serviceInfoProvider, TenantRoutingInfoService tenantRoutingInfoService, ApplicationEventPublisher applicationEventPublisher) {
         this.serviceInfoProvider = serviceInfoProvider;
+        this.tenantRoutingInfoService = tenantRoutingInfoService;
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
@@ -122,10 +124,10 @@ public class ConsistentHashPartitionService implements PartitionService {
             addNode(circles, other);
         }
         ConcurrentMap<ServiceQueueKey, List<Integer>> oldPartitions = myPartitions;
-        TenantId myTenantId = getSystemOrIsolatedTenantId(currentService);
+        TenantId myIsolatedOrSystemTenantId = getSystemOrIsolatedTenantId(currentService);
         myPartitions = new ConcurrentHashMap<>();
         partitionSizes.forEach((type, size) -> {
-            ServiceQueueKey myServiceQueueKey = new ServiceQueueKey(type, myTenantId);
+            ServiceQueueKey myServiceQueueKey = new ServiceQueueKey(type, myIsolatedOrSystemTenantId);
             for (int i = 0; i < size; i++) {
                 ServiceInfo serviceInfo = resolveByPartitionIdx(circles.get(myServiceQueueKey), i);
                 if (currentService.equals(serviceInfo)) {
@@ -247,7 +249,30 @@ public class ConsistentHashPartitionService implements PartitionService {
     }
 
     private boolean isIsolated(ServiceQueue serviceQueue, TenantId tenantId) {
-        return isolatedTenants.get(tenantId) != null && isolatedTenants.get(tenantId).contains(serviceQueue.getType());
+        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            return false;
+        }
+        TenantRoutingInfo routingInfo = tenantRoutingInfoMap.get(tenantId);
+        if (routingInfo == null) {
+            synchronized (tenantRoutingInfoMap) {
+                routingInfo = tenantRoutingInfoMap.get(tenantId);
+                if (routingInfo == null) {
+                    routingInfo = tenantRoutingInfoService.getRoutingInfo(tenantId);
+                    tenantRoutingInfoMap.put(tenantId, routingInfo);
+                }
+            }
+        }
+        if (routingInfo == null) {
+            throw new RuntimeException("Tenant not found!");
+        }
+        switch (serviceQueue.getType()) {
+            case TB_CORE:
+                return routingInfo.isIsolatedTbCore();
+            case TB_RULE_ENGINE:
+                return routingInfo.isIsolatedTbRuleEngine();
+            default:
+                return false;
+        }
     }
 
     private void logServiceInfo(TransportProtos.ServiceInfo server) {
@@ -265,12 +290,6 @@ public class ConsistentHashPartitionService implements PartitionService {
 
     private void addNode(Map<ServiceQueueKey, ConsistentHashCircle<ServiceInfo>> circles, ServiceInfo instance) {
         TenantId tenantId = getSystemOrIsolatedTenantId(instance);
-        if (!tenantId.isNullUid()) {
-            isolatedTenants.putIfAbsent(tenantId, new HashSet<>());
-            for (String serviceType : instance.getServiceTypesList()) {
-                isolatedTenants.get(tenantId).add(ServiceType.valueOf(serviceType.toUpperCase()));
-            }
-        }
         for (String serviceTypeStr : instance.getServiceTypesList()) {
             ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
             if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {

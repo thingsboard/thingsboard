@@ -22,7 +22,6 @@ import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
 import akka.actor.SupervisorStrategy;
 import akka.actor.Terminated;
-import akka.japi.Function;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -31,6 +30,7 @@ import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -47,12 +47,13 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import scala.concurrent.duration.Duration;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TenantActor extends RuleChainManagerActor {
 
     private final BiMap<DeviceId, ActorRef> deviceActors;
-    private boolean isRuleEngine;
+    private boolean isRuleEngineForCurrentTenant;
     private boolean isCore;
 
     private TenantActor(ActorSystemContext systemContext, TenantId tenantId) {
@@ -69,10 +70,19 @@ public class TenantActor extends RuleChainManagerActor {
     public void preStart() {
         log.info("[{}] Starting tenant actor.", tenantId);
         try {
-            isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
+            Tenant tenant = systemContext.getTenantService().findTenantById(tenantId);
+            // This Service may be started for specific tenant only.
+            Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
+
+            isRuleEngineForCurrentTenant = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
             isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
-            if (isRuleEngine) {
-                initRuleChains();
+
+            if (isRuleEngineForCurrentTenant) {
+                if (isolatedTenantId.map(id -> id.equals(tenantId)).orElseGet(() -> !tenant.isIsolatedTbRuleEngine())) {
+                    initRuleChains();
+                } else {
+                    isRuleEngineForCurrentTenant = false;
+                }
             }
             log.info("[{}] Tenant actor started.", tenantId);
         } catch (Exception e) {
@@ -132,8 +142,9 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
-        if (!isRuleEngine) {
+        if (!isRuleEngineForCurrentTenant) {
             log.warn("RECEIVED INVALID MESSAGE: {}", msg);
+            return;
         }
         TbMsg tbMsg = msg.getTbMsg();
         if (tbMsg.getRuleChainId() == null) {
@@ -167,7 +178,7 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        if (isRuleEngine) {
+        if (isRuleEngineForCurrentTenant) {
             ActorRef target = getEntityActorRef(msg.getEntityId());
             if (target != null) {
                 if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {

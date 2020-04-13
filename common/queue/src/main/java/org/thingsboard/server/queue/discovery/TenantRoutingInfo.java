@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.util;
+package org.thingsboard.server.queue.discovery;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine'")
-public @interface TbRuleEngineComponent {
+@Data
+public class TenantRoutingInfo {
+    private final TenantId tenantId;
+    private final boolean isolatedTbCore;
+    private final boolean isolatedTbRuleEngine;
 }

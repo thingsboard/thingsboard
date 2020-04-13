@@ -173,19 +173,21 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
 
     @Override
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        Set<TopicPartitionInfo> removedPartitions = new HashSet<>(currentPartitions);
-        removedPartitions.removeAll(partitionChangeEvent.getPartitions());
+        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
+            Set<TopicPartitionInfo> removedPartitions = new HashSet<>(currentPartitions);
+            removedPartitions.removeAll(partitionChangeEvent.getPartitions());
 
-        currentPartitions.clear();
-        currentPartitions.addAll(partitionChangeEvent.getPartitions());
+            currentPartitions.clear();
+            currentPartitions.addAll(partitionChangeEvent.getPartitions());
 
-        // We no longer manage current partition of devices;
-        removedPartitions.forEach(partition -> {
-            Set<TbSubscription> subs = partitionedSubscriptions.remove(partition);
-            if (subs != null) {
-                subs.forEach(this::removeSubscriptionFromEntityMap);
-            }
-        });
+            // We no longer manage current partition of devices;
+            removedPartitions.forEach(partition -> {
+                Set<TbSubscription> subs = partitionedSubscriptions.remove(partition);
+                if (subs != null) {
+                    subs.forEach(this::removeSubscriptionFromEntityMap);
+                }
+            });
+        }
     }
 
     @Override
