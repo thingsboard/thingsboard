@@ -75,11 +75,11 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
         this.resetToken = userCredentials.getResetToken();
     }
     
-    public UUID getId() {
+    public UUID getUuid() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 

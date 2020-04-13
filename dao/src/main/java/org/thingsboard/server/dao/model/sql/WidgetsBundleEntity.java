@@ -55,7 +55,7 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
 
     public WidgetsBundleEntity(WidgetsBundle widgetsBundle) {
         if (widgetsBundle.getId() != null) {
-            this.setId(widgetsBundle.getId().getId());
+            this.setUuid(widgetsBundle.getId().getId());
         }
         if (widgetsBundle.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(widgetsBundle.getTenantId().getId());
