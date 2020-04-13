@@ -40,10 +40,6 @@ import { AlarmService } from '@app/core/http/alarm.service';
 import { DialogService } from '@core/services/dialog.service';
 import { AlarmTableHeaderComponent } from '@home/components/alarm/alarm-table-header.component';
 import {
-  AuditLogDetailsDialogComponent,
-  AuditLogDetailsDialogData
-} from '@home/components/audit-log/audit-log-details-dialog.component';
-import {
   AlarmDetailsDialogComponent,
   AlarmDetailsDialogData
 } from '@home/components/alarm/alarm-details-dialog.component';
@@ -72,7 +68,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     this.entityType = EntityType.ALARM;
     this.entityTranslations = entityTypeTranslations.get(EntityType.ALARM);
     this.entityResources = {
-    } as EntityTypeResource;
+    } as EntityTypeResource<AlarmInfo>;
     this.searchStatus = defaultSearchStatus;
 
     this.headerComponent = AlarmTableHeaderComponent;

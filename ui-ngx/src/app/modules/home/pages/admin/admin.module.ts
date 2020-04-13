@@ -20,9 +20,9 @@ import { CommonModule } from '@angular/common';
 import { AdminRoutingModule } from './admin-routing.module';
 import { SharedModule } from '@app/shared/shared.module';
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
-import {GeneralSettingsComponent} from '@modules/home/pages/admin/general-settings.component';
-import {SecuritySettingsComponent} from '@modules/home/pages/admin/security-settings.component';
-import {HomeComponentsModule} from '@modules/home/components/home-components.module';
+import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
+import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
+import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 
 @NgModule({
   declarations:

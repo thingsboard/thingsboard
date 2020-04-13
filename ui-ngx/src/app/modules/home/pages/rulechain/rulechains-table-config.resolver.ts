@@ -14,23 +14,23 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-import {Resolve, Router} from '@angular/router';
+import { Resolve, Router } from '@angular/router';
 import {
   checkBoxCell,
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@home/models/entity/entity-component.models';
-import {RuleChain} from '@shared/models/rule-chain.models';
-import {RuleChainService} from '@core/http/rule-chain.service';
-import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.component';
-import {DialogService} from '@core/services/dialog.service';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { RuleChain } from '@shared/models/rule-chain.models';
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.component';
+import { DialogService } from '@core/services/dialog.service';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { ItemBufferService } from '@core/services/item-buffer.service';
@@ -55,7 +55,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.entityResources = entityTypeResources.get(EntityType.RULE_CHAIN);
 
     this.config.columns.push(
-      new DateEntityTableColumn<RuleChain>('createdTime', 'rulechain.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%'),
       new EntityTableColumn<RuleChain>('root', 'rulechain.root', '60px',
         entity => {

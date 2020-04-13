@@ -45,7 +45,7 @@ import {
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
-import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Widget, WidgetConfig, WidgetPosition, widgetTypesData } from '@app/shared/models/widget.models';
 import { environment as env } from '@env/environment';
 import { Authority } from '@shared/models/authority.enum';

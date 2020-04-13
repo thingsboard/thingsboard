@@ -29,7 +29,6 @@ import {
   OnDestroy,
   OnInit,
   SimpleChanges,
-  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -44,7 +43,8 @@ import {
   Widget,
   WidgetActionDescriptor,
   widgetActionSources,
-  WidgetActionType, WidgetComparisonSettings,
+  WidgetActionType,
+  WidgetComparisonSettings,
   WidgetResource,
   widgetType,
   WidgetTypeParameters
@@ -90,24 +90,7 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { DatasourceService } from '@core/api/datasource.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
-import { AssetService } from '@core/http/asset.service';
-import { DialogService } from '@core/services/dialog.service';
-import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
-import { DatePipe } from '@angular/common';
-import { AttributeService } from '@core/http/attribute.service';
-import { TranslateService } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
-
-const ServicesMap = new Map<string, Type<any>>();
-ServicesMap.set('deviceService', DeviceService);
-ServicesMap.set('assetService', AssetService);
-ServicesMap.set('attributeService', AttributeService);
-ServicesMap.set('dialogs', DialogService);
-ServicesMap.set('customDialog', CustomDialogService);
-ServicesMap.set('date', DatePipe);
-ServicesMap.set('utils', UtilsService);
-ServicesMap.set('translate', TranslateService);
-ServicesMap.set('http', HttpClient);
+import { ServicesMap } from '@home/models/services.map';
 
 @Component({
   selector: 'tb-widget',
@@ -706,6 +689,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
         this.cd.detectChanges();
       } catch (e) {
+        console.error(e);
         if (this.dynamicWidgetComponentRef) {
           this.dynamicWidgetComponentRef.destroy();
           this.dynamicWidgetComponentRef = null;
@@ -1010,7 +994,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               'entityName', 'additionalParams', 'entityLabel', customFunction);
             customActionFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
           } catch (e) {
-            //
+            console.error(e);
           }
         }
         break;
@@ -1035,7 +1019,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
                   'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
                 customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
               } catch (e) {
-                //
+                console.error(e);
               }
             }
           },

@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
+
 :host {
 /*  flex: 1;
   display: flex;
   justify-content: flex-start; */
   padding-right: 8px;
+  min-width: 160px;
 }
 
 :host ::ng-deep {
   mat-form-field {
     font-size: 16px;
+    width: 200px;
 
     .mat-form-field-wrapper {
       padding-bottom: 0;
@@ -30,6 +34,14 @@
 
     .mat-form-field-underline {
       bottom: 0;
+    }
+
+    @media #{$mat-xs} {
+      width: 100%;
+
+      .mat-form-field-infix {
+        width: auto !important;
+      }
     }
   }
 }

@@ -1,83 +1,34 @@
-/*================================================================================*/
-/*=======================  New TB 3.0 / Angular 8 Example  =======================*/
-/*================================================================================*/
-//
-//let $injector = widgetContext.$scope.$injector;
-//let deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));
-//
-//deviceService.getDevice(entityId.id).subscribe(function(device) {
-//   console.log(device);
-//});
-//
-//
-//let customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));
-//
-//customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe(
-//    function(res) {
-//        console.log(res);
-//    }
-//);
-//
-//function EditEntityDialogController(instance) {
-//    let vm = instance;
-//    vm.entityId = entityId;
-//    vm.entityName = entityName;
-//    vm.entityType = entityId.entityType;
-//
-//    vm.editEntityFormGroup = vm.fb.group({
-//      entityName: [vm.entityName, [vm.validators.required]]
-//    });
-//
-//    vm.cancel = function() {
-//        vm.dialogRef.close(null);
-//    };
-//
-//    vm.save = function() {
-//        const newVal = vm.editEntityFormGroup.value;
-//        vm.dialogRef.close(newVal);
-//    };
-//}
-//
 /*=======================================================================*/
 /*=====  There are three examples: for delete, edit and add entity  =====*/
 /*=======================================================================*/
 /*=======================  Delete entity example  =======================*/
 /*=======================================================================*/
 //
-//var $injector = widgetContext.$scope.$injector;
-//var $mdDialog = $injector.get('$mdDialog'),
-//    $document = $injector.get('$document'),
-//    types = $injector.get('types'),
-//    assetService = $injector.get('assetService'),
-//    deviceService = $injector.get('deviceService')
-//    $rootScope = $injector.get('$rootScope'),
-//    $q = $injector.get('$q');
+//let $injector = widgetContext.$scope.$injector;
+//let dialogs = $injector.get(widgetContext.servicesMap.get('dialogs'));
+//let assetService = $injector.get(widgetContext.servicesMap.get('assetService'));
+//let deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));
 //
 //openDeleteEntityDialog();
 //
 //function openDeleteEntityDialog() {
-//    var title = 'Delete ' + entityId.entityType
-//        .toLowerCase() + ' ' +
-//        entityName;
-//    var content = 'Are you sure you want to delete the ' +
-//        entityId.entityType.toLowerCase() + ' ' +
-//        entityName + '?';
-//    var confirm = $mdDialog.confirm()
-//        .targetEvent($event)
-//        .title(title)
-//        .htmlContent(content)
-//        .ariaLabel(title)
-//        .cancel('Cancel')
-//        .ok('Delete');
-//    $mdDialog.show(confirm).then(function() {
-//        deleteEntity();
-//    })
+//    let title = 'Delete ' + entityId.entityType.toLowerCase() + ' ' +
+//                 entityName;
+//    let content = 'Are you sure you want to delete the ' +
+//                  entityId.entityType.toLowerCase() + ' ' + entityName + '?';
+//    dialogs.confirm(title, content, 'Cancel', 'Delete').subscribe(
+//        function(result) {
+//            if (result) {
+//                deleteEntity();
+//            }
+//        }
+//    );
 //}
 //
 //function deleteEntity() {
-//    deleteEntityPromise(entityId).then(
+//    deleteEntityObservable(entityId).subscribe(
 //        function success() {
-//            updateAliasData();
+//            widgetContext.updateAliases();
 //        },
 //        function fail() {
 //            showErrorDialog();
@@ -85,228 +36,243 @@
 //    );
 //}
 //
-//function deleteEntityPromise(entityId) {
-//    if (entityId.entityType == types.entityType.asset) {
+//function deleteEntityObservable(entityId) {
+//    if (entityId.entityType == "ASSET") {
 //        return assetService.deleteAsset(entityId.id);
-//    } else if (entityId.entityType == types.entityType.device) {
+//    } else if (entityId.entityType == "DEVICE") {
 //        return deviceService.deleteDevice(entityId.id);
 //    }
 //}
 //
-//function updateAliasData() {
-//    var aliasIds = [];
-//    for (var id in widgetContext.aliasController.resolvedAliases) {
-//        aliasIds.push(id);
-//    }
-//    var tasks = [];
-//    aliasIds.forEach(function(aliasId) {
-//        widgetContext.aliasController.setAliasUnresolved(aliasId);
-//        tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));
-//    });
-//    $q.all(tasks).then(function() {
-//        $rootScope.$broadcast('entityAliasesChanged', aliasIds);
-//    });
-//}
-//
 //function showErrorDialog() {
-//    var title = 'Error';
-//    var content = 'An error occurred while deleting the entity. Please try again.';
-//    var alert = $mdDialog.alert()
-//        .title(title)
-//        .htmlContent(content)
-//        .ariaLabel(title)
-//        .parent(angular.element($document[0].body))
-//        .targetEvent($event)
-//        .multiple(true)
-//        .clickOutsideToClose(true)
-//        .ok('CLOSE');
-//    $mdDialog.show(alert);
+//    let title = 'Error';
+//    let content = 'An error occurred while deleting the entity. Please try again.';
+//    dialogs.alert(title, content, 'CLOSE').subscribe(
+//        function(result) {}
+//    );
 //}
 //
 /*=======================================================================*/
 /*========================  Edit entity example  ========================*/
 /*=======================================================================*/
 //
-//var $injector = widgetContext.$scope.$injector;
-//var $mdDialog = $injector.get('$mdDialog'),
-//    $document = $injector.get('$document'),
-//    $q = $injector.get('$q'),
-//    types = $injector.get('types'),
-//    $rootScope = $injector.get('$rootScope'),
-//    entityService = $injector.get('entityService'),
-//    attributeService = $injector.get('attributeService'),
-//    entityRelationService = $injector.get('entityRelationService');
+//let $injector = widgetContext.$scope.$injector;
+//let customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));
+//let entityService = $injector.get(widgetContext.servicesMap.get('entityService'));
+//let assetService = $injector.get(widgetContext.servicesMap.get('assetService'));
+//let deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));
+//let attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));
+//let entityRelationService = $injector.get(widgetContext.servicesMap.get('entityRelationService'));
 //
 //openEditEntityDialog();
 //
 //function openEditEntityDialog() {
-//    $mdDialog.show({
-//        controller: ['$scope','$mdDialog', EditEntityDialogController],
-//        controllerAs: 'vm',
-//        template: htmlTemplate,
-//        locals: {
-//            entityId: entityId
-//        },
-//        parent: angular.element($document[0].body),
-//        targetEvent: $event,
-//        multiple: true,
-//        clickOutsideToClose: false
-//    });
+//    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();
 //}
 //
-//function EditEntityDialogController($scope,$mdDialog) {
-//    var vm = this;
-//    vm.entityId = entityId;
+//function EditEntityDialogController(instance) {
+//    let vm = instance;
+//
 //    vm.entityName = entityName;
 //    vm.entityType = entityId.entityType;
-//    vm.allowedEntityTypes = [types.entityType.asset, types.entityType.device];
-//    vm.allowedRelatedEntityTypes = [];
-//    vm.entitySearchDirection = types.entitySearchDirection;
+//    vm.entitySearchDirection = {
+//        from: "FROM",
+//        to: "TO"
+//    };
 //    vm.attributes = {};
-//    vm.serverAttributes = {};
-//    vm.relations = [];
-//    vm.newRelations = [];
+//    vm.oldRelationsData = [];
 //    vm.relationsToDelete = [];
+//    vm.entity = {};
+//
+//    vm.editEntityFormGroup = vm.fb.group({
+//        entityName: ['', [vm.validators.required]],
+//        entityType: [null],
+//        entityLabel: [null],
+//        type: ['', [vm.validators.required]],
+//        attributes: vm.fb.group({
+//            latitude: [null],
+//            longitude: [null],
+//            address: [null],
+//            owner: [null],
+//            number: [null, [vm.validators.pattern(/^-?[0-9]+$/)]],
+//            booleanValue: [false]
+//        }),
+//        oldRelations: vm.fb.array([]),
+//        relations: vm.fb.array([])
+//    });
+//
 //    getEntityInfo();
 //
-//    vm.addRelation = function() {
-//        var relation = {
-//            direction: null,
-//            relationType: null,
-//            relatedEntity: null
-//        };
-//        vm.newRelations.push(relation);
-//        $scope.editEntityForm.$setDirty();
-//    };
-//    vm.removeRelation = function(index) {
-//        if (index > -1) {
-//            vm.newRelations.splice(index, 1);
-//            $scope.editEntityForm.$setDirty();
-//        }
-//    };
-//    vm.removeOldRelation = function(index, relation) {
-//        if (index > -1) {
-//            vm.relations.splice(index, 1);
-//            vm.relationsToDelete.push(relation);
-//            $scope.editEntityForm.$setDirty();
-//        }
-//    };
-//    vm.save = function() {
-//        saveAttributes();
-//        saveRelations();
-//        $scope.editEntityForm.$setPristine();
-//    };
 //    vm.cancel = function() {
-//        $mdDialog.hide();
+//        vm.dialogRef.close(null);
+//    };
+//
+//    vm.relations = function() {
+//        return vm.editEntityFormGroup.get('relations');
+//    };
+//
+//    vm.oldRelations = function() {
+//        return vm.editEntityFormGroup.get('oldRelations');
+//    };
+//
+//    vm.addRelation = function() {
+//        vm.relations().push(vm.fb.group({
+//            relatedEntity: [null, [vm.validators.required]],
+//            relationType: [null, [vm.validators.required]],
+//            direction: [null, [vm.validators.required]]
+//        }));
+//    };
+//
+//    function addOldRelation() {
+//        vm.oldRelations().push(vm.fb.group({
+//            relatedEntity: [{value: null, disabled: true}, [vm.validators.required]],
+//            relationType: [{value: null, disabled: true}, [vm.validators.required]],
+//            direction: [{value: null, disabled: true}, [vm.validators.required]]
+//        }));
+//    }
+//
+//    vm.removeRelation = function(index) {
+//        vm.relations().removeAt(index);
+//        vm.relations().markAsDirty();
+//    };
+//
+//    vm.removeOldRelation = function(index) {
+//        vm.oldRelations().removeAt(index);
+//        vm.relationsToDelete.push(vm.oldRelationsData[index]);
+//        vm.oldRelations().markAsDirty();
+//    };
+//
+//    vm.save = function() {
+//        vm.editEntityFormGroup.markAsPristine();
+//        widgetContext.rxjs.forkJoin([
+//            saveAttributes(entityId),
+//            saveRelations(entityId),
+//            saveEntity()
+//        ]).subscribe(
+//            function () {
+//                widgetContext.updateAliases();
+//                vm.dialogRef.close(null);
+//            }
+//        );
 //    };
 //
 //    function getEntityAttributes(attributes) {
 //        for (var i = 0; i < attributes.length; i++) {
-//              vm.attributes[attributes[i].key] = attributes[i].value;
+//            vm.attributes[attributes[i].key] = attributes[i].value;
 //        }
-//        vm.serverAttributes = angular.copy(vm.attributes);
 //    }
 //
 //    function getEntityRelations(relations) {
-//        var relationsFrom = relations[0];
-//        var relationsTo = relations[1];
-//        for (var i=0; i < relationsFrom.length; i++) {
-//            var relation = {
-//                direction: types.entitySearchDirection.from,
+//        let relationsFrom = relations[0];
+//        let relationsTo = relations[1];
+//        for (let i=0; i < relationsFrom.length; i++) {
+//            let relation = {
+//                direction: 'FROM',
 //                relationType: relationsFrom[i].type,
 //                relatedEntity: relationsFrom[i].to
 //            };
-//            vm.relations.push(relation);
+//            vm.oldRelationsData.push(relation);
+//            addOldRelation();
 //        }
-//        for (var i=0; i < relationsTo.length; i++) {
-//            var relation = {
-//                direction: types.entitySearchDirection.to,
+//        for (let i=0; i < relationsTo.length; i++) {
+//            let relation = {
+//                direction: 'TO',
 //                relationType: relationsTo[i].type,
 //                relatedEntity: relationsTo[i].from
 //            };
-//            vm.relations.push(relation);
+//            vm.oldRelationsData.push(relation);
+//            addOldRelation();
 //        }
 //    }
 //
 //    function getEntityInfo() {
-//        entityService.getEntity(entityId.entityType, entityId.id).then(
-//            function(entity) {
-//                vm.entity = entity;
-//                vm.type = vm.entity.type;
-//            });
-//        attributeService.getEntityAttributesValues(entityId.entityType, entityId.id, 'SERVER_SCOPE').then(
-//            function(data){
-//                if (data.length) {
-//                    getEntityAttributes(data);
+//        entityService.getEntity(entityId.entityType, entityId.id).subscribe(function (entity) {
+//            vm.entity = entity;
+//            widgetContext.rxjs.forkJoin([
+//                entityRelationService.findInfoByFrom(entityId),
+//                entityRelationService.findInfoByTo(entityId),
+//                attributeService.getEntityAttributes(entityId, 'SERVER_SCOPE')
+//            ]).subscribe(
+//                function (data) {
+//                    getEntityRelations(data.slice(0,2));
+//                    getEntityAttributes(data[2]);
+//                    vm.editEntityFormGroup.patchValue({
+//                        entityName: vm.entity.name,
+//                        entityType: vm.entityType,
+//                        entityLabel: vm.entity.label,
+//                        type: vm.entity.type,
+//                        attributes: vm.attributes,
+//                        oldRelations: vm.oldRelationsData
+//                    }, {emitEvent: false});
 //                }
-//            });
-//        $q.all([entityRelationService.findInfoByFrom(entityId.id, entityId.entityType), entityRelationService.findInfoByTo(entityId.id, entityId.entityType)]).then(
-//            function(relations){
-//                getEntityRelations(relations);
-//            });
+//            );
+//        });
 //    }
 //
-//    function saveAttributes() {
-//        var attributesArray = [];
-//        for (var key in vm.attributes) {
-//            if (vm.attributes[key] !== vm.serverAttributes[key]) {
-//                attributesArray.push({key: key, value: vm.attributes[key]});
+//    function saveEntity() {
+//        const formValues = vm.editEntityFormGroup.value;
+//        if (vm.entity.label !== formValues.entityLabel){
+//            vm.entity.label = formValues.entityLabel;
+//            if (formValues.entityType == 'ASSET') {
+//                return assetService.saveAsset(vm.entity);
+//            } else if (formValues.entityType == 'DEVICE') {
+//                return deviceService.saveDevice(vm.entity);
+//            }
+//        } else {
+//            return widgetContext.rxjs.of([]);
+//        }
+//    }
+//
+//    function saveAttributes(entityId) {
+//        let attributes = vm.editEntityFormGroup.get('attributes').value;
+//        let attributesArray = [];
+//        for (let key in attributes) {
+//            if (attributes[key] !== vm.attributes[key]) {
+//                attributesArray.push({key: key, value: attributes[key]});
 //            }
 //        }
 //        if (attributesArray.length > 0) {
-//            attributeService.saveEntityAttributes(entityId.entityType, entityId.id, \"SERVER_SCOPE\", attributesArray);
+//            return attributeService.saveEntityAttributes(entityId, "SERVER_SCOPE", attributesArray);
+//        } else {
+//            return widgetContext.rxjs.of([]);
 //        }
 //    }
 //
-//    function saveRelations() {
-//        var tasks = [];
-//        for (var i=0; i < vm.newRelations.length; i++) {
-//            var relation = {
-//                type: vm.newRelations[i].relationType
+//    function saveRelations(entityId) {
+//        let relations = vm.editEntityFormGroup.get('relations').value;
+//        let tasks = [];
+//        for(let i=0; i < relations.length; i++) {
+//            let relation = {
+//                type: relations[i].relationType,
+//                typeGroup: 'COMMON'
 //            };
-//            if (vm.newRelations[i].direction == types.entitySearchDirection.from) {
-//                relation.to = vm.newRelations[i].relatedEntity;
+//            if (relations[i].direction == 'FROM') {
+//                relation.to = relations[i].relatedEntity;
 //                relation.from = entityId;
 //            } else {
 //                relation.to = entityId;
-//                relation.from = vm.newRelations[i].relatedEntity;
+//                relation.from = relations[i].relatedEntity;
 //            }
 //            tasks.push(entityRelationService.saveRelation(relation));
 //        }
-//        for (var i=0; i < vm.relationsToDelete.length; i++) {
-//            var relation = {
+//        for (let i=0; i < vm.relationsToDelete.length; i++) {
+//            let relation = {
 //                type: vm.relationsToDelete[i].relationType
 //            };
-//            if (vm.relationsToDelete[i].direction == types.entitySearchDirection.from) {
+//            if (vm.relationsToDelete[i].direction == 'FROM') {
 //                relation.to = vm.relationsToDelete[i].relatedEntity;
 //                relation.from = entityId;
 //            } else {
 //                relation.to = entityId;
 //                relation.from = vm.relationsToDelete[i].relatedEntity;
 //            }
-//            tasks.push(entityRelationService.deleteRelation(relation.from.id, relation.from.entityType, relation.type, relation.to.id, relation.to.entityType));
+//            tasks.push(entityRelationService.deleteRelation(relation.from, relation.type, relation.to));
 //        }
-//        $q.all(tasks).then(function(){
-//            vm.relations = vm.relations.concat(vm.newRelations);
-//            vm.newRelations = [];
-//            vm.relationsToDelete = [];
-//            updateAliasData();
-//        });
-//    }
-//
-//    function updateAliasData() {
-//        var aliasIds = [];
-//        for (var id in widgetContext.aliasController.resolvedAliases) {
-//            aliasIds.push(id);
+//        if (tasks.length > 0) {
+//            return widgetContext.rxjs.forkJoin(tasks);
+//        } else {
+//            return widgetContext.rxjs.of([]);
 //        }
-//        var tasks = [];
-//        aliasIds.forEach(function(aliasId) {
-//            widgetContext.aliasController.setAliasUnresolved(aliasId);
-//            tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));
-//        });
-//        $q.all(tasks).then(function() {
-//            $rootScope.$broadcast('entityAliasesChanged', aliasIds);
-//        });
 //    }
 //}
 //
@@ -314,124 +280,132 @@
 /*=========================  Add entity example  =========================*/
 /*========================================================================*/
 //
-//var $injector = widgetContext.$scope.$injector;
-//var $mdDialog = $injector.get('$mdDialog'),
-//    $document = $injector.get('$document'),
-//    $q = $injector.get('$q'),
-//    $rootScope = $injector.get('$rootScope'),
-//    types = $injector.get('types'),
-//    assetService = $injector.get('assetService'),
-//    deviceService = $injector.get('deviceService'),
-//    attributeService = $injector.get('attributeService'),
-//    entityRelationService = $injector.get('entityRelationService');
+//let $injector = widgetContext.$scope.$injector;
+//let customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));
+//let assetService = $injector.get(widgetContext.servicesMap.get('assetService'));
+//let deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));
+//let attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));
+//let entityRelationService = $injector.get(widgetContext.servicesMap.get('entityRelationService'));
 //
 //openAddEntityDialog();
 //
 //function openAddEntityDialog() {
-//    $mdDialog.show({
-//        controller: ['$scope','$mdDialog', AddEntityDialogController],
-//        controllerAs: 'vm',
-//        template: htmlTemplate,
-//        locals: {
-//            entityId: entityId
-//        },
-//        parent: angular.element($document[0].body),
-//        targetEvent: $event,
-//        multiple: true,
-//        clickOutsideToClose: false
-//    });
+//    customDialog.customDialog(htmlTemplate, AddEntityDialogController).subscribe();
 //}
 //
-//function AddEntityDialogController($scope, $mdDialog) {
-//    var vm = this;
-//    vm.allowedEntityTypes = [types.entityType.asset, types.entityType.device];
-//    vm.allowedRelatedEntityTypes = [];
-//    vm.entitySearchDirection = types.entitySearchDirection;
-//    vm.attributes = {};
-//    vm.relations = [];
+//function AddEntityDialogController(instance) {
+//    let vm = instance;
+//
+//    vm.allowedEntityTypes = ['ASSET', 'DEVICE'];
+//    vm.entitySearchDirection = {
+//        from: "FROM",
+//        to: "TO"
+//    }
+//
+//    vm.addEntityFormGroup = vm.fb.group({
+//      entityName: ['', [vm.validators.required]],
+//      entityType: ['DEVICE'],
+//      entityLabel: [null],
+//      type: ['', [vm.validators.required]],
+//      attributes: vm.fb.group({
+//          latitude: [null],
+//          longitude: [null],
+//          address: [null],
+//          owner: [null],
+//          number: [null, [vm.validators.pattern(/^-?[0-9]+$/)]],
+//          booleanValue: [null]
+//      }),
+//      relations: vm.fb.array([])
+//    });
+//
+//    vm.cancel = function() {
+//        vm.dialogRef.close(null);
+//    };
+//
+//    vm.relations = function() {
+//        return vm.addEntityFormGroup.get('relations');
+//    };
 //
 //    vm.addRelation = function() {
-//        var relation = {
-//            direction: null,
-//            relationType: null,
-//            relatedEntity: null
-//        };
-//        vm.relations.push(relation);
+//        vm.relations().push(vm.fb.group({
+//          relatedEntity: [null, [vm.validators.required]],
+//          relationType: [null, [vm.validators.required]],
+//          direction: [null, [vm.validators.required]]
+//        }));
 //    };
+//
 //    vm.removeRelation = function(index) {
-//        if (index > -1) {
-//            vm.relations.splice(index, 1);
-//        }
+//        vm.relations().removeAt(index);
+//        vm.relations().markAsDirty();
 //    };
+//
 //    vm.save = function() {
-//        $scope.addEntityForm.$setPristine();
-//        saveEntityPromise().then(
+//        vm.addEntityFormGroup.markAsPristine();
+//        saveEntityObservable().subscribe(
 //            function (entity) {
-//                saveAttributes(entity.id);
-//                saveRelations(entity.id);
-//                $mdDialog.hide();
+//                widgetContext.rxjs.forkJoin([
+//                    saveAttributes(entity.id),
+//                    saveRelations(entity.id)
+//                ]).subscribe(
+//                    function () {
+//                        widgetContext.updateAliases();
+//                        vm.dialogRef.close(null);
+//                    }
+//                );
 //            }
 //        );
 //    };
-//    vm.cancel = function() {
-//        $mdDialog.hide();
-//    };
 //
-//
-//    function saveEntityPromise() {
-//        var entity = {
-//            name: vm.entityName,
-//            type: vm.type
+//    function saveEntityObservable() {
+//        const formValues = vm.addEntityFormGroup.value;
+//        let entity = {
+//            name: formValues.entityName,
+//            type: formValues.type,
+//            label: formValues.entityLabel
 //        };
-//        if (vm.entityType == types.entityType.asset) {
+//        if (formValues.entityType == 'ASSET') {
 //            return assetService.saveAsset(entity);
-//        } else if (vm.entityType == types.entityType.device) {
+//        } else if (formValues.entityType == 'DEVICE') {
 //            return deviceService.saveDevice(entity);
 //        }
 //    }
 //
 //    function saveAttributes(entityId) {
-//        var attributesArray = [];
-//        for (var key in vm.attributes) {
-//            attributesArray.push({key: key, value: vm.attributes[key]});
+//        let attributes = vm.addEntityFormGroup.get('attributes').value;
+//        let attributesArray = [];
+//        for (let key in attributes) {
+//            if(attributes[key] !== null) {
+//                attributesArray.push({key: key, value: attributes[key]});
+//            }
 //        }
 //        if (attributesArray.length > 0) {
-//            attributeService.saveEntityAttributes(entityId.entityType, entityId.id, \"SERVER_SCOPE\", attributesArray);
+//            return attributeService.saveEntityAttributes(entityId, "SERVER_SCOPE", attributesArray);
+//        } else {
+//            return widgetContext.rxjs.of([]);
 //        }
 //    }
 //
 //    function saveRelations(entityId) {
-//        var tasks = [];
-//        for (var i=0; i < vm.relations.length; i++) {
-//            var relation = {
-//                type: vm.relations[i].relationType
+//        let relations = vm.addEntityFormGroup.get('relations').value;
+//        let tasks = [];
+//        for(let i=0; i < relations.length; i++) {
+//            let relation = {
+//                type: relations[i].relationType,
+//                typeGroup: 'COMMON'
 //            };
-//            if (vm.relations[i].direction == types.entitySearchDirection.from) {
-//                relation.to = vm.relations[i].relatedEntity;
+//            if (relations[i].direction == 'FROM') {
+//                relation.to = relations[i].relatedEntity;
 //                relation.from = entityId;
 //            } else {
 //                relation.to = entityId;
-//                relation.from = vm.relations[i].relatedEntity;
+//                relation.from = relations[i].relatedEntity;
 //            }
 //            tasks.push(entityRelationService.saveRelation(relation));
 //        }
-//        $q.all(tasks).then(function(){
-//            updateAliasData();
-//        });
-//    }
-//
-//    function updateAliasData() {
-//        var aliasIds = [];
-//        for (var id in widgetContext.aliasController.resolvedAliases) {
-//            aliasIds.push(id);
+//        if (tasks.length > 0) {
+//            return widgetContext.rxjs.forkJoin(tasks);
+//        } else {
+//            return widgetContext.rxjs.of([]);
 //        }
-//        var tasks = [];
-//        aliasIds.forEach(function(aliasId) {
-//            widgetContext.aliasController.setAliasUnresolved(aliasId);
-//            tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));
-//        });
-//        $q.all(tasks).then(function() {
-//            $rootScope.$broadcast('entityAliasesChanged', aliasIds);
-//        });
 //    }
 //}

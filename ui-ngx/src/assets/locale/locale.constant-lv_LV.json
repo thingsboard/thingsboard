@@ -337,7 +337,8 @@
         "password": "Parole",
         "enter-username": "Ievadiet lietotājvārdu",
         "enter-password": "Ievadiet paroli",
-        "enter-search": "Ievadiet meklēt"
+        "enter-search": "Ievadiet meklēt",
+        "created-time": "Izveidošanas laiks"
     },
     "content-type": {
         "json": "Json",

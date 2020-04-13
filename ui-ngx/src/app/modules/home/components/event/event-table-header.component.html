@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field class="mat-block" style="width: 200px;">
+<mat-form-field class="mat-block">
   <mat-label translate>event.event-type</mat-label>
-  <mat-select matInput [ngModel]="eventTableConfig.eventType"
+  <mat-select [ngModel]="eventTableConfig.eventType"
               (ngModelChange)="eventTypeChanged($event)">
     <mat-option *ngFor="let type of eventTableConfig.eventTypes" [value]="type">
       {{ eventTypeTranslationsMap.get(type) | translate }}

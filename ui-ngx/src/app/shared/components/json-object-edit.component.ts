@@ -30,6 +30,7 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
+import { guid } from '@core/utils';
 
 @Component({
   selector: 'tb-json-object-edit',
@@ -56,6 +57,8 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   private jsonEditor: ace.Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResizeListener: any;
+
+  toastTargetId = `jsonObjectEditor-${guid()}`;
 
   @Input() label: string;
 
@@ -108,7 +111,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
       mode: 'ace/mode/json',
       showGutter: true,
       showPrintMargin: false,
-      readOnly: this.readonly
+      readOnly: this.disabled || this.readonly
     };
 
     const advancedOptions = {
@@ -158,6 +161,9 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.jsonEditor) {
+      this.jsonEditor.setReadOnly(this.disabled || this.readonly);
+    }
   }
 
   public validate(c: FormControl) {
@@ -169,14 +175,14 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   validateOnSubmit(): void {
-    if (!this.readonly) {
+    if (!this.disabled && !this.readonly) {
       this.cleanupJsonErrors();
       if (!this.objectValid) {
         this.store.dispatch(new ActionNotificationShow(
           {
             message: this.validationError,
             type: 'error',
-            target: 'jsonObjectEditor',
+            target: this.toastTargetId,
             verticalPosition: 'bottom',
             horizontalPosition: 'left'
           }));
@@ -189,7 +195,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     if (this.errorShowed) {
       this.store.dispatch(new ActionNotificationHide(
         {
-          target: 'jsonObjectEditor'
+          target: this.toastTargetId
         }));
       this.errorShowed = false;
     }

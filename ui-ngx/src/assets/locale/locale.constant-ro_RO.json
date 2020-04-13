@@ -369,7 +369,8 @@
         "password": "Parola",
         "enter-username": "Introdu nume utilizator",
         "enter-password": "Introdu parola",
-        "enter-search": "Definește căutarea"
+        "enter-search": "Definește căutarea",
+        "created-time": "Data Creării"
     },
     "content-type": {
         "json": "Json",

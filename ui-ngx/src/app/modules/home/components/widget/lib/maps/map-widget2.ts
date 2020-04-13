@@ -39,10 +39,9 @@ import { JsonSettingsSchema } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
+import { Type } from '@angular/core';
 
-let providerSets;
-let defaultSettings;
-
+// @dynamic
 export class MapWidgetController implements MapWidgetInterface {
 
     constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
@@ -141,7 +140,7 @@ export class MapWidgetController implements MapWidgetInterface {
                 });
     }
 
-    initSettings(settings: UnitedMapSettings) {
+    initSettings(settings: UnitedMapSettings): UnitedMapSettings {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
         const customOptions = {
@@ -190,12 +189,12 @@ export class MapWidgetController implements MapWidgetInterface {
 export let TbMapWidgetV2: MapWidgetStaticInterface = MapWidgetController;
 
 interface IProvider {
-    MapClass: LeafletMap,
+    MapClass: Type<LeafletMap>,
     schema: JsonSettingsSchema,
     name: string
 }
 
-providerSets = {
+export const providerSets: {[key: string]: IProvider} = {
     'openstreet-map': {
         MapClass: OpenStreetMap,
         schema: openstreetMapSettingsSchema,
@@ -221,9 +220,9 @@ providerSets = {
         schema: imageMapSettingsSchema,
         name: 'image-map'
     }
-}
+};
 
-defaultSettings = {
+export const defaultSettings: any = {
     xPosKeyName: 'xPos',
     yPosKeyName: 'yPos',
     markerOffsetX: 0.5,
@@ -257,4 +256,4 @@ defaultSettings = {
     credentials: '',
     markerClusteringSetting: null,
     draggableMarker: false
-}
+};

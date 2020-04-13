@@ -17,9 +17,6 @@
 import { Widget, WidgetType } from '@app/shared/models/widget.models';
 import { DashboardLayoutId } from '@shared/models/dashboard.models';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { ActionType } from '@shared/models/audit-log.models';
-import { RuleChain, RuleChainMetaData } from '@shared/models/rule-chain.models';
 
 export interface ImportWidgetResult {
   widget: Widget;
@@ -79,6 +76,21 @@ export interface CsvColumnParam {
   key: string;
   sampleData: any;
 }
+
+export interface FileType {
+  mimeType: string;
+  extension: string;
+}
+
+export const JSON_TYPE: FileType = {
+  mimeType: 'text/json',
+  extension: 'json'
+};
+
+export const ZIP_TYPE: FileType = {
+  mimeType: 'application/zip',
+  extension: 'zip'
+};
 
 export function convertCSVToJson(csvdata: string, config: CsvToJsonConfig,
                                  onError: (messageId: string, params?: any) => void): CsvToJsonResult | number {

@@ -14,16 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, Optional } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { User } from '@shared/models/user.model';
-import { selectAuth, selectUserDetails } from '@core/auth/auth.selectors';
+import { selectAuth } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
 import { isUndefined } from '@core/utils';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
   selector: 'tb-user',
@@ -40,8 +41,10 @@ export class UserComponent extends EntityComponent<User> {
   );
 
   constructor(protected store: Store<AppState>,
+              @Optional() @Inject('entity') protected entityValue: User,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   hideDelete() {

@@ -95,13 +95,12 @@
             <mat-label translate>common.password</mat-label>
             <input matInput formControlName="password" type="password" placeholder="{{ 'common.enter-password' | translate }}"/>
           </mat-form-field>
-          <div fxLayout="row" fxLayoutAlign="end center" style="width: 100%;" class="layout-wrap">
-            <button mat-button mat-raised-button
-                    type="button" style="margin-right: 16px;"
+          <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
+            <button mat-raised-button type="button"
                     [disabled]="(isLoading$ | async) || mailSettingsForm.invalid" (click)="sendTestMail()">
               {{'admin.send-test-mail' | translate}}
             </button>
-            <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || mailSettingsForm.invalid || !mailSettingsForm.dirty"
+            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || mailSettingsForm.invalid || !mailSettingsForm.dirty"
                     type="submit">{{'action.save' | translate}}
             </button>
           </div>

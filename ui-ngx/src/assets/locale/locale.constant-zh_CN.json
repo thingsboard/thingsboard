@@ -326,7 +326,8 @@
         "password": "密码",
         "enter-username": "输入用户名",
         "enter-password": "输入密码",
-        "enter-search": "输入检索条件"
+        "enter-search": "输入检索条件",
+        "created-time": "创建时间"
     },
     "content-type": {
         "json": "Json",

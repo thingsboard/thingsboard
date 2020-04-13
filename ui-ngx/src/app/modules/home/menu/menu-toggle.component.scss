@@ -13,6 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
+:host ::ng-deep {
+  .tb-button-toggle {
+    .tb-toggle-icon {
+      display: inline-block;
+      width: 15px;
+      margin: auto 0 auto auto;
+      background-size: 100% auto;
+      transition: transform .3s ease-in-out;
+      &.tb-toggled {
+        transform: rotateZ(180deg);
+      }
+    }
+  }
 
+  .tb-menu-toggle-list {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+
+    transition: .75s cubic-bezier(.35, 0, .25, 1);
+
+    transition-property: height;
+
+    a.mat-button {
+      padding: 0 16px 0 32px;
+      font-weight: 500;
+      text-transform: none !important;
+      text-rendering: optimizeLegibility;
+    }
+  }
 }

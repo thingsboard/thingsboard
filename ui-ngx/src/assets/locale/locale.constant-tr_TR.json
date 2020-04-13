@@ -326,7 +326,8 @@
         "password": "Parola",
         "enter-username": "Kullanıcı adı gir",
         "enter-password": "Parola gir",
-        "enter-search": "Arama gir"
+        "enter-search": "Arama gir",
+        "created-time": "Oluşma zamanı"
     },
     "content-type": {
         "json": "Json",

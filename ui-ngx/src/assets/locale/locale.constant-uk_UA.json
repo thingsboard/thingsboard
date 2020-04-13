@@ -405,7 +405,8 @@
         "password": "Пароль",
         "enter-username": "Введіть ім'я користувача",
         "enter-password": "Введіть пароль",
-        "enter-search": "Введіть пошук"
+        "enter-search": "Введіть пошук",
+        "created-time": "Час створення"
     },
     "converter": {
         "converter": "Перетворювач даних",
@@ -942,6 +943,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Одне правило} other {Список # правил} }",
         "rulenode-name-starts-with": "Список правил, імена яких починаються '{{prefix}}'",
         "type-current-customer": "Поточний клієнт",
+        "type-current-tenant": "Поточний власник",
         "search": "Пошук сутностей",
         "selected-entities": "{ count, plural, 1 {1 сутність} other {# сутності} } вибрано",
         "entity-name": "Ім'я сутності",

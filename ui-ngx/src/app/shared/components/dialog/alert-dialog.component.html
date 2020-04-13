@@ -16,8 +16,7 @@
 
 -->
 <h2 mat-dialog-title>{{data.title}}</h2>
-<div mat-dialog-content [innerHTML]="data.message">
-</div>
-<div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
+<div mat-dialog-content [innerHTML]="data.message"></div>
+<div mat-dialog-actions fxLayoutAlign="end center">
   <button mat-button color="primary" [mat-dialog-close]="true" cdkFocusInitial>{{data.ok}}</button>
 </div>

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-table [dataSource]="dataSource">
+<table mat-table [dataSource]="dataSource">
   <ng-container matColumnDef="order">
     <mat-header-cell *matHeaderCellDef style="min-width: 40px; max-width: 40px; width: 40px"></mat-header-cell>
     <mat-cell *matCellDef="let column; let i = index">
@@ -23,13 +23,13 @@
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="sampleData">
-    <mat-header-cell *matHeaderCellDef style="width: 30%"> {{ 'import.column-example' | translate }} </mat-header-cell>
+    <mat-header-cell *matHeaderCellDef style="flex: 0 0 30%;"> {{ 'import.column-example' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
       {{column.sampleData}}
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="type">
-    <mat-header-cell *matHeaderCellDef style="width: 40%"> {{ 'import.column-type.column-type' | translate }} </mat-header-cell>
+    <mat-header-cell *matHeaderCellDef style="flex: 0 0 40%"> {{ 'import.column-type.column-type' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
       <mat-select matInput [(ngModel)]="column.type" (ngModelChange)="columnsUpdated()">
         <mat-option *ngFor="let type of columnTypes" [value]="type.value" [disabled]="type.disabled">
@@ -39,7 +39,7 @@
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="key">
-    <mat-header-cell *matHeaderCellDef style="width: 30%"> {{ 'import.column-key' | translate }} </mat-header-cell>
+    <mat-header-cell *matHeaderCellDef style="flex: 0 0 30%"> {{ 'import.column-key' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
       <mat-form-field floatLabel="always" hideRequiredMarker
                       *ngIf="isColumnTypeDiffers(column.type)">
@@ -52,5 +52,5 @@
   </ng-container>
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
   <mat-row *matRowDef="let column; columns: displayedColumns;"></mat-row>
-</mat-table>
+</table>
 <mat-divider></mat-divider>

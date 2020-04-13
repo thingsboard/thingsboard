@@ -360,7 +360,8 @@
     "password": "Passwort",
     "enter-username": "Benutzername eingeben",
     "enter-password": "Passwort eingeben",
-    "enter-search": "Suche eingeben"
+    "enter-search": "Suche eingeben",
+    "created-time": "Erstellungszeit"
   },
   "content-type": {
     "json": "Json",

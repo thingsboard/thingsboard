@@ -31,7 +31,7 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { isUndefined } from '@app/core/utils';
+import { guid, isUndefined } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 
@@ -61,6 +61,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   private jsEditor: ace.Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResizeListener: any;
+
+  toastTargetId = `jsFuncEditor-${guid()}`;
 
   @Input() functionName: string;
 
@@ -183,6 +185,9 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.jsEditor) {
+      this.jsEditor.setReadOnly(this.disabled);
+    }
   }
 
   public validate(c: FormControl) {
@@ -209,7 +214,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
           {
             message: this.validationError,
             type: 'error',
-            target: 'jsFuncEditor',
+            target: this.toastTargetId,
             verticalPosition: 'bottom',
             horizontalPosition: 'left'
           }));
@@ -301,7 +306,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     if (this.errorShowed) {
       this.store.dispatch(new ActionNotificationHide(
         {
-          target: 'jsFuncEditor'
+          target: this.toastTargetId
         }));
       this.errorShowed = false;
     }

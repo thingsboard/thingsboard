@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -23,6 +23,7 @@ import {Tenant} from '@app/shared/models/tenant.model';
 import {ActionNotificationShow} from '@app/core/notification/notification.actions';
 import {TranslateService} from '@ngx-translate/core';
 import {ContactBasedComponent} from '../../components/entity/contact-based.component';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
   selector: 'tb-tenant',
@@ -32,8 +33,10 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
+              @Inject('entity') protected entityValue: Tenant,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Tenant>,
               protected fb: FormBuilder) {
-    super(store, fb);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   hideDelete() {

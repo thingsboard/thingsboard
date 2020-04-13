@@ -14,15 +14,16 @@
 /// limitations under the License.
 ///
 
-import {AfterViewInit, Component, forwardRef, Input, OnInit} from '@angular/core';
-import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {TranslateService} from '@ngx-translate/core';
-import {AliasEntityType, EntityType, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityService} from '@core/http/entity.service';
-import {EntityId} from '@shared/models/id/entity-id';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import { AfterViewInit, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
+import { EntityService } from '@core/http/entity.service';
+import { EntityId } from '@shared/models/id/entity-id';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
   selector: 'tb-entity-select',
@@ -60,6 +61,8 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
 
   displayEntityTypeSelect: boolean;
 
+  AliasEntityType = AliasEntityType;
+
   private readonly defaultEntityType: EntityType | AliasEntityType = null;
 
   private propagateChange = (v: any) => { };
@@ -94,6 +97,9 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   ngOnInit() {
     this.entitySelectFormGroup.get('entityType').valueChanges.subscribe(
       (value) => {
+        if(value === AliasEntityType.CURRENT_TENANT){
+          this.modelValue.id = NULL_UUID;
+        }
         this.updateView(value, this.modelValue.id);
       }
     );
@@ -139,7 +145,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
           entityType,
           id: this.modelValue.entityType !== entityType ? null : entityId
         };
-        if (this.modelValue.entityType && this.modelValue.id) {
+        if (this.modelValue.entityType && (this.modelValue.id || this.modelValue.entityType === AliasEntityType.CURRENT_TENANT)) {
           this.propagateChange(this.modelValue);
         } else {
           this.propagateChange(null);

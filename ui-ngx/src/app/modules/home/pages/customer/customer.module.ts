@@ -17,9 +17,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import {CustomerComponent} from '@modules/home/pages/customer/customer.component';
-import {CustomerRoutingModule} from './customer-routing.module';
-import {HomeComponentsModule} from '@modules/home/components/home-components.module';
+import { CustomerComponent } from '@modules/home/pages/customer/customer.component';
+import { CustomerRoutingModule } from './customer-routing.module';
+import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { CustomerTabsComponent } from '@home/pages/customer/customer-tabs.component';
 
 @NgModule({

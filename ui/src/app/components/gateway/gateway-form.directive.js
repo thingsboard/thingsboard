@@ -119,7 +119,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         vm.ctx.widgetTitle = widgetTitle;
 
         archiveFileName = vm.settings.archiveFileName && vm.settings.archiveFileName.length ? vm.settings.archiveFileName : 'gatewayConfiguration';
-        gatewayNameExists = utils.customTranslation(vm.settings.deviceNameExist, vm.settings.deviceNameExist) || $translate.instant('gateway.gateway-exists');
+        gatewayNameExists = utils.customTranslation(vm.settings.gatewayNameExists, vm.settings.gatewayNameExists) || $translate.instant('gateway.gateway-exists');
         successfulSaved = utils.customTranslation(vm.settings.successfulSave, vm.settings.successfulSave) || $translate.instant('gateway.gateway-saved');
     }
 
