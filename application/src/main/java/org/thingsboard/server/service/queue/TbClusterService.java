@@ -20,20 +20,32 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
+
+import java.util.UUID;
 
 public interface TbClusterService {
 
-    void onToRuleEngineMsg(TenantId tenantId, EntityId entityId, TbMsg msg);
+    void pushMsgToCore(TopicPartitionInfo tpi, UUID msgKey, ToCoreMsg msg, TbQueueCallback callback);
 
-    void onToCoreMsg(ToDeviceActorNotificationMsg msg);
+    void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback);
 
-    void onToCoreMsg(String targetServiceId, FromDeviceRpcResponse response);
+    void pushMsgToCore(ToDeviceActorNotificationMsg msg, TbQueueCallback callback);
 
-    void onToRuleEngineMsg(String targetServiceId, FromDeviceRpcResponse response);
+    void pushNotificationToCore(String targetServiceId, FromDeviceRpcResponse response, TbQueueCallback callback);
 
-    void onToTransportMsg(String targetServiceId, ToTransportMsg response);
+    void pushMsgToRuleEngine(TopicPartitionInfo tpi, UUID msgId, TransportProtos.ToRuleEngineMsg msg, TbQueueCallback callback);
+
+    void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg msg, TbQueueCallback callback);
+
+    void pushNotificationToRuleEngine(String targetServiceId, FromDeviceRpcResponse response, TbQueueCallback callback);
+
+    void pushNotificationToTransport(String targetServiceId, ToTransportMsg response, TbQueueCallback callback);
 
     void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 

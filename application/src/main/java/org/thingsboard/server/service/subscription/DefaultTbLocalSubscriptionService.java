@@ -28,16 +28,14 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 
@@ -70,19 +68,17 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private PartitionService partitionService;
 
     @Autowired
-    private TbQueueProducerProvider producerProvider;
+    private TbClusterService clusterService;
 
     @Autowired
     @Lazy
     private SubscriptionManagerService subscriptionManagerService;
 
     private ExecutorService wsCallBackExecutor;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> toCoreProducer;
 
     @PostConstruct
     public void initExecutor() {
         wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ws-sub-callback"));
-        toCoreProducer = producerProvider.getTbCoreMsgProducer();
     }
 
     @PreDestroy
@@ -140,7 +136,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         } else {
             // Push to the queue;
             TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toNewSubscriptionProto(subscription);
-            toCoreProducer.send(tpi, new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg), null);
+            clusterService.pushMsgToCore(tpi, subscription.getEntityId().getId(), toCoreMsg, null);
         }
     }
 
@@ -181,7 +177,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                 } else {
                     // Push to the queue;
                     TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toCloseSubscriptionProto(subscription);
-                    toCoreProducer.send(tpi, new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg), null);
+                    clusterService.pushMsgToCore(tpi, subscription.getEntityId().getId(), toCoreMsg, null);
                 }
             } else {
                 log.debug("[{}][{}] Subscription not found!", sessionId, subscriptionId);

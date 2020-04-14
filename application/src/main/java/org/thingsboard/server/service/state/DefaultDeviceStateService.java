@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
@@ -56,8 +55,8 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
@@ -106,7 +105,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private final DeviceService deviceService;
     private final AttributesService attributesService;
     private final TimeseriesService tsService;
-    private final TbQueueProducerProvider producerProvider;
+    private final TbClusterService clusterService;
     private final PartitionService partitionService;
 
     private TelemetrySubscriptionService tsSubService;
@@ -137,12 +136,12 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
                                      AttributesService attributesService, TimeseriesService tsService,
-                                     TbQueueProducerProvider producerProvider, PartitionService partitionService) {
+                                     TbClusterService clusterService, PartitionService partitionService) {
         this.tenantService = tenantService;
         this.deviceService = deviceService;
         this.attributesService = attributesService;
         this.tsService = tsService;
-        this.producerProvider = producerProvider;
+        this.clusterService = clusterService;
         this.partitionService = partitionService;
     }
 
@@ -413,8 +412,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void sendDeviceEvent(TenantId tenantId, DeviceId deviceId, boolean added, boolean updated, boolean deleted) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
-        log.trace("[{}][{}] Device is monitored on partition: {}", tenantId, deviceId, tpi);
         TransportProtos.DeviceStateServiceMsgProto.Builder builder = TransportProtos.DeviceStateServiceMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
@@ -424,8 +421,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         builder.setUpdated(updated);
         builder.setDeleted(deleted);
         TransportProtos.DeviceStateServiceMsgProto msg = builder.build();
-        producerProvider.getTbCoreMsgProducer().send(tpi, new TbProtoQueueMsg<>(deviceId.getId(),
-                TransportProtos.ToCoreMsg.newBuilder().setDeviceStateServiceMsg(msg).build()), null);
+        clusterService.pushMsgToCore(tenantId, deviceId, TransportProtos.ToCoreMsg.newBuilder().setDeviceStateServiceMsg(msg).build(), null);
     }
 
     private void onDeviceDeleted(TenantId tenantId, DeviceId deviceId) {
@@ -497,12 +493,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         try {
             TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
                     , json.writeValueAsString(state));
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, stateData.getTenantId(), stateData.getDeviceId());
-            TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
-                    .setTenantIdMSB(stateData.getTenantId().getId().getMostSignificantBits())
-                    .setTenantIdLSB(stateData.getTenantId().getId().getLeastSignificantBits())
-                    .setTbMsg(TbMsg.toByteString(tbMsg)).build();
-            producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), null);
+            clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
         }

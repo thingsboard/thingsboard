@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.rpc;
 
 import akka.actor.ActorRef;
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -147,7 +146,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
                 log.warn("Failed to find tbCoreRpcService for local service. Possible duplication of serviceIds.");
             }
         } else {
-            clusterService.onToRuleEngineMsg(originServiceId, response);
+            clusterService.pushNotificationToRuleEngine(originServiceId, response, null);
         }
     }
 
@@ -170,7 +169,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
         try {
             TbMsg tbMsg = TbMsg.newMsg(DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
-            clusterService.onToRuleEngineMsg(msg.getTenantId(), msg.getDeviceId(), tbMsg);
+            clusterService.pushMsgToRuleEngine(msg.getTenantId(), msg.getDeviceId(), tbMsg, null);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

@@ -245,8 +245,9 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     }
                 }
             } else if (TbAttributeSubscriptionScope.SHARED_SCOPE.name().equalsIgnoreCase(scope)) {
-                clusterService.onToCoreMsg(DeviceAttributesEventNotificationMsg.onUpdate(tenantId,
-                        new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, new ArrayList<>(attributes)));
+                clusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onUpdate(tenantId,
+                        new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, new ArrayList<>(attributes))
+                        , null);
             }
         }
         callback.onSuccess();

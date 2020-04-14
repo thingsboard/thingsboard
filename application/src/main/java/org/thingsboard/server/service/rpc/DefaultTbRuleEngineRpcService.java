@@ -22,7 +22,6 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -96,7 +95,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setToServerResponse(responseMsg)
                 .build();
-        clusterService.onToTransportMsg(serviceId, msg);
+        clusterService.pushNotificationToTransport(serviceId, msg, null);
     }
 
     @Override
@@ -148,7 +147,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
             }
         } else {
             log.trace("[{}] Forwarding msg {} to queue actor!", msg.getDeviceId(), msg);
-            clusterService.onToCoreMsg(rpcMsg);
+            clusterService.pushMsgToCore(rpcMsg, null);
         }
     }
 
@@ -160,7 +159,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
                 log.warn("Failed to find tbCoreRpcService for local service. Possible duplication of serviceIds.");
             }
         } else {
-            clusterService.onToCoreMsg(originServiceId, response);
+            clusterService.pushNotificationToCore(originServiceId, response, null);
         }
     }
 

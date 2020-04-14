@@ -211,7 +211,7 @@ public interface TbContext {
 
     ResultSetFuture submitCassandraTask(CassandraStatementTask task);
 
-    //TODO 2.5: - need to remove this.
+    @Deprecated
     RedisTemplate<String, Object> getRedisTemplate();
 
 }

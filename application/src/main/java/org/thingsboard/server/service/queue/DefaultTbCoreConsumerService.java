@@ -183,20 +183,23 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToCoreNotificationMsg> msg, TbCallback callback) {
-        ToCoreNotificationMsg toCoreMsg = msg.getValue();
-        if (toCoreMsg.hasToLocalSubscriptionServiceMsg()) {
-            log.trace("[{}] Forwarding message to local subscription service {}", id, toCoreMsg.getToLocalSubscriptionServiceMsg());
-            forwardToLocalSubMgrService(toCoreMsg.getToLocalSubscriptionServiceMsg(), callback);
-        } else if (toCoreMsg.hasFromDeviceRpcResponse()) {
-            log.trace("[{}] Forwarding message to RPC service {}", id, toCoreMsg.getFromDeviceRpcResponse());
-            forwardToCoreRpcService(toCoreMsg.getFromDeviceRpcResponse(), callback);
-        } else if (toCoreMsg.getComponentLifecycleMsg() != null && !toCoreMsg.getComponentLifecycleMsg().isEmpty()) {
-            Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreMsg.getComponentLifecycleMsg().toByteArray());
+        ToCoreNotificationMsg toCoreNotification = msg.getValue();
+        if (toCoreNotification.hasToLocalSubscriptionServiceMsg()) {
+            log.trace("[{}] Forwarding message to local subscription service {}", id, toCoreNotification.getToLocalSubscriptionServiceMsg());
+            forwardToLocalSubMgrService(toCoreNotification.getToLocalSubscriptionServiceMsg(), callback);
+        } else if (toCoreNotification.hasFromDeviceRpcResponse()) {
+            log.trace("[{}] Forwarding message to RPC service {}", id, toCoreNotification.getFromDeviceRpcResponse());
+            forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
+        } else if (toCoreNotification.getComponentLifecycleMsg() != null && !toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
+            Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreNotification.getComponentLifecycleMsg().toByteArray());
             if (actorMsg.isPresent()) {
                 log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
                 actorContext.tell(actorMsg.get(), ActorRef.noSender());
             }
             callback.onSuccess();
+        }
+        if (statsEnabled) {
+            stats.log(toCoreNotification);
         }
     }
 
@@ -245,6 +248,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     proto.getScope(), TbSubscriptionUtils.toAttributeKvList(proto.getDataList()), callback);
         } else {
             throwNotHandled(msg, callback);
+        }
+        if (statsEnabled) {
+            stats.log(msg);
         }
     }
 

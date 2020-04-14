@@ -161,10 +161,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private TbQueueProducerProvider producerProvider;
-
-    @Autowired
-    @Getter
     private TimeseriesService tsService;
 
     @Autowired
