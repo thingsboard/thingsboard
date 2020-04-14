@@ -47,8 +47,6 @@ public interface PartitionService {
      */
     Set<String> getAllServiceIds(ServiceType serviceType);
 
-    Set<TenantId> getIsolatedTenants(ServiceType serviceType);
-
     /**
      * Each Service should start a consumer for messages that target individual service instance based on serviceId.
      * This topic is likely to have single partition, and is always assigned to the service.

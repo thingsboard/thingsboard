@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.transport.service;
 
-import org.thingsboard.server.common.msg.TbMsg;
+import lombok.Data;
 
-import java.util.function.Consumer;
+import java.util.UUID;
 
-public interface RuleChainTransactionService {
-
-    void beginTransaction(TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure);
-
-    void endTransaction(TbMsg msg, Consumer<TbMsg> onSuccess, Consumer<Throwable> onFailure);
-
+@Data
+public class RpcRequestMetadata {
+    private final UUID sessionId;
+    private final int requestId;
 }

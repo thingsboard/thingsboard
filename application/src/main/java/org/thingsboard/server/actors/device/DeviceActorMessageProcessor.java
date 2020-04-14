@@ -36,12 +36,11 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
@@ -50,16 +49,19 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotifica
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionSubscriptionInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionType;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToAttributeUpdatesMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToRPCMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
-import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import javax.annotation.Nullable;
@@ -91,7 +93,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private final Map<UUID, SessionInfo> attributeSubscriptions;
     private final Map<UUID, SessionInfo> rpcSubscriptions;
     private final Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap;
-    private final Map<Integer, ToServerRpcRequestMetadata> toServerRpcPendingMap;
 
     private int rpcSeq = 0;
     private String deviceName;
@@ -106,7 +107,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new HashMap<>();
-        this.toServerRpcPendingMap = new HashMap<>();
         if (initAttributes()) {
             restoreSessions();
         }
@@ -142,7 +142,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         Set<UUID> syncSessionSet = new HashSet<>();
         rpcSubscriptions.forEach((key, value) -> {
             sendToTransport(rpcRequest, key, value.getNodeId());
-            if (TransportProtos.SessionType.SYNC == value.getType()) {
+            if (SessionType.SYNC == value.getType()) {
                 syncSessionSet.add(key);
             }
         });
@@ -177,10 +177,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void sendPendingRequests(ActorContext context, UUID sessionId, SessionInfoProto sessionInfo) {
-        TransportProtos.SessionType sessionType = getSessionType(sessionId);
+        SessionType sessionType = getSessionType(sessionId);
         if (!toDeviceRpcPendingMap.isEmpty()) {
             log.debug("[{}] Pushing {} pending RPC messages to new async session [{}]", deviceId, toDeviceRpcPendingMap.size(), sessionId);
-            if (sessionType == TransportProtos.SessionType.SYNC) {
+            if (sessionType == SessionType.SYNC) {
                 log.debug("[{}] Cleanup sync rpc session [{}]", deviceId, sessionId);
                 rpcSubscriptions.remove(sessionId);
             }
@@ -188,7 +188,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}] No pending RPC messages for new async session [{}]", deviceId, sessionId);
         }
         Set<Integer> sentOneWayIds = new HashSet<>();
-        if (sessionType == TransportProtos.SessionType.ASYNC) {
+        if (sessionType == SessionType.ASYNC) {
             toDeviceRpcPendingMap.entrySet().forEach(processPendingRpc(context, sessionId, sessionInfo.getNodeId(), sentOneWayIds));
         } else {
             toDeviceRpcPendingMap.entrySet().stream().findFirst().ifPresent(processPendingRpc(context, sessionId, sessionInfo.getNodeId(), sentOneWayIds));
@@ -297,46 +297,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         return new HashSet<>(strings);
     }
 
-    private void handleClientSideRPCRequest(ActorContext context, SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg request) {
-//        UUID sessionId = getSessionId(sessionInfo);
-//        JsonObject json = new JsonObject();
-//        json.addProperty("method", request.getMethodName());
-//        json.add("params", JsonUtils.parse(request.getParams()));
-//
-//        TbMsgMetaData requestMetaData = defaultMetaData.copy();
-//        requestMetaData.putValue("requestId", Integer.toString(request.getRequestId()));
-//        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, requestMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, null);
-//        context.parent().tell(new DeviceActorToRuleEngineMsg(context.self(), tbMsg), context.self());
-//
-//        scheduleMsgWithDelay(context, new DeviceActorClientSideRpcTimeoutMsg(request.getRequestId(), systemContext.getClientSideRpcTimeout()), systemContext.getClientSideRpcTimeout());
-//        toServerRpcPendingMap.put(request.getRequestId(), new ToServerRpcRequestMetadata(sessionId, getSessionType(sessionId), sessionInfo.getNodeId()));
-    }
-
-    private TransportProtos.SessionType getSessionType(UUID sessionId) {
-        return sessions.containsKey(sessionId) ? TransportProtos.SessionType.ASYNC : TransportProtos.SessionType.SYNC;
-    }
-
-    void processClientSideRpcTimeout(ActorContext context, DeviceActorClientSideRpcTimeoutMsg msg) {
-        ToServerRpcRequestMetadata data = toServerRpcPendingMap.remove(msg.getId());
-        if (data != null) {
-            log.debug("[{}] Client side RPC request [{}] timeout detected!", deviceId, msg.getId());
-            sendToTransport(TransportProtos.ToServerRpcResponseMsg.newBuilder()
-                            .setRequestId(msg.getId()).setError("timeout").build()
-                    , data.getSessionId(), data.getNodeId());
-        }
-    }
-
-    void processToServerRPCResponse(ActorContext context, ToServerRpcResponseActorMsg msg) {
-        int requestId = msg.getMsg().getRequestId();
-        ToServerRpcRequestMetadata data = toServerRpcPendingMap.remove(requestId);
-        if (data != null) {
-            log.debug("[{}] Pushing reply to [{}][{}]!", deviceId, data.getNodeId(), data.getSessionId());
-            sendToTransport(TransportProtos.ToServerRpcResponseMsg.newBuilder()
-                            .setRequestId(requestId).setPayload(msg.getMsg().getData()).build()
-                    , data.getSessionId(), data.getNodeId());
-        } else {
-            log.debug("[{}][{}] Pending RPC request to server not found!", deviceId, requestId);
-        }
+    private SessionType getSessionType(UUID sessionId) {
+        return sessions.containsKey(sessionId) ? SessionType.ASYNC : SessionType.SYNC;
     }
 
     void processAttributesUpdate(ActorContext context, DeviceAttributesEventNotificationMsg msg) {
@@ -399,7 +361,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         } else {
             SessionInfoMetaData sessionMD = sessions.get(sessionId);
             if (sessionMD == null) {
-                sessionMD = new SessionInfoMetaData(new SessionInfo(TransportProtos.SessionType.SYNC, sessionInfo.getNodeId()));
+                sessionMD = new SessionInfoMetaData(new SessionInfo(SessionType.SYNC, sessionInfo.getNodeId()));
             }
             sessionMD.setSubscribedToAttributes(true);
             log.debug("[{}] Registering attributes subscription for session [{}]", deviceId, sessionId);
@@ -420,7 +382,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         } else {
             SessionInfoMetaData sessionMD = sessions.get(sessionId);
             if (sessionMD == null) {
-                sessionMD = new SessionInfoMetaData(new SessionInfo(TransportProtos.SessionType.SYNC, sessionInfo.getNodeId()));
+                sessionMD = new SessionInfoMetaData(new SessionInfo(SessionType.SYNC, sessionInfo.getNodeId()));
             }
             sessionMD.setSubscribedToRPC(true);
             log.debug("[{}] Registering rpc subscription for session [{}]", deviceId, sessionId);
@@ -444,7 +406,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     notifyTransportAboutClosedSession(sessionIdToRemove, sessions.remove(sessionIdToRemove));
                 }
             }
-            sessions.put(sessionId, new SessionInfoMetaData(new SessionInfo(TransportProtos.SessionType.ASYNC, sessionInfo.getNodeId())));
+            sessions.put(sessionId, new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfo.getNodeId())));
             if (sessions.size() == 1) {
                 reportSessionOpen();
             }
@@ -462,10 +424,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
-    private void handleSessionActivity(ActorContext context, SessionInfoProto sessionInfoProto, TransportProtos.SubscriptionInfoProto subscriptionInfo) {
+    private void handleSessionActivity(ActorContext context, SessionInfoProto sessionInfoProto, SubscriptionInfoProto subscriptionInfo) {
         UUID sessionId = getSessionId(sessionInfoProto);
         SessionInfoMetaData sessionMD = sessions.computeIfAbsent(sessionId,
-                id -> new SessionInfoMetaData(new SessionInfo(TransportProtos.SessionType.ASYNC, sessionInfoProto.getNodeId()), 0L));
+                id -> new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfoProto.getNodeId()), 0L));
 
         sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
         sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
@@ -488,7 +450,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd) {
-        DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setSessionCloseNotification(SessionCloseNotificationProto.getDefaultInstance()).build();
@@ -504,7 +466,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void sendToTransport(GetAttributeResponseMsg responseMsg, SessionInfoProto sessionInfo) {
-        DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionInfo.getSessionIdMSB())
                 .setSessionIdLSB(sessionInfo.getSessionIdLSB())
                 .setGetAttributesResponse(responseMsg).build();
@@ -512,7 +474,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void sendToTransport(AttributeUpdateNotificationMsg notificationMsg, UUID sessionId, String nodeId) {
-        DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setAttributeUpdateNotification(notificationMsg).build();
@@ -520,15 +482,15 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void sendToTransport(ToDeviceRpcRequestMsg rpcMsg, UUID sessionId, String nodeId) {
-        DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setToDeviceRequest(rpcMsg).build();
         systemContext.getTbCoreToTransportService().process(nodeId, msg);
     }
 
-    private void sendToTransport(TransportProtos.ToServerRpcResponseMsg rpcMsg, UUID sessionId, String nodeId) {
-        DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
+    private void sendToTransport(ToServerRpcResponseMsg rpcMsg, UUID sessionId, String nodeId) {
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setToServerResponse(rpcMsg).build();
@@ -584,9 +546,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void restoreSessions() {
         log.debug("[{}] Restoring sessions from cache", deviceId);
-        TransportProtos.DeviceSessionsCacheEntry sessionsDump = null;
+        DeviceSessionsCacheEntry sessionsDump = null;
         try {
-            sessionsDump = TransportProtos.DeviceSessionsCacheEntry.parseFrom(systemContext.getDeviceSessionCacheService().get(deviceId));
+            sessionsDump = DeviceSessionsCacheEntry.parseFrom(systemContext.getDeviceSessionCacheService().get(deviceId));
         } catch (InvalidProtocolBufferException e) {
             log.warn("[{}] Failed to decode device sessions from cache", deviceId);
             return;
@@ -595,11 +557,11 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}] No session information found", deviceId);
             return;
         }
-        for (TransportProtos.SessionSubscriptionInfoProto sessionSubscriptionInfoProto : sessionsDump.getSessionsList()) {
+        for (SessionSubscriptionInfoProto sessionSubscriptionInfoProto : sessionsDump.getSessionsList()) {
             SessionInfoProto sessionInfoProto = sessionSubscriptionInfoProto.getSessionInfo();
             UUID sessionId = getSessionId(sessionInfoProto);
-            SessionInfo sessionInfo = new SessionInfo(TransportProtos.SessionType.ASYNC, sessionInfoProto.getNodeId());
-            TransportProtos.SubscriptionInfoProto subInfo = sessionSubscriptionInfoProto.getSubscriptionInfo();
+            SessionInfo sessionInfo = new SessionInfo(SessionType.ASYNC, sessionInfoProto.getNodeId());
+            SubscriptionInfoProto subInfo = sessionSubscriptionInfoProto.getSubscriptionInfo();
             SessionInfoMetaData sessionMD = new SessionInfoMetaData(sessionInfo, subInfo.getLastActivityTime());
             sessions.put(sessionId, sessionMD);
             if (subInfo.getAttributeSubscription()) {
@@ -617,27 +579,27 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void dumpSessions() {
         log.debug("[{}] Dumping sessions: {}, rpc subscriptions: {}, attribute subscriptions: {} to cache", deviceId, sessions.size(), rpcSubscriptions.size(), attributeSubscriptions.size());
-        List<TransportProtos.SessionSubscriptionInfoProto> sessionsList = new ArrayList<>(sessions.size());
+        List<SessionSubscriptionInfoProto> sessionsList = new ArrayList<>(sessions.size());
         sessions.forEach((uuid, sessionMD) -> {
-            if (sessionMD.getSessionInfo().getType() == TransportProtos.SessionType.SYNC) {
+            if (sessionMD.getSessionInfo().getType() == SessionType.SYNC) {
                 return;
             }
             SessionInfo sessionInfo = sessionMD.getSessionInfo();
-            TransportProtos.SubscriptionInfoProto subscriptionInfoProto = TransportProtos.SubscriptionInfoProto.newBuilder()
+            SubscriptionInfoProto subscriptionInfoProto = SubscriptionInfoProto.newBuilder()
                     .setLastActivityTime(sessionMD.getLastActivityTime())
                     .setAttributeSubscription(sessionMD.isSubscribedToAttributes())
                     .setRpcSubscription(sessionMD.isSubscribedToRPC()).build();
-            TransportProtos.SessionInfoProto sessionInfoProto = TransportProtos.SessionInfoProto.newBuilder()
+            SessionInfoProto sessionInfoProto = SessionInfoProto.newBuilder()
                     .setSessionIdMSB(uuid.getMostSignificantBits())
                     .setSessionIdLSB(uuid.getLeastSignificantBits())
                     .setNodeId(sessionInfo.getNodeId()).build();
-            sessionsList.add(TransportProtos.SessionSubscriptionInfoProto.newBuilder()
+            sessionsList.add(SessionSubscriptionInfoProto.newBuilder()
                     .setSessionInfo(sessionInfoProto)
                     .setSubscriptionInfo(subscriptionInfoProto).build());
             log.debug("[{}] Dumping session: {}", deviceId, sessionMD);
         });
         systemContext.getDeviceSessionCacheService()
-                .put(deviceId, TransportProtos.DeviceSessionsCacheEntry.newBuilder()
+                .put(deviceId, DeviceSessionsCacheEntry.newBuilder()
                         .addAllSessions(sessionsList).build().toByteArray());
     }
 

@@ -32,17 +32,15 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -69,22 +67,20 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     private final AttributesService attrService;
     private final TimeseriesService tsService;
-    private final TbQueueProducerProvider producerProvider;
+    private final TbClusterService clusterService;
     private final PartitionService partitionService;
     private Optional<SubscriptionManagerService> subscriptionManagerService;
-
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> toCoreProducer;
 
     private ExecutorService tsCallBackExecutor;
     private ExecutorService wsCallBackExecutor;
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
-                                               TbQueueProducerProvider producerProvider,
+                                               TbClusterService clusterService,
                                                PartitionService partitionService) {
         this.attrService = attrService;
         this.tsService = tsService;
-        this.producerProvider = producerProvider;
+        this.clusterService = clusterService;
         this.partitionService = partitionService;
     }
 
@@ -97,7 +93,6 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     public void initExecutor() {
         tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-service-ts-callback"));
         wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-service-ws-callback"));
-        toCoreProducer = producerProvider.getTbCoreMsgProducer();
     }
 
     @PreDestroy
@@ -172,7 +167,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             }
         } else {
             TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
-            toCoreProducer.send(tpi, new TbProtoQueueMsg<>(entityId.getId(), toCoreMsg), null);
+            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
         }
     }
 
@@ -186,7 +181,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             }
         } else {
             TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
-            toCoreProducer.send(tpi, new TbProtoQueueMsg<>(entityId.getId(), toCoreMsg), null);
+            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
         }
     }
 

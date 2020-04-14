@@ -364,8 +364,8 @@ public class TelemetryController extends BaseController {
                             DeviceId deviceId = new DeviceId(entityId.getId());
                             Set<AttributeKey> keysToNotify = new HashSet<>();
                             keys.forEach(key -> keysToNotify.add(new AttributeKey(scope, key)));
-                            tbClusterService.onToCoreMsg(DeviceAttributesEventNotificationMsg.onDelete(
-                                    user.getTenantId(), deviceId, keysToNotify));
+                            tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
+                                    user.getTenantId(), deviceId, keysToNotify), null);
                         }
                         result.setResult(new ResponseEntity<>(HttpStatus.OK));
                     }
@@ -399,8 +399,8 @@ public class TelemetryController extends BaseController {
                         logAttributesUpdated(user, entityId, scope, attributes, null);
                         if (entityId.getEntityType() == EntityType.DEVICE) {
                             DeviceId deviceId = new DeviceId(entityId.getId());
-                            tbClusterService.onToCoreMsg(DeviceAttributesEventNotificationMsg.onUpdate(
-                                    user.getTenantId(), deviceId, scope, attributes));
+                            tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onUpdate(
+                                    user.getTenantId(), deviceId, scope, attributes), null);
                         }
                         result.setResult(new ResponseEntity(HttpStatus.OK));
                     }

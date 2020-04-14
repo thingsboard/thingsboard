@@ -22,11 +22,11 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
@@ -51,6 +51,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     private final PartitionService partitionService;
     private final TbClusterService clusterService;
     private final TbServiceInfoProvider serviceInfoProvider;
+
 
     private final ConcurrentMap<UUID, Consumer<FromDeviceRpcResponse>> toDeviceRpcRequests = new ConcurrentHashMap<>();
 
@@ -85,8 +86,16 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     }
 
     @Override
-    public void sendRpcReplyToDevice(DeviceId deviceId, int requestId, String body) {
-//        TODO 2.5
+    public void sendRpcReplyToDevice(String serviceId, UUID sessionId, int requestId, String body) {
+        TransportProtos.ToServerRpcResponseMsg responseMsg = TransportProtos.ToServerRpcResponseMsg.newBuilder()
+                .setRequestId(requestId)
+                .setPayload(body).build();
+        TransportProtos.ToTransportMsg msg = TransportProtos.ToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setToServerResponse(responseMsg)
+                .build();
+        clusterService.pushNotificationToTransport(serviceId, msg, null);
     }
 
     @Override
@@ -138,7 +147,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
             }
         } else {
             log.trace("[{}] Forwarding msg {} to queue actor!", msg.getDeviceId(), msg);
-            clusterService.onToCoreMsg(rpcMsg);
+            clusterService.pushMsgToCore(rpcMsg, null);
         }
     }
 
@@ -150,7 +159,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
                 log.warn("Failed to find tbCoreRpcService for local service. Possible duplication of serviceIds.");
             }
         } else {
-            clusterService.onToCoreMsg(originServiceId, response);
+            clusterService.pushNotificationToCore(originServiceId, response, null);
         }
     }
 

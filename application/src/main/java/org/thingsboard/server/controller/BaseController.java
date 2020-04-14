@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -35,6 +34,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -668,7 +668,13 @@ public abstract class BaseController {
                     }
                 }
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
-                tbClusterService.onToRuleEngineMsg(user.getTenantId(), entityId, tbMsg);
+                TenantId tenantId = user.getTenantId();
+                if (tenantId.isNullUid()) {
+                    if (entity instanceof HasTenantId) {
+                        tenantId = ((HasTenantId) entity).getTenantId();
+                    }
+                }
+                tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }

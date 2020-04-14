@@ -42,21 +42,26 @@ import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 import scala.concurrent.duration.Duration;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 public class AppActor extends ContextAwareActor {
 
     private static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
     private final TenantService tenantService;
     private final BiMap<TenantId, ActorRef> tenantActors;
+    private final Set<TenantId> deletedTenants;
     private boolean ruleChainsInitialized;
 
     private AppActor(ActorSystemContext systemContext) {
         super(systemContext);
         this.tenantService = systemContext.getTenantService();
         this.tenantActors = HashBiMap.create();
+        this.deletedTenants = new HashSet<>();
     }
 
     @Override
@@ -139,7 +144,11 @@ public class AppActor extends ContextAwareActor {
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
             msg.getTbMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
-            getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
+            if (!deletedTenants.contains(msg.getTenantId())) {
+                getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
+            } else {
+                msg.getTbMsg().getCallback().onSuccess();
+            }
         }
     }
 
@@ -154,8 +163,10 @@ public class AppActor extends ContextAwareActor {
         } else {
             if (msg.getEntityId().getEntityType() == EntityType.TENANT
                     && msg.getEvent() == ComponentLifecycleEvent.DELETED) {
-                log.debug("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
-                ActorRef tenantActor = tenantActors.remove(new TenantId(msg.getEntityId().getId()));
+                log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
+                TenantId tenantId = new TenantId(msg.getEntityId().getId());
+                deletedTenants.add(tenantId);
+                ActorRef tenantActor = tenantActors.get(tenantId);
                 if (tenantActor != null) {
                     log.debug("[{}] Deleting tenant actor: {}", msg.getTenantId(), tenantActor);
                     context().stop(tenantActor);
@@ -172,16 +183,22 @@ public class AppActor extends ContextAwareActor {
     }
 
     private void onToDeviceActorMsg(TenantAwareMsg msg) {
-        getOrCreateTenantActor(msg.getTenantId()).tell(msg, ActorRef.noSender());
+        if (!deletedTenants.contains(msg.getTenantId())) {
+            getOrCreateTenantActor(msg.getTenantId()).tell(msg, ActorRef.noSender());
+        } else {
+            if (msg instanceof TransportToDeviceActorMsgWrapper) {
+                ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();
+            }
+        }
     }
 
     private ActorRef getOrCreateTenantActor(TenantId tenantId) {
         return tenantActors.computeIfAbsent(tenantId, k -> {
-            log.debug("[{}] Creating tenant actor.", tenantId);
+            log.info("[{}] Creating tenant actor.", tenantId);
             ActorRef tenantActor = context().actorOf(Props.create(new TenantActor.ActorCreator(systemContext, tenantId))
                     .withDispatcher(DefaultActorService.CORE_DISPATCHER_NAME), tenantId.toString());
             context().watch(tenantActor);
-            log.debug("[{}] Created tenant actor: {}.", tenantId, tenantActor);
+            log.info("[{}] Created tenant actor: {}.", tenantId, tenantActor);
             return tenantActor;
         });
     }

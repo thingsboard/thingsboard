@@ -23,13 +23,11 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
 import javax.annotation.PostConstruct;
 
-//TODO 2.5 Maybe remove this service if it is not used.
 @Service
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
 public class TbTransportQueueProducerProvider implements TbQueueProducerProvider {
 
     private final TbTransportQueueFactory tbQueueProvider;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> toTransport;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toRuleEngine;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> toTbCore;
 

@@ -203,15 +203,13 @@ public interface TbContext {
 
     String getServiceId();
 
-    RuleChainTransactionService getRuleChainTransactionService();
-
     EventLoopGroup getSharedEventLoop();
 
     CassandraCluster getCassandraCluster();
 
     ResultSetFuture submitCassandraTask(CassandraStatementTask task);
 
-    //TODO 2.5: - need to remove this.
+    @Deprecated
     RedisTemplate<String, Object> getRedisTemplate();
 
 }

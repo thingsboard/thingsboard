@@ -44,10 +44,9 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.MultipleTbQueueTbMsgCallbackWrapper;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.TbQueueTbMsgCallbackWrapper;
+import org.thingsboard.server.service.queue.TbClusterService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,7 +67,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private final Map<RuleNodeId, RuleNodeCtx> nodeActors;
     private final Map<RuleNodeId, List<RuleNodeRelation>> nodeRoutes;
     private final RuleChainService service;
-    private final TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> producer;
+    private final TbClusterService clusterService;
     private String ruleChainName;
 
     private RuleNodeId firstId;
@@ -84,7 +83,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         this.nodeActors = new HashMap<>();
         this.nodeRoutes = new HashMap<>();
         this.service = systemContext.getRuleChainService();
-        this.producer = systemContext.getProducerProvider().getRuleEngineMsgProducer();
+        this.clusterService = systemContext.getClusterService();
     }
 
     @Override
@@ -255,7 +254,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                         msg.getCallback().onFailure(new RuleNodeException(failureMessage, ruleChainName, ruleNodeCtx.getSelf()));
                     } else {
                         log.debug("[{}] Failure during message processing by Rule Node [{}]. Enable and see debug events for more info", entityId, originatorNodeId.getId());
-                        //TODO 2.5: Introduce our own RuleEngineFailureException to track what is wrong
                         msg.getCallback().onFailure(new RuleEngineException("Failure during message processing by Rule Node [" + originatorNodeId.getId().toString() + "]"));
                     }
                 } else {
@@ -311,7 +309,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setTbMsg(TbMsg.toByteString(newMsg))
                 .build();
-        producer.send(tpi, new TbProtoQueueMsg<>(newMsg.getId(), toQueueMsg), callbackWrapper);
+        clusterService.pushMsgToRuleEngine(tpi, newMsg.getId(), toQueueMsg, callbackWrapper);
     }
 
     private boolean contains(Set<String> relationTypes, String type) {

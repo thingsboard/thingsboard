@@ -32,6 +32,10 @@ public class TbCoreConsumerStats {
     private final AtomicInteger subscriptionInfoCounter = new AtomicInteger(0);
     private final AtomicInteger claimDeviceCounter = new AtomicInteger(0);
 
+    private final AtomicInteger deviceStateCounter = new AtomicInteger(0);
+    private final AtomicInteger subscriptionMsgCounter = new AtomicInteger(0);
+    private final AtomicInteger toCoreNotificationsCounter = new AtomicInteger(0);
+
     public void log(TransportProtos.TransportToDeviceActorMsg msg) {
         totalCounter.incrementAndGet();
         if (msg.hasSessionEvent()) {
@@ -57,18 +61,31 @@ public class TbCoreConsumerStats {
         }
     }
 
-    public void log(TransportProtos.DeviceStateServiceMsgProto deviceStateServiceMsg) {
-        //TODO 2.5
+    public void log(TransportProtos.DeviceStateServiceMsgProto msg) {
+        totalCounter.incrementAndGet();
+        deviceStateCounter.incrementAndGet();
+    }
+
+    public void log(TransportProtos.SubscriptionMgrMsgProto msg) {
+        totalCounter.incrementAndGet();
+        subscriptionMsgCounter.incrementAndGet();
+    }
+
+    public void log(TransportProtos.ToCoreNotificationMsg msg) {
+        totalCounter.incrementAndGet();
+        toCoreNotificationsCounter.incrementAndGet();
     }
 
     public void printStats() {
         int total = totalCounter.getAndSet(0);
         if (total > 0) {
-            log.info("Transport total [{}] sessionEvents [{}] getAttr [{}] subToAttr [{}] subToRpc [{}] toDevRpc [{}] subInfo [{}] claimDevice [{}]",
+            log.info("Transport total [{}] sessionEvents [{}] getAttr [{}] subToAttr [{}] subToRpc [{}] toDevRpc [{}] subInfo [{}] claimDevice [{}]" +
+                            " deviceState [{}] subMgr [{}] coreNfs [{}]",
                     total, sessionEventCounter.getAndSet(0),
                     getAttributesCounter.getAndSet(0), subscribeToAttributesCounter.getAndSet(0),
                     subscribeToRPCCounter.getAndSet(0), toDeviceRPCCallResponseCounter.getAndSet(0),
-                    subscriptionInfoCounter.getAndSet(0), claimDeviceCounter.getAndSet(0));
+                    subscriptionInfoCounter.getAndSet(0), claimDeviceCounter.getAndSet(0)
+                    , deviceStateCounter.getAndSet(0), subscriptionMsgCounter.getAndSet(0), toCoreNotificationsCounter.getAndSet(0));
         }
     }
 

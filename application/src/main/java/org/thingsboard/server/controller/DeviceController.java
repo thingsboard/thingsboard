@@ -99,8 +99,8 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            tbClusterService.onToCoreMsg(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
-                    savedDevice.getId(), savedDevice.getName(), savedDevice.getType()));
+            tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
+                    savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
 
             logEntityAction(savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
@@ -254,7 +254,7 @@ public class DeviceController extends BaseController {
             Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(getCurrentUser().getTenantId(), deviceCredentials));
 
-            tbClusterService.onToCoreMsg(new DeviceCredentialsUpdateNotificationMsg(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId()));
+            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId()), null);
 
             logEntityAction(device.getId(), device,
                     device.getCustomerId(),

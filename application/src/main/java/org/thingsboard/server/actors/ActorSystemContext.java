@@ -36,7 +36,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
@@ -67,7 +66,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -161,10 +159,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private TbQueueProducerProvider producerProvider;
-
-    @Autowired
-    @Getter
     private TimeseriesService tsService;
 
     @Autowired
@@ -250,10 +244,6 @@ public class ActorSystemContext {
     @Getter
     private TbCoreDeviceRpcService tbCoreDeviceRpcService;
 
-    @Autowired(required = false)
-    @Getter
-    private RuleChainTransactionService ruleChainTransactionService;
-
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
     private long maxConcurrentSessionsPerDevice;
@@ -269,10 +259,6 @@ public class ActorSystemContext {
     @Value("${actors.queue.timeout}")
     @Getter
     private long queuePersistenceTimeout;
-
-    @Value("${actors.client_side_rpc.timeout}")
-    @Getter
-    private long clientSideRpcTimeout;
 
     @Value("${actors.rule.chain.error_persist_frequency}")
     @Getter

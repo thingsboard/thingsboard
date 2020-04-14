@@ -47,14 +47,14 @@
         </md-input-container>
         <tb-contact contact="tenant" the-form="theForm" is-edit="isEdit"></tb-contact>
         <md-input-container class="md-block">
-            <md-checkbox ng-disabled="$root.loading || !isEdit"
+            <md-checkbox ng-disabled="{{theForm.$name != 'theForm'}}"
                          ng-model="tenant.isolatedTbCore">
                 {{'tenant.isolated-tb-core' | translate}}<br/>
                 <span style="font-size: 10px">{{'tenant.isolated-tb-core-details' | translate}}</span>
             </md-checkbox>
         </md-input-container>
         <md-input-container class="md-block">
-            <md-checkbox ng-disabled="$root.loading || !isEdit"
+            <md-checkbox ng-disabled="{{theForm.$name != 'theForm'}}"
                          ng-model="tenant.isolatedTbRuleEngine">
                 {{'tenant.isolated-tb-rule-engine' | translate}}<br/>
                 <span style="font-size: 10px">{{'tenant.isolated-tb-rule-engine-details' | translate}}</span>

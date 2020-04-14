@@ -196,11 +196,6 @@ public class ConsistentHashPartitionService implements PartitionService {
         }
     }
 
-    @Override
-    public Set<TenantId> getIsolatedTenants(ServiceType serviceType) {
-        throw new RuntimeException("Not Implemented!");
-    }
-
     private Map<ServiceQueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
         final Map<ServiceQueueKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {

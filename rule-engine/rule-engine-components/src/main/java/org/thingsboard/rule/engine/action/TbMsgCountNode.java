@@ -75,7 +75,6 @@ public class TbMsgCountNode implements TbNode {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("delta", Long.toString(System.currentTimeMillis() - lastScheduledTs + delay));
 
-            //TODO 2.5: Callback?
             TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), metaData, gson.toJson(telemetryJson));
             ctx.enqueueForTellNext(tbMsg, SUCCESS);
             scheduleTickMsg(ctx);
