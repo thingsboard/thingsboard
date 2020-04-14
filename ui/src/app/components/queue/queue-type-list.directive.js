@@ -45,13 +45,11 @@ export default function QueueTypeList($compile, $templateCache, $q, $filter, que
 
         scope.fetchQueues = function(searchText) {
             var deferred = $q.defer();
-            loadQueues().then(
-                function success(queues) {
-                    var result = $filter('filter')(queues, {'$': searchText}, comparator);
+            queueService.getTenantQueuesByServiceType(scope.queueType).then(
+                function success(queuesArr) {
+                    var result = $filter('filter')(queuesArr.data, {'$': searchText}, comparator);
                     if (result && result.length) {
-                        if (searchText && searchText.length && result.indexOf(searchText) === -1) {
-                            result.push(searchText);
-                        }
+                        result.push(searchText);
                         result.sort();
                         deferred.resolve(result);
                     }
@@ -86,46 +84,6 @@ export default function QueueTypeList($compile, $templateCache, $q, $filter, que
             scope.updateView();
         });
 
-        function loadQueues() {
-            var deferred = $q.defer();
-            if (!scope.queues) {
-                var queuePromise;
-                switch (scope.queueType) {
-                    case 'TB_RULE_ENGINE':
-                        queuePromise = queueService.getTenantQueuesByServiceType(scope.queueType);
-                        break;
-                    case 'TB_CORE':
-                        queuePromise = queueService.getTenantQueuesByServiceType(scope.queueType);
-                        break;
-                    case 'TB_TRANSPORT':
-                        queuePromise = queueService.getTenantQueuesByServiceType(scope.queueType);
-                        break;
-                    case 'JS_EXECUTOR':
-                        queuePromise = queueService.getTenantQueuesByServiceType(scope.queueType);
-                        break;
-                }
-
-                if (queuePromise) {
-                    queuePromise.then(
-                        function success(queueArr) {
-                            scope.queues = [];
-                            queueArr.data.forEach(function (queue) {
-                                scope.queues.push(queue);
-                            });
-                            deferred.resolve(scope.queues);
-                        },
-                        function fail() {
-                            deferred.reject();
-                        }
-                    );
-                } else {
-                    deferred.reject();
-                }
-            } else {
-                deferred.resolve(scope.queues);
-            }
-            return deferred.promise;
-        }
         $compile(element.contents())(scope);
     };
 

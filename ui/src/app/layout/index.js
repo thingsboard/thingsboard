@@ -55,7 +55,7 @@ import thingsboardEntityView from '../entity-view';
 import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
 import thingsboardRuleChain from '../rulechain';
-import thingsboardQueue from '../queue';
+import thingsboardQueue from '../components/queue';
 
 import thingsboardJsonForm from '../jsonform';
 
