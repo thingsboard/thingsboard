@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
@@ -143,7 +144,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         TextPageLink pageLink = new TextPageLink(16);
         TextPageData<RuleChain> pageData = null;
         do {
-            pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
             loadedRuleChains.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -158,7 +159,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
 
         pageLink = new TextPageLink(31);
-        pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
@@ -194,7 +195,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         TextPageLink pageLink = new TextPageLink(19, name1);
         TextPageData<RuleChain> pageData = null;
         do {
-            pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
             loadedRuleChainsName1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -209,7 +210,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         List<RuleChain> loadedRuleChainsName2 = new ArrayList<>();
         pageLink = new TextPageLink(4, name2);
         do {
-            pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
             loadedRuleChainsName2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -226,7 +227,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new TextPageLink(4, name1);
-        pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -235,7 +236,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new TextPageLink(4, name2);
-        pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }

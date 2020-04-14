@@ -21,6 +21,7 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 
 public class TenantRuleChainManager extends RuleChainManager {
 
@@ -48,6 +49,6 @@ public class TenantRuleChainManager extends RuleChainManager {
 
     @Override
     protected FetchFunction<RuleChain> getFetchEntitiesFunction() {
-        return link -> service.findTenantRuleChains(tenantId, link);
+        return link -> service.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, link);
     }
 }

@@ -61,8 +61,6 @@ public interface RuleChainService {
 
     List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId);
 
-    TextPageData<RuleChain> findTenantRuleChains(TenantId tenantId, TextPageLink pageLink);
-
     TextPageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, TextPageLink pageLink);
 
     void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId);
