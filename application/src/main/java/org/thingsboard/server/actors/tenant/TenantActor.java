@@ -136,17 +136,11 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        RuleChain ruleChain = null;
-        if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
-            ruleChain = systemContext.getRuleChainService().findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
-            if (ruleChain !=null && !RuleChainType.SYSTEM.equals(ruleChain.getType())) {
-                log.debug("[{}] Non SYSTEM rule chains are ignored and not started. Current rule chain type [{}]", tenantId, ruleChain.getType());
-                return;
-            }
-        }
         ActorRef target = getEntityActorRef(msg.getEntityId());
         if (target != null) {
-            if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN && ruleChain != null) {
+            if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+                RuleChain ruleChain = systemContext.getRuleChainService().
+                        findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
                 ruleChainManager.visit(ruleChain, target);
             }
             target.tell(msg, ActorRef.noSender());
