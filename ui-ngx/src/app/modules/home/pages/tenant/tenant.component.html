@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons">
+<div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageTenantAdmins')"
@@ -28,7 +28,7 @@
           [fxShow]="!hideDelete() && !isEdit">
     {{'tenant.delete' | translate }}
   </button>
-  <div fxLayout="row">
+  <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onTenantIdCopied($event)"
