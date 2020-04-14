@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -376,11 +375,6 @@ class DefaultTbContext implements TbContext {
     @Override
     public EntityViewService getEntityViewService() {
         return mainCtx.getEntityViewService();
-    }
-
-    @Override
-    public RuleChainTransactionService getRuleChainTransactionService() {
-        return mainCtx.getRuleChainTransactionService();
     }
 
     @Override

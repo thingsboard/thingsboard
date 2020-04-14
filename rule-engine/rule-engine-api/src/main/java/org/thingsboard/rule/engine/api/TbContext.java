@@ -203,8 +203,6 @@ public interface TbContext {
 
     String getServiceId();
 
-    RuleChainTransactionService getRuleChainTransactionService();
-
     EventLoopGroup getSharedEventLoop();
 
     CassandraCluster getCassandraCluster();

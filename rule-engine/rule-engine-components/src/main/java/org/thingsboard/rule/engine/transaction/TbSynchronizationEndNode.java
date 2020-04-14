@@ -40,25 +40,20 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = ("tbNodeEmptyConfig")
 )
+@Deprecated
 public class TbSynchronizationEndNode implements TbNode {
-
-    private EmptyNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.getRuleChainTransactionService().endTransaction(msg,
-                successMsg -> ctx.tellNext(successMsg, SUCCESS),
-                throwable -> ctx.tellFailure(msg, throwable));
-        log.trace("Msg left transaction - [{}][{}]", msg.getId(), msg.getType());
+        log.warn("Synchronization Start/End nodes are deprecated since TB 2.5. Use queue with submit strategy SEQUENTIAL_WITHIN_ORIGINATOR instead.");
+        ctx.tellSuccess(msg);
     }
 
     @Override
     public void destroy() {
-
     }
 }
