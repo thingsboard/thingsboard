@@ -68,9 +68,6 @@ public final class InMemoryStorage {
                         entities.add((T) other);
                     }
                 }
-                if (entities.size() > 0) {
-                    storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).addAll(entities);
-                }
                 return entities;
             } catch (InterruptedException e) {
                 if (!stopped) {
