@@ -16,9 +16,12 @@
 package org.thingsboard.server.queue.provider;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.kafka.TbKafkaTopicConfig;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
@@ -50,18 +53,32 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
+    private final TbQueueAdmin coreAdmin;
+    private final TbQueueAdmin ruleEngineAdmin;
+    private final TbQueueAdmin transportApiAdmin;
+    private final TbQueueAdmin notificationAdmin;
+
     public KafkaTbTransportQueueFactory(TbKafkaSettings kafkaSettings,
                                         TbServiceInfoProvider serviceInfoProvider,
                                         TbQueueCoreSettings coreSettings,
                                         TbQueueRuleEngineSettings ruleEngineSettings,
                                         TbQueueTransportApiSettings transportApiSettings,
-                                        TbQueueTransportNotificationSettings transportNotificationSettings) {
+                                        TbQueueTransportNotificationSettings transportNotificationSettings,
+                                        @Qualifier("coreTbKafkaTopicConfig") TbKafkaTopicConfig coreConfig,
+                                        @Qualifier("ruleEngineTbKafkaTopicConfig")TbKafkaTopicConfig ruleEngineConfig,
+                                        @Qualifier("transportApiTbKafkaTopicConfig")TbKafkaTopicConfig transportApiConfig,
+                                        @Qualifier("notificationsTbKafkaTopicConfig")TbKafkaTopicConfig notificationConfig) {
         this.kafkaSettings = kafkaSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+
+        this.coreAdmin = new TBKafkaAdmin(kafkaSettings, coreConfig);
+        this.ruleEngineAdmin = new TBKafkaAdmin(kafkaSettings, ruleEngineConfig);
+        this.transportApiAdmin = new TBKafkaAdmin(kafkaSettings, transportApiConfig);
+        this.notificationAdmin = new TBKafkaAdmin(kafkaSettings, notificationConfig);
     }
 
     @Override
@@ -70,6 +87,7 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("transport-api-request-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(transportApiSettings.getRequestsTopic());
+        requestBuilder.admin(transportApiAdmin);
 
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<TransportApiResponseMsg>> responseBuilder = TBKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
@@ -77,10 +95,11 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         responseBuilder.clientId("transport-api-response-" + serviceInfoProvider.getServiceId());
         responseBuilder.groupId("transport-node-" + serviceInfoProvider.getServiceId());
         responseBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiResponseMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        responseBuilder.admin(transportApiAdmin);
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
                 <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> templateBuilder = DefaultTbQueueRequestTemplate.builder();
-        templateBuilder.queueAdmin(new TBKafkaAdmin(kafkaSettings));
+        templateBuilder.queueAdmin(transportApiAdmin);
         templateBuilder.requestTemplate(requestBuilder.build());
         templateBuilder.responseTemplate(responseBuilder.build());
         templateBuilder.maxPendingRequests(transportApiSettings.getMaxPendingRequests());
@@ -95,6 +114,7 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("transport-node-rule-engine-"+ serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(ruleEngineSettings.getTopic());
+        requestBuilder.admin(ruleEngineAdmin);
         return requestBuilder.build();
     }
 
@@ -104,6 +124,7 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("transport-node-core-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(coreSettings.getTopic());
+        requestBuilder.admin(coreAdmin);
         return requestBuilder.build();
     }
 
@@ -115,6 +136,7 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         responseBuilder.clientId("transport-api-notifications-" + serviceInfoProvider.getServiceId());
         responseBuilder.groupId("transport-node-" + serviceInfoProvider.getServiceId());
         responseBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToTransportMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        responseBuilder.admin(notificationAdmin);
         return responseBuilder.build();
     }
 }

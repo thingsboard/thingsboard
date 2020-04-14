@@ -19,15 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.admin.TopicDescription;
-import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
 import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -35,17 +33,34 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class TBKafkaAdmin implements TbQueueAdmin {
 
-    AdminClient client;
+    private final AdminClient client;
+    private final TbKafkaTopicConfig topicConfig;
+    private final Set<String> topics = ConcurrentHashMap.newKeySet();
 
-    public TBKafkaAdmin(TbKafkaSettings settings) {
+    private final short replicationFactor;
+
+    public TBKafkaAdmin(TbKafkaSettings settings, TbKafkaTopicConfig topicConfig) {
         client = AdminClient.create(settings.toProps());
+        this.topicConfig = topicConfig;
+
+        try {
+            topics.addAll(client.listTopics().names().get());
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Failed to get all topics.", e);
+        }
+
+        replicationFactor = settings.getReplicationFactor();
     }
 
-    //TODO 2.5
     @Override
     public void createTopicIfNotExists(String topic) {
+        if (topics.contains(topic)) {
+            return;
+        }
         try {
-            createTopic(new NewTopic(topic, 1, (short) 1)).values().get(topic).get();
+            NewTopic newTopic = new NewTopic(topic, 1, replicationFactor).configs(topicConfig.getConfigs());
+            createTopic(newTopic).values().get(topic).get();
+            topics.add(topic);
         } catch (ExecutionException ee) {
             if (ee.getCause() instanceof TopicExistsException) {
                 //do nothing
@@ -57,42 +72,10 @@ public class TBKafkaAdmin implements TbQueueAdmin {
             log.warn("[{}] Failed to create topic", topic, e);
             throw new RuntimeException(e);
         }
-//
-//        KafkaFuture<TopicDescription> topicDescriptionFuture = client.describeTopics(Collections.singleton(topic)).values().get(topic);
-//
-//        ListenableFuture<TopicDescription> topicFuture = JdkFutureAdapters.listenInPoolThread(topicDescriptionFuture);
-//
-//        return Futures.transformAsync(topicFuture, topicDescription -> {
-//            KafkaFuture<Void> resultFuture = createTopic(new NewTopic(topic, 1, (short) 1)).values().get(topic);
-//            return JdkFutureAdapters.listenInPoolThread(resultFuture);
-//        });
-    }
 
-    public void waitForTopic(String topic, long timeout, TimeUnit timeoutUnit) throws InterruptedException, TimeoutException {
-        synchronized (this) {
-            long timeoutExpiredMs = System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
-            while (!topicExists(topic)) {
-                long waitMs = timeoutExpiredMs - System.currentTimeMillis();
-                if (waitMs <= 0) {
-                    throw new TimeoutException("Timeout occurred while waiting for topic [" + topic + "] to be available!");
-                } else {
-                    wait(1000);
-                }
-            }
-        }
     }
 
     public CreateTopicsResult createTopic(NewTopic topic) {
         return client.createTopics(Collections.singletonList(topic));
-    }
-
-    private boolean topicExists(String topic) throws InterruptedException {
-        KafkaFuture<TopicDescription> topicDescriptionFuture = client.describeTopics(Collections.singleton(topic)).values().get(topic);
-        try {
-            topicDescriptionFuture.get();
-            return true;
-        } catch (ExecutionException e) {
-            return false;
-        }
     }
 }
