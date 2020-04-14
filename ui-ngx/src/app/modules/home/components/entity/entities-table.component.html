@@ -227,7 +227,7 @@
           </table>
           <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async)"
                 fxLayoutAlign="center center"
-                class="no-data-found" translate>{{ translations.noEntities }}</span>
+                class="no-data-found">{{ translations.noEntities | translate }}</span>
         </div>
         <mat-divider *ngIf="displayPagination"></mat-divider>
         <mat-paginator *ngIf="displayPagination"
