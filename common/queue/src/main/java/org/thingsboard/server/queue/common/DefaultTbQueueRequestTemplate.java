@@ -95,14 +95,13 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                         continue;
                     }
                     responses.forEach(response -> {
-                        log.trace("Received response to Queue Template request: {}", response);
                         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
                         UUID requestId;
                         if (requestIdHeader == null) {
                             log.error("[{}] Missing requestId in header and body", response);
                         } else {
                             requestId = bytesToUuid(requestIdHeader);
-                            log.trace("[{}] Response received", requestId);
+                            log.trace("[{}] Response received: {}", requestId, response);
                             ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
                             if (expectedResponse == null) {
                                 log.trace("[{}] Invalid or stale request", requestId);

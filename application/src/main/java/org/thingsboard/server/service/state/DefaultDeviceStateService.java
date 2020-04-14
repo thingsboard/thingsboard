@@ -325,6 +325,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 });
             });
 
+            addedPartitions.forEach(tpi -> partitionedDevices.computeIfAbsent(tpi, key -> ConcurrentHashMap.newKeySet()));
+
             //TODO 3.0: replace this dummy search with new functionality to search by partitions using SQL capabilities.
             // Adding only devices that are in new partitions
             List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();

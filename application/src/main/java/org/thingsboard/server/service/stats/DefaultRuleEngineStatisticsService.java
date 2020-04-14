@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
@@ -76,13 +77,19 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
         String queueName = ruleEngineStats.getQueueName();
         ruleEngineStats.getTenantStats().forEach((id, stats) -> {
             TenantId tenantId = new TenantId(id);
-            AssetId serviceAssetId = getServiceAssetId(tenantId, queueName);
-            if (stats.getTotalMsgCounter().get() > 0) {
-                List<TsKvEntry> tsList = stats.getCounters().entrySet().stream()
-                        .map(kv -> new BasicTsKvEntry(ts, new LongDataEntry(kv.getKey(), (long) kv.getValue().get())))
-                        .collect(Collectors.toList());
-                if (!tsList.isEmpty()) {
-                    tsService.saveAndNotify(tenantId, serviceAssetId, tsList, CALLBACK);
+            try {
+                AssetId serviceAssetId = getServiceAssetId(tenantId, queueName);
+                if (stats.getTotalMsgCounter().get() > 0) {
+                    List<TsKvEntry> tsList = stats.getCounters().entrySet().stream()
+                            .map(kv -> new BasicTsKvEntry(ts, new LongDataEntry(kv.getKey(), (long) kv.getValue().get())))
+                            .collect(Collectors.toList());
+                    if (!tsList.isEmpty()) {
+                        tsService.saveAndNotify(tenantId, serviceAssetId, tsList, CALLBACK);
+                    }
+                }
+            } catch (DataValidationException e) {
+                if (!e.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
+                    throw e;
                 }
             }
         });

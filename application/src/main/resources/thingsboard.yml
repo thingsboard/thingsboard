@@ -31,7 +31,7 @@ server:
     key-store-type: "${SSL_KEY_STORE_TYPE:PKCS12}"
     # Alias that identifies the key in the key store
     key-alias: "${SSL_KEY_ALIAS:tomcat}"
-  log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:true}"
+  log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:false}"
   ws:
     send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
     limits:
@@ -412,7 +412,7 @@ audit-log:
 state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
-  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:true}"
+  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
@@ -513,7 +513,7 @@ swagger:
   version: "${SWAGGER_VERSION:2.0}"
 
 queue:
-  type: "${TB_QUEUE_TYPE:in-memory}" # kafka or in-memory or aws-sqs or pubsub or service-bus
+  type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
   kafka:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
     acks: "${TB_KAFKA_ACKS:all}"
@@ -588,7 +588,7 @@ queue:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
     queues:
-      - name: "Main"
+      - name: "${TB_QUEUE_RE_MAIN_QUEUE_NAME:Main}"
         topic: "${TB_QUEUE_RE_MAIN_TOPIC:tb_rule_engine.main}"
         poll-interval: "${TB_QUEUE_RE_MAIN_POLL_INTERVAL_MS:25}"
         partitions: "${TB_QUEUE_RE_MAIN_PARTITIONS:10}"
