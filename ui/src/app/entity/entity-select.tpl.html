@@ -25,7 +25,7 @@
                            allowed-entity-types="allowedEntityTypes"
                            ng-model="model.entityType">
     </tb-entity-type-select>
-    <tb-entity-autocomplete flex ng-if="model.entityType"
+    <tb-entity-autocomplete flex ng-if="model.entityType && model.entityType !== entityTypeCurrentTenant"
                             the-form="theForm"
                             ng-disabled="disabled"
                             tb-required="tbRequired"

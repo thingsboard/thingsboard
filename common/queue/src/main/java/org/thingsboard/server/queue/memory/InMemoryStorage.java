@@ -60,16 +60,13 @@ public final class InMemoryStorage {
                 if (first != null) {
                     entities = new ArrayList<>();
                     entities.add(first);
-                } else {
-                    entities = Collections.emptyList();
                     List<TbQueueMsg> otherList = new ArrayList<>();
-                    storage.get(topic).drainTo(otherList, 100);
+                    storage.get(topic).drainTo(otherList, 999);
                     for (TbQueueMsg other : otherList) {
                         entities.add((T) other);
                     }
-                }
-                if (entities.size() > 0) {
-                    storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).addAll(entities);
+                } else {
+                    entities = Collections.emptyList();
                 }
                 return entities;
             } catch (InterruptedException e) {

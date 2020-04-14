@@ -66,6 +66,8 @@ public class TenantActor extends RuleChainManagerActor {
         return strategy;
     }
 
+    boolean cantFindTenant = false;
+
     @Override
     public void preStart() {
         log.info("[{}] Starting tenant actor.", tenantId);
@@ -78,10 +80,14 @@ public class TenantActor extends RuleChainManagerActor {
             isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
 
             if (isRuleEngineForCurrentTenant) {
-                if (isolatedTenantId.map(id -> id.equals(tenantId)).orElseGet(() -> !tenant.isIsolatedTbRuleEngine())) {
-                    initRuleChains();
-                } else {
-                    isRuleEngineForCurrentTenant = false;
+                try {
+                    if (isolatedTenantId.map(id -> id.equals(tenantId)).orElseGet(() -> !tenant.isIsolatedTbRuleEngine())) {
+                        initRuleChains();
+                    } else {
+                        isRuleEngineForCurrentTenant = false;
+                    }
+                } catch (Exception e) {
+                    cantFindTenant = true;
                 }
             }
             log.info("[{}] Tenant actor started.", tenantId);
@@ -97,6 +103,9 @@ public class TenantActor extends RuleChainManagerActor {
 
     @Override
     protected boolean process(TbActorMsg msg) {
+        if (cantFindTenant) {
+            log.info("Missing Tenant msg: {}", msg);
+        }
         switch (msg.getMsgType()) {
             case PARTITION_CHANGE_MSG:
                 PartitionChangeMsg partitionChangeMsg = (PartitionChangeMsg) msg;

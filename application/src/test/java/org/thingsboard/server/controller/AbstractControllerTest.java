@@ -33,6 +33,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -197,6 +198,7 @@ public abstract class AbstractControllerTest {
         createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
 
         logout();
+
         log.info("Executed setup");
     }
 

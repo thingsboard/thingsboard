@@ -256,7 +256,7 @@ public class TbGetCustomerAttributeNodeTest {
                 .thenReturn(Futures.immediateFuture(timeseries));
 
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg, SUCCESS);
+        verify(ctx).tellSuccess(msg);
         assertEquals(msg.getMetaData().getValue("tempo"), "highest");
     }
 
@@ -268,7 +268,7 @@ public class TbGetCustomerAttributeNodeTest {
                 .thenReturn(Futures.immediateFuture(attributes));
 
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg, SUCCESS);
+        verify(ctx).tellSuccess(msg);
         assertEquals(msg.getMetaData().getValue("tempo"), "high");
     }
 }

@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
@@ -47,6 +48,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
@@ -81,6 +83,11 @@ public class TbAlarmNodeTest {
 
     @Mock
     private ScriptEngine detailsJs;
+
+    @Captor
+    private ArgumentCaptor<Runnable> successCaptor;
+    @Captor
+    private ArgumentCaptor<Consumer<Throwable>> failureCaptor;
 
     private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
     private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
@@ -119,11 +126,12 @@ public class TbAlarmNodeTest {
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
-
         doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Created"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -191,6 +199,8 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Created"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);

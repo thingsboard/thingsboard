@@ -65,6 +65,10 @@ public final class TbMsg implements Serializable {
         return new TbMsg(UUID.randomUUID(), type, originator, metaData.copy(), dataType, data, ruleChainId, ruleNodeId, TbMsgCallback.EMPTY);
     }
 
+    public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data, TbMsgCallback callback) {
+        return new TbMsg(UUID.randomUUID(), type, originator, metaData.copy(), TbMsgDataType.JSON, data, null, null, callback);
+    }
+
     public static TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
         return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), origMsg.getDataType(),
                 data, origMsg.getRuleChainId(), origMsg.getRuleNodeId(), origMsg.getCallback());

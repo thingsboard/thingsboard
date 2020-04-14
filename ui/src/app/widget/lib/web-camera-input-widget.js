@@ -52,6 +52,11 @@ function WebCameraWidgetController($element, $scope, $window, types, utils, attr
     let canvas = null;
     let photoCamera = null;
     let dataKeyType = "";
+    let width = 640;
+    let height = 480;
+
+    const DEFAULT_IMAGE_TYPE = 'image/jpeg';
+    const DEFAULT_IMAGE_QUALITY = 0.92;
 
     vm.getStream = getStream;
     vm.createPhoto = createPhoto;
@@ -79,6 +84,8 @@ function WebCameraWidgetController($element, $scope, $window, types, utils, attr
                     vm.isEntityDetected = true;
                 }
             }
+            width = vm.ctx.settings.maxWidth ? vm.ctx.settings.maxWidth : 640;
+            height = vm.ctx.settings.maxHeight ? vm.ctx.settings.maxWidth : 480;
             if (datasource.dataKeys.length) {
                 $scope.currentKey = datasource.dataKeys[0].name;
                 dataKeyType = datasource.dataKeys[0].type;
@@ -92,6 +99,24 @@ function WebCameraWidgetController($element, $scope, $window, types, utils, attr
             }
         }
     });
+
+    function getVideoAspectRatio() {
+        if (videoElement.videoWidth && videoElement.videoWidth > 0 &&
+            videoElement.videoHeight && videoElement.videoHeight > 0) {
+            return videoElement.videoWidth / videoElement.videoHeight;
+        }
+        return width / height;
+    }
+
+    vm.videoWidth = function() {
+        const videoRatio = getVideoAspectRatio();
+        return Math.min(width, height * videoRatio);
+    }
+
+    vm.videoHeight = function() {
+        const videoRatio = getVideoAspectRatio();
+        return Math.min(height, width / videoRatio);
+    }
 
     function hasGetUserMedia() {
         return !!($window.navigator.mediaDevices && $window.navigator.mediaDevices.getUserMedia);
@@ -157,10 +182,12 @@ function WebCameraWidgetController($element, $scope, $window, types, utils, attr
     }
 
     function createPhoto() {
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
-        canvas.getContext('2d').drawImage(videoElement, 0, 0);
-        vm.previewPhoto = canvas.toDataURL('image/png');
+        canvas.width = vm.videoWidth();
+        canvas.height = vm.videoHeight();
+        canvas.getContext('2d').drawImage(videoElement, 0, 0, vm.videoWidth(), vm.videoHeight());
+        const mimeType = vm.ctx.settings.imageFormat ? vm.ctx.settings.imageFormat : DEFAULT_IMAGE_TYPE;
+        const quality = vm.ctx.settings.imageQuality ? vm.ctx.settings.imageQuality : DEFAULT_IMAGE_QUALITY;
+        vm.previewPhoto = canvas.toDataURL(mimeType, quality);
         vm.isPreviewPhoto = true;
     }
 
