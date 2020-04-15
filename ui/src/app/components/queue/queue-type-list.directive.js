@@ -33,27 +33,18 @@ export default function QueueTypeList($compile, $templateCache, $q, $filter, que
         scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;
         scope.queueSearchText = '';
 
-        var comparator = function(actual, expected) {
-            if (angular.isUndefined(actual)) {
-                return false;
-            }
-            if ((actual === null) || (expected === null)) {
-                return actual === expected;
-            }
-            return actual.startsWith(expected);
-        };
-
         scope.fetchQueues = function(searchText) {
             var deferred = $q.defer();
-            queueService.getTenantQueuesByServiceType(scope.queueType).then(
-                function success(queuesArr) {
-                    var result = $filter('filter')(queuesArr.data, {'$': searchText}, comparator);
+            loadQueues().then(
+                function success(queueArr) {
+                    let result = $filter('filter')(queueArr, {'$': searchText});
                     if (result && result.length) {
-                        result.push(searchText);
+                        if (searchText && searchText.length && result.indexOf(searchText) === -1) {
+                            result.push(searchText);
+                        }
                         result.sort();
                         deferred.resolve(result);
-                    }
-                    else {
+                    } else {
                         deferred.resolve([searchText]);
                     }
                 },
@@ -61,6 +52,7 @@ export default function QueueTypeList($compile, $templateCache, $q, $filter, que
                     deferred.reject();
                 }
             );
+
             return deferred.promise;
         };
 
@@ -69,6 +61,24 @@ export default function QueueTypeList($compile, $templateCache, $q, $filter, que
                 ngModelCtrl.$setViewValue(scope.queue);
             }
         };
+
+        function loadQueues() {
+            var deferred = $q.defer();
+            if (!scope.queues) {
+                queueService.getTenantQueuesByServiceType(scope.queueType).then(
+                function success(queueArr) {
+                    scope.queues = queueArr.data;
+                    deferred.resolve(scope.queues);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+                );
+            } else {
+                deferred.resolve(scope.queues);
+            }
+            return deferred.promise;
+        }
 
         ngModelCtrl.$render = function () {
             scope.queue = ngModelCtrl.$viewValue;
