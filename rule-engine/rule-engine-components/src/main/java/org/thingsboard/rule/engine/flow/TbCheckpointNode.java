@@ -35,8 +35,10 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         name = "checkpoint",
         configClazz = TbCheckpointNodeConfiguration.class,
         nodeDescription = "transfers the message to another queue",
-        nodeDetails = "After successful transfer incoming message is automatically acknowledged. Queue name is configurable.")
-
+        nodeDetails = "After successful transfer incoming message is automatically acknowledged. Queue name is configurable.",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbActionNodeCheckPointConfig"
+)
 public class TbCheckpointNode implements TbNode {
 
     private TbCheckpointNodeConfiguration config;

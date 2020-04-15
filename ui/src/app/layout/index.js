@@ -55,6 +55,7 @@ import thingsboardEntityView from '../entity-view';
 import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
 import thingsboardRuleChain from '../rulechain';
+import thingsboardQueue from '../components/queue';
 
 import thingsboardJsonForm from '../jsonform';
 
@@ -86,6 +87,7 @@ export default angular.module('thingsboard.home', [
     thingsboardWidgetLibrary,
     thingsboardDashboard,
     thingsboardRuleChain,
+    thingsboardQueue,
     thingsboardJsonForm,
     thingsboardApiDevice,
     thingsboardApiLogin,
