@@ -23,6 +23,7 @@ import org.apache.kafka.common.errors.TopicExistsException;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -34,14 +35,14 @@ import java.util.concurrent.ExecutionException;
 public class TBKafkaAdmin implements TbQueueAdmin {
 
     private final AdminClient client;
-    private final TbKafkaTopicConfig topicConfig;
+    private final Map<String, String> topicConfigs;
     private final Set<String> topics = ConcurrentHashMap.newKeySet();
 
     private final short replicationFactor;
 
-    public TBKafkaAdmin(TbKafkaSettings settings, TbKafkaTopicConfig topicConfig) {
+    public TBKafkaAdmin(TbKafkaSettings settings, Map<String, String> topicConfigs) {
         client = AdminClient.create(settings.toProps());
-        this.topicConfig = topicConfig;
+        this.topicConfigs = topicConfigs;
 
         try {
             topics.addAll(client.listTopics().names().get());
@@ -58,7 +59,7 @@ public class TBKafkaAdmin implements TbQueueAdmin {
             return;
         }
         try {
-            NewTopic newTopic = new NewTopic(topic, 1, replicationFactor).configs(topicConfig.getConfigs());
+            NewTopic newTopic = new NewTopic(topic, 1, replicationFactor).configs(topicConfigs);
             createTopic(newTopic).values().get(topic).get();
             topics.add(topic);
         } catch (ExecutionException ee) {

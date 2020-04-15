@@ -16,7 +16,6 @@
 package org.thingsboard.server.queue.provider;
 
 import com.google.protobuf.util.JsonFormat;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -42,7 +41,7 @@ import org.thingsboard.server.queue.kafka.TBKafkaAdmin;
 import org.thingsboard.server.queue.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.queue.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
-import org.thingsboard.server.queue.kafka.TbKafkaTopicConfig;
+import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -78,11 +77,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
                                      TbQueueTransportApiSettings transportApiSettings,
                                      TbQueueTransportNotificationSettings transportNotificationSettings,
                                      TbQueueRemoteJsInvokeSettings jsInvokeSettings,
-                                     @Qualifier("coreTbKafkaTopicConfig") TbKafkaTopicConfig coreConfig,
-                                     @Qualifier("ruleEngineTbKafkaTopicConfig")TbKafkaTopicConfig ruleEngineConfig,
-                                     @Qualifier("jsExecutorTbKafkaTopicConfig")TbKafkaTopicConfig jsExecutorConfig,
-                                     @Qualifier("transportApiTbKafkaTopicConfig")TbKafkaTopicConfig transportApiConfig,
-                                     @Qualifier("notificationsTbKafkaTopicConfig")TbKafkaTopicConfig notificationConfig) {
+                                     TbKafkaTopicConfigs kafkaTopicConfigs) {
         this.partitionService = partitionService;
         this.kafkaSettings = kafkaSettings;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -92,11 +87,11 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         this.transportNotificationSettings = transportNotificationSettings;
         this.jsInvokeSettings = jsInvokeSettings;
 
-        this.coreAdmin = new TBKafkaAdmin(kafkaSettings, coreConfig);
-        this.ruleEngineAdmin = new TBKafkaAdmin(kafkaSettings, ruleEngineConfig);
-        this.jsExecutorAdmin = new TBKafkaAdmin(kafkaSettings, jsExecutorConfig);
-        this.transportApiAdmin = new TBKafkaAdmin(kafkaSettings, transportApiConfig);
-        this.notificationAdmin = new TBKafkaAdmin(kafkaSettings, notificationConfig);
+        this.coreAdmin = new TBKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCoreConfigs());
+        this.ruleEngineAdmin = new TBKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getRuleEngineConfigs());
+        this.jsExecutorAdmin = new TBKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getJsExecutorConfigs());
+        this.transportApiAdmin = new TBKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getTransportApiConfigs());
+        this.notificationAdmin = new TBKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getNotificationsConfigs());
     }
 
     @Override

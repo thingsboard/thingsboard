@@ -83,46 +83,11 @@ queue:
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
     topic-properties:
-      rule-engine:
-        properties:
-          - key: "retention.ms"
-            value: "604800000"
-          - key: "segment.bytes"
-            value: "26214400"
-          - key: "retention.bytes"
-            value: "1048576000"
-      core:
-        properties:
-          - key: "retention.ms"
-            value: "604800000"
-          - key: "segment.bytes"
-            value: "26214400"
-          - key: "retention.bytes"
-            value: "1048576000"
-      transport-api:
-        properties:
-          - key: "retention.ms"
-            value: "604800000"
-          - key: "segment.bytes"
-            value: "26214400"
-          - key: "retention.bytes"
-            value: "1048576000"
-      notifications:
-        properties:
-          - key: "retention.ms"
-            value: "604800000"
-          - key: "segment.bytes"
-            value: "26214400"
-          - key: "retention.bytes"
-            value: "1048576000"
-      js-executor:
-        properties:
-          - key: "retention.ms"
-            value: "604800000"
-          - key: "segment.bytes"
-            value: "26214400"
-          - key: "retention.bytes"
-            value: "104857600"
+      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
+      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600}"
   aws_sqs:
     access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
     secret_access_key: "${TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY:YOUR_SECRET}"

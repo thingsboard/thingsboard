@@ -30,9 +30,9 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -65,7 +65,7 @@ public class TBKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         this.producer = new KafkaProducer<>(props);
         this.defaultTopic = defaultTopic;
         this.admin = admin;
-        topics = new HashSet<>();
+        topics = ConcurrentHashMap.newKeySet();
     }
 
     @Override
@@ -100,6 +100,7 @@ public class TBKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
             return;
         }
         admin.createTopicIfNotExists(tpi.getFullTopicName());
+        topics.add(tpi);
     }
 
     @Override
