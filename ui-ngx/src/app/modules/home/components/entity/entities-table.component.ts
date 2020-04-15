@@ -345,6 +345,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       (entity) => {
         if (entity) {
           this.updateData();
+          this.entitiesTableConfig.entityAdded(entity);
         }
       }
     );
@@ -352,6 +353,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
   onEntityUpdated(entity: BaseData<HasId>) {
     this.updateData(false);
+    this.entitiesTableConfig.entityUpdated(entity);
   }
 
   onEntityAction(action: EntityAction<BaseData<HasId>>) {
@@ -375,6 +377,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
         this.entitiesTableConfig.deleteEntity(entity.id).subscribe(
           () => {
             this.updateData();
+            this.entitiesTableConfig.entitiesDeleted([entity.id]);
           }
         );
       }
@@ -402,6 +405,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
         forkJoin(tasks).subscribe(
           () => {
             this.updateData();
+            this.entitiesTableConfig.entitiesDeleted(entities.map((e) => e.id));
           }
         );
       }

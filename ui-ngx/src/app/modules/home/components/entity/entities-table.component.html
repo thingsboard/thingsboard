@@ -225,9 +225,12 @@
                                  'tb-current-entity': dataSource.isCurrentEntity(entity)}"
                      *matRowDef="let entity; columns: displayedColumns;" (click)="onRowClick($event, entity)"></mat-row>
           </table>
-          <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async)"
+          <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async) && !dataSource.dataLoading"
                 fxLayoutAlign="center center"
                 class="no-data-found">{{ translations.noEntities | translate }}</span>
+          <span [fxShow]="dataSource.dataLoading"
+                fxLayoutAlign="center center"
+                class="no-data-found">{{ 'common.loading' | translate }}</span>
         </div>
         <mat-divider *ngIf="displayPagination"></mat-divider>
         <mat-paginator *ngIf="displayPagination"
