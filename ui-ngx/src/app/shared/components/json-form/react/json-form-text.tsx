@@ -56,8 +56,14 @@ class ThingsboardText extends React.Component<JsonFormFieldProps, ThingsboardTex
     }
 
     const multiline = this.props.form.type === 'textarea';
-    const rows = multiline ? this.props.form.rows : 1;
-    const rowsMax = multiline ? this.props.form.rowsMax : 1;
+    let rows = 1;
+    let rowsMax = 1;
+    let minHeight = 48;
+    if (multiline) {
+      rows = this.props.form.rows || 2;
+      rowsMax = this.props.form.rowsMax;
+      minHeight = 19 * rows + 48;
+    }
 
     return (
       <div>
@@ -77,7 +83,7 @@ class ThingsboardText extends React.Component<JsonFormFieldProps, ThingsboardTex
           rowsMax={rowsMax}
           onFocus={this.onFocus}
           onBlur={this.onBlur}
-          style={this.props.form.style || {width: '100%'}}/>
+          style={this.props.form.style || {width: '100%', minHeight: minHeight + 'px'}}/>
       </div>
     );
   }
