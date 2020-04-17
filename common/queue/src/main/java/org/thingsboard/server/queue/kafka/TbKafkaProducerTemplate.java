@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 24.09.18.
  */
 @Slf4j
-public class TBKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueueProducer<T> {
+public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueueProducer<T> {
 
     private final KafkaProducer<String, byte[]> producer;
 
@@ -54,7 +54,7 @@ public class TBKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
     private final Set<TopicPartitionInfo> topics;
 
     @Builder
-    private TBKafkaProducerTemplate(TbKafkaSettings settings, TbKafkaPartitioner<T> partitioner, String defaultTopic, String clientId, TbQueueAdmin admin) {
+    private TbKafkaProducerTemplate(TbKafkaSettings settings, String defaultTopic, String clientId, TbQueueAdmin admin) {
         Properties props = settings.toProps();
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");

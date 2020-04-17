@@ -23,7 +23,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,8 +67,7 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
         }
     }
 
-    @PreDestroy
-    private void destroy() {
+    public void destroy() {
         try {
             client.close();
         } catch (IOException e) {

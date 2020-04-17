@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 24.09.18.
  */
 @Slf4j
-public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
+public class TbKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
 
     private final TbQueueAdmin admin;
     private final KafkaConsumer<String, byte[]> consumer;
@@ -55,7 +55,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
     private final String topic;
 
     @Builder
-    private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
+    private TbKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     String clientId, String groupId, String topic,
                                     boolean autoCommit, int autoCommitIntervalMs,
                                     int maxPollRecords,

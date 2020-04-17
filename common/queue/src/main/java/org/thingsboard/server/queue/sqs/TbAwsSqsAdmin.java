@@ -21,45 +21,56 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
-import com.amazonaws.services.sqs.model.QueueAttributeName;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class TbAwsSqsAdmin implements TbQueueAdmin {
 
-    private final TbAwsSqsSettings sqsSettings;
-    private final Map<String, String> attributes = new HashMap<>();
-    private final AWSStaticCredentialsProvider credProvider;
+    private final Map<String, String> attributes;
+    private final AmazonSQS sqsClient;
+    private final Set<String> queues;
 
-    public TbAwsSqsAdmin(TbAwsSqsSettings sqsSettings) {
-        this.sqsSettings = sqsSettings;
+    public TbAwsSqsAdmin(TbAwsSqsSettings sqsSettings, Map<String, String> attributes) {
+        this.attributes = attributes;
 
         AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
-        this.credProvider = new AWSStaticCredentialsProvider(awsCredentials);
+        sqsClient = AmazonSQSClientBuilder.standard()
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .withRegion(sqsSettings.getRegion())
+                .build();
 
-        attributes.put("FifoQueue", "true");
-        attributes.put("ContentBasedDeduplication", "true");
-        attributes.put(QueueAttributeName.VisibilityTimeout.toString(), sqsSettings.getVisibilityTimeout());
+        queues = sqsClient
+                .listQueues()
+                .getQueueUrls()
+                .stream()
+                .map(this::getQueueNameFromUrl)
+                .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet));
     }
 
     @Override
     public void createTopicIfNotExists(String topic) {
-        AmazonSQS sqsClient = AmazonSQSClientBuilder.standard()
-                .withCredentials(credProvider)
-                .withRegion(sqsSettings.getRegion())
-                .build();
+        String queueName = topic.replaceAll("\\.", "_") + ".fifo";
+        if (queues.contains(queueName)) {
+            return;
+        }
+        final CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName).withAttributes(attributes);
+        String queueUrl = sqsClient.createQueue(createQueueRequest).getQueueUrl();
+        queues.add(getQueueNameFromUrl(queueUrl));
+    }
 
-        final CreateQueueRequest createQueueRequest =
-                new CreateQueueRequest(topic.replaceAll("\\.", "_") + ".fifo")
-                        .withAttributes(attributes);
-        try {
-            sqsClient.createQueue(createQueueRequest);
-        } finally {
-            if (sqsClient != null) {
-                sqsClient.shutdown();
-            }
+    private String getQueueNameFromUrl(String queueUrl) {
+        int delimiterIndex = queueUrl.lastIndexOf("/");
+        return queueUrl.substring(delimiterIndex + 1);
+    }
+
+    @Override
+    public void destroy() {
+        if (sqsClient != null) {
+            sqsClient.shutdown();
         }
     }
 }

@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 package org.thingsboard.server.queue.rabbitmq;
+
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
@@ -62,8 +61,8 @@ public class TbRabbitMqAdmin implements TbQueueAdmin {
         }
     }
 
-    @PreDestroy
-    private void destroy() {
+    @Override
+    public void destroy() {
         if (channel != null) {
             try {
                 channel.close();

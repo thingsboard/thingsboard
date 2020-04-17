@@ -32,7 +32,7 @@ import java.util.concurrent.ExecutionException;
  * Created by ashvayka on 24.09.18.
  */
 @Slf4j
-public class TBKafkaAdmin implements TbQueueAdmin {
+public class TbKafkaAdmin implements TbQueueAdmin {
 
     private final AdminClient client;
     private final Map<String, String> topicConfigs;
@@ -40,7 +40,7 @@ public class TBKafkaAdmin implements TbQueueAdmin {
 
     private final short replicationFactor;
 
-    public TBKafkaAdmin(TbKafkaSettings settings, Map<String, String> topicConfigs) {
+    public TbKafkaAdmin(TbKafkaSettings settings, Map<String, String> topicConfigs) {
         client = AdminClient.create(settings.toProps());
         this.topicConfigs = topicConfigs;
 
@@ -74,6 +74,13 @@ public class TBKafkaAdmin implements TbQueueAdmin {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @Override
+    public void destroy() {
+        if (client != null) {
+            client.close();
+        }
     }
 
     public CreateTopicsResult createTopic(NewTopic topic) {

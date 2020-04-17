@@ -40,6 +40,7 @@ import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
 import org.thingsboard.server.queue.sqs.TbAwsSqsConsumerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
+import org.thingsboard.server.queue.sqs.TbAwsSqsQueueAttributes;
 import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 
 @Component
@@ -52,70 +53,81 @@ public class AwsSqsTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final PartitionService partitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
-    private final TbQueueAdmin admin;
+
+    private final TbQueueAdmin coreAdmin;
+    private final TbQueueAdmin ruleEngineAdmin;
+    private final TbQueueAdmin jsExecutorAdmin;
+    private final TbQueueAdmin transportApiAdmin;
+    private final TbQueueAdmin notificationAdmin;
 
     public AwsSqsTbCoreQueueFactory(TbAwsSqsSettings sqsSettings,
                                     TbQueueCoreSettings coreSettings,
                                     TbQueueTransportApiSettings transportApiSettings,
                                     TbQueueRuleEngineSettings ruleEngineSettings,
                                     PartitionService partitionService,
-                                    TbServiceInfoProvider serviceInfoProvider) {
+                                    TbServiceInfoProvider serviceInfoProvider,
+                                    TbAwsSqsQueueAttributes sqsQueueAttributes) {
         this.sqsSettings = sqsSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
         this.ruleEngineSettings = ruleEngineSettings;
         this.partitionService = partitionService;
         this.serviceInfoProvider = serviceInfoProvider;
-        this.admin = new TbAwsSqsAdmin(sqsSettings);
+
+        this.coreAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getCoreAttributes());
+        this.ruleEngineAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getRuleEngineAttributes());
+        this.jsExecutorAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getJsExecutorAttributes());
+        this.transportApiAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getTransportApiAttributes());
+        this.notificationAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getNotificationsAttributes());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, ruleEngineSettings.getTopic());
+        return new TbAwsSqsProducerTemplate<>(ruleEngineAdmin, sqsSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> createToCoreMsgConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, coreSettings.getTopic(),
+        return new TbAwsSqsConsumerTemplate<>(coreAdmin, sqsSettings, coreSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings,
+        return new TbAwsSqsConsumerTemplate<>(notificationAdmin, sqsSettings,
                 partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> createTransportApiRequestConsumer() {
-        return new TbAwsSqsConsumerTemplate<>(admin, sqsSettings, transportApiSettings.getRequestsTopic(),
+        return new TbAwsSqsConsumerTemplate<>(transportApiAdmin, sqsSettings, transportApiSettings.getRequestsTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiResponseProducer() {
-        return new TbAwsSqsProducerTemplate<>(admin, sqsSettings, coreSettings.getTopic());
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, coreSettings.getTopic());
     }
 
     @Override
