@@ -40,9 +40,6 @@ public class TbPubSubSettings {
     @Value("${queue.pubsub.service_account}")
     private String serviceAccount;
 
-    @Value("${queue.pubsub.ack_deadline}")
-    private int ackDeadline;
-
     @Value("${queue.pubsub.max_msg_size}")
     private int maxMsgSize;
 
