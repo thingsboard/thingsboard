@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.kafka;
+package org.thingsboard.server.queue.sqs;
 
+import com.amazonaws.services.sqs.model.QueueAttributeName;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -25,37 +26,42 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='kafka'")
-public class TbKafkaTopicConfigs {
-    @Value("${queue.kafka.topic-properties.core}")
+@ConditionalOnExpression("'${queue.type:null}'=='aws-sqs'")
+public class TbAwsSqsQueueAttributes {
+    @Value("${queue.aws-sqs.queue-properties.core}")
     private String coreProperties;
-    @Value("${queue.kafka.topic-properties.rule-engine}")
+    @Value("${queue.aws-sqs.queue-properties.rule-engine}")
     private String ruleEngineProperties;
-    @Value("${queue.kafka.topic-properties.transport-api}")
+    @Value("${queue.aws-sqs.queue-properties.transport-api}")
     private String transportApiProperties;
-    @Value("${queue.kafka.topic-properties.notifications}")
+    @Value("${queue.aws-sqs.queue-properties.notifications}")
     private String notificationsProperties;
-    @Value("${queue.kafka.topic-properties.js-executor}")
+    @Value("${queue.aws-sqs.queue-properties.js-executor}")
     private String jsExecutorProperties;
 
     @Getter
-    private Map<String, String> coreConfigs;
+    private Map<String, String> coreAttributes;
     @Getter
-    private Map<String, String> ruleEngineConfigs;
+    private Map<String, String> ruleEngineAttributes;
     @Getter
-    private Map<String, String> transportApiConfigs;
+    private Map<String, String> transportApiAttributes;
     @Getter
-    private Map<String, String> notificationsConfigs;
+    private Map<String, String> notificationsAttributes;
     @Getter
-    private Map<String, String> jsExecutorConfigs;
+    private Map<String, String> jsExecutorAttributes;
+
+    private final Map<String, String> defaultAttributes = new HashMap<>();
 
     @PostConstruct
     private void init() {
-        coreConfigs = getConfigs(coreProperties);
-        ruleEngineConfigs = getConfigs(ruleEngineProperties);
-        transportApiConfigs = getConfigs(transportApiProperties);
-        notificationsConfigs = getConfigs(notificationsProperties);
-        jsExecutorConfigs = getConfigs(jsExecutorProperties);
+        defaultAttributes.put(QueueAttributeName.FifoQueue.toString(), "true");
+        defaultAttributes.put(QueueAttributeName.ContentBasedDeduplication.toString(), "true");
+
+        coreAttributes = getConfigs(coreProperties);
+        ruleEngineAttributes = getConfigs(ruleEngineProperties);
+        transportApiAttributes = getConfigs(transportApiProperties);
+        notificationsAttributes = getConfigs(notificationsProperties);
+        jsExecutorAttributes = getConfigs(jsExecutorProperties);
     }
 
     private Map<String, String> getConfigs(String properties) {
@@ -64,8 +70,14 @@ public class TbKafkaTopicConfigs {
             int delimiterPosition = property.indexOf(":");
             String key = property.substring(0, delimiterPosition);
             String value = property.substring(delimiterPosition + 1);
+            validateAttributeName(key);
             configs.put(key, value);
         }
+        configs.putAll(defaultAttributes);
         return configs;
+    }
+
+    private void validateAttributeName(String key) {
+        QueueAttributeName.fromValue(key);
     }
 }
