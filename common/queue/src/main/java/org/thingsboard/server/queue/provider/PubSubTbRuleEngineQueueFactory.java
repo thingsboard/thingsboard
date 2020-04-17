@@ -41,6 +41,8 @@ import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
+import javax.annotation.PreDestroy;
+
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='pubsub' && '${service.type:null}'=='tb-rule-engine'")
 public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
@@ -116,5 +118,21 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
     @Override
     public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
         return null;
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (coreAdmin != null) {
+            coreAdmin.destroy();
+        }
+        if (ruleEngineAdmin != null) {
+            ruleEngineAdmin.destroy();
+        }
+        if (jsExecutorAdmin != null) {
+            jsExecutorAdmin.destroy();
+        }
+        if (notificationAdmin != null) {
+            notificationAdmin.destroy();
+        }
     }
 }
