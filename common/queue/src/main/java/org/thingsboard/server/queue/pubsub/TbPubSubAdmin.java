@@ -19,32 +19,37 @@ import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
 import com.google.cloud.pubsub.v1.SubscriptionAdminSettings;
 import com.google.cloud.pubsub.v1.TopicAdminClient;
 import com.google.cloud.pubsub.v1.TopicAdminSettings;
+import com.google.protobuf.Duration;
 import com.google.pubsub.v1.ListSubscriptionsRequest;
 import com.google.pubsub.v1.ListTopicsRequest;
 import com.google.pubsub.v1.ProjectName;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
-import com.google.pubsub.v1.PushConfig;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class TbPubSubAdmin implements TbQueueAdmin {
+    private static final String ACK_DEADLINE = "ackDeadlineInSec";
+    private static final String MESSAGE_RETENTION = "messageRetentionInSec";
 
     private final TbPubSubSettings pubSubSettings;
     private final SubscriptionAdminSettings subscriptionAdminSettings;
     private final TopicAdminSettings topicAdminSettings;
     private final Set<String> topicSet = ConcurrentHashMap.newKeySet();
     private final Set<String> subscriptionSet = ConcurrentHashMap.newKeySet();
+    private final Map<String, String> subscriptionProperties;
 
-    public TbPubSubAdmin(TbPubSubSettings pubSubSettings) {
+    public TbPubSubAdmin(TbPubSubSettings pubSubSettings, Map<String, String> subscriptionSettings) {
         this.pubSubSettings = pubSubSettings;
+        this.subscriptionProperties = subscriptionSettings;
 
         try {
             topicAdminSettings = TopicAdminSettings.newBuilder().setCredentialsProvider(pubSubSettings.getCredentialsProvider()).build();
@@ -149,8 +154,15 @@ public class TbPubSubAdmin implements TbQueueAdmin {
                 }
             }
 
-            subscriptionAdminClient.createSubscription(
-                    subscriptionName, topicName, PushConfig.getDefaultInstance(), pubSubSettings.getAckDeadline()).getName();
+            Subscription.Builder subscriptionBuilder = Subscription
+                    .newBuilder()
+                    .setName(subscriptionName.toString())
+                    .setTopic(topicName.toString());
+
+            setAckDeadline(subscriptionBuilder);
+            setMessageRetention(subscriptionBuilder);
+
+            subscriptionAdminClient.createSubscription(subscriptionBuilder.build());
             subscriptionSet.add(subscriptionName.toString());
             log.info("Created new subscription: [{}]", subscriptionName.toString());
         } catch (IOException e) {
@@ -159,4 +171,19 @@ public class TbPubSubAdmin implements TbQueueAdmin {
         }
     }
 
+    private void setAckDeadline(Subscription.Builder builder) {
+        if (subscriptionProperties.containsKey(ACK_DEADLINE)) {
+            builder.setAckDeadlineSeconds(Integer.parseInt(subscriptionProperties.get(ACK_DEADLINE)));
+        }
+    }
+
+    private void setMessageRetention(Subscription.Builder builder) {
+        if (subscriptionProperties.containsKey(MESSAGE_RETENTION)) {
+            Duration duration = Duration
+                    .newBuilder()
+                    .setSeconds(Long.parseLong(subscriptionProperties.get(MESSAGE_RETENTION)))
+                    .build();
+            builder.setMessageRetentionDuration(duration);
+        }
+    }
 }
