@@ -235,7 +235,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           },
           () => {
             this.modelValue = null;
-            this.selectEntityFormGroup.get('entity').patchValue(null, {emitEvent: false});
+            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
             if (value !== null) {
               this.propagateChange(this.modelValue);
             }
@@ -250,7 +250,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           },
           () => {
             this.modelValue = null;
-            this.selectEntityFormGroup.get('entity').patchValue(null, {emitEvent: false});
+            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
             if (value !== null) {
               this.propagateChange(this.modelValue);
             }
