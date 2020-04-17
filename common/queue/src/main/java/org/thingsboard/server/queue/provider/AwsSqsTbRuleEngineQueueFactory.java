@@ -40,6 +40,8 @@ import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsQueueAttributes;
 import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 
+import javax.annotation.PreDestroy;
+
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='aws-sqs' && '${service.type:null}'=='tb-rule-engine'")
 public class AwsSqsTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
@@ -113,5 +115,21 @@ public class AwsSqsTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
     @Override
     public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
         return null;
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (coreAdmin != null) {
+            coreAdmin.destroy();
+        }
+        if (ruleEngineAdmin != null) {
+            ruleEngineAdmin.destroy();
+        }
+        if (jsExecutorAdmin != null) {
+            jsExecutorAdmin.destroy();
+        }
+        if (notificationAdmin != null) {
+            notificationAdmin.destroy();
+        }
     }
 }

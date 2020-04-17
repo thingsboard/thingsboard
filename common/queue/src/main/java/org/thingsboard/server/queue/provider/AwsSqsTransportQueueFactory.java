@@ -38,6 +38,8 @@ import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsQueueAttributes;
 import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 
+import javax.annotation.PreDestroy;
+
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='aws-sqs' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
@@ -99,5 +101,15 @@ public class AwsSqsTransportQueueFactory implements TbTransportQueueFactory {
     public TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsConsumer() {
         return new TbAwsSqsConsumerTemplate<>(notificationAdmin, sqsSettings, transportNotificationSettings.getNotificationsTopic() + "_" + serviceInfoProvider.getServiceId(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToTransportMsg.parseFrom(msg.getData()), msg.getHeaders()));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (transportApiAdmin != null) {
+            transportApiAdmin.destroy();
+        }
+        if (notificationAdmin != null) {
+            notificationAdmin.destroy();
+        }
     }
 }
