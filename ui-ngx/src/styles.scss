@@ -863,6 +863,7 @@ mat-label {
       .mat-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
+          height: 100vh;
         }
         .mat-dialog-content {
           max-height: 100%;

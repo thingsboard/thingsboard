@@ -14,22 +14,21 @@
 /// limitations under the License.
 ///
 
-import {AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild} from '@angular/core';
-import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {Observable, of} from 'rxjs';
-import {PageLink} from '@shared/models/page/page-link';
-import {Direction} from '@shared/models/page/sort-order';
-import {map, mergeMap, startWith, tap} from 'rxjs/operators';
-import {PageData, emptyPageData} from '@shared/models/page/page-data';
-import {DashboardInfo} from '@app/shared/models/dashboard.models';
-import {DashboardId} from '@app/shared/models/id/dashboard-id';
-import {DashboardService} from '@core/http/dashboard.service';
-import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
-import {getCurrentAuthUser} from '@app/core/auth/auth.selectors';
-import {Authority} from '@shared/models/authority.enum';
-import {TranslateService} from '@ngx-translate/core';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Observable, of } from 'rxjs';
+import { PageLink } from '@shared/models/page/page-link';
+import { Direction } from '@shared/models/page/sort-order';
+import { map, mergeMap, startWith, tap } from 'rxjs/operators';
+import { emptyPageData, PageData } from '@shared/models/page/page-data';
+import { DashboardInfo } from '@app/shared/models/dashboard.models';
+import { DashboardService } from '@core/http/dashboard.service';
+import { Store } from '@ngrx/store';
+import { AppState } from '@app/core/core.state';
+import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { TranslateService } from '@ngx-translate/core';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-dashboard-autocomplete',

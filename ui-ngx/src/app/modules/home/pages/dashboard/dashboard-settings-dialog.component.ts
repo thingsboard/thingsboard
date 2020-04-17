@@ -38,7 +38,7 @@ export interface DashboardSettingsDialogData {
   selector: 'tb-dashboard-settings-dialog',
   templateUrl: './dashboard-settings-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: DashboardSettingsDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./dashboard-settings-dialog.component.scss']
 })
 export class DashboardSettingsDialogComponent extends DialogComponent<DashboardSettingsDialogComponent, DashboardSettingsDialogData>
   implements OnInit, ErrorStateMatcher {

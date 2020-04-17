@@ -62,9 +62,17 @@
         height: 100%;
       }
     }
+    .mat-checkbox-label {
+      white-space: normal;
+    }
     .mat-expansion-panel {
-      &.tb-datasources.mat-expanded {
-        overflow: visible;
+      &.tb-datasources{
+        &.mat-expanded {
+          overflow: visible;
+        }
+        .mat-expansion-panel-body{
+          padding: 0 12px 16px;
+        }
       }
       .mat-expansion-panel-content {
         font: inherit;
