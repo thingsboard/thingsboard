@@ -2000,10 +2000,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     private String getUrlParams(TimePageLink pageLink) {
         String urlParams = "limit={limit}&ascOrder={ascOrder}";
         if (pageLink.getStartTime() != null) {
-            urlParams += "&startTime={startTime}";
+            urlParams += "&startTs={startTs}";
         }
         if (pageLink.getEndTime() != null) {
-            urlParams += "&endTime={endTime}";
+            urlParams += "&endTs={endTs}";
         }
         if (pageLink.getIdOffset() != null) {
             urlParams += "&offset={offset}";
@@ -2028,10 +2028,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         params.put("limit", String.valueOf(pageLink.getLimit()));
         if (pageLink.getStartTime() != null) {
-            params.put("startTime", String.valueOf(pageLink.getStartTime()));
+            params.put("startTs", String.valueOf(pageLink.getStartTime()));
         }
         if (pageLink.getEndTime() != null) {
-            params.put("endTime", String.valueOf(pageLink.getEndTime()));
+            params.put("endTs", String.valueOf(pageLink.getEndTime()));
         }
         params.put("ascOrder", String.valueOf(pageLink.isAscOrder()));
         if (pageLink.getIdOffset() != null) {
