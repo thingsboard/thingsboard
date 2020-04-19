@@ -16,11 +16,11 @@
 
 -->
 <mat-tab-group [ngClass]="{'tb-headless': (widgetType === widgetTypes.static && !displayAdvanced())}"
-               fxFlex class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
+               class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
   <mat-tab label="{{ 'widget-config.data' | translate }}" [fxShow]="widgetType !== widgetTypes.static">
     <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
       <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm"
-            fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
+           fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
         <div fxLayout="column" fxLayoutGap="8px" fxFlex>
           <mat-checkbox formControlName="useDashboardTimewindow">
             {{ 'widget-config.use-dashboard-timewindow' | translate }}
@@ -29,8 +29,10 @@
             {{ 'widget-config.display-timewindow' | translate }}
           </mat-checkbox>
         </div>
-        <section fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
-          <span [ngClass]="{'tb-disabled-label': dataSettings.get('useDashboardTimewindow').value}" translate style="padding-right: 8px;">widget-config.timewindow</span>
+        <section fxLayout="row" fxLayoutAlign="start center" fxLayout.lt-lg="column" fxLayoutAlign.lt-lg="center start"
+                 fxFlex style="margin-bottom: 16px;">
+          <span [ngClass]="{'tb-disabled-label': dataSettings.get('useDashboardTimewindow').value}" translate
+                style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
                          isEdit="true"
                          aggregation="{{ widgetType === widgetTypes.timeseries }}"
@@ -38,7 +40,8 @@
         </section>
       </div>
       <div *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutAlign="center">
-        <div fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px">
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
+             fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>alarm.alarm-status</mat-label>
             <mat-select formControlName="alarmSearchStatus">
@@ -61,7 +64,8 @@
             </mat-error>
           </mat-form-field>
         </div>
-        <div fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px">
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
+             fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>alarm.max-count-load</mat-label>
             <input matInput required
@@ -100,7 +104,7 @@
           <mat-panel-title fxLayout="column">
             <div class="tb-panel-title" translate>widget-config.datasources</div>
             <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
-                 class="tb-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
+                 class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
           </mat-panel-title>
         </mat-expansion-panel-header>
         <div *ngIf="datasourcesFormArray().length === 0; else datasourcesTemplate">

@@ -67,7 +67,7 @@
       </mat-form-field>
       <section fxLayout="column" [formGroup]="actionTypeFormGroup" [ngSwitch]="widgetActionFormGroup.get('type').value">
         <ng-template [ngSwitchCase]="widgetActionType.openDashboard">
-          <div fxLayout="column" style="padding-bottom: 20px;">
+          <div fxLayout="column">
             <div class="mat-caption tb-required"
                  style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>widget-action.target-dashboard</div>
             <tb-dashboard-autocomplete

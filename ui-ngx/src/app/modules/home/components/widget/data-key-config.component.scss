@@ -15,8 +15,17 @@
  */
 :host {
   .tb-datakey-config {
-    min-height: 500px;
-    height: 500px;
+    height: 100%;
+
+    .settings{
+      &> :first-child{
+        padding-top: 12px;
+      }
+      &> :nth-child(n){
+        padding-right: 12px;
+        padding-left: 12px;
+      }
+    }
   }
 }
 
@@ -24,7 +33,8 @@
   .tb-datakey-config {
     .mat-tab-body.mat-tab-body-active {
       .mat-tab-body-content > div {
-        height: 100%;
+        height: 500px;
+        overflow: initial;
       }
     }
   }
