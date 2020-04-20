@@ -2006,17 +2006,17 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     private String getUrlParams(TimePageLink pageLink, String startTime, String endTime) {
-        StringBuilder urlParams = new StringBuilder("limit={limit}&ascOrder={ascOrder}");
+        String urlParams = "limit={limit}&ascOrder={ascOrder}";
         if (pageLink.getStartTime() != null) {
-            urlParams.append("&").append(startTime).append("={startTime}");
+            urlParams += "&" + startTime + "={startTime}";
         }
         if (pageLink.getEndTime() != null) {
-            urlParams.append("&").append(endTime).append("={endTime}");
+            urlParams += "&" + endTime + "={endTime}";
         }
         if (pageLink.getIdOffset() != null) {
-            urlParams.append("&offset={offset}");
+            urlParams += "&offset={offset}";
         }
-        return urlParams.toString();
+        return urlParams;
     }
 
     private String getUrlParams(TextPageLink pageLink) {
