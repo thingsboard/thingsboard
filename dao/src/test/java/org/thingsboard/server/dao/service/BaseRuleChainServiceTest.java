@@ -66,7 +66,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     public void testSaveRuleChain() throws IOException {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
-        ruleChain.setType(RuleChainType.SYSTEM);
         ruleChain.setName("My RuleChain");
 
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
@@ -105,7 +104,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
         ruleChain.setName("My RuleChain");
-        ruleChain.setType(RuleChainType.SYSTEM);
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
         RuleChain foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNotNull(foundRuleChain);
@@ -118,7 +116,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
         ruleChain.setName("My RuleChain");
-        ruleChain.setType(RuleChainType.SYSTEM);
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
         RuleChain foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNotNull(foundRuleChain);
@@ -138,7 +135,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         List<RuleChain> ruleChains = new ArrayList<>();
         for (int i = 0; i < 165; i++) {
             RuleChain ruleChain = new RuleChain();
-            ruleChain.setType(RuleChainType.SYSTEM);
             ruleChain.setTenantId(tenantId);
             ruleChain.setName("RuleChain" + i);
             ruleChains.add(ruleChainService.saveRuleChain(ruleChain));
@@ -148,7 +144,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         PageLink pageLink = new PageLink(16);
         PageData<RuleChain> pageData = null;
         do {
-            pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
             loadedRuleChains.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -163,7 +159,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
 
         pageLink = new PageLink(31);
-        pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
@@ -177,7 +173,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         for (int i = 0; i < 123; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
-            ruleChain.setType(RuleChainType.SYSTEM);
             String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 17));
             String name = name1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -189,7 +184,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         for (int i = 0; i < 193; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
-            ruleChain.setType(RuleChainType.SYSTEM);
             String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String name = name2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -201,7 +195,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         PageLink pageLink = new PageLink(19, 0, name1);
         PageData<RuleChain> pageData = null;
         do {
-            pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
             loadedRuleChainsName1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -216,7 +210,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         List<RuleChain> loadedRuleChainsName2 = new ArrayList<>();
         pageLink = new PageLink(4, 0, name2);
         do {
-            pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
             loadedRuleChainsName2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -233,7 +227,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new PageLink(4, 0, name1);
-        pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -242,7 +236,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new PageLink(4, 0, name2);
-        pageData = ruleChainService.findTenantRuleChains(tenantId, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -327,7 +321,6 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     private RuleChainMetaData createRuleChainMetadata() throws Exception {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
-        ruleChain.setType(RuleChainType.SYSTEM);
         ruleChain.setTenantId(tenantId);
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
 

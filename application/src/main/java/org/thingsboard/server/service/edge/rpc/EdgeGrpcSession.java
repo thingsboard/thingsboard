@@ -101,6 +101,8 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private static final ReentrantLock entityCreationLock = new ReentrantLock();
 
+    private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
+
     private final UUID sessionId;
     private final BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
     private final Consumer<EdgeId> sessionCloseListener;
@@ -163,8 +165,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     void processHandleMessages() throws ExecutionException, InterruptedException {
         Long queueStartTs = getQueueStartTs().get();
-        // TODO: this 100 value must be changed properly
-        TimePageLink pageLink = new TimePageLink(30, 0, "", null, queueStartTs + 1000, null);
+        TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, "", null, queueStartTs, null);
         PageData<Event> pageData;
         UUID ifOffset = null;
         do {
@@ -173,10 +174,8 @@ public final class EdgeGrpcSession implements Cloneable {
                 log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
                 for (Event event : pageData.getData()) {
                     log.trace("[{}] Processing event [{}]", this.sessionId, event);
-                    EdgeQueueEntry entry;
                     try {
-                        entry = objectMapper.treeToValue(event.getBody(), EdgeQueueEntry.class);
-
+                        EdgeQueueEntry entry = objectMapper.treeToValue(event.getBody(), EdgeQueueEntry.class);
                         UpdateMsgType msgType = getResponseMsgType(entry.getType());
                         switch (msgType) {
                             case ENTITY_DELETED_RPC_MESSAGE:
@@ -201,6 +200,11 @@ public final class EdgeGrpcSession implements Cloneable {
             }
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
+                try {
+                    Thread.sleep(ctx.getEdgeEventStorageSettings().getSleepIntervalBetweenBatches());
+                } catch (InterruptedException e) {
+                    log.error("Error during sleep between batches", e);
+                }
             }
         } while (pageData.hasNext());
 
@@ -209,7 +213,7 @@ public final class EdgeGrpcSession implements Cloneable {
             updateQueueStartTs(newStartTs);
         }
         try {
-            Thread.sleep(1000);
+            Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
         } catch (InterruptedException e) {
             log.error("Error during sleep", e);
         }
@@ -339,13 +343,14 @@ public final class EdgeGrpcSession implements Cloneable {
     }
 
     private void updateQueueStartTs(Long newStartTs) {
-        List<AttributeKvEntry> attributes = Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry("queueStartTs", newStartTs), System.currentTimeMillis()));
+        newStartTs = ++newStartTs; // increments ts by 1 - next edge event search starts from current offset + 1
+        List<AttributeKvEntry> attributes = Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_TS_ATTR_KEY, newStartTs), System.currentTimeMillis()));
         ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 
     private ListenableFuture<Long> getQueueStartTs() {
         ListenableFuture<Optional<AttributeKvEntry>> future =
-                ctx.getAttributesService().find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, "queueStartTs");
+                ctx.getAttributesService().find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, QUEUE_START_TS_ATTR_KEY);
         return Futures.transform(future, attributeKvEntryOpt -> {
                     if (attributeKvEntryOpt != null && attributeKvEntryOpt.isPresent()) {
                         AttributeKvEntry attributeKvEntry = attributeKvEntryOpt.get();

@@ -242,7 +242,7 @@ public class RuleChainController extends BaseController {
                 RuleChainType type = RuleChainType.valueOf(typeStr);
                 return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, type, pageLink));
             } else {
-                return checkNotNull(ruleChainService.findTenantRuleChains(tenantId, pageLink));
+                return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
