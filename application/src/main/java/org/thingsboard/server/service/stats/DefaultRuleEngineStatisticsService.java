@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsService {
 
+    public static final String TB_SERVICE_QUEUE = "TbServiceQueue";
     public static final FutureCallback<Void> CALLBACK = new FutureCallback<Void>() {
         @Override
         public void onSuccess(@Nullable Void result) {
@@ -95,7 +96,13 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
         });
         ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
             TsKvEntry tsKv = new BasicTsKvEntry(ts, new JsonDataEntry("ruleEngineException", e.toJsonString()));
-            tsService.saveAndNotify(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
+            try {
+                tsService.saveAndNotify(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
+            } catch (DataValidationException e2) {
+                if (!e2.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
+                    throw e2;
+                }
+            }
         });
         ruleEngineStats.reset();
     }
@@ -113,7 +120,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                         asset = new Asset();
                         asset.setTenantId(tenantId);
                         asset.setName(queueName + "_" + serviceInfoProvider.getServiceId());
-                        asset.setType("TbServiceQueue");
+                        asset.setType(TB_SERVICE_QUEUE);
                         asset = assetService.saveAsset(asset);
                     }
                     assetId = asset.getId();
