@@ -124,7 +124,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         dashboard.setTenantId(tenantId);
         dashboard = dashboardService.saveDashboard(dashboard);
         Tenant tenant = new Tenant();
-        tenant.setTitle("Test different tenant");
+        tenant.setTitle("Test different tenant [dashboard]");
         tenant = tenantService.saveTenant(tenant);
         Customer customer = new Customer();
         customer.setTenantId(tenant.getId());
@@ -349,12 +349,13 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         dashboard.setTenantId(tenantId);
         dashboard = dashboardService.saveDashboard(dashboard);
         Tenant tenant = new Tenant();
-        tenant.setTitle("Test different tenant");
+        tenant.setTitle("Test different tenant [edge]");
         tenant = tenantService.saveTenant(tenant);
         Edge edge = new Edge();
         edge.setTenantId(tenant.getId());
         edge.setType("default");
         edge.setName("Test different edge");
+        edge.setType("default");
         edge = edgeService.saveEdge(edge);
         try {
             dashboardService.assignDashboardToEdge(tenantId, dashboard.getId(), edge.getId());
