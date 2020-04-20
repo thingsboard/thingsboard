@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,9 +32,6 @@ import java.util.Properties;
 @ConditionalOnExpression("'${queue.type:null}'=='kafka'")
 @Component
 public class TbKafkaSettings {
-
-    static final String REQUEST_ID_HEADER = "requestId";
-    static final String RESPONSE_TOPIC_HEADER = "responseTopic";
 
     @Value("${queue.kafka.bootstrap.servers}")
     private String servers;
@@ -52,6 +50,10 @@ public class TbKafkaSettings {
 
     @Value("${queue.kafka.buffer.memory}")
     private long bufferMemory;
+
+    @Value("${queue.kafka.replication_factor}")
+    @Getter
+    private short replicationFactor;
 
     @Value("${kafka.other:#{null}}")
     private List<TbKafkaProperty> other;

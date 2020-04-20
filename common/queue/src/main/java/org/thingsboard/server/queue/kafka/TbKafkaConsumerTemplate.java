@@ -23,6 +23,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 
@@ -41,9 +42,9 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 24.09.18.
  */
 @Slf4j
-public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
+public class TbKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
 
-    private final TBKafkaAdmin admin;
+    private final TbQueueAdmin admin;
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
     private volatile boolean subscribed;
@@ -54,10 +55,11 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
     private final String topic;
 
     @Builder
-    private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
+    private TbKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     String clientId, String groupId, String topic,
                                     boolean autoCommit, int autoCommitIntervalMs,
-                                    int maxPollRecords) {
+                                    int maxPollRecords,
+                                    TbQueueAdmin admin) {
         Properties props = settings.toProps();
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         if (groupId != null) {
@@ -70,7 +72,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
         if (maxPollRecords > 0) {
             props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
         }
-        this.admin = new TBKafkaAdmin(settings);
+        this.admin = admin;
         this.consumer = new KafkaConsumer<>(props);
         this.decoder = decoder;
         this.topic = topic;

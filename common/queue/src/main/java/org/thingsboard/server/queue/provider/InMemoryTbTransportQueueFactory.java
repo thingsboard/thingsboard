@@ -23,6 +23,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
@@ -33,6 +34,7 @@ import org.thingsboard.server.queue.memory.InMemoryTbQueueConsumer;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
+import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='in-memory' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
@@ -60,8 +62,15 @@ public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory 
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
                 <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> templateBuilder = DefaultTbQueueRequestTemplate.builder();
-        templateBuilder.queueAdmin(topic -> {
+
+        templateBuilder.queueAdmin(new TbQueueAdmin() {
+            @Override
+            public void createTopicIfNotExists(String topic) {}
+
+            @Override
+            public void destroy() {}
         });
+
         templateBuilder.requestTemplate(producerTemplate);
         templateBuilder.responseTemplate(consumerTemplate);
         templateBuilder.maxPendingRequests(transportApiSettings.getMaxPendingRequests());
