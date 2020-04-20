@@ -79,7 +79,7 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
 
         String deviceId = savedDevice.getId().getId().toString();
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
         List<String> actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", List.class);
         Set<String> actualKeySet = new HashSet<>(actualKeys);
 

@@ -109,6 +109,8 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
 
         client.subscribe("v1/devices/me/rpc/request/+", MqttQoS.AT_MOST_ONCE.value());
 
+        Thread.sleep(2000);
+
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
         String result = doPostAsync("/api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isOk());
@@ -164,6 +166,8 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
         client.connect(options).waitForCompletion();
         client.subscribe("v1/devices/me/rpc/request/+", 1);
         client.setCallback(new TestMqttCallback(client, new CountDownLatch(1)));
+
+        Thread.sleep(2000);
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
