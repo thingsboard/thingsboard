@@ -40,10 +40,12 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 import * as AngularCommon from '@angular/common';
 import * as AngularForms from '@angular/forms';
+import * as AngularRouter from '@angular/router';
 import * as AngularCdkCoercion from '@angular/cdk/coercion';
 import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
 import * as AngularMaterialChips from '@angular/material/chips';
 import * as AngularMaterialAutocomplete from '@angular/material/autocomplete';
+import * as AngularMaterialDialog from '@angular/material/dialog';
 import * as NgrxStore from '@ngrx/store';
 import * as TranslateCore from '@ngx-translate/core';
 import * as TbCore from '@core/public-api';
@@ -58,10 +60,12 @@ const ruleNodeConfigResourcesModulesMap = {
   '@angular/core': SystemJS.newModule(AngularCore),
   '@angular/common': SystemJS.newModule(AngularCommon),
   '@angular/forms': SystemJS.newModule(AngularForms),
+  '@angular/router': SystemJS.newModule(AngularRouter),
   '@angular/cdk/keycodes': SystemJS.newModule(AngularCdkKeycodes),
   '@angular/cdk/coercion': SystemJS.newModule(AngularCdkCoercion),
   '@angular/material/chips': SystemJS.newModule(AngularMaterialChips),
   '@angular/material/autocomplete': SystemJS.newModule(AngularMaterialAutocomplete),
+  '@angular/material/dialog': SystemJS.newModule(AngularMaterialDialog),
   '@ngrx/store': SystemJS.newModule(NgrxStore),
   rxjs: SystemJS.newModule(RxJs),
   'rxjs/operators': SystemJS.newModule(RxJsOperators),
