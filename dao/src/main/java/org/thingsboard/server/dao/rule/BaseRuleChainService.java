@@ -353,14 +353,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public TextPageData<RuleChain> findTenantRuleChains(TenantId tenantId, TextPageLink pageLink) {
-        Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
-        Validator.validatePageLink(pageLink, "Incorrect PageLink object for search rule chain request.");
-        List<RuleChain> ruleChains = ruleChainDao.findRuleChainsByTenantId(tenantId.getId(), pageLink);
-        return new TextPageData<>(ruleChains, pageLink);
-    }
-
-    @Override
     public TextPageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, TextPageLink pageLink) {
         Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
         Validator.validatePageLink(pageLink, "Incorrect PageLink object for search rule chain request.");
@@ -555,7 +547,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                         throw new DataValidationException("Rule chain name should be specified!");
                     }
                     if (ruleChain.getType() == null) {
-                        throw new DataValidationException("Rule chain type should be specified!");
+                        ruleChain.setType(RuleChainType.SYSTEM);
                     }
                     if (ruleChain.getTenantId() == null || ruleChain.getTenantId().isNullUid()) {
                         throw new DataValidationException("Rule chain should be assigned to tenant!");
