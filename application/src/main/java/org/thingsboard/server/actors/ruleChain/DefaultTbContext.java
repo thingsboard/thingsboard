@@ -192,6 +192,9 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void ack(TbMsg tbMsg) {
+        if (nodeCtx.getSelf().isDebugMode()) {
+            mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, "ACK", null);
+        }
         tbMsg.getCallback().onSuccess();
     }
 

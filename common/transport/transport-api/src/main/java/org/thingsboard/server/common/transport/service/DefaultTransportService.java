@@ -588,7 +588,7 @@ public class DefaultTransportService implements TransportService {
         @Override
         public void onSuccess(TbQueueMsgMetadata metadata) {
             if (msgCount.decrementAndGet() <= 0) {
-                callback.onSuccess(null);
+                DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onSuccess(null));
             }
         }
 
