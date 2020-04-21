@@ -22,9 +22,10 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  Output, QueryList,
+  Output,
   SimpleChanges,
-  ViewChild, ViewChildren, ViewEncapsulation
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -34,8 +35,6 @@ import { CustomActionDescriptor } from '@shared/models/widget.models';
 import * as ace from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { css_beautify, html_beautify } from 'js-beautify';
-import { MatTab } from '@angular/material/tabs';
-import { BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'tb-custom-action-pretty-resources-tabs',

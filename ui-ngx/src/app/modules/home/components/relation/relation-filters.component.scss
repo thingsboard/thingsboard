@@ -15,10 +15,17 @@
  */
 :host {
   .tb-relation-filters {
+    max-width: calc(100vw - 48px);
+    overflow: hidden;
+
+    .container{
+      width: 100%;
+      overflow: auto;
+    }
+
     .header {
-      padding-right: 5px;
-      padding-bottom: 5px;
-      padding-left: 5px;
+      width: max-content;
+      padding: 0 5px 5px;
 
       .cell {
         padding-right: 5px;
@@ -31,11 +38,8 @@
     }
 
     .body {
-      max-height: 300px;
-      padding-right: 5px;
-      padding-bottom: 20px;
-      padding-left: 5px;
-      overflow: auto;
+      width: max-content;
+      padding: 0 5px 20px;
 
       .row {
         padding-top: 5px;
@@ -45,6 +49,10 @@
         padding-right: 5px;
         padding-left: 5px;
       }
+    }
+
+    .any-filter{
+      margin: 10px 0 20px;
     }
   }
 }

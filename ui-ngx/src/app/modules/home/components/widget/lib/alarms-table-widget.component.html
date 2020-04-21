@@ -61,7 +61,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <mat-table [dataSource]="alarmsDatasource"
+      <table mat-table [dataSource]="alarmsDatasource"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
@@ -124,7 +124,7 @@
                              'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm)}"
                  *matRowDef="let alarm; columns: displayedColumns;"
                  (click)="onRowClick($event, alarm)"></mat-row>
-      </mat-table>
+      </table>
       <span [fxShow]="alarmsDatasource.isEmpty() | async"
             fxLayoutAlign="center center"
             class="no-data-found" translate>alarm.no-alarms-prompt</span>

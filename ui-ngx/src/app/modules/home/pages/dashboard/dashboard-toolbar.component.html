@@ -15,12 +15,10 @@
     limitations under the License.
 
 -->
-<mat-fab-toolbar [isOpen]="toolbarOpened"
-                 color="primary"
-                 direction="left"
+<mat-fab-toolbar [isOpen]="toolbarOpened" color="primary" direction="left"
                  [ngClass]="{'is-fullscreen': forceFullscreen, 'mat-elevation-z1': forceFullscreen && toolbarOpened }">
   <mat-fab-trigger>
-    <button mat-button mat-icon-button mat-fab color="primary"
+    <button mat-fab color="primary"
             [matTooltip]="!toolbarOpened ? ('dashboard.open-toolbar' | translate) : ''"
             matTooltipPosition="below"
             (click)="onTriggerClick()">

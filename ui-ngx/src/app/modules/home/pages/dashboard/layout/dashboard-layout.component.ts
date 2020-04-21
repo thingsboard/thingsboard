@@ -28,7 +28,7 @@ import {
   WidgetContextMenuItem
 } from '@home/models/dashboard-component.models';
 import { Subscription } from 'rxjs';
-import { Hotkey, HotkeysService } from 'angular2-hotkeys';
+import { Hotkey } from 'angular2-hotkeys';
 import { TranslateService } from '@ngx-translate/core';
 import { ItemBufferService } from '@app/core/services/item-buffer.service';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
