@@ -201,7 +201,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       const entityName = targetParams && targetParams.entityName ? targetParams.entityName : '';
       const entityLabel = targetParams && targetParams.entityLabel ? targetParams.entityLabel : '';
       result = this.utils.insertVariable(stateName, 'entityName', entityName);
-      result = this.utils.insertVariable(stateName, 'entityLabel', entityLabel);
+      result = this.utils.insertVariable(result, 'entityLabel', entityLabel);
       for (const prop of Object.keys(params)) {
         if (params[prop] && params[prop].entityName) {
           result = this.utils.insertVariable(result, prop + ':entityName', params[prop].entityName);
