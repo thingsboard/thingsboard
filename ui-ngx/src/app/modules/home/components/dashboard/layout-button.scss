@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
+:host {
   button.tb-layout-button {
     width: 100%;
-    max-width: 240px;
     height: 100%;
+    padding: 40px 20px;
+  }
+
+  &::ng-deep {
     .mat-button-wrapper {
-      padding: 40px;
       line-height: 18px;
       span {
         font-size: 18px;

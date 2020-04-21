@@ -17,20 +17,16 @@
 import {
   ComponentRef,
   Directive,
-  ElementRef,
   Input,
   OnChanges,
-  OnInit,
   OnDestroy,
+  OnInit,
   SimpleChanges,
-  ViewContainerRef,
-  ChangeDetectorRef
+  ViewContainerRef
 } from '@angular/core';
-import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
 import { DashboardState } from '@shared/models/dashboard.models';
 import { IDashboardController } from '@home/pages/dashboard/dashboard-page.models';
 import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
-import { IStateController } from '@core/api/widget-api.models';
 import { IStateControllerComponent } from '@home/pages/dashboard/states/state-controller.models';
 
 @Directive({

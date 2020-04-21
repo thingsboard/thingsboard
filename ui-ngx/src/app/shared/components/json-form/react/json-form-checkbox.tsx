@@ -33,7 +33,6 @@ class ThingsboardCheckbox extends React.Component<JsonFormFieldProps, JsonFormFi
                 onChange={(e, checked) => {
                   this.props.onChangeValidate(e);
                 }}
-                style={{paddingTop: '14px'}}
               />
             }
             label={this.props.form.title}

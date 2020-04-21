@@ -16,34 +16,26 @@
 
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
-import { TranslateService } from '@ngx-translate/core';
-import {
-  DashboardLayoutId,
-  DashboardSettings,
-  GridSettings,
-  StateControllerId,
-  Dashboard
-} from '@app/shared/models/dashboard.models';
-import { isUndefined, objToBase64 } from '@core/utils';
+import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
+import { objToBase64 } from '@core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { Widget } from '@app/shared/models/widget.models';
 import { DashboardService } from '@core/http/dashboard.service';
 import { forkJoin, Observable, of } from 'rxjs';
 import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
 import {
   SelectTargetStateDialogComponent,
   SelectTargetStateDialogData
 } from '@home/components/dashboard/select-target-state-dialog.component';
-import { mergeMap, map } from 'rxjs/operators';
+import { mergeMap } from 'rxjs/operators';
 import { AliasesInfo } from '@shared/models/alias.models';
 import { ItemBufferService } from '@core/services/item-buffer.service';
 import { StateObject } from '@core/api/widget-api.models';

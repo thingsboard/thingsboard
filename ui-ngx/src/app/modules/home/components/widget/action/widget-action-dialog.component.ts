@@ -55,7 +55,7 @@ export interface WidgetActionDialogData {
   selector: 'tb-widget-action-dialog',
   templateUrl: './widget-action-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: WidgetActionDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./widget-action-dialog.component.scss']
 })
 export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDialogComponent,
                                                  WidgetActionDescriptorInfo> implements OnInit, ErrorStateMatcher {

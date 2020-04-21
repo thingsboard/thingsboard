@@ -33,6 +33,8 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
 
 export type EntityBooleanFunction<T extends BaseData<HasId>> = (entity: T) => boolean;
 export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => string;
+export type EntityVoidFunction<T extends BaseData<HasId>> = (entity: T) => void;
+export type EntityIdsVoidFunction<T extends BaseData<HasId>> = (ids: HasUUID[]) => void;
 export type EntityCountStringFunction = (count: number) => string;
 export type EntityTwoWayOperation<T extends BaseData<HasId>> = (entity: T) => Observable<T>;
 export type EntityByIdOperation<T extends BaseData<HasId>> = (id: HasUUID) => Observable<T>;
@@ -175,6 +177,9 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   onEntityAction: EntityActionFunction<T> = () => false;
   handleRowClick: EntityRowClickFunction<L> = () => false;
   entityTitle: EntityStringFunction<T> = (entity) => entity?.name;
+  entityAdded: EntityVoidFunction<T> = () => {};
+  entityUpdated: EntityVoidFunction<T> = () => {};
+  entitiesDeleted: EntityIdsVoidFunction<T> = () => {};
 }
 
 export function checkBoxCell(value: boolean): string {

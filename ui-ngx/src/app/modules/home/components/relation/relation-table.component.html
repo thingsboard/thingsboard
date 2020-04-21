@@ -86,7 +86,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <mat-table [dataSource]="dataSource"
+      <table mat-table [dataSource]="dataSource"
                  matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
@@ -156,7 +156,7 @@
         <mat-row [ngClass]="{'mat-row-select': true,
                              'mat-selected': dataSource.selection.isSelected(relation)}"
                  *matRowDef="let relation; columns: displayedColumns;" (click)="dataSource.selection.toggle(relation)"></mat-row>
-      </mat-table>
+      </table>
       <span [fxShow]="dataSource.isEmpty() | async"
             fxLayoutAlign="center center"
             class="no-data-found" translate>{{ 'relation.no-relations-text' }}</span>

@@ -32,7 +32,7 @@ import * as RxJs from 'rxjs';
 import { Observable } from 'rxjs';
 import * as RxJsOperators from 'rxjs/operators';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
-import { ResolvedRuleChainMetaData, RuleChain, RuleChainImport } from '@shared/models/rule-chain.models';
+import { ResolvedRuleChainMetaData, RuleChain } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
@@ -40,15 +40,18 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 import * as AngularCommon from '@angular/common';
 import * as AngularForms from '@angular/forms';
+import * as AngularRouter from '@angular/router';
 import * as AngularCdkCoercion from '@angular/cdk/coercion';
 import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
 import * as AngularMaterialChips from '@angular/material/chips';
 import * as AngularMaterialAutocomplete from '@angular/material/autocomplete';
+import * as AngularMaterialDialog from '@angular/material/dialog';
 import * as NgrxStore from '@ngrx/store';
 import * as TranslateCore from '@ngx-translate/core';
 import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
 import * as TbHomeComponents from '@home/components/public-api';
+import * as _moment from 'moment';
 import { ItemBufferService } from '@core/public-api';
 
 declare const SystemJS;
@@ -57,21 +60,21 @@ const ruleNodeConfigResourcesModulesMap = {
   '@angular/core': SystemJS.newModule(AngularCore),
   '@angular/common': SystemJS.newModule(AngularCommon),
   '@angular/forms': SystemJS.newModule(AngularForms),
+  '@angular/router': SystemJS.newModule(AngularRouter),
   '@angular/cdk/keycodes': SystemJS.newModule(AngularCdkKeycodes),
   '@angular/cdk/coercion': SystemJS.newModule(AngularCdkCoercion),
   '@angular/material/chips': SystemJS.newModule(AngularMaterialChips),
   '@angular/material/autocomplete': SystemJS.newModule(AngularMaterialAutocomplete),
+  '@angular/material/dialog': SystemJS.newModule(AngularMaterialDialog),
   '@ngrx/store': SystemJS.newModule(NgrxStore),
   rxjs: SystemJS.newModule(RxJs),
   'rxjs/operators': SystemJS.newModule(RxJsOperators),
   '@ngx-translate/core': SystemJS.newModule(TranslateCore),
   '@core/public-api': SystemJS.newModule(TbCore),
   '@shared/public-api': SystemJS.newModule(TbShared),
-  '@home/components/public-api': SystemJS.newModule(TbHomeComponents)
+  '@home/components/public-api': SystemJS.newModule(TbHomeComponents),
+  moment: SystemJS.newModule(_moment)
 };
-
-const t = SystemJS.newModule(AngularCore);
-
 
 @Injectable()
 export class RuleChainResolver implements Resolve<RuleChain> {

@@ -16,22 +16,17 @@
 
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { Widget, widgetTypesData } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityService } from '@core/http/entity.service';
-import { Dashboard, DashboardLayoutId, DashboardStateLayouts } from '@app/shared/models/dashboard.models';
-import { IAliasController } from '@core/api/widget-api.models';
-import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-component.models';
-import { deepClone, isDefined, isString } from '@core/utils';
+import { DashboardLayoutId, DashboardStateLayouts } from '@app/shared/models/dashboard.models';
+import { deepClone, isDefined } from '@core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { MatDialog } from '@angular/material/dialog';
 import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData

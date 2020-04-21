@@ -380,7 +380,8 @@
         "enter-username": "Enter username",
         "enter-password": "Enter password",
         "enter-search": "Enter search",
-        "created-time": "Created time"
+        "created-time": "Created time",
+        "loading": "Loading..."
     },
     "content-type": {
         "json": "Json",

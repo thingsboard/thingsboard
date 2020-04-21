@@ -18,7 +18,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy, ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
+  ComponentFactoryResolver, ComponentRef,
   EventEmitter, Injector,
   Input,
   OnDestroy,
@@ -60,7 +60,10 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   @Output()
   entityAction = new EventEmitter<EntityAction<BaseData<HasId>>>();
 
+  entityComponentRef: ComponentRef<EntityComponent<BaseData<HasId>>>;
   entityComponent: EntityComponent<BaseData<HasId>>;
+
+  entityTabsComponentRef: ComponentRef<EntityTabsComponent<BaseData<HasId>>>;
   entityTabsComponent: EntityTabsComponent<BaseData<HasId>>;
   detailsForm: NgForm;
 
@@ -84,7 +87,9 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   editingEntity: BaseData<HasId>;
 
   private currentEntityId: HasId;
-  private entityActionSubscription: Subscription;
+  private subscriptions: Subscription[] = [];
+  private viewInited = false;
+  private pendingTabs: MatTab[];
 
   constructor(protected store: Store<AppState>,
               private injector: Injector,
@@ -103,12 +108,14 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
 
   @Input()
   set entitiesTableConfig(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
-    this.entitiesTableConfigValue = entitiesTableConfig;
-    if (this.entityComponent) {
-      this.entityComponent.entitiesTableConfig = entitiesTableConfig;
-    }
-    if (this.entityTabsComponent) {
-      this.entityTabsComponent.entitiesTableConfig = entitiesTableConfig;
+    if (this.entitiesTableConfigValue !== entitiesTableConfig) {
+      this.entitiesTableConfigValue = entitiesTableConfig;
+      if (this.entitiesTableConfigValue) {
+        this.currentEntityId = null;
+        this.isEdit = false;
+        this.entity = null;
+        this.init();
+      }
     }
   }
 
@@ -131,19 +138,33 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   }
 
   ngOnInit(): void {
+    this.init();
+  }
+
+  private init() {
     this.translations = this.entitiesTableConfig.entityTranslations;
     this.resources = this.entitiesTableConfig.entityResources;
     this.buildEntityComponent();
   }
 
+  private clearSubscriptions() {
+    this.subscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.subscriptions.length = 0;
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.entityActionSubscription) {
-      this.entityActionSubscription.unsubscribe();
-    }
+    this.clearSubscriptions();
   }
 
   buildEntityComponent() {
+    this.clearSubscriptions();
+    if (this.entityComponentRef) {
+      this.entityComponentRef.destroy();
+      this.entityComponentRef = null;
+    }
     const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityComponent);
     const viewContainerRef = this.entityDetailsFormAnchor.viewContainerRef;
     viewContainerRef.clear();
@@ -162,29 +183,46 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
         parent: this.injector
       }
     );
-    const componentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
-    this.entityComponent = componentRef.instance;
+    this.entityComponentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
+    this.entityComponent = this.entityComponentRef.instance;
     this.entityComponent.isEdit = this.isEdit;
     this.detailsForm = this.entityComponent.entityNgForm;
-    this.entityActionSubscription = this.entityComponent.entityAction.subscribe((action) => {
+    this.subscriptions.push(this.entityComponent.entityAction.subscribe((action) => {
       this.entityAction.emit(action);
-    });
+    }));
     this.buildEntityTabsComponent();
-    this.entityComponent.entityForm.valueChanges.subscribe(() => {
+    this.subscriptions.push(this.entityComponent.entityForm.valueChanges.subscribe(() => {
       this.cd.detectChanges();
-    });
+    }));
   }
 
   buildEntityTabsComponent() {
+    if (this.entityTabsComponentRef) {
+      this.entityTabsComponentRef.destroy();
+      this.entityTabsComponentRef = null;
+    }
+    const viewContainerRef = this.entityTabsAnchor.viewContainerRef;
+    viewContainerRef.clear();
+    this.entityTabsComponent = null;
     if (this.entitiesTableConfig.entityTabsComponent) {
       const componentTabsFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityTabsComponent);
-      const viewContainerRef = this.entityTabsAnchor.viewContainerRef;
-      viewContainerRef.clear();
-      const componentTabsRef = viewContainerRef.createComponent(componentTabsFactory);
-      this.entityTabsComponent = componentTabsRef.instance;
+      this.entityTabsComponentRef = viewContainerRef.createComponent(componentTabsFactory);
+      this.entityTabsComponent = this.entityTabsComponentRef.instance;
       this.entityTabsComponent.isEdit = this.isEdit;
       this.entityTabsComponent.entitiesTableConfig = this.entitiesTableConfig;
       this.entityTabsComponent.detailsForm = this.detailsForm;
+      this.subscriptions.push(this.entityTabsComponent.entityTabsChanged.subscribe(
+        (entityTabs) => {
+          if (entityTabs) {
+            if (this.viewInited) {
+              this.matTabGroup._tabs.reset([...this.inclusiveTabs.toArray(), ...entityTabs]);
+              this.matTabGroup._tabs.notifyOnChanges();
+            } else {
+              this.pendingTabs = entityTabs;
+            }
+          }
+        }
+      ));
     }
   }
 
@@ -254,15 +292,11 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   }
 
   ngAfterViewInit(): void {
-    if (this.entityTabsComponent) {
-      this.entityTabsComponent.entityTabsChanged.subscribe(
-        (entityTabs) => {
-          if (entityTabs) {
-            this.matTabGroup._tabs.reset([...this.inclusiveTabs.toArray(), ...entityTabs]);
-            this.matTabGroup._tabs.notifyOnChanges();
-          }
-        }
-      );
+    this.viewInited = true;
+    if (this.pendingTabs) {
+      this.matTabGroup._tabs.reset([...this.inclusiveTabs.toArray(), ...this.pendingTabs]);
+      this.matTabGroup._tabs.notifyOnChanges();
+      this.pendingTabs = null;
     }
   }
 
