@@ -46,6 +46,7 @@ import ua_parser.Client;
 
 import java.util.UUID;
 
+
 @Component
 @Slf4j
 public class RestAuthenticationProvider implements AuthenticationProvider {

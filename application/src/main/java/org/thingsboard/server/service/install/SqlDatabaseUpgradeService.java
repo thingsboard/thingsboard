@@ -221,6 +221,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             }
                         }
                     }
+                    try {
+                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN isolated_tb_core boolean DEFAULT (false), ADD COLUMN isolated_tb_rule_engine boolean DEFAULT (false)");
+                    } catch (Exception e) {
+                    }
                     log.info("Schema updated.");
                 }
                 break;

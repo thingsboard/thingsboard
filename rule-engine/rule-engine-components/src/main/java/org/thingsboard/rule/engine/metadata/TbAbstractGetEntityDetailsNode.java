@@ -59,7 +59,7 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(getDetails(ctx, msg),
-                m -> ctx.tellNext(m, SUCCESS),
+                ctx::tellSuccess,
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 

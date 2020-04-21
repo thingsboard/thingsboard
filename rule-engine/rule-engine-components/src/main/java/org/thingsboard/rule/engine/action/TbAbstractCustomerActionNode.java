@@ -63,7 +63,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(processCustomerAction(ctx, msg),
-                m -> ctx.tellNext(msg, "Success"),
+                m -> ctx.tellSuccess(msg),
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
@@ -122,7 +122,9 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
                 newCustomer.setTitle(key.getCustomerTitle());
                 newCustomer.setTenantId(ctx.getTenantId());
                 Customer savedCustomer = service.saveCustomer(newCustomer);
-                ctx.sendTbMsgToRuleEngine(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()));
+                ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
+                        () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
+                        throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
                 return Optional.of(savedCustomer.getId());
             }
             return Optional.empty();
