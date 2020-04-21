@@ -24,29 +24,12 @@ $mobile-toolbar-height-total: 84px !default;
 tb-dashboard-toolbar {
   mat-fab-toolbar {
     mat-fab-trigger {
-      .mat-button {
-        &.mat-fab {
-          width: 36px;
-          height: 36px;
-          margin: 4px 0 0 4px;
-          line-height: 36px;
-          .mat-button-wrapper {
-            width: 36px;
-            height: 36px;
-            padding: 0 6px;
-            box-sizing: border-box;
-          }
-          mat-icon {
-            display: block;
-            position: absolute;
-            top: 25%;
-            width: 18px;
-            min-width: 18px;
-            height: 18px;
-            min-height: 18px;
-            margin: 0;
-            line-height: 18px;
-          }
+      .mat-fab {
+        width: 36px;
+        height: 36px;
+        margin: 4px 0 0 4px;
+        .mat-button-wrapper {
+          padding: 0;
         }
       }
     }
