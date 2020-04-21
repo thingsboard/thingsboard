@@ -18,10 +18,24 @@ import L from 'leaflet';
 import _ from 'lodash';
 import { MarkerSettings, PolylineSettings, PolygonSettings } from './map-models';
 
-export function createTooltip(target: L.Layer, settings: MarkerSettings | PolylineSettings | PolygonSettings): L.Popup {
+export function createTooltip(target: L.Layer,
+    settings: MarkerSettings | PolylineSettings | PolygonSettings,
+    content?: string | HTMLElement): L.Popup {
     const popup = L.popup();
-    popup.setContent('');
+    popup.setContent(content);
+    console.log(settings);
+
     target.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
+    target.on('popupopen', () => {
+        let actions = document.getElementsByClassName('tb-custom-action');
+        Array.from(actions).forEach(
+            (element: HTMLElement) => {
+                if (element && settings.tooltipActions[element.id]) {
+                    console.log(settings.tooltipActions[element.id]);
+                    element.addEventListener('click', settings.tooltipActions[element.id])
+                }
+            })
+    })
     if (settings.displayTooltipAction === 'hover') {
         target.off('click');
         target.on('mouseover', function () {
@@ -52,4 +66,3 @@ export function getDefCenterPosition(position) {
         return position;
     return [0, 0];
 }
-

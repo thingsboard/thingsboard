@@ -43,8 +43,7 @@ export class Marker {
         });
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletMarker, settings);
-            this.tooltip.setContent(parseTemplate(this.settings.tooltipPattern, data));
+            this.tooltip = createTooltip(this.leafletMarker, settings, parseTemplate(this.settings.tooltipPattern, data));
         }
 
         if (onClickListener) {

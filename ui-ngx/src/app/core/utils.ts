@@ -524,9 +524,10 @@ export function parseFunction(source: any, params: string[] = []): Function {
   return res;
 }
 
-export function parseTemplate(template: string, data: object) {
+export function parseTemplate(template: string, data: object) { 
   let res = '';
   try {
+    template = template.replace(/<link-act/g, '<a').replace(/link-act>/g, 'a>').replace(/name=(\'|")(.*?)(\'|")/g, `class='tb-custom-action' id='$2'`);
     let variables = '';
     const expressions = template
       .match(/\{(.*?)\}/g) // find expressions

@@ -65,7 +65,7 @@ export default abstract class LeafletMap {
             let addMarker: L.Control;
             this.map.on('mouseup', (e: L.LeafletMouseEvent) => {
                 mousePositionOnMap = e.latlng;
-            })
+            });
             const dragListener = (e: L.DragEndEvent) => {
                 if (e.type === 'dragend' && mousePositionOnMap) {
                     const newMarker = L.marker(mousePositionOnMap).addTo(this.map);
@@ -83,7 +83,14 @@ export default abstract class LeafletMap {
                             this.createMarker(ds.entityName, updatedEnttity, this.datasources, this.options, false);
                         }
                         datasourcesList.append(dsItem);
-                    })
+                    });
+                    const deleteBtn = document.createElement('a');
+                    deleteBtn.appendChild(document.createTextNode('Delete position'));
+                    deleteBtn.setAttribute('color', 'red');
+                    deleteBtn.onclick = () => {
+                        this.map.removeLayer(newMarker);
+                    }
+                    datasourcesList.append(deleteBtn);
                     const popup = L.popup();
                     popup.setContent(datasourcesList);
                     newMarker.bindPopup(popup).openPopup();
@@ -96,6 +103,7 @@ export default abstract class LeafletMap {
                     img.src = `assets/add_location.svg`;
                     img.style.width = '32px';
                     img.style.height = '32px';
+                    img.title = "Drag and drop to add marker";
                     img.onclick = this.dragMarker;
                     img.draggable = true;
                     const draggableImg = new L.Draggable(img);
@@ -106,7 +114,6 @@ export default abstract class LeafletMap {
                 onRemove(map) {
                 },
                 dragMarker: this.dragMarker
-
             } as any);
 
             L.control.addMarker = (opts) => {
@@ -193,8 +200,8 @@ export default abstract class LeafletMap {
 
     convertToCustomFormat(position: L.LatLng): object {
         return {
-            [this.options.latKeyName]: position.lat,
-            [this.options.lngKeyName]: position.lng
+            [this.options.latKeyName]: position.lat % 180,
+            [this.options.lngKeyName]: position.lng % 180
         }
     }
 

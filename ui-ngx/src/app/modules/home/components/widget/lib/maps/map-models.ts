@@ -54,6 +54,7 @@ export enum MapProviders {
 
 export type MarkerSettings = {
     tooltipPattern?: any;
+    tooltipActions: object;
     icon?: any;
     showLabel?: boolean;
     label: string;
@@ -99,7 +100,8 @@ export type PolygonSettings = {
     polygonColor: string;
     autocloseTooltip: boolean;
     displayTooltipAction: string;
-
+    tooltipActions: object;
+    
     polygonColorFunction?: GenericFunction;
 }
 
@@ -108,6 +110,7 @@ export type PolylineSettings = {
     autocloseTooltip: boolean;
     displayTooltipAction: string;
     useColorFunction: any;
+    tooltipActions: object;
     color: string;
     useStrokeOpacityFunction: any;
     strokeOpacity: number;

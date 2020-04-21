@@ -30,12 +30,12 @@ import {
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import { parseFunction, parseArray, parseData } from '@core/utils';
+import { parseFunction, parseArray, parseData, safeExecute } from '@core/utils';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
 import { forkJoin } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition } from './maps-utils';
-import { JsonSettingsSchema } from '@shared/models/widget.models';
+import { JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -45,6 +45,7 @@ import { Type } from '@angular/core';
 export class MapWidgetController implements MapWidgetInterface {
 
     constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
+        console.log("MapWidgetController -> constructor -> ctx", ctx)
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -55,7 +56,11 @@ export class MapWidgetController implements MapWidgetInterface {
             $element = ctx.$container[0];
         }
         this.settings = this.initSettings(ctx.settings);
-
+        const descriptors = this.ctx.actionsApi.getActionDescriptors('tooltipAction');
+        this.settings.tooltipActions = {};
+        descriptors.forEach(descriptor => {
+            this.settings.tooltipActions[descriptor.name] = ($event) => this.onTooltipClick(descriptor, $event);
+        }, this.settings.tooltipActions);
         const MapClass = providerSets[this.provider]?.MapClass;
         if (!MapClass) {
             return;
@@ -69,6 +74,7 @@ export class MapWidgetController implements MapWidgetInterface {
     schema: JsonSettingsSchema;
     data;
     settings: UnitedMapSettings;
+    actions: Map<string, Map<string, (widgetContext: WidgetContext) => void>>;
 
     public static dataKeySettingsSchema(): object {
         return {};
@@ -86,7 +92,6 @@ export class MapWidgetController implements MapWidgetInterface {
         addGroupInfo(schema, 'Map Provider Settings');
         addToSchema(schema, commonMapSettingsSchema);
         addGroupInfo(schema, 'Common Map Settings');
-
         if (drawRoutes) {
             addToSchema(schema, routeMapSettingsSchema);
             addGroupInfo(schema, 'Route Map Settings');
@@ -116,6 +121,18 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     onInit() {
+    }
+
+    private onTooltipClick(descriptor: WidgetActionDescriptor, $event: any) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+      //  safeExecute(parseFunction(descriptor.customFunction, ['$event', 'widgetContext']), [$event, this.ctx])
+        const entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
+        const entityId = entityInfo ? entityInfo.entityId : null;
+        const entityName = entityInfo ? entityInfo.entityName : null;
+        const entityLabel = entityInfo ? entityInfo.entityLabel : null;
+        this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
     }
 
     setMarkerLocation = (e) => {
@@ -194,7 +211,7 @@ interface IProvider {
     name: string
 }
 
-export const providerSets: {[key: string]: IProvider} = {
+export const providerSets: { [key: string]: IProvider } = {
     'openstreet-map': {
         MapClass: OpenStreetMap,
         schema: openstreetMapSettingsSchema,
