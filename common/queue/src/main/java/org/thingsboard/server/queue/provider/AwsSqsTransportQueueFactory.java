@@ -30,6 +30,7 @@ import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
@@ -47,8 +48,10 @@ public class AwsSqsTransportQueueFactory implements TbTransportQueueFactory {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbAwsSqsSettings sqsSettings;
+    private final TbQueueCoreSettings coreSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
 
+    private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
 
@@ -56,12 +59,15 @@ public class AwsSqsTransportQueueFactory implements TbTransportQueueFactory {
                                        TbQueueTransportNotificationSettings transportNotificationSettings,
                                        TbAwsSqsSettings sqsSettings,
                                        TbServiceInfoProvider serviceInfoProvider,
+                                       TbQueueCoreSettings coreSettings,
                                        TbAwsSqsQueueAttributes sqsQueueAttributes) {
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.sqsSettings = sqsSettings;
         this.serviceInfoProvider = serviceInfoProvider;
+        this.coreSettings = coreSettings;
 
+        this.coreAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getCoreAttributes());
         this.transportApiAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getTransportApiAttributes());
         this.notificationAdmin = new TbAwsSqsAdmin(sqsSettings, sqsQueueAttributes.getNotificationsAttributes());
     }
@@ -94,7 +100,7 @@ public class AwsSqsTransportQueueFactory implements TbTransportQueueFactory {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbAwsSqsProducerTemplate<>(transportApiAdmin, sqsSettings, transportApiSettings.getRequestsTopic());
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, coreSettings.getTopic());
     }
 
     @Override
@@ -105,6 +111,9 @@ public class AwsSqsTransportQueueFactory implements TbTransportQueueFactory {
 
     @PreDestroy
     private void destroy() {
+        if (coreAdmin != null) {
+            coreAdmin.destroy();
+        }
         if (transportApiAdmin != null) {
             transportApiAdmin.destroy();
         }

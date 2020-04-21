@@ -32,9 +32,9 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueConsumer;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
+import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
-import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='in-memory' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
@@ -43,13 +43,16 @@ public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory 
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
+    private final TbQueueCoreSettings coreSettings;
 
     public InMemoryTbTransportQueueFactory(TbQueueTransportApiSettings transportApiSettings,
                                            TbQueueTransportNotificationSettings transportNotificationSettings,
-                                           TbServiceInfoProvider serviceInfoProvider) {
+                                           TbServiceInfoProvider serviceInfoProvider,
+                                           TbQueueCoreSettings coreSettings) {
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.serviceInfoProvider = serviceInfoProvider;
+        this.coreSettings = coreSettings;
     }
 
     @Override
@@ -86,7 +89,7 @@ public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory 
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new InMemoryTbQueueProducer<>(transportApiSettings.getRequestsTopic());
+        return new InMemoryTbQueueProducer<>(coreSettings.getTopic());
     }
 
     @Override

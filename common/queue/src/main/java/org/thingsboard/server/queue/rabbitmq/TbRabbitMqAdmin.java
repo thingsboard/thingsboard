@@ -18,24 +18,23 @@ package org.thingsboard.server.queue.rabbitmq;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
-@Component
-@ConditionalOnExpression("'${queue.type:null}'=='rabbitmq'")
 public class TbRabbitMqAdmin implements TbQueueAdmin {
 
     private final TbRabbitMqSettings rabbitMqSettings;
     private final Channel channel;
     private final Connection connection;
+    private final Map<String, Object> arguments;
 
-    public TbRabbitMqAdmin(TbRabbitMqSettings rabbitMqSettings) {
+    public TbRabbitMqAdmin(TbRabbitMqSettings rabbitMqSettings, Map<String, Object> arguments) {
         this.rabbitMqSettings = rabbitMqSettings;
+        this.arguments = arguments;
 
         try {
             connection = rabbitMqSettings.getConnectionFactory().newConnection();
@@ -55,7 +54,7 @@ public class TbRabbitMqAdmin implements TbQueueAdmin {
     @Override
     public void createTopicIfNotExists(String topic) {
         try {
-            channel.queueDeclare(topic, false, false, false, null);
+            channel.queueDeclare(topic, false, false, false, arguments);
         } catch (IOException e) {
             log.error("Failed to bind queue: [{}]", topic, e);
         }
