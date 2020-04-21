@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+service-type: "TB_SERVICE_TYPE"
+
 kafka:
   request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
   bootstrap:

@@ -31,6 +31,7 @@ const useSandbox = config.get('script.use_sandbox') === 'true';
 const maxActiveScripts = Number(config.get('script.max_active_scripts'));
 
 function JsInvokeMessageProcessor(producer) {
+    console.log("Kafka Producer:", producer);
     this.producer = producer;
     this.executor = new JsExecutor(useSandbox);
     this.scriptMap = {};
@@ -144,17 +145,17 @@ JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, r
 JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseTopic, scriptId, compileResponse, invokeResponse, releaseResponse) {
     var remoteResponse = createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse);
     var rawResponse = Buffer.from(JSON.stringify(remoteResponse), 'utf8');
-    this.producer.send(
-        {
-            topic: responseTopic,
-            messages: [
-                {
-                    key: scriptId,
-                    value: rawResponse,
-                    headers: headers
-                }
-            ]
-        }
+    this.producer.send(responseTopic, scriptId, rawResponse, headers
+        // {
+        //     topic: responseTopic,
+        //     messages: [
+        //         {
+        //             key: scriptId,
+        //             value: rawResponse,
+        //             headers: headers
+        //         }
+        //     ]
+        // }
     ).then(
         () => {},
         (err) => {
