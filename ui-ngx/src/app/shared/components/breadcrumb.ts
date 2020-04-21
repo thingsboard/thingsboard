@@ -27,7 +27,7 @@ export interface BreadCrumb {
   queryParams: Params;
 }
 
-export type BreadCrumbLabelFunction<C> = (route: ActivatedRouteSnapshot, translate: TranslateService, component: C) => string;
+export type BreadCrumbLabelFunction<C> = (route: ActivatedRouteSnapshot, translate: TranslateService, component: C, data?: any) => string;
 
 export interface BreadCrumbConfig<C> {
   labelFunction: BreadCrumbLabelFunction<C>;

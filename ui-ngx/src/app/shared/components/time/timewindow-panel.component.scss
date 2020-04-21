@@ -35,6 +35,10 @@
     margin-right: 5px;
   }
 
+  tb-timeinterval[ng-reflect-fx-show="true"] {
+    margin-bottom: -16px;
+  }
+
   .limit-slider-container {
     >:first-child {
       margin-right: 16px;

@@ -30,7 +30,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 @Component({
   selector: 'tb-entity-autocomplete',
   templateUrl: './entity-autocomplete.component.html',
-  styleUrls: [],
+  styleUrls: ['./entity-autocomplete.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => EntityAutocompleteComponent),
@@ -228,18 +228,32 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     if (value != null) {
       if (typeof value === 'string') {
         const targetEntityType = this.checkEntityType(this.entityTypeValue);
-        this.entityService.getEntity(targetEntityType, value, {ignoreLoading: true}).subscribe(
+        this.entityService.getEntity(targetEntityType, value, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
             this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
+          },
+          () => {
+            this.modelValue = null;
+            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+            if (value !== null) {
+              this.propagateChange(this.modelValue);
+            }
           }
         );
       } else {
         const targetEntityType = this.checkEntityType(value.entityType);
-        this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true}).subscribe(
+        this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
             this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
+          },
+          () => {
+            this.modelValue = null;
+            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+            if (value !== null) {
+              this.propagateChange(this.modelValue);
+            }
           }
         );
       }

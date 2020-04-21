@@ -58,6 +58,15 @@ $previewSize: 100px !default;
 
   .tb-field {
     padding-bottom: 18px;
+
+    .MuiInputBase-multiline {
+      flex: 1;
+      flex-direction: column;
+      .MuiInputBase-inputMultiline {
+        flex: 1;
+      }
+    }
+
     &.tb-required {
       label::after {
         font-size: 13px;
