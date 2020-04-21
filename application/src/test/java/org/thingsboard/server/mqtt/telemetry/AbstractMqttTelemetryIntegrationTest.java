@@ -109,7 +109,7 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         client.setCallback(callback);
         client.connect(options).waitForCompletion(5000);
         client.subscribe("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE.value());
-        String payload = "{\"key\":\"value\"}";
+        String payload = "{\"key\":\"uniqueValue\"}";
 //        TODO 3.1: we need to acknowledge subscription only after it is processed by device actor and not when the message is pushed to queue.
 //        MqttClient -> SUB REQUEST -> Transport -> Kafka -> Device Actor (subscribed)
 //        MqttClient <- SUB_ACK <- Transport
