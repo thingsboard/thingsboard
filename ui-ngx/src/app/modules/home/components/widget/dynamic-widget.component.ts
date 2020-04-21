@@ -21,7 +21,6 @@ import { AppState } from '@core/core.state';
 import { IDynamicWidgetComponent, WidgetContext } from '@home/models/widget-component.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
 import {
   NotificationHorizontalPosition,
   NotificationType,

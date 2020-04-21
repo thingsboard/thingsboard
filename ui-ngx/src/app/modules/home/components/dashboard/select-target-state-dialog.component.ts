@@ -22,11 +22,8 @@ import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { UtilsService } from '@core/services/utils.service';
-import { TranslateService } from '@ngx-translate/core';
 import { DashboardState } from '@app/shared/models/dashboard.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { DashboardService } from '@core/http/dashboard.service';
 
 export interface SelectTargetStateDialogData {
   states: {[id: string]: DashboardState };

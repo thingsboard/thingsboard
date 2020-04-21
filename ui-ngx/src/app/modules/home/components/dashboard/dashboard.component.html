@@ -83,6 +83,7 @@
           <div fxLayout="row" fxLayoutAlign="space-between start">
             <div class="tb-widget-title" fxLayout="column" fxLayoutAlign="center start" [fxShow]="widget.showWidgetTitlePanel">
               <span [fxShow]="widget.showTitle"
+                    [ngClass]="{'single-row': widget.hasTimewindow}"
                     [ngStyle]="widget.titleStyle"
                     [matTooltip]="widget.titleTooltip"
                     matTooltipClass="tb-tooltip-multiline"

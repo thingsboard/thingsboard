@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+:host {
+  small {
+    white-space: normal;
+  }
+}
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
-@ConditionalOnProperty(prefix = "database.entities", value = "type", havingValue = "cassandra")
-public @interface NoSqlDao {
+:host ::ng-deep {
+  .mat-checkbox-label {
+    white-space: normal;
+  }
 }
