@@ -15,19 +15,20 @@
 ///
 
 import {
+  AfterViewInit,
   Component,
+  Directive,
   ElementRef,
+  Inject,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
-  Renderer2,
-  ViewEncapsulation,
   SimpleChanges,
-  Inject, AfterViewInit, AfterViewChecked, Directive, OnDestroy
+  ViewEncapsulation
 } from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
 import { WINDOW } from '@core/services/window.service';
-import { mixinColor, CanColorCtor } from '@angular/material/core';
+import { CanColorCtor, mixinColor } from '@angular/material/core';
 
 export declare type FabToolbarDirection = 'left' | 'right';
 

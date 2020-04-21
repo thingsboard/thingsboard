@@ -19,9 +19,9 @@
                class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
   <mat-tab label="{{ 'widget-config.data' | translate }}" [fxShow]="widgetType !== widgetTypes.static">
     <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
-      <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm"
+      <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm" fxFlex="100"
            fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
-        <div fxLayout="column" fxLayoutGap="8px" fxFlex>
+        <div fxLayout="column" fxLayoutGap="8px" fxFlex.gt-xs>
           <mat-checkbox formControlName="useDashboardTimewindow">
             {{ 'widget-config.use-dashboard-timewindow' | translate }}
           </mat-checkbox>
@@ -30,7 +30,7 @@
           </mat-checkbox>
         </div>
         <section fxLayout="row" fxLayoutAlign="start center" fxLayout.lt-lg="column" fxLayoutAlign.lt-lg="center start"
-                 fxFlex style="margin-bottom: 16px;">
+                 fxFlex.gt-xs style="margin-bottom: 16px;">
           <span [ngClass]="{'tb-disabled-label': dataSettings.get('useDashboardTimewindow').value}" translate
                 style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
@@ -272,8 +272,7 @@
     </div>
   </mat-tab>
   <mat-tab label="{{ 'widget-config.settings' | translate }}">
-    <div class="mat-content mat-padding"
-         fxLayout="column" fxLayoutGap="8px">
+    <div class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
       <div [formGroup]="widgetSettings" fxLayout="column" fxLayoutGap="8px">
         <span translate>widget-config.general-settings</span>
         <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
@@ -296,10 +295,10 @@
             ></tb-json-object-edit>
           </div>
         </div>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-md="row" fxLayoutAlign.gt-md="start center"
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-md="row" fxLayoutAlign.gt-md="start center" fxFlex="100%"
              fxLayoutGap="8px">
           <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-               fxLayoutGap="8px" fxFlex>
+               fxLayoutGap="8px" fxFlex.gt-md>
             <mat-checkbox fxFlex formControlName="showTitleIcon">
               {{ 'widget-config.display-icon' | translate }}
             </mat-checkbox>
@@ -308,7 +307,7 @@
             </tb-material-icon-select>
           </div>
           <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-               fxLayoutGap="8px" fxFlex>
+               fxLayoutGap="8px" fxFlex.gt-md>
             <tb-color-input fxFlex
                             label="{{'widget-config.icon-color' | translate}}"
                             icon="format_color_fill"
@@ -344,9 +343,9 @@
           </div>
         </div>
         <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-md="row" fxLayoutAlign.gt-md="start center"
-             fxLayoutGap="8px">
+             fxFlex="100%" fxLayoutGap="8px">
           <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-               fxLayoutGap="8px" fxFlex>
+               fxLayoutGap="8px" fxFlex.gt-md>
             <tb-color-input fxFlex
                             label="{{'widget-config.background-color' | translate}}"
                             icon="format_color_fill"
@@ -361,7 +360,7 @@
             </tb-color-input>
           </div>
           <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-               fxLayoutGap="8px" fxFlex>
+               fxLayoutGap="8px" fxFlex.gt-md>
             <mat-form-field fxFlex>
               <mat-label translate>widget-config.padding</mat-label>
               <input matInput formControlName="padding">
@@ -385,11 +384,11 @@
         </div>
         <div [fxShow]="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.latest"
              fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-             fxLayoutGap="8px">
-          <mat-checkbox fxFlex formControlName="showLegend">
+             fxLayoutGap="8px" fxFlex="100%">
+          <mat-checkbox fxFlex.gt-xs formControlName="showLegend">
             {{ 'widget-config.display-legend' | translate }}
           </mat-checkbox>
-          <section fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
+          <section fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
             <tb-legend-config formControlName="legendConfig">
             </tb-legend-config>
           </section>

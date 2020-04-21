@@ -59,7 +59,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <mat-table [dataSource]="dataSource"
+      <table mat-table [dataSource]="dataSource"
                  matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="actionSourceName">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%"> {{ 'widget-config.action-source' | translate }} </mat-header-cell>
@@ -110,7 +110,7 @@
         <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row [ngClass]="{'mat-row-select': true}"
                  *matRowDef="let action; columns: displayedColumns;"></mat-row>
-      </mat-table>
+      </table>
       <span [fxShow]="dataSource.isEmpty() | async"
             fxLayoutAlign="center center"
             class="no-data-found" translate>{{ 'widget-config.no-actions-text' }}</span>

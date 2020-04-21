@@ -75,16 +75,16 @@
               </div>
             </mat-toolbar>
             <div class="table-container">
-              <mat-table [dataSource]="dataSource"
+              <table  mat-table [dataSource]="dataSource"
                          matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
                 <ng-container matColumnDef="name">
-                  <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 60%"> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
+                  <mat-header-cell *matHeaderCellDef mat-sort-header style="flex: 0 0 60%"> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     {{ state.name }}
                   </mat-cell>
                 </ng-container>
                 <ng-container matColumnDef="id">
-                  <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'dashboard.state-id' | translate }} </mat-header-cell>
+                  <mat-header-cell *matHeaderCellDef mat-sort-header style="flex: 0 0 40%"> {{ 'dashboard.state-id' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     {{ state.id }}
                   </mat-cell>
@@ -120,7 +120,7 @@
                 <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
                 <mat-row class="mat-row-select"
                          *matRowDef="let state; columns: displayedColumns;"></mat-row>
-              </mat-table>
+              </table>
               <span [fxShow]="dataSource.isEmpty() | async"
                     fxLayoutAlign="center center"
                     class="no-data-found" translate>{{ 'dashboard.no-states-text' }}</span>
