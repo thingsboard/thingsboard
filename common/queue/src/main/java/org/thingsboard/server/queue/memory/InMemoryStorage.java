@@ -50,10 +50,10 @@ public final class InMemoryStorage {
         return storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).add(msg);
     }
 
-    public <T extends TbQueueMsg> List<T> get(String topic, long durationInMillis) throws InterruptedException {
+    public <T extends TbQueueMsg> List<T> get(String topic) throws InterruptedException {
         if (storage.containsKey(topic)) {
             List<T> entities;
-            T first = (T) storage.get(topic).poll(durationInMillis, TimeUnit.MILLISECONDS);
+            T first = (T) storage.get(topic).poll();
             if (first != null) {
                 entities = new ArrayList<>();
                 entities.add(first);

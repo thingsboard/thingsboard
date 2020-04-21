@@ -152,7 +152,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system
         actorSystem.tell(qMsg, ActorRef.noSender());
-        Mockito.verify(tbMsgCallback, Mockito.timeout(3000)).onSuccess();
+        Mockito.verify(tbMsgCallback, Mockito.timeout(10000)).onSuccess();
 
         TimePageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), 1000);
         List<Event> events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
@@ -265,7 +265,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         // Pushing Message to the system
         actorSystem.tell(qMsg, ActorRef.noSender());
 
-        Mockito.verify(tbMsgCallback, Mockito.timeout(3000)).onSuccess();
+        Mockito.verify(tbMsgCallback, Mockito.timeout(10000)).onSuccess();
 
         TimePageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), rootRuleChain.getFirstRuleNodeId(), 1000);
         List<Event> events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());

@@ -106,7 +106,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
     @Override
     public void processRpcResponseFromRuleEngine(FromDeviceRpcResponse response) {
-        log.trace("[{}] Received response to server-side RPC request from rule engine: [{}]", response.getId());
+        log.trace("[{}] Received response to server-side RPC request from rule engine: [{}]", response.getId(), response);
         UUID requestId = response.getId();
         Consumer<FromDeviceRpcResponse> consumer = localToRuleEngineRpcRequests.remove(requestId);
         if (consumer != null) {
@@ -177,9 +177,9 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
     private void scheduleToRuleEngineTimeout(ToDeviceRpcRequest request, UUID requestId) {
         long timeout = Math.max(0, request.getExpirationTime() - System.currentTimeMillis());
-        log.trace("[{}] processing to rule engine request: [{}]", this.hashCode(), requestId);
+        log.trace("[{}] processing to rule engine request.", requestId);
         scheduler.schedule(() -> {
-            log.trace("[{}] timeout for to rule engine request: [{}]", this.hashCode(), requestId);
+            log.trace("[{}] timeout for processing to rule engine request.", requestId);
             Consumer<FromDeviceRpcResponse> consumer = localToRuleEngineRpcRequests.remove(requestId);
             if (consumer != null) {
                 consumer.accept(new FromDeviceRpcResponse(requestId, null, RpcError.TIMEOUT));
@@ -189,9 +189,9 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
     private void scheduleToDeviceTimeout(ToDeviceRpcRequest request, UUID requestId) {
         long timeout = Math.max(0, request.getExpirationTime() - System.currentTimeMillis());
-        log.trace("[{}] processing to device request: [{}]", this.hashCode(), requestId);
+        log.trace("[{}] processing to device request.", requestId);
         scheduler.schedule(() -> {
-            log.trace("[{}] timeout for to device request: [{}]", this.hashCode(), requestId);
+            log.trace("[{}] timeout for to device request.", requestId);
             localToDeviceRpcRequests.remove(requestId);
         }, timeout, TimeUnit.MILLISECONDS);
     }

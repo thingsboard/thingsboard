@@ -249,7 +249,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             if (relationsCount == 0) {
                 log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
                 if (relationTypes.contains(TbRelationTypes.FAILURE)) {
-                    RuleNodeCtx ruleNodeCtx =  nodeActors.get(originatorNodeId);
+                    RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
                     if (ruleNodeCtx != null) {
                         msg.getCallback().onFailure(new RuleNodeException(failureMessage, ruleChainName, ruleNodeCtx.getSelf()));
                     } else {
@@ -327,6 +327,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg, String fromRelationType) {
         if (nodeCtx != null) {
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg, fromRelationType), self);
+        } else {
+            log.error("[{}][{}] RuleNodeCtx is empty", entityId, ruleChainName);
+            msg.getCallback().onFailure(new RuleEngineException("Rule Node CTX is empty"));
         }
     }
 

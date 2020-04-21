@@ -68,7 +68,7 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
                     .stream()
                     .map(tpi -> {
                         try {
-                            return storage.get(tpi.getFullTopicName(), durationInMillis);
+                            return storage.get(tpi.getFullTopicName());
                         } catch (InterruptedException e) {
                             if (!stopped) {
                                 log.error("Queue was interrupted.", e);
