@@ -37,7 +37,8 @@ function GatewayConfig() {
             disabled: '=ngDisabled',
             gatewayConfig: '=',
             changeAlignment: '=',
-            theForm: '='
+            theForm: '=',
+            isReadOnly: '='
         },
         controller: GatewayConfigController,
         controllerAs: 'vm',
@@ -83,6 +84,10 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
             multiple: true,
         }).then(function (config) {
             if (config && index > -1) {
+                console.log(config); //eslint-disable-line
+                if (!angular.equals(vm.gatewayConfig[index].config, config)) {
+                    $scope.gatewayConfiguration.$setDirty();
+                }
                 vm.gatewayConfig[index].config = config;
             }
         });
