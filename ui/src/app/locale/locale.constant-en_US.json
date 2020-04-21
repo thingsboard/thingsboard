@@ -1201,7 +1201,12 @@
         "tls-path-private-key": "Path to private key on gateway",
         "toggle-fullscreen": "Toggle fullscreen",
         "transformer-json-config": "Configuration JSON*",
-        "update-config": "Add/update configuration JSON"
+        "update-config": "Add/update configuration JSON",
+        "state-title": "Gateway state",
+        "show-config-tip": "Show gateway configuration",
+        "title-show-config": "Show gateway configuration",
+        "read-only": "Read only",
+        "read-write": ""
     },
     "grid": {
         "delete-item-title": "Are you sure you want to delete this item?",
