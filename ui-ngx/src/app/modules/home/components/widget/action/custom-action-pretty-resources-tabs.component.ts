@@ -65,7 +65,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
 
   aceEditors: ace.Ace.Editor[] = [];
   editorsResizeCafs: {[editorId: string]: CancelAnimationFrame} = {};
-  aceResizeObservers: ResizeObserver[] = [];
+  aceResize$: ResizeObserver;
   htmlEditor: ace.Ace.Editor;
   cssEditor: ace.Ace.Editor;
   setValuesPending = false;
@@ -85,9 +85,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   ngOnDestroy(): void {
-    this.aceResizeObservers.forEach((resize$) => {
-      resize$.disconnect();
-    });
+    this.aceResize$.disconnect();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -153,6 +151,12 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   private initAceEditors() {
+    this.aceResize$ = new ResizeObserver((enteris) => {
+      enteris.forEach((entry) => {
+        const editor = this.aceEditors.find(aceEditor => aceEditor.container === entry.target);
+        this.onAceEditorResize(editor);
+      })
+    });
     this.htmlEditor = this.createAceEditor(this.htmlInputElmRef, 'html');
     this.htmlEditor.on('input', () => {
       const editorValue = this.htmlEditor.getValue();
@@ -187,12 +191,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
     const aceEditor = ace.edit(editorElement, editorOptions);
     aceEditor.session.setUseWrapMode(true);
     this.aceEditors.push(aceEditor);
-
-    const resize$ = new ResizeObserver(() => {
-      this.onAceEditorResize(aceEditor);
-    });
-    resize$.observe(editorElement);
-    this.aceResizeObservers.push(resize$);
+    this.aceResize$.observe(editorElement);
     return aceEditor;
   }
 
