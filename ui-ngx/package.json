@@ -50,7 +50,6 @@
     "flot": "git://github.com/thingsboard/flot.git#0.9-work",
     "flot.curvedlines": "git://github.com/MichaelZinsmaier/CurvedLines.git#master",
     "font-awesome": "^4.7.0",
-    "javascript-detect-element-resize": "^0.5.3",
     "jquery": "^3.5.0",
     "jquery.terminal": "^2.15.4",
     "js-beautify": "^1.11.0",
