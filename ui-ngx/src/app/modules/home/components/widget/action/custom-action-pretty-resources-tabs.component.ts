@@ -151,8 +151,8 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   private initAceEditors() {
-    this.aceResize$ = new ResizeObserver((enteris) => {
-      enteris.forEach((entry) => {
+    this.aceResize$ = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
         const editor = this.aceEditors.find(aceEditor => aceEditor.container === entry.target);
         this.onAceEditorResize(editor);
       })
