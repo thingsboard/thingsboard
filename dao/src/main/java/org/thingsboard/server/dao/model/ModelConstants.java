@@ -32,6 +32,9 @@ public class ModelConstants {
     public static final String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
     public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
 
+    // this is the difference between midnight October 15, 1582 UTC and midnight January 1, 1970 UTC as 100 nanosecond units
+    public static final long EPOCH_DIFF = 122192928000000000L;
+
     /**
      * Generic constants.
      */

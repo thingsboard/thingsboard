@@ -75,7 +75,8 @@ public abstract class AbstractEventInsertRepository implements EventInsertReposi
                 .setParameter("entity_type", entity.getEntityType().name())
                 .setParameter("event_type", entity.getEventType())
                 .setParameter("event_uid", entity.getEventUid())
-                .setParameter("tenant_id", entity.getTenantId());
+                .setParameter("tenant_id", entity.getTenantId())
+                .setParameter("ts", entity.getTs());
     }
 
     private EventEntity processSaveOrUpdate(EventEntity entity, String query) {
