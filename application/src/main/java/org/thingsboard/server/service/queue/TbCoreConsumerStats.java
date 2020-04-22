@@ -79,7 +79,7 @@ public class TbCoreConsumerStats {
     public void printStats() {
         int total = totalCounter.getAndSet(0);
         if (total > 0) {
-            log.info("Transport total [{}] sessionEvents [{}] getAttr [{}] subToAttr [{}] subToRpc [{}] toDevRpc [{}] subInfo [{}] claimDevice [{}]" +
+            log.info("Total [{}] sessionEvents [{}] getAttr [{}] subToAttr [{}] subToRpc [{}] toDevRpc [{}] subInfo [{}] claimDevice [{}]" +
                             " deviceState [{}] subMgr [{}] coreNfs [{}]",
                     total, sessionEventCounter.getAndSet(0),
                     getAttributesCounter.getAndSet(0), subscribeToAttributesCounter.getAndSet(0),
