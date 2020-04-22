@@ -1820,6 +1820,12 @@
         "help": "Допомога",
         "reset-debug-mode": "Вимкнути режим налогодження у всіх правилах"
     },
+    "queue": {
+        "select_name": "Виберіть ім'я для Queue",
+        "name": "Iм'я для Queue",
+        "name_required": "Поле 'Имя для Queue' обязательно к заполнению!"
+
+    },
     "scheduler": {
         "scheduler": "Планувальник",
         "scheduler-event": "Подія планувальника",

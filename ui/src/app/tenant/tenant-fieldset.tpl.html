@@ -15,32 +15,50 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onManageUsers({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'tenant.manage-tenant-admins' | translate }}</md-button>
-<md-button ng-click="onDeleteTenant({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'tenant.delete' | translate }}</md-button>
+<md-button ng-click="onManageUsers({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{
+    'tenant.manage-tenant-admins' | translate }}
+</md-button>
+<md-button ng-click="onDeleteTenant({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'tenant.delete'
+    | translate }}
+</md-button>
 
 <div layout="row">
-	<md-button ngclipboard data-clipboard-action="copy"
-			   ngclipboard-success="onTenantIdCopied(e)"
-			   data-clipboard-text="{{tenant.id.id}}" ng-show="!isEdit"
-			   class="md-raised">
-		<md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
-		<span translate>tenant.copyId</span>
-	</md-button>
+    <md-button ngclipboard data-clipboard-action="copy"
+               ngclipboard-success="onTenantIdCopied(e)"
+               data-clipboard-text="{{tenant.id.id}}" ng-show="!isEdit"
+               class="md-raised">
+        <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
+        <span translate>tenant.copyId</span>
+    </md-button>
 </div>
 
 <md-content class="md-padding" layout="column">
-	<fieldset ng-disabled="$root.loading || !isEdit">
-		<md-input-container class="md-block">
-			<label translate>tenant.title</label>
-			<input required name="title" ng-model="tenant.title">	
-			<div ng-messages="theForm.title.$error">
-	      		<div translate ng-message="required">tenant.title-required</div>
-	    	</div>				
-		</md-input-container>
-		<md-input-container class="md-block">
-			<label translate>tenant.description</label>
-			<textarea ng-model="tenant.additionalInfo.description" rows="2"></textarea>
-		</md-input-container>
-		<tb-contact contact="tenant" the-form="theForm" is-edit="isEdit"></tb-contact>
-	</fieldset>
+    <fieldset ng-disabled="$root.loading || !isEdit">
+        <md-input-container class="md-block">
+            <label translate>tenant.title</label>
+            <input required name="title" ng-model="tenant.title">
+            <div ng-messages="theForm.title.$error">
+                <div translate ng-message="required">tenant.title-required</div>
+            </div>
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>tenant.description</label>
+            <textarea ng-model="tenant.additionalInfo.description" rows="2"></textarea>
+        </md-input-container>
+        <tb-contact contact="tenant" the-form="theForm" is-edit="isEdit"></tb-contact>
+        <md-input-container class="md-block">
+            <md-checkbox ng-disabled="{{theForm.$name != 'theForm'}}"
+                         ng-model="tenant.isolatedTbCore">
+                {{'tenant.isolated-tb-core' | translate}}<br/>
+                <span style="font-size: 10px">{{'tenant.isolated-tb-core-details' | translate}}</span>
+            </md-checkbox>
+        </md-input-container>
+        <md-input-container class="md-block">
+            <md-checkbox ng-disabled="{{theForm.$name != 'theForm'}}"
+                         ng-model="tenant.isolatedTbRuleEngine">
+                {{'tenant.isolated-tb-rule-engine' | translate}}<br/>
+                <span style="font-size: 10px">{{'tenant.isolated-tb-rule-engine-details' | translate}}</span>
+            </md-checkbox>
+        </md-input-container>
+    </fieldset>
 </md-content>

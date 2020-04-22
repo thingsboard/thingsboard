@@ -40,7 +40,7 @@ public class HsqlEventInsertRepository extends AbstractEventInsertRepository {
     @Override
     protected EventEntity doProcessSaveOrUpdate(EventEntity entity, String query) {
         getQuery(entity, query).executeUpdate();
-        return entityManager.find(EventEntity.class, UUIDConverter.fromTimeUUID(entity.getId()));
+        return entityManager.find(EventEntity.class, UUIDConverter.fromTimeUUID(entity.getUuid()));
     }
 
     private static String getInsertString(String conflictStatement) {

@@ -184,7 +184,9 @@ CREATE TABLE IF NOT EXISTS tenant (
     search_text varchar(255),
     state varchar(255),
     title varchar(255),
-    zip varchar(255)
+    zip varchar(255),
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (

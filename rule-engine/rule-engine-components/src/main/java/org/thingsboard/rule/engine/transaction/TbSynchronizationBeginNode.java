@@ -25,10 +25,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
-import org.thingsboard.server.common.msg.TbMsgTransactionData;
-
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
@@ -43,31 +39,17 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "Size of the queue per originator and timeout values are configurable on a system level",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
+@Deprecated
 public class TbSynchronizationBeginNode implements TbNode {
-
-    private EmptyNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        log.trace("Msg enters transaction - [{}][{}]", msg.getId(), msg.getType());
-
-        TbMsgTransactionData transactionData = new TbMsgTransactionData(msg.getId(), msg.getOriginator());
-        TbMsg tbMsg = new TbMsg(msg.getId(), msg.getType(), msg.getOriginator(), msg.getMetaData(), TbMsgDataType.JSON,
-                msg.getData(), transactionData, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition());
-
-        ctx.getRuleChainTransactionService().beginTransaction(tbMsg, startMsg -> {
-                    log.trace("Transaction starting...[{}][{}]", startMsg.getId(), startMsg.getType());
-                    ctx.tellNext(startMsg, SUCCESS);
-                }, endMsg -> log.trace("Transaction ended successfully...[{}][{}]", endMsg.getId(), endMsg.getType()),
-                throwable -> {
-                    log.trace("Transaction failed! [{}][{}]", tbMsg.getId(), tbMsg.getType(), throwable);
-                    ctx.tellFailure(tbMsg, throwable);
-                });
+        log.warn("Synchronization Start/End nodes are deprecated since TB 2.5. Use queue with submit strategy SEQUENTIAL_WITHIN_ORIGINATOR instead.");
+        ctx.tellSuccess(msg);
     }
 
     @Override

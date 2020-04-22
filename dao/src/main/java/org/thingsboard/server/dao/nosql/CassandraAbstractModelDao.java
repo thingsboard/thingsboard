@@ -132,10 +132,10 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
 
     protected EntityResultSet<E> saveWithResult(TenantId tenantId, E entity) {
         log.debug("Save entity {}", entity);
-        if (entity.getId() == null) {
-            entity.setId(UUIDs.timeBased());
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUIDs.timeBased());
         } else if (isDeleteOnSave()) {
-            removeById(tenantId, entity.getId());
+            removeById(tenantId, entity.getUuid());
         }
         Statement saveStatement = getSaveQuery(entity);
         saveStatement.setConsistencyLevel(cluster.getDefaultWriteConsistencyLevel());

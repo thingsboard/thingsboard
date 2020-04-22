@@ -115,6 +115,8 @@ public class ModelConstants {
     public static final String TENANT_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String TENANT_REGION_PROPERTY = "region";
     public static final String TENANT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String TENANT_ISOLATED_TB_CORE = "isolated_tb_core";
+    public static final String TENANT_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
 
     public static final String TENANT_BY_REGION_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "tenant_by_region_and_search_text";
 

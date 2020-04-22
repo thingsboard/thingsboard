@@ -82,8 +82,10 @@ public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Eve
 
     public EventEntity(Event event) {
         if (event.getId() != null) {
-            this.setId(event.getId().getId());
+            this.setUuid(event.getId().getId());
             this.ts = getTs(event.getId().getId());
+        } else {
+            this.ts = System.currentTimeMillis();
         }
         if (event.getTenantId() != null) {
             this.tenantId = toString(event.getTenantId().getId());
@@ -100,8 +102,8 @@ public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Eve
 
     @Override
     public Event toData() {
-        Event event = new Event(new EventId(getId()));
-        event.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        Event event = new Event(new EventId(this.getUuid()));
+        event.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         event.setTenantId(new TenantId(toUUID(tenantId)));
         event.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, toUUID(entityId)));
         event.setBody(body);
