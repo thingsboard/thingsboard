@@ -907,6 +907,12 @@
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-servicebus</artifactId>
                 <version>${azure-servicebus.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.microsoft.azure</groupId>
+                        <artifactId>adal4j</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>

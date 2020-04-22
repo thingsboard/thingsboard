@@ -31,8 +31,11 @@
 <!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
 <!--    <logger name="org.thingsboard.server.service.transport" level="TRACE" />-->
 
+    <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
+
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
+
 
 </configuration>
