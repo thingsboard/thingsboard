@@ -29,6 +29,7 @@ import {
 } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { CanColorCtor, mixinColor } from '@angular/material/core';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 export declare type FabToolbarDirection = 'left' | 'right';
 
@@ -77,13 +78,13 @@ export class FabActionsDirective implements OnInit {
 })
 export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnInit, OnDestroy, AfterViewInit, OnChanges {
 
+  private fabToolbarResize$: ResizeObserver;
+
   @Input()
   isOpen: boolean;
 
   @Input()
   direction: FabToolbarDirection;
-
-  fabToolbarResizeListener = this.onFabToolbarResize.bind(this);
 
   constructor(private el: ElementRef<HTMLElement>,
               @Inject(WINDOW) private window: Window) {
@@ -96,13 +97,14 @@ export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnIni
     element.find('mat-fab-trigger').find('button')
       .prepend('<div class="mat-fab-toolbar-background"></div>');
     element.addClass(`mat-${this.direction}`);
-    // @ts-ignore
-    addResizeListener(this.el.nativeElement, this.fabToolbarResizeListener);
+    this.fabToolbarResize$ = new ResizeObserver(() => {
+      this.onFabToolbarResize();
+    });
+    this.fabToolbarResize$.observe(this.el.nativeElement);
   }
 
   ngOnDestroy(): void {
-    // @ts-ignore
-    removeResizeListener(this.el.nativeElement, this.fabToolbarResizeListener);
+    this.fabToolbarResize$.disconnect();
   }
 
   ngAfterViewInit(): void {
