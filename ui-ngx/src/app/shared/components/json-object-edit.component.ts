@@ -14,16 +14,8 @@
 /// limitations under the License.
 ///
 
-import {
-  Attribute, ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  forwardRef,
-  Input, OnDestroy,
-  OnInit,
-  ViewChild
-} from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, Validator, NG_VALIDATORS } from '@angular/forms';
+import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import * as ace from 'ace-builds';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
@@ -31,6 +23,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { guid } from '@core/utils';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-json-object-edit',
@@ -56,7 +49,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   private jsonEditor: ace.Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
-  private editorResizeListener: any;
+  private editorResize$: ResizeObserver;
 
   toastTargetId = `jsonObjectEditor-${guid()}`;
 
@@ -128,16 +121,15 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
       this.cleanupJsonErrors();
       this.updateView();
     });
-    this.editorResizeListener = this.onAceEditorResize.bind(this);
-    // @ts-ignore
-    addResizeListener(editorElement, this.editorResizeListener);
+    this.editorResize$ = new ResizeObserver(() => {
+      this.onAceEditorResize();
+    });
+    this.editorResize$.observe(editorElement);
   }
 
   ngOnDestroy(): void {
-    if (this.editorResizeListener) {
-      const editorElement = this.jsonEditorElmRef.nativeElement;
-      // @ts-ignore
-      removeResizeListener(editorElement, this.editorResizeListener);
+    if (this.editorResize$) {
+      this.editorResize$.disconnect();
     }
   }
 

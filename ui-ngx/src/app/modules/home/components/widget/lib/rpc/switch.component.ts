@@ -25,6 +25,7 @@ import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 const switchAspectRation = 2.7893;
 
@@ -98,7 +99,7 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
   private switchErrorContainer: JQuery<HTMLElement>;
   private switchError: JQuery<HTMLElement>;
 
-  private switchResizeListener: any;
+  private switchResize$: ResizeObserver;
 
   constructor(private utils: UtilsService,
               protected store: Store<AppState>) {
@@ -118,9 +119,10 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
     this.switchErrorContainer = $(this.switchErrorContainerRef.nativeElement);
     this.switchError = $(this.switchErrorRef.nativeElement);
 
-    this.switchResizeListener = this.resize.bind(this);
-    // @ts-ignore
-    addResizeListener(this.switchContainerRef.nativeElement, this.switchResizeListener);
+    this.switchResize$ = new ResizeObserver(() => {
+      this.resize();
+    })
+    this.switchResize$.observe(this.switchContainerRef.nativeElement);
     this.init();
   }
 
@@ -128,9 +130,8 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
     if (this.valueSubscription) {
       this.ctx.subscriptionApi.removeSubscription(this.valueSubscription.id);
     }
-    if (this.switchResizeListener) {
-      // @ts-ignore
-      removeResizeListener(this.switchContainerRef.nativeElement, this.switchResizeListener);
+    if (this.switchResize$) {
+      this.switchResize$.disconnect();
     }
   }
 
