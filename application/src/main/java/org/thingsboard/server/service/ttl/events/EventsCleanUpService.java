@@ -31,8 +31,11 @@ import java.sql.SQLException;
 @Service
 public class EventsCleanUpService extends AbstractCleanUpService {
 
-    @Value("${sql.ttl.events.events_key_value_ttl}")
+    @Value("${sql.ttl.events.events_ttl}")
     private long ttl;
+
+    @Value("${sql.ttl.events.debug_events_ttl}")
+    private long debugTtl;
 
     @Value("${sql.ttl.events.enabled}")
     private boolean ttlTaskExecutionEnabled;
@@ -50,7 +53,7 @@ public class EventsCleanUpService extends AbstractCleanUpService {
 
     @Override
     protected void doCleanUp(Connection connection) {
-        long totalEventsRemoved = executeQuery(connection, "call cleanup_events_by_ttl(" + ttl + ", 0);");
+        long totalEventsRemoved = executeQuery(connection, "call cleanup_events_by_ttl(" + ttl + ", " + debugTtl + ", 0);");
         log.info("Total events removed by TTL: [{}]", totalEventsRemoved);
     }
 }
