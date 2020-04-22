@@ -50,8 +50,7 @@ public class EventsCleanUpService extends AbstractCleanUpService {
 
     @Override
     protected void doCleanUp(Connection connection) {
-        log.info("ttl: [{}]", ttl);
-        log.info("ttlTaskExecutionEnabled: [{}]", ttlTaskExecutionEnabled);
-        // TODO: 4/15/20 Do a clean up.
+        long totalEventsRemoved = executeQuery(connection, "call cleanup_events_by_ttl(" + ttl + ", 0);");
+        log.info("Total events removed by TTL: [{}]", totalEventsRemoved);
     }
 }

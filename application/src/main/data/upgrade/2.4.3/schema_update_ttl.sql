@@ -123,3 +123,18 @@ BEGIN
         END LOOP;
 END
 $$;
+
+CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN system_ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+    DECLARE
+        ttl_ts bigint;
+BEGIN
+    IF system_ttl > 0 THEN
+        ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - system_ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted', ttl_ts) into deleted;
+    END IF;
+END
+$$;
+

@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS event (
     event_type varchar(255),
     event_uid varchar(255),
     tenant_id varchar(31),
+    ts bigint,
     CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
@@ -249,3 +250,17 @@ CREATE TABLE IF NOT EXISTS entity_view (
     search_text varchar(255),
     additional_info varchar
 );
+
+CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN system_ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    ttl_ts bigint;
+BEGIN
+    IF system_ttl > 0 THEN
+        ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - system_ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted', ttl_ts) into deleted;
+    END IF;
+END
+$$;

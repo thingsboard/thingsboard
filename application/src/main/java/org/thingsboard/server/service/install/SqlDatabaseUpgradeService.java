@@ -221,6 +221,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             }
                         }
                     }
+                    try {
+                        long ts = System.currentTimeMillis();
+                        conn.createStatement().execute("ALTER TABLE event ADD COLUMN ts bigint DEFAULT " + ts + ";"); //tiNOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {
+                    }
                     log.info("Schema updated.");
                 }
                 break;
