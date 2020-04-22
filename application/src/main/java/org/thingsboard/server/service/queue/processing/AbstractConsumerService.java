@@ -23,11 +23,13 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.queue.TbPackCallback;
+import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
@@ -92,11 +94,12 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     }
                     ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = msgs.stream().collect(
                             Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
-                    ConcurrentMap<UUID, TbProtoQueueMsg<N>> failedMap = new ConcurrentHashMap<>();
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
+                    TbPackProcessingContext<TbProtoQueueMsg<N>> ctx = new TbPackProcessingContext<>(
+                            processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
                     pendingMap.forEach((id, msg) -> {
                         log.trace("[{}] Creating notification callback for message: {}", id, msg.getValue());
-                        TbCallback callback = new TbPackCallback<>(id, processingTimeoutLatch, pendingMap, failedMap);
+                        TbCallback callback = new TbPackCallback<>(id, ctx);
                         try {
                             handleNotification(id, msg, callback);
                         } catch (Throwable e) {
@@ -105,8 +108,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                         }
                     });
                     if (!processingTimeoutLatch.await(getNotificationPackProcessingTimeout(), TimeUnit.MILLISECONDS)) {
-                        pendingMap.forEach((id, msg) -> log.warn("[{}] Timeout to process notification: {}", id, msg.getValue()));
-                        failedMap.forEach((id, msg) -> log.warn("[{}] Failed to process notification: {}", id, msg.getValue()));
+                        ctx.getAckMap().forEach((id, msg) -> log.warn("[{}] Timeout to process notification: {}", id, msg.getValue()));
+                        ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process notification: {}", id, msg.getValue()));
                     }
                     nfConsumer.commit();
                 } catch (Exception e) {

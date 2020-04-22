@@ -19,44 +19,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
 
 @Slf4j
 public class TbPackCallback<T> implements TbCallback {
-    private final CountDownLatch processingTimeoutLatch;
-    private final ConcurrentMap<UUID, T> ackMap;
-    private final ConcurrentMap<UUID, T> failedMap;
+    private final TbPackProcessingContext<T> ctx;
     private final UUID id;
 
-    public TbPackCallback(UUID id,
-                          CountDownLatch processingTimeoutLatch,
-                          ConcurrentMap<UUID, T> ackMap,
-                          ConcurrentMap<UUID, T> failedMap) {
+    public TbPackCallback(UUID id, TbPackProcessingContext<T> ctx) {
         this.id = id;
-        this.processingTimeoutLatch = processingTimeoutLatch;
-        this.ackMap = ackMap;
-        this.failedMap = failedMap;
+        this.ctx = ctx;
     }
 
     @Override
     public void onSuccess() {
         log.trace("[{}] ON SUCCESS", id);
-        T msg = ackMap.remove(id);
-        if (msg != null && ackMap.isEmpty()) {
-            processingTimeoutLatch.countDown();
-        }
+        ctx.onSuccess(id);
     }
 
     @Override
     public void onFailure(Throwable t) {
         log.trace("[{}] ON FAILURE", id, t);
-        T msg = ackMap.remove(id);
-        if (msg != null) {
-            failedMap.put(id, msg);
-        }
-        if (ackMap.isEmpty()) {
-            processingTimeoutLatch.countDown();
-        }
+        ctx.onFailure(id, t);
     }
 }
