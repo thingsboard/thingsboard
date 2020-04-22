@@ -35,6 +35,7 @@ import { CustomActionDescriptor } from '@shared/models/widget.models';
 import * as ace from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { css_beautify, html_beautify } from 'js-beautify';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-custom-action-pretty-resources-tabs',
@@ -64,7 +65,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
 
   aceEditors: ace.Ace.Editor[] = [];
   editorsResizeCafs: {[editorId: string]: CancelAnimationFrame} = {};
-  aceResizeListeners: { element: any, resizeListener: any }[] = [];
+  aceResizeObservers: ResizeObserver[] = [];
   htmlEditor: ace.Ace.Editor;
   cssEditor: ace.Ace.Editor;
   setValuesPending = false;
@@ -84,9 +85,8 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   ngOnDestroy(): void {
-    this.aceResizeListeners.forEach((resizeListener) => {
-      // @ts-ignore
-      removeResizeListener(resizeListener.element, resizeListener.resizeListener);
+    this.aceResizeObservers.forEach((resize$) => {
+      resize$.disconnect();
     });
   }
 
@@ -188,11 +188,11 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
     aceEditor.session.setUseWrapMode(true);
     this.aceEditors.push(aceEditor);
 
-    const resizeListener = this.onAceEditorResize.bind(this, aceEditor);
-
-    // @ts-ignore
-    addResizeListener(editorElement, resizeListener);
-    this.aceResizeListeners.push({element: editorElement, resizeListener});
+    const resize$ = new ResizeObserver(() => {
+      this.onAceEditorResize(aceEditor);
+    });
+    resize$.observe(editorElement);
+    this.aceResizeObservers.push(resize$);
     return aceEditor;
   }
 
