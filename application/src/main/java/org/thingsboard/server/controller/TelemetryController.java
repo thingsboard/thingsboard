@@ -69,9 +69,9 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -99,6 +99,7 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 22.03.18.
  */
 @RestController
+@TbCoreComponent
 @RequestMapping(TbUrlConstants.TELEMETRY_URL_PREFIX)
 @Slf4j
 public class TelemetryController extends BaseController {
@@ -343,7 +344,7 @@ public class TelemetryController extends BaseController {
         return deleteAttributes(entityId, scope, keysStr);
     }
 
-    private DeferredResult<ResponseEntity> deleteAttributes(EntityId entityIdStr, String scope, String keysStr) throws ThingsboardException {
+    private DeferredResult<ResponseEntity> deleteAttributes(EntityId entityIdSrc, String scope, String keysStr) throws ThingsboardException {
         List<String> keys = toKeysList(keysStr);
         if (keys.isEmpty()) {
             return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
@@ -353,19 +354,18 @@ public class TelemetryController extends BaseController {
         if (DataConstants.SERVER_SCOPE.equals(scope) ||
                 DataConstants.SHARED_SCOPE.equals(scope) ||
                 DataConstants.CLIENT_SCOPE.equals(scope)) {
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdStr, (result, tenantId, entityId) -> {
+            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdSrc, (result, tenantId, entityId) -> {
                 ListenableFuture<List<Void>> future = attributesService.removeAll(user.getTenantId(), entityId, scope, keys);
                 Futures.addCallback(future, new FutureCallback<List<Void>>() {
                     @Override
                     public void onSuccess(@Nullable List<Void> tmp) {
                         logAttributesDeleted(user, entityId, scope, keys, null);
-                        if (entityId.getEntityType() == EntityType.DEVICE) {
+                        if (entityIdSrc.getEntityType().equals(EntityType.DEVICE)) {
                             DeviceId deviceId = new DeviceId(entityId.getId());
                             Set<AttributeKey> keysToNotify = new HashSet<>();
                             keys.forEach(key -> keysToNotify.add(new AttributeKey(scope, key)));
-                            DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onDelete(
-                                    user.getTenantId(), deviceId, keysToNotify);
-                            actorService.onMsg(new SendToClusterMsg(deviceId, notificationMsg));
+                            tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
+                                    user.getTenantId(), deviceId, keysToNotify), null);
                         }
                         result.setResult(new ResponseEntity<>(HttpStatus.OK));
                     }
@@ -397,12 +397,6 @@ public class TelemetryController extends BaseController {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         logAttributesUpdated(user, entityId, scope, attributes, null);
-                        if (entityId.getEntityType() == EntityType.DEVICE) {
-                            DeviceId deviceId = new DeviceId(entityId.getId());
-                            DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onUpdate(
-                                    user.getTenantId(), deviceId, scope, attributes);
-                            actorService.onMsg(new SendToClusterMsg(deviceId, notificationMsg));
-                        }
                         result.setResult(new ResponseEntity(HttpStatus.OK));
                     }
 

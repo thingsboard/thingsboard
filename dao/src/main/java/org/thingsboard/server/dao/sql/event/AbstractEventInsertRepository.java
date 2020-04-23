@@ -69,13 +69,14 @@ public abstract class AbstractEventInsertRepository implements EventInsertReposi
 
     protected Query getQuery(EventEntity entity, String query) {
         return entityManager.createNativeQuery(query, EventEntity.class)
-                .setParameter("id", UUIDConverter.fromTimeUUID(entity.getId()))
+                .setParameter("id", UUIDConverter.fromTimeUUID(entity.getUuid()))
                 .setParameter("body", entity.getBody().toString())
                 .setParameter("entity_id", entity.getEntityId())
                 .setParameter("entity_type", entity.getEntityType().name())
                 .setParameter("event_type", entity.getEventType())
                 .setParameter("event_uid", entity.getEventUid())
-                .setParameter("tenant_id", entity.getTenantId());
+                .setParameter("tenant_id", entity.getTenantId())
+                .setParameter("ts", entity.getTs());
     }
 
     private EventEntity processSaveOrUpdate(EventEntity entity, String query) {

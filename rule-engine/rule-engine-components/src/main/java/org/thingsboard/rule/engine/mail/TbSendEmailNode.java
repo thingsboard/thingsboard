@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.util.Properties;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -79,7 +78,7 @@ public class TbSendEmailNode implements TbNode {
                         sendEmail(ctx, email);
                         return null;
                     }),
-                    ok -> ctx.tellNext(msg, SUCCESS),
+                    ok -> ctx.tellSuccess(msg),
                     fail -> ctx.tellFailure(msg, fail));
         } catch (Exception ex) {
             ctx.tellFailure(msg, ex);

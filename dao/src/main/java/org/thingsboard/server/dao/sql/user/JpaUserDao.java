@@ -30,7 +30,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -84,6 +83,5 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.CUSTOMER_USER,
                                 DaoUtil.toPageable(pageLink)));
-
     }
 }

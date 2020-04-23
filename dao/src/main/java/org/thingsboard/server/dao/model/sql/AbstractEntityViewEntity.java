@@ -94,7 +94,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
 
     public AbstractEntityViewEntity(EntityView entityView) {
         if (entityView.getId() != null) {
-            this.setId(entityView.getId().getId());
+            this.setUuid(entityView.getId().getId());
         }
         if (entityView.getEntityId() != null) {
             this.entityId = toString(entityView.getEntityId().getId());
@@ -145,8 +145,8 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     }
 
     protected EntityView toEntityView() {
-        EntityView entityView = new EntityView(new EntityViewId(getId()));
-        entityView.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        EntityView entityView = new EntityView(new EntityViewId(getUuid()));
+        entityView.setCreatedTime(UUIDs.unixTimestamp(getUuid()));
 
         if (entityId != null) {
             entityView.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));
@@ -169,4 +169,5 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         entityView.setAdditionalInfo(additionalInfo);
         return entityView;
     }
+
 }

@@ -40,11 +40,11 @@ public class HsqlEventInsertRepository extends AbstractEventInsertRepository {
     @Override
     protected EventEntity doProcessSaveOrUpdate(EventEntity entity, String query) {
         getQuery(entity, query).executeUpdate();
-        return entityManager.find(EventEntity.class, UUIDConverter.fromTimeUUID(entity.getId()));
+        return entityManager.find(EventEntity.class, UUIDConverter.fromTimeUUID(entity.getUuid()));
     }
 
     private static String getInsertString(String conflictStatement) {
-        return "MERGE INTO event USING (VALUES :id, :body, :entity_id, :entity_type, :event_type, :event_uid, :tenant_id) I (id, body, entity_id, entity_type, event_type, event_uid, tenant_id) ON " + conflictStatement + " WHEN MATCHED THEN UPDATE SET event.id = I.id, event.body = I.body, event.entity_id = I.entity_id, event.entity_type = I.entity_type, event.event_type = I.event_type, event.event_uid = I.event_uid, event.tenant_id = I.tenant_id" +
-                " WHEN NOT MATCHED THEN INSERT (id, body, entity_id, entity_type, event_type, event_uid, tenant_id) VALUES (I.id, I.body, I.entity_id, I.entity_type, I.event_type, I.event_uid, I.tenant_id)";
+        return "MERGE INTO event USING (VALUES :id, :body, :entity_id, :entity_type, :event_type, :event_uid, :tenant_id, :ts) I (id, body, entity_id, entity_type, event_type, event_uid, tenant_id, ts) ON " + conflictStatement + " WHEN MATCHED THEN UPDATE SET event.id = I.id, event.body = I.body, event.entity_id = I.entity_id, event.entity_type = I.entity_type, event.event_type = I.event_type, event.event_uid = I.event_uid, event.tenant_id = I.tenant_id, event.ts = I.ts" +
+                " WHEN NOT MATCHED THEN INSERT (id, body, entity_id, entity_type, event_type, event_uid, tenant_id, ts) VALUES (I.id, I.body, I.entity_id, I.entity_type, I.event_type, I.event_uid, I.tenant_id, I.ts)";
     }
 }
