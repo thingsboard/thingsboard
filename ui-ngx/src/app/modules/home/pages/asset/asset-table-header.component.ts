@@ -36,7 +36,7 @@ export class AssetTableHeaderComponent extends EntityTableHeaderComponent<AssetI
 
   assetTypeChanged(assetType: string) {
     this.entitiesTableConfig.componentsData.assetType = assetType;
-    this.entitiesTableConfig.table.updateData();
+    this.entitiesTableConfig.table.resetSortAndFilter(true);
   }
 
 }
