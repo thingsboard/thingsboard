@@ -389,7 +389,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       padding: this.padding,
       margin: this.margin};
     if (this.widget.config.widgetStyle) {
-      this.style = {...this.widget.config.widgetStyle, ...this.style};
+      this.style = {...this.style, ...this.widget.config.widgetStyle};
     }
 
     this.showWidgetTitlePanel = this.widgetContext.hideTitlePanel ? false :
