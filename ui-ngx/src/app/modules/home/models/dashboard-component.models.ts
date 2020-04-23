@@ -474,7 +474,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       if (mobileHeight) {
         res = mobileHeight;
       } else {
-        res = this.widget.sizeY * 24 / this.dashboard.gridsterOpts.minCols;
+        const sizeY = this.widgetLayout ? this.widgetLayout.sizeY : this.widget.sizeY;
+        res = sizeY * 24 / this.dashboard.gridsterOpts.minCols;
       }
     } else {
       if (this.widgetLayout) {
