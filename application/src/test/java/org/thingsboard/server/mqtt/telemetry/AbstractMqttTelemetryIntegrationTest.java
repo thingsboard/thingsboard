@@ -97,7 +97,8 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         assertEquals("4", values.get("key4").get(0).get("value"));
     }
 
-    @Test
+
+//    @Test - Unstable
     public void testMqttQoSLevel() throws Exception {
         String clientId = MqttAsyncClient.generateClientId();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
