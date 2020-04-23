@@ -181,31 +181,37 @@ cassandra:
 
 # SQL configuration parameters
 sql:
-  # Specify batch size for persisting attribute updates
-  attributes:
-    batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
-    batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
-    stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
-  ts:
-    batch_size: "${SQL_TS_BATCH_SIZE:10000}"
-    batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
-    stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
-  ts_latest:
-    batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
-    batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
-    stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
-  # Specify whether to remove null characters from strValue of attributes and timeseries before insert
-  remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
-  postgres:
-    # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
-    ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
-  timescale:
-    # Specify Interval size for new data chunks storage.
-    chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
-  ttl:
-    enabled: "${SQL_TTL_ENABLED:true}"
-    execution_interval_ms: "${SQL_TTL_EXECUTION_INTERVAL:86400000}" # Number of miliseconds
-    ts_key_value_ttl: "${SQL_TTL_TS_KEY_VALUE_TTL:0}" # Number of seconds
+    # Specify batch size for persisting attribute updates
+    attributes:
+      batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
+    ts:
+      batch_size: "${SQL_TS_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
+    ts_latest:
+      batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
+    # Specify whether to remove null characters from strValue of attributes and timeseries before insert
+    remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
+    postgres:
+      # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
+      ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
+    timescale:
+      # Specify Interval size for new data chunks storage.
+      chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
+    ttl:
+      ts:
+        enabled: "${SQL_TTL_TS_ENABLED:true}"
+        execution_interval_ms: "${SQL_TTL_TS_EXECUTION_INTERVAL:86400000}" # Number of miliseconds. The current value corresponds to one day
+        ts_key_value_ttl: "${SQL_TTL_TS_TS_KEY_VALUE_TTL:0}" # Number of seconds
+      events:
+        enabled: "${SQL_TTL_EVENTS_ENABLED:true}"
+        execution_interval_ms: "${SQL_TTL_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of miliseconds. The current value corresponds to one day
+        events_ttl: "${SQL_TTL_EVENTS_EVENTS_TTL:0}" # Number of seconds
+        debug_events_ttl: "${SQL_TTL_EVENTS_DEBUG_EVENTS_TTL:604800}" # Number of seconds. The current value corresponds to one week
 
 # Actor system parameters
 actors:

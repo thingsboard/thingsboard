@@ -37,6 +37,9 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
 
+import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.EPOCH_DIFF;
 import static org.thingsboard.server.dao.model.ModelConstants.EVENT_BODY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EVENT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EVENT_ENTITY_ID_PROPERTY;
@@ -44,6 +47,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.EVENT_ENTITY_TYPE_
 import static org.thingsboard.server.dao.model.ModelConstants.EVENT_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EVENT_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EVENT_UID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -73,9 +77,15 @@ public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Eve
     @Column(name = EVENT_BODY_PROPERTY)
     private JsonNode body;
 
+    @Column(name = TS_COLUMN)
+    private long ts;
+
     public EventEntity(Event event) {
         if (event.getId() != null) {
             this.setUuid(event.getId().getId());
+            this.ts = getTs(event.getId().getId());
+        } else {
+            this.ts = System.currentTimeMillis();
         }
         if (event.getTenantId() != null) {
             this.tenantId = toString(event.getTenantId().getId());
@@ -100,5 +110,9 @@ public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Eve
         event.setType(eventType);
         event.setUid(eventUid);
         return event;
+    }
+
+    private long getTs(UUID uuid) {
+        return (uuid.timestamp() - EPOCH_DIFF) / 10000;
     }
 }
