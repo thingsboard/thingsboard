@@ -53,6 +53,7 @@ import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { SafeStyle } from '@angular/platform-browser';
 import { distinct } from 'rxjs/operators';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-dashboard',
@@ -166,7 +167,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   private optionsChangeNotificationsPaused = false;
 
-  private gridsterResizeListener = null;
+  private gridsterResize$: ResizeObserver;
 
   constructor(protected store: Store<AppState>,
               private timeService: TimeService,
@@ -225,9 +226,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.gridsterResizeListener) {
-      // @ts-ignore
-      removeResizeListener(this.gridster.el, this.gridsterResizeListener);
+    if (this.gridsterResize$) {
+      this.gridsterResize$.disconnect();
     }
     if (this.breakpointObserverSubscription) {
       this.breakpointObserverSubscription.unsubscribe();
@@ -290,9 +290,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   ngAfterViewInit(): void {
-    this.gridsterResizeListener = this.onGridsterParentResize.bind(this);
-    // @ts-ignore
-    addResizeListener(this.gridster.el, this.gridsterResizeListener);
+    this.gridsterResize$ = new ResizeObserver(() => {
+      this.onGridsterParentResize()
+    });
+    this.gridsterResize$.observe(this.gridster.el);
   }
 
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number, persist?: boolean): void {
@@ -491,8 +492,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     const parentHeight = this.gridster.el.offsetHeight;
     if (this.isMobileSize && this.mobileAutofillHeight && parentHeight) {
       this.updateMobileOpts(parentHeight);
-      this.notifyGridsterOptionsChanged();
     }
+    this.notifyGridsterOptionsChanged();
   }
 
   private updateLayoutOpts() {

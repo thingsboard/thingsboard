@@ -35,6 +35,7 @@ import { CustomActionDescriptor } from '@shared/models/widget.models';
 import * as ace from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { css_beautify, html_beautify } from 'js-beautify';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-custom-action-pretty-resources-tabs',
@@ -64,7 +65,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
 
   aceEditors: ace.Ace.Editor[] = [];
   editorsResizeCafs: {[editorId: string]: CancelAnimationFrame} = {};
-  aceResizeListeners: { element: any, resizeListener: any }[] = [];
+  aceResize$: ResizeObserver;
   htmlEditor: ace.Ace.Editor;
   cssEditor: ace.Ace.Editor;
   setValuesPending = false;
@@ -84,10 +85,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   ngOnDestroy(): void {
-    this.aceResizeListeners.forEach((resizeListener) => {
-      // @ts-ignore
-      removeResizeListener(resizeListener.element, resizeListener.resizeListener);
-    });
+    this.aceResize$.disconnect();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -153,6 +151,12 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   private initAceEditors() {
+    this.aceResize$ = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        const editor = this.aceEditors.find(aceEditor => aceEditor.container === entry.target);
+        this.onAceEditorResize(editor);
+      })
+    });
     this.htmlEditor = this.createAceEditor(this.htmlInputElmRef, 'html');
     this.htmlEditor.on('input', () => {
       const editorValue = this.htmlEditor.getValue();
@@ -187,12 +191,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
     const aceEditor = ace.edit(editorElement, editorOptions);
     aceEditor.session.setUseWrapMode(true);
     this.aceEditors.push(aceEditor);
-
-    const resizeListener = this.onAceEditorResize.bind(this, aceEditor);
-
-    // @ts-ignore
-    addResizeListener(editorElement, resizeListener);
-    this.aceResizeListeners.push({element: editorElement, resizeListener});
+    this.aceResize$.observe(editorElement);
     return aceEditor;
   }
 

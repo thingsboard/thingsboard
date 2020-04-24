@@ -20,10 +20,10 @@ import {
   forwardRef,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
-  ViewChild,
   SimpleChanges,
-  OnDestroy
+  ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import * as ace from 'ace-builds';
@@ -34,6 +34,7 @@ import { AppState } from '@core/core.state';
 import { ContentType, contentTypesMap } from '@shared/models/constants';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { guid } from '@core/utils';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-json-content',
@@ -59,7 +60,7 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
 
   private jsonEditor: ace.Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
-  private editorResizeListener: any;
+  private editorResize$: ResizeObserver;
 
   toastTargetId = `jsonContentEditor-${guid()}`;
 
@@ -97,8 +98,6 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
 
   contentValid: boolean;
 
-  validationError: string;
-
   errorShowed = false;
 
   private propagateChange = null;
@@ -135,16 +134,15 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
       this.cleanupJsonErrors();
       this.updateView();
     });
-    this.editorResizeListener = this.onAceEditorResize.bind(this);
-    // @ts-ignore
-    addResizeListener(editorElement, this.editorResizeListener);
+    this.editorResize$ = new ResizeObserver(() => {
+      this.onAceEditorResize();
+    });
+    this.editorResize$.observe(editorElement);
   }
 
   ngOnDestroy(): void {
-    if (this.editorResizeListener) {
-      const editorElement = this.jsonEditorElmRef.nativeElement;
-      // @ts-ignore
-      removeResizeListener(editorElement, this.editorResizeListener);
+    if (this.editorResize$) {
+      this.editorResize$.disconnect();
     }
   }
 

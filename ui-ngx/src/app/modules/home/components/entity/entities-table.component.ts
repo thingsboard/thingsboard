@@ -434,9 +434,9 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     this.updateData();
   }
 
-  resetSortAndFilter(update: boolean = true) {
+  resetSortAndFilter(update: boolean = true, preserveTimewindow: boolean = false) {
     this.pageLink.textSearch = null;
-    if (this.entitiesTableConfig.useTimePageLink) {
+    if (this.entitiesTableConfig.useTimePageLink && !preserveTimewindow) {
       this.timewindow = historyInterval(DAY);
     }
     if (this.displayPagination) {
