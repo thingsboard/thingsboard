@@ -48,7 +48,7 @@ services:
       - tb-js-executor.env
     depends_on:
       - kafka
-  tb1:
+  tb-core1:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
@@ -59,7 +59,8 @@ services:
         max-size: "200m"
         max-file: "30"
     environment:
-      TB_SERVICE_ID: tb1
+      TB_SERVICE_ID: tb-core1
+      TB_SERVICE_TYPE: tb-core
     env_file:
       - tb-node.env
     volumes:
@@ -69,7 +70,7 @@ services:
       - kafka
       - redis
       - tb-js-executor
-  tb2:
+  tb-core2:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
@@ -80,7 +81,52 @@ services:
         max-size: "200m"
         max-file: "30"
     environment:
-      TB_SERVICE_ID: tb2
+      TB_SERVICE_ID: tb-core2
+      TB_SERVICE_TYPE: tb-core
+    env_file:
+      - tb-node.env
+    volumes:
+      - ./tb-node/conf:/config
+      - ./tb-node/log:/var/log/thingsboard
+    depends_on:
+      - kafka
+      - redis
+      - tb-js-executor
+  tb-rule-engine1:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "30"
+    environment:
+      TB_SERVICE_ID: tb-rule-engine1
+      TB_SERVICE_TYPE: tb-rule-engine
+    env_file:
+      - tb-node.env
+    volumes:
+      - ./tb-node/conf:/config
+      - ./tb-node/log:/var/log/thingsboard
+    depends_on:
+      - kafka
+      - redis
+      - tb-js-executor
+  tb-rule-engine2:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "30"
+    environment:
+      TB_SERVICE_ID: tb-rule-engine2
+      TB_SERVICE_TYPE: tb-rule-engine
     env_file:
       - tb-node.env
     volumes:
@@ -195,8 +241,8 @@ services:
       MQTT_PORT: 1883
       FORCE_HTTPS_REDIRECT: "false"
     links:
-        - tb1
-        - tb2
+        - tb-core1
+        - tb-core2
         - tb-web-ui1
         - tb-web-ui2
         - tb-mqtt-transport1

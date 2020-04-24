@@ -92,7 +92,7 @@ public class ThingsBoardDbInstaller extends ExternalResource {
             dockerCompose.withCommand("up -d redis postgres");
             dockerCompose.invokeCompose();
 
-            dockerCompose.withCommand("run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=true tb1");
+            dockerCompose.withCommand("run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=true tb-core1");
             dockerCompose.invokeCompose();
 
         } finally {

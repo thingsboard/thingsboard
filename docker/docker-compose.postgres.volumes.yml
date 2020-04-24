@@ -20,10 +20,16 @@ services:
   postgres:
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
-  tb1:
+  tb-core1:
     volumes:
       - tb-log-volume:/var/log/thingsboard
-  tb2:
+  tb-core2:
+    volumes:
+      - tb-log-volume:/var/log/thingsboard
+  tb-rule-engine1:
+    volumes:
+      - tb-log-volume:/var/log/thingsboard
+  tb-rule-engine2:
     volumes:
       - tb-log-volume:/var/log/thingsboard
   tb-coap-transport:
