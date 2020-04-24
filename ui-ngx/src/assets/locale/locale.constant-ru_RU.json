@@ -1404,6 +1404,11 @@
         "help": "Помощь",
         "reset-debug-mode": "Сбросить режим отладки во всех правилах"
     },
+    "queue": {
+      "select_name": "Выберите имя для Queue",
+      "name": "Имя для Queue",
+      "name_required": "Поле 'Имя для Queue' обязательно к заполнению!"
+    },
     "tenant": {
         "tenant": "Владелец",
         "tenants": "Владельцы",

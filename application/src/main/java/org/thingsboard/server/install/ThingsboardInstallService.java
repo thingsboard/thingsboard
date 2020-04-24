@@ -154,6 +154,11 @@ public class ThingsboardInstallService {
 
                             systemDataLoaderService.updateSystemWidgets();
                             break;
+                        case "2.5.0":
+                            log.info("Upgrading ThingsBoard from version 2.5 to 3.0 ...");
+                            log.info("Updating system data...");
+                            systemDataLoaderService.updateSystemWidgets();
+                            break;
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
 
