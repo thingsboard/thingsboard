@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 :host {
+  width: min-content; //for Safari
+
   mat-select.default-state-controller {
     margin: 0;
   }
