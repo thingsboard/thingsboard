@@ -110,7 +110,7 @@ export const hereMapSettingsSchema =
         title: 'HERE Map Configuration',
         type: 'object',
         properties: {
-            mapProvider: {
+            mapProviderHere: {
                 title: 'Map layer',
                 type: 'string',
                 default: 'HERE.normalDay'
@@ -120,11 +120,13 @@ export const hereMapSettingsSchema =
                 properties: {
                     app_id: {
                         title: 'HERE app id',
-                        type: 'string'
+                        type: 'string',
+                        default: 'AhM6TzD9ThyK78CT3ptx'
                     },
                     app_code: {
                         title: 'HERE app code',
-                        type: 'string'
+                        type: 'string',
+                        default: 'p6NPiITB3Vv0GMUFnkLOOg'
                     }
                 },
                 required: ['app_id', 'app_code']
@@ -134,7 +136,7 @@ export const hereMapSettingsSchema =
     },
     form: [
         {
-            key: 'mapProvider',
+            key: 'mapProviderHere',
             type: 'rc-select',
             multiple: false,
             items: [
@@ -339,43 +341,6 @@ export const commonMapSettingsSchema =
                 type: 'boolean',
                 default: false
             },
-            polygonKeyName: {
-                title: 'Polygon key name',
-                type: 'string',
-                default: 'coordinates'
-            },
-            polygonColor: {
-                title: 'Polygon color',
-                type: 'string'
-            },
-            polygonOpacity: {
-                title: 'Polygon opacity',
-                type: 'number',
-                default: 0.5
-            },
-            polygonStrokeColor: {
-                title: 'Stroke color',
-                type: 'string'
-            },
-            polygonStrokeOpacity: {
-                title: 'Stroke opacity',
-                type: 'number',
-                default: 1
-            },
-            polygonStrokeWeight: {
-                title: 'Stroke weight',
-                type: 'number',
-                default: 1
-            },
-            usePolygonColorFunction: {
-                title: 'Use polygon color function',
-                type: 'boolean',
-                default: false
-            },
-            polygonColorFunction: {
-                title: 'Polygon Color function: f(data, dsData, dsIndex)',
-                type: 'string'
-            },
             markerImage: {
                 title: 'Custom marker image',
                 type: 'string'
@@ -455,20 +420,6 @@ export const commonMapSettingsSchema =
         {
             key: 'colorFunction',
             type: 'javascript'
-        }, 'showPolygon', 'polygonKeyName',
-        {
-            key: 'polygonColor',
-            type: 'color'
-        },
-        'polygonOpacity',
-        {
-            key: 'polygonStrokeColor',
-            type: 'color'
-        },
-        'polygonStrokeOpacity', 'polygonStrokeWeight', 'usePolygonColorFunction',
-        {
-            key: 'polygonColorFunction',
-            type: 'javascript'
         },
         {
             key: 'markerImage',
@@ -488,7 +439,73 @@ export const commonMapSettingsSchema =
                     type: 'image'
                 }
             ]
-        }
+        },
+        'showPolygon',
+    ]
+};
+
+export const mapPolygonSchema =
+{
+    schema: {
+        title: 'Map Polygon Configuration',
+        type: 'object',
+        properties: {
+            polygonKeyName: {
+                title: 'Polygon key name',
+                type: 'string',
+                default: 'coordinates'
+            },
+            polygonColor: {
+                title: 'Polygon color',
+                type: 'string'
+            },
+            polygonOpacity: {
+                title: 'Polygon opacity',
+                type: 'number',
+                default: 0.5
+            },
+            polygonStrokeColor: {
+                title: 'Stroke color',
+                type: 'string'
+            },
+            polygonStrokeOpacity: {
+                title: 'Stroke opacity',
+                type: 'number',
+                default: 1
+            },
+            polygonStrokeWeight: {
+                title: 'Stroke weight',
+                type: 'number',
+                default: 1
+            },
+            usePolygonColorFunction: {
+                title: 'Use polygon color function',
+                type: 'boolean',
+                default: false
+            },
+            polygonColorFunction: {
+                title: 'Polygon Color function: f(data, dsData, dsIndex)',
+                type: 'string'
+            },
+        },
+        required: []
+    },
+    form: [
+        'polygonKeyName',
+        {
+            key: 'polygonColor',
+            type: 'color'
+        },
+        'polygonOpacity',
+        {
+            key: 'polygonStrokeColor',
+            type: 'color'
+        },
+        'polygonStrokeOpacity', 'polygonStrokeWeight', 'usePolygonColorFunction',
+        {
+            key: 'polygonColorFunction',
+            type: 'javascript'
+        },
     ]
 };
 
@@ -527,23 +544,12 @@ export const markerClusteringSettingsSchema =
                 title: 'Use map markers clustering',
                 type: 'boolean',
                 default: false
-            },
-            zoomOnClick: {
-                title: 'Zoom when clicking on a cluster',
-                type: 'boolean',
-                default: true
-            },
-            maxZoom: {
-                title: 'The maximum zoom level when a marker can be part of a cluster (0 - 18)',
-                type: 'number'
             }
         },
         required: []
     },
     form: [
         'useClusterMarkers',
-        'zoomOnClick',
-        'maxZoom'
     ]
 };
 
@@ -571,12 +577,23 @@ export const markerClusteringSettingsSchemaGoogle =
     ]
 };
 
+
+
 export const markerClusteringSettingsSchemaLeaflet =
 {
     schema: {
         title: 'Markers Clustering Configuration Leaflet',
         type: 'object',
         properties: {
+            zoomOnClick: {
+                title: 'Zoom when clicking on a cluster',
+                type: 'boolean',
+                default: true
+            },
+            maxZoom: {
+                title: 'The maximum zoom level when a marker can be part of a cluster (0 - 18)',
+                type: 'number'
+            },
             showCoverageOnHover: {
                 title: 'Show the bounds of markers when mouse over a cluster',
                 type: 'boolean',
@@ -606,6 +623,8 @@ export const markerClusteringSettingsSchemaLeaflet =
         required: []
     },
     form: [
+        'zoomOnClick',
+        'maxZoom',
         'showCoverageOnHover',
         'animate',
         'maxClusterRadius',

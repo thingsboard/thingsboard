@@ -108,6 +108,7 @@
     "@types/jstree": "^3.3.39",
     "@types/jszip": "^3.1.7",
     "@types/leaflet": "^1.5.12",
+    "@types/leaflet.markercluster": "^1.4.2",
     "@types/leaflet-polylinedecorator": "^1.6.0",
     "@types/lodash": "^4.14.150",
     "@types/raphael": "^2.3.0",

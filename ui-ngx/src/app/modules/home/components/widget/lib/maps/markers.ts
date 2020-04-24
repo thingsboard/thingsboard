@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import L from 'leaflet';
-import { MarkerSettings, FormattedData } from './map-models';
-import { aspectCache, safeExecute, parseTemplate } from '@app/core/utils';
+import { aspectCache, parseWithTranslation, safeExecute } from '@app/core/utils';
+import L, { LeafletMouseEvent } from 'leaflet';
+import { FormattedData, MarkerSettings } from './map-models';
 import { createTooltip } from './maps-utils';
+import tinycolor from 'tinycolor2';
 
 export class Marker {
-
     leafletMarker: L.Marker;
     tooltipOffset: [number, number];
     tooltip: L.Popup;
@@ -28,8 +28,8 @@ export class Marker {
     data: FormattedData;
     dataSources: FormattedData[];
 
-    constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings,
-        data?, dataSources?, onClickListener?, onDragendListener?) {
+    constructor(location: L.LatLngExpression, public settings: MarkerSettings,
+        data?: FormattedData, dataSources?, onDragendListener?) {
         this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
             draggable: settings.draggableMarker
@@ -39,15 +39,21 @@ export class Marker {
             this.leafletMarker.setIcon(iconInfo.icon);
             this.tooltipOffset = [0, -iconInfo.size[1] + 10];
             this.updateMarkerLabel(settings);
-            this.leafletMarker.addTo(map);
         });
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletMarker, settings, parseTemplate(this.settings.tooltipPattern, data));
+            this.tooltip = createTooltip(this.leafletMarker, settings);
+            this.updateMarkerTooltip(data);
         }
 
-        if (onClickListener) {
-            this.leafletMarker.on('click', onClickListener);
+        if (this.settings.markerClick) {
+            this.leafletMarker.on('click', (event: LeafletMouseEvent) => {
+                for (const action in this.settings.markerClick) {
+                    if (typeof (this.settings.markerClick[action]) === 'function') {
+                        this.settings.markerClick[action](event);
+                    }
+                }
+            });
         }
 
         if (onDragendListener) {
@@ -61,7 +67,9 @@ export class Marker {
     }
 
     updateMarkerTooltip(data: FormattedData) {
-        this.tooltip.setContent(parseTemplate(this.settings.tooltipPattern, data));
+        const pattern = this.settings.useTooltipFunction ?
+            safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
+        this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
     }
 
     updateMarkerPosition(position: L.LatLngExpression) {
@@ -70,13 +78,10 @@ export class Marker {
 
     updateMarkerLabel(settings: MarkerSettings) {
         this.leafletMarker.unbindTooltip();
-
         if (settings.showLabel) {
-            if (settings.useLabelFunction) {
-                settings.labelText = parseTemplate(
-                    safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex]), this.data)
-            }
-            else settings.labelText = parseTemplate(settings.label, this.data);
+            const pattern = settings.useLabelFunction ?
+                safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.label;
+            settings.labelText = parseWithTranslation.parseTemplate(pattern, this.data, true);
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
                 { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.tooltipOffset });
         }
@@ -97,7 +102,6 @@ export class Marker {
     }
 
     createMarkerIcon(onMarkerIconReady) {
-
         if (this.settings.icon) {
             onMarkerIconReady({
                 size: [30, 30],
@@ -105,11 +109,11 @@ export class Marker {
             });
             return;
         }
-
         const currentImage = this.settings.useMarkerImageFunction ?
             safeExecute(this.settings.markerImageFunction,
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
-
+        const currentColor = tinycolor(this.settings.useColorFunction ? safeExecute(this.settings.colorFunction,
+            [this.data, this.dataSources, this.data.dsIndex]) : this.settings.color).toHex();
 
         if (currentImage && currentImage.url) {
             aspectCache(currentImage.url).subscribe(
@@ -136,19 +140,19 @@ export class Marker {
                         };
                         onMarkerIconReady(iconInfo);
                     } else {
-                        this.createDefaultMarkerIcon(this.settings.color, onMarkerIconReady);
+                        this.createDefaultMarkerIcon(currentColor, onMarkerIconReady);
                     }
                 }
             );
         } else {
-            this.createDefaultMarkerIcon(this.settings.color, onMarkerIconReady);
+            this.createDefaultMarkerIcon(currentColor, onMarkerIconReady);
         }
     }
 
     createDefaultMarkerIcon(color, onMarkerIconReady) {
         const pinColor = color.substr(1);
         const icon = L.icon({
-            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
+            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + color,
             iconSize: [21, 34],
             iconAnchor: [10, 34],
             popupAnchor: [0, -34],
