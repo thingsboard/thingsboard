@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -182,4 +183,54 @@ public class InstallScripts {
     }
 
 
+    public void loadDemoRuleChains(TenantId tenantId) throws Exception {
+        Path ruleChainsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, RULE_CHAINS_DIR);
+        try {
+            JsonNode ruleChainJson = objectMapper.readTree(ruleChainsDir.resolve("thermostat_alarms.json").toFile());
+            RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
+            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
+            ruleChain.setTenantId(tenantId);
+            ruleChain = ruleChainService.saveRuleChain(ruleChain);
+            ruleChainMetaData.setRuleChainId(ruleChain.getId());
+            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
+
+            JsonNode rootChainJson = objectMapper.readTree(ruleChainsDir.resolve("root_rule_chain.json").toFile());
+            RuleChain rootChain = objectMapper.treeToValue(rootChainJson.get("ruleChain"), RuleChain.class);
+            RuleChainMetaData rootChainMetaData = objectMapper.treeToValue(rootChainJson.get("metadata"), RuleChainMetaData.class);
+
+            RuleChainId thermostatsRuleChainId = ruleChain.getId();
+            rootChainMetaData.getRuleChainConnections().forEach(connection -> connection.setTargetRuleChainId(thermostatsRuleChainId));
+            rootChain.setTenantId(tenantId);
+            rootChain = ruleChainService.saveRuleChain(rootChain);
+            rootChainMetaData.setRuleChainId(rootChain.getId());
+            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), rootChainMetaData);
+        } catch (Exception e) {
+            log.error("Unable to load dashboard from json", e);
+            throw new RuntimeException("Unable to load dashboard from json", e);
+        }
+
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsDir, path -> path.toString().endsWith(JSON_EXT))) {
+            dirStream.forEach(
+                    path -> {
+                        try {
+                            JsonNode ruleChainJson = objectMapper.readTree(path.toFile());
+                            RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
+                            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
+
+                            ruleChain.setTenantId(tenantId);
+                            if (ruleChain.getName().equals("Root Rule Chain")) {
+                                ruleChain.setRoot(true);
+                            }
+                            ruleChain = ruleChainService.saveRuleChain(ruleChain);
+
+                            ruleChainMetaData.setRuleChainId(ruleChain.getId());
+                            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
+                        } catch (Exception e) {
+                            log.error("Unable to load dashboard from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load dashboard from json", e);
+                        }
+                    }
+            );
+        }
+    }
 }
