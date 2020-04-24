@@ -72,13 +72,14 @@ public class TbCheckAlarmStatusNode implements TbNode {
                                 break;
                             }
                         }
+
                         if (isPresent) {
                             ctx.tellNext(msg, "True");
                         } else {
                             ctx.tellNext(msg, "False");
                         }
                     } else {
-                        ctx.tellFailure(msg, new TbNodeException("No such alarm found."));
+                        ctx.tellFailure(msg, new TbNodeException("No such Alarm found."));
                     }
                 }
 

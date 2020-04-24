@@ -35,7 +35,6 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     private volatile DeviceId deviceId;
     @Getter
     private volatile DeviceInfoProto deviceInfo;
-    private volatile boolean connected;
 
     public DeviceId getDeviceId() {
         return deviceId;
@@ -43,15 +42,10 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
 
     public void setDeviceInfo(DeviceInfoProto deviceInfo) {
         this.deviceInfo = deviceInfo;
-        this.connected = true;
         this.deviceId = new DeviceId(new UUID(deviceInfo.getDeviceIdMSB(), deviceInfo.getDeviceIdLSB()));
     }
 
     public boolean isConnected() {
-        return connected;
-    }
-
-    public void setDisconnected() {
-        this.connected = false;
+        return deviceInfo != null;
     }
 }

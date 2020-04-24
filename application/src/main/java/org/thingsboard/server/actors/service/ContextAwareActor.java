@@ -16,14 +16,14 @@
 package org.thingsboard.server.actors.service;
 
 import akka.actor.Terminated;
-import akka.actor.UntypedAbstractActor;
+import akka.actor.UntypedActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 
-public abstract class ContextAwareActor extends UntypedAbstractActor {
+public abstract class ContextAwareActor extends UntypedActor {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 

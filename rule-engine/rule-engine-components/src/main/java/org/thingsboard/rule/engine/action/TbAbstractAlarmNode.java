@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import javax.script.ScriptException;
+
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 
@@ -61,18 +63,16 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                     if (alarmResult.alarm == null) {
                         ctx.tellNext(msg, "False");
                     } else if (alarmResult.isCreated) {
-                        ctx.enqueue(ctx.alarmCreatedMsg(alarmResult.alarm, ctx.getSelfId()),
-                                () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Created"),
-                                throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
+                        ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Created");
+                        ctx.sendTbMsgToRuleEngine(ctx.alarmCreatedMsg(alarmResult.alarm, ctx.getSelfId()));
                     } else if (alarmResult.isUpdated) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated");
                     } else if (alarmResult.isCleared) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
-                    } else {
-                        ctx.tellSuccess(msg);
                     }
                 },
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t)
+                , ctx.getDbCallbackExecutor());
     }
 
     protected abstract ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg);

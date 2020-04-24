@@ -56,7 +56,7 @@ public final class AdminSettingsEntity extends BaseSqlEntity<AdminSettings> impl
 
     public AdminSettingsEntity(AdminSettings adminSettings) {
         if (adminSettings.getId() != null) {
-            this.setUuid(adminSettings.getId().getId());
+            this.setId(adminSettings.getId().getId());
         }
         this.key = adminSettings.getKey();
         this.jsonValue = adminSettings.getJsonValue();

@@ -17,10 +17,6 @@ package org.thingsboard.server.dao.util;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-@Retention(RetentionPolicy.RUNTIME)
 @ConditionalOnExpression("('${database.ts.type}'=='sql' || '${database.ts.type}'=='timescale') " +
         "&& '${spring.jpa.database-platform}'=='org.hibernate.dialect.PostgreSQLDialect'")
 public @interface PsqlTsAnyDao {

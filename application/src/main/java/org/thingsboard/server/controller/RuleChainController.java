@@ -52,10 +52,8 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -69,7 +67,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@TbCoreComponent
 @RequestMapping("/api")
 public class RuleChainController extends BaseController {
 
@@ -133,7 +130,7 @@ public class RuleChainController extends BaseController {
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 
-            tbClusterService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
+            actorService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
                     created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(savedRuleChain.getId(), savedRuleChain,
@@ -164,7 +161,7 @@ public class RuleChainController extends BaseController {
 
                 previousRootRuleChain = ruleChainService.findRuleChainById(getTenantId(), previousRootRuleChain.getId());
 
-                tbClusterService.onEntityStateChange(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
+                actorService.onEntityStateChange(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
                         ComponentLifecycleEvent.UPDATED);
 
                 logEntityAction(previousRootRuleChain.getId(), previousRootRuleChain,
@@ -172,7 +169,7 @@ public class RuleChainController extends BaseController {
 
                 ruleChain = ruleChainService.findRuleChainById(getTenantId(), ruleChainId);
 
-                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(),
+                actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(),
                         ComponentLifecycleEvent.UPDATED);
 
                 logEntityAction(ruleChain.getId(), ruleChain,
@@ -206,7 +203,7 @@ public class RuleChainController extends BaseController {
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
 
-            tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
+            actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(ruleChain.getId(), ruleChain,
                     null,
@@ -258,9 +255,9 @@ public class RuleChainController extends BaseController {
             referencingRuleChainIds.remove(ruleChain.getId());
 
             referencingRuleChainIds.forEach(referencingRuleChainId ->
-                    tbClusterService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
+                    actorService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
 
-            tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
+            actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
 
             logEntityAction(ruleChainId, ruleChain,
                     null,
@@ -321,7 +318,7 @@ public class RuleChainController extends BaseController {
             ScriptEngine engine = null;
             try {
                 engine = new RuleNodeJsScriptEngine(jsInvokeService, getCurrentUser().getId(), script, argNames);
-                TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
+                TbMsg inMsg = new TbMsg(UUIDs.timeBased(), msgType, null, new TbMsgMetaData(metadata), data, null, null, 0L);
                 switch (scriptType) {
                     case "update":
                         output = msgToOutput(engine.executeUpdate(inMsg));

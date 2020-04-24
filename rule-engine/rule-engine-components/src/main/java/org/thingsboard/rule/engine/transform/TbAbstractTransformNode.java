@@ -55,7 +55,7 @@ public abstract class TbAbstractTransformNode implements TbNode {
 
     protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
         if (m != null) {
-            ctx.tellSuccess(m);
+            ctx.tellNext(m, SUCCESS);
         } else {
             ctx.tellNext(msg, FAILURE);
         }

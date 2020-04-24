@@ -74,9 +74,9 @@ public class TbRabbitMqNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
+    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         withCallback(publishMessageAsync(ctx, msg),
-                ctx::tellSuccess,
+                m -> ctx.tellNext(m, TbRelationTypes.SUCCESS),
                 t -> {
                     TbMsg next = processException(ctx, msg, t);
                     ctx.tellFailure(next, t);

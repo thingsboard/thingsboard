@@ -80,10 +80,13 @@ public class TbSqsNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
+    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         withCallback(publishMessageAsync(ctx, msg),
-                ctx::tellSuccess,
-                t -> ctx.tellFailure(processException(ctx, msg, t), t));
+                m -> ctx.tellNext(m, TbRelationTypes.SUCCESS),
+                t -> {
+                    TbMsg next = processException(ctx, msg, t);
+                    ctx.tellFailure(next, t);
+                });
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {

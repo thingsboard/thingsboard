@@ -15,89 +15,43 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
-import akka.actor.ActorContext;
 import akka.actor.ActorRef;
-import akka.actor.Props;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import lombok.Getter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
-import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.actors.shared.rulechain.RuleChainManager;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.rule.RuleChainService;
-
-import java.util.function.Function;
 
 /**
  * Created by ashvayka on 15.03.18.
  */
 public abstract class RuleChainManagerActor extends ContextAwareActor {
 
-    protected final TenantId tenantId;
-    private final RuleChainService ruleChainService;
-    private final BiMap<RuleChainId, ActorRef> actors;
-    @Getter
-    protected RuleChain rootChain;
-    @Getter
-    protected ActorRef rootChainActor;
+    protected final RuleChainManager ruleChainManager;
+    protected final RuleChainService ruleChainService;
 
-    public RuleChainManagerActor(ActorSystemContext systemContext, TenantId tenantId) {
+    public RuleChainManagerActor(ActorSystemContext systemContext, RuleChainManager ruleChainManager) {
         super(systemContext);
-        this.tenantId = tenantId;
-        this.actors = HashBiMap.create();
+        this.ruleChainManager = ruleChainManager;
         this.ruleChainService = systemContext.getRuleChainService();
     }
 
     protected void initRuleChains() {
-        for (RuleChain ruleChain : new PageDataIterable<>(link -> ruleChainService.findTenantRuleChains(tenantId, link), ContextAwareActor.ENTITY_PACK_LIMIT)) {
-            RuleChainId ruleChainId = ruleChain.getId();
-            log.debug("[{}|{}] Creating rule chain actor", ruleChainId.getEntityType(), ruleChain.getId());
-            //TODO: remove this cast making UUIDBased subclass of EntityId an interface and vice versa.
-            ActorRef actorRef = getOrCreateActor(this.context(), ruleChainId, id -> ruleChain);
-            visit(ruleChain, actorRef);
-            log.debug("[{}|{}] Rule Chain actor created.", ruleChainId.getEntityType(), ruleChainId.getId());
-        }
-    }
-
-    protected void visit(RuleChain entity, ActorRef actorRef) {
-        if (entity != null && entity.isRoot()) {
-            rootChain = entity;
-            rootChainActor = actorRef;
-        }
-    }
-
-    public ActorRef getOrCreateActor(akka.actor.ActorContext context, RuleChainId ruleChainId) {
-        return getOrCreateActor(context, ruleChainId, eId -> ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, eId));
-    }
-
-    public ActorRef getOrCreateActor(akka.actor.ActorContext context, RuleChainId ruleChainId, Function<RuleChainId, RuleChain> provider) {
-        return actors.computeIfAbsent(ruleChainId, eId -> {
-            RuleChain ruleChain = provider.apply(eId);
-            return context.actorOf(Props.create(new RuleChainActor.ActorCreator(systemContext, tenantId, ruleChain))
-                    .withDispatcher(DefaultActorService.TENANT_RULE_DISPATCHER_NAME), eId.toString());
-        });
+        ruleChainManager.init(this.context());
     }
 
     protected ActorRef getEntityActorRef(EntityId entityId) {
         ActorRef target = null;
-        if (entityId.getEntityType() == EntityType.RULE_CHAIN) {
-            target = getOrCreateActor(this.context(), (RuleChainId) entityId);
+        switch (entityId.getEntityType()) {
+            case RULE_CHAIN:
+                target = ruleChainManager.getOrCreateActor(this.context(), (RuleChainId) entityId);
+                break;
         }
         return target;
     }
 
     protected void broadcast(Object msg) {
-        actors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
+        ruleChainManager.broadcast(msg);
     }
-
-    public ActorRef get(RuleChainId id) {
-        return actors.get(id);
-    }
-
 }

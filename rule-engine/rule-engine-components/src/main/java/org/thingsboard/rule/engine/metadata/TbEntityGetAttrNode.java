@@ -51,7 +51,8 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         try {
-            withCallback(findEntityAsync(ctx, msg.getOriginator()),
+            withCallback(
+                    findEntityAsync(ctx, msg.getOriginator()),
                     entityId -> safeGetAttributes(ctx, msg, entityId),
                     t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
         } catch (Throwable th) {
@@ -88,7 +89,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
             String attrName = config.getAttrMapping().get(r.getKey());
             msg.getMetaData().putValue(attrName, r.getValueAsString());
         });
-        ctx.tellSuccess(msg);
+        ctx.tellNext(msg, SUCCESS);
     }
 
     @Override

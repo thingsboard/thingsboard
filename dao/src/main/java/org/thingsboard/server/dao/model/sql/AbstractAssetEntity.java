@@ -75,7 +75,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
 
     public AbstractAssetEntity(Asset asset) {
         if (asset.getId() != null) {
-            this.setUuid(asset.getId().getId());
+            this.setId(asset.getId().getId());
         }
         if (asset.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(asset.getTenantId().getId());

@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
+import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 /**
@@ -40,7 +40,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private final RuleChainService service;
     private RuleNode ruleNode;
     private TbNode tbNode;
-    private DefaultTbContext defaultCtx;
+    private TbContext defaultCtx;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, ActorSystemContext systemContext
             , ActorRef parent, ActorRef self) {
@@ -84,9 +84,9 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void onPartitionChangeMsg(PartitionChangeMsg msg) {
+    public void onClusterEventMsg(ClusterEventMsg msg) {
         if (tbNode != null) {
-            tbNode.onPartitionChangeMsg(defaultCtx, msg);
+            tbNode.onClusterEventMsg(defaultCtx, msg);
         }
     }
 

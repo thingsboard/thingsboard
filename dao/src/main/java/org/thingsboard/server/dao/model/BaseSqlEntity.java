@@ -35,15 +35,14 @@ public abstract class BaseSqlEntity<D> implements BaseEntity<D> {
     protected String id;
 
     @Override
-    public UUID getUuid() {
+    public UUID getId() {
         if (id == null) {
             return null;
         }
         return UUIDConverter.fromString(id);
     }
 
-    @Override
-    public void setUuid(UUID id) {
+    public void setId(UUID id) {
         this.id = UUIDConverter.fromTimeUUID(id);
     }
 

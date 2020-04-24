@@ -68,7 +68,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
 
     public AbstractDeviceEntity(Device device) {
         if (device.getId() != null) {
-            this.setUuid(device.getId().getId());
+            this.setId(device.getId().getId());
         }
         if (device.getTenantId() != null) {
             this.tenantId = toString(device.getTenantId().getId());
@@ -104,8 +104,8 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
     }
 
     protected Device toDevice() {
-        Device device = new Device(new DeviceId(getUuid()));
-        device.setCreatedTime(UUIDs.unixTimestamp(getUuid()));
+        Device device = new Device(new DeviceId(getId()));
+        device.setCreatedTime(UUIDs.unixTimestamp(getId()));
         if (tenantId != null) {
             device.setTenantId(new TenantId(toUUID(tenantId)));
         }

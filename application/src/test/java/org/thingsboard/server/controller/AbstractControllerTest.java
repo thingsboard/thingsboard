@@ -33,7 +33,6 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -116,7 +115,9 @@ public abstract class AbstractControllerTest {
      */
     private static final long DEFAULT_TIMEOUT = -1L;
 
-    protected MediaType contentType = MediaType.APPLICATION_JSON;
+    protected MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
+            MediaType.APPLICATION_JSON.getSubtype(),
+            Charset.forName("utf8"));
 
     protected MockMvc mockMvc;
 
@@ -199,7 +200,6 @@ public abstract class AbstractControllerTest {
         createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
 
         logout();
-
         log.info("Executed setup");
     }
 

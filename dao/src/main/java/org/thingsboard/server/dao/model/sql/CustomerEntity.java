@@ -84,7 +84,7 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
 
     public CustomerEntity(Customer customer) {
         if (customer.getId() != null) {
-            this.setUuid(customer.getId().getId());
+            this.setId(customer.getId().getId());
         }
         this.tenantId = UUIDConverter.fromTimeUUID(customer.getTenantId().getId());
         this.title = customer.getTitle();
@@ -111,8 +111,8 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
 
     @Override
     public Customer toData() {
-        Customer customer = new Customer(new CustomerId(this.getUuid()));
-        customer.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
+        Customer customer = new Customer(new CustomerId(getId()));
+        customer.setCreatedTime(UUIDs.unixTimestamp(getId()));
         customer.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         customer.setTitle(title);
         customer.setCountry(country);
