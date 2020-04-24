@@ -15,7 +15,7 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Subject, from, fromEvent, of } from 'rxjs';
+import { Observable, Subject, fromEvent, of } from 'rxjs';
 import { finalize, share, map } from 'rxjs/operators';
 import base64js from 'base64-js';
 
@@ -430,7 +430,7 @@ export function getDescendantProp(obj: any, path: string): any {
 
 export function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
   const image = new Image();
-  const imageLoad$ = fromEvent(image, 'load').pipe(map(event => image));
+  const imageLoad$ = fromEvent(image, 'load').pipe(map(() => image));
   image.src = imageUrl;
   return imageLoad$;
 }
@@ -524,34 +524,47 @@ export function parseFunction(source: any, params: string[] = []): Function {
   return res;
 }
 
-export function parseTemplate(template: string, data: object) {
+export function parseTemplate(template: string, data: object, translateFn?: (key: string) => string) {
   let res = '';
+  let variables = '';
   try {
-    let variables = '';
-    const expressions = template
-      .match(/\{(.*?)\}/g) // find expressions
-      .map(exp => exp.replace(/{|}/g, '')) // remove brackets
-      .map(exp => exp.split(':'))
-      .map(arr => {
-        variables += `let ${arr[0]} = ''; `;
-        return arr;
-      })
-      .filter(arr => !!arr[1]) // filter expressions without format
-      .reduce((res, current) => {
-        res[current[0]] = current[1];
-        return res;
-      }, {});
-
-    for (const key in data) {
-      if (!key.includes('|'))
-        variables += `${key} = '${expressions[key] ? padValue(data[key], +expressions[key]) : data[key]}';`;
+    if (template.match(/<link-act/g)) {
+      template = template.replace(/<link-act/g, '<a').replace(/link-act>/g, 'a>').replace(/name=(\'|")(.*?)(\'|")/g, `class='tb-custom-action' id='$2'`);
     }
-    template = template.replace(/:\d+}/g, '}');
-    res = safeExecute(parseFunction(variables + 'return' + '`' + template + '`'));
+    if (template.includes('i18n')) {
+      const translateRegexp = /\{i18n:(.*?)\}/;
+      template.match(new RegExp(translateRegexp.source, translateRegexp.flags + 'g')).forEach(match => {
+        template = template.replace(match, translateFn(match.match(translateRegexp)[1]));
+      });
+    }
+    const expressions = template.match(/\{(.*?)\}/g);
+    if (expressions) {
+      const clearMatches = template.match(/(?<=\{)(.+?)(?=(\}|\:))/g);
+      for (const key in data) {
+        if (!key.includes('|'))
+          variables += `let ${key} = '${clearMatches[key] ? padValue(data[key], +clearMatches[key]) : data[key]}';`;
+      }
+      template = template.replace(/\:\d+\}/g, '}');
+      res = safeExecute(parseFunction(variables + ' return' + '`' + template + '`'));
+    }
+    else res = template;
   }
   catch (ex) {
+    console.log(ex, variables, template)
   }
   return res;
+}
+
+export let parseWithTranslation = {
+  translate(): string {
+    throw console.error('Translate not assigned');
+  },
+  parseTemplate(template: string, data: object, forceTranslate = false): string {
+    return parseTemplate(forceTranslate ? this.translate(template) : template, data, this?.translate);
+  },
+  setTranslate(translateFn: (key: string, defaultTranslation?: string) => string) {
+    this.translate = translateFn;
+  }
 }
 
 export function padValue(val: any, dec: number): string {

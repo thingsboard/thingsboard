@@ -20,14 +20,9 @@ import { MapSettings, UnitedMapSettings } from '../map-models';
 
 export class HEREMap extends LeafletMap {
     constructor($container, options: UnitedMapSettings) {
-        const defaultCredentials =
-        {
-            app_id: 'AhM6TzD9ThyK78CT3ptx',
-            app_code: 'p6NPiITB3Vv0GMUFnkLOOg'
-        }
         super($container, options);
         const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
-        const tileLayer = (L.tileLayer as any).provider(options.mapProvider || 'HERE.normalDay', options.credentials || defaultCredentials);
+        const tileLayer = (L.tileLayer as any).provider(options.mapProviderHere || 'HERE.normalDay', options.credentials);
         tileLayer.addTo(map);
         super.setMap(map);
         super.initSettings(options);
