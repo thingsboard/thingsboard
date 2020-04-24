@@ -32,8 +32,6 @@ import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.persistence.criteria.Predicate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -41,7 +39,6 @@ import java.util.UUID;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
 import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 
 @Component
 @SqlDao

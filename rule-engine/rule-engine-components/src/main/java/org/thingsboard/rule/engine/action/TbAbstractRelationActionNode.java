@@ -187,9 +187,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newDevice.setType(entitykey.getType());
                         newDevice.setTenantId(ctx.getTenantId());
                         Device savedDevice = deviceService.saveDevice(newDevice);
-                        ctx.enqueue(ctx.deviceCreatedMsg(savedDevice, ctx.getSelfId()),
-                                () -> log.trace("Pushed Device Created message: {}", savedDevice),
-                                throwable -> log.warn("Failed to push Device Created message: {}", savedDevice, throwable));
+                        ctx.sendTbMsgToRuleEngine(ctx.deviceCreatedMsg(savedDevice, ctx.getSelfId()));
                         targetEntity.setEntityId(savedDevice.getId());
                     }
                     break;
@@ -204,9 +202,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newAsset.setType(entitykey.getType());
                         newAsset.setTenantId(ctx.getTenantId());
                         Asset savedAsset = assetService.saveAsset(newAsset);
-                        ctx.enqueue(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()),
-                                () -> log.trace("Pushed Asset Created message: {}", savedAsset),
-                                throwable -> log.warn("Failed to push Asset Created message: {}", savedAsset, throwable));
+                        ctx.sendTbMsgToRuleEngine(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()));
                         targetEntity.setEntityId(savedAsset.getId());
                     }
                     break;
@@ -220,9 +216,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newCustomer.setTitle(entitykey.getEntityName());
                         newCustomer.setTenantId(ctx.getTenantId());
                         Customer savedCustomer = customerService.saveCustomer(newCustomer);
-                        ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
-                                () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
-                                throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
+                        ctx.sendTbMsgToRuleEngine(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()));
                         targetEntity.setEntityId(savedCustomer.getId());
                     }
                     break;

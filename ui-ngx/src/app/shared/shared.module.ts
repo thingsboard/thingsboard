@@ -129,7 +129,6 @@ import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-ob
 import { HistorySelectorComponent } from './components/time/history-selector/history-selector.component';
 import { TbTemplatePipe } from '@shared/pipe/template.pipe';
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
-import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
 
 @NgModule({
   providers: [
@@ -180,7 +179,6 @@ import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list
     EntityKeysListComponent,
     EntityListSelectComponent,
     EntityTypeListComponent,
-    QueueTypeListComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
@@ -299,7 +297,6 @@ import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list
     EntityKeysListComponent,
     EntityListSelectComponent,
     EntityTypeListComponent,
-    QueueTypeListComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,

@@ -22,7 +22,10 @@ import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+
+import java.util.Optional;
 
 /**
  * Created by ashvayka on 16.04.18.
@@ -32,7 +35,7 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 public class ToDeviceRpcRequestActorMsg implements ToDeviceActorNotificationMsg {
 
     @Getter
-    private final String serviceId;
+    private final ServerAddress serverAddress;
     @Getter
     private final ToDeviceRpcRequest msg;
 

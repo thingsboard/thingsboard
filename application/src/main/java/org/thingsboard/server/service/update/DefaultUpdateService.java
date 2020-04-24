@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -39,7 +38,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@TbCoreComponent
 @Slf4j
 public class DefaultUpdateService implements UpdateService {
 

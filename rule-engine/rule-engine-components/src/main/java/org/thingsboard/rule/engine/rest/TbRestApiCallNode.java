@@ -25,6 +25,8 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.concurrent.ExecutionException;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
@@ -45,6 +47,7 @@ public class TbRestApiCallNode implements TbNode {
 
     private boolean useRedisQueueForMsgPersistence;
     private TbHttpClient httpClient;
+    private TbRedisQueueProcessor queueProcessor;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -52,19 +55,29 @@ public class TbRestApiCallNode implements TbNode {
         httpClient = new TbHttpClient(config);
         useRedisQueueForMsgPersistence = config.isUseRedisQueueForMsgPersistence();
         if (useRedisQueueForMsgPersistence) {
-            log.warn("[{}][{}] Usage of Redis Template is deprecated starting 2.5 and will have no affect", ctx.getTenantId(), ctx.getSelfId());
+            if (ctx.getRedisTemplate() == null) {
+                throw new RuntimeException("Redis cache type must be used!");
+            }
+            queueProcessor = new TbRedisQueueProcessor(ctx, httpClient, config.isTrimQueue(), config.getMaxQueueSize());
         }
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
-        httpClient.processMessage(ctx, msg);
+    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+        if (useRedisQueueForMsgPersistence) {
+            queueProcessor.push(msg);
+        } else {
+            httpClient.processMessage(ctx, msg, null);
+        }
     }
 
     @Override
     public void destroy() {
         if (this.httpClient != null) {
             this.httpClient.destroy();
+        }
+        if (this.queueProcessor != null) {
+            this.queueProcessor.destroy();
         }
     }
 

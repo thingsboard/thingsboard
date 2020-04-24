@@ -141,7 +141,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
                 entityId.getEntityType(),
                 UUIDConverter.fromTimeUUID(entityId.getId()),
                 eventType,
-                PageRequest.of(0, limit));
+                new PageRequest(0, limit));
         return DaoUtil.convertDataList(latest);
     }
 
@@ -151,11 +151,11 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
             log.trace("Save system event with predefined id {}", systemTenantId);
             entity.setTenantId(UUIDConverter.fromTimeUUID(systemTenantId));
         }
-        if (entity.getUuid() == null) {
-            entity.setUuid(UUIDs.timeBased());
+        if (entity.getId() == null) {
+            entity.setId(UUIDs.timeBased());
         }
         if (StringUtils.isEmpty(entity.getEventUid())) {
-            entity.setEventUid(entity.getUuid().toString());
+            entity.setEventUid(entity.getId().toString());
         }
         if (ifNotExists &&
                 eventRepository.findByTenantIdAndEntityTypeAndEntityId(entity.getTenantId(), entity.getEntityType(), entity.getEntityId()) != null) {

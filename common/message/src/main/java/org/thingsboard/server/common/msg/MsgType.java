@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.msg;
 
-import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
-import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
-
 /**
  * Created by ashvayka on 15.03.18.
  */
@@ -27,11 +24,16 @@ public enum MsgType {
     /**
      * ADDED/UPDATED/DELETED events for server nodes.
      *
-     * See {@link PartitionChangeMsg}
+     * See {@link org.thingsboard.server.common.msg.cluster.ClusterEventMsg}
      */
-    PARTITION_CHANGE_MSG,
+    CLUSTER_EVENT_MSG,
 
     APP_INIT_MSG,
+
+    /**
+     * All messages, could be send  to cluster
+    */
+    SEND_TO_CLUSTER_MSG,
 
     /**
      * ADDED/UPDATED/DELETED events for main entities.
@@ -41,11 +43,11 @@ public enum MsgType {
     COMPONENT_LIFE_CYCLE_MSG,
 
     /**
-     * Misc messages consumed from the Queue and forwarded to Rule Engine Actor.
+     * Misc messages from the REST API/SERVICE layer to the new rule engine.
      *
-     * See {@link QueueToRuleEngineMsg}
+     * See {@link org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg}
      */
-    QUEUE_TO_RULE_ENGINE_MSG,
+    SERVICE_TO_RULE_ENGINE_MSG,
 
     /**
      * Message that is sent by RuleChainActor to RuleActor with command to process TbMsg.
@@ -89,9 +91,12 @@ public enum MsgType {
 
     DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG,
 
+    DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG,
+
     /**
      * Message that is sent from the Device Actor to Rule Engine. Requires acknowledgement
      */
+    DEVICE_ACTOR_TO_RULE_ENGINE_MSG,
 
     SESSION_TIMEOUT_MSG,
 

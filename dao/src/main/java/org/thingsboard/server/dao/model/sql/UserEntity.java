@@ -81,7 +81,7 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
 
     public UserEntity(User user) {
         if (user.getId() != null) {
-            this.setUuid(user.getId().getId());
+            this.setId(user.getId().getId());
         }
         this.authority = user.getAuthority();
         if (user.getTenantId() != null) {
@@ -108,8 +108,8 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
 
     @Override
     public User toData() {
-        User user = new User(new UserId(this.getUuid()));
-        user.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
+        User user = new User(new UserId(getId()));
+        user.setCreatedTime(UUIDs.unixTimestamp(getId()));
         user.setAuthority(authority);
         if (tenantId != null) {
             user.setTenantId(new TenantId(fromString(tenantId)));

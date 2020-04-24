@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.dao.util;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@Retention(RetentionPolicy.RUNTIME)
 public @interface SqlDao {
 }

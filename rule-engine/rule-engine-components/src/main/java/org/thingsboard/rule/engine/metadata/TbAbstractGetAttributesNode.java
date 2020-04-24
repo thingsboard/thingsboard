@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.LATEST_TS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
@@ -100,7 +101,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             if (!failuresMap.isEmpty()) {
                 throw reportFailures(failuresMap);
             }
-            ctx.tellSuccess(msg);
+            ctx.tellNext(msg, SUCCESS);
         }, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 

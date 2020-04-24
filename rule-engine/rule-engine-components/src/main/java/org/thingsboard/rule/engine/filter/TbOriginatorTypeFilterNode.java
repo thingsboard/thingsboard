@@ -42,7 +42,7 @@ public class TbOriginatorTypeFilterNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
+    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         EntityType originatorType = msg.getOriginator().getEntityType();
         ctx.tellNext(msg, config.getOriginatorTypes().contains(originatorType) ? "True" : "False");
     }

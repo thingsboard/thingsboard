@@ -32,10 +32,6 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
         this.lastUpdateTs = lastUpdateTs;
     }
 
-    public BaseAttributeKvEntry(long lastUpdateTs, KvEntry kv) {
-        this(kv, lastUpdateTs);
-    }
-
     @Override
     public long getLastUpdateTs() {
         return lastUpdateTs;

@@ -34,6 +34,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -71,7 +72,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
 
     public ComponentDescriptorEntity(ComponentDescriptor component) {
         if (component.getId() != null) {
-            this.setUuid(component.getId().getId());
+            this.setId(component.getId().getId());
         }
         this.actions = component.getActions();
         this.type = component.getType();
@@ -84,7 +85,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
 
     @Override
     public ComponentDescriptor toData() {
-        ComponentDescriptor data = new ComponentDescriptor(new ComponentDescriptorId(this.getUuid()));
+        ComponentDescriptor data = new ComponentDescriptor(new ComponentDescriptorId(this.getId()));
         data.setType(type);
         data.setScope(scope);
         data.setName(this.getName());

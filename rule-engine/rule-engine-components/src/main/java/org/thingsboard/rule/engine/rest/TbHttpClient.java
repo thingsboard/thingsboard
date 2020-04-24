@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
 import org.springframework.util.concurrent.ListenableFuture;
@@ -83,7 +84,7 @@ class TbHttpClient {
         }
     }
 
-    void processMessage(TbContext ctx, TbMsg msg) {
+    void processMessage(TbContext ctx, TbMsg msg, TbRedisQueueProcessor queueProcessor) {
         String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
         HttpHeaders headers = prepareHeaders(msg.getMetaData());
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
@@ -94,6 +95,13 @@ class TbHttpClient {
         future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
             @Override
             public void onFailure(Throwable throwable) {
+                if (config.isUseRedisQueueForMsgPersistence()) {
+                    if (throwable instanceof HttpClientErrorException) {
+                        processHttpClientError(((HttpClientErrorException) throwable).getStatusCode(), msg, queueProcessor);
+                    } else {
+                        queueProcessor.pushOnFailure(msg);
+                    }
+                }
                 TbMsg next = processException(ctx, msg, throwable);
                 ctx.tellFailure(next, throwable);
             }
@@ -101,9 +109,15 @@ class TbHttpClient {
             @Override
             public void onSuccess(ResponseEntity<String> responseEntity) {
                 if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                    if (config.isUseRedisQueueForMsgPersistence()) {
+                        queueProcessor.resetCounter();
+                    }
                     TbMsg next = processResponse(ctx, msg, responseEntity);
-                    ctx.tellSuccess(next);
+                    ctx.tellNext(next, TbRelationTypes.SUCCESS);
                 } else {
+                    if (config.isUseRedisQueueForMsgPersistence()) {
+                        processHttpClientError(responseEntity.getStatusCode(), msg, queueProcessor);
+                    }
                     TbMsg next = processFailureResponse(ctx, msg, responseEntity);
                     ctx.tellNext(next, TbRelationTypes.FAILURE);
                 }
@@ -169,4 +183,11 @@ class TbHttpClient {
         }
     }
 
+    private void processHttpClientError(HttpStatus statusCode, TbMsg msg, TbRedisQueueProcessor queueProcessor) {
+        if (statusCode.is4xxClientError()) {
+            log.warn("[{}] Client error during message delivering!", msg);
+        } else {
+            queueProcessor.pushOnFailure(msg);
+        }
+    }
 }

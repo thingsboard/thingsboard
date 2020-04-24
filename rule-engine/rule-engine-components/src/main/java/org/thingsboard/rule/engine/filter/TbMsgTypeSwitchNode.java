@@ -45,7 +45,7 @@ public class TbMsgTypeSwitchNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
+    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         String relationType;
         if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
             relationType = "Post attributes";
