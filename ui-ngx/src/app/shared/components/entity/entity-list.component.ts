@@ -15,38 +15,29 @@
 ///
 
 import {
-  AfterContentInit,
   AfterViewInit,
   Component,
   ElementRef,
   forwardRef,
-  Input, OnChanges,
-  OnInit, SimpleChanges,
-  SkipSelf,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
   ViewChild
 } from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormGroupDirective,
-  NG_VALUE_ACCESSOR, NgForm, Validators
-} from '@angular/forms';
-import {Observable, of} from 'rxjs';
-import {map, mergeMap, startWith, tap, share, pairwise, filter} from 'rxjs/operators';
-import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
-import {TranslateService} from '@ngx-translate/core';
-import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
-import {BaseData} from '@shared/models/base-data';
-import {EntityId} from '@shared/models/id/entity-id';
-import {EntityService} from '@core/http/entity.service';
-import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import { AppState } from '@app/core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { EntityType } from '@shared/models/entity-type.models';
+import { BaseData } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EntityService } from '@core/http/entity.service';
+import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipList } from '@angular/material/chips';
-import { ErrorStateMatcher } from '@angular/material/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { emptyPageData } from '@shared/models/page/page-data';
 
 @Component({
   selector: 'tb-entity-list',
@@ -205,10 +196,11 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   }
 
   remove(entity: BaseData<EntityId>) {
-    const index = this.entities.indexOf(entity);
+    let index = this.entities.indexOf(entity);
     if (index >= 0) {
       this.entities.splice(index, 1);
       this.entityListFormGroup.get('entities').setValue(this.entities);
+      index = this.modelValue.indexOf(entity.id.id);
       this.modelValue.splice(index, 1);
       if (!this.modelValue.length) {
         this.modelValue = null;
