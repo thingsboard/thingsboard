@@ -63,12 +63,16 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.rxSubscriptions.push(this.aliasController.entityAliasesChanged.subscribe(
       () => {
-        this.updateDisplayValue();
+        setTimeout(() => {
+          this.updateDisplayValue();
+        }, 0);
       }
     ));
     this.rxSubscriptions.push(this.aliasController.entityAliasResolved.subscribe(
       () => {
-        this.updateDisplayValue();
+        setTimeout(() => {
+          this.updateDisplayValue();
+        }, 0);
       }
     ));
   }

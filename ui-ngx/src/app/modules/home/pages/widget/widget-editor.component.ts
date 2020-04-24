@@ -46,6 +46,7 @@ import {
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { Subscription } from 'rxjs';
 import Timeout = NodeJS.Timeout;
+import { ResizeObserver } from '@juggle/resize-observer';
 
 // @dynamic
 @Component({
@@ -124,7 +125,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   jsonSettingsEditor: ace.Ace.Editor;
   dataKeyJsonSettingsEditor: ace.Ace.Editor;
   jsEditor: ace.Ace.Editor;
-  aceResizeListeners: { element: any, resizeListener: any }[] = [];
+  aceResize$: ResizeObserver;
 
   onWindowMessageListener = this.onWindowMessage.bind(this);
 
@@ -193,10 +194,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   ngOnDestroy(): void {
     this.window.removeEventListener('message', this.onWindowMessageListener);
-    this.aceResizeListeners.forEach((resizeListener) => {
-      // @ts-ignore
-      removeResizeListener(resizeListener.element, resizeListener.resizeListener);
-    });
+    this.aceResize$.disconnect();
     this.rxSubscriptions.forEach((subscription) => {
       subscription.unsubscribe();
     });
@@ -272,6 +270,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private initAceEditors() {
+    this.aceResize$ = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        const editor = this.aceEditors.find(aceEditor => aceEditor.container === entry.target);
+        this.onAceEditorResize(editor);
+      })
+    });
     this.htmlEditor = this.createAceEditor(this.htmlInputElmRef, 'html');
     this.htmlEditor.on('input', () => {
       const editorValue = this.htmlEditor.getValue();
@@ -342,12 +346,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     const aceEditor = ace.edit(editorElement, editorOptions);
     aceEditor.session.setUseWrapMode(true);
     this.aceEditors.push(aceEditor);
-
-    const resizeListener = this.onAceEditorResize.bind(this, aceEditor);
-
-    // @ts-ignore
-    addResizeListener(editorElement, resizeListener);
-    this.aceResizeListeners.push({element: editorElement, resizeListener});
+    this.aceResize$.observe(editorElement);
     return aceEditor;
   }
 

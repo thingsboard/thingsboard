@@ -49,7 +49,6 @@
               ]
             },
             "scripts": [
-              "node_modules/javascript-detect-element-resize/detect-element-resize.js",
               "node_modules/jquery/dist/jquery.min.js",
               "node_modules/jquery.terminal/js/jquery.terminal.min.js",
               "node_modules/flot/lib/jquery.colorhelpers.js",

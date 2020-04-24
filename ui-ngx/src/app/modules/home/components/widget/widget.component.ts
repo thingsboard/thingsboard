@@ -91,6 +91,7 @@ import { DatasourceService } from '@core/api/datasource.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
 import { ServicesMap } from '@home/models/services.map';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-widget',
@@ -140,7 +141,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
 
-  onResizeListener = null;
+  private widgetResize$: ResizeObserver;
 
   private cssParser = new cssjs();
 
@@ -647,10 +648,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private destroyDynamicWidgetComponent() {
-    if (this.widgetContext.$containerParent && this.onResizeListener) {
-      // @ts-ignore
-      removeResizeListener(this.widgetContext.$containerParent[0], this.onResizeListener);
-      this.onResizeListener = null;
+    if (this.widgetContext.$containerParent && this.widgetResize$) {
+      this.widgetResize$.disconnect()
     }
     if (this.dynamicWidgetComponentRef) {
       this.dynamicWidgetComponentRef.destroy();
@@ -709,9 +708,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
       }
 
-      this.onResizeListener = this.onResize.bind(this);
-      // @ts-ignore
-      addResizeListener(this.widgetContext.$containerParent[0], this.onResizeListener);
+      this.widgetResize$ = new ResizeObserver(() => {
+        this.onResize();
+      });
+      this.widgetResize$.observe(this.widgetContext.$containerParent[0]);
   }
 
   private createSubscription(options: WidgetSubscriptionOptions, subscribe?: boolean): Observable<IWidgetSubscription> {

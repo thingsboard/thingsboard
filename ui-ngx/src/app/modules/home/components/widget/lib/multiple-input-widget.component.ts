@@ -33,6 +33,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { forkJoin, Observable } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 type FieldAlignment = 'row' | 'column';
 
@@ -94,7 +95,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   @Input()
   ctx: WidgetContext;
 
-  private formResizeListener: any;
+  private formResize$: ResizeObserver;
   private settings: MultipleInputWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
@@ -135,15 +136,15 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     this.updateDatasources();
     this.buildForm();
     this.ctx.updateWidgetParams();
-    this.formResizeListener = this.resize.bind(this);
-    // @ts-ignore
-    addResizeListener(this.formContainerRef.nativeElement, this.formResizeListener);
+    this.formResize$ = new ResizeObserver(() => {
+      this.resize();
+    });
+    this.formResize$.observe(this.formContainerRef.nativeElement);
   }
 
   ngOnDestroy(): void {
-    if (this.formResizeListener) {
-      // @ts-ignore
-      removeResizeListener(this.formContainerRef.nativeElement, this.formResizeListener);
+    if (this.formResize$) {
+      this.formResize$.disconnect();
     }
   }
 
