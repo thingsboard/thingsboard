@@ -15,8 +15,8 @@
 ///
 
 import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
-import { interval, Subscription, Subscriber, SubscriptionLike, Observer } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { interval } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { HistorySelectSettings } from '@app/modules/home/components/widget/lib/maps/map-models';
 
 @Component({

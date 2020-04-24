@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 :host {
+  overflow: hidden;
+
   .entity-state-controller {
     .state-divider {
-      padding-right: 15px;
-      padding-left: 15px;
+      padding: 0 15px;
       overflow: hidden;
-      font-size: 18px;
       text-overflow: ellipsis;
       white-space: nowrap;
       pointer-events: none;

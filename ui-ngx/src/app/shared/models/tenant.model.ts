@@ -21,5 +21,7 @@ import {TenantId} from './id/tenant-id';
 export interface Tenant extends ContactBased<TenantId> {
   title: string;
   region: string;
+  isolatedTbCore: boolean;
+  isolatedTbRuleEngine: boolean;
   additionalInfo?: any;
 }

@@ -17,17 +17,17 @@
 -->
 <div class="trip-animation-widget">
     <div class="trip-animation-label-container" *ngIf="settings.showLabel">
-        {{settings.label | tbParseTemplate: activeTrip}}
+        {{label }}
     </div>
-    <div class="trip-animation-container" layout="column">
+    <div class="trip-animation-container" fxLayout="column">
         <div class="map" #map></div>
-        <div class="trip-animation-info-panel" layout="row">
+        <div class="trip-animation-info-panel" fxLayout="row">
             <button class="tooltip-button" mat-mini-fab color="primary" aria-label="tooltip"
-                *ngIf="settings.showTooltip" (click)="showHideTooltip()">
+                *ngIf="settings.showTooltip" (click)="visibleTooltip = !visibleTooltip">
                 <mat-icon>info_outline</mat-icon>
             </button>
         </div>
-        <div class="trip-animation-tooltip md-whiteframe-z4" layout="column"
+        <div class="trip-animation-tooltip md-whiteframe-z4" fxLayout="column"
             [ngClass]="{'trip-animation-tooltip-hidden':!visibleTooltip}" [innerHTML]="mainTooltip"
             [ngStyle]="{'background-color': settings.tooltipColor, 'opacity': settings.tooltipOpacity, 'color': settings.tooltipFontColor}">
         </div>

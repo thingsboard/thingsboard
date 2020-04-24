@@ -26,7 +26,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -110,7 +110,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
 
     public AbstractAlarmEntity(Alarm alarm) {
         if (alarm.getId() != null) {
-            this.setId(alarm.getId().getId());
+            this.setUuid(alarm.getId().getId());
         }
         if (alarm.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(alarm.getTenantId().getId());

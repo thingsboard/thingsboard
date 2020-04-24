@@ -36,6 +36,7 @@ export * from './error.models';
 export * from './event.models';
 export * from './login.models';
 export * from './material.models';
+export * from './queue.models';
 export * from './relation.models';
 export * from './rule-chain.models';
 export * from './rule-node.models';

@@ -75,7 +75,7 @@ public class SubscriptionUpdate {
         if (data == null) {
             return Collections.emptyMap();
         } else {
-            return data.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> {
+            return data.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
                 List<Object> data = e.getValue();
                 Object[] latest = (Object[]) data.get(data.size() - 1);
                 return (long) latest[0];

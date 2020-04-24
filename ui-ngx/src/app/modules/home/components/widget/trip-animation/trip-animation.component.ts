@@ -22,13 +22,14 @@ import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 import { Component, OnInit, Input, ViewChild, AfterViewInit, ChangeDetectorRef, SecurityContext } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
 import { MapProviders } from '../lib/maps/map-models';
-import { parseArray, parseTemplate, safeExecute } from '@app/core/utils';
+import { parseArray, parseWithTranslation, safeExecute, parseTemplate } from '@app/core/utils';
 import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
 import { tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getRatio, findAngle } from '../lib/maps/maps-utils';
 import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
+import moment from 'moment';
 
 
 @Component({
@@ -55,6 +56,9 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   mainTooltip = '';
   visibleTooltip = false;
   activeTrip;
+  label;
+  minTime;
+  maxTime;
 
   static getSettingsSchema(): JsonSettingsSchema {
     const schema = initSchema();
@@ -90,48 +94,58 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     const ctxCopy: WidgetContext = _.cloneDeep(this.ctx);
-    ctxCopy.settings.showLabel = false;
-    ctxCopy.settings.showTooltip = false;
     this.mapWidget = new MapWidgetController(MapProviders.openstreet, false, ctxCopy, this.mapContainer.nativeElement);
   }
 
   timeUpdated(time: number) {
     const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]);
     this.activeTrip = currentPosition[0];
-    if (this.settings.showPolygon) {
-      this.mapWidget.map.updatePolygons(this.interpolatedData);
+    this.minTime = moment(this.historicalData[0][this.historicalData.length - 1]?.time).format('YYYY-MM-DD HH:mm:ss')
+     this.maxTime = moment(this.historicalData[0][0]?.time).format('YYYY-MM-DD HH:mm:ss')
+    this.calcLabel();
+    this.calcTooltip();
+    if (this.mapWidget) {
+      if (this.settings.showPolygon) {
+        this.mapWidget.map.updatePolygons(this.interpolatedData);
+      }
+      this.mapWidget.map.updateMarkers(currentPosition);
     }
-    this.mapWidget.map.updateMarkers(currentPosition);
   }
 
   setActiveTrip() {
-
   }
 
   calculateIntervals() {
     this.historicalData.forEach((dataSource, index) => {
       this.intervals = [];
+
       for (let time = dataSource[0]?.time; time < dataSource[dataSource.length - 1]?.time; time += this.normalizationStep) {
         this.intervals.push(time);
       }
+
       this.intervals.push(dataSource[dataSource.length - 1]?.time);
       this.interpolatedData[index] = this.interpolateArray(dataSource, this.intervals);
     });
+
   }
 
-  showHideTooltip() {
+  calcTooltip() {
+    const data = { ...this.activeTrip, maxTime: this.maxTime, minTime: this.minTime }
     const tooltipText: string = this.settings.useTooltipFunction ?
-      safeExecute(this.settings.tooolTipFunction, [this.activeTrip, this.historicalData, 0])
-      : this.settings.tooltipPattern;
+      safeExecute(this.settings.tooolTipFunction, [data, this.historicalData, 0]) : this.settings.tooltipPattern;
+    this.mainTooltip = this.sanitizer.sanitize(
+      SecurityContext.HTML, (parseWithTranslation.parseTemplate(tooltipText, data, true)));
+  }
 
-    this.mainTooltip = this.sanitizer.sanitize(SecurityContext.HTML, parseTemplate(tooltipText, this.activeTrip))
-    this.visibleTooltip = !this.visibleTooltip;
+  calcLabel() {
+    const data = { ...this.activeTrip, maxTime: this.maxTime, minTime: this.minTime }
+    const labelText: string = this.settings.useLabelFunction ?
+      safeExecute(this.settings.labelFunction, [data, this.historicalData, 0]) : this.settings.label;
+    this.label = (parseWithTranslation.parseTemplate(labelText, data, true));
   }
 
   interpolateArray(originData, interpolatedIntervals) {
-
     const result = {};
-
     for (let i = 1, j = 0; i < originData.length && j < interpolatedIntervals.length;) {
       const currentTime = interpolatedIntervals[j];
       while (originData[i].time < currentTime) i++;

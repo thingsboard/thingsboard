@@ -24,7 +24,6 @@ import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 
 @Slf4j
 public class StatsActor extends ContextAwareActor {
@@ -58,12 +57,12 @@ public class StatsActor extends ContextAwareActor {
         event.setEntityId(msg.getEntityId());
         event.setTenantId(msg.getTenantId());
         event.setType(DataConstants.STATS);
-        event.setBody(toBodyJson(systemContext.getDiscoveryService().getCurrentServer().getServerAddress(), msg.getMessagesProcessed(), msg.getErrorsOccurred()));
+        event.setBody(toBodyJson(systemContext.getServiceInfoProvider().getServiceId(), msg.getMessagesProcessed(), msg.getErrorsOccurred()));
         systemContext.getEventService().save(event);
     }
 
-    private JsonNode toBodyJson(ServerAddress server, long messagesProcessed, long errorsOccurred) {
-        return mapper.createObjectNode().put("server", server.toString()).put("messagesProcessed", messagesProcessed).put("errorsOccurred", errorsOccurred);
+    private JsonNode toBodyJson(String serviceId, long messagesProcessed, long errorsOccurred) {
+        return mapper.createObjectNode().put("server", serviceId).put("messagesProcessed", messagesProcessed).put("errorsOccurred", errorsOccurred);
     }
 
     public static class ActorCreator extends ContextBasedCreator<StatsActor> {
