@@ -42,9 +42,6 @@ import java.util.UUID;
 public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoEntity, DashboardInfo> implements DashboardInfoDao {
 
     @Autowired
-    private RelationDao relationDao;
-
-    @Autowired
     private DashboardInfoRepository dashboardInfoRepository;
 
     @Override

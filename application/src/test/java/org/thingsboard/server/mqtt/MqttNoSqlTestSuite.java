@@ -16,11 +16,13 @@
 package org.thingsboard.server.mqtt;
 
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
 import org.thingsboard.server.dao.CustomCassandraCQLUnit;
 import org.thingsboard.server.dao.CustomSqlUnit;
+import org.thingsboard.server.queue.memory.InMemoryStorage;
 
 import java.util.Arrays;
 
@@ -41,4 +43,9 @@ public class MqttNoSqlTestSuite {
                     Arrays.asList(
                             new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false)),
                     "cassandra-test.yaml", 30000l);
+
+    @BeforeClass
+    public static void cleanupInMemStorage(){
+        InMemoryStorage.getInstance().cleanup();
+    }
 }

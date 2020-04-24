@@ -1,0 +1,43 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-autocomplete ng-required="tbRequired"
+                 ng-disabled="disabled"
+                 md-no-cache="true"
+                 md-input-name="queue"
+                 ng-model="queue"
+                 md-selected-item="queue"
+                 md-search-text="queueSearchText"
+                 md-items="item in fetchQueues(queueSearchText)"
+                 md-item-text="item"
+                 md-min-length="0"
+                 md-select-on-match="false"
+                 md-autoselect="true"
+                 ng-blur="queue = queueSearchText"
+                 md-menu-class="tb-queue-autocomplete"
+                 md-clear-button="true"
+                 placeholder="{{'queue.select_name' | translate}}"
+                 md-floating-label="{{'queue.name' | translate}}">
+    <md-item-template>
+        <div class="tb-queue-item">
+            <span md-highlight-text="queueSearchText" md-highlight-flags="^i">{{item}}</span>
+        </div>
+    </md-item-template>
+    <div ng-messages="theForm.queue.$error">
+        <div translate ng-message="required">{{'queue.name_required' | translate}}</div>
+    </div>
+</md-autocomplete>

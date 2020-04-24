@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -55,6 +56,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class UserController extends BaseController {
 

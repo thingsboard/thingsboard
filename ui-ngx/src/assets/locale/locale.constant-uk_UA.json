@@ -1970,6 +1970,11 @@
         "no-timezones-matching": "Не знайдено жодних часових поясів, які відповідають '{{timezone}}'.",
         "timezone-required": "Необхідно вказати часовий пояс."
     },
+    "queue": {
+      "select_name": "Виберіть ім'я для Queue",
+      "name": "Iм'я для Queue",
+      "name_required": "Поле 'Имя для Queue' обязательно к заполнению!"
+    },
     "tenant": {
         "tenant": "Власник",
         "tenants": "Власники",

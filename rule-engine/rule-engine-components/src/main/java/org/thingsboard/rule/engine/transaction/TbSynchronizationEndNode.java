@@ -35,30 +35,25 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.ACTION,
         name = "synchronization end",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Stops synchronization of message processing based on message originator",
+        nodeDescription = "This Node is now deprecated. Use \"Checkpoint\" instead.",
         nodeDetails = "",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = ("tbNodeEmptyConfig")
 )
+@Deprecated
 public class TbSynchronizationEndNode implements TbNode {
-
-    private EmptyNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.getRuleChainTransactionService().endTransaction(msg,
-                successMsg -> ctx.tellNext(successMsg, SUCCESS),
-                throwable -> ctx.tellFailure(msg, throwable));
-        log.trace("Msg left transaction - [{}][{}]", msg.getId(), msg.getType());
+        log.warn("Synchronization Start/End nodes are deprecated since TB 2.5. Use queue with submit strategy SEQUENTIAL_WITHIN_ORIGINATOR instead.");
+        ctx.tellSuccess(msg);
     }
 
     @Override
     public void destroy() {
-
     }
 }

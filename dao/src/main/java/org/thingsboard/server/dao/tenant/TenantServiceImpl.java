@@ -39,8 +39,6 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
-import java.util.List;
-
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
@@ -125,7 +123,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     @Override
     public void deleteTenants() {
         log.trace("Executing deleteTenants");
-        tenantsRemover.removeEntities(new TenantId(EntityId.NULL_UUID),DEFAULT_TENANT_REGION);
+        tenantsRemover.removeEntities(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION);
     }
 
     private DataValidator<Tenant> tenantValidator =
@@ -139,19 +137,31 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                         validateEmail(tenant.getEmail());
                     }
                 }
-    };
+
+                @Override
+                protected void validateUpdate(TenantId tenantId, Tenant tenant) {
+                    Tenant old = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
+                    if (old == null) {
+                        throw new DataValidationException("Can't update non existing tenant!");
+                    } else if (old.isIsolatedTbRuleEngine() != tenant.isIsolatedTbRuleEngine()) {
+                        throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
+                    } else if (old.isIsolatedTbCore() != tenant.isIsolatedTbCore()) {
+                        throw new DataValidationException("Can't update isolatedTbCore property!");
+                    }
+                }
+            };
 
     private PaginatedRemover<String, Tenant> tenantsRemover =
             new PaginatedRemover<String, Tenant>() {
 
-        @Override
-        protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
-            return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
-        }
+                @Override
+                protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
+                    return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
+                }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, Tenant entity) {
-            deleteTenant(new TenantId(entity.getUuidId()));
-        }
-    };
+                @Override
+                protected void removeEntity(TenantId tenantId, Tenant entity) {
+                    deleteTenant(new TenantId(entity.getUuidId()));
+                }
+            };
 }
