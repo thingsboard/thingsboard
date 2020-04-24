@@ -21,10 +21,10 @@
 
     <appender name="fileLogAppender"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/var/log/tb-coap-transport/${TB_HOST}/tb-coap-transport.log</file>
+        <file>/var/log/tb-coap-transport/${TB_SERVICE_ID}/tb-coap-transport.log</file>
         <rollingPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>/var/log/tb-coap-transport/${TB_HOST}/tb-coap-transport.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>/var/log/tb-coap-transport/${TB_SERVICE_ID}/tb-coap-transport.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>

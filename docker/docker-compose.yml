@@ -59,8 +59,7 @@ services:
         max-size: "200m"
         max-file: "30"
     environment:
-      TB_HOST: tb1
-      CLUSTER_NODE_ID: tb1
+      TB_SERVICE_ID: tb1
     env_file:
       - tb-node.env
     volumes:
@@ -81,8 +80,7 @@ services:
         max-size: "200m"
         max-file: "30"
     environment:
-      TB_HOST: tb2
-      CLUSTER_NODE_ID: tb2
+      TB_SERVICE_ID: tb2
     env_file:
       - tb-node.env
     volumes:
@@ -98,8 +96,7 @@ services:
     ports:
       - "1883"
     environment:
-      TB_HOST: tb-mqtt-transport1
-      CLUSTER_NODE_ID: tb-mqtt-transport1
+      TB_SERVICE_ID: tb-mqtt-transport1
     env_file:
       - tb-mqtt-transport.env
     volumes:
@@ -113,8 +110,7 @@ services:
     ports:
       - "1883"
     environment:
-      TB_HOST: tb-mqtt-transport2
-      CLUSTER_NODE_ID: tb-mqtt-transport2
+      TB_SERVICE_ID: tb-mqtt-transport2
     env_file:
       - tb-mqtt-transport.env
     volumes:
@@ -128,8 +124,7 @@ services:
     ports:
       - "8081"
     environment:
-      TB_HOST: tb-http-transport1
-      CLUSTER_NODE_ID: tb-http-transport1
+      TB_SERVICE_ID: tb-http-transport1
     env_file:
       - tb-http-transport.env
     volumes:
@@ -143,8 +138,7 @@ services:
     ports:
       - "8081"
     environment:
-      TB_HOST: tb-http-transport2
-      CLUSTER_NODE_ID: tb-http-transport2
+      TB_SERVICE_ID: tb-http-transport2
     env_file:
       - tb-http-transport.env
     volumes:
@@ -158,8 +152,7 @@ services:
     ports:
       - "5683:5683/udp"
     environment:
-      TB_HOST: tb-coap-transport
-      CLUSTER_NODE_ID: tb-coap-transport
+      TB_SERVICE_ID: tb-coap-transport
     env_file:
       - tb-coap-transport.env
     volumes:

@@ -23,7 +23,7 @@ metadata:
     name: tb-coap-transport-config
 data:
   conf: |
-      export JAVA_OPTS="$JAVA_OPTS -Xloggc:/var/log/tb-coap-transport/${TB_HOST}/gc.log -XX:+IgnoreUnrecognizedVMOptions -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/tb-coap-transport/${TB_HOST}/heapdump.bin -XX:+PrintGCDetails -XX:+PrintGCDateStamps"
+      export JAVA_OPTS="$JAVA_OPTS -Xloggc:/var/log/tb-coap-transport/${TB_SERVICE_ID}/gc.log -XX:+IgnoreUnrecognizedVMOptions -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/tb-coap-transport/${TB_SERVICE_ID}/heapdump.bin -XX:+PrintGCDetails -XX:+PrintGCDateStamps"
       export JAVA_OPTS="$JAVA_OPTS -XX:+PrintHeapAtGC -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10"
       export JAVA_OPTS="$JAVA_OPTS -XX:GCLogFileSize=10M -XX:-UseBiasedLocking -XX:+UseTLAB -XX:+ResizeTLAB -XX:+PerfDisableSharedMem -XX:+UseCondCardMark"
       export JAVA_OPTS="$JAVA_OPTS -XX:CMSWaitDuration=10000 -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+CMSParallelInitialMarkEnabled"
@@ -36,10 +36,10 @@ data:
 
           <appender name="fileLogAppender"
                     class="ch.qos.logback.core.rolling.RollingFileAppender">
-              <file>/var/log/tb-coap-transport/${TB_HOST}/tb-coap-transport.log</file>
+              <file>/var/log/tb-coap-transport/${TB_SERVICE_ID}/tb-coap-transport.log</file>
               <rollingPolicy
                       class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-                  <fileNamePattern>/var/log/tb-coap-transport/${TB_HOST}/tb-coap-transport.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                  <fileNamePattern>/var/log/tb-coap-transport/${TB_SERVICE_ID}/tb-coap-transport.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
                   <maxFileSize>100MB</maxFileSize>
                   <maxHistory>30</maxHistory>
                   <totalSizeCap>3GB</totalSizeCap>

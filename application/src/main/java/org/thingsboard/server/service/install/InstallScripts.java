@@ -208,29 +208,5 @@ public class InstallScripts {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);
         }
-
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsDir, path -> path.toString().endsWith(JSON_EXT))) {
-            dirStream.forEach(
-                    path -> {
-                        try {
-                            JsonNode ruleChainJson = objectMapper.readTree(path.toFile());
-                            RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
-                            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
-
-                            ruleChain.setTenantId(tenantId);
-                            if (ruleChain.getName().equals("Root Rule Chain")) {
-                                ruleChain.setRoot(true);
-                            }
-                            ruleChain = ruleChainService.saveRuleChain(ruleChain);
-
-                            ruleChainMetaData.setRuleChainId(ruleChain.getId());
-                            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
-                        } catch (Exception e) {
-                            log.error("Unable to load dashboard from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load dashboard from json", e);
-                        }
-                    }
-            );
-        }
     }
 }
