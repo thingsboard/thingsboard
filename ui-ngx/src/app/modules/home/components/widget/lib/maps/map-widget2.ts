@@ -42,7 +42,7 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Type } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { UtilsService } from '@app/core/public-api';
+import { UtilsService } from '@core/services/utils.service';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {

@@ -539,7 +539,9 @@ export function parseTemplate(template: string, data: object, translateFn?: (key
     }
     const expressions = template.match(/\{(.*?)\}/g);
     if (expressions) {
-      const clearMatches = template.match(/(?<=\{)(.+?)(?=(\}|\:))/g);
+      // TODO: not supported in IE
+      // const clearMatches = template.match(/(?<=\{)(.+?)(?=(\}|\:))/g);
+      const clearMatches = template.match(/\{(.+?)(\}|\:)/g);
       for (const key in data) {
         if (!key.includes('|'))
           variables += `let ${key} = '${clearMatches[key] ? padValue(data[key], +clearMatches[key]) : data[key]}';`;
