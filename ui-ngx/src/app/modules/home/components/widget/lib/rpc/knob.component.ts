@@ -23,8 +23,8 @@ import { AppState } from '@core/core.state';
 import { isDefined, isNumber } from '@core/utils';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import * as tinycolor_ from 'tinycolor2';
-import GenericOptions = CanvasGauges.GenericOptions;
 import { ResizeObserver } from '@juggle/resize-observer';
+import GenericOptions = CanvasGauges.GenericOptions;
 
 const tinycolor = tinycolor_;
 

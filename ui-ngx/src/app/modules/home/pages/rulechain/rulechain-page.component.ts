@@ -40,10 +40,12 @@ import { DialogService } from '@core/services/dialog.service';
 import { AuthService } from '@core/auth/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-  inputNodeComponent, NodeConnectionInfo,
+  inputNodeComponent,
+  NodeConnectionInfo,
   ResolvedRuleChainMetaData,
   RuleChain,
-  RuleChainConnectionInfo, RuleChainImport,
+  RuleChainConnectionInfo,
+  RuleChainImport,
   RuleChainMetaData,
   ruleChainNodeComponent
 } from '@shared/models/rule-chain.models';
@@ -73,8 +75,8 @@ import { MatMenuTrigger } from '@angular/material/menu';
 import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
 import { Hotkey } from 'angular2-hotkeys';
 import { EntityType } from '@shared/models/entity-type.models';
-import Timeout = NodeJS.Timeout;
 import { DebugEventType, EventType } from '@shared/models/event.models';
+import Timeout = NodeJS.Timeout;
 
 @Component({
   selector: 'tb-rulechain-page',

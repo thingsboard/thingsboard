@@ -21,7 +21,8 @@ import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import {
-  ClaimRequest, ClaimResult,
+  ClaimRequest,
+  ClaimResult,
   Device,
   DeviceCredentials,
   DeviceInfo,

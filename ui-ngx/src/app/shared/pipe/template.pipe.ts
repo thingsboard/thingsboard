@@ -15,7 +15,7 @@
 ///
 
 import { Pipe, PipeTransform } from '@angular/core';
-import { parseTemplate, parseWithTranslation } from '@app/core/utils';
+import { parseWithTranslation } from '@app/core/utils';
 
 @Pipe({ name: 'tbParseTemplate' })
 export class TbTemplatePipe implements PipeTransform {

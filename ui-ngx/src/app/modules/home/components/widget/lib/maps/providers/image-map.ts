@@ -16,7 +16,7 @@
 
 import L, { LatLngLiteral } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapSettings, UnitedMapSettings } from '../map-models';
+import { UnitedMapSettings } from '../map-models';
 import { aspectCache } from '@app/core/utils';
 
 const maxZoom = 4;// ?

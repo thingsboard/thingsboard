@@ -143,7 +143,6 @@ export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnIni
     const actions = element.find('mat-fab-actions').children();
     if (triggerElement && backgroundElement) {
       const width = el.offsetWidth;
-      const height = el.offsetHeight;
       const scale = 2 * (width / triggerElement.offsetWidth);
 
       backgroundElement.style.borderRadius = width + 'px';

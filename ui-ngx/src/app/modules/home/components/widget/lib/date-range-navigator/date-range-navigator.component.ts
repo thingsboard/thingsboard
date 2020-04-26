@@ -38,7 +38,7 @@ import {
   DateRangeNavigatorSettings,
   getFormattedDate
 } from '@home/components/widget/lib/date-range-navigator/date-range-navigator.models';
-import { DatePipe, KeyValue } from '@angular/common';
+import { KeyValue } from '@angular/common';
 import * as _moment from 'moment';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';

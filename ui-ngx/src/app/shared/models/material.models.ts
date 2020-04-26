@@ -15,6 +15,7 @@
 ///
 
 import * as tinycolor_ from 'tinycolor2';
+
 const tinycolor = tinycolor_;
 
 export interface MaterialColorItem {

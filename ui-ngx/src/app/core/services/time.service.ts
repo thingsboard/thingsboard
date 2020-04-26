@@ -15,7 +15,14 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { AggregationType, DAY, defaultTimeIntervals, SECOND, Timewindow, defaultTimewindow } from '@shared/models/time/time.models';
+import {
+  AggregationType,
+  DAY,
+  defaultTimeIntervals,
+  defaultTimewindow,
+  SECOND,
+  Timewindow
+} from '@shared/models/time/time.models';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { defaultHttpOptions } from '@core/http/http-utils';

@@ -15,12 +15,16 @@
 ///
 
 import {
-  AfterViewInit, ApplicationRef, ChangeDetectorRef,
+  AfterViewInit,
+  ChangeDetectorRef,
   Component,
   Directive,
   ElementRef,
-  Inject, Input, NgZone,
-  OnDestroy, ViewChild,
+  Inject,
+  Input,
+  NgZone,
+  OnDestroy,
+  ViewChild,
   ViewContainerRef
 } from '@angular/core';
 import { MAT_SNACK_BAR_DATA, MatSnackBar, MatSnackBarConfig, MatSnackBarRef } from '@angular/material/snack-bar';
@@ -30,8 +34,8 @@ import { Subscription } from 'rxjs';
 import { NotificationService } from '@app/core/services/notification.service';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
-import Timeout = NodeJS.Timeout;
 import { MatButton } from '@angular/material/button';
+import Timeout = NodeJS.Timeout;
 
 @Directive({
   selector: '[tb-toast]'

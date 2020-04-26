@@ -37,8 +37,7 @@ import { deepClone, isDefined, isNumber } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
-import { DataSource } from '@angular/cdk/collections';
-import { CollectionViewer, SelectionModel } from '@angular/cdk/collections';
+import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
@@ -59,7 +58,8 @@ import {
   getColumnWidth,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
-  toAlarmColumnDef, widthStyle
+  toAlarmColumnDef,
+  widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';

@@ -17,7 +17,6 @@ import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
 import TextField from '@material-ui/core/TextField';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import { FormControl } from '@material-ui/core';
 
 interface ThingsboardTextState extends JsonFormFieldState {
   focused: boolean;

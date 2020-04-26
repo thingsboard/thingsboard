@@ -15,7 +15,7 @@
 ///
 
 import { Component, Inject, InjectionToken, OnInit, ViewContainerRef } from '@angular/core';
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { OverlayRef } from '@angular/cdk/overlay';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -60,7 +60,6 @@ export class LegendConfigPanelComponent extends PageComponent implements OnInit 
               public overlayRef: OverlayRef,
               protected store: Store<AppState>,
               public fb: FormBuilder,
-              private overlay: Overlay,
               public viewContainerRef: ViewContainerRef) {
     super(store);
   }

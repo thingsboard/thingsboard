@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -36,9 +36,8 @@ import { UtilsService } from '@core/services/utils.service';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { concatMap, expand, map, toArray } from 'rxjs/operators';
-import { EMPTY } from 'rxjs';
-import Timeout = NodeJS.Timeout;
 import { isDefined } from '@core/utils';
+import Timeout = NodeJS.Timeout;
 
 interface AlarmSourceListenerQuery {
   entityType: EntityType;

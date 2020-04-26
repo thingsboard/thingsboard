@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {TenantId} from './id/tenant-id';
+import { TenantId } from './id/tenant-id';
 import { BaseData, HasId } from '@shared/models/base-data';
 
 ///

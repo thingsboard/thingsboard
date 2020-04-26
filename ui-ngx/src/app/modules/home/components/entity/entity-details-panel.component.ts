@@ -16,10 +16,13 @@
 
 import {
   AfterViewInit,
-  ChangeDetectionStrategy, ChangeDetectorRef,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver, ComponentRef,
-  EventEmitter, Injector,
+  ComponentFactoryResolver,
+  ComponentRef,
+  EventEmitter,
+  Injector,
   Input,
   OnDestroy,
   OnInit,

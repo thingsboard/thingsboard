@@ -23,7 +23,9 @@ import {
   Datasource,
   DatasourceType,
   datasourceTypeTranslationMap,
-  defaultLegendConfig, GroupInfo, JsonSchema,
+  defaultLegendConfig,
+  GroupInfo,
+  JsonSchema,
   widgetType
 } from '@shared/models/widget.models';
 import {

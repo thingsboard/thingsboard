@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, {useCallback} from 'react';
-import { DropzoneState, useDropzone } from 'react-dropzone';
-import ThingsboardBaseComponent from './json-form-base-component';
+import React from 'react';
 import Dropzone from 'react-dropzone';
+import ThingsboardBaseComponent from './json-form-base-component';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import IconButton from '@material-ui/core/IconButton';
 import ClearIcon from '@material-ui/icons/Clear';

@@ -15,11 +15,11 @@
 ///
 
 import { Component, Inject } from '@angular/core';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {EntityComponent} from '../../components/entity/entity.component';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {WidgetsBundle} from '@shared/models/widgets-bundle.model';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { EntityComponent } from '../../components/entity/entity.component';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({

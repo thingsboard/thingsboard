@@ -23,7 +23,7 @@ import { take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
-import {AuthUser} from '@shared/models/user.model';
+import { AuthUser } from '@shared/models/user.model';
 
 @Injectable({
   providedIn: 'root'

@@ -17,22 +17,22 @@
 import { MapProviders, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
-    openstreetMapSettingsSchema,
-    googleMapSettingsSchema,
-    imageMapSettingsSchema,
-    tencentMapSettingsSchema,
-    commonMapSettingsSchema,
-    routeMapSettingsSchema,
-    markerClusteringSettingsSchema,
-    markerClusteringSettingsSchemaLeaflet,
-    hereMapSettingsSchema,
-    mapProviderSchema,
-    mapPolygonSchema
+  commonMapSettingsSchema,
+  googleMapSettingsSchema,
+  hereMapSettingsSchema,
+  imageMapSettingsSchema,
+  mapPolygonSchema,
+  mapProviderSchema,
+  markerClusteringSettingsSchema,
+  markerClusteringSettingsSchemaLeaflet,
+  openstreetMapSettingsSchema,
+  routeMapSettingsSchema,
+  tencentMapSettingsSchema
 } from './schemes';
-import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
-import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import { parseFunction, parseArray, parseData, safeExecute, parseWithTranslation } from '@core/utils';
-import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
+import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
+import { GoogleMap, HEREMap, ImageMap, OpenStreetMap, TencentMap } from './providers';
+import { parseArray, parseData, parseFunction, parseWithTranslation } from '@core/utils';
+import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { forkJoin } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition } from './maps-utils';

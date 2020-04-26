@@ -16,7 +16,7 @@
 import * as React from 'react';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import { Radio, FormLabel, RadioGroup } from '@material-ui/core';
+import { FormLabel, Radio, RadioGroup } from '@material-ui/core';
 import FormControl from '@material-ui/core/FormControl';
 import ThingsboardBaseComponent from '@shared/components/json-form/react/json-form-base-component';
 

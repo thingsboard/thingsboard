@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import {BaseData, HasId} from '@shared/models/base-data';
-import {EntityTableConfig} from './entities-table-config.models';
+import { BaseData, HasId } from '@shared/models/base-data';
+import { EntityTableConfig } from './entities-table-config.models';
 
 export interface AddEntityDialogData<T extends BaseData<HasId>> {
   entitiesTableConfig: EntityTableConfig<T>;

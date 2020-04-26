@@ -331,7 +331,6 @@ export class DashboardUtilsService {
     const states = dashboardConfiguration.states;
     const state = states[targetState];
     if (state) {
-      const allWidgets = dashboardConfiguration.widgets;
       const result: DashboardLayoutsInfo = {};
       for (const l of Object.keys(state.layouts)) {
         const layout: DashboardLayout = state.layouts[l];

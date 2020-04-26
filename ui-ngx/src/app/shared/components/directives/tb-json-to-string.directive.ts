@@ -14,16 +14,18 @@
 /// limitations under the License.
 ///
 
-import {Directive, ElementRef, forwardRef, HostListener, Renderer2, SkipSelf} from '@angular/core';
+import { Directive, ElementRef, forwardRef, HostListener, Renderer2, SkipSelf } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormControl, FormGroupDirective,
+  FormControl,
+  FormGroupDirective,
   NG_VALIDATORS,
-  NG_VALUE_ACCESSOR, NgForm,
+  NG_VALUE_ACCESSOR,
+  NgForm,
   ValidationErrors,
   Validator
 } from '@angular/forms';
-import {ErrorStateMatcher} from '@angular/material/core';
+import { ErrorStateMatcher } from '@angular/material/core';
 
 @Directive({
   selector: '[tb-json-to-string]',

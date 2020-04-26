@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {MissingTranslationHandler, MissingTranslationHandlerParams} from '@ngx-translate/core';
+import { MissingTranslationHandler, MissingTranslationHandlerParams } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
 
 export class TbMissingTranslationHandler implements MissingTranslationHandler {

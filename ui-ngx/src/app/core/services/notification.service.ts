@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { HideNotification, NotificationMessage } from '@app/core/notification/notification.models';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 
 @Injectable(
