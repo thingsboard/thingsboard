@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-@Retention(RetentionPolicy.RUNTIME)
-public @interface SqlDao {
+:host ::ng-deep {
+  .mat-checkbox.hinted-checkbox {
+    .mat-checkbox-inner-container {
+      margin-top: 4px;
+    }
+  }
 }

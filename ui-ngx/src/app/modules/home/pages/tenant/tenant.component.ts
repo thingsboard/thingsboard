@@ -26,7 +26,8 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 
 @Component({
   selector: 'tb-tenant',
-  templateUrl: './tenant.component.html'
+  templateUrl: './tenant.component.html',
+  styleUrls: ['./tenant.component.scss']
 })
 export class TenantComponent extends ContactBasedComponent<Tenant> {
 
@@ -50,6 +51,8 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
     return this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required]],
+        isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
+        isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
@@ -61,6 +64,8 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
 
   updateEntityForm(entity: Tenant) {
     this.entityForm.patchValue({title: entity.title});
+    this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
+    this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
   }
 

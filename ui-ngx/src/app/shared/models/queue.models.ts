@@ -14,14 +14,9 @@
 /// limitations under the License.
 ///
 
-import { CustomerId } from '@shared/models/id/customer-id';
-import { ContactBased } from '@shared/models/contact-based.model';
-import {TenantId} from './id/tenant-id';
-
-export interface Tenant extends ContactBased<TenantId> {
-  title: string;
-  region: string;
-  isolatedTbCore: boolean;
-  isolatedTbRuleEngine: boolean;
-  additionalInfo?: any;
+export enum ServiceType {
+  TB_CORE = 'TB_CORE',
+  TB_RULE_ENGINE = 'TB_RULE_ENGINE',
+  TB_TRANSPORT = 'TB_TRANSPORT',
+  JS_EXECUTOR = 'JS_EXECUTOR'
 }
