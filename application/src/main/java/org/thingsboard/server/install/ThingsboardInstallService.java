@@ -151,7 +151,6 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("2.4.3");
 
                             log.info("Updating system data...");
-
                             systemDataLoaderService.updateSystemWidgets();
                             break;
                         case "2.5.0":

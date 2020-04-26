@@ -37,7 +37,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.Objects;
 import java.util.Optional;
 
-
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */

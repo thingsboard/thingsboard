@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
-    @Value("${js.remote.max_requests_timeout}")
+    @Value("${queue.js.max_requests_timeout}")
     private long maxRequestsTimeout;
 
     @Getter

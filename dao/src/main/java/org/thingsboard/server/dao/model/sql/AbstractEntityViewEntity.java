@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
 import java.io.IOException;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
 
@@ -169,5 +170,4 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         entityView.setAdditionalInfo(additionalInfo);
         return entityView;
     }
-
 }

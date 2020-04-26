@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
@@ -83,5 +82,6 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.CUSTOMER_USER,
                                 DaoUtil.toPageable(pageLink)));
+
     }
 }

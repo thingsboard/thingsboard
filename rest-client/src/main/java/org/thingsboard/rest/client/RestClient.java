@@ -1996,9 +1996,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {
-        return getUrlParams(pageLink);
+        return this.getUrlParams(pageLink);
     }
-
     private String getUrlParams(TimePageLink pageLink) {
         return getUrlParams(pageLink, "startTime", "endTime");
     }

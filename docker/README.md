@@ -58,7 +58,7 @@ In case of any issues you can examine service logs for errors.
 For example to see ThingsBoard node logs execute the following command:
 
 `
-$ docker-compose logs -f tb1
+$ docker-compose logs -f tb-core1 tb-rule-engine1
 `
 
 Or use `docker-compose ps` to see the state of all the containers.

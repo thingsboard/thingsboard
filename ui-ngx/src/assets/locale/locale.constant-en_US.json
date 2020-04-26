@@ -1514,11 +1514,6 @@
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes"
     },
-    "queue": {
-      "select_name": "Select queue name",
-      "name": "Queue Name",
-      "name_required": "Queue name is required!"
-    },
     "tenant": {
         "tenant": "Tenant",
         "tenants": "Tenants",
