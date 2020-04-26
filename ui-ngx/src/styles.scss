@@ -527,11 +527,10 @@ mat-label {
   .mat-table {
     width: 100%;
     max-width: 100%;
-    margin-bottom: 1rem;
     display: table;
     table-layout: auto;
     border-collapse: separate;
-    margin: 0px;
+    margin: 0;
   }
 
   mat-footer-row::after, mat-header-row::after, mat-row::after {

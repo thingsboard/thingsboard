@@ -122,13 +122,10 @@ export class ManageDashboardCustomersDialogComponent extends
     switch (this.data.actionType) {
       case 'assign':
         return this.dashboardService.addDashboardCustomers(dashboardId, customerIds);
-        break;
       case 'manage':
         return this.dashboardService.updateDashboardCustomers(dashboardId, customerIds);
-        break;
       case 'unassign':
         return this.dashboardService.removeDashboardCustomers(dashboardId, customerIds);
-        break;
     }
   }
 }
