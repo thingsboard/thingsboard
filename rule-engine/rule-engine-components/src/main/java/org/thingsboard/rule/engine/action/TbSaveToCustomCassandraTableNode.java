@@ -89,10 +89,8 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        withCallback(save(msg, ctx), aVoid -> {
-            ctx.tellNext(msg, SUCCESS);
-        }, e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
+    public void onMsg(TbContext ctx, TbMsg msg) {
+        withCallback(save(msg, ctx), aVoid -> ctx.tellSuccess(msg), e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
     }
 
     @Override

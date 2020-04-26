@@ -55,8 +55,8 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     private final AtomicInteger jsEvalMsgs = new AtomicInteger(0);
     private final AtomicInteger jsFailedMsgs = new AtomicInteger(0);
     private final AtomicInteger jsTimeoutMsgs = new AtomicInteger(0);
-    private final FutureCallback<UUID> evalCallback = new JsStatCallback<UUID>(jsEvalMsgs, jsTimeoutMsgs, jsFailedMsgs);
-    private final FutureCallback<Object> invokeCallback = new JsStatCallback<Object>(jsInvokeMsgs, jsTimeoutMsgs, jsFailedMsgs);
+    private final FutureCallback<UUID> evalCallback = new JsStatCallback<>(jsEvalMsgs, jsTimeoutMsgs, jsFailedMsgs);
+    private final FutureCallback<Object> invokeCallback = new JsStatCallback<>(jsInvokeMsgs, jsTimeoutMsgs, jsFailedMsgs);
 
     @Autowired
     @Getter

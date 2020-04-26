@@ -28,7 +28,7 @@ import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
  * Created by ashvayka on 18.10.18.
  */
 @Slf4j
-@ConditionalOnExpression("'${transport.type:null}'=='null' || ('${transport.type}'=='local' && '${transport.coap.enabled}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.coap.enabled}'=='true')")
 @Component
 public class CoapTransportContext extends TransportContext {
 
