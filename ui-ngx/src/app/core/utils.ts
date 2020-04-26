@@ -510,14 +510,13 @@ export function safeExecute(func: Function, params = []) {
   return res;
 }
 
-export function parseFunction(source: any, params: string[] = []): Function {
+export function parseFunction(source: any, params: string[] = ['def']): Function {
   let res = null;
   if (source?.length) {
     try {
       res = new Function(...params, source);
     }
     catch (err) {
-      console.error(err);
       res = null;
     }
   }
@@ -537,17 +536,24 @@ export function parseTemplate(template: string, data: object, translateFn?: (key
         template = template.replace(match, translateFn(match.match(translateRegexp)[1]));
       });
     }
+    /*
     const expressions = template.match(/\{(.*?)\}/g);
     if (expressions) {
-      const clearMatches = template.match(/(.)/g);
+      const clearMatches = template.match(/\$\{([^}]*?)\}/g);
       for (const key in data) {
         if (!key.includes('|'))
-          variables += `let ${key} = '${clearMatches[key] ? padValue(data[key], +clearMatches[key]) : data[key]}';`;
+          variables += `var ${key} = '${clearMatches[key] ? padValue(data[key], +clearMatches[key]) : data[key]}';`;
       }
       template = template.replace(/\:\d+\}/g, '}');
+      const interpolator = new Interpolator({delimeter: ['${', '}']});
+       interpolator.parse(template, data);
       res = safeExecute(parseFunction(variables + ' return' + '`' + template + '`'));
     }
-    else res = template;
+    else res = template;*/
+    const compiled = _.template(template, {
+      interpolate: /${([\s\S]+?)}/g
+    });
+    res = compiled(data)
   }
   catch (ex) {
     console.log(ex, variables, template)

@@ -42,7 +42,7 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Type } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { UtilsService } from '@app/core/services/utils.service';
+import { UtilsService } from '@core/services/utils.service';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
@@ -85,26 +85,27 @@ export class MapWidgetController implements MapWidgetInterface {
     public static getProvidersSchema(mapProvider: MapProviders) {
         mapProviderSchema.schema.properties.provider.default = mapProvider;
         return mergeSchemes([mapProviderSchema,
-            ...Object.values(providerSets)?.map(
-                (setting: IProvider) => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
+            ...Object.keys(providerSets)?.map(
+                (key: string) => { const setting = providerSets[key]; return addCondition(setting?.schema, `model.provider === '${setting.name}'`) })]);
     }
 
     public static settingsSchema(mapProvider: MapProviders, drawRoutes: boolean): JsonSettingsSchema {
         const schema = initSchema();
         addToSchema(schema, this.getProvidersSchema(mapProvider));
-       if(mapProvider!=='image-map'){
+        if (mapProvider !== 'image-map') {
             addGroupInfo(schema, 'Map Provider Settings');
-        addToSchema(schema, mergeSchemes([commonMapSettingsSchema, addCondition(mapPolygonSchema, 'model.showPolygon === true')]));
-        addGroupInfo(schema, 'Common Map Settings');
-        if (drawRoutes) {
-            addToSchema(schema, routeMapSettingsSchema);
-            addGroupInfo(schema, 'Route Map Settings');
-        } else if (mapProvider !== 'image-map') {
-            const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
-                addCondition(markerClusteringSettingsSchemaLeaflet, `model.useClusterMarkers === true`)])
-            addToSchema(schema, clusteringSchema);
-            addGroupInfo(schema, 'Markers Clustering Settings');
-        }}
+            addToSchema(schema, mergeSchemes([commonMapSettingsSchema, addCondition(mapPolygonSchema, 'model.showPolygon === true')]));
+            addGroupInfo(schema, 'Common Map Settings');
+            if (drawRoutes) {
+                addToSchema(schema, routeMapSettingsSchema);
+                addGroupInfo(schema, 'Route Map Settings');
+            } else if (mapProvider !== 'image-map') {
+                const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
+                    addCondition(markerClusteringSettingsSchemaLeaflet, `model.useClusterMarkers === true`)])
+                addToSchema(schema, clusteringSchema);
+                addGroupInfo(schema, 'Markers Clustering Settings');
+            }
+        }
         return schema;
     }
 
@@ -125,7 +126,7 @@ export class MapWidgetController implements MapWidgetInterface {
         };
     }
 
-    translate = (key: string, defaultTranslation?: string):string => {
+    translate = (key: string, defaultTranslation?: string): string => {
         return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
             || this.ctx.$injector.get(TranslateService).instant(key));
     }
@@ -143,7 +144,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     private onCustomAction(descriptor: WidgetActionDescriptor, $event: any) {
-        if ($event & $event.stopPropagation) {
+        if ($event && $event.stopPropagation) {
             $event?.stopPropagation();
         }
         //  safeExecute(parseFunction(descriptor.customFunction, ['$event', 'widgetContext']), [$event, this.ctx])
