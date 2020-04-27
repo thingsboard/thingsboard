@@ -16,8 +16,11 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 
@@ -25,11 +28,21 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 @Slf4j
 public class DeviceUpdateMsgConstructor {
 
+    @Autowired
+    private DeviceCredentialsService deviceCredentialsService;
+
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
+        DeviceCredentials deviceCredentials
+                = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setName(device.getName())
-                .setType(device.getType());
+                .setType(device.getType())
+                .setCredentialsType(deviceCredentials.getCredentialsType().name())
+                .setCredentialsId(deviceCredentials.getCredentialsId());
+        if (deviceCredentials.getCredentialsValue() != null) {
+            builder.setCredentialsValue(deviceCredentials.getCredentialsValue());
+        }
         return builder.build();
     }
 }

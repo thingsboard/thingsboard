@@ -565,6 +565,7 @@ public abstract class BaseController {
         }
         if (e == null) {
             pushEntityActionToRuleEngine(entityId, entity, user, customerId, actionType, additionalInfo);
+            // TODO: voba - refactor to push events to edge queue directly, instead of the rule engine flow
         }
         auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }
@@ -610,6 +611,10 @@ public abstract class BaseController {
                 break;
             case UNASSIGNED_FROM_EDGE:
                 msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
+                break;
+            case CREDENTIALS_UPDATED:
+                //TODO: voba - this is not efficient way to do this. Refactor on later stages
+                msgType = DataConstants.ENTITY_UPDATED;
                 break;
         }
         if (!StringUtils.isEmpty(msgType)) {

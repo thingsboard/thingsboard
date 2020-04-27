@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.dao.edge;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;

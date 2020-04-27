@@ -160,6 +160,9 @@ message DeviceUpdateMsg {
   UpdateMsgType msgType = 1;
   string name = 2;
   string type = 3;
+  string credentialsType = 4;
+  string credentialsId = 5;
+  string credentialsValue = 6;
 }
 
 message AssetUpdateMsg {
