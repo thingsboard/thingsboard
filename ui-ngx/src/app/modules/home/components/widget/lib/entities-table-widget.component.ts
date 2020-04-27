@@ -43,9 +43,8 @@ import { deepClone, isDefined, isNumber } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
-import { DataSource } from '@angular/cdk/collections';
+import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { CollectionViewer } from '@angular/cdk/collections';
 import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -55,20 +54,21 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
-    CellContentInfo,
-    CellStyleInfo,
-    constructTableCssString,
-    DisplayColumn,
-    EntityColumn,
-    EntityData,
-    fromEntityColumnDef,
-    getCellContentInfo,
-    getCellStyleInfo,
-    getColumnWidth,
-    getEntityValue,
-    TableWidgetDataKeySettings,
-    TableWidgetSettings,
-    toEntityColumnDef, widthStyle
+  CellContentInfo,
+  CellStyleInfo,
+  constructTableCssString,
+  DisplayColumn,
+  EntityColumn,
+  EntityData,
+  fromEntityColumnDef,
+  getCellContentInfo,
+  getCellStyleInfo,
+  getColumnWidth,
+  getEntityValue,
+  TableWidgetDataKeySettings,
+  TableWidgetSettings,
+  toEntityColumnDef,
+  widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';

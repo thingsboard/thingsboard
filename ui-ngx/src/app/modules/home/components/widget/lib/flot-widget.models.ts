@@ -17,7 +17,7 @@
 // tslint:disable-next-line:no-reference
 /// <reference path="../../../../../../../src/typings/jquery.flot.typings.d.ts" />
 
-import { JsonSettingsSchema, DataKey, DatasourceData, Datasource } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceData, JsonSettingsSchema } from '@shared/models/widget.models';
 import * as moment_ from 'moment';
 
 export declare type ChartType = 'line' | 'pie' | 'bar' | 'state' | 'graph';

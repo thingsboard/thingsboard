@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import {Directive, Input, OnInit, OnDestroy, ElementRef} from '@angular/core';
-import {Hotkey, ExtendedKeyboardEvent} from 'angular2-hotkeys';
+import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Hotkey } from 'angular2-hotkeys';
 import 'mousetrap';
 import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 

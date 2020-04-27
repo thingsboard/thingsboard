@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { interval } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { HistorySelectSettings } from '@app/modules/home/components/widget/lib/maps/map-models';

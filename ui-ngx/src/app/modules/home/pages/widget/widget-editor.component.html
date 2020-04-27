@@ -124,7 +124,7 @@
                          fxLayoutAlign="start center"
                          *ngFor="let resource of widget.resources; let i = index" >
                       <mat-form-field fxFlex class="mat-block resource-field" floatLabel="never"
-                                      style="margin: 10px 0px 0px 0px; max-height: 40px;">
+                                      style="margin: 10px 0 0 0; max-height: 40px;">
                         <input required matInput [(ngModel)]="resource.url"
                                (ngModelChange)="isDirty = true"
                                placeholder="{{ 'widget.resource-url' | translate }}"/>

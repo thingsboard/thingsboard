@@ -16,15 +16,14 @@
 
 import { BaseData, HasId } from '@shared/models/base-data';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, ContentChildren, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren, Directive } from '@angular/core';
+import { AfterViewInit, Directive, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { MatTab } from '@angular/material/tabs';
-import { EntityAction } from '@home/models/entity/entity-component.models';
 import { BehaviorSubject } from 'rxjs';
 import { Authority } from '@app/shared/models/authority.enum';
-import { selectAuthUser, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { AuthUser } from '@shared/models/user.model';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AuditLogMode } from '@shared/models/audit-log.models';
@@ -35,6 +34,7 @@ import { NgForm } from '@angular/forms';
 import { PageLink } from '@shared/models/page/page-link';
 
 @Directive()
+// tslint:disable-next-line:directive-class-suffix
 export abstract class EntityTabsComponent<T extends BaseData<HasId>,
   P extends PageLink = PageLink,
   L extends BaseData<HasId> = T,

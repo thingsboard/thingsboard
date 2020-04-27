@@ -26,8 +26,10 @@ import {
   DashboardConfiguration,
   DashboardLayoutId,
   DashboardLayoutInfo,
-  DashboardLayoutsInfo, DashboardState,
-  DashboardStateLayouts, GridSettings,
+  DashboardLayoutsInfo,
+  DashboardState,
+  DashboardStateLayouts,
+  GridSettings,
   WidgetLayout
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';

@@ -14,19 +14,15 @@
 /// limitations under the License.
 ///
 
-import {Component, Inject, OnInit, SkipSelf} from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import {PageComponent} from '@shared/components/page.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm} from '@angular/forms';
-import {EntityType} from '@shared/models/entity-type.models';
-import {DashboardService} from '@core/http/dashboard.service';
-import {forkJoin, Observable} from 'rxjs';
-import {DashboardInfo} from '@app/shared/models/dashboard.models';
-import {ActionNotificationShow} from '@core/notification/notification.actions';
-import {TranslateService} from '@ngx-translate/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { FormBuilder } from '@angular/forms';
+import { DashboardService } from '@core/http/dashboard.service';
+import { DashboardInfo } from '@app/shared/models/dashboard.models';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { TranslateService } from '@ngx-translate/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 

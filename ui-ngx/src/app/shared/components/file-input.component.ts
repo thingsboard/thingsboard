@@ -22,7 +22,8 @@ import {
   Input,
   OnChanges,
   OnDestroy,
-  Output, SimpleChanges,
+  Output,
+  SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';

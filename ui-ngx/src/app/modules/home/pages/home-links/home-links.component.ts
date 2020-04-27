@@ -15,9 +15,6 @@
 ///
 
 import { Component, OnInit } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { PageComponent } from '@shared/components/page.component';
 import { MenuService } from '@core/services/menu.service';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';

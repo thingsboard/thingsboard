@@ -15,11 +15,14 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
-import { NodeScriptTestDialogComponent, NodeScriptTestDialogData } from '@shared/components/dialog/node-script-test-dialog.component';
+import {
+  NodeScriptTestDialogComponent,
+  NodeScriptTestDialogData
+} from '@shared/components/dialog/node-script-test-dialog.component';
 
 @Injectable({
   providedIn: 'root'

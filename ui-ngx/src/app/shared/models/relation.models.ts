@@ -16,7 +16,6 @@
 
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { ActionStatus } from '@shared/models/audit-log.models';
 
 export const CONTAINS_TYPE = 'Contains';
 export const MANAGES_TYPE = 'Manages';

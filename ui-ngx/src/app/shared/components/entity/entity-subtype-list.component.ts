@@ -14,44 +14,21 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterContentInit,
-  AfterViewInit,
-  Component,
-  ElementRef,
-  forwardRef,
-  Input, OnDestroy,
-  OnInit,
-  SkipSelf,
-  ViewChild
-} from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormGroupDirective,
-  NG_VALUE_ACCESSOR, NgForm, Validators
-} from '@angular/forms';
-import { Observable, of, Subscription, throwError } from 'rxjs';
-import { map, mergeMap, startWith, tap, share, pairwise, filter, publishReplay, refCount } from 'rxjs/operators';
-import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
-import {TranslateService} from '@ngx-translate/core';
-import { AliasEntityType, EntitySubtype, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import {BaseData} from '@shared/models/base-data';
-import {EntityId} from '@shared/models/id/entity-id';
-import {EntityService} from '@core/http/entity.service';
+import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Observable, Subscription, throwError } from 'rxjs';
+import { map, mergeMap, publishReplay, refCount, share } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import { AppState } from '@app/core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { EntitySubtype, EntityType } from '@shared/models/entity-type.models';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipList } from '@angular/material/chips';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { emptyPageData } from '@shared/models/page/page-data';
 import { AssetService } from '@core/http/asset.service';
 import { DeviceService } from '@core/http/device.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { BroadcastService } from '@core/services/broadcast.service';
-import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 
 @Component({

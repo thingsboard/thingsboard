@@ -16,7 +16,8 @@
 
 import * as CanvasGauges from 'canvas-gauges';
 import {
-  AnalogueRadialGaugeSettings, getAnalogueRadialGaugeSettingsSchema
+  AnalogueRadialGaugeSettings,
+  getAnalogueRadialGaugeSettingsSchema
 } from '@home/components/widget/lib/analogue-radial-gauge.models';
 import { JsonSettingsSchema } from '@shared/models/widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';

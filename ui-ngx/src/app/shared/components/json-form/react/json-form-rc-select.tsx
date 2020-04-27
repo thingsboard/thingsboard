@@ -15,7 +15,7 @@
  */
 import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
-import Select, {Option} from 'rc-select';
+import Select, { Option } from 'rc-select';
 import {
   JsonFormFieldProps,
   JsonFormFieldState,

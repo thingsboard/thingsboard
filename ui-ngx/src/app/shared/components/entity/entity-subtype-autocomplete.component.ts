@@ -14,27 +14,19 @@
 /// limitations under the License.
 ///
 
-import {AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild, OnDestroy} from '@angular/core';
-import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {Observable, of, throwError, Subscription} from 'rxjs';
-import {PageLink} from '@shared/models/page/page-link';
-import {Direction} from '@shared/models/page/sort-order';
-import {filter, map, mergeMap, publishReplay, refCount, startWith, tap, publish} from 'rxjs/operators';
-import {PageData, emptyPageData} from '@shared/models/page/page-data';
-import {DashboardInfo} from '@app/shared/models/dashboard.models';
-import {DashboardId} from '@app/shared/models/id/dashboard-id';
-import {DashboardService} from '@core/http/dashboard.service';
-import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
-import {getCurrentAuthUser} from '@app/core/auth/auth.selectors';
-import {Authority} from '@shared/models/authority.enum';
-import {TranslateService} from '@ngx-translate/core';
-import {DeviceService} from '@core/http/device.service';
-import {EntitySubtype, EntityType} from '@app/shared/models/entity-type.models';
-import {BroadcastService} from '@app/core/services/broadcast.service';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {AssetService} from '@core/http/asset.service';
-import {EntityViewService} from '@core/http/entity-view.service';
+import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Observable, Subscription, throwError } from 'rxjs';
+import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import { AppState } from '@app/core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { DeviceService } from '@core/http/device.service';
+import { EntitySubtype, EntityType } from '@app/shared/models/entity-type.models';
+import { BroadcastService } from '@app/core/services/broadcast.service';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { AssetService } from '@core/http/asset.service';
+import { EntityViewService } from '@core/http/entity-view.service';
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',

@@ -55,7 +55,7 @@
       </mat-error>
     </mat-form-field>
     <div fxLayout="column" fxLayoutAlign="center" fxFlex="60" *ngIf="valueType === valueTypeEnum.BOOLEAN">
-      <mat-checkbox [disabled]="disabled" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()" style="margin-bottom: 0px;">
+      <mat-checkbox [disabled]="disabled" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()" style="margin-bottom: 0;">
         {{ (modelValue ? 'value.true' : 'value.false') | translate }}
       </mat-checkbox>
     </div>

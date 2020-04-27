@@ -15,13 +15,13 @@
 ///
 
 import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
-import { Widget, widgetType, WidgetPosition } from '@app/shared/models/widget.models';
+import { Widget, WidgetPosition, widgetType } from '@app/shared/models/widget.models';
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
 import { guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
-import { IterableDiffer, KeyValueDiffer, NgZone } from '@angular/core';
+import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 
 export interface WidgetsData {

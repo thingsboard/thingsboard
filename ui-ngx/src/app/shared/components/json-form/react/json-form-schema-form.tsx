@@ -33,11 +33,12 @@ import ThingsboardCheckbox from './json-form-checkbox';
 import ThingsboardHelp from './json-form-help';
 import ThingsboardFieldSet from './json-form-fieldset';
 import ThingsboardIcon from './json-form-icon';
-import { JsonFormProps, JsonFormData, onChangeFn, OnColorClickFn, OnIconClickFn } from './json-form.models';
+import { JsonFormData, JsonFormProps, onChangeFn, OnColorClickFn, OnIconClickFn } from './json-form.models';
 
 import _ from 'lodash';
 import * as tinycolor_ from 'tinycolor2';
 import { GroupInfo } from '@shared/models/widget.models';
+
 const tinycolor = tinycolor_;
 
 class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
