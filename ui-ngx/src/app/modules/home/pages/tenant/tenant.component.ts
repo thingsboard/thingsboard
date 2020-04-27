@@ -69,6 +69,20 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
   }
 
+  updateFormState() {
+    if (this.entityForm) {
+      if (this.isEditValue) {
+        this.entityForm.enable({emitEvent: false});
+        if (!this.isAdd) {
+          this.entityForm.get('isolatedTbCore').disable({emitEvent: false});
+          this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
+        }
+      } else {
+        this.entityForm.disable({emitEvent: false});
+      }
+    }
+  }
+
   onTenantIdCopied(event) {
     this.store.dispatch(new ActionNotificationShow(
       {
