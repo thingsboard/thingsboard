@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #entityAliasesForm="ngForm" [formGroup]="entityAliasesFormGroup" (ngSubmit)="save()" style="width: 700px;">
+<form [formGroup]="entityAliasesFormGroup" (ngSubmit)="save()" style="width: 700px;">
   <mat-toolbar color="primary">
     <h2>{{ title | translate }}</h2>
     <span fxFlex></span>

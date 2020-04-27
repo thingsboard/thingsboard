@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #saveWidgetTypeAsForm="ngForm" [formGroup]="saveWidgetTypeAsFormGroup" (ngSubmit)="saveAs()">
+<form [formGroup]="saveWidgetTypeAsFormGroup" (ngSubmit)="saveAs()">
   <mat-toolbar color="primary">
     <h2 translate>widget.save-widget-type-as</h2>
     <span fxFlex></span>
@@ -48,8 +48,8 @@
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || saveWidgetTypeAsForm.invalid
-            || !saveWidgetTypeAsForm.dirty">
+            [disabled]="(isLoading$ | async) || saveWidgetTypeAsFormGroup.invalid
+            || !saveWidgetTypeAsFormGroup.dirty">
       {{ 'action.saveAs' | translate }}
     </button>
     <button mat-button color="primary"

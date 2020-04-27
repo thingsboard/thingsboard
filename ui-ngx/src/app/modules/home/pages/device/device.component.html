@@ -74,7 +74,7 @@
        [fxShow]="!isEdit && entity?.customerIsPublic && (deviceScope === 'customer' || deviceScope === 'tenant')">
     {{ 'device.device-public' | translate }}
   </div>
-  <form #entityNgForm="ngForm" [formGroup]="entityForm">
+  <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>device.name</mat-label>

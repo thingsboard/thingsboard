@@ -16,7 +16,6 @@
 
 -->
 <form #formContainer class="tb-multiple-input"
-      #multipleInputForm="ngForm"
       [formGroup]="multipleInputFormGroup"
       tb-toast toastTarget="{{ toastTargetId }}"
       (ngSubmit)="save()" novalidate autocomplete="off">
@@ -103,12 +102,12 @@
          *ngIf="entityDetected && settings.showActionButtons">
       <button mat-button color="primary" type="button"
               (click)="discardAll()" style="max-height: 50px; margin-right:20px;"
-              [disabled]="!multipleInputForm.dirty">
+              [disabled]="!multipleInputFormGroup.dirty">
         {{ 'action.undo' | translate }}
       </button>
       <button mat-button mat-raised-button color="primary" type="submit"
                  style="max-height: 50px; margin-right:20px;"
-                 [disabled]="!multipleInputForm.dirty || multipleInputForm.invalid">
+                 [disabled]="!multipleInputFormGroup.dirty || multipleInputFormGroup.invalid">
         {{ 'action.save' | translate }}
       </button>
     </div>

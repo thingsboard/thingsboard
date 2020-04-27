@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #entityAliasForm="ngForm" [formGroup]="entityAliasFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+<form [formGroup]="entityAliasFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
   <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'alias.add' : 'alias.edit') | translate }}</h2>
     <span fxFlex></span>

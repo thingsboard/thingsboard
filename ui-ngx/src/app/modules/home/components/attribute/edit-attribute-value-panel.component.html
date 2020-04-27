@@ -15,8 +15,7 @@
     limitations under the License.
 
 -->
-<form #attributeForm="ngForm"
-      class="mat-elevation-z1"
+<form class="mat-elevation-z1"
       [formGroup]="attributeFormGroup" (ngSubmit)="update()" style="width: 400px; padding: 5px;">
   <fieldset [disabled]="isLoading$ | async">
     <tb-value-input

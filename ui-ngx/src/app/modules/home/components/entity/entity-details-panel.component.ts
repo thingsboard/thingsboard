@@ -37,7 +37,7 @@ import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityType, EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
-import { NgForm } from '@angular/forms';
+import { FormGroup, NgForm } from '@angular/forms';
 import { EntityComponent } from './entity.component';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
@@ -68,7 +68,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
 
   entityTabsComponentRef: ComponentRef<EntityTabsComponent<BaseData<HasId>>>;
   entityTabsComponent: EntityTabsComponent<BaseData<HasId>>;
-  detailsForm: NgForm;
+  detailsForm: FormGroup;
 
   entitiesTableConfigValue: EntityTableConfig<BaseData<HasId>>;
   isEditValue = false;
@@ -189,7 +189,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
     this.entityComponentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
     this.entityComponent = this.entityComponentRef.instance;
     this.entityComponent.isEdit = this.isEdit;
-    this.detailsForm = this.entityComponent.entityNgForm;
+    this.detailsForm = this.entityComponent.entityForm;
     this.subscriptions.push(this.entityComponent.entityAction.subscribe((action) => {
       this.entityAction.emit(action);
     }));

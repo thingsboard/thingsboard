@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #widgetForm="ngForm" [formGroup]="widgetFormGroup">
+<form [formGroup]="widgetFormGroup">
   <fieldset [disabled]="isLoading$ | async">
     <tb-widget-config
       [aliasController]="aliasController"

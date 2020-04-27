@@ -58,7 +58,7 @@
   </div>
 </div>
 <div class="mat-padding" fxLayout="column">
-  <form #entityNgForm="ngForm" [formGroup]="entityForm">
+  <form [formGroup]="entityForm">
     <fieldset [fxShow]="!isPublic" [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>customer.title</mat-label>

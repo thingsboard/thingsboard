@@ -49,8 +49,6 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
   @Input()
   widgetLayout: WidgetLayout;
 
-  @ViewChild('widgetForm', {static: true}) widgetForm: NgForm;
-
   widgetFormGroup: FormGroup;
 
   widgetConfig: WidgetConfigComponentData;
