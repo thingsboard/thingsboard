@@ -62,19 +62,21 @@ export function mergeSchemes(schemes: JsonSettingsSchema[]): JsonSettingsSchema 
     }, initSchema());
 }
 
-export function addCondition(schema: JsonSettingsSchema, condition: string): JsonSettingsSchema {
+export function addCondition(schema: JsonSettingsSchema, condition: string, exclude: string[] = []): JsonSettingsSchema {
     schema.form = schema.form.map(element => {
-        if (typeof element === 'string') {
-            return {
-                key: element,
-                condition
+        if (!exclude.includes(element)) {
+            if (typeof element === 'string') {
+                return {
+                    key: element,
+                    condition
+                }
             }
-        }
-        if (typeof element === 'object') {
-            if (element.condition) {
-                element.condition += ' && ' + condition
+            if (typeof element === 'object') {
+                if (element.condition) {
+                    element.condition += ' && ' + condition
+                }
+                else element.condition = condition;
             }
-            else element.condition = condition;
         }
         return element;
     });

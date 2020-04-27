@@ -94,21 +94,20 @@ export class MapWidgetController implements MapWidgetInterface {
     public static settingsSchema(mapProvider: MapProviders, drawRoutes: boolean): JsonSettingsSchema {
         const schema = initSchema();
         addToSchema(schema, this.getProvidersSchema(mapProvider));
-        if (mapProvider !== 'image-map') {
-            addGroupInfo(schema, 'Map Provider Settings');
-            addToSchema(schema, commonMapSettingsSchema);
-            addGroupInfo(schema, 'Common Map Settings');
-            addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true'));
-            addGroupInfo(schema, 'Polygon Settings');
-            if (drawRoutes) {
-                addToSchema(schema, routeMapSettingsSchema);
-                addGroupInfo(schema, 'Route Map Settings');
-            } else if (mapProvider !== 'image-map') {
-                const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
-                    addCondition(markerClusteringSettingsSchemaLeaflet, `model.useClusterMarkers === true`)])
-                addToSchema(schema, clusteringSchema);
-                addGroupInfo(schema, 'Markers Clustering Settings');
-            }
+        addGroupInfo(schema, 'Map Provider Settings');
+        addToSchema(schema, addCondition(commonMapSettingsSchema, 'model.provider !== "image-map"'));
+        addGroupInfo(schema, 'Common Map Settings');
+        addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon=== true', ['showPolygon']));
+        addGroupInfo(schema, 'Polygon Settings');
+        if (drawRoutes) {
+            addToSchema(schema, routeMapSettingsSchema);
+            addGroupInfo(schema, 'Route Map Settings');
+        } else {
+            const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
+                addCondition(markerClusteringSettingsSchemaLeaflet,
+                    `model.useClusterMarkers === true && model.provider !== "image-map"`)])
+            addToSchema(schema, clusteringSchema);
+            addGroupInfo(schema, 'Markers Clustering Settings');
         }
         return schema;
     }
@@ -162,7 +161,6 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     setMarkerLocation = (e) => {
-        console.log("setMarkerLocation -> e", e)
         const attributeService = this.ctx.$injector.get(AttributeService);
 
         const entityId: EntityId = {
@@ -186,7 +184,7 @@ export class MapWidgetController implements MapWidgetInterface {
     initSettings(settings: UnitedMapSettings): UnitedMapSettings {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
-        if (!settings.mapProviderHere) {
+        if (this.provider === MapProviders.here && !settings.mapProviderHere) {
             if (settings.mapProvider && hereProviders.includes(settings.mapProvider))
                 settings.mapProviderHere = settings.mapProvider
             else settings.mapProviderHere = hereProviders[0];
