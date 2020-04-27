@@ -70,6 +70,8 @@ services:
       - kafka
       - redis
       - tb-js-executor
+      - tb-rule-engine1
+      - tb-rule-engine2
   tb-core2:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
@@ -92,6 +94,8 @@ services:
       - kafka
       - redis
       - tb-js-executor
+      - tb-rule-engine1
+      - tb-rule-engine2
   tb-rule-engine1:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"

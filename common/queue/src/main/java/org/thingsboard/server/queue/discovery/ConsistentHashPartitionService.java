@@ -30,6 +30,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 
 import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
@@ -61,6 +62,7 @@ public class ConsistentHashPartitionService implements PartitionService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TenantRoutingInfoService tenantRoutingInfoService;
+    private final TbQueueRuleEngineSettings tbQueueRuleEngineSettings;
     private final ConcurrentMap<ServiceQueue, String> partitionTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<ServiceQueue, Integer> partitionSizes = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, TenantRoutingInfo> tenantRoutingInfoMap = new ConcurrentHashMap<>();
@@ -74,10 +76,14 @@ public class ConsistentHashPartitionService implements PartitionService {
 
     private HashFunction hashFunction;
 
-    public ConsistentHashPartitionService(TbServiceInfoProvider serviceInfoProvider, TenantRoutingInfoService tenantRoutingInfoService, ApplicationEventPublisher applicationEventPublisher) {
+    public ConsistentHashPartitionService(TbServiceInfoProvider serviceInfoProvider,
+                                          TenantRoutingInfoService tenantRoutingInfoService,
+                                          ApplicationEventPublisher applicationEventPublisher,
+                                          TbQueueRuleEngineSettings tbQueueRuleEngineSettings) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.tenantRoutingInfoService = tenantRoutingInfoService;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.tbQueueRuleEngineSettings = tbQueueRuleEngineSettings;
     }
 
     @PostConstruct
@@ -85,6 +91,10 @@ public class ConsistentHashPartitionService implements PartitionService {
         this.hashFunction = forName(hashFunctionName);
         partitionSizes.put(new ServiceQueue(ServiceType.TB_CORE), corePartitions);
         partitionTopics.put(new ServiceQueue(ServiceType.TB_CORE), coreTopic);
+        tbQueueRuleEngineSettings.getQueues().forEach(queueConfiguration -> {
+            partitionTopics.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getTopic());
+            partitionSizes.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getPartitions());
+        });
     }
 
     @Override
