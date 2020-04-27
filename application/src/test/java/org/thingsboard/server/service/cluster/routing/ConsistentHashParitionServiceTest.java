@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cluster.routing;
 
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +32,8 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
+import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,6 +44,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
@@ -52,6 +56,7 @@ public class ConsistentHashParitionServiceTest {
     private TbServiceInfoProvider discoveryService;
     private TenantRoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
+    private TbQueueRuleEngineSettings ruleEngineSettings;
 
     private String hashFunctionName = "murmur3_128";
     private Integer virtualNodesSize = 16;
@@ -62,12 +67,15 @@ public class ConsistentHashParitionServiceTest {
         discoveryService = mock(TbServiceInfoProvider.class);
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
         routingInfoService = mock(TenantRoutingInfoService.class);
-        clusterRoutingService = new ConsistentHashPartitionService(discoveryService, routingInfoService, applicationEventPublisher);
+        ruleEngineSettings = mock(TbQueueRuleEngineSettings.class);
+        clusterRoutingService = new ConsistentHashPartitionService(discoveryService,
+                routingInfoService,
+                applicationEventPublisher,
+                ruleEngineSettings
+        );
+        when(ruleEngineSettings.getQueues()).thenReturn(Collections.emptyList());
         ReflectionTestUtils.setField(clusterRoutingService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(clusterRoutingService, "corePartitions", 3);
-        ReflectionTestUtils.setField(clusterRoutingService, "ruleEngineTopic", "tb.rule-engine");
-        ReflectionTestUtils.setField(clusterRoutingService, "ruleEnginePartitions", 100);
-
         ReflectionTestUtils.setField(clusterRoutingService, "hashFunctionName", hashFunctionName);
         ReflectionTestUtils.setField(clusterRoutingService, "virtualNodesSize", virtualNodesSize);
         TransportProtos.ServiceInfo currentServer = TransportProtos.ServiceInfo.newBuilder()
@@ -107,8 +115,9 @@ public class ConsistentHashParitionServiceTest {
         List<Map.Entry<Integer, Integer>> data = map.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue)).collect(Collectors.toList());
         long end = System.currentTimeMillis();
         double diff = (data.get(data.size() - 1).getValue() - data.get(0).getValue());
-        System.out.println("Size: " + virtualNodesSize + " Time: " + (end - start) + " Diff: " + diff + "(" + String.format("%f", (diff / ITERATIONS) * 100.0) + "%)");
-
+        double diffPercent = (diff / ITERATIONS) * 100.0;
+        System.out.println("Size: " + virtualNodesSize + " Time: " + (end - start) + " Diff: " + diff + "(" + String.format("%f", diffPercent) + "%)");
+        Assert.assertTrue(diffPercent < 0.5);
         for (Map.Entry<Integer, Integer> entry : data) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
