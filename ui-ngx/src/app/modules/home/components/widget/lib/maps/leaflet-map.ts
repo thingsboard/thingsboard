@@ -294,6 +294,9 @@ export default abstract class LeafletMap {
         }
     }
 
+    setImageAlias(alias:Observable<any>){       
+    }
+
     // Polyline
 
     updatePolylines(polyData: FormattedData[][]) {
@@ -323,7 +326,7 @@ export default abstract class LeafletMap {
 
     updatePolyline(key: string, data: FormattedData[], dataSources: FormattedData[], settings: PolylineSettings) {
         this.ready$.subscribe(() => {
-            this.polylines.get(key).updatePolyline(settings, data, dataSources);
+            this.polylines.get(key).updatePolyline(settings, data.map(el => this.convertPosition(el)), dataSources);
         });
     }
 

@@ -33,12 +33,12 @@ import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.inter
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
 import { parseFunction, parseArray, parseData, safeExecute, parseWithTranslation } from '@core/utils';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, Observable } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition } from './maps-utils';
-import { JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
+import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Type } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -48,7 +48,7 @@ import { UtilsService } from '@core/services/utils.service';
 export class MapWidgetController implements MapWidgetInterface {
 
     constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
-        console.log("MapWidgetController -> constructor -> ctx", ctx)
+        console.log('MapWidgetController -> constructor -> ctx', ctx)
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -70,6 +70,7 @@ export class MapWidgetController implements MapWidgetInterface {
         }
         parseWithTranslation.setTranslate(this.translate);
         this.map = new MapClass($element, this.settings);
+        this.map.setImageAlias(this.subscribeForImageAttribute());
         this.map.saveMarkerLocation = this.setMarkerLocation;
     }
 
@@ -84,7 +85,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     public static getProvidersSchema(mapProvider: MapProviders) {
-        console.log("MapWidgetController -> getProvidersSchema -> mapProvider", mapProvider)
+        console.log('MapWidgetController -> getProvidersSchema -> mapProvider', mapProvider)
         mapProviderSchema.schema.properties.provider.default = mapProvider;
         return mergeSchemes([mapProviderSchema,
             ...Object.keys(providerSets)?.map(
@@ -225,6 +226,44 @@ export class MapWidgetController implements MapWidgetInterface {
     resize() {
         this.map?.invalidateSize();
         this.map.onResize();
+    }
+
+    subscribeForImageAttribute() {
+        const imageEntityAlias = this.settings.imageEntityAlias;
+        const imageUrlAttribute = this.settings.imageUrlAttribute;
+        if (!imageEntityAlias || !imageUrlAttribute) {
+            return of(false);
+        }
+        const entityAliasId = this.ctx.aliasController.getEntityAliasId(imageEntityAlias);
+        if (!entityAliasId) {
+            return of(false);
+        }
+        const datasources = [
+            {
+                type: DatasourceType.entity,
+                name: imageEntityAlias,
+                aliasName: imageEntityAlias,
+                entityAliasId,
+                dataKeys: [
+                    {
+                        type: DataKeyType.attribute,
+                        name: imageUrlAttribute,
+                        label: imageUrlAttribute,
+                        settings: {},
+                        _hash: Math.random()
+                    }
+                ]
+            }
+        ];
+        const imageUrlSubscriptionOptions = {
+            datasources,
+            useDashboardTimewindow: false,
+            type: widgetType.latest,
+            callbacks: {
+                onDataUpdated: (subscription, apply) => { }
+            }
+        };
+        return this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true);
     }
 
     onDestroy() {

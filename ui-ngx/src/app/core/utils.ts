@@ -224,7 +224,7 @@ function scrollParents(node: Node): Node[] {
 function hashCode(str) {
   let hash = 0;
   let i, char;
-  if (str.length == 0) return hash;
+  if (str.length === 0) return hash;
   for (i = 0; i < str.length; i++) {
     char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;

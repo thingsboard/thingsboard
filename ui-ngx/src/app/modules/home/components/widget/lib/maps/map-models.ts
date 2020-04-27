@@ -23,6 +23,7 @@ export type MapSettings = {
     polygonKeyName: any;
     draggableMarker: boolean;
     initCallback?: () => any;
+    posFunction: (rigXPos, origYPos) => { x, y };
     defaultZoomLevel?: number;
     disableScrollZooming?: boolean;
     minZoomLevel?: number;
@@ -31,6 +32,8 @@ export type MapSettings = {
     lngKeyName?: string;
     xPosKeyName?: string;
     yPosKeyName?: string;
+    imageEntityAlias: string;
+    imageUrlAttribute: string;
     mapProvider: MapProviders;
     mapProviderHere: string;
     mapUrl?: string;

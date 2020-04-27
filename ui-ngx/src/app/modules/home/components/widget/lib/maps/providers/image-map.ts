@@ -17,7 +17,9 @@
 import L, { LatLngLiteral } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { MapSettings, UnitedMapSettings } from '../map-models';
-import { aspectCache } from '@app/core/utils';
+import { aspectCache, parseFunction } from '@app/core/utils';
+import { Observable } from 'rxjs';
+import { skipLast, map, filter, switchMap } from 'rxjs/operators';
 
 const maxZoom = 4;// ?
 
@@ -30,12 +32,21 @@ export class ImageMap extends LeafletMap {
 
     constructor($container: HTMLElement, options: UnitedMapSettings) {
         super($container, options);
+        options.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((rigXPos, origYPos) => { x, y });
         aspectCache(options.mapUrl).subscribe(aspect => {
             this.aspect = aspect;
             this.onResize();
             super.setMap(this.map);
             super.initSettings(options);
         });
+    }
+
+    setImageAlias(alias: Observable<any>) {
+        alias.pipe(filter(result => result),
+            map(subscription => subscription.data[1])).subscribe(res => {
+                console.log("ImageMap -> setImageAlias -> res", res)
+
+            })
     }
 
     updateBounds(updateImage?, lastCenterPos?) {
@@ -116,6 +127,7 @@ export class ImageMap extends LeafletMap {
     }
 
     convertPosition(expression): L.LatLng {
+        console.log("ImageMap -> expression", expression)
         return this.pointToLatLng(
             expression[this.options.xPosKeyName] * this.width,
             expression[this.options.yPosKeyName] * this.height);
@@ -129,10 +141,10 @@ export class ImageMap extends LeafletMap {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom - 1);
     }
 
-   /* convertToCustomFormat(position: L.LatLng): object {
+    convertToCustomFormat(position: L.LatLng): object {
         return {
             [this.options.xPosKeyName]: (position.lng + 180) / 360,
             [this.options.yPosKeyName]: (position.lat + 180) / 360
         }
-    }*/
+    }
 }
