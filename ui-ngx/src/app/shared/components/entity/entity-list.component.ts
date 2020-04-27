@@ -205,10 +205,11 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   }
 
   remove(entity: BaseData<EntityId>) {
-    const index = this.entities.indexOf(entity);
+    let index = this.entities.indexOf(entity);
     if (index >= 0) {
       this.entities.splice(index, 1);
       this.entityListFormGroup.get('entities').setValue(this.entities);
+      index = this.modelValue.indexOf(entity.id.id);
       this.modelValue.splice(index, 1);
       if (!this.modelValue.length) {
         this.modelValue = null;
