@@ -48,6 +48,7 @@ import { UtilsService } from '@core/services/utils.service';
 export class MapWidgetController implements MapWidgetInterface {
 
     constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
+        console.log("MapWidgetController -> constructor -> ctx", ctx)
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -83,6 +84,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     public static getProvidersSchema(mapProvider: MapProviders) {
+        console.log("MapWidgetController -> getProvidersSchema -> mapProvider", mapProvider)
         mapProviderSchema.schema.properties.provider.default = mapProvider;
         return mergeSchemes([mapProviderSchema,
             ...Object.keys(providerSets)?.map(
@@ -94,8 +96,10 @@ export class MapWidgetController implements MapWidgetInterface {
         addToSchema(schema, this.getProvidersSchema(mapProvider));
         if (mapProvider !== 'image-map') {
             addGroupInfo(schema, 'Map Provider Settings');
-            addToSchema(schema, mergeSchemes([commonMapSettingsSchema, addCondition(mapPolygonSchema, 'model.showPolygon === true')]));
+            addToSchema(schema, commonMapSettingsSchema);
             addGroupInfo(schema, 'Common Map Settings');
+            addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true'));
+            addGroupInfo(schema, 'Polygon Settings');
             if (drawRoutes) {
                 addToSchema(schema, routeMapSettingsSchema);
                 addGroupInfo(schema, 'Route Map Settings');
@@ -127,8 +131,10 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     translate = (key: string, defaultTranslation?: string): string => {
-        return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
-            || this.ctx.$injector.get(TranslateService).instant(key));
+        if (key)
+            return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
+                || this.ctx.$injector.get(TranslateService).instant(key));
+        else return '';
     }
 
     getDescriptors(name: string): { [name: string]: ($event: Event) => void } {
@@ -156,24 +162,25 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     setMarkerLocation = (e) => {
+        console.log("setMarkerLocation -> e", e)
         const attributeService = this.ctx.$injector.get(AttributeService);
-        forkJoin(
-            this.data.filter(data => !!e[data.dataKey.name])
-                .map(data => {
-                    const entityId: EntityId = {
-                        entityType: data.datasource.entityType,
-                        id: data.datasource.entityId
-                    };
-                    return attributeService.saveEntityAttributes(
-                        entityId,
-                        AttributeScope.SHARED_SCOPE,
-                        [{
-                            key: data.dataKey.name,
-                            value: e[data.dataKey.name]
-                        }]
-                    );
-                })).subscribe(res => {
-                });
+
+        const entityId: EntityId = {
+            entityType: e.$datasource.entityType,
+            id: e.$datasource.entityId
+        };
+        const keys = e.$datasource.dataKeys.map(key => {
+            return {
+                key: key.name,
+                value: e[key.name]
+            }
+        })
+        return attributeService.saveEntityAttributes(
+            entityId,
+            AttributeScope.SHARED_SCOPE,
+            keys
+        ).subscribe(res => {
+        });
     }
 
     initSettings(settings: UnitedMapSettings): UnitedMapSettings {
@@ -214,8 +221,7 @@ export class MapWidgetController implements MapWidgetInterface {
         if (this.settings.draggableMarker) {
             this.map.setDataSources(parseData(this.data));
         }
-        else
-            this.map.updateMarkers(parseData(this.data));
+        this.map.updateMarkers(parseData(this.data));
     }
 
     resize() {

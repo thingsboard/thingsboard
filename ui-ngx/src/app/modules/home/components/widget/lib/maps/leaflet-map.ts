@@ -14,12 +14,10 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngTuple, LatLngBounds, Point } from 'leaflet';
+import L, { LatLngTuple, LatLngBounds, Point, MarkerClusterGroupOptions, markerClusterGroup} from 'leaflet';
 
 import 'leaflet-providers';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import LM from 'leaflet.markercluster/dist/leaflet.markercluster';
+import 'leaflet.markercluster/dist/leaflet.markercluster';
 
 import { MapSettings, MarkerSettings, FormattedData, UnitedMapSettings, PolygonSettings, PolylineSettings } from './map-models';
 import { Marker } from './markers';
@@ -43,7 +41,7 @@ export default abstract class LeafletMap {
     bounds: L.LatLngBounds;
     newMarker: L.Marker;
     datasources: FormattedData[];
-    markersCluster: LM.markerClusterGroup;
+    markersCluster;
 
     constructor(public $container: HTMLElement, options: UnitedMapSettings) {
         this.options = options;
@@ -67,7 +65,7 @@ export default abstract class LeafletMap {
             setTimeout(options.initCallback, 0);
         }
         if (useClusterMarkers) {
-            const clusteringSettings: LM.MarkerClusterGroupOptions = {
+            const clusteringSettings: MarkerClusterGroupOptions = {
                 zoomToBoundsOnClick: zoomOnClick,
                 showCoverageOnHover,
                 removeOutsideVisibleBounds,
@@ -80,7 +78,7 @@ export default abstract class LeafletMap {
             if (maxZoom && maxZoom >= 0 && maxZoom < 19) {
                 clusteringSettings.disableClusteringAtZoom = Math.floor(maxZoom);
             }
-            this.markersCluster = LM.markerClusterGroup(clusteringSettings);
+            this.markersCluster = markerClusterGroup(clusteringSettings);
             this.ready$.subscribe(map => map.addLayer(this.markersCluster));
         }
     }
@@ -208,7 +206,7 @@ export default abstract class LeafletMap {
                 });
                 this.map.fitBounds(bounds, { padding: padding || [50, 50], animate: false });
             }
-            this.bounds = this.bounds.extend(bounds);
+            this.bounds = bounds;
         }
     }
 
@@ -259,7 +257,9 @@ export default abstract class LeafletMap {
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.convertPosition(data), settings, data, dataSources, this.dragMarker);
-            this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()), settings.draggableMarker && this.markers.size > 2);
+            console.log(this.bounds);
+            
+            this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()), settings.draggableMarker && this.markers.size < 2);
             this.markers.set(key, newMarker);
             if (this.options.useClusterMarkers) {
                 this.markersCluster.addLayer(newMarker.leafletMarker);

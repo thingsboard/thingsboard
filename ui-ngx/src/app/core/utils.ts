@@ -525,7 +525,6 @@ export function parseFunction(source: any, params: string[] = ['def']): Function
 
 export function parseTemplate(template: string, data: object, translateFn?: (key: string) => string) {
   let res = '';
-  let variables = '';
   try {
     if (template.match(/<link-act/g)) {
       template = template.replace(/<link-act/g, '<a').replace(/link-act>/g, 'a>').replace(/name=(\'|")(.*?)(\'|")/g, `class='tb-custom-action' id='$2'`);
@@ -536,27 +535,26 @@ export function parseTemplate(template: string, data: object, translateFn?: (key
         template = template.replace(match, translateFn(match.match(translateRegexp)[1]));
       });
     }
-    /*
-    const expressions = template.match(/\{(.*?)\}/g);
-    if (expressions) {
-      const clearMatches = template.match(/\$\{([^}]*?)\}/g);
-      for (const key in data) {
-        if (!key.includes('|'))
-          variables += `var ${key} = '${clearMatches[key] ? padValue(data[key], +clearMatches[key]) : data[key]}';`;
-      }
-      template = template.replace(/\:\d+\}/g, '}');
-      const interpolator = new Interpolator({delimeter: ['${', '}']});
-       interpolator.parse(template, data);
-      res = safeExecute(parseFunction(variables + ' return' + '`' + template + '`'));
+    const formatted = template.match(/\$\{([^}]*)\:\d*\}/g);
+    if (formatted)
+      formatted.forEach(value => {
+        const [variable, digits] = value.replace('${', '').replace('}', '').split(':');
+        data[variable] = padValue(data[variable], +digits)
+        template = template.replace(value, '${' + variable + '}');
+      });
+    const variables = template.match(/\$\{.*?\}/g);
+    if (variables) {
+      variables.forEach(variable => {
+        variable = variable.replace('${', '').replace('}', '');
+        if (!data[variable])
+          data[variable] = '';
+      })
     }
-    else res = template;*/
-    const compiled = _.template(template, {
-      interpolate: /${([\s\S]+?)}/g
-    });
-    res = compiled(data)
+    const compiled = _.template(template);
+    res = compiled(data);
   }
   catch (ex) {
-    console.log(ex, variables, template)
+    console.log(ex, template)
   }
   return res;
 }
