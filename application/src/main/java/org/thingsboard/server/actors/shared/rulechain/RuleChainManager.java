@@ -24,6 +24,7 @@ import org.thingsboard.server.actors.ruleChain.RuleChainActor;
 import org.thingsboard.server.actors.shared.EntityActorsManager;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 /**
@@ -50,7 +51,7 @@ public abstract class RuleChainManager extends EntityActorsManager<RuleChainId, 
 
     @Override
     public void visit(RuleChain entity, ActorRef actorRef) {
-        if (entity != null && entity.isRoot()) {
+        if (entity != null && entity.isRoot() && entity.getType().equals(RuleChainType.SYSTEM)) {
             rootChain = entity;
             rootChainActor = actorRef;
         }
