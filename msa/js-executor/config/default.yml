@@ -15,12 +15,24 @@
 #
 
 service-type: "kafka"
+request_topic: "js.eval.requests"
 
 kafka:
-  request_topic: "js.eval.requests"
   bootstrap:
     # Kafka Bootstrap Servers
     servers: "localhost:9092"
+
+rabbitmq:
+  exchange_name: ""
+  host: "localhost"
+  port: "5672"
+  virtual_host: "/"
+  username: "YOUR_USERNAME"
+  password: "YOUR_PASSWORD"
+  automatic_recovery_enabled: "false"
+  connection_timeout: "60000"
+  handshake_timeout: "10000"
+
 
 logger:
   level: "info"

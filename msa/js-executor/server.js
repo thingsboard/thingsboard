@@ -14,16 +14,32 @@
  * limitations under the License.
  */
 
-const config = require('config');
+const config = require('config'), logger = require('./config/logger')._logger('main');
 
 const serviceType = config.get('service-type');
 switch (serviceType) {
     case 'kafka':
-        require('./queue/kafka/kafkaTemplate');
-        console.log('Used kafka template.');
+        logger.info('Starting kafka template.');
+        require('./queue/kafkaTemplate');
+        logger.info('kafka template is started.');
+        break;
+    case 'pubsub':
+        logger.info('Starting Pub/Sub template.')
+        require('./queue/pubSubTemplate');
+        logger.info('Pub/Sub template is started.')
+        break;
+    case 'aws-sqs':
+        logger.info('Starting Aws Sqs template.')
+        require('./queue/awsSqsTemplate');
+        logger.info('Aws Sqs template is started.')
+        break;
+    case 'rabbitmq':
+        logger.info('Starting RabbitMq template.')
+        require('./queue/rabbitmqTemplate');
+        logger.info('RabbitMq template is started.')
         break;
     default:
-        console.error('Unknown service type: ', serviceType);
+        logger.error('Unknown service type: ', serviceType);
         process.exit(-1);
 }
 

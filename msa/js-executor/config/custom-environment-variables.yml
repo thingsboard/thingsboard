@@ -15,12 +15,33 @@
 #
 
 service-type: "TB_SERVICE_TYPE"
+request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
 
 kafka:
-  request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
   bootstrap:
     # Kafka Bootstrap Servers
     servers: "TB_KAFKA_SERVERS"
+
+pubsub:
+  project_id: "TB_QUEUE_PUBSUB_PROJECT_ID"
+  service_account: "TB_QUEUE_PUBSUB_SERVICE_ACCOUNT"
+
+aws_sqs:
+  access_key_id: "TB_QUEUE_AWS_SQS_ACCESS_KEY_ID"
+  secret_access_key: "TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY"
+  region: "TB_QUEUE_AWS_SQS_REGION"
+
+rabbitmq:
+  exchange_name: "TB_QUEUE_RABBIT_MQ_EXCHANGE_NAME"
+  host: "TB_QUEUE_RABBIT_MQ_HOST"
+  port: "TB_QUEUE_RABBIT_MQ_PORT"
+  virtual_host: "TB_QUEUE_RABBIT_MQ_VIRTUAL_HOST"
+  username: "TB_QUEUE_RABBIT_MQ_USERNAME"
+  password: "TB_QUEUE_RABBIT_MQ_PASSWORD"
+  automatic_recovery_enabled: "TB_QUEUE_RABBIT_MQ_AUTOMATIC_RECOVERY_ENABLED"
+  connection_timeout: "TB_QUEUE_RABBIT_MQ_CONNECTION_TIMEOUT"
+  handshake_timeout: "TB_QUEUE_RABBIT_MQ_HANDSHAKE_TIMEOUT"
+
 logger:
   level: "LOGGER_LEVEL"
   path: "LOG_FOLDER"

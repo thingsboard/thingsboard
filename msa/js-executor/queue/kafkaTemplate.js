@@ -13,39 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const { logLevel, Kafka } = require('kafkajs');
+const {logLevel, Kafka} = require('kafkajs');
 
 const config = require('config'),
-    JsInvokeMessageProcessor = require('../../api/jsInvokeMessageProcessor'),
-    logger = require('../../config/logger')._logger('main'),
-    KafkaJsWinstonLogCreator = require('../../config/logger').KafkaJsWinstonLogCreator;
+    JsInvokeMessageProcessor = require('../api/jsInvokeMessageProcessor'),
+    logger = require('../config/logger')._logger('kafkaTemplate'),
+    KafkaJsWinstonLogCreator = require('../config/logger').KafkaJsWinstonLogCreator;
 
-var kafkaClient;
-var consumer;
-var producer;
+let kafkaClient;
+let consumer;
+let producer;
 
 function KafkaProducer() {
     this.send = async (responseTopic, scriptId, rawResponse, headers) => {
+        let headersData = headers.data;
+        headersData = Object.fromEntries(Object.entries(headersData).map(([key, value]) => [key, Buffer.from(value)]));
         return producer.send(
-        {
-            topic: responseTopic,
-            messages: [
-                {
-                    key: scriptId,
-                    value: rawResponse,
-                    headers: headers
-                }
-            ]
-        });
+            {
+                topic: responseTopic,
+                messages: [
+                    {
+                        key: scriptId,
+                        value: rawResponse,
+                        headers: headersData
+                    }
+                ]
+            });
     }
 }
 
-(async() => {
+(async () => {
     try {
         logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
 
         const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
-        const kafkaRequestTopic = config.get('kafka.request_topic');
+        const kafkaRequestTopic = config.get('request_topic');
 
         logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
         logger.info('Kafka Requests Topic: %s', kafkaRequestTopic);
@@ -56,17 +58,28 @@ function KafkaProducer() {
             logCreator: KafkaJsWinstonLogCreator
         });
 
-        consumer = kafkaClient.consumer({ groupId: 'js-executor-group' });
+        consumer = kafkaClient.consumer({groupId: 'js-executor-group'});
         producer = kafkaClient.producer();
         const messageProcessor = new JsInvokeMessageProcessor(new KafkaProducer());
         await consumer.connect();
         await producer.connect();
-        await consumer.subscribe({ topic: kafkaRequestTopic});
+        await consumer.subscribe({topic: kafkaRequestTopic});
 
         logger.info('Started ThingsBoard JavaScript Executor Microservice.');
         await consumer.run({
-            eachMessage: async ({ topic, partition, message }) => {
-                messageProcessor.onJsInvokeMessage(message);
+            eachMessage: async ({topic, partition, message}) => {
+                let headers = message.headers;
+                let key = message.key;
+                let data = message.value;
+                let msg = {};
+
+                headers = Object.fromEntries(
+                    Object.entries(headers).map(([key, value]) => [key, [...value]]));
+
+                msg.key = key.toString('utf8');
+                msg.data = [...data];
+                msg.headers = {data: headers}
+                messageProcessor.onJsInvokeMessage(JSON.stringify(msg));
             },
         });
 
@@ -85,7 +98,7 @@ async function exit(status) {
     logger.info('Exiting with status: %d ...', status);
     if (consumer) {
         logger.info('Stopping Kafka Consumer...');
-        var _consumer = consumer;
+        let _consumer = consumer;
         consumer = null;
         try {
             await _consumer.disconnect();

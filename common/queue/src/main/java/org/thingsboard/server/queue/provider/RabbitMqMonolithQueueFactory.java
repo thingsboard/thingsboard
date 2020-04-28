@@ -15,27 +15,36 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import com.google.protobuf.util.JsonFormat;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.gen.js.JsInvokeProtos.RemoteJsRequest;
+import org.thingsboard.server.gen.js.JsInvokeProtos.RemoteJsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
+import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
+import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
+
+import java.nio.charset.StandardCharsets;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='rabbitmq' && '${service.type:null}'=='monolith'")
@@ -48,6 +57,8 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbRabbitMqSettings rabbitMqSettings;
+    private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
+
     private final TbQueueAdmin admin;
 
     public RabbitMqMonolithQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
@@ -56,6 +67,7 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
                                         TbQueueTransportApiSettings transportApiSettings,
                                         TbQueueTransportNotificationSettings transportNotificationSettings,
                                         TbRabbitMqSettings rabbitMqSettings,
+                                        TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                         TbQueueAdmin admin) {
         this.partitionService = partitionService;
         this.coreSettings = coreSettings;
@@ -64,6 +76,7 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.rabbitMqSettings = rabbitMqSettings;
+        this.jsInvokeSettings = jsInvokeSettings;
         this.admin = admin;
     }
 
@@ -130,7 +143,25 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     }
 
     @Override
-    public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
-        return null;
+    @Bean
+    public TbQueueRequestTemplate<TbProtoJsQueueMsg<RemoteJsRequest>, TbProtoQueueMsg<RemoteJsResponse>> createRemoteJsRequestTemplate() {
+        TbQueueProducer<TbProtoJsQueueMsg<RemoteJsRequest>> producer = new TbRabbitMqProducerTemplate<>(admin, rabbitMqSettings, jsInvokeSettings.getRequestTopic());
+        TbQueueConsumer<TbProtoQueueMsg<RemoteJsResponse>> consumer = new TbRabbitMqConsumerTemplate<>(admin, rabbitMqSettings,
+                jsInvokeSettings.getResponseTopic() + "." + serviceInfoProvider.getServiceId(),
+                msg -> {
+                    RemoteJsResponse.Builder builder = RemoteJsResponse.newBuilder();
+                    JsonFormat.parser().ignoringUnknownFields().merge(new String(msg.getData(), StandardCharsets.UTF_8), builder);
+                    return new TbProtoQueueMsg<>(msg.getKey(), builder.build(), msg.getHeaders());
+                });
+
+        DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
+                <TbProtoJsQueueMsg<RemoteJsRequest>, TbProtoQueueMsg<RemoteJsResponse>> builder = DefaultTbQueueRequestTemplate.builder();
+        builder.queueAdmin(admin);
+        builder.requestTemplate(producer);
+        builder.responseTemplate(consumer);
+        builder.maxPendingRequests(jsInvokeSettings.getMaxPendingRequests());
+        builder.maxRequestTimeout(jsInvokeSettings.getMaxRequestsTimeout());
+        builder.pollInterval(jsInvokeSettings.getResponsePollInterval());
+        return builder.build();
     }
 }
