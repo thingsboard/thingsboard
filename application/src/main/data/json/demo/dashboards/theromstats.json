@@ -61,7 +61,7 @@
                     "useCellStyleFunction": true,
                     "useCellContentFunction": true,
                     "cellContentFunction": "value = '&#11044;';\nreturn value;",
-                    "cellStyleFunction": "var color;\nif (value) {\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn {\n    color: color,\n    fontSize: '18px'\n};"
+                    "cellStyleFunction": "var color;\nif (value === \"true\") {\n    color = 'rgb(39, 134, 34)';\n} else {\n    color = 'rgb(255, 0, 0)';\n}\nreturn {\n    color: color,\n    fontSize: '18px'\n};"
                   },
                   "_hash": 0.9264526512320641
                 },
@@ -121,7 +121,7 @@
                 "type": "customPretty",
                 "customHtml": "<md-dialog aria-label=\"Add entity\">\n    <form name=\"addEntityForm\" class=\"add-entity-form\" ng-submit=\"vm.save()\">\n        <md-toolbar>\n            <div class=\"md-toolbar-tools\">\n                <h2>Add thermostat</h2>\n                <span flex></span>\n                <md-button class=\"md-icon-button\" ng-click=\"vm.cancel()\">\n                    <ng-md-icon icon=\"close\" aria-label=\"Close\"></ng-md-icon>\n                </md-button>\n            </div>\n        </md-toolbar>\n        <md-dialog-content>\n            <div class=\"md-dialog-content\">\n                <md-input-container flex class=\"md-block\">\n                    <label>Thermostat name</label>\n                    <input ng-model=\"vm.entityName\" name=entityName required>\n                    <div ng-messages=\"addEntityForm.entityName.$error\">\n                        <div ng-message=\"required\">Thermostat name is required.</div>\n                    </div>\n                </md-input-container>\n                <md-switch ng-model=\"vm.attributes.alarmTemperature\">\n                    High temperature alarm\n                </md-switch>\n                <md-input-container flex class=\"md-block\">\n                    <label>High temperature threshold, °C</label>\n                    <input name=\"thresholdTemperature\" type=\"number\" step=\"any\" \n                            ng-model=\"vm.attributes.thresholdTemperature\"\n                            ng-disabled=\"!vm.attributes.alarmTemperature\"\n                            ng-required=\"vm.attributes.alarmTemperature\">\n                    <div ng-messages=\"addEntityForm.thresholdTemperature.$error\">\n                        <div ng-message=\"required\">High temperature threshold is required.</div>\n                    </div>\n                </md-input-container>\n                <md-switch ng-model=\"vm.attributes.alarmHumidity\">\n                    Low humidity alarm\n                </md-switch>\n                <md-input-container flex class=\"md-block\">\n                    <label>Low humidity threshold, %</label>\n                    <input name=\"thresholdHumidity\" type=\"number\" step=\"any\" \n                            ng-model=\"vm.attributes.thresholdHumidity\"\n                            ng-disabled=\"!vm.attributes.alarmHumidity\"\n                            ng-required=\"vm.attributes.alarmHumidity\">\n                    <div ng-messages=\"addEntityForm.thresholdHumidity.$error\">\n                        <div ng-message=\"required\">Low humidity threshold is required.</div>\n                    </div>\n                </md-input-container>\n            </div>\n        </md-dialog-content>\n        <md-dialog-actions>\n            <md-button type=\"submit\" ng-disabled=\"addEntityForm.$invalid || !addEntityForm.$dirty\" class=\"md-raised md-primary\">Create</md-button>\n            <md-button ng-click=\"vm.cancel()\" class=\"md-primary\">Cancel</md-button>\n        </md-dialog-actions>\n    </form>\n</md-dialog>",
                 "customCss": ".add-entity-form md-input-container {\n    padding-right: 10px;\n}\n\n.add-entity-form .boolean-value-input {\n    padding-left: 5px;\n}\n\n.add-entity-form .boolean-value-input .checkbox-label {\n    margin-bottom: 8px;\n    color: rgba(0,0,0,0.54);\n    font-size: 12px;\n}\n\n",
-                "customFunction": "var $injector = widgetContext.$scope.$injector;\nvar $mdDialog = $injector.get('$mdDialog'),\n    $document = $injector.get('$document'),\n    $q = $injector.get('$q'),\n    types = $injector.get('types'),\n    $rootScope = $injector.get('$rootScope'),\n    deviceService = $injector.get('deviceService'),\n    attributeService = $injector.get('attributeService'),\n    userService = $injector.get('userService'),\n    entityRelationService = $injector.get('entityRelationService');\n\nopenAddEntityDialog();\n\nfunction openAddEntityDialog() {\n    $mdDialog.show({\n        controller: ['$scope','$mdDialog', AddEntityDialogController],\n        controllerAs: 'vm',\n        template: htmlTemplate,\n        locals: {\n            entityId: entityId\n        },\n        parent: angular.element($document[0].body),\n        targetEvent: $event,\n        multiple: true,\n        clickOutsideToClose: false\n    });\n}\n\nfunction AddEntityDialogController($scope, $mdDialog) {\n    var vm = this;\n    vm.attributes = {};\n    vm.relations = [];\n\n    vm.addRelation = function() {\n        var relation = {\n            direction: types.entitySearchDirection.from,\n            relationType: 'Contains',\n            relatedEntity: {\n                id: userService.getCurrentUser().tenantId,\n                entityType: types.entityType.tenant\n            }\n        };\n        console.log(userService.getCurrentUser());\n        vm.relations.push(relation);\n    };\n\n    vm.save = function() {\n        $scope.addEntityForm.$setPristine();\n        vm.addRelation();\n        saveEntityPromise().then(\n            function (entity) {\n                $q.all([saveAttributes(entity.id),\n                    saveRelations(entity.id)]).then(() => {\n                       updateAliasData();\n                        $mdDialog.hide();\n                    });\n            }\n        );\n    };\n    vm.cancel = function() {\n        $mdDialog.hide();\n    };\n    \n    \n    function saveEntityPromise() {\n        var entity = {\n            name: vm.entityName,\n            type: \"thermostat\"\n        };\n        return deviceService.saveDevice(entity);\n    }\n    \n    function saveAttributes(entityId) {\n        var attributesArray = [];\n        for (var key in vm.attributes) {\n            attributesArray.push({key: key, value: vm.attributes[key]});\n        }\n        if (attributesArray.length > 0) {\n            attributeService.saveEntityAttributes(entityId.entityType, entityId.id, \"SERVER_SCOPE\", attributesArray);\n        } \n    }\n    \n    function saveRelations(entityId) {\n        var tasks = [];\n        for (var i=0; i < vm.relations.length; i++) {\n            var relation = {\n                type: vm.relations[i].relationType\n            };\n            if (vm.relations[i].direction == types.entitySearchDirection.from) {\n                relation.to = vm.relations[i].relatedEntity;\n                relation.from = entityId;\n            } else {\n                relation.to = entityId;\n                relation.from = vm.relations[i].relatedEntity;\n            }\n            tasks.push(entityRelationService.saveRelation(relation));\n        }\n        return $q.all(tasks);\n    }\n    \n    function updateAliasData() {\n        var aliasIds = [];\n        for (var id in widgetContext.aliasController.resolvedAliases) {\n            aliasIds.push(id);\n        }\n        var tasks = [];\n        aliasIds.forEach(function(aliasId) {\n            widgetContext.aliasController.setAliasUnresolved(aliasId);\n            tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));\n        });\n        $q.all(tasks).then(function() {\n            $rootScope.$broadcast('widgetForceReInit');\n        });\n    }\n}\n"
+                "customFunction": "var $injector = widgetContext.$scope.$injector;\nvar $mdDialog = $injector.get('$mdDialog'),\n    $document = $injector.get('$document'),\n    $q = $injector.get('$q'),\n    types = $injector.get('types'),\n    $rootScope = $injector.get('$rootScope'),\n    deviceService = $injector.get('deviceService'),\n    attributeService = $injector.get('attributeService'),\n    userService = $injector.get('userService'),\n    entityRelationService = $injector.get('entityRelationService');\n\nopenAddEntityDialog();\n\nfunction openAddEntityDialog() {\n    $mdDialog.show({\n        controller: ['$scope','$mdDialog', AddEntityDialogController],\n        controllerAs: 'vm',\n        template: htmlTemplate,\n        locals: {\n            entityId: entityId\n        },\n        parent: angular.element($document[0].body),\n        targetEvent: $event,\n        multiple: true,\n        clickOutsideToClose: false\n    });\n}\n\nfunction AddEntityDialogController($scope, $mdDialog) {\n    var vm = this;\n    vm.attributes = {};\n    vm.relations = [];\n\n    vm.addRelation = function() {\n        var relation = {\n            direction: types.entitySearchDirection.from,\n            relationType: 'Contains',\n            relatedEntity: {\n                id: userService.getCurrentUser().tenantId,\n                entityType: types.entityType.tenant\n            }\n        };\n        console.log(userService.getCurrentUser());\n        vm.relations.push(relation);\n    };\n\n    vm.save = function() {\n        $scope.addEntityForm.$setPristine();\n        vm.addRelation();\n        saveEntityPromise().then(\n            function (entity) {\n                $q.all([saveAttributes(entity.id),\n                    saveRelations(entity.id)]).then(() => {\n                       updateAliasData();\n                        $mdDialog.hide();\n                    });\n            }\n        );\n    };\n    vm.cancel = function() {\n        $mdDialog.hide();\n    };\n    \n    \n    function saveEntityPromise() {\n        var entity = {\n            name: vm.entityName,\n            type: \"thermostat\"\n        };\n        return deviceService.saveDevice(entity);\n    }\n    \n    function saveAttributes(entityId) {\n        var attributesArray = [];\n        for (var key in vm.attributes) {\n            attributesArray.push({key: key, value: vm.attributes[key]});\n        }\n        if (attributesArray.length > 0) {\n            attributeService.saveEntityAttributes(entityId.entityType, entityId.id, \"SERVER_SCOPE\", attributesArray);\n        } \n    }\n    \n    function saveRelations(entityId) {\n        var tasks = [];\n        for (var i=0; i < vm.relations.length; i++) {\n            var relation = {\n                type: vm.relations[i].relationType\n            };\n            if (vm.relations[i].direction == types.entitySearchDirection.from) {\n                relation.to = vm.relations[i].relatedEntity;\n                relation.from = entityId;\n            } else {\n                relation.to = entityId;\n                relation.from = vm.relations[i].relatedEntity;\n            }\n            tasks.push(entityRelationService.saveRelation(relation));\n        }\n        return $q.all(tasks);\n    }\n    \n    function updateAliasData() {\n        var aliasIds = [];\n        for (var id in widgetContext.aliasController.resolvedAliases) {\n            aliasIds.push(id);\n        }\n        var tasks = [];\n        aliasIds.forEach(function(aliasId) {\n            widgetContext.aliasController.setAliasUnresolved(aliasId);\n            tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));\n        });\n        $q.all(tasks).then(function() {\n            $rootScope.$broadcast('widgetForceReInit');\n        });\n    }\n}"
               }
             ],
             "actionCellButton": [
@@ -897,11 +897,147 @@
           "displayTimewindow": true
         },
         "id": "00fb2742-ba1f-7e43-673f-d6c08b72ed06"
+      },
+      "0a430429-9078-9ae6-2b67-e4a15a2bf8bf": {
+        "isSystemType": true,
+        "bundleAlias": "input_widgets",
+        "typeAlias": "markers_placement_openstreetmap",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 6,
+        "sizeY": 6,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "longitude",
+                  "type": "attribute",
+                  "label": "longitude",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.3640193654284214
+                },
+                {
+                  "name": "latitude",
+                  "type": "attribute",
+                  "label": "latitude",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.49020393887695923
+                },
+                {
+                  "name": "temperature",
+                  "type": "timeseries",
+                  "label": "temperature",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.5885892766009955,
+                  "postFuncBody": "return value || \"\";"
+                },
+                {
+                  "name": "humidity",
+                  "type": "timeseries",
+                  "label": "humidity",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.21077893588180707,
+                  "postFuncBody": "return value || \"\";"
+                },
+                {
+                  "name": "active",
+                  "type": "attribute",
+                  "label": "active",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.34722983638504346
+                }
+              ],
+              "entityAliasId": "12ae98c7-1ea2-52cf-64d5-763e9d993547"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "fitMapBounds": true,
+            "latKeyName": "latitude",
+            "lngKeyName": "longitude",
+            "showLabel": true,
+            "label": "${entityName}",
+            "tooltipPattern": "<b>${entityName}</b><br/><br/><b>Temperature:</b> ${temperature:1} °C<br/><b>Humidity:</b> ${humidity:0} %<br/><br/><link-act name='delete'>Delete</link-act>",
+            "markerImageSize": 34,
+            "useColorFunction": false,
+            "markerImages": [
+              "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJzdmc0NDA4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHg9IjAiIHk9IjAiIHZpZXdCb3g9IjAgMCAxNTAgMTUwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48c3R5bGU+LnN0MntmaWxsOiNmNDQzMzZ9PC9zdHlsZT48ZyBpZD0ibGF5ZXIxIj48ZyBpZD0icGF0aDY4ODEtMy01LTUtMS04LTQtNC03LTgiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xNDYuNDM4IC0yNzYuMDI4KSIgb3BhY2l0eT0iLjg5MiI+PHJhZGlhbEdyYWRpZW50IGlkPSJTVkdJRF8xXyIgY3g9IjMwODUuMjE1IiBjeT0iMzE3OC40NTgiIHI9IjQ5LjkwMSIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCguNjc5MyAuMDA3NiAtLjUwOSAuNTYxMiAtMjMyLjYyOSAtMTQxMS43MjUpIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xODgiLz48L3JhZGlhbEdyYWRpZW50PjxwYXRoIGQ9Ik0yODUuNiAzODguNWMxMC4zLTEyLjQgNC40LTIyLjQtMTQuNC0yMi40LTE4LjkgMC00Mi40IDEwLTUzLjkgMjIuNC0xNi44IDE4IC40IDIzLjUtLjIgMzUtLjEgMS44IDMuOSAxLjggNyAwIDE5LjgtMTEuNSA0Ni41LTE3IDYxLjUtMzUiIGZpbGw9InVybCgjU1ZHSURfMV8pIi8+PC9nPjxwYXRoIGlkPSJwYXRoNjg4MS0zLTUtNS0xLTgtNC00IiBjbGFzcz0ic3QyIiBkPSJNMTI0LjcgNjkuMWMtLjktMjcuNS0yMi4zLTQ5LjgtNDkuOC00OS44cy00OSAyMi4zLTQ5LjggNDkuOGMtMS4zIDQwLjEgMzAuNyA1Mi4yIDQ0LjcgNzggMi4yIDQgOCA0IDEwLjEgMCAxNC4xLTI1LjggNDYuMS0zNy45IDQ0LjgtNzgiLz48L2c+PGcgaWQ9Imc0OTI4Ij48Y2lyY2xlIGlkPSJwYXRoNDk3OCIgY2xhc3M9InN0MiIgY3g9Ijc0LjkiIGN5PSI2OS4xIiByPSI0OS45Ii8+PGcgaWQ9Imc0OTE1Ij48cGF0aCBpZD0icGF0aDY4ODMtMi0zLTUtMi00LTktNC05IiBkPSJNNzQuOCAxMDYuNGMtMjAuNiAwLTM3LjQtMTYuNy0zNy40LTM3LjQgMC0yMC42IDE2LjctMzcuNCAzNy40LTM3LjQgMjAuNiAwIDM3LjQgMTYuNyAzNy40IDM3LjRzLTE2LjcgMzcuNC0zNy40IDM3LjQiIGZpbGw9IiNmZmYiLz48L2c+PC9nPjxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik05NS45IDQ2LjZWNDloLTEwdi0yLjVsMTAgLjF6bS0yIDUuM2gtOHYyLjVoOHYtMi41em0tOCA3LjloNnYtMi41aC02djIuNXptNCAyLjloLTR2Mi41aDR2LTIuNXptLTQgNy44aDJWNjhoLTJ2Mi41em0xLjUgMTRjMCA2LjktNS41IDEyLjUtMTIuMyAxMi41cy0xMi4zLTUuNi0xMi4zLTEyLjVjMC00LjUgMi4zLTguNSA2LjEtMTAuN1Y0NS41YzAtMy41IDIuOC02LjMgNi4yLTYuM3M2LjIgMi44IDYuMiA2LjN2MjguM2MzLjggMi4yIDYuMSA2LjMgNi4xIDEwLjd6bS0yLjQgMGMwLTMuOC0yLjEtNy4yLTUuNC04LjlsLS43LS4zVjQ1LjVjMC0yLjEtMS43LTMuOC0zLjgtMy44LTIuMSAwLTMuOCAxLjctMy44IDMuOHYyOS44bC0uNy4zYy0zLjMgMS43LTUuNCA1LjEtNS40IDguOSAwIDUuNSA0LjQgMTAgOS45IDEwUzg1IDkwIDg1IDg0LjV6bS0yLjEgMGMwIDQuNC0zLjUgOC03LjggOHMtNy44LTMuNi03LjgtOGMwLTMuNiAyLjQtNi44IDUuOC03LjdsLjUtLjFWNjEuNWgzLjF2MTUuMmwuNS4xYzMuMyAxIDUuNyA0LjEgNS43IDcuN3ptLTcuNC01LjNjLS4yLS44LTEtMS40LTEuOS0xLjItMyAuNy01IDMuMy01IDYuNCAwIC45LjcgMS42IDEuNiAxLjZzMS42LS43IDEuNi0xLjZjMC0xLjYgMS4xLTMgMi42LTMuMy43LS4yIDEuMy0xIDEuMS0xLjl6Ii8+PC9zdmc+",
+              "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJzdmc0NDA4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHg9IjAiIHk9IjAiIHZpZXdCb3g9IjAgMCAxNTAgMTUwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48c3R5bGU+LnN0MntmaWxsOiMyNzg2MjJ9PC9zdHlsZT48ZyBpZD0ibGF5ZXIxIj48ZyBpZD0icGF0aDY4ODEtMy01LTUtMS04LTQtNC03LTgiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xNDYuNDM4IC0yNzYuMDI4KSIgb3BhY2l0eT0iLjg5MiI+PHJhZGlhbEdyYWRpZW50IGlkPSJTVkdJRF8xXyIgY3g9IjMwODUuMjE1IiBjeT0iMzE3OC40NTgiIHI9IjQ5LjkwMSIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCguNjc5MyAuMDA3NiAtLjUwOSAuNTYxMiAtMjMyLjYyOSAtMTQxMS43MjUpIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xODgiLz48L3JhZGlhbEdyYWRpZW50PjxwYXRoIGQ9Ik0yODUuNiAzODguNWMxMC4zLTEyLjQgNC40LTIyLjQtMTQuNC0yMi40LTE4LjkgMC00Mi40IDEwLTUzLjkgMjIuNC0xNi44IDE4IC40IDIzLjUtLjIgMzUtLjEgMS44IDMuOSAxLjggNyAwIDE5LjgtMTEuNSA0Ni41LTE3IDYxLjUtMzUiIGZpbGw9InVybCgjU1ZHSURfMV8pIi8+PC9nPjxwYXRoIGlkPSJwYXRoNjg4MS0zLTUtNS0xLTgtNC00IiBjbGFzcz0ic3QyIiBkPSJNMTI0LjcgNjkuMWMtLjktMjcuNS0yMi4zLTQ5LjgtNDkuOC00OS44cy00OSAyMi4zLTQ5LjggNDkuOGMtMS4zIDQwLjEgMzAuNyA1Mi4yIDQ0LjcgNzggMi4yIDQgOCA0IDEwLjEgMCAxNC4xLTI1LjggNDYuMS0zNy45IDQ0LjgtNzgiLz48L2c+PGcgaWQ9Imc0OTI4Ij48Y2lyY2xlIGlkPSJwYXRoNDk3OCIgY2xhc3M9InN0MiIgY3g9Ijc0LjkiIGN5PSI2OS4xIiByPSI0OS45Ii8+PGcgaWQ9Imc0OTE1Ij48cGF0aCBpZD0icGF0aDY4ODMtMi0zLTUtMi00LTktNC05IiBkPSJNNzQuOCAxMDYuNGMtMjAuNiAwLTM3LjQtMTYuNy0zNy40LTM3LjQgMC0yMC42IDE2LjctMzcuNCAzNy40LTM3LjQgMjAuNiAwIDM3LjQgMTYuNyAzNy40IDM3LjRzLTE2LjcgMzcuNC0zNy40IDM3LjQiIGZpbGw9IiNmZmYiLz48L2c+PC9nPjxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik05NS45IDQ2LjZWNDloLTEwdi0yLjVsMTAgLjF6bS0yIDUuM2gtOHYyLjVoOHYtMi41em0tOCA3LjloNnYtMi41aC02djIuNXptNCAyLjloLTR2Mi41aDR2LTIuNXptLTQgNy44aDJWNjhoLTJ2Mi41em0xLjUgMTRjMCA2LjktNS41IDEyLjUtMTIuMyAxMi41cy0xMi4zLTUuNi0xMi4zLTEyLjVjMC00LjUgMi4zLTguNSA2LjEtMTAuN1Y0NS41YzAtMy41IDIuOC02LjMgNi4yLTYuM3M2LjIgMi44IDYuMiA2LjN2MjguM2MzLjggMi4yIDYuMSA2LjMgNi4xIDEwLjd6bS0yLjQgMGMwLTMuOC0yLjEtNy4yLTUuNC04LjlsLS43LS4zVjQ1LjVjMC0yLjEtMS43LTMuOC0zLjgtMy44LTIuMSAwLTMuOCAxLjctMy44IDMuOHYyOS44bC0uNy4zYy0zLjMgMS43LTUuNCA1LjEtNS40IDguOSAwIDUuNSA0LjQgMTAgOS45IDEwUzg1IDkwIDg1IDg0LjV6bS0yLjEgMGMwIDQuNC0zLjUgOC03LjggOHMtNy44LTMuNi03LjgtOGMwLTMuNiAyLjQtNi44IDUuOC03LjdsLjUtLjFWNjEuNWgzLjF2MTUuMmwuNS4xYzMuMyAxIDUuNyA0LjEgNS43IDcuN3ptLTcuNC01LjNjLS4yLS44LTEtMS40LTEuOS0xLjItMyAuNy01IDMuMy01IDYuNCAwIC45LjcgMS42IDEuNiAxLjZzMS42LS43IDEuNi0xLjZjMC0xLjYgMS4xLTMgMi42LTMuMy43LS4yIDEuMy0xIDEuMS0xLjl6Ii8+PC9zdmc+Cg=="
+            ],
+            "useMarkerImageFunction": true,
+            "color": "#fe7569",
+            "mapProvider": "OpenStreetMap.HOT",
+            "showTooltip": true,
+            "autocloseTooltip": true,
+            "defaultCenterPosition": [
+              0,
+              0
+            ],
+            "customProviderTileUrl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "showTooltipAction": "click",
+            "polygonKeyName": "coordinates",
+            "polygonOpacity": 0.5,
+            "polygonStrokeOpacity": 1,
+            "polygonStrokeWeight": 1,
+            "zoomOnClick": true,
+            "showCoverageOnHover": true,
+            "animate": true,
+            "maxClusterRadius": 80,
+            "removeOutsideVisibleBounds": true,
+            "defaultZoomLevel": 12,
+            "labelFunction": "var color;\nif(dsData[dsIndex].active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px\">' + \n           '${entityLabel}' + \n        '</span>'",
+            "markerImageFunction": "var res;\nif(dsData[dsIndex].active !== \"true\"){\n\tvar res = {\n\t    url: images[0],\n\t    size: 48\n\t}\n} else {\n    var res = {\n\t    url: images[1],\n\t    size: 48\n\t}\n}\nreturn res;",
+            "useLabelFunction": true
+          },
+          "title": "New Markers Placement - OpenStreetMap",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "widgetStyle": {},
+          "actions": {
+            "tooltipAction": [
+              {
+                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66",
+                "name": "delete",
+                "icon": "more_horiz",
+                "type": "custom",
+                "customFunction": "var $rootScope = widgetContext.$scope.$injector.get('$rootScope');\nvar entityDatasource = widgetContext.map.subscription.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.map.saveMarkerLocation(entityDatasource[0],\n    widgetContext.map.locations[0], {\n        \"lat\": null,\n        \"lng\": null\n    }).then(function succes() {\n        $rootScope.$broadcast('widgetForceReInit');\n    });"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "displayTimewindow": true
+        },
+        "id": "0a430429-9078-9ae6-2b67-e4a15a2bf8bf"
       }
     },
     "states": {
       "default": {
-        "name": "Thermostat",
+        "name": "Thermostats",
         "root": true,
         "layouts": {
           "main": {
@@ -995,6 +1131,12 @@
                 "sizeY": 6,
                 "row": 0,
                 "col": 0
+              },
+              "0a430429-9078-9ae6-2b67-e4a15a2bf8bf": {
+                "sizeX": 6,
+                "sizeY": 6,
+                "row": 6,
+                "col": 0
               }
             },
             "gridSettings": {
@@ -1037,7 +1179,7 @@
       },
       "ce27a9d0-93bf-b7a4-054d-d0369a8cf813": {
         "id": "ce27a9d0-93bf-b7a4-054d-d0369a8cf813",
-        "alias": "Current tenant",
+        "alias": "Thermostat-alarm",
         "filter": {
           "type": "singleEntity",
           "resolveMultiple": false,
