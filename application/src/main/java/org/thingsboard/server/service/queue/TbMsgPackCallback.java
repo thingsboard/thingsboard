@@ -18,21 +18,17 @@ package org.thingsboard.server.service.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
-import org.thingsboard.server.common.msg.queue.RuleNodeException;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
 
 @Slf4j
 public class TbMsgPackCallback implements TbMsgCallback {
     private final UUID id;
     private final TenantId tenantId;
-    private final ProcessingAttemptContext ctx;
+    private final TbMsgPackProcessingContext ctx;
 
-    public TbMsgPackCallback(UUID id, TenantId tenantId, ProcessingAttemptContext ctx) {
+    public TbMsgPackCallback(UUID id, TenantId tenantId, TbMsgPackProcessingContext ctx) {
         this.id = id;
         this.tenantId = tenantId;
         this.ctx = ctx;

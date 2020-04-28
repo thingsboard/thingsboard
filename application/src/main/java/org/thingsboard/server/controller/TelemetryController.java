@@ -397,11 +397,6 @@ public class TelemetryController extends BaseController {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         logAttributesUpdated(user, entityId, scope, attributes, null);
-                        if (entityIdSrc.getEntityType().equals(EntityType.DEVICE)) {
-                            DeviceId deviceId = new DeviceId(entityId.getId());
-                            tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onUpdate(
-                                    user.getTenantId(), deviceId, scope, attributes), null);
-                        }
                         result.setResult(new ResponseEntity(HttpStatus.OK));
                     }
 

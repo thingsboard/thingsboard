@@ -29,9 +29,9 @@ public class TbRuleEngineSubmitStrategyFactory {
                 return new BurstTbRuleEngineSubmitStrategy(name);
             case "BATCH":
                 return new BatchTbRuleEngineSubmitStrategy(name, configuration.getBatchSize());
-            case "SEQUENTIAL_WITHIN_ORIGINATOR":
+            case "SEQUENTIAL_BY_ORIGINATOR":
                 return new SequentialByOriginatorIdTbRuleEngineSubmitStrategy(name);
-            case "SEQUENTIAL_WITHIN_TENANT":
+            case "SEQUENTIAL_BY_TENANT":
                 return new SequentialByTenantIdTbRuleEngineSubmitStrategy(name);
             case "SEQUENTIAL":
                 return new SequentialTbRuleEngineSubmitStrategy(name);

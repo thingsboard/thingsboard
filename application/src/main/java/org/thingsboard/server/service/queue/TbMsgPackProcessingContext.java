@@ -29,7 +29,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProcessingAttemptContext {
+public class TbMsgPackProcessingContext {
 
     private final TbRuleEngineSubmitStrategy submitStrategy;
 
@@ -44,7 +44,7 @@ public class ProcessingAttemptContext {
     @Getter
     private final ConcurrentMap<TenantId, RuleEngineException> exceptionsMap = new ConcurrentHashMap<>();
 
-    public ProcessingAttemptContext(TbRuleEngineSubmitStrategy submitStrategy) {
+    public TbMsgPackProcessingContext(TbRuleEngineSubmitStrategy submitStrategy) {
         this.submitStrategy = submitStrategy;
         this.pendingMap = submitStrategy.getPendingMap();
         this.pendingCount = new AtomicInteger(pendingMap.size());

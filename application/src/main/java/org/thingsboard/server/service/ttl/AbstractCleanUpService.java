@@ -17,47 +17,27 @@ package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.thingsboard.server.dao.util.PsqlTsAnyDao;
+import org.thingsboard.server.dao.util.PsqlDao;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 
-@PsqlTsAnyDao
+
 @Slf4j
-public abstract class AbstractTimeseriesCleanUpService {
-
-    @Value("${sql.ttl.ts_key_value_ttl}")
-    protected long systemTtl;
-
-    @Value("${sql.ttl.enabled}")
-    private boolean ttlTaskExecutionEnabled;
+@PsqlDao
+public abstract class AbstractCleanUpService {
 
     @Value("${spring.datasource.url}")
-    private String dbUrl;
+    protected String dbUrl;
 
     @Value("${spring.datasource.username}")
-    private String dbUserName;
+    protected String dbUserName;
 
     @Value("${spring.datasource.password}")
-    private String dbPassword;
-
-    @Scheduled(initialDelayString = "${sql.ttl.execution_interval_ms}", fixedDelayString = "${sql.ttl.execution_interval_ms}")
-    public void cleanUp() {
-        if (ttlTaskExecutionEnabled) {
-            try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                doCleanUp(conn);
-            } catch (SQLException e) {
-                log.error("SQLException occurred during TTL task execution ", e);
-            }
-        }
-    }
-
-    protected abstract void doCleanUp(Connection connection);
+    protected String dbPassword;
 
     protected long executeQuery(Connection conn, String query) {
         long removed = 0L;
@@ -74,7 +54,7 @@ public abstract class AbstractTimeseriesCleanUpService {
         return removed;
     }
 
-    private void getWarnings(Statement statement) throws SQLException {
+    protected void getWarnings(Statement statement) throws SQLException {
         SQLWarning warnings = statement.getWarnings();
         if (warnings != null) {
             log.debug("{}", warnings.getMessage());
@@ -85,5 +65,7 @@ public abstract class AbstractTimeseriesCleanUpService {
             }
         }
     }
+
+    protected abstract void doCleanUp(Connection connection);
 
 }

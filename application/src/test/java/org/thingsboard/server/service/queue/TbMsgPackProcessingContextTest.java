@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
-public class ProcessingAttemptContextTest {
+public class TbMsgPackProcessingContextTest {
 
     @Test
     public void testHighConcurrencyCase() throws InterruptedException {
@@ -51,7 +51,7 @@ public class ProcessingAttemptContextTest {
                 messages.put(UUID.randomUUID(), new TbProtoQueueMsg<>(UUID.randomUUID(), null));
             }
             when(strategyMock.getPendingMap()).thenReturn(messages);
-            ProcessingAttemptContext context = new ProcessingAttemptContext(strategyMock);
+            TbMsgPackProcessingContext context = new TbMsgPackProcessingContext(strategyMock);
             for (UUID uuid : messages.keySet()) {
                 for (int i = 0; i < parallelCount; i++) {
                     executorService.submit(() -> context.onSuccess(uuid));

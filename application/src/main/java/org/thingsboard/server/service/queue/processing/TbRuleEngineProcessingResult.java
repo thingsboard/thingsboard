@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.service.queue.ProcessingAttemptContext;
+import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
@@ -32,9 +32,9 @@ public class TbRuleEngineProcessingResult {
     @Getter
     private final boolean timeout;
     @Getter
-    private final ProcessingAttemptContext ctx;
+    private final TbMsgPackProcessingContext ctx;
 
-    public TbRuleEngineProcessingResult(boolean timeout, ProcessingAttemptContext ctx) {
+    public TbRuleEngineProcessingResult(boolean timeout, TbMsgPackProcessingContext ctx) {
         this.timeout = timeout;
         this.ctx = ctx;
         this.success = !timeout && ctx.getPendingMap().isEmpty() && ctx.getFailedMap().isEmpty();

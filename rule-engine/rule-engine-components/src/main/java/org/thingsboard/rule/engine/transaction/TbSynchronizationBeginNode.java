@@ -33,7 +33,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.ACTION,
         name = "synchronization start",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Starts synchronization of message processing based on message originator",
+        nodeDescription = "This Node is now deprecated. Use \"Checkpoint\" instead.",
         nodeDetails = "This node should be used together with \"synchronization end\" node. \n This node will put messages into queue based on message originator id. \n" +
                 "Subsequent messages will not be processed until the previous message processing is completed or timeout event occurs.\n" +
                 "Size of the queue per originator and timeout values are configurable on a system level",
