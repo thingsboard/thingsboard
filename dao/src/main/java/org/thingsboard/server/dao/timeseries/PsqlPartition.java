@@ -35,6 +35,6 @@ public class PsqlPartition {
     }
 
     private String createStatement(long start, long end, String partitionDate) {
-        return "CREATE TABLE IF NOT EXISTS " + TABLE_REGEX + partitionDate + " PARTITION OF ts_kv(PRIMARY KEY (entity_id, key, ts)) FOR VALUES FROM (" + start + ") TO (" + end + ")";
+        return "CREATE TABLE IF NOT EXISTS " + TABLE_REGEX + partitionDate + " PARTITION OF ts_kv FOR VALUES FROM (" + start + ") TO (" + end + ")";
     }
 }
