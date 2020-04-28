@@ -50,13 +50,13 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private long maxRequestsTimeout;
 
     @Getter
-//    @Value("${queue.js.max_errors}")
+    @Value("${js.remote.max_errors}")
     private int maxErrors;
 
-    @Value("${queue.js.max_black_list_duration_sec:60}")
+    @Value("${js.remote.max_black_list_duration_sec:60}")
     private int maxBlackListDurationSec;
 
-    @Value("${queue.js.stats.enabled:false}")
+    @Value("${js.remote.stats.enabled:false}")
     private boolean statsEnabled;
 
     private final AtomicInteger kafkaPushedMsgs = new AtomicInteger(0);
@@ -65,7 +65,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private final AtomicInteger kafkaFailedMsgs = new AtomicInteger(0);
     private final AtomicInteger kafkaTimeoutMsgs = new AtomicInteger(0);
 
-//    @Scheduled(fixedDelayString = "${queue.js.stats.print_interval_ms}")
+    @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
     public void printStats() {
         if (statsEnabled) {
             int pushedMsgs = kafkaPushedMsgs.getAndSet(0);
