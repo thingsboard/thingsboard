@@ -1181,12 +1181,10 @@
         "id": "ce27a9d0-93bf-b7a4-054d-d0369a8cf813",
         "alias": "Thermostat-alarm",
         "filter": {
-          "type": "singleEntity",
-          "resolveMultiple": false,
-          "singleEntity": {
-            "entityType": "CURRENT_TENANT",
-            "id": null
-          }
+          "type": "entityName",
+          "resolveMultiple": true,
+          "entityType": "ASSET",
+          "entityNameFilter": "Thermostat Alarms"
         }
       }
     },
