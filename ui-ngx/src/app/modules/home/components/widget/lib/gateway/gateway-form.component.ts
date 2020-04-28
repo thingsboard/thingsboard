@@ -112,8 +112,17 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
   @Input()
   ctx: WidgetContext;
 
+  @Input()
+  isStateForm: boolean;
+
+  isReadOnlyForm = false;
+  deviceNameForm: string;
+
   ngOnInit(): void {
     this.initWidgetSettings(this.ctx.settings);
+    if (this.ctx.datasources && this.ctx.datasources.length) {
+      this.deviceNameForm = this.ctx.datasources[0].name;
+    }
 
     this.buildForm();
     this.ctx.updateWidgetParams();
@@ -133,12 +142,13 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
 
   private initWidgetSettings(settings: WidgetSetting): void {
     let widgetTitle;
-    if (settings.widgetTitle && settings.widgetTitle.length) {
-      widgetTitle = this.utils.customTranslation(settings.widgetTitle, settings.widgetTitle);
+    if (settings.gatewayTitle && settings.gatewayTitle.length) {
+      widgetTitle = this.utils.customTranslation(settings.gatewayTitle, settings.gatewayTitle);
     } else {
       widgetTitle = this.translate.instant('gateway.gateway');
     }
     this.ctx.widgetTitle = widgetTitle;
+    this.isReadOnlyForm = (settings.readOnly) ? settings.readOnly : false;
 
     this.archiveFileName = settings.archiveFileName?.length ? settings.archiveFileName : 'gatewayConfiguration';
     this.gatewayType = settings.gatewayType?.length ? settings.gatewayType : 'Gateway';
@@ -189,7 +199,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
 
   private buildForm(): void {
     this.gatewayConfigurationGroup = this.fb.group({
-      gateway: [null],
+      gateway: [null, []],
       accessToken: [null, [Validators.required]],
       securityType: [SecurityType.accessToken],
       host: [this.window.location.hostname, [Validators.required]],
@@ -207,6 +217,10 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
       dataFolderPath: ['./data/', [Validators.required]],
       connectors: this.fb.array([])
     });
+
+    if (this.isReadOnlyForm) {
+      this.gatewayConfigurationGroup.disable({emitEvent: false});
+    }
 
     this.subscribeStorageType$ = this.getFormField('storageType').valueChanges.subscribe((value: StorageType) => {
       if (value === StorageType.memory) {
@@ -342,6 +356,9 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
         tap(([currentConfig, draftConfig]) => {
           this.setFormGatewaySettings(currentConfig);
           this.setFormConnectorsDraft(draftConfig);
+          if (this.isReadOnlyForm) {
+            this.gatewayConfigurationGroup.disable({emitEvent: false});
+          }
         })
       )
     );

@@ -28,6 +28,8 @@
       </mat-expansion-panel-header>
         <tb-entity-gateway-select
           formControlName="gateway"
+          [deviceName]="deviceNameForm"
+          [isStateForm]="isStateForm"
           [newGatewayType]="gatewayType"
           (gatewayNameExist)="gatewayExist()"
           required
@@ -218,13 +220,14 @@
             </div>
             <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap"
                  fxLayoutAlign="{{alignment == 'row' ? 'end center' : 'space-evenly center'}}" class="action-buttons">
-              <button mat-icon-button (click)="openConfigDialog($event, i, connector.get('config').value, connector.get('name').value)"
+              <button [disabled]="isReadOnlyForm" mat-icon-button (click)="openConfigDialog($event, i, connector.get('config').value, connector.get('name').value)"
                          matTooltip="{{ 'gateway.update-config' | translate }}"
                          matTooltipPosition="above"
                          [ngClass]="{'mat-warn': connector.get('config').invalid}">
                 <mat-icon>more_horiz</mat-icon>
               </button>
-              <button mat-icon-button (click)="removeConnector(i)"
+              <button [disabled]="isReadOnlyForm"
+                      mat-icon-button (click)="removeConnector(i)"
                       matTooltip="{{ 'gateway.delete' | translate }}"
                       matTooltipPosition="above">
                 <mat-icon>close</mat-icon>
@@ -234,7 +237,7 @@
         </section>
         <span [fxShow]="!connectors.length" fxLayoutAlign="center center" class="no-data-found">{{'gateway.no-connectors' | translate}}</span>
         <div>
-          <button mat-raised-button type="button" (click)="addNewConnector()"
+          <button [fxShow]="!isReadOnlyForm" mat-raised-button type="button" (click)="addNewConnector()"
                   matTooltip="{{ 'gateway.connector-add' | translate }}"
                   matTooltipPosition="above">
             {{ 'action.add' | translate }}
@@ -243,7 +246,8 @@
       </div >
     </mat-expansion-panel>
   </mat-accordion>
-  <section fxLayout="row" fxLayoutAlign="end center" class="form-action-buttons">
+  <section [fxShow]="!isReadOnlyForm"
+           fxLayout="row" fxLayoutAlign="end center" class="form-action-buttons">
     <button mat-raised-button color="primary" type="button"
             (click)="exportConfig()"
             *ngIf="!gatewayConfigurationGroup.get('remoteConfiguration').value"

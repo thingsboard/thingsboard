@@ -24,7 +24,7 @@
          (keypress)="gatewayNameEnter($event)"
          [matAutocomplete]="gatewayAutocomplete"
   >
-  <button *ngIf="selectDeviceGatewayFormGroup.get('gateway').value" (click)="clear()"
+  <button *ngIf="selectDeviceGatewayFormGroup.get('gateway').value && !isStateForm" (click)="clear()"
           type="button" matSuffix mat-icon-button aria-label="Clear">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
