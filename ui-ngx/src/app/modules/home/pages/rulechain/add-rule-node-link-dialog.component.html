@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<form [formGroup]="ruleNodeLinkFormGroup" (ngSubmit)="add()" style="width: 900px;">
-  <mat-toolbar fxLayout="row" color="primary">
+<form [formGroup]="ruleNodeLinkFormGroup" (ngSubmit)="add()" style="width: 480px;">
+  <mat-toolbar color="primary">
     <h2 translate>rulenode.add-link</h2>
     <span fxFlex></span>
     <div [tb-help]="'ruleEngine'"></div>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -38,15 +38,13 @@
       </tb-rule-node-link>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || ruleNodeLinkFormGroup.invalid || !ruleNodeLinkFormGroup.dirty">
       {{ 'action.add' | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

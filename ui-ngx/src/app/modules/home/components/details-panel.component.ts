@@ -18,7 +18,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormGroup, NgForm } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'tb-details-panel',

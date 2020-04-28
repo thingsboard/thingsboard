@@ -67,8 +67,12 @@ export const StorageTypeTranslationMap = new Map<StorageType, string>(
 export enum ConnectorType {
   mqtt= 'MQTT',
   modbus = 'Modbus',
-  opc_ua = 'OPC-UA',
-  ble = 'BLE'
+  opcua = 'OPC-UA',
+  ble = 'BLE',
+  request = 'Request',
+  can = 'CAN',
+  bacnet = 'BACnet',
+  custom = 'Custom'
 }
 
 export interface GatewayFormModels {
