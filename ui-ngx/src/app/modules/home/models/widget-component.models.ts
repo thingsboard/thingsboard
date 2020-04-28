@@ -58,6 +58,8 @@ import {
   NotificationVerticalPosition
 } from '@core/notification/notification.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { AuthUser } from '@shared/models/user.model';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 export interface IWidgetAction {
   name: string;
@@ -114,6 +116,14 @@ export class WidgetContext {
 
   set changeDetector(cd: ChangeDetectorRef) {
     this.changeDetectorValue = cd;
+  }
+
+  get currentUser(): AuthUser {
+    if (this.store) {
+      return getCurrentAuthUser(this.store);
+    } else {
+      return null;
+    }
   }
 
   private changeDetectorValue: ChangeDetectorRef;
