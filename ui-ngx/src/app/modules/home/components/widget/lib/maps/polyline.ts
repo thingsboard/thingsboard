@@ -73,11 +73,14 @@ export class Polyline {
     getPolyStyle(settings: PolylineSettings): L.PolylineOptions {
         return {
             color: settings.useColorFunction ?
-                safeExecute(settings.colorFunction, [this.data, this.dataSources, this.data[0]?.dsIndex]) : settings.color,
+                safeExecute(settings.colorFunction,
+                    [this.data, this.dataSources, this.dataSources[0]?.dsIndex]) : settings.color,
             opacity: settings.useStrokeOpacityFunction ?
-                safeExecute(settings.strokeOpacityFunction, [this.data, this.dataSources, this.data[0]?.dsIndex]) : settings.strokeOpacity,
+                safeExecute(settings.strokeOpacityFunction,
+                    [this.data, this.dataSources, this.dataSources[0]?.dsIndex]) : settings.strokeOpacity,
             weight: settings.useStrokeWeightFunction ?
-                safeExecute(settings.strokeWeightFunction, [this.data, this.dataSources, this.data[0]?.dsIndex]) : settings.strokeWeight,
+                safeExecute(settings.strokeWeightFunction,
+                    [this.data, this.dataSources, this.dataSources[0]?.dsIndex]) : settings.strokeWeight,
         }
     }
 

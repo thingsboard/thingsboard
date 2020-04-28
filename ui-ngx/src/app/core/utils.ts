@@ -464,7 +464,7 @@ export function parseArray(input: any[]): any[] {
           time: el[0],
           deviceType: null
         };
-        entityArray.filter(el=>el.data.length).forEach(entity => {
+        entityArray.filter(el => el.data.length).forEach(entity => {
           obj[entity?.dataKey?.label] = entity?.data[i][1];
           obj[entity?.dataKey?.label + '|ts'] = entity?.data[0][0];
           if (entity?.dataKey?.label === 'type') {
@@ -485,7 +485,7 @@ export function parseData(input: any[]): any[] {
         dsIndex: i,
         deviceType: null
       };
-      entityArray.filter(el=>el.data.length).forEach(el => {
+      entityArray.filter(el => el.data.length).forEach(el => {
         obj[el?.dataKey?.label] = el?.data[0][1];
         obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
         if (el?.dataKey?.label === 'type') {
@@ -525,22 +525,19 @@ export function parseFunction(source: any, params: string[] = ['def']): Function
 
 export function parseTemplate(template: string, data: object, translateFn?: (key: string) => string) {
   let res = '';
-  let variables = '';
   try {
     if (template.match(/<link-act/g)) {
       template = template.replace(/<link-act/g, '<a').replace(/link-act>/g, 'a>').replace(/name=(\'|")(.*?)(\'|")/g, `class='tb-custom-action' id='$2'`);
     }
-    if (template.includes('i18n')) {
-      const translateRegexp = /\{i18n:(.*?)\}/;
-      template.match(new RegExp(translateRegexp.source, translateRegexp.flags + 'g')).forEach(match => {
-        template = template.replace(match, translateFn(match.match(translateRegexp)[1]));
-      });
+    if (translateFn) {
+      template = translateFn(template);
     }
     const formatted = template.match(/\$\{([^}]*)\:\d*\}/g);
     if (formatted)
       formatted.forEach(value => {
         const [variable, digits] = value.replace('${', '').replace('}', '').split(':');
-        data[variable] = padValue(data[variable], +digits)
+        data[variable] = padValue(data[variable], +digits);
+        if (isNaN(data[variable])) data[value] = '';
         template = template.replace(value, '${' + variable + '}');
       });
     const variables = template.match(/\$\{.*?\}/g);

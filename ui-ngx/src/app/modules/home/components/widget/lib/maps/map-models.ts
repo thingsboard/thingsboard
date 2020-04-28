@@ -52,7 +52,9 @@ export type MapSettings = {
     animate: boolean,
     maxClusterRadius: number,
     chunkedLoading: boolean,
-    removeOutsideVisibleBounds: boolean
+    removeOutsideVisibleBounds: boolean,
+    useCustomProvider: boolean,
+    customProviderTileUrl: string;
 }
 
 export enum MapProviders {

@@ -170,7 +170,7 @@ export class MapWidgetController implements MapWidgetInterface {
         const timeseries = [];
         const latLngProperties = [this.settings.latKeyName, this.settings.lngKeyName, this.settings.xPosKeyName, this.settings.yPosKeyName];
         e.$datasource.dataKeys.forEach(key => {
-            if (latLngProperties.includes(key)) {
+            if (latLngProperties.includes(key.name)) {
                 const value = {
                     key: key.name,
                     value: e[key.name]
