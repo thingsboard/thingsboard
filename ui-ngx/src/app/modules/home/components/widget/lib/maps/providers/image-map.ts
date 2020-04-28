@@ -16,10 +16,10 @@
 
 import L, { LatLngLiteral } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapSettings, UnitedMapSettings } from '../map-models';
+import { UnitedMapSettings } from '../map-models';
 import { aspectCache, parseFunction } from '@app/core/utils';
 import { Observable } from 'rxjs';
-import { skipLast, map, filter, switchMap } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 
 const maxZoom = 4;// ?
 
@@ -29,11 +29,13 @@ export class ImageMap extends LeafletMap {
     aspect = 0;
     width = 0;
     height = 0;
+    imageUrl;
 
     constructor($container: HTMLElement, options: UnitedMapSettings) {
         super($container, options);
         options.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((rigXPos, origYPos) => { x, y });
-        aspectCache(options.mapUrl).subscribe(aspect => {
+        this.imageUrl = options.mapUrl;
+        aspectCache(this.imageUrl).subscribe(aspect => {
             this.aspect = aspect;
             this.onResize();
             super.setMap(this.map);
@@ -43,9 +45,12 @@ export class ImageMap extends LeafletMap {
 
     setImageAlias(alias: Observable<any>) {
         alias.pipe(filter(result => result),
-            map(subscription => subscription.data[1])).subscribe(res => {
-                console.log("ImageMap -> setImageAlias -> res", res)
-
+            filter(result => result), map(el => el[1])).subscribe(res => {
+                this.imageUrl = res;
+                aspectCache(res).subscribe(aspect => {
+                    this.aspect = aspect;
+                    this.onResize(true);
+                })
             })
     }
 
@@ -64,8 +69,7 @@ export class ImageMap extends LeafletMap {
         if (this.imageOverlay) {
             this.imageOverlay.setBounds(bounds);
         } else {
-            this.imageOverlay = L.imageOverlay(this.options.mapUrl, bounds).addTo(this.map);
-
+            this.imageOverlay = L.imageOverlay(this.imageUrl, bounds).addTo(this.map);
         }
         const padding = 200 * maxZoom;
         southWest = this.pointToLatLng(-padding, h + padding);
@@ -127,7 +131,6 @@ export class ImageMap extends LeafletMap {
     }
 
     convertPosition(expression): L.LatLng {
-        console.log("ImageMap -> expression", expression)
         return this.pointToLatLng(
             expression[this.options.xPosKeyName] * this.width,
             expression[this.options.yPosKeyName] * this.height);

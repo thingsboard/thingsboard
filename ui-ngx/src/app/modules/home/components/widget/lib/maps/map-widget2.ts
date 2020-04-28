@@ -31,9 +31,9 @@ import {
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import { parseFunction, parseArray, parseData, safeExecute, parseWithTranslation } from '@core/utils';
+import { parseFunction, parseArray, parseData, parseWithTranslation } from '@core/utils';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
-import { forkJoin, of, Observable } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition } from './maps-utils';
 import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType } from '@shared/models/widget.models';
@@ -48,7 +48,6 @@ import { UtilsService } from '@core/services/utils.service';
 export class MapWidgetController implements MapWidgetInterface {
 
     constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
-        console.log('MapWidgetController -> constructor -> ctx', ctx)
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -85,7 +84,6 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     public static getProvidersSchema(mapProvider: MapProviders) {
-        console.log('MapWidgetController -> getProvidersSchema -> mapProvider', mapProvider)
         mapProviderSchema.schema.properties.provider.default = mapProvider;
         return mergeSchemes([mapProviderSchema,
             ...Object.keys(providerSets)?.map(
@@ -178,7 +176,7 @@ export class MapWidgetController implements MapWidgetInterface {
             entityId,
             AttributeScope.SHARED_SCOPE,
             keys
-        ).subscribe(res => {
+        ).subscribe(() => {
         });
     }
 
@@ -255,15 +253,19 @@ export class MapWidgetController implements MapWidgetInterface {
                 ]
             }
         ];
+        const result = new Subject();
         const imageUrlSubscriptionOptions = {
             datasources,
             useDashboardTimewindow: false,
             type: widgetType.latest,
             callbacks: {
-                onDataUpdated: (subscription, apply) => { }
+                onDataUpdated: (subscription) => {
+                    result.next(subscription.data[0].data[0]);
+                }
             }
         };
-        return this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true);
+        this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe(() => { });
+        return result;
     }
 
     onDestroy() {

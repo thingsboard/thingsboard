@@ -257,8 +257,6 @@ export default abstract class LeafletMap {
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.convertPosition(data), settings, data, dataSources, this.dragMarker);
-            console.log(this.bounds);
-            
             this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()), settings.draggableMarker && this.markers.size < 2);
             this.markers.set(key, newMarker);
             if (this.options.useClusterMarkers) {
@@ -294,7 +292,7 @@ export default abstract class LeafletMap {
         }
     }
 
-    setImageAlias(alias:Observable<any>){       
+    setImageAlias(alias:Observable<any>){
     }
 
     // Polyline

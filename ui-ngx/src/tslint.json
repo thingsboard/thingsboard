@@ -12,10 +12,6 @@
       "element",
       "tb",
       "kebab-case"
-    ],
-    "import-blacklist": [
-      true,
-      ["^.*/public-api$"]
-  ]
+    ]
   }
 }

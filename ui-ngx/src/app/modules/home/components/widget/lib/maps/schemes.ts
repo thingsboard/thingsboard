@@ -335,7 +335,7 @@ export const commonMapSettingsSchema =
             colorFunction: {
                 title: 'Color function: f(data, dsData, dsIndex)',
                 type: 'string'
-            },            
+            },
             markerImage: {
                 title: 'Custom marker image',
                 type: 'string'
@@ -434,7 +434,7 @@ export const commonMapSettingsSchema =
                     type: 'image'
                 }
             ]
-        }        
+        }
     ]
 };
 
