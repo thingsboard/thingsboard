@@ -247,18 +247,12 @@ spec:
         - containerPort: 9001
           name: rpc
         env:
-        - name: RPC_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: CLUSTER_NODE_ID
+        - name: TB_SERVICE_ID
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: TB_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        - name: TB_SERVICE_TYPE
+          value: "monolith"
         - name: ZOOKEEPER_ENABLED
           value: "true"
         - name: ZOOKEEPER_URL
@@ -334,14 +328,12 @@ spec:
         - containerPort: 1883
           name: mqtt
         env:
-        - name: CLUSTER_NODE_ID
+        - name: TB_SERVICE_ID
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: TB_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        - name: TB_SERVICE_TYPE
+          value: "monolith"
         - name: MQTT_BIND_ADDRESS
           value: "0.0.0.0"
         - name: MQTT_BIND_PORT
@@ -409,14 +401,12 @@ spec:
         - containerPort: 8080
           name: http
         env:
-        - name: CLUSTER_NODE_ID
+        - name: TB_SERVICE_ID
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: TB_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        - name: TB_SERVICE_TYPE
+          value: "monolith"
         - name: HTTP_BIND_ADDRESS
           value: "0.0.0.0"
         - name: HTTP_BIND_PORT
@@ -484,14 +474,12 @@ spec:
           name: coap
           protocol: UDP
         env:
-        - name: CLUSTER_NODE_ID
+        - name: TB_SERVICE_ID
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: TB_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        - name: TB_SERVICE_TYPE
+          value: "monolith"
         - name: COAP_BIND_ADDRESS
           value: "0.0.0.0"
         - name: COAP_BIND_PORT

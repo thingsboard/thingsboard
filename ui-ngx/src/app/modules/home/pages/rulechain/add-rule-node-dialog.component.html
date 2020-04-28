@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #ruleNodeForm="ngForm" (ngSubmit)="add()" style="min-width: 650px;">
+<form (ngSubmit)="add()" style="min-width: 650px;">
   <mat-toolbar fxLayout="row" color="primary">
     <h2 translate>rulenode.add</h2>
     <span fxFlex></span>
@@ -42,7 +42,7 @@
     <span fxFlex></span>
     <button mat-button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || tbRuleNode.ruleNodeForm.invalid || !tbRuleNode.ruleNodeForm.dirty">
+            [disabled]="(isLoading$ | async) || tbRuleNode.ruleNodeFormGroup.invalid || !tbRuleNode.ruleNodeFormGroup.dirty">
       {{ 'action.add' | translate }}
     </button>
     <button mat-button color="primary"

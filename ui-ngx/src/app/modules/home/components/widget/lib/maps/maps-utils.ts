@@ -15,8 +15,7 @@
 ///
 
 import L from 'leaflet';
-import _ from 'lodash';
-import { MarkerSettings, PolylineSettings, PolygonSettings } from './map-models';
+import { MarkerSettings, PolygonSettings, PolylineSettings } from './map-models';
 
 export function createTooltip(target: L.Layer,
     settings: MarkerSettings | PolylineSettings | PolygonSettings,

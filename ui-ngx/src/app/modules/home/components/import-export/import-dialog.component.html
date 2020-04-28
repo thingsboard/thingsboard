@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #importForm="ngForm" [formGroup]="importFormGroup" (ngSubmit)="importFromJson()">
+<form [formGroup]="importFormGroup" (ngSubmit)="importFromJson()">
   <mat-toolbar color="primary">
     <h2 translate>{{ importTitle }}</h2>
     <span fxFlex></span>

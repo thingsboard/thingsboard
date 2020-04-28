@@ -32,8 +32,6 @@ import { RuleNodeConfigComponent } from './rule-node-config.component';
 })
 export class RuleNodeDetailsComponent extends PageComponent implements OnInit, OnChanges {
 
-  @ViewChild('ruleNodeForm', {static: true}) ruleNodeForm: NgForm;
-
   @ViewChild('ruleNodeConfigComponent') ruleNodeConfigComponent: RuleNodeConfigComponent;
 
   @Input()

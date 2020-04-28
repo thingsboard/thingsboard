@@ -22,7 +22,7 @@ import org.thingsboard.server.actors.stats.StatsPersistMsg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 
 /**
@@ -115,9 +115,9 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         }
     }
 
-    protected void onClusterEventMsg(ClusterEventMsg msg) {
+    protected void onClusterEventMsg(PartitionChangeMsg msg) {
         try {
-            processor.onClusterEventMsg(msg);
+            processor.onPartitionChangeMsg(msg);
         } catch (Exception e) {
             logAndPersist("onClusterEventMsg", e);
         }

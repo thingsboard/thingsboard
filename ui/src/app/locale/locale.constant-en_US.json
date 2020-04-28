@@ -1489,6 +1489,12 @@
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes"
     },
+    "queue": {
+        "select_name": "Select queue name",
+        "name": "Queue Name",
+        "name_required": "Queue name is required!"
+
+    },
     "tenant": {
         "tenant": "Tenant",
         "tenants": "Tenants",
@@ -1514,7 +1520,11 @@
         "idCopiedMessage": "Tenant Id has been copied to clipboard",
         "select-tenant": "Select tenant",
         "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
-        "tenant-required": "Tenant is required"
+        "tenant-required": "Tenant is required",
+        "isolated-tb-core": "Processing in isolated ThingsBoard Core container",
+        "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
+        "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
+        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",

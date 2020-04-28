@@ -19,7 +19,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormControl, FormGroupDirective, NgForm } from '@angular/forms';
+import { FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
 import { EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -29,7 +29,6 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { AddEntityDialogData } from '@home/models/entity/entity-component.models';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'tb-add-entity-dialog',
@@ -41,7 +40,7 @@ export class AddEntityDialogComponent extends
   DialogComponent<AddEntityDialogComponent, BaseData<HasId>> implements OnInit, ErrorStateMatcher {
 
   entityComponent: EntityComponent<BaseData<HasId>>;
-  detailsForm: NgForm;
+  detailsForm: FormGroup;
 
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
   translations: EntityTypeTranslation;
@@ -88,7 +87,7 @@ export class AddEntityDialogComponent extends
     const componentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
     this.entityComponent = componentRef.instance;
     this.entityComponent.isEdit = true;
-    this.detailsForm = this.entityComponent.entityNgForm;
+    this.detailsForm = this.entityComponent.entityForm;
   }
 
   helpLinkId(): string {

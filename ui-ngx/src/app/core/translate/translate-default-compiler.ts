@@ -15,10 +15,12 @@
 ///
 
 import {
-  MESSAGE_FORMAT_CONFIG, MessageFormatConfig,
+  MESSAGE_FORMAT_CONFIG,
+  MessageFormatConfig,
   TranslateMessageFormatCompiler
 } from 'ngx-translate-messageformat-compiler';
 import { Inject, Injectable, Optional } from '@angular/core';
+
 const parse = require('messageformat-parser').parse;
 
 @Injectable({ providedIn: 'root' })

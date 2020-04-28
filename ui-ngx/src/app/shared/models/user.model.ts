@@ -18,7 +18,7 @@ import { BaseData } from './base-data';
 import { UserId } from './id/user-id';
 import { CustomerId } from './id/customer-id';
 import { Authority } from './authority.enum';
-import {TenantId} from './id/tenant-id';
+import { TenantId } from './id/tenant-id';
 
 export interface User extends BaseData<UserId> {
   tenantId: TenantId;

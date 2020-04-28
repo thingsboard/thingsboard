@@ -14,11 +14,10 @@
 /// limitations under the License.
 ///
 
-import {BaseData} from '@shared/models/base-data';
-import {AssetId} from './id/asset-id';
-import {TenantId} from '@shared/models/id/tenant-id';
-import {CustomerId} from '@shared/models/id/customer-id';
-import {DeviceCredentialsId} from '@shared/models/id/device-credentials-id';
+import { BaseData } from '@shared/models/base-data';
+import { AssetId } from './id/asset-id';
+import { TenantId } from '@shared/models/id/tenant-id';
+import { CustomerId } from '@shared/models/id/customer-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
 
 export interface Asset extends BaseData<AssetId> {

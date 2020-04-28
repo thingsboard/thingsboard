@@ -35,8 +35,6 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
 
   entityForm: FormGroup;
 
-  @ViewChild('entityNgForm', {static: true}) entityNgForm: NgForm;
-
   isEditValue: boolean;
 
   @Input()

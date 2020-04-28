@@ -21,7 +21,7 @@ import { ContactBased } from '@shared/models/contact-based.model';
 import { AfterViewInit } from '@angular/core';
 import { POSTAL_CODE_PATTERNS } from '@home/models/contact.models';
 import { HasId } from '@shared/models/base-data';
-import {EntityComponent} from './entity.component';
+import { EntityComponent } from './entity.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 export abstract class ContactBasedComponent<T extends ContactBased<HasId>> extends EntityComponent<T> implements AfterViewInit {

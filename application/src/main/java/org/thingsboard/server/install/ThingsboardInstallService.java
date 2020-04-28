@@ -23,8 +23,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.install.DatabaseTsUpgradeService;
 import org.thingsboard.server.service.install.DatabaseEntitiesUpgradeService;
+import org.thingsboard.server.service.install.DatabaseTsUpgradeService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
@@ -151,7 +151,11 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("2.4.3");
 
                             log.info("Updating system data...");
-
+                            systemDataLoaderService.updateSystemWidgets();
+                            break;
+                        case "2.5.0":
+                            log.info("Upgrading ThingsBoard from version 2.5 to 3.0 ...");
+                            log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
                         default:

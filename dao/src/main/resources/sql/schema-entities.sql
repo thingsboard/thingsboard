@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS event (
     event_type varchar(255),
     event_uid varchar(255),
     tenant_id varchar(31),
+    ts bigint NOT NULL,
     CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
@@ -183,7 +184,9 @@ CREATE TABLE IF NOT EXISTS tenant (
     search_text varchar(255),
     state varchar(255),
     title varchar(255),
-    zip varchar(255)
+    zip varchar(255),
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
@@ -249,3 +252,28 @@ CREATE TABLE IF NOT EXISTS entity_view (
     search_text varchar(255),
     additional_info varchar
 );
+
+CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    ttl_ts bigint;
+    debug_ttl_ts bigint;
+    ttl_deleted_count bigint DEFAULT 0;
+    debug_ttl_deleted_count bigint DEFAULT 0;
+BEGIN
+    IF ttl > 0 THEN
+        ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint AND (event_type != %L::varchar AND event_type != %L::varchar) RETURNING *) SELECT count(*) FROM deleted', ttl_ts, 'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into ttl_deleted_count;
+    END IF;
+    IF debug_ttl > 0 THEN
+        debug_ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - debug_ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint AND (event_type = %L::varchar OR event_type = %L::varchar) RETURNING *) SELECT count(*) FROM deleted', debug_ttl_ts, 'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into debug_ttl_deleted_count;
+    END IF;
+    RAISE NOTICE 'Events removed by ttl: %', ttl_deleted_count;
+    RAISE NOTICE 'Debug Events removed by ttl: %', debug_ttl_deleted_count;
+    deleted := ttl_deleted_count + debug_ttl_deleted_count;
+END
+$$;

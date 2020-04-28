@@ -14,13 +14,10 @@
 /// limitations under the License.
 ///
 
-import {
-  ActionReducerMap,
-  MetaReducer, Store
-} from '@ngrx/store';
+import { ActionReducerMap, MetaReducer } from '@ngrx/store';
 import { storeFreeze } from 'ngrx-store-freeze';
 
-import { environment as env} from '@env/environment';
+import { environment as env } from '@env/environment';
 
 import { initStateFromLocalStorage } from './meta-reducers/init-state-from-local-storage.reducer';
 import { debug } from './meta-reducers/debug.reducer';
@@ -35,7 +32,6 @@ import { SettingsEffects } from '@app/core/settings/settings.effects';
 import { NotificationState } from '@app/core/notification/notification.models';
 import { notificationReducer } from '@app/core/notification/notification.reducer';
 import { NotificationEffects } from '@app/core/notification/notification.effects';
-import { take } from 'rxjs/operators';
 
 export const reducers: ActionReducerMap<AppState> = {
   load: loadReducer,

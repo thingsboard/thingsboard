@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #statesForm="ngForm" [formGroup]="statesFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+<form [formGroup]="statesFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
   <mat-toolbar color="primary">
     <h2 translate>dashboard.manage-states</h2>
     <span fxFlex></span>
@@ -28,8 +28,8 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" fxLayout="column">
-      <div class="manage-dashboard-states" fxLayout="column">
+    <fieldset [disabled]="isLoading$ | async">
+      <div class="manage-dashboard-states">
         <div class="tb-entity-table">
           <div fxLayout="column" class="tb-entity-table-content">
             <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
@@ -78,13 +78,13 @@
               <table  mat-table [dataSource]="dataSource"
                          matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
                 <ng-container matColumnDef="name">
-                  <mat-header-cell *matHeaderCellDef mat-sort-header style="flex: 0 0 60%"> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
+                  <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 60%"> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     {{ state.name }}
                   </mat-cell>
                 </ng-container>
                 <ng-container matColumnDef="id">
-                  <mat-header-cell *matHeaderCellDef mat-sort-header style="flex: 0 0 40%"> {{ 'dashboard.state-id' | translate }} </mat-header-cell>
+                  <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'dashboard.state-id' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     {{ state.id }}
                   </mat-cell>

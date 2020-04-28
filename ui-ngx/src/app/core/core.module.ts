@@ -28,7 +28,8 @@ import {
   MissingTranslationHandler,
   TranslateCompiler,
   TranslateLoader,
-  TranslateModule, TranslateParser
+  TranslateModule,
+  TranslateParser
 } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TbMissingTranslationHandler } from './translate/missing-translate-handler';

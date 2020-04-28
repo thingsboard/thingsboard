@@ -434,7 +434,73 @@ export const commonMapSettingsSchema =
                     type: 'image'
                 }
             ]
-        }
+        },
+        'showPolygon',
+    ]
+};
+
+export const mapPolygonSchema =
+{
+    schema: {
+        title: 'Map Polygon Configuration',
+        type: 'object',
+        properties: {
+            polygonKeyName: {
+                title: 'Polygon key name',
+                type: 'string',
+                default: 'coordinates'
+            },
+            polygonColor: {
+                title: 'Polygon color',
+                type: 'string'
+            },
+            polygonOpacity: {
+                title: 'Polygon opacity',
+                type: 'number',
+                default: 0.5
+            },
+            polygonStrokeColor: {
+                title: 'Stroke color',
+                type: 'string'
+            },
+            polygonStrokeOpacity: {
+                title: 'Stroke opacity',
+                type: 'number',
+                default: 1
+            },
+            polygonStrokeWeight: {
+                title: 'Stroke weight',
+                type: 'number',
+                default: 1
+            },
+            usePolygonColorFunction: {
+                title: 'Use polygon color function',
+                type: 'boolean',
+                default: false
+            },
+            polygonColorFunction: {
+                title: 'Polygon Color function: f(data, dsData, dsIndex)',
+                type: 'string'
+            },
+        },
+        required: []
+    },
+    form: [
+        'polygonKeyName',
+        {
+            key: 'polygonColor',
+            type: 'color'
+        },
+        'polygonOpacity',
+        {
+            key: 'polygonStrokeColor',
+            type: 'color'
+        },
+        'polygonStrokeOpacity', 'polygonStrokeWeight', 'usePolygonColorFunction',
+        {
+            key: 'polygonColorFunction',
+            type: 'javascript'
+        },
     ]
 };
 

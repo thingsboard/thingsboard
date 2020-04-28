@@ -107,7 +107,7 @@
                             (closeDetails)="onEditRuleNodeClosed()"
                             (toggleDetailsEditMode)="onRevertRuleNodeEdit()"
                             (applyDetails)="saveRuleNode()"
-                            [theForm]="tbRuleNode.ruleNodeForm">
+                            [theForm]="tbRuleNode.ruleNodeFormGroup">
             <div class="details-buttons">
               <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
             </div>
@@ -148,7 +148,7 @@
                             (closeDetails)="onEditRuleNodeLinkClosed()"
                             (toggleDetailsEditMode)="onRevertRuleNodeLinkEdit()"
                             (applyDetails)="saveRuleNodeLink()"
-                            [theForm]="tbRuleNodeLink.ruleNodeLinkForm">
+                            [theForm]="tbRuleNodeLink.ruleNodeLinkFormGroup">
             <div class="details-buttons">
               <div [tb-help]="'ruleEngine'"></div>
             </div>

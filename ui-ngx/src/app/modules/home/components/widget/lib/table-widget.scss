@@ -32,16 +32,16 @@
 
     .mat-row:not(.mat-row-select), .mat-header-row:not(.mat-row-select) {
       mat-cell:nth-child(n+2):nth-last-child(n+2), mat-footer-cell:nth-child(n+2):nth-last-child(n+2), mat-header-cell:nth-child(n+2):nth-last-child(n+2) {
-        padding: 0px 5px;
+        padding: 0 5px;
       }
     }
 
     .mat-row.mat-row-select, .mat-header-row.mat-row-select {
       mat-cell:nth-child(2), mat-footer-cell:nth-child(2), mat-header-cell:nth-child(2) {
-        padding: 0px 5px;
+        padding: 0 5px;
       }
       mat-cell:nth-child(n+3):nth-last-child(n+2), mat-footer-cell:nth-child(n+3):nth-last-child(n+2), mat-header-cell:nth-child(n+3):nth-last-child(n+2) {
-        padding: 0px 5px;
+        padding: 0 5px;
       }
     }
   }

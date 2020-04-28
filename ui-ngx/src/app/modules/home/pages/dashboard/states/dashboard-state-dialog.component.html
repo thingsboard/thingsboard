@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #stateForm="ngForm" [formGroup]="stateFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+<form [formGroup]="stateFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
   <mat-toolbar color="primary">
     <h2 translate>{{ isAdd ? 'dashboard.add-state' : 'dashboard.edit-state' }}</h2>
     <span fxFlex></span>

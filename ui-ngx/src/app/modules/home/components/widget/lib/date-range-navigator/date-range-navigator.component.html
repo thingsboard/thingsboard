@@ -19,7 +19,7 @@
      [ngClass]="{'short-mode':ctx.width < 400, 'labels-hidden': settings.hideLabels, 'long-mode': ctx.width >= 400}">
   <mat-form-field class="mat-block" [fxHide]="settings.hidePicker" (click)="openNavigatorPanel($event)">
     <mat-label *ngIf="!settings.hideLabels" translate>widgets.date-range-navigator.localizationMap.Date picker</mat-label>
-    <mat-select #datePicker [ngModel]="advancedModel.chosenLabel" matInput>
+    <mat-select #datePicker [ngModel]="advancedModel.chosenLabel">
       <mat-option [value]="advancedModel.chosenLabel">
         {{advancedModel.chosenLabel}}
       </mat-option>
@@ -27,7 +27,7 @@
   </mat-form-field>
   <mat-form-field class="mat-block" [fxHide]="settings.hideInterval">
     <mat-label translate *ngIf="!settings.hideLabels">widgets.date-range-navigator.localizationMap.Interval</mat-label>
-    <mat-select matInput [(ngModel)]="selectedDateInterval" (ngModelChange)="changeInterval()">
+    <mat-select [(ngModel)]="selectedDateInterval" (ngModelChange)="changeInterval()">
       <mat-option *ngIf="customInterval" [value]="customInterval.ts">
         {{'widgets.date-range-navigator.localizationMap.' + customInterval.label | translate}}
       </mat-option>
@@ -43,7 +43,7 @@
     </button>
     <mat-form-field class="mat-block" fxFlex.gt-sm>
       <mat-label translate *ngIf="!settings.hideLabels">widgets.date-range-navigator.localizationMap.Step size</mat-label>
-      <mat-select matInput [(ngModel)]="selectedStepSize">
+      <mat-select [(ngModel)]="selectedStepSize">
         <mat-option *ngFor="let date of datesMap | keyvalue: originalOrder" [value]="date.value.ts">
           {{'widgets.date-range-navigator.localizationMap.' + date.value.label | translate}}
         </mat-option>

@@ -28,7 +28,7 @@
     </mat-progress-bar>
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
-      <form #mailSettingsForm="ngForm" [formGroup]="mailSettings" (ngSubmit)="save()">
+      <form [formGroup]="mailSettings" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
           <mat-form-field class="mat-block">
             <mat-label translate>admin.mail-from</mat-label>
@@ -97,10 +97,10 @@
           </mat-form-field>
           <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
             <button mat-raised-button type="button"
-                    [disabled]="(isLoading$ | async) || mailSettingsForm.invalid" (click)="sendTestMail()">
+                    [disabled]="(isLoading$ | async) || mailSettings.invalid" (click)="sendTestMail()">
               {{'admin.send-test-mail' | translate}}
             </button>
-            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || mailSettingsForm.invalid || !mailSettingsForm.dirty"
+            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || mailSettings.invalid || !mailSettings.dirty"
                     type="submit">{{'action.save' | translate}}
             </button>
           </div>

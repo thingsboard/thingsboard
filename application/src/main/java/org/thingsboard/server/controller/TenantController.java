@@ -34,11 +34,13 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
 public class TenantController extends BaseController {
@@ -74,7 +76,6 @@ public class TenantController extends BaseController {
 
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation,
                     tenant.getId(), tenant);
-
             tenant = checkNotNull(tenantService.saveTenant(tenant));
             if (newTenant) {
                 installScripts.createDefaultRuleChains(tenant.getId());
@@ -94,8 +95,7 @@ public class TenantController extends BaseController {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             checkTenantId(tenantId, Operation.DELETE);
             tenantService.deleteTenant(tenantId);
-
-            actorService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
+            tbClusterService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);
         }

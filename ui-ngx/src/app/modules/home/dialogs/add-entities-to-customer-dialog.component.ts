@@ -120,16 +120,12 @@ export class AddEntitiesToCustomerDialogComponent extends
     switch (this.data.entityType) {
       case EntityType.DEVICE:
         return this.deviceService.assignDeviceToCustomer(customerId, entityId);
-        break;
       case EntityType.ASSET:
         return this.assetService.assignAssetToCustomer(customerId, entityId);
-        break;
       case EntityType.ENTITY_VIEW:
         return this.entityViewService.assignEntityViewToCustomer(customerId, entityId);
-        break;
       case EntityType.DASHBOARD:
         return this.dashboardService.assignDashboardToCustomer(customerId, entityId);
-        break;
     }
   }
 

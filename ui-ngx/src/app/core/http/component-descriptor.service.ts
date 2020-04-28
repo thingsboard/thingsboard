@@ -19,8 +19,7 @@ import { HttpClient } from '@angular/common/http';
 import { ComponentDescriptor, ComponentType } from '@shared/models/component-descriptor.models';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { Observable, of } from 'rxjs';
-import { RuleChainMetaData } from '@shared/models/rule-chain.models';
-import { tap, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { RuleNodeType } from '@shared/models/rule-node.models';
 
 @Injectable({

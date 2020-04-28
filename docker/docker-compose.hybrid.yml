@@ -34,7 +34,7 @@ services:
       - "9042"
     volumes:
       - ./tb-node/cassandra:/var/lib/cassandra
-  tb1:
+  tb-core1:
     env_file:
       - tb-node.hybrid.env
     depends_on:
@@ -42,7 +42,21 @@ services:
       - redis
       - postgres
       - cassandra
-  tb2:
+  tb-core2:
+    env_file:
+      - tb-node.cassandra.env
+    depends_on:
+      - kafka
+      - redis
+      - cassandra
+  tb-rule-engine1:
+    env_file:
+      - tb-node.cassandra.env
+    depends_on:
+      - kafka
+      - redis
+      - cassandra
+  tb-rule-engine2:
     env_file:
       - tb-node.hybrid.env
     depends_on:

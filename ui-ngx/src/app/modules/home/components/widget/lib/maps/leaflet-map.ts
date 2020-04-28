@@ -21,7 +21,7 @@ import 'leaflet.markercluster/dist/leaflet.markercluster';
 
 import { MapSettings, MarkerSettings, FormattedData, UnitedMapSettings, PolygonSettings, PolylineSettings } from './map-models';
 import { Marker } from './markers';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';

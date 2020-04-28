@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class AuditLogController extends BaseController {
 

@@ -16,10 +16,7 @@
 import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
 import DateFnsUtils from '@date-io/date-fns';
-import {
-  MuiPickersUtilsProvider,
-  KeyboardDatePicker
-} from '@material-ui/pickers';
+import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 
 interface ThingsboardDateState extends JsonFormFieldState {

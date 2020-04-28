@@ -16,13 +16,14 @@
 
 import { BaseData, HasId } from '@shared/models/base-data';
 import { PageComponent } from '@shared/components/page.component';
-import { Input, OnInit, Directive } from '@angular/core';
+import { Directive, Input, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { PageLink } from '@shared/models/page/page-link';
 
 @Directive()
+// tslint:disable-next-line:directive-class-suffix
 export abstract class EntityTableHeaderComponent<T extends BaseData<HasId>,
   P extends PageLink = PageLink,
   L extends BaseData<HasId> = T,

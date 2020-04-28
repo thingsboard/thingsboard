@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Pipe, PipeTransform} from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'highlight' })
 export class HighlightPipe implements PipeTransform {

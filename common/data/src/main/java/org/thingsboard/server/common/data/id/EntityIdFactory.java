@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.id;
 
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.alarm.AlarmId;
 
 import java.util.UUID;
 

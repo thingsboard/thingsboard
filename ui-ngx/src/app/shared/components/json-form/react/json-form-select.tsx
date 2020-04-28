@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 import * as React from 'react';
-import {
-  JsonFormFieldProps,
-  JsonFormFieldState,
-  KeyLabelItem
-} from '@shared/components/json-form/react/json-form.models';
+import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';

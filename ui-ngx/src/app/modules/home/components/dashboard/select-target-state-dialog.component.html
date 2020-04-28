@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #stateForm="ngForm" [formGroup]="stateFormGroup" (ngSubmit)="save()">
+<form [formGroup]="stateFormGroup" (ngSubmit)="save()">
   <mat-toolbar color="primary">
     <h2 translate>dashboard.select-state</h2>
     <span fxFlex></span>

@@ -19,27 +19,10 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormGroupDirective,
-  NgForm, Validators, ValidatorFn
-} from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { AttributeData } from '@shared/models/telemetry/telemetry.models';
-import { EntityAlias, EntityAliases, EntityAliasFilter } from '@shared/models/alias.models';
-import { DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { UtilsService } from '@core/services/utils.service';
-import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { DialogService } from '@core/services/dialog.service';
-import { EntityService } from '@core/http/entity.service';
-import { Observable, of } from 'rxjs';
 
 export interface ImportDialogData {
   importTitle: string;

@@ -17,18 +17,18 @@
   display: inline-block;
   pointer-events: all;
   .tb-toast {
-    box-shadow: 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14), 0px 1px 18px 0px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
     color: #fff;
     font-size: 18px;
     border-radius: 4px;
-    padding: 0px 18px;
+    padding: 0 18px;
     margin: 8px;
     .toast-text {
-      padding: 0px 6px;
+      padding: 0 6px;
       width: 100%;
     }
     button {
-      margin: 6px 0px 6px 12px;
+      margin: 6px 0 6px 12px;
     }
     &.info-toast {
       background: #323232;

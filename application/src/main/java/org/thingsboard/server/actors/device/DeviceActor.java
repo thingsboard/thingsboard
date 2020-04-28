@@ -22,10 +22,8 @@ import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
-import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 public class DeviceActor extends ContextAwareActor {
@@ -49,6 +47,11 @@ public class DeviceActor extends ContextAwareActor {
     }
 
     @Override
+    public void postStop() {
+
+    }
+
+    @Override
     protected boolean process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
@@ -66,14 +69,8 @@ public class DeviceActor extends ContextAwareActor {
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
                 processor.processRpcRequest(context(), (ToDeviceRpcRequestActorMsg) msg);
                 break;
-            case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
-                processor.processToServerRPCResponse(context(), (ToServerRpcResponseActorMsg) msg);
-                break;
             case DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG:
                 processor.processServerSideRpcTimeout(context(), (DeviceActorServerSideRpcTimeoutMsg) msg);
-                break;
-            case DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG:
-                processor.processClientSideRpcTimeout(context(), (DeviceActorClientSideRpcTimeoutMsg) msg);
                 break;
             case SESSION_TIMEOUT_MSG:
                 processor.checkSessionsTimeout();

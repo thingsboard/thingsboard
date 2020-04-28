@@ -106,7 +106,7 @@
     <ng-template [ngSwitchCase]="aliasFilterType.relationsQuery">
       <section fxLayout="column" id="relationsQueryFilter">
         <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
-        <section class="tb-root-state-entity-switch" fxLayout="row" fxLayoutAlign="start center" style="padding-left: 0px;">
+        <section class="tb-root-state-entity-switch" fxLayout="row" fxLayoutAlign="start center" style="padding-left: 0;">
           <mat-slide-toggle class="root-state-entity-switch"
                             formControlName="rootStateEntity">
           </mat-slide-toggle>
@@ -134,7 +134,7 @@
           </div>
         </div>
         <div fxFlex fxLayout="row">
-          <section class="tb-root-state-entity-switch" fxLayout="row" fxLayoutAlign="start center" style="padding-left: 0px;">
+          <section class="tb-root-state-entity-switch" fxLayout="row" fxLayoutAlign="start center" style="padding-left: 0;">
             <mat-slide-toggle class="root-state-entity-switch"
                               formControlName="fetchLastLevelOnly">
             </mat-slide-toggle>

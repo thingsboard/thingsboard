@@ -16,13 +16,16 @@
 
 import * as AngularCore from '@angular/core';
 import { Injectable, NgModule } from '@angular/core';
+import * as AngularRouter from '@angular/router';
 import {
   ActivatedRouteSnapshot,
   CanActivate,
-  Resolve, Router,
+  Resolve,
+  Router,
   RouterModule,
   RouterStateSnapshot,
-  Routes, UrlTree
+  Routes,
+  UrlTree
 } from '@angular/router';
 
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
@@ -40,7 +43,6 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 import * as AngularCommon from '@angular/common';
 import * as AngularForms from '@angular/forms';
-import * as AngularRouter from '@angular/router';
 import * as AngularCdkCoercion from '@angular/cdk/coercion';
 import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
 import * as AngularMaterialChips from '@angular/material/chips';
@@ -49,10 +51,10 @@ import * as AngularMaterialDialog from '@angular/material/dialog';
 import * as NgrxStore from '@ngrx/store';
 import * as TranslateCore from '@ngx-translate/core';
 import * as TbCore from '@core/public-api';
+import { ItemBufferService } from '@core/public-api';
 import * as TbShared from '@shared/public-api';
 import * as TbHomeComponents from '@home/components/public-api';
 import * as _moment from 'moment';
-import { ItemBufferService } from '@core/public-api';
 
 declare const SystemJS;
 

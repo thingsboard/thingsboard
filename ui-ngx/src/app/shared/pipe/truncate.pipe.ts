@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Pipe, PipeTransform} from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 import { isString } from '@core/utils';
 
 @Pipe({ name: 'truncate' })

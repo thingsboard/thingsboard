@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #assignToCustomerForm="ngForm" [formGroup]="assignToCustomerFormGroup" (ngSubmit)="assign()">
+<form [formGroup]="assignToCustomerFormGroup" (ngSubmit)="assign()">
   <mat-toolbar color="primary">
     <h2>{{ assignToCustomerTitle | translate }}</h2>
     <span fxFlex></span>
@@ -41,8 +41,8 @@
   <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || assignToCustomerForm.invalid
-            || !assignToCustomerForm.dirty">
+            [disabled]="(isLoading$ | async) || assignToCustomerFormGroup.invalid
+            || !assignToCustomerFormGroup.dirty">
       {{ 'action.assign' | translate }}
     </button>
     <button mat-button color="primary"

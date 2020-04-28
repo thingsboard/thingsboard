@@ -70,7 +70,6 @@ export declare type DashboardPageLayouts = {[key in DashboardLayoutId]: Dashboar
 export class LayoutWidgetsArray implements Iterable<Widget> {
 
   private widgetIds: string[] = [];
-  private pointer = 0;
 
   private loaded = false;
 

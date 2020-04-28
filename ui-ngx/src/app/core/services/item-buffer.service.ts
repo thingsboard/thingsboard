@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
-import { EntityAlias, EntityAliasFilter, EntityAliases, EntityAliasInfo, AliasesInfo } from '@shared/models/alias.models';
+import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo } from '@shared/models/alias.models';
 import { DatasourceType, Widget, WidgetPosition, WidgetSize } from '@shared/models/widget.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { deepClone, isEqual } from '@core/utils';

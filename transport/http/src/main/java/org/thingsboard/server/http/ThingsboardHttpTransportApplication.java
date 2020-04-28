@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 @SpringBootApplication
 @EnableAsync
-@ComponentScan({"org.thingsboard.server.http", "org.thingsboard.server.common", "org.thingsboard.server.transport.http", "org.thingsboard.server.kafka"})
+@ComponentScan({"org.thingsboard.server.http", "org.thingsboard.server.common", "org.thingsboard.server.transport.http", "org.thingsboard.server.queue.kafka"})
 public class ThingsboardHttpTransportApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";

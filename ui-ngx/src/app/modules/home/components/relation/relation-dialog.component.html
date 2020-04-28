@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #relationForm="ngForm" [formGroup]="relationFormGroup" (ngSubmit)="save()" style="min-width: 600px;">
+<form [formGroup]="relationFormGroup" (ngSubmit)="save()" style="min-width: 600px;">
   <mat-toolbar fxLayout="row" color="primary">
     <h2>{{ (isAdd ? 'relation.add' : 'relation.edit' ) | translate }}</h2>
     <span fxFlex></span>

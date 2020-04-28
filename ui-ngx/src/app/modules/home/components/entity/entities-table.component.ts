@@ -16,12 +16,16 @@
 
 import {
   AfterViewInit,
-  ChangeDetectionStrategy, ChangeDetectorRef,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ComponentFactoryResolver,
-  ElementRef, EventEmitter,
-  Input, OnChanges,
-  OnInit, SimpleChanges,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
