@@ -305,6 +305,7 @@
                         </properties>
                         <excludes>
                             <exclude>**/.env</exclude>
+                            <exclude>**/*.env</exclude>
                             <exclude>**/.eslintrc</exclude>
                             <exclude>**/.babelrc</exclude>
                             <exclude>**/.jshintrc</exclude>
