@@ -1645,7 +1645,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         addPageLinkToParam(params, pageLink);
 
         Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&" + getUrlParams(pageLink),
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&" + getUrlParamsTs(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
@@ -1997,12 +1997,20 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     private String getUrlParams(TimePageLink pageLink) {
+        return getUrlParams(pageLink, "startTime", "endTime");
+    }
+
+    private String getUrlParamsTs(TimePageLink pageLink) {
+        return getUrlParams(pageLink, "startTs", "endTs");
+    }
+
+    private String getUrlParams(TimePageLink pageLink, String startTime, String endTime) {
         String urlParams = "limit={limit}&ascOrder={ascOrder}";
         if (pageLink.getStartTime() != null) {
-            urlParams += "&startTime={startTime}";
+            urlParams += "&" + startTime + "={startTime}";
         }
         if (pageLink.getEndTime() != null) {
-            urlParams += "&endTime={endTime}";
+            urlParams += "&" + endTime + "={endTime}";
         }
         if (pageLink.getIdOffset() != null) {
             urlParams += "&offset={offset}";

@@ -43,7 +43,7 @@ public class QueueController extends BaseController {
             ServiceType type = ServiceType.valueOf(serviceType);
             switch (type) {
                 case TB_RULE_ENGINE:
-                    return Arrays.asList("HighPriority", "Main");
+                    return Arrays.asList("Main", "HighPriority", "SequentialByOriginator");
                 default:
                     return Collections.emptyList();
             }

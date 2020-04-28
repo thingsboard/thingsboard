@@ -31,7 +31,6 @@ import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -64,9 +63,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @TbRuleEngineComponent
@@ -116,10 +112,10 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     @PreDestroy
     public void stop() {
+        super.destroy();
         if (submitExecutor != null) {
             submitExecutor.shutdownNow();
         }
-
         ruleEngineSettings.getQueues().forEach(config -> consumerConfigurations.put(config.getName(), config));
     }
 
@@ -156,7 +152,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                     submitStrategy.init(msgs);
 
                     while (!stopped) {
-                        ProcessingAttemptContext ctx = new ProcessingAttemptContext(submitStrategy);
+                        TbMsgPackProcessingContext ctx = new TbMsgPackProcessingContext(submitStrategy);
                         submitStrategy.submitAttempt((id, msg) -> submitExecutor.submit(() -> {
                             log.trace("[{}] Creating callback for message: {}", id, msg.getValue());
                             ToRuleEngineMsg toRuleEngineMsg = msg.getValue();
@@ -174,7 +170,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                         }));
 
                         boolean timeout = false;
-                        if (!ctx.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
+                        if (!ctx.await(configuration.getPackProcessingTimeout(), TimeUnit.MILLISECONDS)) {
                             timeout = true;
                         }
 

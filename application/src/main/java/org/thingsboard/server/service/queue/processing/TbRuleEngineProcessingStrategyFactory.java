@@ -17,6 +17,8 @@ package org.thingsboard.server.service.queue.processing;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueAckStrategyConfiguration;
@@ -32,7 +34,7 @@ public class TbRuleEngineProcessingStrategyFactory {
 
     public TbRuleEngineProcessingStrategy newInstance(String name, TbRuleEngineQueueAckStrategyConfiguration configuration) {
         switch (configuration.getType()) {
-            case "SKIP_ALL":
+            case "SKIP_ALL_FAILURES":
                 return new SkipStrategy(name);
             case "RETRY_ALL":
                 return new RetryStrategy(name, true, true, true, configuration);
@@ -98,7 +100,7 @@ public class TbRuleEngineProcessingStrategyFactory {
                     }
                     log.info("[{}] Going to reprocess {} messages", queueName, toReprocess.size());
                     if (log.isTraceEnabled()) {
-                        toReprocess.forEach((id, msg) -> log.trace("Going to reprocess [{}]: {}", id, msg.getValue()));
+                        toReprocess.forEach((id, msg) -> log.trace("Going to reprocess [{}]: {}", id, TbMsg.fromBytes(msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));
                     }
                     if (pauseBetweenRetries > 0) {
                         try {
@@ -123,7 +125,15 @@ public class TbRuleEngineProcessingStrategyFactory {
 
         @Override
         public TbRuleEngineProcessingDecision analyze(TbRuleEngineProcessingResult result) {
-            log.info("[{}] Reprocessing skipped for {} failed and {} timeout messages", queueName, result.getFailedMap().size(), result.getPendingMap().size());
+            if (!result.isSuccess()) {
+                log.info("[{}] Reprocessing skipped for {} failed and {} timeout messages", queueName, result.getFailedMap().size(), result.getPendingMap().size());
+            }
+            if (log.isTraceEnabled()) {
+                result.getFailedMap().forEach((id, msg) -> log.trace("Failed messages [{}]: {}", id, TbMsg.fromBytes(msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));
+            }
+            if (log.isTraceEnabled()) {
+                result.getPendingMap().forEach((id, msg) -> log.trace("Timeout messages [{}]: {}", id, TbMsg.fromBytes(msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));
+            }
             return new TbRuleEngineProcessingDecision(true, null);
         }
     }

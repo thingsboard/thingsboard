@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
@@ -73,24 +74,30 @@ public class TenantActor extends RuleChainManagerActor {
         log.info("[{}] Starting tenant actor.", tenantId);
         try {
             Tenant tenant = systemContext.getTenantService().findTenantById(tenantId);
-            // This Service may be started for specific tenant only.
-            Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
+            if (tenant == null) {
+                cantFindTenant = true;
+                log.info("[{}] Started tenant actor for missing tenant.", tenantId);
+            } else {
+                // This Service may be started for specific tenant only.
+                Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
 
-            isRuleEngineForCurrentTenant = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
-            isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
+                isRuleEngineForCurrentTenant = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
+                isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
 
-            if (isRuleEngineForCurrentTenant) {
-                try {
-                    if (isolatedTenantId.map(id -> id.equals(tenantId)).orElseGet(() -> !tenant.isIsolatedTbRuleEngine())) {
-                        initRuleChains();
-                    } else {
-                        isRuleEngineForCurrentTenant = false;
+                if (isRuleEngineForCurrentTenant) {
+                    try {
+                        if (isolatedTenantId.map(id -> id.equals(tenantId)).orElseGet(() -> !tenant.isIsolatedTbRuleEngine())) {
+                            log.info("[{}] Going to init rule chains", tenantId);
+                            initRuleChains();
+                        } else {
+                            isRuleEngineForCurrentTenant = false;
+                        }
+                    } catch (Exception e) {
+                        cantFindTenant = true;
                     }
-                } catch (Exception e) {
-                    cantFindTenant = true;
                 }
+                log.info("[{}] Tenant actor started.", tenantId);
             }
-            log.info("[{}] Tenant actor started.", tenantId);
         } catch (Exception e) {
             log.warn("[{}] Unknown failure", tenantId, e);
         }
@@ -104,7 +111,12 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     protected boolean process(TbActorMsg msg) {
         if (cantFindTenant) {
-            log.info("Missing Tenant msg: {}", msg);
+            log.info("[{}] Processing missing Tenant msg: {}", tenantId, msg);
+            if (msg.getMsgType().equals(MsgType.QUEUE_TO_RULE_ENGINE_MSG)) {
+                QueueToRuleEngineMsg queueMsg = (QueueToRuleEngineMsg) msg;
+                queueMsg.getTbMsg().getCallback().onSuccess();
+            }
+            return true;
         }
         switch (msg.getMsgType()) {
             case PARTITION_CHANGE_MSG:

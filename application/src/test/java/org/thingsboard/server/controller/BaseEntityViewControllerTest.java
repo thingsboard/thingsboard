@@ -426,7 +426,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         message.setPayload(strKvs.getBytes());
         client.publish("v1/devices/me/telemetry", message);
         Thread.sleep(1000);
-//        client.disconnect();
+        client.disconnect();
     }
 
     private void awaitConnected(MqttAsyncClient client, long ms) throws InterruptedException {
@@ -463,13 +463,13 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(accessToken);
         client.connect(options);
-        Thread.sleep(3000);
+        awaitConnected(client, TimeUnit.SECONDS.toMillis(30));
 
         MqttMessage message = new MqttMessage();
         message.setPayload((stringKV).getBytes());
         client.publish("v1/devices/me/attributes", message);
         Thread.sleep(1000);
-
+        client.disconnect();
         return new HashSet<>(doGetAsync("/api/plugins/telemetry/DEVICE/" + viewDeviceId + "/keys/attributes", List.class));
     }
 

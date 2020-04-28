@@ -66,7 +66,16 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
         if (subscribed) {
             List<T> messages = partitions
                     .stream()
-                    .map(tpi -> storage.get(tpi.getFullTopicName(), durationInMillis))
+                    .map(tpi -> {
+                        try {
+                            return storage.get(tpi.getFullTopicName());
+                        } catch (InterruptedException e) {
+                            if (!stopped) {
+                                log.error("Queue was interrupted.", e);
+                            }
+                            return Collections.emptyList();
+                        }
+                    })
                     .flatMap(List::stream)
                     .map(msg -> (T) msg).collect(Collectors.toList());
             if (messages.size() > 0) {

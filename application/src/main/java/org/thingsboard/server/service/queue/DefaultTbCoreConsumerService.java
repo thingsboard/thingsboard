@@ -52,6 +52,7 @@ import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -98,6 +99,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         super.init("tb-core-consumer", "tb-core-notifications-consumer");
     }
 
+    @PreDestroy
+    public void destroy(){
+        super.destroy();
+    }
+
     @Override
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (partitionChangeEvent.getServiceType().equals(getServiceType())) {
@@ -117,11 +123,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     }
                     ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> pendingMap = msgs.stream().collect(
                             Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
-                    ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> failedMap = new ConcurrentHashMap<>();
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
+                    TbPackProcessingContext<TbProtoQueueMsg<ToCoreMsg>> ctx = new TbPackProcessingContext<>(
+                            processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
                     pendingMap.forEach((id, msg) -> {
                         log.trace("[{}] Creating main callback for message: {}", id, msg.getValue());
-                        TbCallback callback = new TbPackCallback<>(id, processingTimeoutLatch, pendingMap, failedMap);
+                        TbCallback callback = new TbPackCallback<>(id, ctx);
                         try {
                             ToCoreMsg toCoreMsg = msg.getValue();
                             if (toCoreMsg.hasToSubscriptionMgrMsg()) {
@@ -147,8 +154,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         }
                     });
                     if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
-                        pendingMap.forEach((id, msg) -> log.warn("[{}] Timeout to process message: {}", id, msg.getValue()));
-                        failedMap.forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
+                        ctx.getAckMap().forEach((id, msg) -> log.warn("[{}] Timeout to process message: {}", id, msg.getValue()));
+                        ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
                     }
                     mainConsumer.commit();
                 } catch (Exception e) {

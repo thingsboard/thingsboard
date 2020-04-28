@@ -30,11 +30,9 @@ import java.util.concurrent.TimeUnit;
 public final class InMemoryStorage {
     private static InMemoryStorage instance;
     private final ConcurrentHashMap<String, BlockingQueue<TbQueueMsg>> storage;
-    private volatile boolean stopped;
 
     private InMemoryStorage() {
         storage = new ConcurrentHashMap<>();
-        stopped = false;
     }
 
     public static InMemoryStorage getInstance() {
@@ -52,33 +50,31 @@ public final class InMemoryStorage {
         return storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).add(msg);
     }
 
-    public <T extends TbQueueMsg> List<T> get(String topic, long durationInMillis) {
+    public <T extends TbQueueMsg> List<T> get(String topic) throws InterruptedException {
         if (storage.containsKey(topic)) {
-            try {
-                List<T> entities;
-                T first = (T) storage.get(topic).poll(durationInMillis, TimeUnit.MILLISECONDS);
-                if (first != null) {
-                    entities = new ArrayList<>();
-                    entities.add(first);
-                    List<TbQueueMsg> otherList = new ArrayList<>();
-                    storage.get(topic).drainTo(otherList, 999);
-                    for (TbQueueMsg other : otherList) {
-                        entities.add((T) other);
-                    }
-                } else {
-                    entities = Collections.emptyList();
+            List<T> entities;
+            T first = (T) storage.get(topic).poll();
+            if (first != null) {
+                entities = new ArrayList<>();
+                entities.add(first);
+                List<TbQueueMsg> otherList = new ArrayList<>();
+                storage.get(topic).drainTo(otherList, 999);
+                for (TbQueueMsg other : otherList) {
+                    entities.add((T) other);
                 }
-                return entities;
-            } catch (InterruptedException e) {
-                if (!stopped) {
-                    log.warn("Queue was interrupted", e);
-                }
+            } else {
+                entities = Collections.emptyList();
             }
+            return entities;
         }
         return Collections.emptyList();
     }
 
-    public void stop() {
-        stopped = true;
+    /**
+     * Used primarily for testing.
+     */
+    public void cleanup() {
+        storage.clear();
     }
+
 }
