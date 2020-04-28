@@ -15,13 +15,8 @@
 ///
 
 import _ from 'lodash';
-<<<<<<< HEAD
 import { Observable, Subject, fromEvent, of } from 'rxjs';
 import { finalize, share, map } from 'rxjs/operators';
-=======
-import { fromEvent, Observable, of, Subject } from 'rxjs';
-import { finalize, map, share } from 'rxjs/operators';
->>>>>>> 8cfe4ef44f356d9e920189664df3abb9e89b708c
 import base64js from 'base64-js';
 
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
