@@ -2,9 +2,6 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
     "types": ["node", "jquery", "flot", "tooltipster", "tinycolor2", "js-beautify",
        "react", "react-dom", "jstree", "raphael", "canvas-gauges", "leaflet", "leaflet-markercluster"]
   },

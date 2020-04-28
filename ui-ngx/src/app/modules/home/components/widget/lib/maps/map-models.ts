@@ -23,7 +23,7 @@ export type MapSettings = {
     polygonKeyName: any;
     draggableMarker: boolean;
     initCallback?: () => any;
-    posFunction: (rigXPos, origYPos) => { x, y };
+    posFunction: (origXPos, origYPos) => { x, y };
     defaultZoomLevel?: number;
     disableScrollZooming?: boolean;
     minZoomLevel?: number;

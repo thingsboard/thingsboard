@@ -19,7 +19,7 @@ import LeafletMap from '../leaflet-map';
 import { UnitedMapSettings } from '../map-models';
 import { aspectCache, parseFunction } from '@app/core/utils';
 import { Observable } from 'rxjs';
-import { map, filter } from 'rxjs/operators';
+import { map, filter, switchMap } from 'rxjs/operators';
 
 const maxZoom = 4;// ?
 
@@ -33,7 +33,7 @@ export class ImageMap extends LeafletMap {
 
     constructor($container: HTMLElement, options: UnitedMapSettings) {
         super($container, options);
-        options.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((rigXPos, origYPos) => { x, y });
+        options.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((origXPos, origYPos) => { x, y });
         this.imageUrl = options.mapUrl;
         aspectCache(this.imageUrl).subscribe(aspect => {
             this.aspect = aspect;
@@ -44,14 +44,13 @@ export class ImageMap extends LeafletMap {
     }
 
     setImageAlias(alias: Observable<any>) {
-        alias.pipe(filter(result => result),
-            filter(result => result), map(el => el[1])).subscribe(res => {
-                this.imageUrl = res;
-                aspectCache(res).subscribe(aspect => {
-                    this.aspect = aspect;
-                    this.onResize(true);
-                })
-            })
+        alias.pipe(filter(result => result), map(el => el[1]), switchMap(res => {
+            this.imageUrl = res;
+            return aspectCache(res);
+        })).subscribe(aspect => {
+            this.aspect = aspect;
+            this.onResize(true);
+        });
     }
 
     updateBounds(updateImage?, lastCenterPos?) {

@@ -166,16 +166,30 @@ export class MapWidgetController implements MapWidgetInterface {
             entityType: e.$datasource.entityType,
             id: e.$datasource.entityId
         };
-        const keys = e.$datasource.dataKeys.map(key => {
-            return {
+        const attributes = [];
+        const timeseries = [];
+        e.$datasource.dataKeys.forEach(key => {
+            const value = {
                 key: key.name,
                 value: e[key.name]
+            };
+            if(key.type === DataKeyType.attribute){
+                attributes.push(value)
+            }
+            if(key.type === DataKeyType.timeseries){
+                timeseries.push(value)
             }
         })
-        return attributeService.saveEntityAttributes(
+        attributeService.saveEntityTimeseries(
             entityId,
             AttributeScope.SHARED_SCOPE,
-            keys
+            timeseries
+        ).subscribe(() => {
+        });
+        attributeService.saveEntityAttributes(
+            entityId,
+            AttributeScope.SERVER_SCOPE,
+            attributes
         ).subscribe(() => {
         });
     }
@@ -260,7 +274,7 @@ export class MapWidgetController implements MapWidgetInterface {
             type: widgetType.latest,
             callbacks: {
                 onDataUpdated: (subscription) => {
-                    result.next(subscription.data[0].data[0]);
+                    result.next(subscription?.data[0]?.data[0]);
                 }
             }
         };

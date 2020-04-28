@@ -75,7 +75,6 @@
 import './zone-flags';
 import 'zone.js/dist/zone';  // Included with Angular CLI.
 import 'core-js/es/array';
-import { polyfill } from 'es6-promise'; polyfill();
 import moment from 'moment';
 
 /***************************************************************************************************
