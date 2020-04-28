@@ -47,7 +47,7 @@ import { UtilsService } from '@core/services/utils.service';
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
 
-    constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
+    constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement, isEdit?) {
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -58,6 +58,9 @@ export class MapWidgetController implements MapWidgetInterface {
             $element = ctx.$container[0];
         }
         this.settings = this.initSettings(ctx.settings);
+        if (isEdit) {
+            this.settings.draggableMarker = true;
+        }
         this.settings.tooltipAction = this.getDescriptors('tooltipAction');
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
