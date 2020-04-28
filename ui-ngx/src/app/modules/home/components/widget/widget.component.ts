@@ -92,6 +92,7 @@ import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
 import { ServicesMap } from '@home/models/services.map';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-widget',
@@ -246,6 +247,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext.ngZone = this.ngZone;
     this.widgetContext.store = this.store;
     this.widgetContext.servicesMap = ServicesMap;
+    this.widgetContext.currentUser = getCurrentAuthUser(this.store);
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
 

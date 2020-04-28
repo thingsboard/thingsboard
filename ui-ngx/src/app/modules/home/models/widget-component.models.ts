@@ -58,6 +58,7 @@ import {
   NotificationVerticalPosition
 } from '@core/notification/notification.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { AuthUser } from '@shared/models/user.model';
 
 export interface IWidgetAction {
   name: string;
@@ -185,6 +186,7 @@ export class WidgetContext {
   widgetActions?: Array<WidgetAction>;
 
   servicesMap?: Map<string, Type<any>>;
+  currentUser?: AuthUser;
 
   $injector?: Injector;
 
