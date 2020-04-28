@@ -606,9 +606,9 @@ queue:
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:10000}"
   js:
     # JS Eval request topic
-    request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js.eval.requests}"
+    request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"
     # JS Eval responses topic prefix that is combined with node id
-    response_topic_prefix: "${REMOTE_JS_EVAL_RESPONSE_TOPIC:js.eval.responses}"
+    response_topic_prefix: "${REMOTE_JS_EVAL_RESPONSE_TOPIC:js_eval.responses}"
     # JS Eval max pending requests
     max_pending_requests: "${REMOTE_JS_MAX_PENDING_REQUESTS:10000}"
     # JS Eval max request timeout
