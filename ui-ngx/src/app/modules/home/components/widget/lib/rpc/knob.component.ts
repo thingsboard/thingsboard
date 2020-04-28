@@ -122,7 +122,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     this.knobErrorContainer = $(this.knobErrorContainerRef.nativeElement);
     this.knobError = $(this.knobErrorRef.nativeElement);
     this.knobMinmaxContainer = $(this.knobMinmaxContainerRef.nativeElement);
-    this.minmaxLabel = this.knobMinmaxContainer.find('.minmax-label');
+    this.minmaxLabel = this.knobMinmaxContainer.find<HTMLElement>('.minmax-label');
     this.textMeasure = $(this.textMeasureRef.nativeElement);
     this.canvasBarElement = this.canvasBarElementRef.nativeElement;
 
