@@ -23,6 +23,7 @@ export type MapSettings = {
     polygonKeyName: any;
     draggableMarker: boolean;
     initCallback?: () => any;
+    posFunction: (origXPos, origYPos) => { x, y };
     defaultZoomLevel?: number;
     disableScrollZooming?: boolean;
     minZoomLevel?: number;
@@ -31,6 +32,8 @@ export type MapSettings = {
     lngKeyName?: string;
     xPosKeyName?: string;
     yPosKeyName?: string;
+    imageEntityAlias: string;
+    imageUrlAttribute: string;
     mapProvider: MapProviders;
     mapProviderHere: string;
     mapUrl?: string;
@@ -49,7 +52,9 @@ export type MapSettings = {
     animate: boolean,
     maxClusterRadius: number,
     chunkedLoading: boolean,
-    removeOutsideVisibleBounds: boolean
+    removeOutsideVisibleBounds: boolean,
+    useCustomProvider: boolean,
+    customProviderTileUrl: string;
 }
 
 export enum MapProviders {

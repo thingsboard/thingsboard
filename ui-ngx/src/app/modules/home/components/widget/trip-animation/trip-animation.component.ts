@@ -22,8 +22,8 @@ import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
 import { MapProviders } from '../lib/maps/map-models';
-import { parseArray, parseWithTranslation, safeExecute } from '@app/core/utils';
-import { addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
+import { parseArray, parseWithTranslation, safeExecute, parseTemplate } from '@app/core/utils';
+import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
 import { tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
@@ -100,8 +100,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   timeUpdated(time: number) {
     const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]);
     this.activeTrip = currentPosition[0];
-    this.minTime = moment(this.historicalData[0][this.historicalData.length - 1]?.time).format('YYYY-MM-DD HH:mm:ss')
-     this.maxTime = moment(this.historicalData[0][0]?.time).format('YYYY-MM-DD HH:mm:ss')
+    this.minTime = moment(this.intervals[this.intervals.length - 1]).format('YYYY-MM-DD HH:mm:ss')
+    this.maxTime = moment(this.intervals[0]).format('YYYY-MM-DD HH:mm:ss')
     this.calcLabel();
     this.calcTooltip();
     if (this.mapWidget) {

@@ -150,7 +150,6 @@ export class Marker {
     }
 
     createDefaultMarkerIcon(color, onMarkerIconReady) {
-        const pinColor = color.substr(1);
         const icon = L.icon({
             iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + color,
             iconSize: [21, 34],
