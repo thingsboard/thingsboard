@@ -410,7 +410,7 @@ public class GatewaySessionHandler {
         return deviceSessionCtx.nextMsgId();
     }
 
-    public void reportActivity() {
-        devices.forEach((id, deviceCtx) -> transportService.reportActivity(deviceCtx.getSessionInfo()));
+    public UUID getSessionId() {
+        return sessionId;
     }
 }

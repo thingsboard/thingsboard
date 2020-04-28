@@ -49,6 +49,8 @@ message SessionInfoProto {
   int64 deviceIdLSB = 7;
   string deviceName = 8;
   string deviceType = 9;
+  int64 gwSessionIdMSB = 10;
+  int64 gwSessionIdLSB = 11;
 }
 
 enum SessionEvent {
