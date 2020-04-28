@@ -183,14 +183,14 @@ export class MapWidgetController implements MapWidgetInterface {
                 }
             }
         });
-        if (attributes.length) {
+        if (timeseries.length) {
             attributeService.saveEntityTimeseries(
                 entityId,
                 LatestTelemetry.LATEST_TELEMETRY,
                 timeseries
             ).subscribe(() => { });
         }
-        if (timeseries.length) {
+        if (attributes.length) {
             attributeService.saveEntityAttributes(
                 entityId,
                 AttributeScope.SERVER_SCOPE,
