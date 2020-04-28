@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, NgForm, Validators } from '@angular/forms';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { FcRuleEdge, LinkLabel } from '@shared/models/rule-node.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
