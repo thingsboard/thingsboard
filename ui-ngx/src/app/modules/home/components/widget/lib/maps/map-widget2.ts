@@ -17,28 +17,28 @@
 import { MapProviders, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
-  commonMapSettingsSchema,
-  googleMapSettingsSchema,
-  hereMapSettingsSchema,
-  imageMapSettingsSchema,
-  mapPolygonSchema,
-  mapProviderSchema,
-  markerClusteringSettingsSchema,
-  markerClusteringSettingsSchemaLeaflet,
-  openstreetMapSettingsSchema,
-  routeMapSettingsSchema,
-  tencentMapSettingsSchema
+    openstreetMapSettingsSchema,
+    googleMapSettingsSchema,
+    imageMapSettingsSchema,
+    tencentMapSettingsSchema,
+    commonMapSettingsSchema,
+    routeMapSettingsSchema,
+    markerClusteringSettingsSchema,
+    markerClusteringSettingsSchemaLeaflet,
+    hereMapSettingsSchema,
+    mapProviderSchema,
+    mapPolygonSchema
 } from './schemes';
-import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
-import { GoogleMap, HEREMap, ImageMap, OpenStreetMap, TencentMap } from './providers';
-import { parseArray, parseData, parseFunction, parseWithTranslation } from '@core/utils';
-import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
-import { forkJoin } from 'rxjs';
+import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
+import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
+import { parseFunction, parseArray, parseData, parseWithTranslation } from '@core/utils';
+import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
+import { of, Subject } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition } from './maps-utils';
-import { JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
+import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Type } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,7 +47,7 @@ import { UtilsService } from '@core/services/utils.service';
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
 
-    constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement) {
+    constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement, isEdit?) {
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -58,6 +58,9 @@ export class MapWidgetController implements MapWidgetInterface {
             $element = ctx.$container[0];
         }
         this.settings = this.initSettings(ctx.settings);
+        if (isEdit) {
+            this.settings.draggableMarker = true;
+        }
         this.settings.tooltipAction = this.getDescriptors('tooltipAction');
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
@@ -69,6 +72,7 @@ export class MapWidgetController implements MapWidgetInterface {
         }
         parseWithTranslation.setTranslate(this.translate);
         this.map = new MapClass($element, this.settings);
+        this.map.setImageAlias(this.subscribeForImageAttribute());
         this.map.saveMarkerLocation = this.setMarkerLocation;
     }
 
@@ -85,26 +89,28 @@ export class MapWidgetController implements MapWidgetInterface {
     public static getProvidersSchema(mapProvider: MapProviders) {
         mapProviderSchema.schema.properties.provider.default = mapProvider;
         return mergeSchemes([mapProviderSchema,
-            ...Object.values(providerSets)?.map(
-                (setting: IProvider) => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
+            ...Object.keys(providerSets)?.map(
+                (key: string) => { const setting = providerSets[key]; return addCondition(setting?.schema, `model.provider === '${setting.name}'`) })]);
     }
 
     public static settingsSchema(mapProvider: MapProviders, drawRoutes: boolean): JsonSettingsSchema {
         const schema = initSchema();
         addToSchema(schema, this.getProvidersSchema(mapProvider));
-       if(mapProvider!=='image-map'){
-            addGroupInfo(schema, 'Map Provider Settings');
-        addToSchema(schema, mergeSchemes([commonMapSettingsSchema, addCondition(mapPolygonSchema, 'model.showPolygon === true')]));
+        addGroupInfo(schema, 'Map Provider Settings');
+        addToSchema(schema, addCondition(commonMapSettingsSchema, 'model.provider !== "image-map"'));
         addGroupInfo(schema, 'Common Map Settings');
+        addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
+        addGroupInfo(schema, 'Polygon Settings');
         if (drawRoutes) {
             addToSchema(schema, routeMapSettingsSchema);
             addGroupInfo(schema, 'Route Map Settings');
-        } else if (mapProvider !== 'image-map') {
+        } else {
             const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
-                addCondition(markerClusteringSettingsSchemaLeaflet, `model.useClusterMarkers === true`)])
+                addCondition(markerClusteringSettingsSchemaLeaflet,
+                    `model.useClusterMarkers === true && model.provider !== "image-map"`)])
             addToSchema(schema, clusteringSchema);
             addGroupInfo(schema, 'Markers Clustering Settings');
-        }}
+        }
         return schema;
     }
 
@@ -125,9 +131,11 @@ export class MapWidgetController implements MapWidgetInterface {
         };
     }
 
-    translate = (key: string, defaultTranslation?: string):string => {
-        return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
-            || this.ctx.$injector.get(TranslateService).instant(key));
+    translate = (key: string, defaultTranslation?: string): string => {
+        if (key)
+            return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
+                || this.ctx.$injector.get(TranslateService).instant(key));
+        else return '';
     }
 
     getDescriptors(name: string): { [name: string]: ($event: Event) => void } {
@@ -143,7 +151,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     private onCustomAction(descriptor: WidgetActionDescriptor, $event: any) {
-        if ($event & $event.stopPropagation) {
+        if ($event && $event.stopPropagation) {
             $event?.stopPropagation();
         }
         //  safeExecute(parseFunction(descriptor.customFunction, ['$event', 'widgetContext']), [$event, this.ctx])
@@ -156,29 +164,48 @@ export class MapWidgetController implements MapWidgetInterface {
 
     setMarkerLocation = (e) => {
         const attributeService = this.ctx.$injector.get(AttributeService);
-        forkJoin(
-            this.data.filter(data => !!e[data.dataKey.name])
-                .map(data => {
-                    const entityId: EntityId = {
-                        entityType: data.datasource.entityType,
-                        id: data.datasource.entityId
-                    };
-                    return attributeService.saveEntityAttributes(
-                        entityId,
-                        AttributeScope.SHARED_SCOPE,
-                        [{
-                            key: data.dataKey.name,
-                            value: e[data.dataKey.name]
-                        }]
-                    );
-                })).subscribe(res => {
-                });
+
+        const entityId: EntityId = {
+            entityType: e.$datasource.entityType,
+            id: e.$datasource.entityId
+        };
+        const attributes = [];
+        const timeseries = [];
+        const latLngProperties = [this.settings.latKeyName, this.settings.lngKeyName, this.settings.xPosKeyName, this.settings.yPosKeyName];
+        e.$datasource.dataKeys.forEach(key => {
+            if (latLngProperties.includes(key.name)) {
+                const value = {
+                    key: key.name,
+                    value: e[key.name]
+                };
+                if (key.type === DataKeyType.attribute) {
+                    attributes.push(value)
+                }
+                if (key.type === DataKeyType.timeseries) {
+                    timeseries.push(value)
+                }
+            }
+        });
+        if (timeseries.length) {
+            attributeService.saveEntityTimeseries(
+                entityId,
+                LatestTelemetry.LATEST_TELEMETRY,
+                timeseries
+            ).subscribe(() => { });
+        }
+        if (attributes.length) {
+            attributeService.saveEntityAttributes(
+                entityId,
+                AttributeScope.SERVER_SCOPE,
+                attributes
+            ).subscribe(() => { });
+        }
     }
 
     initSettings(settings: UnitedMapSettings): UnitedMapSettings {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
-        if (!settings.mapProviderHere) {
+        if (this.provider === MapProviders.here && !settings.mapProviderHere) {
             if (settings.mapProvider && hereProviders.includes(settings.mapProvider))
                 settings.mapProviderHere = settings.mapProvider
             else settings.mapProviderHere = hereProviders[0];
@@ -213,13 +240,54 @@ export class MapWidgetController implements MapWidgetInterface {
         if (this.settings.draggableMarker) {
             this.map.setDataSources(parseData(this.data));
         }
-        else
-            this.map.updateMarkers(parseData(this.data));
+        this.map.updateMarkers(parseData(this.data));
     }
 
     resize() {
         this.map?.invalidateSize();
         this.map.onResize();
+    }
+
+    subscribeForImageAttribute() {
+        const imageEntityAlias = this.settings.imageEntityAlias;
+        const imageUrlAttribute = this.settings.imageUrlAttribute;
+        if (!imageEntityAlias || !imageUrlAttribute) {
+            return of(false);
+        }
+        const entityAliasId = this.ctx.aliasController.getEntityAliasId(imageEntityAlias);
+        if (!entityAliasId) {
+            return of(false);
+        }
+        const datasources = [
+            {
+                type: DatasourceType.entity,
+                name: imageEntityAlias,
+                aliasName: imageEntityAlias,
+                entityAliasId,
+                dataKeys: [
+                    {
+                        type: DataKeyType.attribute,
+                        name: imageUrlAttribute,
+                        label: imageUrlAttribute,
+                        settings: {},
+                        _hash: Math.random()
+                    }
+                ]
+            }
+        ];
+        const result = new Subject();
+        const imageUrlSubscriptionOptions = {
+            datasources,
+            useDashboardTimewindow: false,
+            type: widgetType.latest,
+            callbacks: {
+                onDataUpdated: (subscription) => {
+                    result.next(subscription?.data[0]?.data[0]);
+                }
+            }
+        };
+        this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe(() => { });
+        return result;
     }
 
     onDestroy() {

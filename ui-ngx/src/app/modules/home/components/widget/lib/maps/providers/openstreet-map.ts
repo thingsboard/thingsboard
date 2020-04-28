@@ -22,7 +22,11 @@ export class OpenStreetMap extends LeafletMap {
     constructor($container, options: UnitedMapSettings) {
         super($container, options);
         const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
-        const tileLayer = (L.tileLayer as any).provider(options.mapProvider || 'OpenStreetMap.Mapnik');
+        let tileLayer;
+        if (options.useCustomProvider)
+            tileLayer = L.tileLayer(options.customProviderTileUrl);
+        else
+            tileLayer = (L.tileLayer as any).provider(options.mapProvider || 'OpenStreetMap.Mapnik');
         tileLayer.addTo(map);
         super.setMap(map);
         super.initSettings(options);

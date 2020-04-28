@@ -17,7 +17,9 @@
 import L, { LatLngLiteral } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { UnitedMapSettings } from '../map-models';
-import { aspectCache } from '@app/core/utils';
+import { aspectCache, parseFunction } from '@app/core/utils';
+import { Observable } from 'rxjs';
+import { map, filter, switchMap } from 'rxjs/operators';
 
 const maxZoom = 4;// ?
 
@@ -27,14 +29,27 @@ export class ImageMap extends LeafletMap {
     aspect = 0;
     width = 0;
     height = 0;
+    imageUrl;
 
     constructor($container: HTMLElement, options: UnitedMapSettings) {
         super($container, options);
-        aspectCache(options.mapUrl).subscribe(aspect => {
+        options.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((origXPos, origYPos) => { x, y });
+        this.imageUrl = options.mapUrl;
+        aspectCache(this.imageUrl).subscribe(aspect => {
             this.aspect = aspect;
             this.onResize();
             super.setMap(this.map);
             super.initSettings(options);
+        });
+    }
+
+    setImageAlias(alias: Observable<any>) {
+        alias.pipe(filter(result => result), map(el => el[1]), switchMap(res => {
+            this.imageUrl = res;
+            return aspectCache(res);
+        })).subscribe(aspect => {
+            this.aspect = aspect;
+            this.onResize(true);
         });
     }
 
@@ -53,8 +68,7 @@ export class ImageMap extends LeafletMap {
         if (this.imageOverlay) {
             this.imageOverlay.setBounds(bounds);
         } else {
-            this.imageOverlay = L.imageOverlay(this.options.mapUrl, bounds).addTo(this.map);
-
+            this.imageOverlay = L.imageOverlay(this.imageUrl, bounds).addTo(this.map);
         }
         const padding = 200 * maxZoom;
         southWest = this.pointToLatLng(-padding, h + padding);
@@ -116,6 +130,7 @@ export class ImageMap extends LeafletMap {
     }
 
     convertPosition(expression): L.LatLng {
+        if (isNaN(expression[this.options.xPosKeyName]) || isNaN(expression[this.options.yPosKeyName])) return null;
         return this.pointToLatLng(
             expression[this.options.xPosKeyName] * this.width,
             expression[this.options.yPosKeyName] * this.height);
@@ -129,10 +144,10 @@ export class ImageMap extends LeafletMap {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom - 1);
     }
 
-   /* convertToCustomFormat(position: L.LatLng): object {
+    convertToCustomFormat(position: L.LatLng): object {
         return {
             [this.options.xPosKeyName]: (position.lng + 180) / 360,
             [this.options.yPosKeyName]: (position.lat + 180) / 360
         }
-    }*/
+    }
 }
