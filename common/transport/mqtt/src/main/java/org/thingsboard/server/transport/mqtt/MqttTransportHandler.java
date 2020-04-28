@@ -138,12 +138,24 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 break;
             case PUBLISH:
                 processPublish(ctx, (MqttPublishMessage) msg);
+                transportService.reportActivity(sessionInfo);
+                if (gatewaySessionHandler != null) {
+                    gatewaySessionHandler.reportActivity();
+                }
                 break;
             case SUBSCRIBE:
                 processSubscribe(ctx, (MqttSubscribeMessage) msg);
+                transportService.reportActivity(sessionInfo);
+                if (gatewaySessionHandler != null) {
+                    gatewaySessionHandler.reportActivity();
+                }
                 break;
             case UNSUBSCRIBE:
                 processUnsubscribe(ctx, (MqttUnsubscribeMessage) msg);
+                transportService.reportActivity(sessionInfo);
+                if (gatewaySessionHandler != null) {
+                    gatewaySessionHandler.reportActivity();
+                }
                 break;
             case PINGREQ:
                 if (checkConnected(ctx, msg)) {
