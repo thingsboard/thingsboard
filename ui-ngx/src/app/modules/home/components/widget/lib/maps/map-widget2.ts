@@ -38,7 +38,7 @@ import { WidgetContext } from '@app/modules/home/models/widget-component.models'
 import { getDefCenterPosition } from './maps-utils';
 import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Type } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -168,30 +168,35 @@ export class MapWidgetController implements MapWidgetInterface {
         };
         const attributes = [];
         const timeseries = [];
+        const latLngProperties = [this.settings.latKeyName, this.settings.lngKeyName, this.settings.xPosKeyName, this.settings.yPosKeyName];
         e.$datasource.dataKeys.forEach(key => {
-            const value = {
-                key: key.name,
-                value: e[key.name]
-            };
-            if(key.type === DataKeyType.attribute){
-                attributes.push(value)
+            if (latLngProperties.includes(key)) {
+                const value = {
+                    key: key.name,
+                    value: e[key.name]
+                };
+                if (key.type === DataKeyType.attribute) {
+                    attributes.push(value)
+                }
+                if (key.type === DataKeyType.timeseries) {
+                    timeseries.push(value)
+                }
             }
-            if(key.type === DataKeyType.timeseries){
-                timeseries.push(value)
-            }
-        })
-        attributeService.saveEntityTimeseries(
-            entityId,
-            AttributeScope.SHARED_SCOPE,
-            timeseries
-        ).subscribe(() => {
         });
-        attributeService.saveEntityAttributes(
-            entityId,
-            AttributeScope.SERVER_SCOPE,
-            attributes
-        ).subscribe(() => {
-        });
+        if (attributes.length) {
+            attributeService.saveEntityTimeseries(
+                entityId,
+                LatestTelemetry.LATEST_TELEMETRY,
+                timeseries
+            ).subscribe(() => { });
+        }
+        if (timeseries.length) {
+            attributeService.saveEntityAttributes(
+                entityId,
+                AttributeScope.SERVER_SCOPE,
+                attributes
+            ).subscribe(() => { });
+        }
     }
 
     initSettings(settings: UnitedMapSettings): UnitedMapSettings {

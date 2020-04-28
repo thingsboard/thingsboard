@@ -90,24 +90,24 @@
     mat-slider {
       min-width: 80px;
     }
+  }
 
-    button.mat-button.mat-icon-button {
-      width: 44px;
-      min-width: 44px;
-      height: 44px;
-      min-height: 44px;
-      margin: 0;
-      line-height: 28px;
+  .mat-icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 48px;
+    min-height: 48px;
+    margin: 0;
+    line-height: 28px;
 
-      mat-icon {
-        width: 28px;
-        height: 28px;
-        font-size: 28px;
+    mat-icon {
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
 
-        svg {
-          width: inherit;
-          height: inherit;
-        }
+      svg {
+        width: inherit;
+        height: inherit;
       }
     }
 
