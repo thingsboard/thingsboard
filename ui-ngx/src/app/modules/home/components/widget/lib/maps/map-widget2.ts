@@ -96,7 +96,7 @@ export class MapWidgetController implements MapWidgetInterface {
         addGroupInfo(schema, 'Map Provider Settings');
         addToSchema(schema, addCondition(commonMapSettingsSchema, 'model.provider !== "image-map"'));
         addGroupInfo(schema, 'Common Map Settings');
-        addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon=== true', ['showPolygon']));
+        addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
         addGroupInfo(schema, 'Polygon Settings');
         if (drawRoutes) {
             addToSchema(schema, routeMapSettingsSchema);

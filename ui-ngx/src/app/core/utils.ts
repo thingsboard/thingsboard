@@ -464,7 +464,7 @@ export function parseArray(input: any[]): any[] {
           time: el[0],
           deviceType: null
         };
-        entityArray.forEach(entity => {
+        entityArray.filter(el=>el.data.length).forEach(entity => {
           obj[entity?.dataKey?.label] = entity?.data[i][1];
           obj[entity?.dataKey?.label + '|ts'] = entity?.data[0][0];
           if (entity?.dataKey?.label === 'type') {
@@ -485,7 +485,7 @@ export function parseData(input: any[]): any[] {
         dsIndex: i,
         deviceType: null
       };
-      entityArray.forEach(el => {
+      entityArray.filter(el=>el.data.length).forEach(el => {
         obj[el?.dataKey?.label] = el?.data[0][1];
         obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
         if (el?.dataKey?.label === 'type') {

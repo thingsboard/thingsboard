@@ -64,7 +64,7 @@ export function mergeSchemes(schemes: JsonSettingsSchema[]): JsonSettingsSchema 
 
 export function addCondition(schema: JsonSettingsSchema, condition: string, exclude: string[] = []): JsonSettingsSchema {
     schema.form = schema.form.map(element => {
-        if (!exclude.includes(element)) {
+        if (!exclude.includes(element) && !exclude.includes(element.key)) {
             if (typeof element === 'string') {
                 return {
                     key: element,

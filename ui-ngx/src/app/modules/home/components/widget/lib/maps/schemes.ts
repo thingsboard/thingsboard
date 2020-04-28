@@ -434,8 +434,7 @@ export const commonMapSettingsSchema =
                     type: 'image'
                 }
             ]
-        },
-        'showPolygon',
+        }
     ]
 };
 

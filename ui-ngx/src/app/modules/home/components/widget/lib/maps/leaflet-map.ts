@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngTuple, LatLngBounds, Point, MarkerClusterGroupOptions, markerClusterGroup} from 'leaflet';
+import L, { LatLngTuple, LatLngBounds, Point, MarkerClusterGroupOptions, markerClusterGroup } from 'leaflet';
 
 import 'leaflet-providers';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
@@ -229,22 +229,20 @@ export default abstract class LeafletMap {
 
     // Markers
     updateMarkers(markersData) {
-        markersData.forEach(data => {
-            if (this.convertPosition(data)) {
-                if (data.rotationAngle || data.rotationAngle === 0) {
-                    this.options.icon = L.divIcon({
-                        html: `<div class="arrow" style="transform: translate(-10px, -10px) rotate(${data.rotationAngle}deg);"><div>`
-                    })
-                }
-                else {
-                    this.options.icon = null;
-                }
-                if (this.markers.get(data.entityName)) {
-                    this.updateMarker(data.entityName, data, markersData, this.options)
-                }
-                else {
-                    this.createMarker(data.entityName, data, markersData, this.options as MarkerSettings);
-                }
+        markersData.filter(mdata => !!this.convertPosition(mdata)).forEach(data => {
+            if (data.rotationAngle || data.rotationAngle === 0) {
+                this.options.icon = L.divIcon({
+                    html: `<div class="arrow" style="transform: translate(-10px, -10px) rotate(${data.rotationAngle}deg);"><div>`
+                })
+            }
+            else {
+                this.options.icon = null;
+            }
+            if (this.markers.get(data.entityName)) {
+                this.updateMarker(data.entityName, data, markersData, this.options)
+            }
+            else {
+                this.createMarker(data.entityName, data, markersData, this.options as MarkerSettings);
             }
         });
     }
@@ -292,7 +290,7 @@ export default abstract class LeafletMap {
         }
     }
 
-    setImageAlias(alias:Observable<any>){
+    setImageAlias(alias: Observable<any>) {
     }
 
     // Polyline

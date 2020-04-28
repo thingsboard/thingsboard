@@ -130,6 +130,7 @@ export class ImageMap extends LeafletMap {
     }
 
     convertPosition(expression): L.LatLng {
+        if (isNaN(expression[this.options.xPosKeyName]) || isNaN(expression[this.options.yPosKeyName])) return null;
         return this.pointToLatLng(
             expression[this.options.xPosKeyName] * this.width,
             expression[this.options.yPosKeyName] * this.height);
