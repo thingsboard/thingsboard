@@ -97,6 +97,44 @@ security:
     allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
     # Time allowed to claim the device in milliseconds
     duration: "${SECURITY_CLAIM_DURATION:60000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
+  basic:
+    enabled: false
+    #  oauth2:
+    #    enabled: true
+    #    registrationId: A
+    #    userNameAttributeName: email
+    #    client:
+    #      clientName: Thingsboard Dev Test Q
+    #      clientId: 5f5c0998-1d9b-4679-9610-6108fb91af2a
+    #      clientSecret: h_kXVb7Ee1LgDDinix_nkAh_owWX7YCO783NNteF9AIOqlTWu2L03YoFjv5KL8yRVyx4uYAE-r_N3tFbupE8Kw
+    #      accessTokenUri: https://federation-q.auth.schwarz/nidp/oauth/nam/token
+    #      authorizationUri: https://federation-q.auth.schwarz/nidp/oauth/nam/authz
+    #      scope: openid,profile,email,siam
+    #      redirectUriTemplate: http://localhost:8080/login/oauth2/code/
+    #      loginProcessingUrl: /login/oauth2/code/
+    #      jwkSetUri: https://federation-q.auth.schwarz/nidp/oauth/nam/keys
+    #      authorizationGrantType: authorization_code  # authorization_code, implicit, refresh_token, client_credentials
+    #      clientAuthenticationMethod: post # basic, post
+    #    resource:
+    #      userInfoUri: https://federation-q.auth.schwarz/nidp/oauth/nam/userinfo
+    oauth2:
+      enabled: true
+      registrationId: A
+      userNameAttributeName: email
+      client:
+        clientName: Test app
+        clientId: dVH9reqyqiXIG7M2wmamb0ySue8zaM4g
+        clientSecret: EYAfAGxwkwoeYnb2o2cDgaWZB5k97OStpZQPPvcMMD-SVH2BuughTGeBazXtF5I6
+        accessTokenUri: https://dev-r9m8ht0k.auth0.com/oauth/token
+        authorizationUri: https://dev-r9m8ht0k.auth0.com/authorize
+        scope: openid,profile,email
+        redirectUriTemplate: http://localhost:8080/login/oauth2/code/
+        loginProcessingUrl: /login/oauth2/code/
+        jwkSetUri: https://dev-r9m8ht0k.auth0.com/.well-known/jwks.json
+        authorizationGrantType: authorization_code  # authorization_code, implicit, refresh_token, client_credentials
+        clientAuthenticationMethod: post # basic, post
+      resource:
+        userInfoUri: https://dev-r9m8ht0k.auth0.com/userinfo
 
 # Dashboard parameters
 dashboard:
