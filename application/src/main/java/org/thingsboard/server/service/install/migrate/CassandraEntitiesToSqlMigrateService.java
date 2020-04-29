@@ -66,7 +66,7 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
     @Override
     public void migrate() throws Exception {
         log.info("Performing migration of entities data from cassandra to SQL database ...");
-        entityDatabaseSchemaService.createDatabaseSchema();
+        entityDatabaseSchemaService.createDatabaseSchema(false);
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
             conn.setAutoCommit(false);
             for (CassandraToSqlTable table: tables) {
@@ -76,6 +76,7 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
             log.error("Unexpected error during ThingsBoard entities data migration!", e);
             throw e;
         }
+        entityDatabaseSchemaService.createDatabaseIndexes();
     }
 
     private static List<CassandraToSqlTable> tables = Arrays.asList(
