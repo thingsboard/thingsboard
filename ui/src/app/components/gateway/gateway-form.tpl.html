@@ -39,12 +39,11 @@
                                                   get_access_token="vm.getAccessToken"
                                                   create-device="vm.createDevice">
                         </tb-gateway-config-select>
-                        <md-input-container ng-if="vm.isStateForm"
-                                            class="md-block">
+                        <md-input-container ng-if="vm.isStateForm" class="md-block">
                             <label>{{'gateway.gateway-name' | translate }}</label>
                             <input ng-disabled="true" type="text" ng-model="vm.configurations.gateway.name" name="gatewayName"/>
                         </md-input-container>
-                        <md-input-container class="md-block">
+                        <md-input-container class="md-block" style="margin-top: 0;">
                             <label>{{'gateway.security-type' | translate }}</label>
                             <md-select ng-disabled="vm.isReadOnlyForm" name="securityType" ng-model="vm.configurations.securityType" required>
                                 <md-option ng-repeat="securityType in vm.securityTypes" ng-value="securityType.value">
