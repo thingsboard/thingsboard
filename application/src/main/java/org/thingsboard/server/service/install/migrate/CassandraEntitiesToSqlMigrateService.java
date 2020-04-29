@@ -62,7 +62,6 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
     @Value("${spring.datasource.password}")
     protected String dbPassword;
 
-
     @Override
     public void migrate() throws Exception {
         log.info("Performing migration of entities data from cassandra to SQL database ...");
@@ -150,7 +149,19 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
                 stringColumn("search_text"),
                 stringColumn("clazz"),
                 stringColumn("configuration_descriptor"),
-                stringColumn("actions")),
+                stringColumn("actions")) {
+            @Override
+            protected boolean onConstraintViolation(List<CassandraToSqlColumnData[]> batchData,
+                                                    CassandraToSqlColumnData[] data, String constraint) {
+                if (constraint.equalsIgnoreCase("component_descriptor_clazz_key")) {
+                    String clazz = this.getColumnData(data, "clazz").getValue();
+                    log.warn("Found component_descriptor record with duplicate clazz [{}]. Record will be ignored!", clazz);
+                    this.ignoreRecord(batchData, data);
+                    return true;
+                }
+                return super.onConstraintViolation(batchData, data, constraint);
+            }
+        },
         new CassandraToSqlTable("customer",
                 idColumn("id"),
                 idColumn("tenant_id"),
