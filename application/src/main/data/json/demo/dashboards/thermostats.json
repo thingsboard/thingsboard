@@ -985,8 +985,8 @@
             "showTooltip": true,
             "autocloseTooltip": true,
             "defaultCenterPosition": [
-              0,
-              0
+              37.7749,
+              -122.4194
             ],
             "customProviderTileUrl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             "showTooltipAction": "click",
@@ -999,10 +999,11 @@
             "animate": true,
             "maxClusterRadius": 80,
             "removeOutsideVisibleBounds": true,
-            "defaultZoomLevel": 12,
+            "defaultZoomLevel": 5,
             "labelFunction": "var color;\nif(dsData[dsIndex].active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px\">' + \n           '${entityLabel}' + \n        '</span>'",
             "markerImageFunction": "var res;\nif(dsData[dsIndex].active !== \"true\"){\n\tvar res = {\n\t    url: images[0],\n\t    size: 48\n\t}\n} else {\n    var res = {\n\t    url: images[1],\n\t    size: 48\n\t}\n}\nreturn res;",
-            "useLabelFunction": true
+            "useLabelFunction": true,
+            "useDefaultCenterPosition": true
           },
           "title": "New Markers Placement - OpenStreetMap",
           "dropShadow": true,
@@ -1182,7 +1183,7 @@
         "alias": "Thermostat-alarm",
         "filter": {
           "type": "entityName",
-          "resolveMultiple": true,
+          "resolveMultiple": false,
           "entityType": "ASSET",
           "entityNameFilter": "Thermostat Alarms"
         }

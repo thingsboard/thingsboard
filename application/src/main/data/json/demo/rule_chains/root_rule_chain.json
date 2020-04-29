@@ -3,13 +3,25 @@
     "additionalInfo": null,
     "name": "Root Rule Chain",
     "firstRuleNodeId": null,
-    "root": true,
+    "root": false,
     "debugMode": false,
     "configuration": null
   },
   "metadata": {
-    "firstNodeIndex": 2,
+    "firstNodeIndex": 3,
     "nodes": [
+      {
+        "additionalInfo": {
+          "layoutX": 1069,
+          "layoutY": 267
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Is Thermostat?",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "return msg.id.entityType === \"DEVICE\" && msg.type === \"thermostat\";"
+        }
+      },
       {
         "additionalInfo": {
           "layoutX": 824,
@@ -48,8 +60,8 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 825,
-          "layoutY": 266
+          "layoutX": 839,
+          "layoutY": 345
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log RPC from Device",
@@ -60,8 +72,8 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 825,
-          "layoutY": 379
+          "layoutX": 832,
+          "layoutY": 407
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log Other",
@@ -93,51 +105,81 @@
         "configuration": {
           "jsScript": "return metadata[\"deviceType\"] === \"thermostat\";"
         }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 1090,
+          "layoutY": 360
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateRelationNode",
+        "name": "Relate to Asset",
+        "debugMode": true,
+        "configuration": {
+          "direction": "FROM",
+          "relationType": "ToAlarmPropagationAsset",
+          "entityType": "ASSET",
+          "entityNamePattern": "Thermostat Alarms",
+          "entityTypePattern": "AlarmPropagationAsset",
+          "entityCacheExpiration": 300,
+          "createEntityIfNotExists": true,
+          "changeOriginatorToRelatedEntity": false,
+          "removeCurrentRelations": false
+        }
       }
     ],
     "connections": [
       {
         "fromIndex": 0,
-        "toIndex": 6,
+        "toIndex": 8,
+        "type": "True"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 7,
         "type": "Success"
       },
       {
-        "fromIndex": 2,
-        "toIndex": 4,
+        "fromIndex": 3,
+        "toIndex": 5,
         "type": "Other"
       },
       {
-        "fromIndex": 2,
-        "toIndex": 1,
+        "fromIndex": 3,
+        "toIndex": 2,
         "type": "Post attributes"
       },
       {
-        "fromIndex": 2,
-        "toIndex": 0,
+        "fromIndex": 3,
+        "toIndex": 1,
         "type": "Post telemetry"
       },
       {
-        "fromIndex": 2,
-        "toIndex": 3,
+        "fromIndex": 3,
+        "toIndex": 4,
         "type": "RPC Request from Device"
       },
       {
-        "fromIndex": 2,
-        "toIndex": 5,
+        "fromIndex": 3,
+        "toIndex": 6,
         "type": "RPC Request to Device"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 0,
+        "type": "Entity Created"
       }
     ],
     "ruleChainConnections": [
       {
-        "fromIndex": 6,
+        "fromIndex": 7,
         "targetRuleChainId": {
           "entityType": "RULE_CHAIN",
-          "id": "83d42540-85fd-11ea-aee2-794850541ced"
+          "id": "25e26570-89ed-11ea-a650-cd6e14e633bd"
         },
         "additionalInfo": {
-          "layoutX": 1088,
-          "layoutY": 203,
-          "ruleChainNodeId": "rule-chain-node-9"
+          "layoutX": 1109,
+          "layoutY": 182,
+          "ruleChainNodeId": "rule-chain-node-10"
         },
         "type": "True"
       }
