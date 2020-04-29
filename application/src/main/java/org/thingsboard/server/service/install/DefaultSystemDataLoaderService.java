@@ -174,6 +174,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                 "Raspberry Pi GPIO control sample application");
 
         Asset thermostatAlarms = new Asset();
+        thermostatAlarms.setTenantId(demoTenant.getId());
         thermostatAlarms.setName("Thermostat Alarms");
         thermostatAlarms.setType("AlarmPropagationAsset");
         thermostatAlarms = assetService.saveAsset(thermostatAlarms);
