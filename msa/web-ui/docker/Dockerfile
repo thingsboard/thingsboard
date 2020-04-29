@@ -21,7 +21,7 @@ COPY start-web-ui.sh ${pkg.name}.deb /tmp/
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-web-ui.sh /usr/bin
 
-RUN dpkg -i /tmp/${pkg.name}.deb
+RUN yes | dpkg -i /tmp/${pkg.name}.deb
 
 RUN update-rc.d ${pkg.name} disable
 
