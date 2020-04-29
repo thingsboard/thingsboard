@@ -25,6 +25,8 @@ RUN dpkg -i /tmp/${pkg.name}.deb
 
 RUN update-rc.d ${pkg.name} disable
 
+RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
+
 USER ${pkg.user}
 
 CMD ["start-tb-mqtt-transport.sh"]

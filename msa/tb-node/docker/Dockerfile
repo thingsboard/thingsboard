@@ -27,6 +27,8 @@ RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || 
 
 RUN chown -R ${pkg.user}:${pkg.user} /tmp
 
+RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
+
 USER ${pkg.user}
 
 CMD ["start-tb-node.sh"]
