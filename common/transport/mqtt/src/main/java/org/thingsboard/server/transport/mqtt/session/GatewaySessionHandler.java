@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -69,7 +69,8 @@ public class GatewaySessionHandler {
     private final TransportService transportService;
     private final DeviceInfoProto gateway;
     private final UUID sessionId;
-    private final Map<String, GatewayDeviceSessionCtx> devices;
+    private final ConcurrentMap<String, GatewayDeviceSessionCtx> devices;
+    private final ConcurrentMap<String, SettableFuture<GatewayDeviceSessionCtx>> deviceFutures;
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     private final ChannelHandlerContext channel;
     private final DeviceSessionCtx deviceSessionCtx;
@@ -81,6 +82,7 @@ public class GatewaySessionHandler {
         this.gateway = deviceSessionCtx.getDeviceInfo();
         this.sessionId = sessionId;
         this.devices = new ConcurrentHashMap<>();
+        this.deviceFutures = new ConcurrentHashMap<>();
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
     }
@@ -106,35 +108,51 @@ public class GatewaySessionHandler {
     }
 
     private ListenableFuture<GatewayDeviceSessionCtx> onDeviceConnect(String deviceName, String deviceType) {
-        SettableFuture<GatewayDeviceSessionCtx> future = SettableFuture.create();
+        SettableFuture<GatewayDeviceSessionCtx> future;
         GatewayDeviceSessionCtx result = devices.get(deviceName);
         if (result == null) {
-            transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
-                            .setDeviceName(deviceName)
-                            .setDeviceType(deviceType)
-                            .setGatewayIdMSB(gateway.getDeviceIdMSB())
-                            .setGatewayIdLSB(gateway.getDeviceIdLSB()).build(),
-                    new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg>() {
-                        @Override
-                        public void onSuccess(GetOrCreateDeviceFromGatewayResponseMsg msg) {
-                            GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), mqttQoSMap);
-                            if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
-                                SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
-                                transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
-                                transportService.process(deviceSessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
-                                transportService.process(deviceSessionInfo, TransportProtos.SubscribeToRPCMsg.getDefaultInstance(), null);
-                                transportService.process(deviceSessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), null);
-                            }
-                            future.set(devices.get(deviceName));
-                        }
+            synchronized (deviceFutures) {
+                future = deviceFutures.get(deviceName);
+                if (future == null) {
+                    final SettableFuture<GatewayDeviceSessionCtx> futureToSet = SettableFuture.create();
+                    deviceFutures.put(deviceName, futureToSet);
+                    future = futureToSet;
+                    try {
+                        transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
+                                        .setDeviceName(deviceName)
+                                        .setDeviceType(deviceType)
+                                        .setGatewayIdMSB(gateway.getDeviceIdMSB())
+                                        .setGatewayIdLSB(gateway.getDeviceIdLSB()).build(),
+                                new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg>() {
+                                    @Override
+                                    public void onSuccess(GetOrCreateDeviceFromGatewayResponseMsg msg) {
+                                        GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), mqttQoSMap);
+                                        if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
+                                            SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
+                                            transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
+                                            transportService.process(deviceSessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+                                            transportService.process(deviceSessionInfo, TransportProtos.SubscribeToRPCMsg.getDefaultInstance(), null);
+                                            transportService.process(deviceSessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), null);
+                                        }
+                                        futureToSet.set(devices.get(deviceName));
+                                        deviceFutures.remove(deviceName);
+                                    }
 
-                        @Override
-                        public void onError(Throwable e) {
-                            log.warn("[{}] Failed to process device connect command: {}", sessionId, deviceName, e);
-                            future.setException(e);
-                        }
-                    });
+                                    @Override
+                                    public void onError(Throwable e) {
+                                        log.warn("[{}] Failed to process device connect command: {}", sessionId, deviceName, e);
+                                        futureToSet.setException(e);
+                                        deviceFutures.remove(deviceName);
+                                    }
+                                });
+                    } catch (Throwable e) {
+                        deviceFutures.remove(deviceName);
+                        throw e;
+                    }
+                }
+            }
         } else {
+            future = SettableFuture.create();
             future.set(result);
         }
         return future;
