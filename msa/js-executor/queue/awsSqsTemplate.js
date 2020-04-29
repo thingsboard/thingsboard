@@ -32,7 +32,7 @@ const poolInterval = config.get('js.response_poll_interval');
 let queueAttributes = {FifoQueue: 'true', ContentBasedDeduplication: 'true'};
 let sqsClient;
 let requestQueueURL;
-let queueUrls = new Map();
+const queueUrls = new Map();
 let stopped = false;
 
 function AwsSqsProducer() {

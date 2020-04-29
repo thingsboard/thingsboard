@@ -30,7 +30,7 @@ let pubSubClient;
 
 const topics = [];
 const subscriptions = [];
-let queueProps = [];
+const queueProps = [];
 
 function PubSubProducer() {
     this.send = async (responseTopic, scriptId, rawResponse, headers) => {
@@ -107,7 +107,12 @@ async function createTopic(topic) {
 
 async function createSubscription(topic) {
     if (!subscriptions.includes(topic)) {
-        await pubSubClient.topic(topic).createSubscription(topic);
+        await pubSubClient.createSubscription(topic, topic, {
+            topic: topic,
+            subscription: topic,
+            ackDeadlineSeconds: queueProps['ackDeadlineInSec'],
+            messageRetentionDuration: {seconds: queueProps['messageRetentionInSec']}
+        });
         subscriptions.push(topic);
         logger.info('Created new Pub/Sub subscription: %s', topic);
     }
