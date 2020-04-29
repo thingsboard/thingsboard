@@ -19,13 +19,28 @@ const config = require('config'),
     JsInvokeMessageProcessor = require('../api/jsInvokeMessageProcessor'),
     logger = require('../config/logger')._logger('kafkaTemplate'),
     KafkaJsWinstonLogCreator = require('../config/logger').KafkaJsWinstonLogCreator;
+const replicationFactor = config.get('kafka.replication_factor');
+const topicProperties = config.get('kafka.topic-properties');
 
 let kafkaClient;
+let kafkaAdmin;
 let consumer;
 let producer;
 
+const topics = [];
+const configEntries = [];
+
 function KafkaProducer() {
     this.send = async (responseTopic, scriptId, rawResponse, headers) => {
+
+        if (!topics.includes(responseTopic)) {
+            let createResponseTopicResult = await createTopic(responseTopic);
+            topics.push(responseTopic);
+            if (createResponseTopicResult) {
+                logger.info('Created new topic: %s', requestTopic);
+            }
+        }
+
         let headersData = headers.data;
         headersData = Object.fromEntries(Object.entries(headersData).map(([key, value]) => [key, Buffer.from(value)]));
         return producer.send(
@@ -47,10 +62,10 @@ function KafkaProducer() {
         logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
 
         const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
-        const kafkaRequestTopic = config.get('request_topic');
+        const requestTopic = config.get('request_topic');
 
         logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
-        logger.info('Kafka Requests Topic: %s', kafkaRequestTopic);
+        logger.info('Kafka Requests Topic: %s', requestTopic);
 
         kafkaClient = new Kafka({
             brokers: kafkaBootstrapServers.split(','),
@@ -58,12 +73,23 @@ function KafkaProducer() {
             logCreator: KafkaJsWinstonLogCreator
         });
 
+        parseTopicProperties();
+
+        kafkaAdmin = kafkaClient.admin();
+        await kafkaAdmin.connect();
+
+        let createRequestTopicResult = await createTopic(requestTopic);
+
+        if (createRequestTopicResult) {
+            logger.info('Created new topic: %s', requestTopic);
+        }
+
         consumer = kafkaClient.consumer({groupId: 'js-executor-group'});
         producer = kafkaClient.producer();
         const messageProcessor = new JsInvokeMessageProcessor(new KafkaProducer());
         await consumer.connect();
         await producer.connect();
-        await consumer.subscribe({topic: kafkaRequestTopic});
+        await consumer.subscribe({topic: requestTopic});
 
         logger.info('Started ThingsBoard JavaScript Executor Microservice.');
         await consumer.run({
@@ -90,12 +116,37 @@ function KafkaProducer() {
     }
 })();
 
+function createTopic(topic) {
+    return kafkaAdmin.createTopics({
+        topics: [{
+            topic: topic,
+            replicationFactor: replicationFactor,
+            configEntries: configEntries
+        }]
+    });
+}
+
+function parseTopicProperties() {
+    const props = topicProperties.split(';');
+    props.forEach(p => {
+        const delimiterPosition = p.indexOf(':');
+        configEntries.push({name: p.substring(0, delimiterPosition), value: p.substring(delimiterPosition + 1)});
+    });
+}
+
 process.on('exit', () => {
     exit(0);
 });
 
 async function exit(status) {
     logger.info('Exiting with status: %d ...', status);
+
+    if (kafkaAdmin) {
+        logger.info('Stopping Kafka Admin...');
+        await kafkaAdmin.disconnect();
+        logger.info('Kafka Admin stopped.');
+    }
+
     if (consumer) {
         logger.info('Stopping Kafka Consumer...');
         let _consumer = consumer;

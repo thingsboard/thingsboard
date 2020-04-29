@@ -21,7 +21,17 @@ const config = require('config'),
     logger = require('../config/logger')._logger('rabbitmqTemplate');
 
 const requestTopic = config.get('request_topic');
+const host = config.get('rabbitmq.host');
+const port = config.get('rabbitmq.port');
+const vhost = config.get('rabbitmq.virtual_host');
+const username = config.get('rabbitmq.username');
+const password = config.get('rabbitmq.password');
+const queueProperties = config.get('rabbitmq.queue-properties');
+const poolInterval = config.get('js.response_poll_interval');
+
 const amqp = require('amqplib/callback_api');
+
+let queueParams = {durable: false, exclusive: false, autoDelete: false};
 let connection;
 let channel;
 let stopped = false;
@@ -58,10 +68,11 @@ function RabbitMqProducer() {
 (async () => {
     try {
         logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
+        const url = `amqp://${host}:${port}${vhost}`;
 
-        amqp.credentials.amqplain('admin', 'password');
+        amqp.credentials.amqplain(username, password);
         connection = await new Promise((resolve, reject) => {
-            amqp.connect('amqp://localhost:5672/', function (err, connection) {
+            amqp.connect(url, function (err, connection) {
                 if (err) {
                     reject(err);
                 } else {
@@ -79,6 +90,8 @@ function RabbitMqProducer() {
                 }
             });
         });
+
+        parseQueueProperties();
 
         await createQueue(requestTopic);
 
@@ -98,6 +111,8 @@ function RabbitMqProducer() {
             if (message) {
                 messageProcessor.onJsInvokeMessage(message.content.toString('utf8'));
                 channel.ack(message);
+            } else {
+                await sleep(poolInterval);
             }
         }
     } catch (e) {
@@ -107,16 +122,29 @@ function RabbitMqProducer() {
     }
 })();
 
+function parseQueueProperties() {
+    const props = queueProperties.split(';');
+    props.forEach(p => {
+        const delimiterPosition = p.indexOf(':');
+        queueParams[p.substring(0, delimiterPosition)] = p.substring(delimiterPosition + 1);
+    });
+}
+
 function createQueue(topic) {
-    let params = {durable: false};
     return new Promise((resolve, reject) => {
-        channel.assertQueue(topic, params, function (err, data) {
+        channel.assertQueue(topic, queueParams, function (err, data) {
             if (err) {
                 reject(err);
             } else {
                 resolve();
             }
         });
+    });
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
     });
 }
 

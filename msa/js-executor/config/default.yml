@@ -15,23 +15,31 @@
 #
 
 service-type: "kafka"
-request_topic: "js.eval.requests"
+request_topic: "js_eval.requests"
+
+js:
+  response_poll_interval: "25"
 
 kafka:
   bootstrap:
     # Kafka Bootstrap Servers
     servers: "localhost:9092"
+  replication_factor: "1"
+  topic-properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600"
+
+pubsub:
+  queue-properties: "ackDeadlineInSec:30;messageRetentionInSec:604800"
+
+aws_sqs:
+  queue-properties: "VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800"
 
 rabbitmq:
-  exchange_name: ""
   host: "localhost"
   port: "5672"
   virtual_host: "/"
-  username: "YOUR_USERNAME"
-  password: "YOUR_PASSWORD"
-  automatic_recovery_enabled: "false"
-  connection_timeout: "60000"
-  handshake_timeout: "10000"
+  username: "admin"
+  password: "password"
+  queue-properties: "x-max-length-bytes:1048576000;x-message-ttl:604800000"
 
 
 logger:

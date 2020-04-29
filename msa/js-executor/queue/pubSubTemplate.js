@@ -24,11 +24,21 @@ const {PubSub} = require('@google-cloud/pubsub');
 const projectId = config.get('pubsub.project_id');
 const credentials = JSON.parse(config.get('pubsub.service_account'));
 const requestTopic = config.get('request_topic');
+const queueProperties = config.get('pubsub.queue-properties');
 
 let pubSubClient;
 
+const topics = [];
+const subscriptions = [];
+let queueProps = [];
+
 function PubSubProducer() {
     this.send = async (responseTopic, scriptId, rawResponse, headers) => {
+
+        if (!(subscriptions.includes(responseTopic) && topics.includes(requestTopic))) {
+            await createTopic(requestTopic);
+        }
+
         let data = JSON.stringify(
             {
                 key: scriptId,
@@ -44,6 +54,28 @@ function PubSubProducer() {
     try {
         logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
         pubSubClient = new PubSub({projectId: projectId, credentials: credentials});
+
+        parseQueueProperties();
+
+        const topicList = await pubSubClient.getTopics();
+
+        if (topicList) {
+            topicList[0].forEach(topic => {
+                topics.push(getName(topic.name));
+            });
+        }
+
+        const subscriptionList = await pubSubClient.getSubscriptions();
+
+        if (subscriptionList) {
+            topicList[0].forEach(sub => {
+                subscriptions.push(getName(sub.name));
+            });
+        }
+
+        if (!(subscriptions.includes(requestTopic) && topics.includes(requestTopic))) {
+            await createTopic(requestTopic);
+        }
 
         const subscription = pubSubClient.subscription(requestTopic);
 
@@ -63,6 +95,36 @@ function PubSubProducer() {
         exit(-1);
     }
 })();
+
+async function createTopic(topic) {
+    if (!topics.includes(topic)) {
+        await pubSubClient.createTopic(topic);
+        topics.push(topic);
+        logger.info('Created new Pub/Sub topic: %s', topic);
+    }
+    await createSubscription(topic)
+}
+
+async function createSubscription(topic) {
+    if (!subscriptions.includes(topic)) {
+        await pubSubClient.topic(topic).createSubscription(topic);
+        subscriptions.push(topic);
+        logger.info('Created new Pub/Sub subscription: %s', topic);
+    }
+}
+
+function parseQueueProperties() {
+    const props = queueProperties.split(';');
+    props.forEach(p => {
+        const delimiterPosition = p.indexOf(':');
+        queueProps[p.substring(0, delimiterPosition)] = p.substring(delimiterPosition + 1);
+    });
+}
+
+function getName(fullName) {
+    const delimiterPosition = fullName.lastIndexOf('/');
+    return fullName.substring(delimiterPosition + 1);
+}
 
 process.on('exit', () => {
     exit(0);
