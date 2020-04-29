@@ -18,6 +18,8 @@ package org.thingsboard.server.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
@@ -73,11 +75,24 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
     public static final String WS_TOKEN_BASED_AUTH_ENTRY_POINT = "/api/ws/**";
 
     @Autowired private ThingsboardErrorResponseHandler restAccessDeniedHandler;
-    @Autowired private AuthenticationSuccessHandler successHandler;
+
+    @Autowired(required = false)
+    @Qualifier("oauth2AuthenticationSuccessHandler")
+    private AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
+
+    @Autowired
+    @Qualifier("defaultAuthenticationSuccessHandler")
+    private AuthenticationSuccessHandler successHandler;
+
     @Autowired private AuthenticationFailureHandler failureHandler;
     @Autowired private RestAuthenticationProvider restAuthenticationProvider;
     @Autowired private JwtAuthenticationProvider jwtAuthenticationProvider;
     @Autowired private RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
+
+    @Value("${security.oauth2.enabled}")
+    private boolean oauth2Enabled;
+    @Value("${security.oauth2.client.loginProcessingUrl}")
+    private String loginProcessingUrl;
 
     @Autowired
     @Qualifier("jwtHeaderTokenExtractor")
@@ -189,6 +204,11 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildWsJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
+        if (oauth2Enabled) {
+            http.oauth2Login()
+                    .loginProcessingUrl(loginProcessingUrl)
+                    .successHandler(oauth2AuthenticationSuccessHandler);
+        }
     }
 
 

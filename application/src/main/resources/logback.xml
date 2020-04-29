@@ -26,6 +26,7 @@
     </appender>
 
     <logger name="org.thingsboard.server" level="INFO" />
+    <logger name="org.springframework.security" level="DEBUG" />
     <logger name="akka" level="INFO" />
 
 <!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
