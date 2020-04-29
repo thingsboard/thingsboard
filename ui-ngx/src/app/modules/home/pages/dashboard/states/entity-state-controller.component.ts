@@ -193,21 +193,25 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   public getStateName(index: number): string {
     let result = '';
-    if (this.stateObject[index]) {
-      let stateName = this.states[this.stateObject[index].id].name;
-      stateName = this.utils.customTranslation(stateName, stateName);
-      const params = this.stateObject[index].params;
-      const targetParams = params && params.targetEntityParamName ? params[params.targetEntityParamName] : params;
-      const entityName = targetParams && targetParams.entityName ? targetParams.entityName : '';
-      const entityLabel = targetParams && targetParams.entityLabel ? targetParams.entityLabel : '';
-      result = this.utils.insertVariable(stateName, 'entityName', entityName);
-      result = this.utils.insertVariable(result, 'entityLabel', entityLabel);
-      for (const prop of Object.keys(params)) {
-        if (params[prop] && params[prop].entityName) {
-          result = this.utils.insertVariable(result, prop + ':entityName', params[prop].entityName);
-        }
-        if (params[prop] && params[prop].entityLabel) {
-          result = this.utils.insertVariable(result, prop + ':entityLabel', params[prop].entityLabel);
+    const state = this.stateObject[index];
+    if (state) {
+      const dashboardState = this.states[state.id];
+      if (dashboardState) {
+        let stateName = dashboardState.name;
+        stateName = this.utils.customTranslation(stateName, stateName);
+        const params = this.stateObject[index].params;
+        const targetParams = params && params.targetEntityParamName ? params[params.targetEntityParamName] : params;
+        const entityName = targetParams && targetParams.entityName ? targetParams.entityName : '';
+        const entityLabel = targetParams && targetParams.entityLabel ? targetParams.entityLabel : '';
+        result = this.utils.insertVariable(stateName, 'entityName', entityName);
+        result = this.utils.insertVariable(result, 'entityLabel', entityLabel);
+        for (const prop of Object.keys(params)) {
+          if (params[prop] && params[prop].entityName) {
+            result = this.utils.insertVariable(result, prop + ':entityName', params[prop].entityName);
+          }
+          if (params[prop] && params[prop].entityLabel) {
+            result = this.utils.insertVariable(result, prop + ':entityLabel', params[prop].entityLabel);
+          }
         }
       }
     }

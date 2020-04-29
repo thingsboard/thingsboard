@@ -19,13 +19,13 @@
   <button mat-icon-button
           cdkOverlayOrigin #aliasEntitySelectPanelOrigin="cdkOverlayOrigin"
           (click)="openEditMode()"
-          matTooltip="{{ 'entity.select-entities' | translate }}"
+          matTooltip="{{ hasSelectableAliasEntities ? ('entity.select-entities' | translate) : '' }}"
           [matTooltipPosition]="tooltipPosition">
     <mat-icon class="material-icons">devices_other</mat-icon>
   </button>
   <span fxHide.lt-lg
         (click)="openEditMode()"
-        matTooltip="{{ 'entity.select-entities' | translate }}"
+        matTooltip="{{ hasSelectableAliasEntities ? ('entity.select-entities' | translate) : '' }}"
         [matTooltipPosition]="tooltipPosition">
     {{displayValue}}
   </span>
