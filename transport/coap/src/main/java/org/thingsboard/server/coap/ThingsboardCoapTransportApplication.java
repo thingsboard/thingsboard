@@ -26,7 +26,7 @@ import java.util.Arrays;
 @SpringBootConfiguration
 @EnableAsync
 @EnableScheduling
-@ComponentScan({"org.thingsboard.server.coap", "org.thingsboard.server.common", "org.thingsboard.server.transport.coap", "org.thingsboard.server.queue.kafka"})
+@ComponentScan({"org.thingsboard.server.coap", "org.thingsboard.server.common", "org.thingsboard.server.transport.coap", "org.thingsboard.server.queue"})
 public class ThingsboardCoapTransportApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";
