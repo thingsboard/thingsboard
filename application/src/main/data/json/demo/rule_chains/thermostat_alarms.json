@@ -24,7 +24,9 @@
           "severity": "MAJOR",
           "propagate": true,
           "useMessageAlarmData": false,
-          "relationTypes": []
+          "relationTypes": [
+            "ToAlarmPropagationAsset"
+          ]
         }
       },
       {
@@ -54,7 +56,9 @@
           "severity": "MINOR",
           "propagate": true,
           "useMessageAlarmData": false,
-          "relationTypes": []
+          "relationTypes": [
+            "ToAlarmPropagationAsset"
+          ]
         }
       },
       {
