@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.edge;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -124,5 +125,9 @@ public interface EdgeDao extends Dao<Edge> {
      * @return the optional edge object
      */
     Optional<Edge> findByRoutingKey(UUID tenantId, String routingKey);
+
+    PageData<EdgeInfo> findEdgeInfosByTenantIdAndType(UUID tenantId, String type, PageLink pageLink);
+
+    PageData<EdgeInfo> findEdgeInfosByTenantId(UUID tenantId, PageLink pageLink);
 
 }

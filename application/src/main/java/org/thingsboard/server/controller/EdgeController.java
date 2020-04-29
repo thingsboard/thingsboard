@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -240,6 +241,29 @@ public class EdgeController extends BaseController {
                 return checkNotNull(edgeService.findEdgesByTenantIdAndType(tenantId, type, pageLink));
             } else {
                 return checkNotNull(edgeService.findEdgesByTenantId(tenantId, pageLink));
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/edgeInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<EdgeInfo> getTenantEdgeInfos(
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            if (type != null && type.trim().length() > 0) {
+                return checkNotNull(edgeService.findEdgeInfosByTenantIdAndType(tenantId, type, pageLink));
+            } else {
+                return checkNotNull(edgeService.findEdgeInfosByTenantId(tenantId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
