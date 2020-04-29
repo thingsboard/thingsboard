@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-service-type: "TB_SERVICE_TYPE"
+service-type: "TB_SERVICE_TYPE" #kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
 request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
 
 js:
@@ -45,6 +45,13 @@ rabbitmq:
   username: "TB_QUEUE_RABBIT_MQ_USERNAME"
   password: "TB_QUEUE_RABBIT_MQ_PASSWORD"
   queue-properties: "TB_QUEUE_RABBIT_MQ_JE_QUEUE_PROPERTIES"
+
+service_bus:
+  namespace_name: "TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME"
+  sas_key_name: "TB_QUEUE_SERVICE_BUS_SAS_KEY_NAME"
+  sas_key: "TB_QUEUE_SERVICE_BUS_SAS_KEY"
+  max_messages: "TB_QUEUE_SERVICE_BUS_MAX_MESSAGES"
+  queue-properties: "TB_QUEUE_SERVICE_BUS_JE_QUEUE_PROPERTIES"
 
 logger:
   level: "LOGGER_LEVEL"

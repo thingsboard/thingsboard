@@ -105,7 +105,7 @@ function KafkaProducer() {
                 msg.key = key.toString('utf8');
                 msg.data = [...data];
                 msg.headers = {data: headers}
-                messageProcessor.onJsInvokeMessage(JSON.stringify(msg));
+                messageProcessor.onJsInvokeMessage(msg);
             },
         });
 

@@ -113,7 +113,7 @@ function AwsSqsProducer() {
                         Id: message.MessageId,
                         ReceiptHandle: message.ReceiptHandle
                     });
-                    messageProcessor.onJsInvokeMessage(message.Body);
+                    messageProcessor.onJsInvokeMessage(JSON.parse(message.Body));
                 });
 
                 const deleteBatch = {
@@ -187,7 +187,7 @@ async function exit(status) {
         logger.info('Stopping Aws Sqs client.')
         try {
             await sqsClient.close();
-            logger.info('Aws Sqs client is stopped.')
+            logger.info('Aws Sqs client stopped.')
             process.exit(status);
         } catch (e) {
             logger.info('Aws Sqs client stop error.');

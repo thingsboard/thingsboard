@@ -109,7 +109,7 @@ function RabbitMqProducer() {
             });
 
             if (message) {
-                messageProcessor.onJsInvokeMessage(message.content.toString('utf8'));
+                messageProcessor.onJsInvokeMessage(JSON.parse(message.content.toString('utf8')));
                 channel.ack(message);
             } else {
                 await sleep(poolInterval);
@@ -132,7 +132,7 @@ function parseQueueProperties() {
 
 function createQueue(topic) {
     return new Promise((resolve, reject) => {
-        channel.assertQueue(topic, queueParams, function (err, data) {
+        channel.assertQueue(topic, queueParams, function (err) {
             if (err) {
                 reject(err);
             } else {
@@ -158,14 +158,14 @@ async function exit(status) {
     if (channel) {
         logger.info('Stopping RabbitMq chanel.')
         await channel.close();
-        logger.info('RabbitMq chanel is stopped');
+        logger.info('RabbitMq chanel stopped');
     }
 
     if (connection) {
         logger.info('Stopping RabbitMq connection.')
         try {
             await connection.close();
-            logger.info('RabbitMq client is connection.')
+            logger.info('RabbitMq client connection.')
             process.exit(status);
         } catch (e) {
             logger.info('RabbitMq connection stop error.');

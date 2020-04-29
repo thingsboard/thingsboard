@@ -38,12 +38,11 @@ function JsInvokeMessageProcessor(producer) {
     this.executedScriptsCounter = 0;
 }
 
-JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(messageStr) {
+JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
 
     let requestId;
     let responseTopic;
     try {
-        let message = JSON.parse(messageStr);
         let request = JSON.parse(Buffer.from(message.data).toString('utf8'));
         let headers = message.headers;
         let buf = Buffer.from(headers.data['requestId']);

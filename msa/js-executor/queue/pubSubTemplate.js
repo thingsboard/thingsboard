@@ -83,7 +83,7 @@ function PubSubProducer() {
 
         const messageHandler = message => {
 
-            messageProcessor.onJsInvokeMessage(message.data.toString('utf8'));
+            messageProcessor.onJsInvokeMessage(JSON.parse(message.data.toString('utf8')));
             message.ack();
         };
 
@@ -141,7 +141,7 @@ async function exit(status) {
         logger.info('Stopping Pub/Sub client.')
         try {
             await pubSubClient.close();
-            logger.info('Pub/Sub client is stopped.')
+            logger.info('Pub/Sub client stopped.')
             process.exit(status);
         } catch (e) {
             logger.info('Pub/Sub client stop error.');
