@@ -33,7 +33,7 @@ public class RuleEngineSqlTestSuite {
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
             Arrays.asList("sql/schema-ts-hsql.sql", "sql/schema-entities-hsql.sql", "sql/system-data.sql"),
-            "sql/drop-all-tables.sql",
+            "sql/hsql/drop-all-tables.sql",
             "sql-test.properties");
 
     @BeforeClass

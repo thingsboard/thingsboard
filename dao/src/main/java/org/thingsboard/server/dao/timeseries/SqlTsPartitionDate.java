@@ -23,7 +23,7 @@ import java.util.Optional;
 
 public enum SqlTsPartitionDate {
 
-    MINUTES("yyyy_MM_dd_HH_mm", ChronoUnit.MINUTES), HOURS("yyyy_MM_dd_HH", ChronoUnit.HOURS), DAYS("yyyy_MM_dd", ChronoUnit.DAYS), MONTHS("yyyy_MM", ChronoUnit.MONTHS), YEARS("yyyy", ChronoUnit.YEARS), INDEFINITE("indefinite", ChronoUnit.FOREVER);
+    DAYS("yyyy_MM_dd", ChronoUnit.DAYS), MONTHS("yyyy_MM", ChronoUnit.MONTHS), YEARS("yyyy", ChronoUnit.YEARS), INDEFINITE("indefinite", ChronoUnit.FOREVER);
 
     private final String pattern;
     private final transient TemporalUnit truncateUnit;
@@ -44,10 +44,6 @@ public enum SqlTsPartitionDate {
 
     public LocalDateTime trancateTo(LocalDateTime time) {
         switch (this) {
-            case MINUTES:
-                return time.truncatedTo(ChronoUnit.MINUTES);
-            case HOURS:
-                return time.truncatedTo(ChronoUnit.HOURS);
             case DAYS:
                 return time.truncatedTo(ChronoUnit.DAYS);
             case MONTHS:
@@ -63,10 +59,6 @@ public enum SqlTsPartitionDate {
 
     public LocalDateTime plusTo(LocalDateTime time) {
         switch (this) {
-            case MINUTES:
-                return time.plusMinutes(1);
-            case HOURS:
-                return time.plusHours(1);
             case DAYS:
                 return time.plusDays(1);
             case MONTHS:

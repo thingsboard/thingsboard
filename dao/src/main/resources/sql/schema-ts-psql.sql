@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS ts_kv
     str_v     varchar(10000000),
     long_v    bigint,
     dbl_v     double precision,
-    json_v    json
+    json_v    json,
+    CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts)
 ) PARTITION BY RANGE (ts);
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest
