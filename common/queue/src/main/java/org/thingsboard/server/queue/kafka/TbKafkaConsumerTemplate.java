@@ -106,6 +106,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
                 if (!subscribed) {
                     List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
                     topicNames.forEach(admin::createTopicIfNotExists);
+                    consumer.unsubscribe();
                     consumer.subscribe(topicNames);
                     subscribed = true;
                 }
