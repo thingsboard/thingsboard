@@ -26,7 +26,7 @@ const requestTopic = config.get('request_topic');
 const namespaceName = config.get('service_bus.namespace_name');
 const sasKeyName = config.get('service_bus.sas_key_name');
 const sasKey = config.get('service_bus.sas_key');
-const queueProperties = config.get('service_bus.queue-properties');
+const queueProperties = config.get('service_bus.queue_properties');
 
 let sbClient;
 let receiverClient;

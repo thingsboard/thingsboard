@@ -26,7 +26,7 @@ const accessKeyId = config.get('aws_sqs.access_key_id');
 const secretAccessKey = config.get('aws_sqs.secret_access_key');
 const region = config.get('aws_sqs.region');
 const AWS = require('aws-sdk');
-const queueProperties = config.get('aws_sqs.queue-properties');
+const queueProperties = config.get('aws_sqs.queue_properties');
 const poolInterval = config.get('js.response_poll_interval');
 
 let queueAttributes = {FifoQueue: 'true', ContentBasedDeduplication: 'true'};

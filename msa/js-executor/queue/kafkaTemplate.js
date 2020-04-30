@@ -20,7 +20,7 @@ const config = require('config'),
     logger = require('../config/logger')._logger('kafkaTemplate'),
     KafkaJsWinstonLogCreator = require('../config/logger').KafkaJsWinstonLogCreator;
 const replicationFactor = config.get('kafka.replication_factor');
-const topicProperties = config.get('kafka.topic-properties');
+const topicProperties = config.get('kafka.topic_properties');
 
 let kafkaClient;
 let kafkaAdmin;

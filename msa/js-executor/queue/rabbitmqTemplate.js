@@ -26,7 +26,7 @@ const port = config.get('rabbitmq.port');
 const vhost = config.get('rabbitmq.virtual_host');
 const username = config.get('rabbitmq.username');
 const password = config.get('rabbitmq.password');
-const queueProperties = config.get('rabbitmq.queue-properties');
+const queueProperties = config.get('rabbitmq.queue_properties');
 const poolInterval = config.get('js.response_poll_interval');
 
 const amqp = require('amqplib/callback_api');

@@ -24,7 +24,7 @@ const {PubSub} = require('@google-cloud/pubsub');
 const projectId = config.get('pubsub.project_id');
 const credentials = JSON.parse(config.get('pubsub.service_account'));
 const requestTopic = config.get('request_topic');
-const queueProperties = config.get('pubsub.queue-properties');
+const queueProperties = config.get('pubsub.queue_properties');
 
 let pubSubClient;
 
