@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.EdgeEntity;
+import org.thingsboard.server.dao.model.sql.EdgeInfoEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -42,6 +43,15 @@ public interface EdgeRepository extends CrudRepository<EdgeEntity, String> {
                                     @Param("textSearch") String textSearch,
                                     Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EdgeInfoEntity(d, c.title, c.additionalInfo) " +
+            "FROM EdgeEntity d " +
+            "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
+            "WHERE d.tenantId = :tenantId " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<EdgeInfoEntity> findEdgeInfosByTenantId(@Param("tenantId") String tenantId,
+                                                 @Param("textSearch") String textSearch,
+                                                 Pageable pageable);
+
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.type = :type " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
@@ -49,6 +59,17 @@ public interface EdgeRepository extends CrudRepository<EdgeEntity, String> {
                                            @Param("type") String type,
                                            @Param("textSearch") String textSearch,
                                            Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EdgeInfoEntity(d, c.title, c.additionalInfo) " +
+            "FROM EdgeEntity d " +
+            "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
+            "WHERE d.tenantId = :tenantId " +
+            "AND d.type = :type " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndType(@Param("tenantId") String tenantId,
+                                                        @Param("type") String type,
+                                                        @Param("textSearch") String textSearch,
+                                                        Pageable pageable);
 
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
