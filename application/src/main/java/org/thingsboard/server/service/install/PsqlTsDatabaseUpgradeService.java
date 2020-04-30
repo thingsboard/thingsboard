@@ -46,7 +46,7 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
 
     private static final String CREATE_PARTITION_TS_KV_TABLE = "create_partition_ts_kv_table()";
     private static final String CREATE_NEW_TS_KV_LATEST_TABLE = "create_new_ts_kv_latest_table()";
-    private static final String CREATE_PARTITIONS = "create_partitions()";
+    private static final String CREATE_PARTITIONS = "create_partitions(IN partition_type varchar)";
     private static final String CREATE_TS_KV_DICTIONARY_TABLE = "create_ts_kv_dictionary_table()";
     private static final String INSERT_INTO_DICTIONARY = "insert_into_dictionary()";
     private static final String INSERT_INTO_TS_KV = "insert_into_ts_kv()";
@@ -107,7 +107,6 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_DICTIONARY);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV);
                             executeQuery(conn, DROP_PROCEDURE_CREATE_NEW_TS_KV_LATEST_TABLE);
-                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
                             executeQuery(conn, DROP_FUNCTION_GET_PARTITION_DATA);
 
