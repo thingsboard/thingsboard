@@ -74,11 +74,13 @@ function AwsSqsProducer() {
 
         const queues = await getQueues();
 
-        queues.forEach(queueUrl => {
-            const delimiterPosition = queueUrl.lastIndexOf('/');
-            const queueName = queueUrl.substring(delimiterPosition + 1);
-            queueUrls.set(queueName, queueUrl);
-        })
+        if (queues) {
+            queues.forEach(queueUrl => {
+                const delimiterPosition = queueUrl.lastIndexOf('/');
+                const queueName = queueUrl.substring(delimiterPosition + 1);
+                queueUrls.set(queueName, queueUrl);
+            });
+        }
 
         parseQueueProperties();
 
