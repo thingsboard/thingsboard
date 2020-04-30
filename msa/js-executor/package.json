@@ -14,12 +14,7 @@
   "dependencies": {
     "config": "^3.2.2",
     "js-yaml": "^3.12.0",
-    "kafkajs": "^1.12.0",
-    "@google-cloud/pubsub": "^1.7.1",
-    "aws-sdk": "^2.663.0",
-    "amqplib": "^0.5.5",
-    "@azure/service-bus": "^1.1.6",
-    "azure-sb": "^0.11.1",
+    "kafkajs": "^1.11.0",
     "long": "^4.0.0",
     "uuid-parse": "^1.0.0",
     "winston": "^3.0.0",
