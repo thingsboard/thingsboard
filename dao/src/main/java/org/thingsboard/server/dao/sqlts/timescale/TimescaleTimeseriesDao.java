@@ -36,7 +36,6 @@ import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
-import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
@@ -64,7 +63,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     @Autowired
     protected InsertTsRepository<TimescaleTsKvEntity> insertRepository;
 
-    protected TbSqlBlockingQueue<EntityContainer<TimescaleTsKvEntity>> tsQueue;
+    protected TbSqlBlockingQueue<TimescaleTsKvEntity> tsQueue;
 
     @PostConstruct
     protected void init() {
@@ -175,7 +174,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         entity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
 
         log.trace("Saving entity to timescale db: {}", entity);
-        return tsQueue.add(new EntityContainer(entity, null));
+        return tsQueue.add(entity);
     }
 
     @Override
