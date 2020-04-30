@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.queue.provider;
 
-import com.google.protobuf.util.JsonFormat;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
@@ -32,7 +30,6 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -43,12 +40,10 @@ import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqQueueArguments;
 import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
-import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 
 import javax.annotation.PreDestroy;
-import java.nio.charset.StandardCharsets;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='rabbitmq' && '${service.type:null}'=='tb-core'")
@@ -60,7 +55,6 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final PartitionService partitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
-    private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
@@ -74,7 +68,6 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
                                       TbQueueRuleEngineSettings ruleEngineSettings,
                                       PartitionService partitionService,
                                       TbServiceInfoProvider serviceInfoProvider,
-                                      TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                       TbRabbitMqQueueArguments queueArguments) {
         this.rabbitMqSettings = rabbitMqSettings;
         this.coreSettings = coreSettings;
@@ -82,7 +75,6 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
         this.ruleEngineSettings = ruleEngineSettings;
         this.partitionService = partitionService;
         this.serviceInfoProvider = serviceInfoProvider;
-        this.jsInvokeSettings = jsInvokeSettings;
 
         this.coreAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getCoreArgs());
         this.ruleEngineAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getRuleEngineArgs());
@@ -141,26 +133,8 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
     }
 
     @Override
-    @Bean
     public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
-        TbQueueProducer<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>> producer = new TbRabbitMqProducerTemplate<>(jsExecutorAdmin, rabbitMqSettings, jsInvokeSettings.getRequestTopic());
-        TbQueueConsumer<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> consumer = new TbRabbitMqConsumerTemplate<>(jsExecutorAdmin, rabbitMqSettings,
-                jsInvokeSettings.getResponseTopic() + "." + serviceInfoProvider.getServiceId(),
-                msg -> {
-                    JsInvokeProtos.RemoteJsResponse.Builder builder = JsInvokeProtos.RemoteJsResponse.newBuilder();
-                    JsonFormat.parser().ignoringUnknownFields().merge(new String(msg.getData(), StandardCharsets.UTF_8), builder);
-                    return new TbProtoQueueMsg<>(msg.getKey(), builder.build(), msg.getHeaders());
-                });
-
-        DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
-                <TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> builder = DefaultTbQueueRequestTemplate.builder();
-        builder.queueAdmin(jsExecutorAdmin);
-        builder.requestTemplate(producer);
-        builder.responseTemplate(consumer);
-        builder.maxPendingRequests(jsInvokeSettings.getMaxPendingRequests());
-        builder.maxRequestTimeout(jsInvokeSettings.getMaxRequestsTimeout());
-        builder.pollInterval(jsInvokeSettings.getResponsePollInterval());
-        return builder.build();
+        return null;
     }
 
     @PreDestroy
