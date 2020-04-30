@@ -33,7 +33,7 @@ import { Datasource, WidgetActionDescriptor, WidgetConfig } from '@shared/models
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, isDefined, isNumber } from '@core/utils';
+import { deepClone, isDefined, isNumber, createLabelFromDatasource } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -282,7 +282,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       alarmsTitle = this.translate.instant('alarm.alarms');
     }
 
-    this.ctx.widgetTitle = this.utils.createLabelFromDatasource(this.alarmSource, alarmsTitle);
+    this.ctx.widgetTitle = createLabelFromDatasource(this.alarmSource, alarmsTitle);
 
     this.enableSelection = isDefined(this.settings.enableSelection) ? this.settings.enableSelection : true;
     if (!this.allowAcknowledgment && !this.allowClear) {

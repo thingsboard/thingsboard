@@ -24,7 +24,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { isDefined, isEqual, isUndefined } from '@core/utils';
+import { isDefined, isEqual, isUndefined, createLabelFromDatasource } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -331,7 +331,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public getGroupTitle(datasource: Datasource): string {
-    return this.utils.createLabelFromDatasource(datasource, this.settings.groupTitle);
+    return createLabelFromDatasource(datasource, this.settings.groupTitle);
   }
 
   public visibleKeys(source: MultipleInputWidgetSource): MultipleInputWidgetDataKey[] {
