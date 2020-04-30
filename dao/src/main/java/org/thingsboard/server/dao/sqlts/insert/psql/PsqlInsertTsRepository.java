@@ -20,7 +20,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.insert.AbstractInsertRepository;
-import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
@@ -28,10 +27,7 @@ import org.thingsboard.server.dao.util.SqlTsDao;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @SqlTsDao
 @PsqlDao
@@ -39,22 +35,15 @@ import java.util.Map;
 @Transactional
 public class PsqlInsertTsRepository extends AbstractInsertRepository implements InsertTsRepository<TsKvEntity> {
 
-    private static final String INSERT_INTO_TS_KV = "INSERT INTO ts_kv_";
-
-    private static final String VALUES_ON_CONFLICT_DO_UPDATE = " (entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) VALUES (?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
+    private static final String INSERT_ON_CONFLICT_DO_UPDATE = "INSERT INTO ts_kv (entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) VALUES (?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
             "ON CONFLICT (entity_id, key, ts) DO UPDATE SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json);";
 
     @Override
-    public void saveOrUpdate(List<EntityContainer<TsKvEntity>> entities) {
-        Map<String, List<TsKvEntity>> partitionMap = new HashMap<>();
-        for (EntityContainer<TsKvEntity> entityContainer : entities) {
-            List<TsKvEntity> tsKvEntities = partitionMap.computeIfAbsent(entityContainer.getPartitionDate(), k -> new ArrayList<>());
-            tsKvEntities.add(entityContainer.getEntity());
-        }
-        partitionMap.forEach((partition, entries) -> jdbcTemplate.batchUpdate(getInsertOrUpdateQuery(partition), new BatchPreparedStatementSetter() {
+    public void saveOrUpdate(List<TsKvEntity> entities) {
+        jdbcTemplate.batchUpdate(INSERT_ON_CONFLICT_DO_UPDATE, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                TsKvEntity tsKvEntity = entries.get(i);
+                TsKvEntity tsKvEntity = entities.get(i);
                 ps.setObject(1, tsKvEntity.getEntityId());
                 ps.setInt(2, tsKvEntity.getKey());
                 ps.setLong(3, tsKvEntity.getTs());
@@ -93,12 +82,9 @@ public class PsqlInsertTsRepository extends AbstractInsertRepository implements 
 
             @Override
             public int getBatchSize() {
-                return entries.size();
+                return entities.size();
             }
-        }));
+        });
     }
 
-    private String getInsertOrUpdateQuery(String partitionDate) {
-        return INSERT_INTO_TS_KV + partitionDate + VALUES_ON_CONFLICT_DO_UPDATE;
-    }
 }

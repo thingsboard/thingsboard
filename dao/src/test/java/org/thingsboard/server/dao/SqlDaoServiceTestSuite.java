@@ -31,14 +31,14 @@ public class SqlDaoServiceTestSuite {
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
             Arrays.asList("sql/schema-ts-hsql.sql", "sql/schema-entities-hsql.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql", "sql/system-test.sql"),
-            "sql/drop-all-tables.sql",
+            "sql/hsql/drop-all-tables.sql",
             "sql-test.properties"
     );
 
 //    @ClassRule
 //    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
 //            Arrays.asList("sql/schema-ts-psql.sql", "sql/schema-entities.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql", "sql/system-test.sql"),
-//            "sql/drop-all-tables.sql",
+//            "sql/psql/drop-all-tables.sql",
 //            "sql-test.properties"
 //    );
 

@@ -87,11 +87,13 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
     @PostConstruct
     public void init() {
+        super.init(maxRequestsTimeout);
         requestTemplate.init();
     }
 
     @PreDestroy
     public void destroy() {
+        super.stop();
         if (requestTemplate != null) {
             requestTemplate.stop();
         }
@@ -111,7 +113,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
         log.trace("Post compile request for scriptId [{}]", scriptId);
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
-
+        if (maxRequestsTimeout > 0) {
+            future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
+        }
         kafkaPushedMsgs.incrementAndGet();
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
@@ -154,8 +158,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setTimeout((int) maxRequestsTimeout)
                 .setScriptBody(scriptIdToBodysMap.get(scriptId));
 
-        for (int i = 0; i < args.length; i++) {
-            jsRequestBuilder.addArgs(args[i].toString());
+        for (Object arg : args) {
+            jsRequestBuilder.addArgs(arg.toString());
         }
 
         JsInvokeProtos.RemoteJsRequest jsRequestWrapper = JsInvokeProtos.RemoteJsRequest.newBuilder()
@@ -163,6 +167,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .build();
 
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
+        if (maxRequestsTimeout > 0) {
+            future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
+        }
         kafkaPushedMsgs.incrementAndGet();
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
@@ -203,6 +210,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .build();
 
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
+        if (maxRequestsTimeout > 0) {
+            future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
+        }
         JsInvokeProtos.RemoteJsResponse response = future.get().getValue();
 
         JsInvokeProtos.JsReleaseResponse compilationResult = response.getReleaseResponse();
