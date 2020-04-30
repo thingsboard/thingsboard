@@ -396,10 +396,10 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
                     var token = response.data.token;
                     var refreshToken = response.data.refreshToken;
                     setUserFromJwtToken(token, refreshToken, true);
+                    procceedJwtTokenValidate();
                 }, function fail() {
                     deferred.reject();
                 });
-                procceedJwtTokenValidate();
             } else {
                 procceedJwtTokenValidate();
             }
