@@ -25,7 +25,7 @@ import createPasswordTemplate from './create-password.tpl.html';
 /*@ngInject*/
 export default function LoginRoutes($stateProvider) {
     $stateProvider.state('login', {
-        url: '/login?username&password',
+        url: '/login',
         module: 'public',
         views: {
             "@": {
