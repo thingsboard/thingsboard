@@ -18,7 +18,7 @@
 <div fxFlex fxLayout="column" class="tb-progress-cover" fxLayoutAlign="center center"
      [ngStyle]="dashboardStyle"
      [style.backgroundImage]="backgroundImage"
-     [fxShow]="(((isLoading$ | async) && !this.ignoreLoading) || this.dashboardLoading) && !isEdit">
+     [fxShow]="(isLoading$ | async) && !ignoreLoading && !isEdit">
   <mat-spinner color="warn" mode="indeterminate" diameter="100">
   </mat-spinner>
 </div>

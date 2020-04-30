@@ -19,7 +19,6 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.sqlts.insert.AbstractInsertRepository;
 import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
 import org.thingsboard.server.dao.util.HsqlDao;
@@ -47,12 +46,11 @@ public class HsqlInsertTsRepository extends AbstractInsertRepository implements 
                     "VALUES (T.entity_id, T.key, T.ts, T.bool_v, T.str_v, T.long_v, T.dbl_v, T.json_v);";
 
     @Override
-    public void saveOrUpdate(List<EntityContainer<TsKvEntity>> entities) {
+    public void saveOrUpdate(List<TsKvEntity> entities) {
         jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                EntityContainer<TsKvEntity> tsKvEntityEntityContainer = entities.get(i);
-                TsKvEntity tsKvEntity = tsKvEntityEntityContainer.getEntity();
+                TsKvEntity tsKvEntity = entities.get(i);
                 ps.setObject(1, tsKvEntity.getEntityId());
                 ps.setInt(2, tsKvEntity.getKey());
                 ps.setLong(3, tsKvEntity.getTs());

@@ -28,6 +28,8 @@ import { Device } from '@shared/models/device.models';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceService } from '@core/http/device.service';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
 
 @Component({
   selector: 'tb-entity-gateway-select',
@@ -55,6 +57,12 @@ export class EntityGatewaySelectComponent implements ControlValueAccessor, OnIni
     this.gatewayType = value;
   }
 
+  @Input()
+  deviceName: string;
+
+  @Input()
+  isStateForm: boolean;
+
   @Output()
   private gatewayNameExist = new EventEmitter();
 
@@ -64,10 +72,6 @@ export class EntityGatewaySelectComponent implements ControlValueAccessor, OnIni
               private deviceService: DeviceService,
               private translate: TranslateService,
               private fb: FormBuilder) {
-    this.loadGatewayList();
-    this.selectDeviceGatewayFormGroup = this.fb.group({
-      gateway: [null]
-    });
   }
 
   private gatewayType = 'Gateway';
@@ -91,6 +95,10 @@ export class EntityGatewaySelectComponent implements ControlValueAccessor, OnIni
   }
 
   ngOnInit() {
+    this.selectDeviceGatewayFormGroup = this.fb.group({
+      gateway: this.fb.control({value: null, disabled: this.isStateForm})
+    });
+    this.loadGatewayList();
     this.filteredGateways = this.selectDeviceGatewayFormGroup.get('gateway').valueChanges
       .pipe(
         tap(value => {
@@ -204,15 +212,33 @@ export class EntityGatewaySelectComponent implements ControlValueAccessor, OnIni
     })
   }
 
-  private loadGatewayList(): void{
-    this.entityService.getEntitiesByNameFilter(EntityType.DEVICE, '', -1).pipe(
-      switchMap(results => results),
-      filter((device) => (device as Device)?.additionalInfo?.gateway),
-      reduce((acc, val) => acc.concat(val), [])
+  private loadGatewayList(): void {
+    let listObservable: Observable<any[]>;
+    if (getCurrentAuthUser(this.store).authority === Authority.SYS_ADMIN) {
+      listObservable = of([]);
+    } else {
+      const entityNameFilter = this.isStateForm && this.deviceName ? this.deviceName : '';
+      listObservable = this.entityService.getEntitiesByNameFilter(EntityType.DEVICE, entityNameFilter,
+        -1, '', {ignoreLoading: true});
+    }
+    listObservable.pipe(
+      map((devices) => devices ? devices.filter((device) =>
+        (device as Device)?.additionalInfo?.gateway): []),
     ).subscribe((devices) => {
       this.gatewayList = devices;
-      if(!this.searchText && this.gatewayList.length){
-        this.selectDeviceGatewayFormGroup.get('gateway').patchValue(this.gatewayList[0], {emitEvent: true});
+      if (!this.searchText) {
+        if (this.gatewayList.length) {
+          let foundGateway: Device = null;
+          if (this.deviceName) {
+            foundGateway = this.gatewayList.find((gateway) => gateway.name === this.deviceName);
+          }
+          if (!foundGateway) {
+            foundGateway = this.gatewayList[0];
+          }
+          if (foundGateway) {
+            this.selectDeviceGatewayFormGroup.get('gateway').patchValue(foundGateway, {emitEvent: true});
+          }
+        }
       }
     })
   }

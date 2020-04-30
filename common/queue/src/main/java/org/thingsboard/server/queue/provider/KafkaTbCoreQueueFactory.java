@@ -47,6 +47,7 @@ import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 
+import javax.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -218,4 +219,22 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         return builder.build();
     }
 
+    @PreDestroy
+    private void destroy() {
+        if (coreAdmin != null) {
+            coreAdmin.destroy();
+        }
+        if (ruleEngineAdmin != null) {
+            ruleEngineAdmin.destroy();
+        }
+        if (jsExecutorAdmin != null) {
+            jsExecutorAdmin.destroy();
+        }
+        if (transportApiAdmin != null) {
+            transportApiAdmin.destroy();
+        }
+        if (notificationAdmin != null) {
+            notificationAdmin.destroy();
+        }
+    }
 }

@@ -41,7 +41,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         name = "delay",
         configClazz = TbMsgDelayNodeConfiguration.class,
         nodeDescription = "Delays incoming message",
-        nodeDetails = "Delays messages for configurable period.",
+        nodeDetails = "Delays messages for configurable period. Please note, this node acknowledges the message from the current queue (message will be removed from queue)",
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig"

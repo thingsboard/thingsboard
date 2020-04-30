@@ -379,6 +379,7 @@ public class DefaultTransportService implements TransportService {
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
+            reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setClaimDevice(msg).build(), callback);
         }
@@ -401,23 +402,32 @@ public class DefaultTransportService implements TransportService {
     private void checkInactivityAndReportActivity() {
         long expTime = System.currentTimeMillis() - sessionInactivityTimeout;
         sessions.forEach((uuid, sessionMD) -> {
-            if (sessionMD.getLastActivityTime() < expTime) {
-                if (log.isDebugEnabled()) {
-                    log.debug("[{}] Session has expired due to last activity time: {}", toSessionId(sessionMD.getSessionInfo()), sessionMD.getLastActivityTime());
+            long lastActivityTime = sessionMD.getLastActivityTime();
+            TransportProtos.SessionInfoProto sessionInfo = sessionMD.getSessionInfo();
+            if (sessionInfo.getGwSessionIdMSB() > 0 &&
+                    sessionInfo.getGwSessionIdLSB() > 0) {
+                SessionMetaData gwMetaData = sessions.get(new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB()));
+                if (gwMetaData != null) {
+                    lastActivityTime = Math.max(gwMetaData.getLastActivityTime(), lastActivityTime);
                 }
-                process(sessionMD.getSessionInfo(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
+            }
+            if (lastActivityTime < expTime) {
+                if (log.isDebugEnabled()) {
+                    log.debug("[{}] Session has expired due to last activity time: {}", toSessionId(sessionInfo), lastActivityTime);
+                }
+                process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
                 sessions.remove(uuid);
                 sessionMD.getListener().onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
             } else {
-                if (sessionMD.getLastActivityTime() > sessionMD.getLastReportedActivityTime()) {
-                    final long lastActivityTime = sessionMD.getLastActivityTime();
-                    process(sessionMD.getSessionInfo(), TransportProtos.SubscriptionInfoProto.newBuilder()
+                if (lastActivityTime > sessionMD.getLastReportedActivityTime()) {
+                    final long lastActivityTimeFinal = lastActivityTime;
+                    process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
                             .setAttributeSubscription(sessionMD.isSubscribedToAttributes())
                             .setRpcSubscription(sessionMD.isSubscribedToRPC())
-                            .setLastActivityTime(sessionMD.getLastActivityTime()).build(), new TransportServiceCallback<Void>() {
+                            .setLastActivityTime(lastActivityTime).build(), new TransportServiceCallback<Void>() {
                         @Override
                         public void onSuccess(Void msg) {
-                            sessionMD.setLastReportedActivityTime(lastActivityTime);
+                            sessionMD.setLastReportedActivityTime(lastActivityTimeFinal);
                         }
 
                         @Override

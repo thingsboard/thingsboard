@@ -17,7 +17,7 @@
 -->
 <div fxLayout="column" class="mat-content mat-padding">
   <div fxLayout="row" *ngFor="let alias of entityAliasesInfo | keyvalue">
-    <mat-form-field>
+    <mat-form-field fxFlex>
       <mat-label>{{alias.value.alias}}</mat-label>
       <mat-select [(ngModel)]="alias.value.selectedId"
                   (ngModelChange)="currentAliasEntityChanged(alias.key, alias.value.selectedId)">
