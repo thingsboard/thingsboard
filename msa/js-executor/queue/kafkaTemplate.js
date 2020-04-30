@@ -41,8 +41,6 @@ function KafkaProducer() {
             }
         }
 
-        let headersData = headers.data;
-        headersData = Object.fromEntries(Object.entries(headersData).map(([key, value]) => [key, Buffer.from(value)]));
         return producer.send(
             {
                 topic: responseTopic,
@@ -50,7 +48,7 @@ function KafkaProducer() {
                     {
                         key: scriptId,
                         value: rawResponse,
-                        headers: headersData
+                        headers: headers.data
                     }
                 ]
             });
@@ -96,15 +94,10 @@ function KafkaProducer() {
             eachMessage: async ({topic, partition, message}) => {
                 let headers = message.headers;
                 let key = message.key;
-                let data = message.value;
                 let msg = {};
-
-                headers = Object.fromEntries(
-                    Object.entries(headers).map(([key, value]) => [key, [...value]]));
-
                 msg.key = key.toString('utf8');
-                msg.data = [...data];
-                msg.headers = {data: headers}
+                msg.data = message.value;
+                msg.headers = {data: headers};
                 messageProcessor.onJsInvokeMessage(msg);
             },
         });

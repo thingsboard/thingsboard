@@ -106,7 +106,8 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
             Thread.sleep(2000);
             log.info("Successfully executed query: {}", query);
         } catch (InterruptedException | SQLException e) {
-            log.info("Failed to execute query: {} due to: {}", query, e.getMessage());
+            log.error("Failed to execute query: {} due to: {}", query, e.getMessage());
+            throw new RuntimeException("Failed to execute query:" + query + " due to: ", e);
         }
     }
 

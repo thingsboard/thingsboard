@@ -21,6 +21,8 @@ CREATE OR REPLACE PROCEDURE create_partition_ts_kv_table() LANGUAGE plpgsql AS $
 BEGIN
   ALTER TABLE ts_kv
     RENAME TO ts_kv_old;
+  ALTER TABLE ts_kv_old
+      RENAME CONSTRAINT ts_kv_pkey TO ts_kv_pkey_old;
   CREATE TABLE IF NOT EXISTS ts_kv
   (
     LIKE ts_kv_old
@@ -32,6 +34,8 @@ BEGIN
     ALTER COLUMN entity_id TYPE uuid USING entity_id::uuid;
   ALTER TABLE ts_kv
     ALTER COLUMN key TYPE integer USING key::integer;
+  ALTER TABLE ts_kv
+      ADD CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts);
 END;
 $$;
 
@@ -59,33 +63,65 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION get_partitions_data(IN partition_type varchar)
+    RETURNS
+        TABLE
+        (
+            partition_date text,
+            from_ts        bigint,
+            to_ts          bigint
+        )
+AS
+$$
+BEGIN
+    CASE
+        WHEN partition_type = 'DAYS' THEN
+            RETURN QUERY SELECT day_date.day                                                   AS partition_date,
+                                (extract(epoch from (day_date.day)::timestamp) * 1000)::bigint AS from_ts,
+                                (extract(epoch from (day_date.day::date + INTERVAL '1 DAY')::timestamp) *
+                                 1000)::bigint                                                 AS to_ts
+                         FROM (SELECT DISTINCT TO_CHAR(TO_TIMESTAMP(ts / 1000), 'YYYY_MM_DD') AS day
+                               FROM ts_kv_old) AS day_date;
+        WHEN partition_type = 'MONTHS' THEN
+            RETURN QUERY SELECT SUBSTRING(month_date.first_date, 1, 7)                                  AS partition_date,
+                                (extract(epoch from (month_date.first_date)::timestamp) * 1000)::bigint AS from_ts,
+                                (extract(epoch from (month_date.first_date::date + INTERVAL '1 MONTH')::timestamp) *
+                                 1000)::bigint                                                          AS to_ts
+                         FROM (SELECT DISTINCT TO_CHAR(TO_TIMESTAMP(ts / 1000), 'YYYY_MM_01') AS first_date
+                               FROM ts_kv_old) AS month_date;
+        WHEN partition_type = 'YEARS' THEN
+            RETURN QUERY SELECT SUBSTRING(year_date.year, 1, 4)                                  AS partition_date,
+                                (extract(epoch from (year_date.year)::timestamp) * 1000)::bigint AS from_ts,
+                                (extract(epoch from (year_date.year::date + INTERVAL '1 YEAR')::timestamp) *
+                                 1000)::bigint                                                          AS to_ts
+                         FROM (SELECT DISTINCT TO_CHAR(TO_TIMESTAMP(ts / 1000), 'YYYY_01_01') AS year FROM ts_kv_old) AS year_date;
+        ELSE
+            RAISE EXCEPTION 'Failed to parse partitioning property: % !', partition_type;
+        END CASE;
+END;
+$$ LANGUAGE plpgsql;
 
 -- call create_partitions();
 
-CREATE OR REPLACE PROCEDURE create_partitions() LANGUAGE plpgsql AS $$
+CREATE OR REPLACE PROCEDURE create_partitions(IN partition_type varchar) LANGUAGE plpgsql AS $$
 
 DECLARE
     partition_date varchar;
     from_ts        bigint;
     to_ts          bigint;
-    key_cursor CURSOR FOR select SUBSTRING(month_date.first_date, 1, 7)                        AS partition_date,
-                                 extract(epoch from (month_date.first_date)::timestamp) * 1000 as from_ts,
-                                 extract(epoch from (month_date.first_date::date + INTERVAL '1 MONTH')::timestamp) *
-                                 1000                                                          as to_ts
-                          FROM (SELECT DISTINCT TO_CHAR(TO_TIMESTAMP(ts / 1000), 'YYYY_MM_01') AS first_date
-                                FROM ts_kv_old) AS month_date;
+    partitions_cursor CURSOR FOR SELECT * FROM get_partitions_data(partition_type);
 BEGIN
-    OPEN key_cursor;
+    OPEN partitions_cursor;
     LOOP
-        FETCH key_cursor INTO partition_date, from_ts, to_ts;
+        FETCH partitions_cursor INTO partition_date, from_ts, to_ts;
         EXIT WHEN NOT FOUND;
         EXECUTE 'CREATE TABLE IF NOT EXISTS ts_kv_' || partition_date ||
-                ' PARTITION OF ts_kv(PRIMARY KEY (entity_id, key, ts)) FOR VALUES FROM (' || from_ts ||
+                ' PARTITION OF ts_kv FOR VALUES FROM (' || from_ts ||
                 ') TO (' || to_ts || ');';
         RAISE NOTICE 'A partition % has been created!',CONCAT('ts_kv_', partition_date);
     END LOOP;
 
-    CLOSE key_cursor;
+    CLOSE partitions_cursor;
 END;
 $$;
 

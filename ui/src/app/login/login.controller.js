@@ -20,7 +20,7 @@ import logoSvg from '../../svg/logo_title_white.svg';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function LoginController(toast, loginService, userService, types, $state, $stateParams/*, $rootScope, $log, $translate*/) {
+export default function LoginController(toast, loginService, userService, types, $state/*, $rootScope, $log, $translate*/) {
     var vm = this;
 
     vm.logoSvg = logoSvg;
@@ -31,12 +31,6 @@ export default function LoginController(toast, loginService, userService, types,
     };
 
     vm.login = login;
-
-    if ($stateParams.username && $stateParams.password) {
-        vm.user.name = $stateParams.username;
-        vm.user.password = $stateParams.password;
-        doLogin();
-    }
 
     function doLogin() {
         loginService.login(vm.user).then(function success(response) {
