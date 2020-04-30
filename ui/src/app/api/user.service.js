@@ -398,12 +398,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
                     var refreshToken = response.data.refreshToken;
                     try {
                         updateAndValidateToken(token, 'jwt_token', false);
-                        if (refreshToken) {
-                            updateAndValidateToken(refreshToken, 'refresh_token', false);
-                        } else {
-                            store.remove('refresh_token');
-                            store.remove('refresh_token_expiration');
-                        }
+                        updateAndValidateToken(refreshToken, 'refresh_token', false);
                     } catch (e) {
                         deferred.reject();
                     }
