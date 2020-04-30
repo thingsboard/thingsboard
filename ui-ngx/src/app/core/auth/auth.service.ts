@@ -293,22 +293,20 @@ export class AuthService {
         }
         return this.procceedJwtTokenValidate();
       } else if (username && password) {
+        this.utils.updateQueryParam('username', null);
+        this.utils.updateQueryParam('password', null);
         const loginRequest: LoginRequest = {
-          username: username,
-          password: password
+          username,
+          password
         };
         return this.http.post<LoginResponse>('/api/auth/login', loginRequest, defaultHttpOptions()).pipe(
-          tap((loginResponse: LoginResponse) => {
-                try {
-                  this.updateAndValidateToken(loginResponse.token, 'jwt_token', false);
-                  this.updateAndValidateToken(loginResponse.refreshToken, 'refresh_token', false);
-                } catch (e) {
-                }
-              }
-          ), mergeMap( () => {
+          mergeMap((loginResponse: LoginResponse) => {
+              this.updateAndValidateToken(loginResponse.token, 'jwt_token', false);
+              this.updateAndValidateToken(loginResponse.refreshToken, 'refresh_token', false);
               return this.procceedJwtTokenValidate();
             }
-          ));
+          )
+        );
       }
       return this.procceedJwtTokenValidate(doTokenRefresh);
     } else {
