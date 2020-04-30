@@ -19,6 +19,7 @@ const COMPILATION_ERROR = 0;
 const RUNTIME_ERROR = 1;
 const TIMEOUT_ERROR = 2;
 const UNRECOGNIZED = -1;
+let headers;
 
 const config = require('config'),
       logger = require('../config/logger')._logger('JsInvokeMessageProcessor'),
@@ -30,7 +31,6 @@ const useSandbox = config.get('script.use_sandbox') === 'true';
 const maxActiveScripts = Number(config.get('script.max_active_scripts'));
 
 function JsInvokeMessageProcessor(producer) {
-    console.log("Producer:", producer);
     this.producer = producer;
     this.executor = new JsExecutor(useSandbox);
     this.scriptMap = {};
@@ -40,24 +40,24 @@ function JsInvokeMessageProcessor(producer) {
 
 JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
 
-    let requestId;
-    let responseTopic;
+    var requestId;
+    var responseTopic;
     try {
-        let request = JSON.parse(Buffer.from(message.data).toString('utf8'));
-        let headers = message.headers;
-        let buf = Buffer.from(headers.data['requestId']);
+        var request = JSON.parse(message.value.toString('utf8'));
+        headers = message.headers;
+        var buf = message.headers['requestId'];
         requestId = Utils.UUIDFromBuffer(buf);
-        buf = Buffer.from(headers.data['responseTopic']);
+        buf = message.headers['responseTopic'];
         responseTopic = buf.toString('utf8');
 
         logger.debug('[%s] Received request, responseTopic: [%s]', requestId, responseTopic);
 
         if (request.compileRequest) {
-            this.processCompileRequest(requestId, responseTopic, headers, request.compileRequest);
+            this.processCompileRequest(requestId, responseTopic, request.compileRequest);
         } else if (request.invokeRequest) {
-            this.processInvokeRequest(requestId, responseTopic, headers, request.invokeRequest);
+            this.processInvokeRequest(requestId, responseTopic, request.invokeRequest);
         } else if (request.releaseRequest) {
-            this.processReleaseRequest(requestId, responseTopic, headers, request.releaseRequest);
+            this.processReleaseRequest(requestId, responseTopic, request.releaseRequest);
         } else {
             logger.error('[%s] Unknown request recevied!', requestId);
         }
@@ -68,7 +68,7 @@ JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
     }
 }
 
-JsInvokeMessageProcessor.prototype.processCompileRequest = function(requestId, responseTopic, headers, compileRequest) {
+JsInvokeMessageProcessor.prototype.processCompileRequest = function(requestId, responseTopic, compileRequest) {
     var scriptId = getScriptId(compileRequest);
     logger.debug('[%s] Processing compile request, scriptId: [%s]', requestId, scriptId);
 
@@ -77,17 +77,17 @@ JsInvokeMessageProcessor.prototype.processCompileRequest = function(requestId, r
             this.cacheScript(scriptId, script);
             var compileResponse = createCompileResponse(scriptId, true);
             logger.debug('[%s] Sending success compile response, scriptId: [%s]', requestId, scriptId);
-            this.sendResponse(requestId, responseTopic, headers, scriptId, compileResponse);
+            this.sendResponse(requestId, responseTopic, scriptId, compileResponse);
         },
         (err) => {
             var compileResponse = createCompileResponse(scriptId, false, COMPILATION_ERROR, err);
             logger.debug('[%s] Sending failed compile response, scriptId: [%s]', requestId, scriptId);
-            this.sendResponse(requestId, responseTopic, headers, scriptId, compileResponse);
+            this.sendResponse(requestId, responseTopic, scriptId, compileResponse);
         }
     );
 }
 
-JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, responseTopic, headers, invokeRequest) {
+JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, responseTopic, invokeRequest) {
     var scriptId = getScriptId(invokeRequest);
     logger.debug('[%s] Processing invoke request, scriptId: [%s]', requestId, scriptId);
     this.executedScriptsCounter++;
@@ -103,7 +103,7 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, re
                 (result) => {
                     var invokeResponse = createInvokeResponse(result, true);
                     logger.debug('[%s] Sending success invoke response, scriptId: [%s]', requestId, scriptId);
-                    this.sendResponse(requestId, responseTopic, headers, scriptId, null, invokeResponse);
+                    this.sendResponse(requestId, responseTopic, scriptId, null, invokeResponse);
                 },
                 (err) => {
                     var errorCode;
@@ -114,19 +114,19 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, re
                     }
                     var invokeResponse = createInvokeResponse("", false, errorCode, err);
                     logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, errorCode);
-                    this.sendResponse(requestId, responseTopic, headers, scriptId, null, invokeResponse);
+                    this.sendResponse(requestId, responseTopic, scriptId, null, invokeResponse);
                 }
             )
         },
         (err) => {
             var invokeResponse = createInvokeResponse("", false, COMPILATION_ERROR, err);
             logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, COMPILATION_ERROR);
-            this.sendResponse(requestId, responseTopic, headers, scriptId, null, invokeResponse);
+            this.sendResponse(requestId, responseTopic, scriptId, null, invokeResponse);
         }
     );
 }
 
-JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, responseTopic, headers, releaseRequest) {
+JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, responseTopic, releaseRequest) {
     var scriptId = getScriptId(releaseRequest);
     logger.debug('[%s] Processing release request, scriptId: [%s]', requestId, scriptId);
     if (this.scriptMap[scriptId]) {
@@ -138,17 +138,28 @@ JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, r
     }
     var releaseResponse = createReleaseResponse(scriptId, true);
     logger.debug('[%s] Sending success release response, scriptId: [%s]', requestId, scriptId);
-    this.sendResponse(requestId, responseTopic, headers, scriptId, null, null, releaseResponse);
+    this.sendResponse(requestId, responseTopic, scriptId, null, null, releaseResponse);
 }
 
-JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseTopic, headers, scriptId, compileResponse, invokeResponse, releaseResponse) {
+JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseTopic, scriptId, compileResponse, invokeResponse, releaseResponse) {
     var remoteResponse = createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse);
     var rawResponse = Buffer.from(JSON.stringify(remoteResponse), 'utf8');
-    this.producer.send(responseTopic, scriptId, rawResponse, headers).then(
+    this.producer.send(
+        {
+            topic: responseTopic,
+            messages: [
+                {
+                    key: scriptId,
+                    value: rawResponse,
+                    headers: headers
+                }
+            ]
+        }
+    ).then(
         () => {},
         (err) => {
             if (err) {
-                logger.error('[%s] Failed to send response to queue: %s', requestId, err.message);
+                logger.error('[%s] Failed to send response to kafka: %s', requestId, err.message);
                 logger.error(err.stack);
             }
         }
