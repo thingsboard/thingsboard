@@ -59,7 +59,7 @@ JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
         } else if (request.releaseRequest) {
             this.processReleaseRequest(requestId, responseTopic, headers, request.releaseRequest);
         } else {
-            logger.error('[%s] Unknown request recevied!', requestId);
+            logger.error('[%s] Unknown request received!', requestId);
         }
 
     } catch (err) {
