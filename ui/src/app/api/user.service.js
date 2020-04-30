@@ -392,10 +392,21 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
                 user.password = locationSearch.password;
                 $location.search('username', null);
                 $location.search('password', null);
+
                 loginService.login(user).then(function success(response) {
                     var token = response.data.token;
                     var refreshToken = response.data.refreshToken;
-                    setUserFromJwtToken(token, refreshToken, true);
+                    try {
+                        updateAndValidateToken(token, 'jwt_token', false);
+                        if (refreshToken) {
+                            updateAndValidateToken(refreshToken, 'refresh_token', false);
+                        } else {
+                            store.remove('refresh_token');
+                            store.remove('refresh_token_expiration');
+                        }
+                    } catch (e) {
+                        deferred.reject();
+                    }
                     procceedJwtTokenValidate();
                 }, function fail() {
                     deferred.reject();
