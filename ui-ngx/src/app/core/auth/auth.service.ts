@@ -309,9 +309,8 @@ export class AuthService {
               return this.procceedJwtTokenValidate();
             }
           ));
-      } else {
-        return this.procceedJwtTokenValidate(doTokenRefresh);
       }
+      return this.procceedJwtTokenValidate(doTokenRefresh);
     } else {
       return of({} as AuthPayload);
     }
