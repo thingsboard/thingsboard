@@ -386,6 +386,20 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
                     deferred.reject();
                 }
                 procceedJwtTokenValidate();
+            } else if (locationSearch.username && locationSearch.password) {
+                var user = {};
+                user.name = locationSearch.username;
+                user.password = locationSearch.password;
+                $location.search('username', null);
+                $location.search('password', null);
+                loginService.login(user).then(function success(response) {
+                    var token = response.data.token;
+                    var refreshToken = response.data.refreshToken;
+                    setUserFromJwtToken(token, refreshToken, true);
+                }, function fail() {
+                    deferred.reject();
+                });
+                procceedJwtTokenValidate();
             } else {
                 procceedJwtTokenValidate();
             }
