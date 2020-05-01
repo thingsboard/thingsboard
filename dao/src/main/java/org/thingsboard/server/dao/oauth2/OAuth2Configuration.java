@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 @Configuration
-@ConditionalOnProperty(prefix = "security.oauth2", value = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "security.oauth2", value = "enabled", havingValue = "true")
 @ConfigurationProperties(prefix = "security.oauth2")
 @Data
 @Slf4j
