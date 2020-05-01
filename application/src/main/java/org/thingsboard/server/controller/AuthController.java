@@ -38,8 +38,10 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
@@ -55,6 +57,7 @@ import ua_parser.Client;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 @RestController
 @TbCoreComponent
@@ -79,6 +82,9 @@ public class AuthController extends BaseController {
 
     @Autowired
     private AuditLogService auditLogService;
+
+    @Autowired
+    private OAuth2Service oauth2Service;
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
@@ -330,4 +336,13 @@ public class AuthController extends BaseController {
         }
     }
 
+    @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
+    @ResponseBody
+    public List<OAuth2ClientInfo> getOath2Clients() throws ThingsboardException {
+        try {
+            return oauth2Service.getOAuth2Clients();
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
 }
