@@ -22,6 +22,7 @@
     "azure-sb": "^0.11.1",
     "long": "^4.0.0",
     "uuid-parse": "^1.0.0",
+    "uuid-random": "^1.3.0",
     "winston": "^3.0.0",
     "winston-daily-rotate-file": "^3.2.1"
   },

@@ -60,9 +60,11 @@ function PubSubProducer() {
         const topicList = await pubSubClient.getTopics();
 
         if (topicList) {
-            topicList[0].forEach(topic => {
-                topics.push(getName(topic.name));
-            });
+            if (topicList) {
+                topicList[0].forEach(topic => {
+                    topics.push(getName(topic.name));
+                });
+            }
         }
 
         const subscriptionList = await pubSubClient.getSubscriptions();

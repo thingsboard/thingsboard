@@ -19,6 +19,7 @@
 const config = require('config'),
     JsInvokeMessageProcessor = require('../api/jsInvokeMessageProcessor'),
     logger = require('../config/logger')._logger('awsSqsTemplate');
+const uuid = require('uuid-random');
 
 const requestTopic = config.get('request_topic');
 
@@ -29,7 +30,7 @@ const AWS = require('aws-sdk');
 const queueProperties = config.get('aws_sqs.queue_properties');
 const poolInterval = config.get('js.response_poll_interval');
 
-let queueAttributes = {FifoQueue: 'true', ContentBasedDeduplication: 'true'};
+let queueAttributes = {FifoQueue: 'true'};
 let sqsClient;
 let requestQueueURL;
 const queueUrls = new Map();
@@ -51,7 +52,7 @@ function AwsSqsProducer() {
             queueUrls.set(responseTopic, responseQueueUrl);
         }
 
-        let params = {MessageBody: msgBody, QueueUrl: responseQueueUrl, MessageGroupId: scriptId};
+        let params = {MessageBody: msgBody, QueueUrl: responseQueueUrl, MessageGroupId: 'js_eval', MessageDeduplicationId: uuid()};
 
         return new Promise((resolve, reject) => {
             sqsClient.sendMessage(params, function (err, data) {

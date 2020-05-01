@@ -127,6 +127,11 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             if (!subscribed) {
                 List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
                 queueUrls = topicNames.stream().map(this::getQueueUrl).collect(Collectors.toSet());
+
+                if (consumerExecutor != null) {
+                    consumerExecutor.shutdown();
+                }
+
                 consumerExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(queueUrls.size() * sqsSettings.getThreadsPerTopic() + 1));
                 subscribed = true;
             }
@@ -172,7 +177,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                 ReceiveMessageRequest request = new ReceiveMessageRequest();
                 request
                         .withWaitTimeSeconds(waitTimeSeconds)
-                        .withMessageAttributeNames("headers")
                         .withQueueUrl(url)
                         .withMaxNumberOfMessages(MAX_NUM_MSGS);
                 return sqsClient.receiveMessage(request).getMessages();
