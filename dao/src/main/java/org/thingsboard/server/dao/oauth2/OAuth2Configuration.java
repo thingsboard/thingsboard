@@ -40,13 +40,15 @@ import java.util.Map;
 public class OAuth2Configuration {
 
     private boolean enabled;
+    private String loginProcessingUrl;
     private Map<String, OAuth2Client> clients = new HashMap<>();
 
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
         List<ClientRegistration> result = new ArrayList<>();
-        for (OAuth2Client client : clients.values()) {
-            ClientRegistration registration = ClientRegistration.withRegistrationId(client.getRegistrationId())
+        for (Map.Entry<String, OAuth2Client> entry : clients.entrySet()) {
+            OAuth2Client client = entry.getValue();
+            ClientRegistration registration = ClientRegistration.withRegistrationId(entry.getKey())
                     .clientId(client.getClientId())
                     .authorizationUri(client.getAuthorizationUri())
                     .clientSecret(client.getClientSecret())
@@ -68,9 +70,9 @@ public class OAuth2Configuration {
     public OAuth2Client getClientByRegistrationId(String registrationId) {
         OAuth2Client result = null;
         if (clients != null && !clients.isEmpty()) {
-            for (OAuth2Client client : clients.values()) {
-                if (client.getRegistrationId().equals(registrationId)) {
-                    result = client;
+            for (String key : clients.keySet()) {
+                if (key.equals(registrationId)) {
+                    result = clients.get(key);
                     break;
                 }
             }

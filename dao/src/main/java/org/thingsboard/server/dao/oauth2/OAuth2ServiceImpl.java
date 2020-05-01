@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -33,15 +34,15 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public List<OAuth2ClientInfo> getOAuth2Clients() {
-        if (!oauth2Configuration.isEnabled()) {
+        if (oauth2Configuration == null || !oauth2Configuration.isEnabled()) {
             return Collections.emptyList();
         }
         List<OAuth2ClientInfo> result = new ArrayList<>();
-        for (OAuth2Client c : oauth2Configuration.getClients().values()) {
+        for (Map.Entry<String, OAuth2Client> entry : oauth2Configuration.getClients().entrySet()) {
             OAuth2ClientInfo client = new OAuth2ClientInfo();
-            client.setName(c.getLoginButtonLabel());
-            client.setUrl(String.format("/oauth2/authorization/%s", c.getRegistrationId()));
-            client.setIcon(c.getLoginButtonIcon());
+            client.setName(entry.getValue().getLoginButtonLabel());
+            client.setUrl(String.format("/oauth2/authorization/%s", entry.getKey()));
+            client.setIcon(entry.getValue().getLoginButtonIcon());
             result.add(client);
         }
         return result;

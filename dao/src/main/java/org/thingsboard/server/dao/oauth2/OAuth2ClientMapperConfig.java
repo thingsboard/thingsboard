@@ -21,8 +21,8 @@ import lombok.Data;
 public class OAuth2ClientMapperConfig {
 
     private String type;
-    private CustomOAuth2ClientMapperConfig custom;
     private BasicOAuth2ClientMapperConfig basic;
+    private CustomOAuth2ClientMapperConfig custom;
 
     @Data
     public static class BasicOAuth2ClientMapperConfig {

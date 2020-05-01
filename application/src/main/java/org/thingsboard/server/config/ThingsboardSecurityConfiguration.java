@@ -200,10 +200,10 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildWsJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
-        if (oauth2Configuration.isEnabled()) {
+        if (oauth2Configuration != null && oauth2Configuration.isEnabled()) {
             http.oauth2Login()
                     .loginPage("/oauth2Login")
-                    .loginProcessingUrl(oauth2Configuration.getClients().values().iterator().next().getLoginProcessingUrl())
+                    .loginProcessingUrl(oauth2Configuration.getLoginProcessingUrl())
                     .successHandler(oauth2AuthenticationSuccessHandler);
         }
     }

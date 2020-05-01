@@ -28,7 +28,13 @@ import java.util.Map;
 
 @Service(value = "basicOAuth2ClientMapper")
 @Slf4j
-public class BasicOAuth2ClientMapper extends BaseOAuth2ClientMapper implements OAuth2ClientMapper {
+public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implements OAuth2ClientMapper {
+
+    private static final String START_PLACEHOLDER_PREFIX = "%{";
+    private static final String END_PLACEHOLDER_PREFIX = "}";
+    private static final String EMAIL_TENANT_STRATEGY = "email";
+    private static final String DOMAIN_TENANT_STRATEGY = "domain";
+    private static final String CUSTOM_TENANT_STRATEGY = "custom";
 
     @Override
     public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig config) {
@@ -46,7 +52,7 @@ public class BasicOAuth2ClientMapper extends BaseOAuth2ClientMapper implements O
             oauth2User.setFirstName(firstName);
         }
         if (!StringUtils.isEmpty(config.getBasic().getCustomerNameStrategyPattern())) {
-            StrSubstitutor sub = new StrSubstitutor(attributes, "${", "}");
+            StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
             String customerName = sub.replace(config.getBasic().getCustomerNameStrategyPattern());
             oauth2User.setCustomerName(customerName);
         }
@@ -55,11 +61,13 @@ public class BasicOAuth2ClientMapper extends BaseOAuth2ClientMapper implements O
 
     private String getTenantName(Map<String, Object> attributes, OAuth2ClientMapperConfig config) {
         switch (config.getBasic().getTenantNameStrategy()) {
-            case "domain":
+            case EMAIL_TENANT_STRATEGY:
+                return getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
+            case DOMAIN_TENANT_STRATEGY:
                 String email = getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
                 return email.substring(email .indexOf("@") + 1);
-            case "custom":
-                StrSubstitutor sub = new StrSubstitutor(attributes, "${", "}");
+            case CUSTOM_TENANT_STRATEGY:
+                StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
                 return sub.replace(config.getBasic().getTenantNameStrategyPattern());
             default:
                 throw new RuntimeException("Tenant Name Strategy with type " + config.getBasic().getTenantNameStrategy() + " is not supported!");

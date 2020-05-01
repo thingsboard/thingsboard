@@ -36,9 +36,11 @@ import org.thingsboard.server.service.security.model.UserPrincipal;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public abstract class BaseOAuth2ClientMapper {
+public abstract class AbstractOAuth2ClientMapper {
 
     @Autowired
     private UserService userService;
@@ -48,6 +50,8 @@ public abstract class BaseOAuth2ClientMapper {
 
     @Autowired
     private CustomerService customerService;
+
+    private final Lock userCreationLock = new ReentrantLock();
 
     protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, boolean allowUserCreation) {
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, oauth2User.getEmail());
@@ -59,18 +63,30 @@ public abstract class BaseOAuth2ClientMapper {
         }
 
         if (user == null) {
-            user = new User();
-            if (StringUtils.isEmpty(oauth2User.getCustomerName())) {
-                user.setAuthority(Authority.TENANT_ADMIN);
-            } else {
-                user.setAuthority(Authority.CUSTOMER_USER);
+            userCreationLock.lock();
+            try {
+                user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, oauth2User.getEmail());
+                if (user == null) {
+                    user = new User();
+                    if (oauth2User.getCustomerId() == null && StringUtils.isEmpty(oauth2User.getCustomerName())) {
+                        user.setAuthority(Authority.TENANT_ADMIN);
+                    } else {
+                        user.setAuthority(Authority.CUSTOMER_USER);
+                    }
+                    TenantId tenantId = oauth2User.getTenantId() != null ?
+                            oauth2User.getTenantId() : getTenantId(oauth2User.getTenantName());
+                    user.setTenantId(tenantId);
+                    CustomerId customerId = oauth2User.getCustomerId() != null ?
+                            oauth2User.getCustomerId() : getCustomerId(user.getTenantId(), oauth2User.getCustomerName());
+                    user.setCustomerId(customerId);
+                    user.setEmail(oauth2User.getEmail());
+                    user.setFirstName(oauth2User.getFirstName());
+                    user.setLastName(oauth2User.getLastName());
+                    user = userService.saveUser(user);
+                }
+            } finally {
+                userCreationLock.unlock();
             }
-            user.setTenantId(getTenantId(oauth2User.getTenantName()));
-            user.setCustomerId(getCustomerId(user.getTenantId(), oauth2User.getCustomerName()));
-            user.setEmail(oauth2User.getEmail());
-            user.setFirstName(oauth2User.getFirstName());
-            user.setLastName(oauth2User.getLastName());
-            user = userService.saveUser(user);
         }
 
         try {
@@ -78,7 +94,7 @@ public abstract class BaseOAuth2ClientMapper {
             return (SecurityUser) new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities()).getPrincipal();
         } catch (Exception e) {
             log.error("Can't get or create security user from oauth2 user", e);
-            throw e;
+            throw new RuntimeException("Can't get or create security user from oauth2 user", e);
         }
     }
 

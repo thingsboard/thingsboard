@@ -20,7 +20,6 @@ import lombok.Data;
 @Data
 public class OAuth2Client {
 
-    private String registrationId;
     private String loginButtonLabel;
     private String loginButtonIcon;
     private String clientName;
@@ -31,7 +30,6 @@ public class OAuth2Client {
     private String scope;
     private String redirectUriTemplate;
     private String jwkSetUri;
-    private String loginProcessingUrl;
     private String authorizationGrantType;
     private String clientAuthenticationMethod;
     private String userInfoUri;
