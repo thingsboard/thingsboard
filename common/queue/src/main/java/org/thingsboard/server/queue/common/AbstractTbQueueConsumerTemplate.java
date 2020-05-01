@@ -28,11 +28,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> implements TbQueueConsumer<T> {
 
     private volatile boolean subscribed;
+    protected volatile boolean stopped = false;
     protected volatile Set<TopicPartitionInfo> partitions;
     protected final Lock consumerLock = new ReentrantLock();
 
@@ -74,10 +76,12 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 log.debug("Failed to await subscription", e);
             }
         } else {
+            long pollStartTs = System.currentTimeMillis();
             consumerLock.lock();
             try {
                 if (!subscribed) {
-                    doSubscribe();
+                    List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+                    doSubscribe(topicNames);
                     subscribed = true;
                 }
 
@@ -95,6 +99,17 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                         }
                     });
                     return result;
+                } else {
+                    long pollDuration = System.currentTimeMillis() - pollStartTs;
+                    if (pollDuration < durationInMillis) {
+                        try {
+                            Thread.sleep(durationInMillis - pollDuration);
+                        } catch (InterruptedException e) {
+                            if (!stopped) {
+                                log.error("Failed to wait.", e);
+                            }
+                        }
+                    }
                 }
             } finally {
                 consumerLock.unlock();
@@ -115,6 +130,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     @Override
     public void unsubscribe() {
+        stopped = true;
         consumerLock.lock();
         try {
             doUnsubscribe();
@@ -127,7 +143,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     abstract protected T decode(R record) throws IOException;
 
-    abstract protected void doSubscribe();
+    abstract protected void doSubscribe(List<String> topicNames);
 
     abstract protected void doCommit();
 

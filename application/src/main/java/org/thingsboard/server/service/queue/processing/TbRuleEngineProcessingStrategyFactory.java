@@ -82,10 +82,10 @@ public class TbRuleEngineProcessingStrategyFactory {
                 retryCount++;
                 double failedCount = result.getFailedMap().size() + result.getPendingMap().size();
                 if (maxRetries > 0 && retryCount > maxRetries) {
-                    log.info("[{}] Skip reprocess of the rule engine pack due to max retries", queueName);
+                    log.debug("[{}] Skip reprocess of the rule engine pack due to max retries", queueName);
                     return new TbRuleEngineProcessingDecision(true, null);
                 } else if (maxAllowedFailurePercentage > 0 && (failedCount / initialTotalCount) > maxAllowedFailurePercentage) {
-                    log.info("[{}] Skip reprocess of the rule engine pack due to max allowed failure percentage", queueName);
+                    log.debug("[{}] Skip reprocess of the rule engine pack due to max allowed failure percentage", queueName);
                     return new TbRuleEngineProcessingDecision(true, null);
                 } else {
                     ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toReprocess = new ConcurrentHashMap<>(initialTotalCount);
@@ -98,7 +98,7 @@ public class TbRuleEngineProcessingStrategyFactory {
                     if (retrySuccessful) {
                         result.getSuccessMap().forEach(toReprocess::put);
                     }
-                    log.info("[{}] Going to reprocess {} messages", queueName, toReprocess.size());
+                    log.debug("[{}] Going to reprocess {} messages", queueName, toReprocess.size());
                     if (log.isTraceEnabled()) {
                         toReprocess.forEach((id, msg) -> log.trace("Going to reprocess [{}]: {}", id, TbMsg.fromBytes(msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));
                     }
@@ -126,7 +126,7 @@ public class TbRuleEngineProcessingStrategyFactory {
         @Override
         public TbRuleEngineProcessingDecision analyze(TbRuleEngineProcessingResult result) {
             if (!result.isSuccess()) {
-                log.info("[{}] Reprocessing skipped for {} failed and {} timeout messages", queueName, result.getFailedMap().size(), result.getPendingMap().size());
+                log.debug("[{}] Reprocessing skipped for {} failed and {} timeout messages", queueName, result.getFailedMap().size(), result.getPendingMap().size());
             }
             if (log.isTraceEnabled()) {
                 result.getFailedMap().forEach((id, msg) -> log.trace("Failed messages [{}]: {}", id, TbMsg.fromBytes(msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));

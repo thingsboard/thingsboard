@@ -69,8 +69,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     }
 
     @Override
-    protected void doSubscribe() {
-        List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+    protected void doSubscribe( List<String> topicNames) {
         topicNames.forEach(admin::createTopicIfNotExists);
         consumer.subscribe(topicNames);
     }

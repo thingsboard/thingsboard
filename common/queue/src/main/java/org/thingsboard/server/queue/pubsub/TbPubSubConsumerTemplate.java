@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.pubsub;
 
+import com.amazonaws.services.sqs.model.Message;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.pubsub.v1.stub.GrpcSubscriberStub;
@@ -35,11 +36,14 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
+import org.thingsboard.server.queue.common.AbstractParallelTbQueueConsumerTemplate;
+import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -47,10 +51,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
+public class TbPubSubConsumerTemplate<T extends TbQueueMsg> extends AbstractParallelTbQueueConsumerTemplate<PubsubMessage, T> {
 
     private final Gson gson = new Gson();
     private final TbQueueAdmin admin;
@@ -58,23 +63,18 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     private final TbQueueMsgDecoder<T> decoder;
     private final TbPubSubSettings pubSubSettings;
 
-    private volatile boolean subscribed;
-    private volatile Set<TopicPartitionInfo> partitions;
     private volatile Set<String> subscriptionNames;
     private final List<AcknowledgeRequest> acknowledgeRequests = new CopyOnWriteArrayList<>();
 
-    private ExecutorService consumerExecutor;
     private final SubscriberStub subscriber;
-    private volatile boolean stopped;
-
     private volatile int messagesPerTopic;
 
     public TbPubSubConsumerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String topic, TbQueueMsgDecoder<T> decoder) {
+        super(topic);
         this.admin = admin;
         this.pubSubSettings = pubSubSettings;
         this.topic = topic;
         this.decoder = decoder;
-
         try {
             SubscriberStubSettings subscriberStubSettings =
                     SubscriberStubSettings.newBuilder()
@@ -84,89 +84,50 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                                             .setMaxInboundMessageSize(pubSubSettings.getMaxMsgSize())
                                             .build())
                             .build();
-
             this.subscriber = GrpcSubscriberStub.create(subscriberStubSettings);
         } catch (IOException e) {
             log.error("Failed to create subscriber.", e);
             throw new RuntimeException("Failed to create subscriber.", e);
         }
-        stopped = false;
     }
 
     @Override
-    public String getTopic() {
-        return topic;
-    }
-
-    @Override
-    public void subscribe() {
-        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null, true));
-        subscribed = false;
-    }
-
-    @Override
-    public void subscribe(Set<TopicPartitionInfo> partitions) {
-        this.partitions = partitions;
-        subscribed = false;
-    }
-
-    @Override
-    public void unsubscribe() {
-        stopped = true;
-        if (consumerExecutor != null) {
-            consumerExecutor.shutdownNow();
-        }
-
-        if (subscriber != null) {
-            subscriber.close();
-        }
-    }
-
-    @Override
-    public List<T> poll(long durationInMillis) {
-        if (!subscribed && partitions == null) {
-            try {
-                Thread.sleep(durationInMillis);
-            } catch (InterruptedException e) {
-                log.debug("Failed to await subscription", e);
+    protected List<PubsubMessage> doPoll(long durationInMillis) {
+        try {
+            List<ReceivedMessage> messages = receiveMessages();
+            if (!messages.isEmpty()) {
+                return messages.stream().map(ReceivedMessage::getMessage).collect(Collectors.toList());
             }
-        } else {
-            if (!subscribed) {
-                subscriptionNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toSet());
-                subscriptionNames.forEach(admin::createTopicIfNotExists);
-                consumerExecutor = Executors.newFixedThreadPool(subscriptionNames.size());
-                messagesPerTopic = pubSubSettings.getMaxMessages() / subscriptionNames.size();
-                subscribed = true;
-            }
-            List<ReceivedMessage> messages;
-            try {
-                messages = receiveMessages();
-                if (!messages.isEmpty()) {
-                    List<T> result = new ArrayList<>();
-                    messages.forEach(msg -> {
-                        try {
-                            result.add(decode(msg.getMessage()));
-                        } catch (InvalidProtocolBufferException e) {
-                            log.error("Failed decode record: [{}]", msg);
-                        }
-                    });
-                    return result;
-                }
-            } catch (ExecutionException | InterruptedException e) {
-                if (stopped) {
-                    log.info("[{}] Pub/Sub consumer is stopped.", topic);
-                } else {
-                    log.error("Failed to receive messages", e);
-                }
+        } catch (ExecutionException | InterruptedException e) {
+            if (stopped) {
+                log.info("[{}] Pub/Sub consumer is stopped.", topic);
+            } else {
+                log.error("Failed to receive messages", e);
             }
         }
         return Collections.emptyList();
     }
 
     @Override
-    public void commit() {
+    protected void doSubscribe(List<String> topicNames) {
+        subscriptionNames = new LinkedHashSet<>(topicNames);
+        subscriptionNames.forEach(admin::createTopicIfNotExists);
+        initNewExecutor(subscriptionNames.size() + 1);
+        messagesPerTopic = pubSubSettings.getMaxMessages() / subscriptionNames.size();
+    }
+
+    @Override
+    protected void doCommit() {
         acknowledgeRequests.forEach(subscriber.acknowledgeCallable()::futureCall);
         acknowledgeRequests.clear();
+    }
+
+    @Override
+    protected void doUnsubscribe() {
+        if (subscriber != null) {
+            subscriber.close();
+        }
+        shutdownExecutor();
     }
 
     private List<ReceivedMessage> receiveMessages() throws ExecutionException, InterruptedException {
@@ -211,6 +172,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
         return transform.get();
     }
 
+    @Override
     public T decode(PubsubMessage message) throws InvalidProtocolBufferException {
         DefaultTbQueueMsg msg = gson.fromJson(message.getData().toStringUtf8(), DefaultTbQueueMsg.class);
         return decoder.decode(msg);

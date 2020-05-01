@@ -19,8 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,8 +61,8 @@ public class SequentialTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSu
         if (idx < listSize) {
             IdMsgPair pair = orderedMsgList.get(idx);
             expectedMsgId = pair.uuid;
-            if (log.isInfoEnabled()) {
-                log.info("[{}] submitting [{}] message to rule engine", queueName, pair.msg);
+            if (log.isDebugEnabled()) {
+                log.debug("[{}] submitting [{}] message to rule engine", queueName, pair.msg);
             }
             msgConsumer.accept(pair.uuid, pair.msg);
         }
