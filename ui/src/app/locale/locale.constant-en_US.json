@@ -1317,7 +1317,7 @@
         }
     },
     "login": {
-        "login": "Login",
+        "login": "Log in",
         "request-password-reset": "Request Password Reset",
         "reset-password": "Reset Password",
         "create-password": "Create Password",
@@ -1332,7 +1332,9 @@
         "new-password": "New password",
         "new-password-again": "New password again",
         "password-link-sent-message": "Password reset link was successfully sent!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Login with {{name}}",
+        "or": "or"
     },
     "position": {
         "top": "Top",

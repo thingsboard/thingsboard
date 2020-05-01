@@ -1246,7 +1246,9 @@
         "new-password": "Новый пароль",
         "new-password-again": "Повторите новый пароль",
         "password-link-sent-message": "Ссылка для сброса пароля была успешно отправлена!",
-        "email": "Эл. адрес"
+        "email": "Эл. адрес",
+        "login-with": "Войти через {{name}}",
+        "or": "или"
     },
     "position": {
         "top": "Верх",

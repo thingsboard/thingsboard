@@ -99,29 +99,13 @@ security:
     duration: "${SECURITY_CLAIM_DURATION:60000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
   basic:
     enabled: false
-    #  oauth2:
-    #    enabled: true
-    #    registrationId: A
-    #    userNameAttributeName: email
-    #    client:
-    #      clientName: Thingsboard Dev Test Q
-    #      clientId: 5f5c0998-1d9b-4679-9610-6108fb91af2a
-    #      clientSecret: h_kXVb7Ee1LgDDinix_nkAh_owWX7YCO783NNteF9AIOqlTWu2L03YoFjv5KL8yRVyx4uYAE-r_N3tFbupE8Kw
-    #      accessTokenUri: https://federation-q.auth.schwarz/nidp/oauth/nam/token
-    #      authorizationUri: https://federation-q.auth.schwarz/nidp/oauth/nam/authz
-    #      scope: openid,profile,email,siam
-    #      redirectUriTemplate: http://localhost:8080/login/oauth2/code/
-    #      loginProcessingUrl: /login/oauth2/code/
-    #      jwkSetUri: https://federation-q.auth.schwarz/nidp/oauth/nam/keys
-    #      authorizationGrantType: authorization_code  # authorization_code, implicit, refresh_token, client_credentials
-    #      clientAuthenticationMethod: post # basic, post
-    #    resource:
-    #      userInfoUri: https://federation-q.auth.schwarz/nidp/oauth/nam/userinfo
-    oauth2:
-      enabled: true
-      registrationId: A
-      userNameAttributeName: email
-      client:
+  oauth2:
+    enabled: true
+    clients:
+      schwarz:
+        registrationId: A
+        loginButtonLabel: Auth0 #
+        loginButtonIcon:
         clientName: Test app
         clientId: dVH9reqyqiXIG7M2wmamb0ySue8zaM4g
         clientSecret: EYAfAGxwkwoeYnb2o2cDgaWZB5k97OStpZQPPvcMMD-SVH2BuughTGeBazXtF5I6
@@ -133,8 +117,53 @@ security:
         jwkSetUri: https://dev-r9m8ht0k.auth0.com/.well-known/jwks.json
         authorizationGrantType: authorization_code  # authorization_code, implicit, refresh_token, client_credentials
         clientAuthenticationMethod: post # basic, post
-      resource:
         userInfoUri: https://dev-r9m8ht0k.auth0.com/userinfo
+        userNameAttributeName: email
+        mapperConfig:
+          type: custom # basic or custom
+          basic:
+            allowUserCreation: true # required
+            emailAttributeKey: email # required
+            firstNameAttributeKey:
+            lastNameAttributeKey:
+            tenantNameStrategy: domain # domain or custom
+            tenantNameStrategyPattern:
+            customerNameStrategyPattern:
+          custom:
+            url: http://localhost:9090/oauth2/mapper
+            username: admin
+            password: bababa
+      auth0:
+        registrationId: B
+        loginButtonLabel: Schwarz #
+        loginButtonIcon: mdi:google
+        clientName: Thingsboard Dev Test Q
+        clientId: 5f5c0998-1d9b-4679-9610-6108fb91af2a
+        clientSecret: h_kXVb7Ee1LgDDinix_nkAh_owWX7YCO783NNteF9AIOqlTWu2L03YoFjv5KL8yRVyx4uYAE-r_N3tFbupE8Kw
+        accessTokenUri: https://federation-q.auth.schwarz/nidp/oauth/nam/token
+        authorizationUri: https://federation-q.auth.schwarz/nidp/oauth/nam/authz
+        scope: openid,profile,email,siam
+        redirectUriTemplate: http://localhost:8080/login/oauth2/code/
+        loginProcessingUrl: /login/oauth2/code/
+        jwkSetUri: https://federation-q.auth.schwarz/nidp/oauth/nam/keys
+        authorizationGrantType: authorization_code  # authorization_code, implicit, refresh_token, client_credentials
+        clientAuthenticationMethod: post # basic, post
+        userInfoUri: https://federation-q.auth.schwarz/nidp/oauth/nam/userinfo
+        userNameAttributeName: mail
+        mapperConfig:
+          type: basic # simple or custom
+          basic:
+            allowUserCreation: true # required
+            emailAttributeKey: CloudLoginName # required
+            firstNameAttributeKey: givenName
+            lastNameAttributeKey: sn
+            tenantNameStrategy: custom # domain or custom
+            tenantNameStrategyPattern: LOL ${region}
+            customerNameStrategyPattern: GGG ${countrycode}
+          custom:
+            url: http://localhost:9090/oauth2/mapper
+            username: test
+            password: test
 
 # Dashboard parameters
 dashboard:
