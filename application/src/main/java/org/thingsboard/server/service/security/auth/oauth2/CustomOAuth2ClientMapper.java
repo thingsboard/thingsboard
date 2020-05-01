@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -27,7 +29,9 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service(value = "customOAuth2ClientMapper")
 @Slf4j
-public class CustomOAuth2ClientMapper extends BaseOAuth2ClientMapper implements OAuth2ClientMapper {
+public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper implements OAuth2ClientMapper {
+
+    private static final ObjectMapper json = new ObjectMapper();
 
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 
@@ -42,6 +46,18 @@ public class CustomOAuth2ClientMapper extends BaseOAuth2ClientMapper implements 
             restTemplateBuilder = restTemplateBuilder.basicAuthentication(custom.getUsername(), custom.getPassword());
         }
         RestTemplate restTemplate = restTemplateBuilder.build();
-        return restTemplate.postForEntity(custom.getUrl(), token.getPrincipal(), OAuth2User.class).getBody();
+        String request;
+        try {
+            request = json.writeValueAsString(token.getPrincipal());
+        } catch (JsonProcessingException e) {
+            log.error("Can't convert principal to JSON string", e);
+            throw new RuntimeException("Can't convert principal to JSON string", e);
+        }
+        try {
+            return restTemplate.postForEntity(custom.getUrl(), request, OAuth2User.class).getBody();
+        } catch (Exception e) {
+            log.error("Can't connect to custom mapper endpoint", e);
+            throw new RuntimeException("Can't connect to custom mapper endpoint", e);
+        }
     }
 }
