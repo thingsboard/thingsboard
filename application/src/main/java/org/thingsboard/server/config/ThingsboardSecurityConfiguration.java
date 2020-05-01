@@ -205,7 +205,6 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
                     .loginPage("/oauth2Login")
                     .loginProcessingUrl(oauth2Configuration.getClients().values().iterator().next().getLoginProcessingUrl())
                     .successHandler(oauth2AuthenticationSuccessHandler);
-//                    .and().oauth2Login().loginProcessingUrl();
         }
     }
 
