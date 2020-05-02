@@ -81,7 +81,7 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
         "name": "Check Alarms",
-        "debugMode": true,
+        "debugMode": false,
         "configuration": {
           "jsScript": "var relations = [];\nif(metadata[\"ss_alarmTemperature\"] === \"true\"){\n    if(msg.temperature > metadata[\"ss_thresholdTemperature\"]){\n        relations.push(\"NewTempAlarm\");\n    } else {\n        relations.push(\"ClearTempAlarm\");\n    }\n}\nif(metadata[\"ss_alarmHumidity\"] === \"true\"){\n    if(msg.humidity < metadata[\"ss_thresholdHumidity\"]){\n        relations.push(\"NewHumidityAlarm\");\n    } else {\n        relations.push(\"ClearHumidityAlarm\");\n    }\n}\n\nreturn relations;"
         }
@@ -93,7 +93,7 @@
         },
         "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
         "name": "Fetch Configuration",
-        "debugMode": true,
+        "debugMode": false,
         "configuration": {
           "clientAttributeNames": [],
           "sharedAttributeNames": [],
