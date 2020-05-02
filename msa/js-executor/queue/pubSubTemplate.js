@@ -60,11 +60,9 @@ function PubSubProducer() {
         const topicList = await pubSubClient.getTopics();
 
         if (topicList) {
-            if (topicList) {
-                topicList[0].forEach(topic => {
-                    topics.push(getName(topic.name));
-                });
-            }
+            topicList[0].forEach(topic => {
+                topics.push(getName(topic.name));
+            });
         }
 
         const subscriptionList = await pubSubClient.getSubscriptions();
@@ -100,23 +98,32 @@ function PubSubProducer() {
 
 async function createTopic(topic) {
     if (!topics.includes(topic)) {
-        await pubSubClient.createTopic(topic);
+        try {
+            await pubSubClient.createTopic(topic);
+            logger.info('Created new Pub/Sub topic: %s', topic);
+        } catch (e) {
+            logger.info('Pub/Sub topic already exists');
+        }
         topics.push(topic);
-        logger.info('Created new Pub/Sub topic: %s', topic);
     }
     await createSubscription(topic)
 }
 
 async function createSubscription(topic) {
     if (!subscriptions.includes(topic)) {
-        await pubSubClient.createSubscription(topic, topic, {
-            topic: topic,
-            subscription: topic,
-            ackDeadlineSeconds: queueProps['ackDeadlineInSec'],
-            messageRetentionDuration: {seconds: queueProps['messageRetentionInSec']}
-        });
+        try {
+            await pubSubClient.createSubscription(topic, topic, {
+                topic: topic,
+                subscription: topic,
+                ackDeadlineSeconds: queueProps['ackDeadlineInSec'],
+                messageRetentionDuration: {seconds: queueProps['messageRetentionInSec']}
+            });
+            logger.info('Created new Pub/Sub subscription: %s', topic);
+        } catch (e) {
+            logger.info('Pub/Sub subscription already exists.');
+        }
+
         subscriptions.push(topic);
-        logger.info('Created new Pub/Sub subscription: %s', topic);
     }
 }
 

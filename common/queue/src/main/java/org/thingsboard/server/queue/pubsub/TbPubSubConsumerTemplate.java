@@ -134,6 +134,11 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             if (!subscribed) {
                 subscriptionNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toSet());
                 subscriptionNames.forEach(admin::createTopicIfNotExists);
+
+                if (consumerExecutor != null) {
+                    consumerExecutor.shutdown();
+                }
+
                 consumerExecutor = Executors.newFixedThreadPool(subscriptionNames.size());
                 messagesPerTopic = pubSubSettings.getMaxMessages() / subscriptionNames.size();
                 subscribed = true;
