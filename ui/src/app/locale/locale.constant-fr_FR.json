@@ -1197,7 +1197,7 @@
         "create-password": "Créer un mot de passe",
         "email": "Email",
         "forgot-password": "Mot de passe oublié?",
-        "login": "Login",
+        "login": "Connexion",
         "new-password": "Nouveau mot de passe",
         "new-password-again": "nouveau mot de passe",
         "password-again": "Mot de passe à nouveau",
@@ -1208,7 +1208,9 @@
         "request-password-reset": "Demander la réinitialisation du mot de passe",
         "reset-password": "Réinitialiser le mot de passe",
         "sign-in": "Veuillez vous connecter",
-        "username": "Nom d'utilisateur (courriel)"
+        "username": "Nom d'utilisateur (courriel)",
+        "login-with": "Se connecter avec {{name}}",
+        "or": "ou"
     },
     "position": {
         "bottom": "Bas",
