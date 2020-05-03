@@ -27,3 +27,9 @@ export interface LoginResponse {
   token: string;
   refreshToken: string;
 }
+
+export interface OAuth2Client {
+  name: string;
+  icon?: string;
+  url: string;
+}

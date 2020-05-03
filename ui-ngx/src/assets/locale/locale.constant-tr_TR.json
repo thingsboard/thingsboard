@@ -1091,7 +1091,7 @@
         "total": "toplam"
     },
     "login": {
-        "login": "Oturum aç",
+        "login": "Giriş Yap",
         "request-password-reset": "Parola Sıfırlama İsteği Gönder",
         "reset-password": "Parola Sıfırla",
         "create-password": "Parola Oluştur",
@@ -1105,7 +1105,9 @@
         "new-password": "Yeni parola",
         "new-password-again": "Yeni parola tekrarı",
         "password-link-sent-message": "Parola sıfırlama e-postası başarıyla gönderildi!",
-        "email": "E-posta"
+        "email": "E-posta",
+        "login-with": "{{name}} ile Giriş Yap",
+        "or": "ya da"
     },
     "position": {
         "top": "Üst",
