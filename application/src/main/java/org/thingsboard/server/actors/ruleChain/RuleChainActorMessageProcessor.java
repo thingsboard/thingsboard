@@ -163,7 +163,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         String dispatcherName = tenantId.getId().equals(EntityId.NULL_UUID) ?
                 DefaultActorService.SYSTEM_RULE_DISPATCHER_NAME : DefaultActorService.TENANT_RULE_DISPATCHER_NAME;
         return context.actorOf(
-                Props.create(new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleNode.getId()))
+                Props.create(new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleNode.getName(), ruleNode.getId()))
                         .withDispatcher(dispatcherName), ruleNode.getId().toString());
     }
 
@@ -200,7 +200,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, msg.getId(), msg);
         if (envelope.getRelationTypes() == null || envelope.getRelationTypes().isEmpty()) {
             try {
-                checkActive();
+                checkActive(envelope.getTbMsg());
                 RuleNodeId targetId = msg.getRuleNodeId();
                 RuleNodeCtx targetCtx;
                 if (targetId == null) {
@@ -216,6 +216,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                     log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
                     msg.getCallback().onSuccess();
                 }
+            } catch (RuleNodeException rne) {
+                envelope.getTbMsg().getCallback().onFailure(rne);
             } catch (Exception e) {
                 envelope.getTbMsg().getCallback().onFailure(new RuleEngineException(e.getMessage()));
             }
@@ -225,11 +227,15 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     void onRuleChainToRuleChainMsg(RuleChainToRuleChainMsg envelope) {
-        checkActive();
-        if (firstNode != null) {
-            pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
-        } else {
-            envelope.getMsg().getCallback().onSuccess();
+        try {
+            checkActive(envelope.getMsg());
+            if (firstNode != null) {
+                pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
+            } else {
+                envelope.getMsg().getCallback().onSuccess();
+            }
+        } catch (RuleNodeException e) {
+            log.debug("Rule Chain is not active. Current state [{}] for processor [{}][{}] tenant [{}]", state, entityId.getEntityType(), entityId, tenantId);
         }
     }
 
@@ -239,7 +245,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void onTellNext(TbMsg msg, RuleNodeId originatorNodeId, Set<String> relationTypes, String failureMessage) {
         try {
-            checkActive();
+            checkActive(msg);
             EntityId entityId = msg.getOriginator();
             TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
             List<RuleNodeRelation> relations = nodeRoutes.get(originatorNodeId).stream()
@@ -272,6 +278,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                     putToQueue(tpi, msg, callbackWrapper, target);
                 }
             }
+        } catch (RuleNodeException rne) {
+            msg.getCallback().onFailure(rne);
         } catch (Exception e) {
             msg.getCallback().onFailure(new RuleEngineException("onTellNext - " + e.getMessage()));
         }
@@ -333,4 +341,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         }
     }
 
+    @Override
+    protected RuleNodeException getInactiveException() {
+        RuleNode firstRuleNode = firstNode != null ? firstNode.getSelf() : null;
+        return new RuleNodeException("Rule Chain is not active!  Failed to initialize.", ruleChainName, firstRuleNode);
+    }
 }
