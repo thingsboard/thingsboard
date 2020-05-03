@@ -1229,7 +1229,9 @@
         "new-password": "Nueva contraseña",
         "new-password-again": "Repita la nueva contraseña",
         "password-link-sent-message": "¡El enlace para el restablecer la contraseña fue enviado correctamente!",
-        "email": "Correo electrónico"
+        "email": "Correo electrónico",
+        "login-with": "Iniciar sesión con {{name}}",
+        "or": "o"
     },
     "position": {
         "top": "Superior",
