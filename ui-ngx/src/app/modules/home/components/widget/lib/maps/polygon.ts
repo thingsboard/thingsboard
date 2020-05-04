@@ -75,8 +75,8 @@ export class Polygon {
     updatePolygonColor(settings) {
         const style: L.PathOptions = {
             fill: true,
-            fillColor: settings.color,
-            color: settings.color,
+            fillColor: settings.polygonColor,
+            color: settings.polygonStrokeColor,
             weight: settings.polygonStrokeWeight,
             fillOpacity: settings.polygonOpacity,
             opacity: settings.polygonStrokeOpacity

@@ -31,6 +31,7 @@
         <main.dir>${basedir}</main.dir>
         <pkg.user>thingsboard</pkg.user>
         <spring-boot.version>2.2.4.RELEASE</spring-boot.version>
+        <spring-oauth2.version>2.1.2.RELEASE</spring-oauth2.version>
         <spring.version>5.2.2.RELEASE</spring.version>
         <spring-security.version>5.2.2.RELEASE</spring-security.version>
         <spring-data-redis.version>2.2.4.RELEASE</spring-data-redis.version>
@@ -461,6 +462,21 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-security</artifactId>
                 <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-oauth2</artifactId>
+                <version>${spring-oauth2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-oauth2-client</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-oauth2-jose</artifactId>
+                <version>${spring.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>

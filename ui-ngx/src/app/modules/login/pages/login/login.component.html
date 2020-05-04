@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-login-content mat-app-background tb-dark" fxFlex fxLayoutAlign="center center">
-  <mat-card style="height: 100%; max-height: 525px; overflow-y: auto;">
+  <mat-card style="max-height: 80vh; overflow-y: auto;">
     <mat-card-content>
       <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()">
         <fieldset [disabled]="isLoading$ | async" fxLayout="column">
@@ -48,6 +48,19 @@
             <div fxLayout="column" class="tb-action-button">
               <button mat-raised-button color="accent" [disabled]="(isLoading$ | async)"
                       type="submit">{{ 'login.login' | translate }}</button>
+            </div>
+            <div class="oauth-container" fxLayout="column" fxLayoutGap="16px" *ngIf="oauth2Clients?.length">
+              <div class="container-divider">
+                <div class="line"><mat-divider></mat-divider></div>
+                <div class="text mat-typography">{{ "login.or" | translate | uppercase }}</div>
+                <div class="line"><mat-divider></mat-divider></div>
+              </div>
+              <ng-container *ngFor="let oauth2Client of oauth2Clients">
+                <button mat-raised-button color="primary" class="centered" routerLink="{{ oauth2Client.url }}">
+                  <mat-icon class="material-icons md-18" svgIcon="{{ oauth2Client.icon }}"></mat-icon>
+                  {{ 'login.login-with' | translate: {name: oauth2Client.name} }}
+                </button>
+              </ng-container>
             </div>
           </div>
         </fieldset>

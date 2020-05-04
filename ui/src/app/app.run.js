@@ -17,7 +17,7 @@ import Flow from '@flowjs/ng-flow/dist/ng-flow-standalone.min';
 import UrlHandler from './url.handler';
 
 /*@ngInject*/
-export default function AppRun($rootScope, $window, $injector, $location, $log, $state, $mdDialog, $filter, loginService, userService, $translate) {
+export default function AppRun($rootScope, $window, $injector, $location, $log, $state, $mdDialog, $filter, $q, loginService, userService, $translate) {
 
     $window.Flow = Flow;
     var frame = null;
@@ -41,11 +41,13 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
     }
 
     initWatchers();
-    
+
+    var skipStateChange = false;
+
     function initWatchers() {
         $rootScope.unauthenticatedHandle = $rootScope.$on('unauthenticated', function (event, doLogout) {
             if (doLogout) {
-                $state.go('login');
+                gotoPublicModule('login');
             } else {
                 UrlHandler($injector, $location);
             }
@@ -60,6 +62,11 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
         });
 
         $rootScope.stateChangeStartHandle = $rootScope.$on('$stateChangeStart', function (evt, to, params) {
+
+            if (skipStateChange) {
+                skipStateChange = false;
+                return;
+            }
 
             function waitForUserLoaded() {
                 if ($rootScope.userLoadedHandle) {
@@ -128,7 +135,10 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
                         redirectParams.toName = to.name;
                         redirectParams.params = params;
                         userService.setRedirectParams(redirectParams);
-                        $state.go('login', params);
+                        gotoPublicModule('login', params);
+                    } else {
+                        evt.preventDefault();
+                        gotoPublicModule(to.name, params);
                     }
                 }
             } else {
@@ -156,6 +166,23 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
 
     function gotoDefaultPlace(params) {
         userService.gotoDefaultPlace(params);
+    }
+
+    function gotoPublicModule(name, params) {
+        let tasks = [];
+        if (name === "login") {
+            tasks.push(loginService.loadOAuth2Clients());
+        }
+        $q.all(tasks).then(
+            () => {
+                skipStateChange = true;
+                $state.go(name, params);
+            },
+            () => {
+                skipStateChange = true;
+                $state.go(name, params);
+            }
+        );
     }
 
     function showForbiddenDialog() {

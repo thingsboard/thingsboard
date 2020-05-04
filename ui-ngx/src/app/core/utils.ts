@@ -15,8 +15,8 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Subject, fromEvent, of } from 'rxjs';
-import { finalize, share, map } from 'rxjs/operators';
+import { Observable, Observer, of, Subject } from 'rxjs';
+import { finalize, map, share } from 'rxjs/operators';
 import base64js from 'base64-js';
 import { Datasource } from '@app/shared/models/widget.models';
 import { FormattedData } from '@app/modules/home/components/widget/lib/maps/map-models';
@@ -225,11 +225,14 @@ function scrollParents(node: Node): Node[] {
 
 function hashCode(str) {
   let hash = 0;
-  let i, char;
+  let i;
+  let char;
   if (str.length === 0) return hash;
   for (i = 0; i < str.length; i++) {
     char = str.charCodeAt(i);
+    // tslint:disable-next-line:no-bitwise
     hash = ((hash << 5) - hash) + char;
+    // tslint:disable-next-line:no-bitwise
     hash = hash & hash; // Convert to 32bit integer
   }
   return hash;
@@ -431,10 +434,24 @@ export function getDescendantProp(obj: any, path: string): any {
 }
 
 export function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
-  const image = new Image();
-  const imageLoad$ = fromEvent(image, 'load').pipe(map(() => image));
-  image.src = imageUrl;
-  return imageLoad$;
+  return new Observable((observer: Observer<HTMLImageElement>) => {
+    const image = new Image();
+    image.style.position = 'absolute';
+    image.style.left = '-99999px';
+    image.style.top = '-99999px';
+    image.onload = () => {
+      observer.next(image);
+      document.body.removeChild(image);
+      observer.complete();
+    };
+    image.onerror = err => {
+      observer.error(err);
+      document.body.removeChild(image);
+      observer.complete();
+    };
+    document.body.appendChild(image)
+    image.src = imageUrl;
+  });
 }
 
 export function createLabelFromDatasource(datasource: Datasource, pattern: string) {

@@ -97,6 +97,41 @@ security:
     allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
     # Time allowed to claim the device in milliseconds
     duration: "${SECURITY_CLAIM_DURATION:60000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
+  basic:
+    enabled: "${SECURITY_BASIC_ENABLED:false}"
+  oauth2:
+    enabled: "${SECURITY_OAUTH2_ENABLED:false}"
+    loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
+    clients:
+      default:
+        loginButtonLabel: "${SECURITY_OAUTH2_DEFAULT_LOGIN_BUTTON_LABEL:Default}" # Label that going to be show on login screen
+        loginButtonIcon: "${SECURITY_OAUTH2_DEFAULT_LOGIN_BUTTON_ICON:}" # Icon that going to be show on login screen. Material design icon ID (https://material.angularjs.org/latest/api/directive/mdIcon)
+        clientName: "${SECURITY_OAUTH2_DEFAULT_CLIENT_NAME:ClientName}"
+        clientId: "${SECURITY_OAUTH2_DEFAULT_CLIENT_ID:}"
+        clientSecret: "${SECURITY_OAUTH2_DEFAULT_CLIENT_SECRET:}"
+        accessTokenUri: "${SECURITY_OAUTH2_DEFAULT_ACCESS_TOKEN_URI:}"
+        authorizationUri: "${SECURITY_OAUTH2_DEFAULT_AUTHORIZATION_URI:}"
+        scope: "${SECURITY_OAUTH2_DEFAULT_SCOPE:}"
+        redirectUriTemplate: "${SECURITY_OAUTH2_DEFAULT_REDIRECT_URI_TEMPLATE:http://localhost:8080/login/oauth2/code/}" # Must be in sync with security.oauth2.loginProcessingUrl
+        jwkSetUri: "${SECURITY_OAUTH2_DEFAULT_JWK_SET_URI:}"
+        authorizationGrantType: "${SECURITY_OAUTH2_DEFAULT_AUTHORIZATION_GRANT_TYPE:authorization_code}"  # authorization_code, implicit, refresh_token or client_credentials
+        clientAuthenticationMethod: "${SECURITY_OAUTH2_DEFAULT_CLIENT_AUTHENTICATION_METHOD:post}" # basic or post
+        userInfoUri: "${SECURITY_OAUTH2_DEFAULT_USER_INFO_URI:}"
+        userNameAttributeName: "${SECURITY_OAUTH2_DEFAULT_USER_NAME_ATTRIBUTE_NAME:email}"
+        mapperConfig:
+          type: "${SECURITY_OAUTH2_DEFAULT_MAPPER_TYPE:basic}" # basic or custom
+          basic:
+            allowUserCreation: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_ALLOW_USER_CREATION:true}" # Allows to create user if it not exists
+            emailAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_EMAIL_ATTRIBUTE_KEY:email}" # Attribute key to use as email for the user
+            firstNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_FIRST_NAME_ATTRIBUTE_KEY:}"
+            lastNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_LAST_NAME_ATTRIBUTE_KEY:}"
+            tenantNameStrategy: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_STRATEGY:domain}" # domain, email or custom
+            tenantNameStrategyPattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_STRATEGY_PATTERN:}"
+            customerNameStrategyPattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_CUSTOMER_NAME_STRATEGY_PATTERN:}"
+          custom:
+            url: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_URL:}"
+            username: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_USERNAME:}"
+            password: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_PASSWORD:}"
 
 # Dashboard parameters
 dashboard:

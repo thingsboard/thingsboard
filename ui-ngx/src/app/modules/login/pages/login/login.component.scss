@@ -32,8 +32,44 @@
       }
 
       .tb-action-button{
-        padding-top: 20px;
-        padding-bottom: 20px;
+        padding: 20px 0 16px;
+      }
+    }
+
+    .oauth-container{
+      padding: 0;
+
+      .container-divider {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+
+        .line {
+          flex: 1;
+        }
+
+        .mat-divider-horizontal{
+          position: relative;
+        }
+
+        .text {
+          padding-right: 10px;
+          padding-left: 10px;
+        }
+      }
+
+      .material-icons{
+        width: 20px;
+        min-width: 20px;
+      }
+
+
+      .centered ::ng-deep .mat-button-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
     }
   }
