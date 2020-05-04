@@ -23,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
@@ -77,8 +76,8 @@ public class BatchTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSubmitS
             }
         }
         int submitSize = pendingPack.size();
-        if (log.isInfoEnabled() && submitSize > 0) {
-            log.info("[{}] submitting [{}] messages to rule engine", queueName, submitSize);
+        if (log.isDebugEnabled() && submitSize > 0) {
+            log.debug("[{}] submitting [{}] messages to rule engine", queueName, submitSize);
         }
         pendingPack.forEach(msgConsumer);
     }

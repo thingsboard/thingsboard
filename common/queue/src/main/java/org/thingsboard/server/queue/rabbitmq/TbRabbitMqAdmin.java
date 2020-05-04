@@ -27,13 +27,11 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class TbRabbitMqAdmin implements TbQueueAdmin {
 
-    private final TbRabbitMqSettings rabbitMqSettings;
     private final Channel channel;
     private final Connection connection;
     private final Map<String, Object> arguments;
 
     public TbRabbitMqAdmin(TbRabbitMqSettings rabbitMqSettings, Map<String, Object> arguments) {
-        this.rabbitMqSettings = rabbitMqSettings;
         this.arguments = arguments;
 
         try {

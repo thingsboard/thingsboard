@@ -27,22 +27,22 @@ const vhost = config.get('rabbitmq.virtual_host');
 const username = config.get('rabbitmq.username');
 const password = config.get('rabbitmq.password');
 const queueProperties = config.get('rabbitmq.queue_properties');
-const poolInterval = config.get('js.response_poll_interval');
+const pollInterval = config.get('js.response_poll_interval');
 
 const amqp = require('amqplib/callback_api');
 
-let queueParams = {durable: false, exclusive: false, autoDelete: false};
+let queueOptions = {durable: false, exclusive: false, autoDelete: false};
 let connection;
 let channel;
 let stopped = false;
-const responseTopics = [];
+let queues = [];
 
 function RabbitMqProducer() {
     this.send = async (responseTopic, scriptId, rawResponse, headers) => {
 
-        if (!responseTopics.includes(responseTopic)) {
+        if (!queues.includes(responseTopic)) {
             await createQueue(responseTopic);
-            responseTopics.push(responseTopic);
+            queues.push(responseTopic);
         }
 
         let data = JSON.stringify(
@@ -98,6 +98,7 @@ function RabbitMqProducer() {
         const messageProcessor = new JsInvokeMessageProcessor(new RabbitMqProducer());
 
         while (!stopped) {
+            let pollStartTs = new Date().getTime();
             let message = await new Promise((resolve, reject) => {
                 channel.get(requestTopic, {}, function (err, msg) {
                     if (err) {
@@ -112,7 +113,10 @@ function RabbitMqProducer() {
                 messageProcessor.onJsInvokeMessage(JSON.parse(message.content.toString('utf8')));
                 channel.ack(message);
             } else {
-                await sleep(poolInterval);
+                let pollDuration = new Date().getTime() - pollStartTs;
+                if (pollDuration < pollInterval) {
+                    await sleep(pollInterval - pollDuration);
+                }
             }
         }
     } catch (e) {
@@ -123,16 +127,18 @@ function RabbitMqProducer() {
 })();
 
 function parseQueueProperties() {
+    let args = {};
     const props = queueProperties.split(';');
     props.forEach(p => {
         const delimiterPosition = p.indexOf(':');
-        queueParams[p.substring(0, delimiterPosition)] = p.substring(delimiterPosition + 1);
+        args[p.substring(0, delimiterPosition)] = +p.substring(delimiterPosition + 1);
     });
+    queueOptions['arguments'] = args;
 }
 
-function createQueue(topic) {
+async function createQueue(topic) {
     return new Promise((resolve, reject) => {
-        channel.assertQueue(topic, queueParams, function (err) {
+        channel.assertQueue(topic, queueOptions, function (err) {
             if (err) {
                 reject(err);
             } else {

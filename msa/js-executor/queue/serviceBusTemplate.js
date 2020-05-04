@@ -140,6 +140,7 @@ function parseQueueProperties() {
         properties[p.substring(0, delimiterPosition)] = p.substring(delimiterPosition + 1);
     });
     queueOptions = {
+        DuplicateDetection: 'false',
         MaxSizeInMegabytes: properties['maxSizeInMb'],
         DefaultMessageTimeToLive: `PT${properties['messageTimeToLiveInSec']}S`,
         LockDuration: `PT${properties['lockDurationInSec']}S`

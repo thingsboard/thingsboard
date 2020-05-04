@@ -49,7 +49,7 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
 
     private final Map<String, Publisher> publisherMap = new ConcurrentHashMap<>();
 
-    private ExecutorService pubExecutor = Executors.newCachedThreadPool();
+    private final ExecutorService pubExecutor = Executors.newCachedThreadPool();
 
     public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic) {
         this.defaultTopic = defaultTopic;
