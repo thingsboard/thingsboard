@@ -33,6 +33,7 @@ import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -42,14 +43,14 @@ public class TbServiceBusProducerTemplate<T extends TbQueueMsg> implements TbQue
     private final Gson gson = new Gson();
     private final TbQueueAdmin admin;
     private final TbServiceBusSettings serviceBusSettings;
-    private final Map<String, QueueClient> clients = new HashMap<>();
-    private ExecutorService executorService;
+    private final Map<String, QueueClient> clients = new ConcurrentHashMap<>();
+    private final ExecutorService executorService;
 
     public TbServiceBusProducerTemplate(TbQueueAdmin admin, TbServiceBusSettings serviceBusSettings, String defaultTopic) {
         this.admin = admin;
         this.defaultTopic = defaultTopic;
         this.serviceBusSettings = serviceBusSettings;
-        executorService = Executors.newSingleThreadExecutor();
+        executorService = Executors.newCachedThreadPool();
     }
 
     @Override

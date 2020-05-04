@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.pubsub;
 
+import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
 import com.google.cloud.pubsub.v1.SubscriptionAdminSettings;
 import com.google.cloud.pubsub.v1.TopicAdminClient;
@@ -24,9 +25,9 @@ import com.google.pubsub.v1.ListSubscriptionsRequest;
 import com.google.pubsub.v1.ListTopicsRequest;
 import com.google.pubsub.v1.ProjectName;
 import com.google.pubsub.v1.ProjectSubscriptionName;
-import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
+import com.google.pubsub.v1.TopicName;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
@@ -103,7 +104,10 @@ public class TbPubSubAdmin implements TbQueueAdmin {
 
     @Override
     public void createTopicIfNotExists(String partition) {
-        ProjectTopicName topicName = ProjectTopicName.of(pubSubSettings.getProjectId(), partition);
+        TopicName topicName = TopicName.newBuilder()
+                .setTopic(partition)
+                .setProject(pubSubSettings.getProjectId())
+                .build();
 
         if (topicSet.contains(topicName.toString())) {
             createSubscriptionIfNotExists(partition, topicName);
@@ -121,13 +125,18 @@ public class TbPubSubAdmin implements TbQueueAdmin {
             }
         }
 
-        topicAdminClient.createTopic(topicName);
-        topicSet.add(topicName.toString());
-        log.info("Created new topic: [{}]", topicName.toString());
+        try {
+            topicAdminClient.createTopic(topicName);
+            log.info("Created new topic: [{}]", topicName.toString());
+        } catch (AlreadyExistsException e) {
+            log.info("[{}] Topic already exist.", topicName.toString());
+        } finally {
+            topicSet.add(topicName.toString());
+        }
         createSubscriptionIfNotExists(partition, topicName);
     }
 
-    private void createSubscriptionIfNotExists(String partition, ProjectTopicName topicName) {
+    private void createSubscriptionIfNotExists(String partition, TopicName topicName) {
         ProjectSubscriptionName subscriptionName =
                 ProjectSubscriptionName.of(pubSubSettings.getProjectId(), partition);
 
@@ -153,9 +162,14 @@ public class TbPubSubAdmin implements TbQueueAdmin {
         setAckDeadline(subscriptionBuilder);
         setMessageRetention(subscriptionBuilder);
 
-        subscriptionAdminClient.createSubscription(subscriptionBuilder.build());
-        subscriptionSet.add(subscriptionName.toString());
-        log.info("Created new subscription: [{}]", subscriptionName.toString());
+        try {
+            subscriptionAdminClient.createSubscription(subscriptionBuilder.build());
+            log.info("Created new subscription: [{}]", subscriptionName.toString());
+        } catch (AlreadyExistsException e) {
+            log.info("[{}] Subscription already exist.", subscriptionName.toString());
+        } finally {
+            subscriptionSet.add(subscriptionName.toString());
+        }
     }
 
     private void setAckDeadline(Subscription.Builder builder) {

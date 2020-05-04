@@ -27,12 +27,14 @@ import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
 public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessageProcessor> {
 
+    private final String ruleChainName;
     private final RuleChainId ruleChainId;
 
-    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
         super(systemContext, tenantId, ruleNodeId);
+        this.ruleChainName = ruleChainName;
         this.ruleChainId = ruleChainId;
-        setProcessor(new RuleNodeActorMessageProcessor(tenantId, ruleChainId, ruleNodeId, systemContext,
+        setProcessor(new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext,
                 context().parent(), context().self()));
     }
 
@@ -96,19 +98,21 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
 
         private final TenantId tenantId;
         private final RuleChainId ruleChainId;
+        private final String ruleChainName;
         private final RuleNodeId ruleNodeId;
 
-        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
             super(context);
             this.tenantId = tenantId;
             this.ruleChainId = ruleChainId;
+            this.ruleChainName = ruleChainName;
             this.ruleNodeId = ruleNodeId;
 
         }
 
         @Override
         public RuleNodeActor create() throws Exception {
-            return new RuleNodeActor(context, tenantId, ruleChainId, ruleNodeId);
+            return new RuleNodeActor(context, tenantId, ruleChainId, ruleChainName, ruleNodeId);
         }
     }
 

@@ -17,7 +17,7 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
         "name": "Is Thermostat?",
-        "debugMode": true,
+        "debugMode": false,
         "configuration": {
           "jsScript": "return msg.id.entityType === \"DEVICE\" && msg.type === \"thermostat\";"
         }
@@ -113,7 +113,7 @@
         },
         "type": "org.thingsboard.rule.engine.action.TbCreateRelationNode",
         "name": "Relate to Asset",
-        "debugMode": true,
+        "debugMode": false,
         "configuration": {
           "direction": "FROM",
           "relationType": "ToAlarmPropagationAsset",

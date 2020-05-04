@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -47,7 +48,7 @@ public final class TbMsg implements Serializable {
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
     //This field is not serialized because we use queues and there is no need to do it
-    private final TbMsgCallback callback;
+    transient private final TbMsgCallback callback;
 
     public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
         return new TbMsg(UUID.randomUUID(), type, originator, metaData.copy(), TbMsgDataType.JSON, data, null, null, TbMsgCallback.EMPTY);
@@ -155,5 +156,14 @@ public final class TbMsg implements Serializable {
 
     public TbMsg copyWithRuleNodeId(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         return new TbMsg(this.id, this.type, this.originator, this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, callback);
+    }
+
+    public TbMsgCallback getCallback() {
+        //May be null in case of deserialization;
+        if (callback != null) {
+            return callback;
+        } else {
+            return TbMsgCallback.EMPTY;
+        }
     }
 }

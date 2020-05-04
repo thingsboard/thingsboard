@@ -81,8 +81,8 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
                     }
                     alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
                     return Futures.immediateFuture(new AlarmResult(false, false, true, alarm));
-                }, MoreExecutors.directExecutor());
-            }, MoreExecutors.directExecutor());
+                }, ctx.getDbCallbackExecutor());
+            }, ctx.getDbCallbackExecutor());
         }, ctx.getDbCallbackExecutor());
     }
 }

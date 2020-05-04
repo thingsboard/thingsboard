@@ -19,6 +19,7 @@
 const config = require('config'),
     JsInvokeMessageProcessor = require('../api/jsInvokeMessageProcessor'),
     logger = require('../config/logger')._logger('awsSqsTemplate');
+const uuid = require('uuid-random');
 
 const requestTopic = config.get('request_topic');
 
@@ -26,10 +27,10 @@ const accessKeyId = config.get('aws_sqs.access_key_id');
 const secretAccessKey = config.get('aws_sqs.secret_access_key');
 const region = config.get('aws_sqs.region');
 const AWS = require('aws-sdk');
-const queueProperties = config.get('aws_sqs.queue-properties');
-const poolInterval = config.get('js.response_poll_interval');
+const queueProperties = config.get('aws_sqs.queue_properties');
+const pollInterval = config.get('js.response_poll_interval');
 
-let queueAttributes = {FifoQueue: 'true', ContentBasedDeduplication: 'true'};
+let queueAttributes = {FifoQueue: 'true'};
 let sqsClient;
 let requestQueueURL;
 const queueUrls = new Map();
@@ -51,7 +52,12 @@ function AwsSqsProducer() {
             queueUrls.set(responseTopic, responseQueueUrl);
         }
 
-        let params = {MessageBody: msgBody, QueueUrl: responseQueueUrl, MessageGroupId: scriptId};
+        let params = {
+            MessageBody: msgBody,
+            QueueUrl: responseQueueUrl,
+            MessageGroupId: 'js_eval',
+            MessageDeduplicationId: uuid()
+        };
 
         return new Promise((resolve, reject) => {
             sqsClient.sendMessage(params, function (err, data) {
@@ -74,11 +80,13 @@ function AwsSqsProducer() {
 
         const queues = await getQueues();
 
-        queues.forEach(queueUrl => {
-            const delimiterPosition = queueUrl.lastIndexOf('/');
-            const queueName = queueUrl.substring(delimiterPosition + 1);
-            queueUrls.set(queueName, queueUrl);
-        })
+        if (queues) {
+            queues.forEach(queueUrl => {
+                const delimiterPosition = queueUrl.lastIndexOf('/');
+                const queueName = queueUrl.substring(delimiterPosition + 1);
+                queueUrls.set(queueName, queueUrl);
+            });
+        }
 
         parseQueueProperties();
 
@@ -95,6 +103,7 @@ function AwsSqsProducer() {
             WaitTimeSeconds: poolInterval / 1000
         };
         while (!stopped) {
+            let pollStartTs = new Date().getTime();
             const messages = await new Promise((resolve, reject) => {
                 sqsClient.receiveMessage(params, function (err, data) {
                     if (err) {
@@ -127,6 +136,11 @@ function AwsSqsProducer() {
                         //do nothing
                     }
                 });
+            } else {
+                let pollDuration = new Date().getTime() - pollStartTs;
+                if (pollDuration < pollInterval) {
+                    await sleep(pollInterval - pollDuration);
+                }
             }
         }
     } catch (e) {
@@ -172,6 +186,12 @@ function parseQueueProperties() {
     props.forEach(p => {
         const delimiterPosition = p.indexOf(':');
         queueAttributes[p.substring(0, delimiterPosition)] = p.substring(delimiterPosition + 1);
+    });
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
     });
 }
 

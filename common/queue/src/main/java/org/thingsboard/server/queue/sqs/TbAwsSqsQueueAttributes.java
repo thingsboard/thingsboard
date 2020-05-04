@@ -55,7 +55,6 @@ public class TbAwsSqsQueueAttributes {
     @PostConstruct
     private void init() {
         defaultAttributes.put(QueueAttributeName.FifoQueue.toString(), "true");
-        defaultAttributes.put(QueueAttributeName.ContentBasedDeduplication.toString(), "true");
 
         coreAttributes = getConfigs(coreProperties);
         ruleEngineAttributes = getConfigs(ruleEngineProperties);

@@ -19,14 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class BurstTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSubmitStrategy {
@@ -37,8 +31,8 @@ public class BurstTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSubmitS
 
     @Override
     public void submitAttempt(BiConsumer<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> msgConsumer) {
-        if (log.isInfoEnabled()) {
-            log.info("[{}] submitting [{}] messages to rule engine", queueName, orderedMsgList.size());
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] submitting [{}] messages to rule engine", queueName, orderedMsgList.size());
         }
         orderedMsgList.forEach(pair -> msgConsumer.accept(pair.uuid, pair.msg));
     }

@@ -1160,7 +1160,7 @@
         "total": "totale"
     },
     "login": {
-        "login": "Login",
+        "login": "Accedi",
         "request-password-reset": "Richiesta reset password",
         "reset-password": "Reset Password",
         "create-password": "Crea Password",
@@ -1174,7 +1174,9 @@
         "new-password": "Nuova password",
         "new-password-again": "Ripeti nuova password",
         "password-link-sent-message": "Link reset password inviato con successo!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Accedi con {{name}}",
+        "or": "o"
     },
     "position": {
         "top": "Alto",

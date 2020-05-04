@@ -1149,7 +1149,7 @@
     "total": "Gesamt"
   },
   "login": {
-    "login": "Login",
+    "login": "Anmelden",
     "request-password-reset": "Passwortzurücksetzung anfordern",
     "reset-password": "Passwort zurücksetzen",
     "create-password": "Passwort erstellen",
@@ -1163,7 +1163,9 @@
     "new-password": "Neues Passwort",
     "new-password-again": "Neues Passwort wiederholen",
     "password-link-sent-message": "Der Link zum Zurücksetzen des Passworts wurde erfolgreich versendet!",
-    "email": "E-Mail"
+    "email": "E-Mail",
+    "login-with": "Mit {{name}} anmelden",
+    "or": "oder"
   },
   "position": {
     "top": "Oben",

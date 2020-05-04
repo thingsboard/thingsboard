@@ -37,6 +37,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
@@ -80,7 +81,9 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
         sendMsgRequest.withQueueUrl(getQueueUrl(tpi.getFullTopicName()));
         sendMsgRequest.withMessageBody(gson.toJson(new DefaultTbQueueMsg(msg)));
 
-        sendMsgRequest.withMessageGroupId(msg.getKey().toString());
+        sendMsgRequest.withMessageGroupId(tpi.getTopic());
+        sendMsgRequest.withMessageDeduplicationId(UUID.randomUUID().toString());
+
         ListenableFuture<SendMessageResult> future = producerExecutor.submit(() -> sqsClient.sendMessage(sendMsgRequest));
 
         Futures.addCallback(future, new FutureCallback<SendMessageResult>() {
