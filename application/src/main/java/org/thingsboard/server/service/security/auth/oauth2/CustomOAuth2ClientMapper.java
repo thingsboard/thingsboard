@@ -41,7 +41,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.getBasic().isAllowUserCreation());
     }
 
-    public OAuth2User getOAuth2User(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig.CustomOAuth2ClientMapperConfig custom) {
+    private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig.CustomOAuth2ClientMapperConfig custom) {
         if (!StringUtils.isEmpty(custom.getUsername()) && !StringUtils.isEmpty(custom.getPassword())) {
             restTemplateBuilder = restTemplateBuilder.basicAuthentication(custom.getUsername(), custom.getPassword());
         }
