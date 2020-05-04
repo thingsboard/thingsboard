@@ -37,6 +37,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -55,6 +56,8 @@ public class CoapTransportResource extends CoapResource {
     private final Field observerField;
     private final long timeout;
     private final ConcurrentMap<String, TransportProtos.SessionInfoProto> tokenToSessionIdMap = new ConcurrentHashMap<>();
+    private final Set<UUID> rpcSubscriptions = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> attributeSubscriptions = ConcurrentHashMap.newKeySet();
 
     public CoapTransportResource(CoapTransportContext context, String name) {
         super(name);
@@ -149,11 +152,13 @@ public class CoapTransportResource extends CoapResource {
                                 transportService.process(sessionInfo,
                                         transportContext.getAdaptor().convertToPostAttributes(sessionId, request),
                                         new CoapOkCallback(exchange));
+                                reportActivity(sessionId, sessionInfo);
                                 break;
                             case POST_TELEMETRY_REQUEST:
                                 transportService.process(sessionInfo,
                                         transportContext.getAdaptor().convertToPostTelemetry(sessionId, request),
                                         new CoapOkCallback(exchange));
+                                reportActivity(sessionId, sessionInfo);
                                 break;
                             case CLAIM_REQUEST:
                                 transportService.process(sessionInfo,
@@ -161,6 +166,7 @@ public class CoapTransportResource extends CoapResource {
                                         new CoapOkCallback(exchange));
                                 break;
                             case SUBSCRIBE_ATTRIBUTES_REQUEST:
+                                attributeSubscriptions.add(sessionId);
                                 advanced.setObserver(new CoapExchangeObserverProxy((ExchangeObserver) observerField.get(advanced),
                                         registerAsyncCoapSession(exchange, request, sessionInfo, sessionId)));
                                 transportService.process(sessionInfo,
@@ -168,6 +174,7 @@ public class CoapTransportResource extends CoapResource {
                                         new CoapNoOpCallback(exchange));
                                 break;
                             case UNSUBSCRIBE_ATTRIBUTES_REQUEST:
+                                attributeSubscriptions.remove(sessionId);
                                 TransportProtos.SessionInfoProto attrSession = lookupAsyncSessionInfo(request);
                                 if (attrSession != null) {
                                     transportService.process(attrSession,
@@ -177,6 +184,7 @@ public class CoapTransportResource extends CoapResource {
                                 }
                                 break;
                             case SUBSCRIBE_RPC_COMMANDS_REQUEST:
+                                rpcSubscriptions.add(sessionId);
                                 advanced.setObserver(new CoapExchangeObserverProxy((ExchangeObserver) observerField.get(advanced),
                                         registerAsyncCoapSession(exchange, request, sessionInfo, sessionId)));
                                 transportService.process(sessionInfo,
@@ -184,13 +192,13 @@ public class CoapTransportResource extends CoapResource {
                                         new CoapNoOpCallback(exchange));
                                 break;
                             case UNSUBSCRIBE_RPC_COMMANDS_REQUEST:
+                                rpcSubscriptions.remove(sessionId);
                                 TransportProtos.SessionInfoProto rpcSession = lookupAsyncSessionInfo(request);
                                 if (rpcSession != null) {
                                     transportService.process(rpcSession,
                                             TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(),
                                             new CoapOkCallback(exchange));
-                                    transportService.process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
-                                    transportService.deregisterSession(rpcSession);
+                                    closeAndDeregister(sessionInfo);
                                 }
                                 break;
                             case TO_DEVICE_RPC_RESPONSE:
@@ -219,6 +227,14 @@ public class CoapTransportResource extends CoapResource {
                         exchange.respond(ResponseCode.INTERNAL_SERVER_ERROR);
                     }
                 }));
+    }
+
+    private void reportActivity(UUID sessionId, TransportProtos.SessionInfoProto sessionInfo) {
+        transportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
+                .setAttributeSubscription(attributeSubscriptions.contains(sessionId))
+                .setRpcSubscription(rpcSubscriptions.contains(sessionId))
+                .setLastActivityTime(System.currentTimeMillis())
+                .build(), TransportServiceCallback.EMPTY);
     }
 
     private TransportProtos.SessionInfoProto lookupAsyncSessionInfo(Request request) {
@@ -438,6 +454,9 @@ public class CoapTransportResource extends CoapResource {
     private void closeAndDeregister(TransportProtos.SessionInfoProto session) {
         transportService.process(session, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
         transportService.deregisterSession(session);
+        UUID sessionId = new UUID(session.getSessionIdMSB(), session.getSessionIdLSB());
+        rpcSubscriptions.remove(sessionId);
+        attributeSubscriptions.remove(sessionId);
     }
 
 }
