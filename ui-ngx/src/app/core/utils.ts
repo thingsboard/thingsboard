@@ -18,6 +18,7 @@ import _ from 'lodash';
 import { Observable, Subject, fromEvent, of } from 'rxjs';
 import { finalize, share, map } from 'rxjs/operators';
 import base64js from 'base64-js';
+import { Datasource } from '@app/shared/models/widget.models';
 
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
   const scrollSubject = new Subject<Event>();
@@ -435,6 +436,34 @@ export function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
   return imageLoad$;
 }
 
+export function createLabelFromDatasource(datasource: Datasource, pattern: string) {
+  const varsRegex = /\$\{([^}]*)\}/g;
+  let label = pattern;
+  if (!datasource) {
+    return label;
+  }
+  let match = varsRegex.exec(pattern);
+  while (match !== null) {
+    const variable = match[0];
+    const variableName = match[1];
+    if (variableName === 'dsName') {
+      label = label.split(variable).join(datasource.name);
+    } else if (variableName === 'entityName') {
+      label = label.split(variable).join(datasource.entityName);
+    } else if (variableName === 'deviceName') {
+      label = label.split(variable).join(datasource.entityName);
+    } else if (variableName === 'entityLabel') {
+      label = label.split(variable).join(datasource.entityLabel || datasource.entityName);
+    } else if (variableName === 'aliasName') {
+      label = label.split(variable).join(datasource.aliasName);
+    } else if (variableName === 'entityDescription') {
+      label = label.split(variable).join(datasource.entityDescription);
+    }
+    match = varsRegex.exec(pattern);
+  }
+  return label;
+}
+
 const imageAspectMap = {};
 
 export function aspectCache(imageUrl: string): Observable<number> {
@@ -451,7 +480,6 @@ export function aspectCache(imageUrl: string): Observable<number> {
     }))
   }
 }
-
 
 export function parseArray(input: any[]): any[] {
   return _(input).groupBy(el => el?.datasource?.entityName)
@@ -523,15 +551,18 @@ export function parseFunction(source: any, params: string[] = ['def']): Function
   return res;
 }
 
-export function parseTemplate(template: string, data: object, translateFn?: (key: string) => string) {
+export function parseTemplate(template: string, data: { $datasource?: Datasource, [key: string]: any },
+  translateFn?: (key: string) => string) {
   let res = '';
   try {
     if (template.match(/<link-act/g)) {
-      template = template.replace(/<link-act/g, '<a').replace(/link-act>/g, 'a>').replace(/name=(\'|")(.*?)(\'|")/g, `class='tb-custom-action' id='$2'`);
+      template = template.replace(/<link-act/g, '<a').replace(/link-act>/g, 'a>')
+        .replace(/name=(\'|")(.*?)(\'|")/g, `class='tb-custom-action' id='$2'`);
     }
     if (translateFn) {
       template = translateFn(template);
     }
+    template = createLabelFromDatasource(data.$datasource, template);
     const formatted = template.match(/\$\{([^}]*)\:\d*\}/g);
     if (formatted)
       formatted.forEach(value => {

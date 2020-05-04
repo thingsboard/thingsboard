@@ -26,6 +26,7 @@ import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { DatasourceData } from '@app/shared/models/widget.models';
+import { safeExecute } from '@app/core/utils';
 
 export default abstract class LeafletMap {
 
@@ -87,12 +88,14 @@ export default abstract class LeafletMap {
         if (this.options.draggableMarker) {
             let mousePositionOnMap: L.LatLng;
             let addMarker: L.Control;
-            this.map.on('mouseup', (e: L.LeafletMouseEvent) => {
+            this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
                 mousePositionOnMap = e.latlng;
             });
             const dragListener = (e: L.DragEndEvent) => {
                 if (e.type === 'dragend' && mousePositionOnMap) {
-                    const newMarker = L.marker(mousePositionOnMap).addTo(this.map);
+                    const icon = new L.Icon.Default();
+                    icon.options.shadowSize = [0, 0];
+                    const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     const datasourcesList = document.createElement('div');
                     const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
                     this.datasources.forEach(ds => {
@@ -195,15 +198,18 @@ export default abstract class LeafletMap {
 
     fitBounds(bounds: LatLngBounds, useDefaultZoom = false, padding?: LatLngTuple) {
         if (bounds.isValid()) {
-            if ((!this.options.fitMapBounds || useDefaultZoom) && this.options.defaultZoomLevel) {
+            if ((!this.options.fitMapBounds || this.options.useDefaultCenterPosition) && this.options.defaultZoomLevel) {
                 this.map.setZoom(this.options.defaultZoomLevel, { animate: false });
-                this.map.panTo(bounds.getCenter(), { animate: false });
+                this.map.panTo(this.options.defaultCenterPosition, { animate: false });
             } else {
                 this.map.once('zoomend', () => {
                     if (!this.options.defaultZoomLevel && this.map.getZoom() > this.options.minZoomLevel) {
                         this.map.setZoom(this.options.minZoomLevel, { animate: false });
                     }
                 });
+                if (this.options.useDefaultCenterPosition) {
+                    bounds = bounds.extend(this.options.defaultCenterPosition);
+                }
                 this.map.fitBounds(bounds, { padding: padding || [50, 50], animate: false });
             }
             this.bounds = bounds;
@@ -231,8 +237,16 @@ export default abstract class LeafletMap {
     updateMarkers(markersData) {
         markersData.filter(mdata => !!this.convertPosition(mdata)).forEach(data => {
             if (data.rotationAngle || data.rotationAngle === 0) {
+                const currentImage = this.options.useMarkerImageFunction ?
+                    safeExecute(this.options.markerImageFunction,
+                        [data, this.options.markerImages, markersData, data.dsIndex]) : this.options.currentImage;
+                const style = currentImage ? 'background-image: url(' + currentImage.url + ');' : '';
                 this.options.icon = L.divIcon({
-                    html: `<div class="arrow" style="transform: translate(-10px, -10px) rotate(${data.rotationAngle}deg);"><div>`
+                    html: `<div class="arrow"
+                     style="transform: translate(-10px, -10px);
+                     ${style}
+                      rotate(${data.rotationAngle}deg);
+                      "><div>`
                 })
             }
             else {
@@ -335,31 +349,28 @@ export default abstract class LeafletMap {
                     data.data = JSON.parse(data.data[0][1]) as LatLngTuple[];
                 }
                 if (this.polygons.get(data.datasource.entityName)) {
-                    this.updatePolygon(data.datasource.entityName, data.data, polyData, this.options);
+                    this.updatePolygon(data, polyData, this.options);
                 }
                 else {
-                    this.createPolygon(data.datasource.entityName, data.data, polyData, this.options);
+                    this.createPolygon(data, polyData, this.options);
                 }
             }
         });
     }
 
-    createPolygon(key: string, data: LatLngTuple[], dataSources: DatasourceData[], settings: PolygonSettings) {
+    createPolygon(polyData: DatasourceData, dataSources: DatasourceData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
-            const polygon = new Polygon(this.map, data, dataSources, settings);
+            const polygon = new Polygon(this.map, polyData, dataSources, settings);
             const bounds = this.bounds.extend(polygon.leafletPoly.getBounds());
-            if (bounds.isValid()) {
-                this.map.fitBounds(bounds);
-                this.bounds = bounds;
-            }
-            this.polygons.set(key, polygon);
+            this.fitBounds(bounds);
+            this.polygons.set(polyData.datasource.entityName, polygon);
         });
     }
 
-    updatePolygon(key: string, data: LatLngTuple[], dataSources: DatasourceData[], settings: PolygonSettings) {
+    updatePolygon(polyData: DatasourceData, dataSources: DatasourceData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
-            const poly = this.polygons.get(key);
-            poly.updatePolygon(data, dataSources, settings);
+            const poly = this.polygons.get(polyData.datasource.entityName);
+            poly.updatePolygon(polyData.data, dataSources, settings);
             this.fitBounds(poly.leafletPoly.getBounds());
         });
     }

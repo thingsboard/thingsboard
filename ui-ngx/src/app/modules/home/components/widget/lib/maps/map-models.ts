@@ -111,9 +111,13 @@ export type PolygonSettings = {
     polygonStrokeWeight: number;
     polygonStrokeColor: string;
     polygonColor: string;
+    showPolygonTooltip: boolean;
     autocloseTooltip: boolean;
+    tooltipFunction: GenericFunction;
     showTooltipAction: string;
     tooltipAction: object;
+    tooltipPattern: string;
+    useTooltipFunction: boolean;
     polygonClick: { [name: string]: actionsHandler };
     polygonColorFunction?: GenericFunction;
 }

@@ -16,8 +16,9 @@
 
 import L, { LatLngExpression, LatLngTuple } from 'leaflet';
 import { createTooltip } from './maps-utils';
-import { PolygonSettings } from './map-models';
+import { PolygonSettings, FormattedData } from './map-models';
 import { DatasourceData } from '@app/shared/models/widget.models';
+import { safeExecute, parseWithTranslation } from '@app/core/utils';
 
 export class Polygon {
 
@@ -26,8 +27,8 @@ export class Polygon {
     data;
     dataSources;
 
-    constructor(public map, coordinates, dataSources, settings: PolygonSettings, onClickListener?) {
-        this.leafletPoly = L.polygon(coordinates, {
+    constructor(public map, polyData: DatasourceData, dataSources, private settings: PolygonSettings, onClickListener?) {
+        this.leafletPoly = L.polygon(polyData.data, {
             fill: true,
             fillColor: settings.polygonColor,
             color: settings.polygonStrokeColor,
@@ -35,19 +36,29 @@ export class Polygon {
             fillOpacity: settings.polygonOpacity,
             opacity: settings.polygonStrokeOpacity
         }).addTo(this.map);
-
-        if (settings.showTooltip) {
+        this.dataSources = dataSources;
+        this.data = polyData;
+        if (settings.showPolygonTooltip) {
             this.tooltip = createTooltip(this.leafletPoly, settings);
+            this.updateTooltip(polyData);
         }
         if (onClickListener) {
             this.leafletPoly.on('click', onClickListener);
         }
     }
 
+    updateTooltip(data: DatasourceData) {
+        const pattern = this.settings.useTooltipFunction ?
+            safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
+        this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
+    }
+
     updatePolygon(data: LatLngTuple[], dataSources: DatasourceData[], settings: PolygonSettings) {
         this.data = data;
         this.dataSources = dataSources;
         this.leafletPoly.setLatLngs(data);
+        if (settings.showPolygonTooltip)
+            this.updateTooltip(this.data);
         this.updatePolygonColor(settings);
     }
 

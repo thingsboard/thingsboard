@@ -477,6 +477,11 @@ export const mapPolygonSchema =
                 type: 'number',
                 default: 1
             },
+            showPolygonTooltip: {
+                title: 'Show polygon tooltip',
+                type: 'boolean',
+                default: false
+            },
             usePolygonColorFunction: {
                 title: 'Use polygon color function',
                 type: 'boolean',
@@ -501,7 +506,7 @@ export const mapPolygonSchema =
             key: 'polygonStrokeColor',
             type: 'color'
         },
-        'polygonStrokeOpacity', 'polygonStrokeWeight', 'usePolygonColorFunction',
+        'polygonStrokeOpacity', 'polygonStrokeWeight', 'usePolygonColorFunction', 'showPolygonTooltip',
         {
             key: 'polygonColorFunction',
             type: 'javascript'
@@ -1137,7 +1142,7 @@ export const tripAnimationSchema = {
             rotationAngle: {
                 title: 'Set additional rotation angle for marker (deg)',
                 type: 'number',
-                default: 180
+                default: 0
             },
             useMarkerImageFunction: {
                 title: 'Use marker image function',
