@@ -154,12 +154,11 @@ export class MapWidgetController implements MapWidgetInterface {
         if ($event && $event.stopPropagation) {
             $event?.stopPropagation();
         }
-        const { id, entityName, entityLabel, entityType } = entityInfo;
-        const entityId: EntityId = {
+        const { entityId, entityName, entityLabel, entityType } = entityInfo;
+        this.ctx.actionsApi.handleWidgetAction($event, descriptor, {
             entityType,
-            id
-        };
-        this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
+            id: entityId
+        }, entityName, null, entityLabel);
     }
 
     setMarkerLocation = (e) => {
