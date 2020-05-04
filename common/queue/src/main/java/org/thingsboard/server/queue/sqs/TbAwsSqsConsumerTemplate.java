@@ -25,21 +25,17 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
-import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
+import org.thingsboard.server.queue.common.AbstractParallelTbQueueConsumerTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,34 +43,28 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
-public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
+public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> extends AbstractParallelTbQueueConsumerTemplate<Message, T> {
 
     private static final int MAX_NUM_MSGS = 10;
 
     private final Gson gson = new Gson();
     private final TbQueueAdmin admin;
     private final AmazonSQS sqsClient;
-    private final String topic;
     private final TbQueueMsgDecoder<T> decoder;
     private final TbAwsSqsSettings sqsSettings;
 
     private final List<AwsSqsMsgWrapper> pendingMessages = new CopyOnWriteArrayList<>();
     private volatile Set<String> queueUrls;
-    private volatile Set<TopicPartitionInfo> partitions;
-    private ListeningExecutorService consumerExecutor;
-    private volatile boolean subscribed;
-    private volatile boolean stopped = false;
 
     public TbAwsSqsConsumerTemplate(TbQueueAdmin admin, TbAwsSqsSettings sqsSettings, String topic, TbQueueMsgDecoder<T> decoder) {
+        super(topic);
         this.admin = admin;
         this.decoder = decoder;
-        this.topic = topic;
         this.sqsSettings = sqsSettings;
 
         AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
@@ -87,81 +77,60 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
     }
 
     @Override
-    public String getTopic() {
-        return topic;
+    protected void doSubscribe(List<String> topicNames) {
+        queueUrls = topicNames.stream().map(this::getQueueUrl).collect(Collectors.toSet());
+        initNewExecutor(queueUrls.size() * sqsSettings.getThreadsPerTopic() + 1);
     }
 
     @Override
-    public void subscribe() {
-        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null, true));
-        subscribed = false;
+    protected List<Message> doPoll(long durationInMillis) {
+        int duration = (int) TimeUnit.MILLISECONDS.toSeconds(durationInMillis);
+        List<ListenableFuture<List<Message>>> futureList = queueUrls
+                .stream()
+                .map(url -> poll(url, duration))
+                .collect(Collectors.toList());
+        ListenableFuture<List<List<Message>>> futureResult = Futures.allAsList(futureList);
+        try {
+            return futureResult.get().stream()
+                    .flatMap(List::stream)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (InterruptedException | ExecutionException e) {
+            if (stopped) {
+                log.info("[{}] Aws SQS consumer is stopped.", getTopic());
+            } else {
+                log.error("Failed to pool messages.", e);
+            }
+            return Collections.emptyList();
+        }
     }
 
     @Override
-    public void subscribe(Set<TopicPartitionInfo> partitions) {
-        this.partitions = partitions;
-        subscribed = false;
+    public T decode(Message message) throws InvalidProtocolBufferException {
+        DefaultTbQueueMsg msg = gson.fromJson(message.getBody(), DefaultTbQueueMsg.class);
+        return decoder.decode(msg);
     }
 
     @Override
-    public void unsubscribe() {
+    protected void doCommit() {
+        pendingMessages.forEach(msg ->
+                consumerExecutor.submit(() -> {
+                    List<DeleteMessageBatchRequestEntry> entries = msg.getMessages()
+                            .stream()
+                            .map(message -> new DeleteMessageBatchRequestEntry(message.getMessageId(), message.getReceiptHandle()))
+                            .collect(Collectors.toList());
+                    sqsClient.deleteMessageBatch(msg.getUrl(), entries);
+                }));
+        pendingMessages.clear();
+    }
+
+    @Override
+    protected void doUnsubscribe() {
         stopped = true;
-
         if (sqsClient != null) {
             sqsClient.shutdown();
         }
-        if (consumerExecutor != null) {
-            consumerExecutor.shutdownNow();
-        }
-    }
-
-    @Override
-    public List<T> poll(long durationInMillis) {
-        if (!subscribed && partitions == null) {
-            try {
-                Thread.sleep(durationInMillis);
-            } catch (InterruptedException e) {
-                log.debug("Failed to await subscription", e);
-            }
-        } else {
-            if (!subscribed) {
-                List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
-                queueUrls = topicNames.stream().map(this::getQueueUrl).collect(Collectors.toSet());
-                consumerExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(queueUrls.size() * sqsSettings.getThreadsPerTopic() + 1));
-                subscribed = true;
-            }
-
-            if (!pendingMessages.isEmpty()) {
-                log.warn("Present {} non committed messages.", pendingMessages.size());
-                return Collections.emptyList();
-            }
-
-            List<ListenableFuture<List<Message>>> futureList = queueUrls
-                    .stream()
-                    .map(url -> poll(url, (int) TimeUnit.MILLISECONDS.toSeconds(durationInMillis)))
-                    .collect(Collectors.toList());
-            ListenableFuture<List<List<Message>>> futureResult = Futures.allAsList(futureList);
-            try {
-                return futureResult.get().stream()
-                        .flatMap(List::stream)
-                        .map(msg -> {
-                            try {
-                                return decode(msg);
-                            } catch (IOException e) {
-                                log.error("Failed to decode message: [{}]", msg);
-                                return null;
-                            }
-                        }).filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-            } catch (InterruptedException | ExecutionException e) {
-                if (stopped) {
-                    log.info("[{}] Aws SQS consumer is stopped.", topic);
-                } else {
-                    log.error("Failed to pool messages.", e);
-                }
-            }
-        }
-        return Collections.emptyList();
+        shutdownExecutor();
     }
 
     private ListenableFuture<List<Message>> poll(String url, int waitTimeSeconds) {
@@ -172,7 +141,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
                 ReceiveMessageRequest request = new ReceiveMessageRequest();
                 request
                         .withWaitTimeSeconds(waitTimeSeconds)
-                        .withMessageAttributeNames("headers")
                         .withQueueUrl(url)
                         .withMaxNumberOfMessages(MAX_NUM_MSGS);
                 return sqsClient.receiveMessage(request).getMessages();
@@ -192,25 +160,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> implements TbQueueCo
             }
             return Collections.emptyList();
         }, consumerExecutor);
-    }
-
-    @Override
-    public void commit() {
-        pendingMessages.forEach(msg ->
-                consumerExecutor.submit(() -> {
-                    List<DeleteMessageBatchRequestEntry> entries = msg.getMessages()
-                            .stream()
-                            .map(message -> new DeleteMessageBatchRequestEntry(message.getMessageId(), message.getReceiptHandle()))
-                            .collect(Collectors.toList());
-                    sqsClient.deleteMessageBatch(msg.getUrl(), entries);
-                }));
-
-        pendingMessages.clear();
-    }
-
-    public T decode(Message message) throws InvalidProtocolBufferException {
-        DefaultTbQueueMsg msg = gson.fromJson(message.getBody(), DefaultTbQueueMsg.class);
-        return decoder.decode(msg);
     }
 
     @Data

@@ -16,7 +16,7 @@
 
 const config = require('config'), logger = require('./config/logger')._logger('main');
 
-const serviceType = config.get('service-type');
+const serviceType = config.get('queue_type');
 switch (serviceType) {
     case 'kafka':
         logger.info('Starting kafka template.');
