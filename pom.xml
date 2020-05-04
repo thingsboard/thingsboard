@@ -30,10 +30,10 @@
     <properties>
         <main.dir>${basedir}</main.dir>
         <pkg.user>thingsboard</pkg.user>
-        <spring-boot.version>2.2.4.RELEASE</spring-boot.version>
+        <spring-boot.version>2.2.6.RELEASE</spring-boot.version>
         <spring-oauth2.version>2.1.2.RELEASE</spring-oauth2.version>
-        <spring.version>5.2.2.RELEASE</spring.version>
-        <spring-security.version>5.2.2.RELEASE</spring-security.version>
+        <spring.version>5.2.6.RELEASE</spring.version>
+        <spring-security.version>5.2.3.RELEASE</spring-security.version>
         <spring-data-redis.version>2.2.4.RELEASE</spring-data-redis.version>
         <jedis.version>3.1.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
@@ -69,7 +69,7 @@
         <grpc.version>1.22.1</grpc.version>
         <lombok.version>1.16.18</lombok.version>
         <paho.client.version>1.1.0</paho.client.version>
-        <netty.version>4.1.45.Final</netty.version>
+        <netty.version>4.1.49.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
@@ -606,6 +606,12 @@
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>${zookeeper.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
