@@ -31,8 +31,8 @@ public class OAuth2ClientMapperConfig {
         private String firstNameAttributeKey;
         private String lastNameAttributeKey;
         private String tenantNameStrategy;
-        private String tenantNameStrategyPattern;
-        private String customerNameStrategyPattern;
+        private String tenantNamePattern;
+        private String customerNamePattern;
     }
 
     @Data
