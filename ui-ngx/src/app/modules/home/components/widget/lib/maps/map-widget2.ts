@@ -36,7 +36,7 @@ import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } fro
 import { of, Subject } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition } from './maps-utils';
-import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType, Datasource } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -142,7 +142,7 @@ export class MapWidgetController implements MapWidgetInterface {
         const descriptors = this.ctx.actionsApi.getActionDescriptors(name);
         const actions = {};
         descriptors.forEach(descriptor => {
-            actions[descriptor.name] = ($event: Event) => this.onCustomAction(descriptor, $event);
+            actions[descriptor.name] = ($event: Event, datasource: Datasource) => this.onCustomAction(descriptor, $event, datasource);
         }, actions);
         return actions;
     }
@@ -150,15 +150,15 @@ export class MapWidgetController implements MapWidgetInterface {
     onInit() {
     }
 
-    private onCustomAction(descriptor: WidgetActionDescriptor, $event: any) {
+    private onCustomAction(descriptor: WidgetActionDescriptor, $event: any, entityInfo: Datasource) {
         if ($event && $event.stopPropagation) {
             $event?.stopPropagation();
         }
-        //  safeExecute(parseFunction(descriptor.customFunction, ['$event', 'widgetContext']), [$event, this.ctx])
-        const entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
-        const entityId = entityInfo ? entityInfo.entityId : null;
-        const entityName = entityInfo ? entityInfo.entityName : null;
-        const entityLabel = entityInfo ? entityInfo.entityLabel : null;
+        const { id, entityName, entityLabel, entityType } = entityInfo;
+        const entityId: EntityId = {
+            entityType,
+            id
+        };
         this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
     }
 

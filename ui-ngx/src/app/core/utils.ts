@@ -19,6 +19,7 @@ import { Observable, Subject, fromEvent, of } from 'rxjs';
 import { finalize, share, map } from 'rxjs/operators';
 import base64js from 'base64-js';
 import { Datasource } from '@app/shared/models/widget.models';
+import { FormattedData } from '@app/modules/home/components/widget/lib/maps/map-models';
 
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
   const scrollSubject = new Subject<Event>();
@@ -504,12 +505,12 @@ export function parseArray(input: any[]): any[] {
     );
 }
 
-export function parseData(input: any[]): any[] {
+export function parseData(input: any[]): FormattedData[] {
   return _(input).groupBy(el => el?.datasource?.entityName)
     .values().value().map((entityArray, i) => {
       const obj = {
         entityName: entityArray[0]?.datasource?.entityName,
-        $datasource: entityArray[0]?.datasource,
+        $datasource: entityArray[0]?.datasource as Datasource,
         dsIndex: i,
         deviceType: null
       };
@@ -568,7 +569,7 @@ export function parseTemplate(template: string, data: { $datasource?: Datasource
       formatted.forEach(value => {
         const [variable, digits] = value.replace('${', '').replace('}', '').split(':');
         data[variable] = padValue(data[variable], +digits);
-        if (isNaN(data[variable])) data[value] = '';
+        if (data[variable] === 'NaN') data[variable] = '';
         template = template.replace(value, '${' + variable + '}');
       });
     const variables = template.match(/\$\{.*?\}/g);
