@@ -44,17 +44,19 @@ services:
       - cassandra
   tb-core2:
     env_file:
-      - tb-node.cassandra.env
+      - tb-node.hybrid.env
     depends_on:
       - kafka
       - redis
+      - postgres
       - cassandra
   tb-rule-engine1:
     env_file:
-      - tb-node.cassandra.env
+      - tb-node.hybrid.env
     depends_on:
       - kafka
       - redis
+      - postgres
       - cassandra
   tb-rule-engine2:
     env_file:
