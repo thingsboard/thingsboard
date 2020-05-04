@@ -1647,7 +1647,7 @@
         }
     },
     "login": {
-        "login": "Вхід",
+        "login": "Увійти",
         "request-password-reset": "Запит скидання пароля",
         "reset-password": "Скинути пароль",
         "create-password": "Створити пароль",
@@ -1662,7 +1662,9 @@
         "new-password": "Новий пароль",
         "new-password-again": "Повторіть новий пароль",
         "password-link-sent-message": "Посилання для скидання пароля було успішно надіслано!",
-        "email": "Електронна пошта"
+        "email": "Електронна пошта",
+        "login-with": "Увійти через {{name}}",
+        "or": "або"
     },
     "position": {
         "top": "Угорі",

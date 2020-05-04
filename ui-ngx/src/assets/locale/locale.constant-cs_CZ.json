@@ -1137,7 +1137,7 @@
         "total": "celkem"
     },
     "login": {
-        "login": "Přihlásit",
+        "login": "Přihlásit se",
         "request-password-reset": "Vyžádat reset hesla",
         "reset-password": "Reset hesla",
         "create-password": "Vytvořit heslo",
@@ -1151,7 +1151,9 @@
         "new-password": "Nové heslo",
         "new-password-again": "Nové heslo znovu",
         "password-link-sent-message": "Odkaz pro reset hesla byl úspěšně odeslán!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Přihlásit se přes {{name}}",
+        "or": "nebo"
     },
     "position": {
         "top": "Nahoře",

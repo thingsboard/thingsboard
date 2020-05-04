@@ -21,7 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
-import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
+import { LoginRequest, LoginResponse, OAuth2Client, PublicLoginRequest } from '@shared/models/login.models';
 import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { defaultHttpOptions } from '../http/http-utils';
 import { ReplaySubject } from 'rxjs/internal/ReplaySubject';
@@ -65,6 +65,7 @@ export class AuthService {
   }
 
   redirectUrl: string;
+  oauth2Clients: Array<OAuth2Client> = null;
 
   private refreshTokenSubject: ReplaySubject<LoginResponse> = null;
   private jwtHelper = new JwtHelperService();
@@ -191,6 +192,15 @@ export class AuthService {
     this.zone.run(() => {
       this.router.navigateByUrl(url);
     });
+  }
+
+  public loadOAuth2Clients(): Observable<Array<OAuth2Client>> {
+    return this.http.post<Array<OAuth2Client>>(`/api/noauth/oauth2Clients`,
+      null, defaultHttpOptions()).pipe(
+        tap((OAuth2Clients) => {
+          this.oauth2Clients = OAuth2Clients;
+        })
+      );
   }
 
   private forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
