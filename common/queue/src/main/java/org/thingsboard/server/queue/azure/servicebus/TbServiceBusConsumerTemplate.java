@@ -58,7 +58,7 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> extends Abstract
     private final Gson gson = new Gson();
 
     private Set<CoreMessageReceiver> receivers;
-    private Map<CoreMessageReceiver, Collection<MessageWithDeliveryTag>> pendingMessages = new ConcurrentHashMap<>();
+    private final Map<CoreMessageReceiver, Collection<MessageWithDeliveryTag>> pendingMessages = new ConcurrentHashMap<>();
     private volatile int messagesPerQueue;
 
     public TbServiceBusConsumerTemplate(TbQueueAdmin admin, TbServiceBusSettings serviceBusSettings, String topic, TbQueueMsgDecoder<T> decoder) {

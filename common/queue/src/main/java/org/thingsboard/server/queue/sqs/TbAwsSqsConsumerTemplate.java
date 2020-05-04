@@ -84,10 +84,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
 
     @Override
     protected List<Message> doPoll(long durationInMillis) {
-        if (!pendingMessages.isEmpty()) {
-            log.warn("Present {} non committed messages.", pendingMessages.size());
-            return Collections.emptyList();
-        }
         int duration = (int) TimeUnit.MILLISECONDS.toSeconds(durationInMillis);
         List<ListenableFuture<List<Message>>> futureList = queueUrls
                 .stream()
@@ -145,7 +141,6 @@ public class TbAwsSqsConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
                 ReceiveMessageRequest request = new ReceiveMessageRequest();
                 request
                         .withWaitTimeSeconds(waitTimeSeconds)
-                        .withMessageAttributeNames("headers")
                         .withQueueUrl(url)
                         .withMaxNumberOfMessages(MAX_NUM_MSGS);
                 return sqsClient.receiveMessage(request).getMessages();

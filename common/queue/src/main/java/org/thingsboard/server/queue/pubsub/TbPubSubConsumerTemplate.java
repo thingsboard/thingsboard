@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.queue.pubsub;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.pubsub.v1.stub.GrpcSubscriberStub;
@@ -31,13 +30,10 @@ import com.google.pubsub.v1.PullResponse;
 import com.google.pubsub.v1.ReceivedMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
-import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.common.AbstractParallelTbQueueConsumerTemplate;
-import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
 import java.io.IOException;
@@ -49,9 +45,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -136,7 +129,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
             PullRequest pullRequest =
                     PullRequest.newBuilder()
                             .setMaxMessages(messagesPerTopic)
-                            .setReturnImmediately(false) // return immediately if messages are not available
+//                            .setReturnImmediately(false) // return immediately if messages are not available
                             .setSubscription(subscriptionName)
                             .build();
 
