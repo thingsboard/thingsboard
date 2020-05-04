@@ -34,7 +34,7 @@
       <span>{{ labelText | translate }}</span>
       <tb-entity-list
         formControlName="assignedCustomerIds"
-        required
+        [required]="data.actionType !== 'manage'"
         [entityType]="entityType.CUSTOMER">
       </tb-entity-list>
     </fieldset>
