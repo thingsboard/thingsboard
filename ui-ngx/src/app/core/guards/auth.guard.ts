@@ -84,15 +84,15 @@ export class AuthGuard implements CanActivate, CanActivateChild {
             // this.authService.gotoDefaultPlace(false);
             return of(this.authService.defaultUrl(false));
           } else {
-            const tasks: Observable<any>[] = [];
             if (path === 'login') {
-              tasks.push(this.authService.loadOAuth2Clients());
+              return forkJoin([this.authService.loadOAuth2Clients()]).pipe(
+                map(() => {
+                  return true;
+                })
+              );
+            } else {
+              return of(true);
             }
-            return forkJoin(tasks).pipe(
-              map(() => {
-                return true;
-              })
-            );
           }
         } else {
           if (authState.authUser.isPublic) {
