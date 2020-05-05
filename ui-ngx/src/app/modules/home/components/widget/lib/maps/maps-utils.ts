@@ -75,7 +75,7 @@ const imageAspectMap = {};
 
 function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
   return new Observable((observer: Observer<HTMLImageElement>) => {
-    const image = new Image();
+    const image = document.createElement('img'); // support IE
     image.style.position = 'absolute';
     image.style.left = '-99999px';
     image.style.top = '-99999px';
