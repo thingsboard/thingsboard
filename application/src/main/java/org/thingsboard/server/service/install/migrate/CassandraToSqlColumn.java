@@ -97,7 +97,11 @@ public class CassandraToSqlColumn {
 
     public String getColumnValue(Row row) {
         if (row.isNull(index)) {
-            return null;
+            if (this.type == CassandraToSqlColumnType.BOOLEAN) {
+                return Boolean.toString(false);
+            } else {
+                return null;
+            }
         } else {
             switch (this.type) {
                 case ID:
