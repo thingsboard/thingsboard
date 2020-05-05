@@ -94,6 +94,8 @@ export type MarkerSettings = {
     tooltipFunction: GenericFunction;
     labelFunction: GenericFunction;
     markerImageFunction?: MarkerImageFunction;
+    markerOffsetX: number;
+    markerOffsetY: number;
 }
 
 export interface FormattedData {
