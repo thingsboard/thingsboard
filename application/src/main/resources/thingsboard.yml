@@ -656,7 +656,7 @@ queue:
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:60000}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
-      print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:10000}"
+      print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"
@@ -676,7 +676,7 @@ queue:
     pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:60000}"
     stats:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
-      print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
+      print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
     queues:
       - name: "${TB_QUEUE_RE_MAIN_QUEUE_NAME:Main}"
         topic: "${TB_QUEUE_RE_MAIN_TOPIC:tb_rule_engine.main}"
