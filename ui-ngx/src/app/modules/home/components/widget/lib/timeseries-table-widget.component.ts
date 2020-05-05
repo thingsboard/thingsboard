@@ -40,7 +40,7 @@ import {
 } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { isDefined, isNumber } from '@core/utils';
+import { hashCode, isDefined, isNumber } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -230,7 +230,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
     const cssParser = new cssjs();
     cssParser.testMode = false;
-    const namespace = 'ts-table-' + this.utils.hashCode(cssString);
+    const namespace = 'ts-table-' + hashCode(cssString);
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);

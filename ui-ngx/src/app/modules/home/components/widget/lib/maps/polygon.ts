@@ -15,10 +15,9 @@
 ///
 
 import L, { LatLngExpression, LatLngTuple, LeafletMouseEvent } from 'leaflet';
-import { createTooltip } from './maps-utils';
-import { PolygonSettings, FormattedData } from './map-models';
+import { createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
+import { PolygonSettings } from './map-models';
 import { DatasourceData } from '@app/shared/models/widget.models';
-import { safeExecute, parseWithTranslation } from '@app/core/utils';
 
 export class Polygon {
 
@@ -46,7 +45,7 @@ export class Polygon {
             this.leafletPoly.on('click', (event: LeafletMouseEvent) => {
                 for (const action in this.settings.polygonClick) {
                     if (typeof (this.settings.polygonClick[action]) === 'function') {
-                        this.settings.polygonClick[action](event, polyData.datasource);
+                        this.settings.polygonClick[action](event.originalEvent, polyData.datasource);
                     }
                 }
             });

@@ -31,11 +31,10 @@ import {
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import { parseFunction, parseArray, parseData, parseWithTranslation } from '@core/utils';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
 import { of, Subject } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition } from './maps-utils';
+import { getDefCenterPosition, parseArray, parseData, parseFunction, parseWithTranslation } from './maps-utils';
 import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType, Datasource } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
@@ -138,7 +137,7 @@ export class MapWidgetController implements MapWidgetInterface {
         else return '';
     }
 
-    getDescriptors(name: string): { [name: string]: ($event: Event) => void } {
+    getDescriptors(name: string): { [name: string]: ($event: Event, datasource: Datasource) => void } {
         const descriptors = this.ctx.actionsApi.getActionDescriptors(name);
         const actions = {};
         descriptors.forEach(descriptor => {
@@ -150,9 +149,10 @@ export class MapWidgetController implements MapWidgetInterface {
     onInit() {
     }
 
-    private onCustomAction(descriptor: WidgetActionDescriptor, $event: any, entityInfo: Datasource) {
-        if ($event && $event.stopPropagation) {
-            $event?.stopPropagation();
+    private onCustomAction(descriptor: WidgetActionDescriptor, $event: Event, entityInfo: Datasource) {
+        if ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
         }
         const { entityId, entityName, entityLabel, entityType } = entityInfo;
         this.ctx.actionsApi.handleWidgetAction($event, descriptor, {
