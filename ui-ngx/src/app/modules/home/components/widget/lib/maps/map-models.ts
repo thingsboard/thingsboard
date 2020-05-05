@@ -14,7 +14,8 @@
 /// limitations under the License.
 ///
 
-import { LatLngTuple, LeafletMouseEvent } from 'leaflet';
+import { LatLngTuple } from 'leaflet';
+import { Datasource } from '@app/shared/models/widget.models';
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
@@ -96,11 +97,11 @@ export type MarkerSettings = {
 }
 
 export interface FormattedData {
-    aliasName: string;
+    $datasource: Datasource;
     entityName: string;
-    $datasource: string;
     dsIndex: number;
-    deviceType: string
+    deviceType: string;
+    [key: string]: any
 }
 
 export type PolygonSettings = {
@@ -115,7 +116,7 @@ export type PolygonSettings = {
     autocloseTooltip: boolean;
     tooltipFunction: GenericFunction;
     showTooltipAction: string;
-    tooltipAction: object;
+    tooltipAction: { [name: string]: actionsHandler };
     tooltipPattern: string;
     useTooltipFunction: boolean;
     polygonClick: { [name: string]: actionsHandler };
@@ -151,6 +152,6 @@ export interface HistorySelectSettings {
     buttonColor: string;
 }
 
-export type actionsHandler = ($event: Event | LeafletMouseEvent) => void;
+export type actionsHandler = ($event: Event, datasource: Datasource) => void;
 
 export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings;

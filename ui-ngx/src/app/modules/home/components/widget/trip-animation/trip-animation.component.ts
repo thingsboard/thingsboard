@@ -22,12 +22,11 @@ import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
 import { MapProviders } from '../lib/maps/map-models';
-import { parseArray, parseWithTranslation, safeExecute, parseTemplate } from '@app/core/utils';
 import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
 import { tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { findAngle, getRatio } from '../lib/maps/maps-utils';
+import { findAngle, getRatio, parseArray, parseWithTranslation, safeExecute } from '../lib/maps/maps-utils';
 import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
 

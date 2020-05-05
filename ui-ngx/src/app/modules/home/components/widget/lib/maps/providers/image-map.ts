@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngLiteral } from 'leaflet';
+import L, { LatLngLiteral, LatLngBounds, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { UnitedMapSettings } from '../map-models';
-import { aspectCache, parseFunction } from '@app/core/utils';
 import { Observable } from 'rxjs';
 import { map, filter, switchMap } from 'rxjs/operators';
+import { aspectCache, parseFunction } from '@home/components/widget/lib/maps/maps-utils';
 
 const maxZoom = 4;// ?
 
@@ -108,10 +108,11 @@ export class ImageMap extends LeafletMap {
                     this.updateBounds(updateImage, lastCenterPos);
                     this.map.invalidateSize(true);
                 }
-
             }
         }
     }
+
+    fitBounds(bounds: LatLngBounds, useDefaultZoom = false, padding?: LatLngTuple) { }
 
     initMap(updateImage?) {
         if (!this.map && this.aspect > 0) {

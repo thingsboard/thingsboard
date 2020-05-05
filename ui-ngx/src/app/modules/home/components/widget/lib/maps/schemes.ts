@@ -558,32 +558,6 @@ export const markerClusteringSettingsSchema =
     ]
 };
 
-export const markerClusteringSettingsSchemaGoogle =
-{
-    schema: {
-        title: 'Marker Clustering Configuration Google',
-        type: 'object',
-        properties: {
-            gridSize: {
-                title: 'Maximum radius that a cluster will cover in pixels',
-                type: 'number',
-                default: 60
-            },
-            minimumClusterSize: {
-                title: 'The minimum number of markers in a cluster',
-                type: 'number'
-            }
-        },
-        required: []
-    },
-    form: [
-        'gridSize',
-        'minimumClusterSize'
-    ]
-};
-
-
-
 export const markerClusteringSettingsSchemaLeaflet =
 {
     schema: {

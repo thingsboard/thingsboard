@@ -33,7 +33,7 @@ import { Datasource, WidgetActionDescriptor, WidgetConfig } from '@shared/models
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, isDefined, isNumber, createLabelFromDatasource } from '@core/utils';
+import { deepClone, isDefined, isNumber, createLabelFromDatasource, hashCode } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -304,7 +304,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();
     cssParser.testMode = false;
-    const namespace = 'alarms-table-' + this.utils.hashCode(cssString);
+    const namespace = 'alarms-table-' + hashCode(cssString);
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);

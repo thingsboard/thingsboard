@@ -163,32 +163,6 @@ export class UtilsService {
     return obj;
   }
 
-  public hashCode(str: string): number {
-    let hash = 0;
-    let i: number;
-    let char: number;
-    if (str.length === 0) {
-      return hash;
-    }
-    for (i = 0; i < str.length; i++) {
-      char = str.charCodeAt(i);
-      // tslint:disable-next-line:no-bitwise
-      hash = ((hash << 5) - hash) + char;
-      // tslint:disable-next-line:no-bitwise
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash;
-  }
-
-  public objectHashCode(obj: any): number {
-    let hash = 0;
-    if (obj) {
-      const str = JSON.stringify(obj);
-      hash = this.hashCode(str);
-    }
-    return hash;
-  }
-
   public processWidgetException(exception: any): ExceptionData {
     const data = this.parseException(exception, -6);
     if (this.widgetEditMode) {

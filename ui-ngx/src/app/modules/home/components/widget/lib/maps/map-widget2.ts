@@ -31,12 +31,11 @@ import {
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import { parseFunction, parseArray, parseData, parseWithTranslation } from '@core/utils';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
 import { of, Subject } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition } from './maps-utils';
-import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { getDefCenterPosition, parseArray, parseData, parseFunction, parseWithTranslation } from './maps-utils';
+import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType, Datasource } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -138,11 +137,11 @@ export class MapWidgetController implements MapWidgetInterface {
         else return '';
     }
 
-    getDescriptors(name: string): { [name: string]: ($event: Event) => void } {
+    getDescriptors(name: string): { [name: string]: ($event: Event, datasource: Datasource) => void } {
         const descriptors = this.ctx.actionsApi.getActionDescriptors(name);
         const actions = {};
         descriptors.forEach(descriptor => {
-            actions[descriptor.name] = ($event: Event) => this.onCustomAction(descriptor, $event);
+            actions[descriptor.name] = ($event: Event, datasource: Datasource) => this.onCustomAction(descriptor, $event, datasource);
         }, actions);
         return actions;
     }
@@ -150,16 +149,16 @@ export class MapWidgetController implements MapWidgetInterface {
     onInit() {
     }
 
-    private onCustomAction(descriptor: WidgetActionDescriptor, $event: any) {
-        if ($event && $event.stopPropagation) {
-            $event?.stopPropagation();
+    private onCustomAction(descriptor: WidgetActionDescriptor, $event: Event, entityInfo: Datasource) {
+        if ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
         }
-        //  safeExecute(parseFunction(descriptor.customFunction, ['$event', 'widgetContext']), [$event, this.ctx])
-        const entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
-        const entityId = entityInfo ? entityInfo.entityId : null;
-        const entityName = entityInfo ? entityInfo.entityName : null;
-        const entityLabel = entityInfo ? entityInfo.entityLabel : null;
-        this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
+        const { entityId, entityName, entityLabel, entityType } = entityInfo;
+        this.ctx.actionsApi.handleWidgetAction($event, descriptor, {
+            entityType,
+            id: entityId
+        }, entityName, null, entityLabel);
     }
 
     setMarkerLocation = (e) => {

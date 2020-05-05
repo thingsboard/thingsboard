@@ -15,8 +15,8 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Observer, of, Subject } from 'rxjs';
-import { finalize, map, share } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { finalize, share } from 'rxjs/operators';
 import base64js from 'base64-js';
 import { Datasource } from '@app/shared/models/widget.models';
 
@@ -32,7 +32,7 @@ export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
     scrollParentNode.addEventListener('scroll', eventListenerObject);
   });
   window.addEventListener('resize', eventListenerObject);
-  const shared = scrollSubject.pipe(
+  return scrollSubject.pipe(
     finalize(() => {
       scrollParentNodes.forEach((scrollParentNode) => {
         scrollParentNode.removeEventListener('scroll', eventListenerObject);
@@ -41,18 +41,13 @@ export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
     }),
     share()
   );
-  return shared;
 }
 
 export function isLocalUrl(url: string): boolean {
   const parser = document.createElement('a');
   parser.href = url;
   const host = parser.hostname;
-  if (host === 'localhost' || host === '127.0.0.1') {
-    return true;
-  } else {
-    return false;
-  }
+  return host === 'localhost' || host === '127.0.0.1';
 }
 
 export function animatedScroll(element: HTMLElement, scrollTop: number, delay?: number) {
@@ -67,8 +62,7 @@ export function animatedScroll(element: HTMLElement, scrollTop: number, delay?: 
       element.scrollTop = to;
     } else {
       currentTime += increment;
-      const val = easeInOut(currentTime, start, remaining, duration);
-      element.scrollTop = val;
+      element.scrollTop = easeInOut(currentTime, start, remaining, duration);
       if (currentTime < duration) {
         setTimeout(animateScroll, increment);
       }
@@ -117,7 +111,7 @@ export function formatValue(value: any, dec?: number, units?: string, showZeroDe
       formatted = formatted.toFixed(dec);
     }
     if (!showZeroDecimals) {
-      formatted = (Number(formatted) * 1);
+      formatted = (Number(formatted));
     }
     formatted = formatted.toString();
     if (isDefined(units) && units.length > 0) {
@@ -153,15 +147,13 @@ export function deleteNullProperties(obj: any) {
 export function objToBase64(obj: any): string {
   const json = JSON.stringify(obj);
   const encoded = utf8Encode(json);
-  const b64Encoded: string = base64js.fromByteArray(encoded);
-  return b64Encoded;
+  return base64js.fromByteArray(encoded);
 }
 
 export function base64toObj(b64Encoded: string): any {
   const encoded: Uint8Array | number[] = base64js.toByteArray(b64Encoded);
   const json = utf8Decode(encoded);
-  const obj = JSON.parse(json);
-  return obj;
+  return JSON.parse(json);
 }
 
 function utf8Encode(str: string): Uint8Array | number[] {
@@ -222,17 +214,28 @@ function scrollParents(node: Node): Node[] {
   return scrollParentNodes;
 }
 
-function hashCode(str) {
+export function hashCode(str: string): number {
   let hash = 0;
-  let i;
-  let char;
-  if (str.length === 0) return hash;
+  let i: number;
+  let char: number;
+  if (str.length === 0) {
+    return hash;
+  }
   for (i = 0; i < str.length; i++) {
     char = str.charCodeAt(i);
     // tslint:disable-next-line:no-bitwise
     hash = ((hash << 5) - hash) + char;
     // tslint:disable-next-line:no-bitwise
     hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
+}
+
+export function objectHashCode(obj: any): number {
+  let hash = 0;
+  if (obj) {
+    const str = JSON.stringify(obj);
+    hash = hashCode(str);
   }
   return hash;
 }
@@ -432,29 +435,8 @@ export function getDescendantProp(obj: any, path: string): any {
   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 }
 
-export function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
-  return new Observable((observer: Observer<HTMLImageElement>) => {
-    const image = new Image();
-    image.style.position = 'absolute';
-    image.style.left = '-99999px';
-    image.style.top = '-99999px';
-    image.onload = () => {
-      observer.next(image);
-      document.body.removeChild(image);
-      observer.complete();
-    };
-    image.onerror = err => {
-      observer.error(err);
-      document.body.removeChild(image);
-      observer.complete();
-    };
-    document.body.appendChild(image)
-    image.src = imageUrl;
-  });
-}
-
 export function createLabelFromDatasource(datasource: Datasource, pattern: string) {
-  const varsRegex = /\$\{([^}]*)\}/g;
+  const varsRegex = /\${([^}]*)}/g;
   let label = pattern;
   if (!datasource) {
     return label;
@@ -479,142 +461,6 @@ export function createLabelFromDatasource(datasource: Datasource, pattern: strin
     match = varsRegex.exec(pattern);
   }
   return label;
-}
-
-const imageAspectMap = {};
-
-export function aspectCache(imageUrl: string): Observable<number> {
-  if (imageUrl?.length) {
-    const hash = hashCode(imageUrl);
-    let aspect = imageAspectMap[hash];
-    if (aspect) {
-      return of(aspect);
-    }
-    else return imageLoader(imageUrl).pipe(map(image => {
-      aspect = image.width / image.height;
-      imageAspectMap[hash] = aspect;
-      return aspect;
-    }))
-  }
-}
-
-export function parseArray(input: any[]): any[] {
-  return _(input).groupBy(el => el?.datasource?.entityName)
-    .values().value().map((entityArray, dsIndex) =>
-      entityArray[0].data.map((el, i) => {
-        const obj = {
-          entityName: entityArray[0]?.datasource?.entityName,
-          $datasource: entityArray[0]?.datasource,
-          dsIndex,
-          time: el[0],
-          deviceType: null
-        };
-        entityArray.filter(el => el.data.length).forEach(entity => {
-          obj[entity?.dataKey?.label] = entity?.data[i][1];
-          obj[entity?.dataKey?.label + '|ts'] = entity?.data[0][0];
-          if (entity?.dataKey?.label === 'type') {
-            obj.deviceType = entity?.data[0][1];
-          }
-        });
-        return obj;
-      })
-    );
-}
-
-export function parseData(input: any[]): any[] {
-  return _(input).groupBy(el => el?.datasource?.entityName)
-    .values().value().map((entityArray, i) => {
-      const obj = {
-        entityName: entityArray[0]?.datasource?.entityName,
-        $datasource: entityArray[0]?.datasource,
-        dsIndex: i,
-        deviceType: null
-      };
-      entityArray.filter(el => el.data.length).forEach(el => {
-        obj[el?.dataKey?.label] = el?.data[0][1];
-        obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
-        if (el?.dataKey?.label === 'type') {
-          obj.deviceType = el?.data[0][1];
-        }
-      });
-      return obj;
-    });
-}
-
-export function safeExecute(func: Function, params = []) {
-  let res = null;
-  if (func && typeof (func) === 'function') {
-    try {
-      res = func(...params);
-    }
-    catch (err) {
-      console.log('error in external function:', err);
-      res = null;
-    }
-  }
-  return res;
-}
-
-export function parseFunction(source: any, params: string[] = ['def']): Function {
-  let res = null;
-  if (source?.length) {
-    try {
-      res = new Function(...params, source);
-    }
-    catch (err) {
-      res = null;
-    }
-  }
-  return res;
-}
-
-export function parseTemplate(template: string, data: { $datasource?: Datasource, [key: string]: any },
-  translateFn?: (key: string) => string) {
-  let res = '';
-  try {
-    if (template.match(/<link-act/g)) {
-      template = template.replace(/<link-act/g, '<a').replace(/link-act>/g, 'a>')
-        .replace(/name=(\'|")(.*?)(\'|")/g, `class='tb-custom-action' id='$2'`);
-    }
-    if (translateFn) {
-      template = translateFn(template);
-    }
-    template = createLabelFromDatasource(data.$datasource, template);
-    const formatted = template.match(/\$\{([^}]*)\:\d*\}/g);
-    if (formatted)
-      formatted.forEach(value => {
-        const [variable, digits] = value.replace('${', '').replace('}', '').split(':');
-        data[variable] = padValue(data[variable], +digits);
-        if (isNaN(data[variable])) data[value] = '';
-        template = template.replace(value, '${' + variable + '}');
-      });
-    const variables = template.match(/\$\{.*?\}/g);
-    if (variables) {
-      variables.forEach(variable => {
-        variable = variable.replace('${', '').replace('}', '');
-        if (!data[variable])
-          data[variable] = '';
-      })
-    }
-    const compiled = _.template(template);
-    res = compiled(data);
-  }
-  catch (ex) {
-    console.log(ex, template)
-  }
-  return res;
-}
-
-export let parseWithTranslation = {
-  translate(): string {
-    throw console.error('Translate not assigned');
-  },
-  parseTemplate(template: string, data: object, forceTranslate = false): string {
-    return parseTemplate(forceTranslate ? this.translate(template) : template, data, this?.translate);
-  },
-  setTranslate(translateFn: (key: string, defaultTranslation?: string) => string) {
-    this.translate = translateFn;
-  }
 }
 
 export function padValue(val: any, dec: number): string {
