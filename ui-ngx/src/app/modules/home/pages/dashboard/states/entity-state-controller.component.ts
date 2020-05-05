@@ -199,9 +199,8 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
         let stateName = dashboardState.name;
         stateName = this.utils.customTranslation(stateName, stateName);
         const params = this.stateObject[index].params;
-        const targetParams = params && params.targetEntityParamName ? params[params.targetEntityParamName] : params;
-        const entityName = targetParams && targetParams.entityName ? targetParams.entityName : '';
-        const entityLabel = targetParams && targetParams.entityLabel ? targetParams.entityLabel : '';
+        const entityName = params && params.entityName ? params.entityName : '';
+        const entityLabel = params && params.entityLabel ? params.entityLabel : '';
         result = insertVariable(stateName, 'entityName', entityName);
         result = insertVariable(result, 'entityLabel', entityLabel);
         for (const prop of Object.keys(params)) {
