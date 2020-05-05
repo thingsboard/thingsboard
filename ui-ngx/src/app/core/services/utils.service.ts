@@ -345,6 +345,10 @@ export class UtilsService {
     return additionalDataKey;
   }
 
+  public createLabelFromDatasource(datasource: Datasource, pattern: string): string {
+    return createLabelFromDatasource(datasource, pattern);
+  }
+
   public generateColors(datasources: Array<Datasource>) {
     let index = 0;
     datasources.forEach((datasource) => {

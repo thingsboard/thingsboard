@@ -460,7 +460,7 @@ export function insertVariable(pattern: string, name: string, value: any): strin
   return result;
 }
 
-export function createLabelFromDatasource(datasource: Datasource, pattern: string) {
+export function createLabelFromDatasource(datasource: Datasource, pattern: string): string {
   let label = pattern;
   if (!datasource) {
     return label;
