@@ -1231,7 +1231,7 @@
         }
     },
     "login": {
-        "login": "Intră în Cont",
+        "login": "Conectare",
         "request-password-reset": "Solicită Resetarea Parolei",
         "reset-password": "Resetează Parolă",
         "create-password": "Creează Parolă",
@@ -1246,7 +1246,9 @@
         "new-password": "Parolă nouă",
         "new-password-again": "Verificare parolă nouă",
         "password-link-sent-message": "Ți-am trimis pe eMail un link pentru resetarea parolei",
-        "email": "eMail"
+        "email": "eMail",
+        "login-with": "Conectare cu {{name}}",
+        "or": "sau"
     },
     "position": {
         "top": "Sus",

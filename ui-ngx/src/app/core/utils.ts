@@ -15,10 +15,11 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Subject, fromEvent, of } from 'rxjs';
-import { finalize, share, map } from 'rxjs/operators';
+import { Observable, Observer, of, Subject } from 'rxjs';
+import { finalize, map, share } from 'rxjs/operators';
 import base64js from 'base64-js';
 import { Datasource } from '@app/shared/models/widget.models';
+import { FormattedData } from '@app/modules/home/components/widget/lib/maps/map-models';
 
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
   const scrollSubject = new Subject<Event>();
@@ -224,11 +225,14 @@ function scrollParents(node: Node): Node[] {
 
 function hashCode(str) {
   let hash = 0;
-  let i, char;
+  let i;
+  let char;
   if (str.length === 0) return hash;
   for (i = 0; i < str.length; i++) {
     char = str.charCodeAt(i);
+    // tslint:disable-next-line:no-bitwise
     hash = ((hash << 5) - hash) + char;
+    // tslint:disable-next-line:no-bitwise
     hash = hash & hash; // Convert to 32bit integer
   }
   return hash;
@@ -430,10 +434,24 @@ export function getDescendantProp(obj: any, path: string): any {
 }
 
 export function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
-  const image = new Image();
-  const imageLoad$ = fromEvent(image, 'load').pipe(map(() => image));
-  image.src = imageUrl;
-  return imageLoad$;
+  return new Observable((observer: Observer<HTMLImageElement>) => {
+    const image = new Image();
+    image.style.position = 'absolute';
+    image.style.left = '-99999px';
+    image.style.top = '-99999px';
+    image.onload = () => {
+      observer.next(image);
+      document.body.removeChild(image);
+      observer.complete();
+    };
+    image.onerror = err => {
+      observer.error(err);
+      document.body.removeChild(image);
+      observer.complete();
+    };
+    document.body.appendChild(image)
+    image.src = imageUrl;
+  });
 }
 
 export function createLabelFromDatasource(datasource: Datasource, pattern: string) {
@@ -504,12 +522,12 @@ export function parseArray(input: any[]): any[] {
     );
 }
 
-export function parseData(input: any[]): any[] {
+export function parseData(input: any[]): FormattedData[] {
   return _(input).groupBy(el => el?.datasource?.entityName)
     .values().value().map((entityArray, i) => {
       const obj = {
         entityName: entityArray[0]?.datasource?.entityName,
-        $datasource: entityArray[0]?.datasource,
+        $datasource: entityArray[0]?.datasource as Datasource,
         dsIndex: i,
         deviceType: null
       };
@@ -568,7 +586,7 @@ export function parseTemplate(template: string, data: { $datasource?: Datasource
       formatted.forEach(value => {
         const [variable, digits] = value.replace('${', '').replace('}', '').split(':');
         data[variable] = padValue(data[variable], +digits);
-        if (isNaN(data[variable])) data[value] = '';
+        if (data[variable] === 'NaN') data[variable] = '';
         template = template.replace(value, '${' + variable + '}');
       });
     const variables = template.match(/\$\{.*?\}/g);
