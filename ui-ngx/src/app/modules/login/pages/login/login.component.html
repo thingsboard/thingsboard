@@ -56,7 +56,7 @@
                 <div class="line"><mat-divider></mat-divider></div>
               </div>
               <ng-container *ngFor="let oauth2Client of oauth2Clients">
-                <button mat-raised-button color="primary" class="centered" routerLink="{{ oauth2Client.url }}">
+                <button mat-raised-button color="primary" class="centered" (click)="open(oauth2Client.url)">
                   <mat-icon class="material-icons md-18" svgIcon="{{ oauth2Client.icon }}"></mat-icon>
                   {{ 'login.login-with' | translate: {name: oauth2Client.name} }}
                 </button>

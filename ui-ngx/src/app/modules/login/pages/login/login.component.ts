@@ -69,4 +69,8 @@ export class LoginComponent extends PageComponent implements OnInit {
     }
   }
 
+  open(url: string): void{
+    window.open(url);
+  }
+
 }
