@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -45,6 +46,7 @@ import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
+import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
@@ -100,7 +102,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @PreDestroy
-    public void destroy(){
+    public void destroy() {
         super.destroy();
     }
 
@@ -143,8 +145,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                             } else if (toCoreMsg.getToDeviceActorNotificationMsg() != null && !toCoreMsg.getToDeviceActorNotificationMsg().isEmpty()) {
                                 Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreMsg.getToDeviceActorNotificationMsg().toByteArray());
                                 if (actorMsg.isPresent()) {
-                                    log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                                    actorContext.tell(actorMsg.get(), ActorRef.noSender());
+                                    TbActorMsg tbActorMsg = actorMsg.get();
+                                    if (tbActorMsg.getMsgType().equals(MsgType.DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG)) {
+                                        tbCoreDeviceRpcService.forwardRpcRequestToDeviceActor((ToDeviceRpcRequestActorMsg) tbActorMsg);
+                                    } else {
+                                        log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
+                                        actorContext.tell(actorMsg.get(), ActorRef.noSender());
+                                    }
                                 }
                                 callback.onSuccess();
                             }
