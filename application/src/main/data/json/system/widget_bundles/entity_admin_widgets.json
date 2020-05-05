@@ -6,7 +6,7 @@
   },
   "widgetTypes": [
     {
-      "alias": "device_admin_table2",
+      "alias": "device_admin_table",
       "name": "Device admin table",
       "descriptor": {
         "type": "latest",
@@ -22,7 +22,7 @@
       }
     },
     {
-      "alias": "device_admin_table",
+      "alias": "asset_admin_table",
       "name": "Asset admin table",
       "descriptor": {
         "type": "latest",
