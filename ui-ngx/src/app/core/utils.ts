@@ -20,6 +20,8 @@ import { finalize, share } from 'rxjs/operators';
 import base64js from 'base64-js';
 import { Datasource } from '@app/shared/models/widget.models';
 
+const varsRegex = /\${([^}]*)}/g;
+
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
   const scrollSubject = new Subject<Event>();
   const scrollParentNodes = scrollParents(el);
@@ -101,6 +103,15 @@ export function isNumeric(value: any): boolean {
 
 export function isString(value: any): boolean {
   return typeof value === 'string';
+}
+
+export function isEmpty(obj: any): boolean {
+  for (const key of Object.keys(obj)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
@@ -435,8 +446,21 @@ export function getDescendantProp(obj: any, path: string): any {
   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 }
 
+export function insertVariable(pattern: string, name: string, value: any): string {
+  let result = pattern;
+  let match = varsRegex.exec(pattern);
+  while (match !== null) {
+    const variable = match[0];
+    const variableName = match[1];
+    if (variableName === name) {
+      result = result.split(variable).join(value);
+    }
+    match = varsRegex.exec(pattern);
+  }
+  return result;
+}
+
 export function createLabelFromDatasource(datasource: Datasource, pattern: string) {
-  const varsRegex = /\${([^}]*)}/g;
   let label = pattern;
   if (!datasource) {
     return label;

@@ -20,7 +20,15 @@
 import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { deepClone, deleteNullProperties, guid, isDefined, isDefinedAndNotNull, isUndefined, createLabelFromDatasource } from '@core/utils';
+import {
+  createLabelFromDatasource,
+  deepClone,
+  deleteNullProperties,
+  guid,
+  isDefined,
+  isDefinedAndNotNull,
+  isUndefined
+} from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
@@ -33,8 +41,6 @@ import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
 import materialIconsCodepoints from '!raw-loader!material-design-icons/iconfont/codepoints';
 import { Observable, of, ReplaySubject } from 'rxjs';
-
-const varsRegex = /\$\{([^}]*)\}/g;
 
 const predefinedFunctions: { [func: string]: string } = {
   Sin: 'return Math.round(1000*Math.sin(time/5000));',
@@ -215,27 +221,13 @@ export class UtilsService {
   }
 
   public customTranslation(translationValue: string, defaultValue: string): string {
-    let result = '';
+    let result: string;
     const translationId = customTranslationsPrefix + translationValue;
     const translation = this.translate.instant(translationId);
     if (translation !== translationId) {
       result = translation + '';
     } else {
       result = defaultValue;
-    }
-    return result;
-  }
-
-  public insertVariable(pattern: string, name: string, value: any): string {
-    let result = deepClone(pattern);
-    let match = varsRegex.exec(pattern);
-    while (match !== null) {
-      const variable = match[0];
-      const variableName = match[1];
-      if (variableName === name) {
-        result = result.split(variable).join(value);
-      }
-      match = varsRegex.exec(pattern);
     }
     return result;
   }
@@ -351,10 +343,6 @@ export class UtilsService {
     }
     additionalDataKey._hash = Math.random();
     return additionalDataKey;
-  }
-
-  public createLabelFromDatasource(datasource: Datasource, pattern: string) {
-    return createLabelFromDatasource(datasource, pattern);
   }
 
   public generateColors(datasources: Array<Datasource>) {
