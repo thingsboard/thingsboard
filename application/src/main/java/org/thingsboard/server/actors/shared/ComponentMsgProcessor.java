@@ -22,7 +22,10 @@ import org.thingsboard.server.actors.stats.StatsPersistTick;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.RuleNodeException;
 
 @Slf4j
 public abstract class ComponentMsgProcessor<T extends EntityId> extends AbstractContextAwareMsgProcessor {
@@ -74,11 +77,17 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
         schedulePeriodicMsgWithDelay(context, new StatsPersistTick(), statsPersistFrequency, statsPersistFrequency);
     }
 
-    protected void checkActive() {
+    protected void checkActive(TbMsg tbMsg) throws RuleNodeException {
         if (state != ComponentLifecycleState.ACTIVE) {
             log.debug("Component is not active. Current state [{}] for processor [{}][{}] tenant [{}]", state, entityId.getEntityType(), entityId, tenantId);
-            throw new IllegalStateException("Rule chain is not active! " + entityId + " - " + tenantId);
+            RuleNodeException ruleNodeException = getInactiveException();
+            if (tbMsg != null) {
+                tbMsg.getCallback().onFailure(ruleNodeException);
+            }
+            throw ruleNodeException;
         }
     }
+
+    abstract protected RuleNodeException getInactiveException();
 
 }

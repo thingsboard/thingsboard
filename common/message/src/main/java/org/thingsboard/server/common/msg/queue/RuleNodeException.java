@@ -36,9 +36,15 @@ public class RuleNodeException extends RuleEngineException {
     public RuleNodeException(String message, String ruleChainName, RuleNode ruleNode) {
         super(message);
         this.ruleChainName = ruleChainName;
-        this.ruleNodeName = ruleNode.getName();
-        this.ruleChainId = ruleNode.getRuleChainId();
-        this.ruleNodeId = ruleNode.getId();
+        if (ruleNode != null) {
+            this.ruleNodeName = ruleNode.getName();
+            this.ruleChainId = ruleNode.getRuleChainId();
+            this.ruleNodeId = ruleNode.getId();
+        } else {
+            ruleNodeName = "Unknown";
+            ruleChainId = new RuleChainId(RuleChainId.NULL_UUID);
+            ruleNodeId = new RuleNodeId(RuleNodeId.NULL_UUID);
+        }
     }
 
     public String toJsonString() {

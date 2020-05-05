@@ -17,8 +17,8 @@
 import L, { PolylineDecoratorOptions } from 'leaflet';
 import 'leaflet-polylinedecorator';
 
-import { safeExecute } from '@app/core/utils';
 import { PolylineSettings } from './map-models';
+import { safeExecute } from '@home/components/widget/lib/maps/maps-utils';
 
 export class Polyline {
 

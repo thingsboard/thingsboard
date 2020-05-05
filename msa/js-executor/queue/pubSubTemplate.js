@@ -24,7 +24,7 @@ const {PubSub} = require('@google-cloud/pubsub');
 const projectId = config.get('pubsub.project_id');
 const credentials = JSON.parse(config.get('pubsub.service_account'));
 const requestTopic = config.get('request_topic');
-const queueProperties = config.get('pubsub.queue-properties');
+const queueProperties = config.get('pubsub.queue_properties');
 
 let pubSubClient;
 
@@ -98,23 +98,32 @@ function PubSubProducer() {
 
 async function createTopic(topic) {
     if (!topics.includes(topic)) {
-        await pubSubClient.createTopic(topic);
+        try {
+            await pubSubClient.createTopic(topic);
+            logger.info('Created new Pub/Sub topic: %s', topic);
+        } catch (e) {
+            logger.info('Pub/Sub topic already exists');
+        }
         topics.push(topic);
-        logger.info('Created new Pub/Sub topic: %s', topic);
     }
     await createSubscription(topic)
 }
 
 async function createSubscription(topic) {
     if (!subscriptions.includes(topic)) {
-        await pubSubClient.createSubscription(topic, topic, {
-            topic: topic,
-            subscription: topic,
-            ackDeadlineSeconds: queueProps['ackDeadlineInSec'],
-            messageRetentionDuration: {seconds: queueProps['messageRetentionInSec']}
-        });
+        try {
+            await pubSubClient.createSubscription(topic, topic, {
+                topic: topic,
+                subscription: topic,
+                ackDeadlineSeconds: queueProps['ackDeadlineInSec'],
+                messageRetentionDuration: {seconds: queueProps['messageRetentionInSec']}
+            });
+            logger.info('Created new Pub/Sub subscription: %s', topic);
+        } catch (e) {
+            logger.info('Pub/Sub subscription already exists.');
+        }
+
         subscriptions.push(topic);
-        logger.info('Created new Pub/Sub subscription: %s', topic);
     }
 }
 

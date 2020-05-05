@@ -49,7 +49,7 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
 
     private final Map<String, Publisher> publisherMap = new ConcurrentHashMap<>();
 
-    private ExecutorService pubExecutor = Executors.newCachedThreadPool();
+    private final ExecutorService pubExecutor = Executors.newCachedThreadPool();
 
     public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic) {
         this.defaultTopic = defaultTopic;
@@ -124,8 +124,8 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                 publisherMap.put(topic, publisher);
                 return publisher;
             } catch (IOException e) {
-                log.error("Failed to create topic [{}].", topic, e);
-                throw new RuntimeException("Failed to create topic.", e);
+                log.error("Failed to create Publisher for the topic [{}].", topic, e);
+                throw new RuntimeException("Failed to create Publisher for the topic.", e);
             }
         }
 

@@ -17,9 +17,9 @@
 import L, { LatLngLiteral, LatLngBounds, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { UnitedMapSettings } from '../map-models';
-import { aspectCache, parseFunction } from '@app/core/utils';
 import { Observable } from 'rxjs';
 import { map, filter, switchMap } from 'rxjs/operators';
+import { aspectCache, parseFunction } from '@home/components/widget/lib/maps/maps-utils';
 
 const maxZoom = 4;// ?
 

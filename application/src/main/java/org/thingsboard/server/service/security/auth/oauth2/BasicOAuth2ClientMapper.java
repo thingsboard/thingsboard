@@ -51,9 +51,9 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
             String firstName = getStringAttributeByKey(attributes, config.getBasic().getFirstNameAttributeKey());
             oauth2User.setFirstName(firstName);
         }
-        if (!StringUtils.isEmpty(config.getBasic().getCustomerNameStrategyPattern())) {
+        if (!StringUtils.isEmpty(config.getBasic().getCustomerNamePattern())) {
             StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
-            String customerName = sub.replace(config.getBasic().getCustomerNameStrategyPattern());
+            String customerName = sub.replace(config.getBasic().getCustomerNamePattern());
             oauth2User.setCustomerName(customerName);
         }
         return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.getBasic().isAllowUserCreation());
@@ -68,7 +68,7 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
                 return email.substring(email .indexOf("@") + 1);
             case CUSTOM_TENANT_STRATEGY:
                 StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
-                return sub.replace(config.getBasic().getTenantNameStrategyPattern());
+                return sub.replace(config.getBasic().getTenantNamePattern());
             default:
                 throw new RuntimeException("Tenant Name Strategy with type " + config.getBasic().getTenantNameStrategy() + " is not supported!");
         }
@@ -78,7 +78,6 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
         String result = null;
         try {
             result = (String) attributes.get(key);
-
         } catch (Exception e) {
             log.warn("Can't convert attribute to String by key " + key);
         }

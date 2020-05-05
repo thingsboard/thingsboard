@@ -29,7 +29,7 @@ export class GoogleMap extends LeafletMap {
         super($container, options);
         this.loadGoogle(() => {
             const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
-            const roads = (L.gridLayer as any).googleMutant({
+            (L.gridLayer as any).googleMutant({
                 type: options?.gmDefaultMapType || 'roadmap'
             }).addTo(map);
             super.setMap(map);

@@ -31,9 +31,9 @@ import org.apache.qpid.proton.amqp.transport.SenderSettleMode;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
-import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
+import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
 import java.time.Duration;
@@ -50,100 +50,70 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
-public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
+public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQueueConsumerTemplate<MessageWithDeliveryTag, T> {
     private final TbQueueAdmin admin;
-    private final String topic;
     private final TbQueueMsgDecoder<T> decoder;
     private final TbServiceBusSettings serviceBusSettings;
 
     private final Gson gson = new Gson();
 
     private Set<CoreMessageReceiver> receivers;
-    private volatile Set<TopicPartitionInfo> partitions;
-    private volatile boolean subscribed;
-    private volatile boolean stopped = false;
-    private Map<CoreMessageReceiver, Collection<MessageWithDeliveryTag>> pendingMessages = new ConcurrentHashMap<>();
+    private final Map<CoreMessageReceiver, Collection<MessageWithDeliveryTag>> pendingMessages = new ConcurrentHashMap<>();
     private volatile int messagesPerQueue;
 
     public TbServiceBusConsumerTemplate(TbQueueAdmin admin, TbServiceBusSettings serviceBusSettings, String topic, TbQueueMsgDecoder<T> decoder) {
+        super(topic);
         this.admin = admin;
         this.decoder = decoder;
-        this.topic = topic;
         this.serviceBusSettings = serviceBusSettings;
     }
 
     @Override
-    public String getTopic() {
-        return topic;
-    }
-
-    @Override
-    public void subscribe() {
-        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null, true));
-        subscribed = false;
-    }
-
-    @Override
-    public void subscribe(Set<TopicPartitionInfo> partitions) {
-        this.partitions = partitions;
-        subscribed = false;
-    }
-
-    @Override
-    public void unsubscribe() {
-        stopped = true;
-        receivers.forEach(CoreMessageReceiver::closeAsync);
-    }
-
-    @Override
-    public List<T> poll(long durationInMillis) {
-        if (!subscribed && partitions == null) {
-            try {
-                Thread.sleep(durationInMillis);
-            } catch (InterruptedException e) {
-                log.debug("Failed to await subscription", e);
+    protected List<MessageWithDeliveryTag> doPoll(long durationInMillis) {
+        List<CompletableFuture<Collection<MessageWithDeliveryTag>>> messageFutures =
+                receivers.stream()
+                        .map(receiver -> receiver
+                                .receiveAsync(messagesPerQueue, Duration.ofMillis(durationInMillis))
+                                .whenComplete((messages, err) -> {
+                                    if (!CollectionUtils.isEmpty(messages)) {
+                                        pendingMessages.put(receiver, messages);
+                                    } else if (err != null) {
+                                        log.error("Failed to receive messages.", err);
+                                    }
+                                }))
+                        .collect(Collectors.toList());
+        try {
+            return fromList(messageFutures)
+                    .get()
+                    .stream()
+                    .flatMap(messages -> CollectionUtils.isEmpty(messages) ? Stream.empty() : messages.stream())
+                    .collect(Collectors.toList());
+        } catch (InterruptedException | ExecutionException e) {
+            if (stopped) {
+                log.info("[{}] Service Bus consumer is stopped.", getTopic());
+            } else {
+                log.error("Failed to receive messages", e);
             }
-        } else {
-            if (!subscribed) {
-                createReceivers();
-                messagesPerQueue = receivers.size() / partitions.size();
-                subscribed = true;
-            }
-
-            List<CompletableFuture<Collection<MessageWithDeliveryTag>>> messageFutures =
-                    receivers.stream()
-                            .map(receiver -> receiver
-                                    .receiveAsync(messagesPerQueue, Duration.ofMillis(durationInMillis))
-                                    .whenComplete((messages, err) -> {
-                                        if (!CollectionUtils.isEmpty(messages)) {
-                                            pendingMessages.put(receiver, messages);
-                                        } else if (err != null) {
-                                            log.error("Failed to receive messages.", err);
-                                        }
-                                    }))
-                            .collect(Collectors.toList());
-            try {
-                return fromList(messageFutures)
-                        .get()
-                        .stream()
-                        .flatMap(messages -> CollectionUtils.isEmpty(messages) ? Stream.empty() : messages.stream())
-                        .map(message -> {
-                            try {
-                                return decode(message);
-                            } catch (InvalidProtocolBufferException e) {
-                                log.error("Failed to parse message.", e);
-                                throw new RuntimeException("Failed to parse message.", e);
-                            }
-                        }).collect(Collectors.toList());
-            } catch (InterruptedException | ExecutionException e) {
-                if (stopped) {
-                    log.info("[{}] Service Bus consumer is stopped.", topic);
-                } else {
-                    log.error("Failed to receive messages", e);
-                }
-            }
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+    }
+
+    @Override
+    protected void doSubscribe(List<String> topicNames) {
+        createReceivers();
+        messagesPerQueue = receivers.size() / partitions.size();
+    }
+
+    @Override
+    protected void doCommit() {
+        pendingMessages.forEach((receiver, msgs) ->
+                msgs.forEach(msg -> receiver.completeMessageAsync(msg.getDeliveryTag(), TransactionContext.NULL_TXN)));
+        pendingMessages.clear();
+    }
+
+    @Override
+    protected void doUnsubscribe() {
+        receivers.forEach(CoreMessageReceiver::closeAsync);
     }
 
     private void createReceivers() {
@@ -167,7 +137,7 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQue
             receivers = new HashSet<>(fromList(receiverFutures).get());
         } catch (InterruptedException | ExecutionException e) {
             if (stopped) {
-                log.info("[{}] Service Bus consumer is stopped.", topic);
+                log.info("[{}] Service Bus consumer is stopped.", getTopic());
             } else {
                 log.error("Failed to create receivers", e);
             }
@@ -196,13 +166,7 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> implements TbQue
     }
 
     @Override
-    public void commit() {
-        pendingMessages.forEach((receiver, msgs) ->
-                msgs.forEach(msg -> receiver.completeMessageAsync(msg.getDeliveryTag(), TransactionContext.NULL_TXN)));
-        pendingMessages.clear();
-    }
-
-    private T decode(MessageWithDeliveryTag data) throws InvalidProtocolBufferException {
+    protected T decode(MessageWithDeliveryTag data) throws InvalidProtocolBufferException {
         DefaultTbQueueMsg msg = gson.fromJson(new String(((Data) data.getMessage().getBody()).getValue().getArray()), DefaultTbQueueMsg.class);
         return decoder.decode(msg);
     }

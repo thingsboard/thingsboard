@@ -23,9 +23,9 @@ import com.rabbitmq.client.GetResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
-import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
+import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 
 import java.io.IOException;
@@ -37,33 +37,26 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
+public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQueueConsumerTemplate<GetResponse, T> {
 
     private final Gson gson = new Gson();
     private final TbQueueAdmin admin;
-    private final String topic;
     private final TbQueueMsgDecoder<T> decoder;
-    private final TbRabbitMqSettings rabbitMqSettings;
     private final Channel channel;
     private final Connection connection;
 
-    private volatile Set<TopicPartitionInfo> partitions;
-    private volatile boolean subscribed;
     private volatile Set<String> queues;
-    private volatile boolean stopped;
 
     public TbRabbitMqConsumerTemplate(TbQueueAdmin admin, TbRabbitMqSettings rabbitMqSettings, String topic, TbQueueMsgDecoder<T> decoder) {
+        super(topic);
         this.admin = admin;
         this.decoder = decoder;
-        this.topic = topic;
-        this.rabbitMqSettings = rabbitMqSettings;
         try {
             connection = rabbitMqSettings.getConnectionFactory().newConnection();
         } catch (IOException | TimeoutException e) {
             log.error("Failed to create connection.", e);
             throw new RuntimeException("Failed to create connection.", e);
         }
-
         try {
             channel = connection.createChannel();
         } catch (IOException e) {
@@ -74,25 +67,42 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
     }
 
     @Override
-    public String getTopic() {
-        return topic;
+    protected List<GetResponse> doPoll(long durationInMillis) {
+        List<GetResponse> result = queues.stream()
+                .map(queue -> {
+                    try {
+                        return channel.basicGet(queue, false);
+                    } catch (IOException e) {
+                        log.error("Failed to get messages from queue: [{}]", queue);
+                        throw new RuntimeException("Failed to get messages from queue.", e);
+                    }
+                }).filter(Objects::nonNull).collect(Collectors.toList());
+        if (result.size() > 0) {
+            return result;
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     @Override
-    public void subscribe() {
-        partitions = Collections.singleton(new TopicPartitionInfo(topic, null, null, true));
-        subscribed = false;
+    protected void doSubscribe(List<String> topicNames) {
+        queues = partitions.stream()
+                .map(TopicPartitionInfo::getFullTopicName)
+                .collect(Collectors.toSet());
+        queues.forEach(admin::createTopicIfNotExists);
     }
 
     @Override
-    public void subscribe(Set<TopicPartitionInfo> partitions) {
-        this.partitions = partitions;
-        subscribed = false;
+    protected void doCommit() {
+        try {
+            channel.basicAck(0, true);
+        } catch (IOException e) {
+            log.error("Failed to ack messages.", e);
+        }
     }
 
     @Override
-    public void unsubscribe() {
-        stopped = true;
+    protected void doUnsubscribe() {
         if (channel != null) {
             try {
                 channel.close();
@@ -106,63 +116,6 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> implements TbQueue
             } catch (IOException e) {
                 log.error("Failed to close the connection.");
             }
-        }
-    }
-
-    @Override
-    public List<T> poll(long durationInMillis) {
-        if (!subscribed && partitions == null) {
-            try {
-                Thread.sleep(durationInMillis);
-            } catch (InterruptedException e) {
-                log.debug("Failed to await subscription", e);
-            }
-        } else {
-            if (!subscribed) {
-                queues = partitions.stream()
-                        .map(TopicPartitionInfo::getFullTopicName)
-                        .collect(Collectors.toSet());
-
-                queues.forEach(admin::createTopicIfNotExists);
-                subscribed = true;
-            }
-
-            List<T> result = queues.stream()
-                    .map(queue -> {
-                        try {
-                            return channel.basicGet(queue, false);
-                        } catch (IOException e) {
-                            log.error("Failed to get messages from queue: [{}]", queue);
-                            throw new RuntimeException("Failed to get messages from queue.", e);
-                        }
-                    }).filter(Objects::nonNull).map(message -> {
-                        try {
-                            return decode(message);
-                        } catch (InvalidProtocolBufferException e) {
-                            log.error("Failed to decode message: [{}].", message);
-                            throw new RuntimeException("Failed to decode message.", e);
-                        }
-                    }).collect(Collectors.toList());
-            if (result.size() > 0) {
-                return result;
-            }
-        }
-        try {
-            Thread.sleep(durationInMillis);
-        } catch (InterruptedException e) {
-            if (!stopped) {
-                log.error("Failed to wait.", e);
-            }
-        }
-        return Collections.emptyList();
-    }
-
-    @Override
-    public void commit() {
-        try {
-            channel.basicAck(0, true);
-        } catch (IOException e) {
-            log.error("Failed to ack messages.", e);
         }
     }
 

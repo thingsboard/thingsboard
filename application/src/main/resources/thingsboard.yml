@@ -126,8 +126,8 @@ security:
             firstNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_FIRST_NAME_ATTRIBUTE_KEY:}"
             lastNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_LAST_NAME_ATTRIBUTE_KEY:}"
             tenantNameStrategy: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_STRATEGY:domain}" # domain, email or custom
-            tenantNameStrategyPattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_STRATEGY_PATTERN:}"
-            customerNameStrategyPattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_CUSTOMER_NAME_STRATEGY_PATTERN:}"
+            tenantNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_PATTERN:}" # %{attribute_key} as placeholder for attributes value by key
+            customerNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_CUSTOMER_NAME_PATTERN:}" # %{attribute_key} as placeholder for attributes value by key
           custom:
             url: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_URL:}"
             username: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_USERNAME:}"
@@ -637,7 +637,7 @@ queue:
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:60000}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
-      print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:10000}"
+      print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"
@@ -657,7 +657,7 @@ queue:
     pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:60000}"
     stats:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
-      print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
+      print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
     queues:
       - name: "${TB_QUEUE_RE_MAIN_QUEUE_NAME:Main}"
         topic: "${TB_QUEUE_RE_MAIN_TOPIC:tb_rule_engine.main}"

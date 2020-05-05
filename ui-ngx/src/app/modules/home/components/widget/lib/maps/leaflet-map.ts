@@ -14,19 +14,26 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngTuple, LatLngBounds, Point, MarkerClusterGroupOptions, markerClusterGroup } from 'leaflet';
+import L, { LatLngBounds, LatLngTuple, markerClusterGroup, MarkerClusterGroupOptions } from 'leaflet';
 
 import 'leaflet-providers';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 
-import { MapSettings, MarkerSettings, FormattedData, UnitedMapSettings, PolygonSettings, PolylineSettings } from './map-models';
+import {
+  FormattedData,
+  MapSettings,
+  MarkerSettings,
+  PolygonSettings,
+  PolylineSettings,
+  UnitedMapSettings
+} from './map-models';
 import { Marker } from './markers';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { DatasourceData } from '@app/shared/models/widget.models';
-import { safeExecute } from '@app/core/utils';
+import { safeExecute } from '@home/components/widget/lib/maps/maps-utils';
 
 export default abstract class LeafletMap {
 
@@ -38,13 +45,11 @@ export default abstract class LeafletMap {
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
     options: UnitedMapSettings;
-    isMarketCluster: boolean;
     bounds: L.LatLngBounds;
-    newMarker: L.Marker;
     datasources: FormattedData[];
     markersCluster;
 
-    constructor(public $container: HTMLElement, options: UnitedMapSettings) {
+    protected constructor(public $container: HTMLElement, options: UnitedMapSettings) {
         this.options = options;
     }
 
@@ -125,7 +130,7 @@ export default abstract class LeafletMap {
                 addMarker.setPosition('topright')
             }
             L.Control.AddMarker = L.Control.extend({
-                onAdd(map) {
+                onAdd() {
                     const img = L.DomUtil.create('img') as any;
                     img.src = `assets/add_location.svg`;
                     img.style.width = '32px';
@@ -138,7 +143,7 @@ export default abstract class LeafletMap {
                     draggableImg.on('dragend', dragListener)
                     return img;
                 },
-                onRemove(map) {
+                onRemove() {
                 },
                 dragMarker: this.dragMarker
             } as any);
@@ -166,7 +171,7 @@ export default abstract class LeafletMap {
         this.datasources = dataSources;
     }
 
-    public saveMarkerLocation(e) {
+    public saveMarkerLocation(_e) {
 
     }
 

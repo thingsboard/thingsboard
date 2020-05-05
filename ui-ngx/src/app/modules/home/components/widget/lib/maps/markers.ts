@@ -14,10 +14,9 @@
 /// limitations under the License.
 ///
 
-import { aspectCache, parseWithTranslation, safeExecute } from '@app/core/utils';
 import L, { LeafletMouseEvent } from 'leaflet';
 import { FormattedData, MarkerSettings } from './map-models';
-import { createTooltip } from './maps-utils';
+import { aspectCache, createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
 import tinycolor from 'tinycolor2';
 
 export class Marker {
@@ -50,7 +49,7 @@ export class Marker {
             this.leafletMarker.on('click', (event: LeafletMouseEvent) => {
                 for (const action in this.settings.markerClick) {
                     if (typeof (this.settings.markerClick[action]) === 'function') {
-                        this.settings.markerClick[action](event, this.data.$datasource);
+                        this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
                     }
                 }
             });
