@@ -19,7 +19,7 @@ import LeafletMap from '../leaflet-map';
 import { UnitedMapSettings } from '../map-models';
 import { Observable } from 'rxjs';
 import { map, filter, switchMap } from 'rxjs/operators';
-import { aspectCache, parseFunction } from '@home/components/widget/lib/maps/maps-utils';
+import { aspectCache, calculateNewPointCoordinate, parseFunction } from '@home/components/widget/lib/maps/maps-utils';
 
 const maxZoom = 4;// ?
 
@@ -79,9 +79,10 @@ export class ImageMap extends LeafletMap {
         if (lastCenterPos) {
             lastCenterPos.x *= w;
             lastCenterPos.y *= h;
-            /* this.ctx.$scope.$injector.get('$mdUtil').nextTick(() => {
-                 this.map.panTo(center, { animate: false });
-             });*/
+            const center = this.pointToLatLng(lastCenterPos.x, lastCenterPos.y);
+            setTimeout(() => {
+              this.map.panTo(center, { animate: false });
+            }, 0);
         }
     }
 
@@ -133,7 +134,7 @@ export class ImageMap extends LeafletMap {
 
     convertPosition(expression): L.LatLng {
         if (isNaN(expression[this.options.xPosKeyName]) || isNaN(expression[this.options.yPosKeyName])) return null;
-        Object.assign(expression, this.posFunction(expression[this.options.xPosKeyName], expression[this.options.yPosKeyName]))
+        Object.assign(expression, this.posFunction(expression[this.options.xPosKeyName], expression[this.options.yPosKeyName]));
         return this.pointToLatLng(
           expression.x * this.width,
           expression.y * this.height);
@@ -148,9 +149,10 @@ export class ImageMap extends LeafletMap {
     }
 
     convertToCustomFormat(position: L.LatLng): object {
+        const point = this.latLngToPoint(position);
         return {
-            [this.options.xPosKeyName]: (position.lng + 180) / 360,
-            [this.options.yPosKeyName]: (position.lat + 180) / 360
+            [this.options.xPosKeyName]: calculateNewPointCoordinate(point.x, this.width),
+            [this.options.yPosKeyName]: calculateNewPointCoordinate(point.y, this.height)
         }
     }
 }
