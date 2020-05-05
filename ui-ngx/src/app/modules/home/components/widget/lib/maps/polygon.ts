@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngExpression, LatLngTuple } from 'leaflet';
+import L, { LatLngExpression, LatLngTuple, LeafletMouseEvent } from 'leaflet';
 import { createTooltip } from './maps-utils';
 import { PolygonSettings, FormattedData } from './map-models';
 import { DatasourceData } from '@app/shared/models/widget.models';
@@ -27,7 +27,7 @@ export class Polygon {
     data;
     dataSources;
 
-    constructor(public map, polyData: DatasourceData, dataSources, private settings: PolygonSettings, onClickListener?) {
+    constructor(public map, polyData: DatasourceData, dataSources, private settings: PolygonSettings) {
         this.leafletPoly = L.polygon(polyData.data, {
             fill: true,
             fillColor: settings.polygonColor,
@@ -39,11 +39,17 @@ export class Polygon {
         this.dataSources = dataSources;
         this.data = polyData;
         if (settings.showPolygonTooltip) {
-            this.tooltip = createTooltip(this.leafletPoly, settings);
+            this.tooltip = createTooltip(this.leafletPoly, settings, polyData.datasource);
             this.updateTooltip(polyData);
         }
-        if (onClickListener) {
-            this.leafletPoly.on('click', onClickListener);
+        if (settings.polygonClick) {
+            this.leafletPoly.on('click', (event: LeafletMouseEvent) => {
+                for (const action in this.settings.polygonClick) {
+                    if (typeof (this.settings.polygonClick[action]) === 'function') {
+                        this.settings.polygonClick[action](event, polyData.datasource);
+                    }
+                }
+            });
         }
     }
 

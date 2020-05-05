@@ -42,7 +42,7 @@ export class Marker {
         });
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletMarker, settings);
+            this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource);
             this.updateMarkerTooltip(data);
         }
 
@@ -50,7 +50,7 @@ export class Marker {
             this.leafletMarker.on('click', (event: LeafletMouseEvent) => {
                 for (const action in this.settings.markerClick) {
                     if (typeof (this.settings.markerClick[action]) === 'function') {
-                        this.settings.markerClick[action](event);
+                        this.settings.markerClick[action](event, this.data.$datasource);
                     }
                 }
             });

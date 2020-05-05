@@ -198,9 +198,15 @@ export default abstract class LeafletMap {
 
     fitBounds(bounds: LatLngBounds, useDefaultZoom = false, padding?: LatLngTuple) {
         if (bounds.isValid()) {
-            if ((!this.options.fitMapBounds || this.options.useDefaultCenterPosition) && this.options.defaultZoomLevel) {
+            this.bounds = this.bounds.extend(bounds);
+            if (!this.options.fitMapBounds && this.options.defaultZoomLevel) {
                 this.map.setZoom(this.options.defaultZoomLevel, { animate: false });
-                this.map.panTo(this.options.defaultCenterPosition, { animate: false });
+                if (this.options.useDefaultCenterPosition) {
+                    this.map.panTo(this.options.defaultCenterPosition, { animate: false });
+                }
+                else {
+                    this.map.panTo(this.bounds.getCenter());
+                }
             } else {
                 this.map.once('zoomend', () => {
                     if (!this.options.defaultZoomLevel && this.map.getZoom() > this.options.minZoomLevel) {
@@ -212,7 +218,6 @@ export default abstract class LeafletMap {
                 }
                 this.map.fitBounds(bounds, { padding: padding || [50, 50], animate: false });
             }
-            this.bounds = bounds;
         }
     }
 
