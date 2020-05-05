@@ -30,10 +30,11 @@ export class ImageMap extends LeafletMap {
     width = 0;
     height = 0;
     imageUrl;
+    posFunction;
 
     constructor($container: HTMLElement, options: UnitedMapSettings) {
         super($container, options);
-        options.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((origXPos, origYPos) => { x, y });
+        this.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((origXPos, origYPos) => { x, y });
         this.imageUrl = options.mapUrl;
         aspectCache(this.imageUrl).subscribe(aspect => {
             this.aspect = aspect;
@@ -132,9 +133,10 @@ export class ImageMap extends LeafletMap {
 
     convertPosition(expression): L.LatLng {
         if (isNaN(expression[this.options.xPosKeyName]) || isNaN(expression[this.options.yPosKeyName])) return null;
+        Object.assign(expression, this.posFunction(expression[this.options.xPosKeyName], expression[this.options.yPosKeyName]))
         return this.pointToLatLng(
-            expression[this.options.xPosKeyName] * this.width,
-            expression[this.options.yPosKeyName] * this.height);
+          expression.x * this.width,
+          expression.y * this.height);
     }
 
     pointToLatLng(x, y): L.LatLng {
