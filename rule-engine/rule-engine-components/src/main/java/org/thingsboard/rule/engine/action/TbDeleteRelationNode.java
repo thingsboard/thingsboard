@@ -48,8 +48,6 @@ import java.util.List;
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
 
-    private String relationType;
-
     @Override
     protected TbDeleteRelationNodeConfiguration loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbDeleteRelationNodeConfiguration.class);
@@ -61,19 +59,18 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     }
 
     @Override
-    protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg) {
-        return getRelationContainerListenableFuture(ctx, msg);
+    protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg, String relationType) {
+        return getRelationContainerListenableFuture(ctx, msg, relationType);
     }
 
     @Override
-    protected ListenableFuture<RelationContainer> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
-        return Futures.transform(processSingle(ctx, msg, entityContainer), result -> new RelationContainer(msg, result), MoreExecutors.directExecutor());
+    protected ListenableFuture<RelationContainer> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer, String relationType) {
+        return Futures.transform(processSingle(ctx, msg, entityContainer, relationType), result -> new RelationContainer(msg, result), MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<RelationContainer> getRelationContainerListenableFuture(TbContext ctx, TbMsg msg) {
-        relationType = processPattern(msg, config.getRelationType());
+    private ListenableFuture<RelationContainer> getRelationContainerListenableFuture(TbContext ctx, TbMsg msg, String relationType) {
         if (config.isDeleteForSingleEntity()) {
-            return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer), MoreExecutors.directExecutor());
+            return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer, relationType), MoreExecutors.directExecutor());
         } else {
             return Futures.transform(processList(ctx, msg), result -> new RelationContainer(msg, result), MoreExecutors.directExecutor());
         }
@@ -100,18 +97,18 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg, EntityContainer entityContainer, String relationType) {
         SearchDirectionIds sdId = processSingleSearchDirection(msg, entityContainer);
         return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON),
                 result -> {
                     if (result) {
-                        return processSingleDeleteRelation(ctx, sdId);
+                        return processSingleDeleteRelation(ctx, sdId, relationType);
                     }
                     return Futures.immediateFuture(true);
                 }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> processSingleDeleteRelation(TbContext ctx, SearchDirectionIds sdId) {
+    private ListenableFuture<Boolean> processSingleDeleteRelation(TbContext ctx, SearchDirectionIds sdId, String relationType) {
         return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
     }
 
