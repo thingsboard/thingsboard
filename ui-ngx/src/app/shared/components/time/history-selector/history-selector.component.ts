@@ -28,6 +28,8 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
 
   @Input() settings: HistorySelectSettings
   @Input() intervals = [];
+  @Input() anchors = [];
+  @Input() useAnchors = false;
 
   @Output() timeUpdated: EventEmitter<number> = new EventEmitter();
 
@@ -56,7 +58,7 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
       this.interval = interval(1000 / this.speed)
         .pipe(
           filter(() => this.playing)).subscribe(() => {
-          this.index++;
+            this.index++;
             if (this.index < this.maxTimeIndex) {
               this.cd.detectChanges();
               this.timeUpdated.emit(this.intervals[this.index]);
@@ -91,14 +93,24 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
 
   moveNext() {
     if (this.index < this.maxTimeIndex) {
-      this.index++;
+      if (this.useAnchors) {
+        const anchorIndex = this.findIndex(this.intervals[this.index], this.anchors)+1;
+        this.index = this.findIndex(this.anchors[anchorIndex], this.intervals);
+      }
+      else
+        this.index++;
     }
     this.pause();
   }
 
   movePrev() {
     if (this.index > this.minTimeIndex) {
-      this.index++;
+      if (this.useAnchors) {
+        const anchorIndex = this.findIndex(this.intervals[this.index], this.anchors) - 1;
+        this.index = this.findIndex(this.anchors[anchorIndex], this.intervals);
+      }
+      else
+        this.index--;
     }
     this.pause();
   }
@@ -111,6 +123,14 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   moveEnd() {
     this.index = this.maxTimeIndex;
     this.pause();
+  }
+
+  findIndex(value, array: any[]) {
+    let i = 0;
+    while (array[i] < value) {
+      i++;
+    };
+    return i;
   }
 
   changeIndex() {

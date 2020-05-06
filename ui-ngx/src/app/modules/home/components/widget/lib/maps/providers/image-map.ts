@@ -112,7 +112,7 @@ export class ImageMap extends LeafletMap {
         }
     }
 
-    fitBounds(bounds: LatLngBounds, useDefaultZoom = false, padding?: LatLngTuple) { }
+    fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) { }
 
     initMap(updateImage?) {
         if (!this.map && this.aspect > 0) {

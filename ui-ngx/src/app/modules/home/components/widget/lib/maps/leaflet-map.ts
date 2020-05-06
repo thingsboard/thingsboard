@@ -14,18 +14,18 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngBounds, LatLngTuple, markerClusterGroup, MarkerClusterGroupOptions } from 'leaflet';
+import L, { LatLngBounds, LatLngTuple, markerClusterGroup, MarkerClusterGroupOptions, FeatureGroup, LayerGroup } from 'leaflet';
 
 import 'leaflet-providers';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 
 import {
-  FormattedData,
-  MapSettings,
-  MarkerSettings,
-  PolygonSettings,
-  PolylineSettings,
-  UnitedMapSettings
+    FormattedData,
+    MapSettings,
+    MarkerSettings,
+    PolygonSettings,
+    PolylineSettings,
+    UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -33,7 +33,7 @@ import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { DatasourceData } from '@app/shared/models/widget.models';
-import { safeExecute } from '@home/components/widget/lib/maps/maps-utils';
+import { safeExecute, createTooltip } from '@home/components/widget/lib/maps/maps-utils';
 
 export default abstract class LeafletMap {
 
@@ -48,6 +48,7 @@ export default abstract class LeafletMap {
     bounds: L.LatLngBounds;
     datasources: FormattedData[];
     markersCluster;
+    points: FeatureGroup;
 
     protected constructor(public $container: HTMLElement, options: UnitedMapSettings) {
         this.options = options;
@@ -158,9 +159,9 @@ export default abstract class LeafletMap {
         this.map = map;
         if (this.options.useDefaultCenterPosition) {
             this.map.panTo(this.options.defaultCenterPosition);
-            this.bounds = map.getBounds();
+            //  this.bounds = map.getBounds();
         }
-        else this.bounds = new L.LatLngBounds(null, null);
+        //  else this.bounds = new L.LatLngBounds(null, null);
         if (this.options.draggableMarker) {
             this.addMarkerControl();
         }
@@ -201,9 +202,9 @@ export default abstract class LeafletMap {
         return this.map.getCenter();
     }
 
-    fitBounds(bounds: LatLngBounds, useDefaultZoom = false, padding?: LatLngTuple) {
+    fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) {
         if (bounds.isValid()) {
-            this.bounds = this.bounds.extend(bounds);
+            this.bounds = !!this.bounds ? this.bounds.extend(bounds) : bounds;
             if (!this.options.fitMapBounds && this.options.defaultZoomLevel) {
                 this.map.setZoom(this.options.defaultZoomLevel, { animate: false });
                 if (this.options.useDefaultCenterPosition) {
@@ -219,9 +220,9 @@ export default abstract class LeafletMap {
                     }
                 });
                 if (this.options.useDefaultCenterPosition) {
-                    bounds = bounds.extend(this.options.defaultCenterPosition);
+                    this.bounds = this.bounds.extend(this.options.defaultCenterPosition);
                 }
-                this.map.fitBounds(bounds, { padding: padding || [50, 50], animate: false });
+                this.map.fitBounds(this.bounds, { padding: padding || [50, 50], animate: false });
             }
         }
     }
@@ -253,11 +254,10 @@ export default abstract class LeafletMap {
                 const style = currentImage ? 'background-image: url(' + currentImage.url + ');' : '';
                 this.options.icon = L.divIcon({
                     html: `<div class="arrow"
-                     style="transform: translate(-10px, -10px);
-                     ${style}
-                      rotate(${data.rotationAngle}deg);
-                      "><div>`
-                })
+                     style="transform: translate(-10px, -10px)
+                     rotate(${data.rotationAngle}deg);
+                     ${style}"><div>`
+                });
             }
             else {
                 this.options.icon = null;
@@ -279,7 +279,8 @@ export default abstract class LeafletMap {
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.convertPosition(data), settings, data, dataSources, this.dragMarker);
-            this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()), settings.draggableMarker && this.markers.size < 2);
+            if (this.bounds)
+                this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
             this.markers.set(key, newMarker);
             if (this.options.useClusterMarkers) {
                 this.markersCluster.addLayer(newMarker.leafletMarker);
@@ -314,6 +315,29 @@ export default abstract class LeafletMap {
         }
     }
 
+    updatePoints(pointsData: FormattedData[], getTooltip: (point: FormattedData, setTooltip?: boolean) => string) {
+        this.map$.subscribe(map => {
+            if (this.points) {
+                map.removeLayer(this.points);
+            }
+            this.points = new FeatureGroup();
+            pointsData.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
+                const point = L.circleMarker(this.convertPosition(data), {
+                    color: this.options.pointColor,
+                    radius: this.options.pointSize
+                });
+                if (!this.options.pointTooltipOnRightPanel) {
+                    point.on('click', () => getTooltip(data));
+                }
+                else {
+                    createTooltip(point, this.options, pointsData, getTooltip(data, false));
+                }
+                this.points.addLayer(point);
+            });
+            map.addLayer(this.points);
+        });
+    }
+
     setImageAlias(alias: Observable<any>) {
     }
 
@@ -338,15 +362,17 @@ export default abstract class LeafletMap {
             this.ready$.subscribe(() => {
                 const poly = new Polyline(this.map,
                     data.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
-                const bounds = this.bounds.extend(poly.leafletPoly.getBounds());
-                this.fitBounds(bounds)
-                this.polylines.set(data[0].entityName, poly)
+                const bounds = poly.leafletPoly.getBounds();
+                this.fitBounds(bounds);
+                this.polylines.set(data[0].entityName, poly);
             });
     }
 
     updatePolyline(key: string, data: FormattedData[], dataSources: FormattedData[], settings: PolylineSettings) {
         this.ready$.subscribe(() => {
-            this.polylines.get(key).updatePolyline(settings, data.map(el => this.convertPosition(el)), dataSources);
+            const poly = this.polylines.get(key);
+            poly.updatePolyline(settings, data.map(el => this.convertPosition(el)), dataSources);
+            const bounds = poly.leafletPoly.getBounds();
         });
     }
 
@@ -371,7 +397,7 @@ export default abstract class LeafletMap {
     createPolygon(polyData: DatasourceData, dataSources: DatasourceData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
             const polygon = new Polygon(this.map, polyData, dataSources, settings);
-            const bounds = this.bounds.extend(polygon.leafletPoly.getBounds());
+            const bounds = polygon.leafletPoly.getBounds();
             this.fitBounds(bounds);
             this.polygons.set(polyData.datasource.entityName, polygon);
         });
@@ -381,7 +407,6 @@ export default abstract class LeafletMap {
         this.ready$.subscribe(() => {
             const poly = this.polygons.get(polyData.datasource.entityName);
             poly.updatePolygon(polyData.data, dataSources, settings);
-            this.fitBounds(poly.leafletPoly.getBounds());
         });
     }
 }

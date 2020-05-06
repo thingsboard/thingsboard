@@ -923,35 +923,7 @@ export const pathSchema =
                 title: 'Decorator repeat',
                 type: 'string',
                 default: '20px'
-            },
-            showPoints: {
-                title: 'Show points',
-                type: 'boolean',
-                default: false
-            },
-            pointColor: {
-                title: 'Point color',
-                type: 'string'
-            },
-            pointSize: {
-                title: 'Point size (px)',
-                type: 'number',
-                default: 10
-            },
-            usePointAsAnchor: {
-                title: 'Use point as anchor',
-                type: 'boolean',
-                default: false
-            },
-            pointAsAnchorFunction: {
-                title: 'Point as anchor function: f(data, dsData, dsIndex)',
-                type: 'string'
-            },
-            pointTooltipOnRightPanel: {
-                title: 'Independant point tooltip',
-                type: 'boolean',
-                default: true
-            },
+            }
         },
         required: []
     },
@@ -986,13 +958,7 @@ export const pathSchema =
         }, {
             key: 'decoratorRepeat',
             type: 'textarea'
-        }, 'showPoints', {
-            key: 'pointColor',
-            type: 'color'
-        }, 'pointSize', 'usePointAsAnchor', {
-            key: 'pointAsAnchorFunction',
-            type: 'javascript'
-        }, 'pointTooltipOnRightPanel',
+        }
     ]
 };
 

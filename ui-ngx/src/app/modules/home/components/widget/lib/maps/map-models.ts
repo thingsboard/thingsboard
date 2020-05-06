@@ -159,9 +159,15 @@ export interface HistorySelectSettings {
     buttonColor: string;
 }
 
+export type TripAnimationSttings = {
+    pointColor: string;
+    pointSize: number;
+    pointTooltipOnRightPanel: boolean;
+}
+
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;
 
-export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings;
+export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings & TripAnimationSttings;
 
 interface IProvider {
     MapClass: Type<LeafletMap>,
