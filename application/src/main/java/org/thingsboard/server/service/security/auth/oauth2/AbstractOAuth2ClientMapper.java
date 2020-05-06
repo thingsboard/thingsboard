@@ -63,7 +63,7 @@ public abstract class AbstractOAuth2ClientMapper {
 
     private final Lock userCreationLock = new ReentrantLock();
 
-    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, boolean allowUserCreation) {
+    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, boolean allowUserCreation, boolean activateUser) {
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, oauth2User.getEmail());
 
         User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, oauth2User.getEmail());
@@ -93,8 +93,10 @@ public abstract class AbstractOAuth2ClientMapper {
                     user.setFirstName(oauth2User.getFirstName());
                     user.setLastName(oauth2User.getLastName());
                     user = userService.saveUser(user);
-                    UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-                    userService.activateUserCredentials(user.getTenantId(), userCredentials.getActivateToken(), passwordEncoder.encode(""));
+                    if (activateUser) {
+                        UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+                        userService.activateUserCredentials(user.getTenantId(), userCredentials.getActivateToken(), passwordEncoder.encode(""));
+                    }
                 }
             } catch (Exception e) {
                 log.error("Can't get or create security user from oauth2 user", e);

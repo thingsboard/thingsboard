@@ -127,11 +127,13 @@ security:
         userInfoUri: "${SECURITY_OAUTH2_DEFAULT_USER_INFO_URI:}"
         userNameAttributeName: "${SECURITY_OAUTH2_DEFAULT_USER_NAME_ATTRIBUTE_NAME:email}"
         mapperConfig:
+          # Allows to create user if it not exists
+          allowUserCreation: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ALLOW_USER_CREATION:true}"
+          # Allows user to setup ThingsBoard internal password and login over default Login window
+          activateUser: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ACTIVATE_USER:false}"
           # Mapper type of converter from external user into internal - 'basic' or 'custom'
           type: "${SECURITY_OAUTH2_DEFAULT_MAPPER_TYPE:basic}"
           basic:
-            # Allows to create user if it not exists
-            allowUserCreation: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_ALLOW_USER_CREATION:true}"
             # Key from attributes of external user object to use as email
             emailAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_EMAIL_ATTRIBUTE_KEY:email}"
             firstNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_FIRST_NAME_ATTRIBUTE_KEY:}"

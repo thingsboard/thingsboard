@@ -204,10 +204,10 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
             http.oauth2Login()
                     .loginPage("/oauth2Login")
                     .loginProcessingUrl(oauth2Configuration.getLoginProcessingUrl())
-                    .successHandler(oauth2AuthenticationSuccessHandler);
+                    .successHandler(oauth2AuthenticationSuccessHandler)
+                    .failureHandler(failureHandler);
         }
     }
-
 
     @Bean
     @ConditionalOnMissingBean(CorsFilter.class)

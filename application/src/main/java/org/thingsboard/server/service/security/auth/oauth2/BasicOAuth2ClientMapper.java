@@ -56,7 +56,8 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
             String customerName = sub.replace(config.getBasic().getCustomerNamePattern());
             oauth2User.setCustomerName(customerName);
         }
-        return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.getBasic().isAllowUserCreation());
+
+        return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.isAllowUserCreation(), config.isActivateUser());
     }
 
     private String getTenantName(Map<String, Object> attributes, OAuth2ClientMapperConfig config) {
