@@ -109,6 +109,7 @@ export class ImageMap extends LeafletMap {
                     lastCenterPos.y /= prevHeight;
                     this.updateBounds(updateImage, lastCenterPos);
                     this.map.invalidateSize(true);
+                    // TODO: need add update marker position
                 }
             }
         }
