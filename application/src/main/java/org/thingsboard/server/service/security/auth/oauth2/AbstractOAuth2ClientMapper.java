@@ -31,9 +31,11 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
@@ -50,6 +52,9 @@ public abstract class AbstractOAuth2ClientMapper {
 
     @Autowired
     private CustomerService customerService;
+
+    @Autowired
+    private InstallScripts installScripts;
 
     private final Lock userCreationLock = new ReentrantLock();
 
@@ -84,6 +89,9 @@ public abstract class AbstractOAuth2ClientMapper {
                     user.setLastName(oauth2User.getLastName());
                     user = userService.saveUser(user);
                 }
+            } catch (Exception e) {
+                log.error("Can't get or create security user from oauth2 user", e);
+                throw new RuntimeException("Can't get or create security user from oauth2 user", e);
             } finally {
                 userCreationLock.unlock();
             }
@@ -98,13 +106,14 @@ public abstract class AbstractOAuth2ClientMapper {
         }
     }
 
-    private TenantId getTenantId(String tenantName) {
+    private TenantId getTenantId(String tenantName) throws IOException {
         List<Tenant> tenants = tenantService.findTenants(new TextPageLink(1, tenantName)).getData();
         Tenant tenant;
         if (tenants == null || tenants.isEmpty()) {
             tenant = new Tenant();
             tenant.setTitle(tenantName);
             tenant = tenantService.saveTenant(tenant);
+            installScripts.createDefaultRuleChains(tenant.getId());
         } else {
             tenant = tenants.get(0);
         }
