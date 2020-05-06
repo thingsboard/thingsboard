@@ -51,7 +51,7 @@
                             <div class="text mat-typography">{{ "login.or" | translate | uppercase }}</div>
                             <div class="line"><md-divider></md-divider></div>
                         </div>
-                        <md-button ng-repeat="oauth2Client in oauth2Clients" class="md-raised md-warn"
+                        <md-button ng-repeat="oauth2Client in oauth2Clients" class="md-raised md-accent md-hue-2"
                                    layout="row" layout-align="center center" ng-href="{{ oauth2Client.url }}" target="_self">
                             <md-icon class="material-icons md-18" md-svg-icon="{{ oauth2Client.icon }}"></md-icon>
                             {{ 'login.login-with' | translate: {name: oauth2Client.name} }}
