@@ -98,7 +98,7 @@ export class ImageMap extends LeafletMap {
             width *= maxZoom;
             const prevWidth = this.width;
             const prevHeight = this.height;
-            if (this.width !== width) {
+            if (this.width !== width || updateImage) {
                 this.width = width;
                 this.height = width / this.aspect;
                 if (!this.map) {
