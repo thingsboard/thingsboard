@@ -521,39 +521,6 @@ public abstract class BaseController {
         return ruleNode;
     }
 
-
-    protected String constructBaseUrl(HttpServletRequest request) {
-        String scheme = request.getScheme();
-
-        String forwardedProto = request.getHeader("x-forwarded-proto");
-        if (forwardedProto != null) {
-            scheme = forwardedProto;
-        }
-
-        int serverPort = request.getServerPort();
-        if (request.getHeader("x-forwarded-port") != null) {
-            try {
-                serverPort = request.getIntHeader("x-forwarded-port");
-            } catch (NumberFormatException e) {
-            }
-        } else if (forwardedProto != null) {
-            switch (forwardedProto) {
-                case "http":
-                    serverPort = 80;
-                    break;
-                case "https":
-                    serverPort = 443;
-                    break;
-            }
-        }
-
-        String baseUrl = String.format("%s://%s:%d",
-                scheme,
-                request.getServerName(),
-                serverPort);
-        return baseUrl;
-    }
-
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
