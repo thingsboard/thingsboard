@@ -14,23 +14,17 @@
 /// limitations under the License.
 ///
 
-import { MapProviders, UnitedMapSettings } from './map-models';
+import { MapProviders, UnitedMapSettings, providerSets, hereProviders, defaultSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
-    openstreetMapSettingsSchema,
-    googleMapSettingsSchema,
-    imageMapSettingsSchema,
-    tencentMapSettingsSchema,
     commonMapSettingsSchema,
     routeMapSettingsSchema,
     markerClusteringSettingsSchema,
     markerClusteringSettingsSchemaLeaflet,
-    hereMapSettingsSchema,
     mapProviderSchema,
     mapPolygonSchema
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
-import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
 import { of, Subject } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
@@ -39,7 +33,6 @@ import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType,
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
-import { Type } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 
@@ -85,11 +78,19 @@ export class MapWidgetController implements MapWidgetInterface {
         return {};
     }
 
-    public static getProvidersSchema(mapProvider: MapProviders) {
-        mapProviderSchema.schema.properties.provider.default = mapProvider;
-        return mergeSchemes([mapProviderSchema,
+    public static getProvidersSchema(mapProvider: MapProviders, ignoreImageMap = false) {
+        if (mapProvider)
+            mapProviderSchema.schema.properties.provider.default = mapProvider;
+        const providerSchema = mapProviderSchema;
+        if (ignoreImageMap) {
+            providerSchema.form[0].items = providerSchema.form[0]?.items.filter(item => item.value !== 'image-map');
+        }
+        return mergeSchemes([providerSchema,
             ...Object.keys(providerSets)?.map(
-                (key: string) => { const setting = providerSets[key]; return addCondition(setting?.schema, `model.provider === '${setting.name}'`) })]);
+                (key: string) => {
+                    const setting = providerSets[key];
+                    return addCondition(setting?.schema, `model.provider === '${setting.name}'`);
+                })]);
     }
 
     public static settingsSchema(mapProvider: MapProviders, drawRoutes: boolean): JsonSettingsSchema {
@@ -218,6 +219,7 @@ export class MapWidgetController implements MapWidgetInterface {
             polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             labelColor: this.ctx.widgetConfig.color,
+            polygonKeyName: settings.polKeyName ? settings.polKeyName : settings.polygonKeyName,
             tooltipPattern: settings.tooltipPattern ||
                 '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${' +
                 settings.latKeyName + ':7}<br/><b>Longitude:</b> ${' + settings.lngKeyName + ':7}',
@@ -295,78 +297,4 @@ export class MapWidgetController implements MapWidgetInterface {
 
 export let TbMapWidgetV2: MapWidgetStaticInterface = MapWidgetController;
 
-interface IProvider {
-    MapClass: Type<LeafletMap>,
-    schema: JsonSettingsSchema,
-    name: string
-}
 
-export const providerSets: { [key: string]: IProvider } = {
-    'openstreet-map': {
-        MapClass: OpenStreetMap,
-        schema: openstreetMapSettingsSchema,
-        name: 'openstreet-map',
-    },
-    'tencent-map': {
-        MapClass: TencentMap,
-        schema: tencentMapSettingsSchema,
-        name: 'tencent-map'
-    },
-    'google-map': {
-        MapClass: GoogleMap,
-        schema: googleMapSettingsSchema,
-        name: 'google-map'
-    },
-    here: {
-        MapClass: HEREMap,
-        schema: hereMapSettingsSchema,
-        name: 'here'
-    },
-    'image-map': {
-        MapClass: ImageMap,
-        schema: imageMapSettingsSchema,
-        name: 'image-map'
-    }
-};
-
-export const defaultSettings: any = {
-    xPosKeyName: 'xPos',
-    yPosKeyName: 'yPos',
-    markerOffsetX: 0.5,
-    markerOffsetY: 1,
-    latKeyName: 'latitude',
-    lngKeyName: 'longitude',
-    polygonKeyName: 'coordinates',
-    showLabel: false,
-    label: '${entityName}',
-    showTooltip: false,
-    useDefaultCenterPosition: false,
-    showTooltipAction: 'click',
-    autocloseTooltip: false,
-    showPolygon: false,
-    labelColor: '#000000',
-    color: '#FE7569',
-    polygonColor: '#0000ff',
-    polygonStrokeColor: '#fe0001',
-    polygonOpacity: 0.5,
-    polygonStrokeOpacity: 1,
-    polygonStrokeWeight: 1,
-    useLabelFunction: false,
-    markerImages: [],
-    strokeWeight: 2,
-    strokeOpacity: 1.0,
-    initCallback: () => { },
-    defaultZoomLevel: 8,
-    disableScrollZooming: false,
-    minZoomLevel: 16,
-    credentials: '',
-    markerClusteringSetting: null,
-    draggableMarker: false,
-    fitMapBounds: true
-};
-
-export const hereProviders = [
-    'HERE.normalDay',
-    'HERE.normalNight',
-    'HERE.hybridDay',
-    'HERE.terrainDay']

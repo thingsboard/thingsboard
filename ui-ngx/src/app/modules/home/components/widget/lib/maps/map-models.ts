@@ -15,13 +15,19 @@
 ///
 
 import { LatLngTuple } from 'leaflet';
-import { Datasource } from '@app/shared/models/widget.models';
+import { Datasource, JsonSettingsSchema } from '@app/shared/models/widget.models';
+import { Type } from '@angular/core';
+import LeafletMap from './leaflet-map';
+import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
+import {
+    openstreetMapSettingsSchema, tencentMapSettingsSchema,
+    googleMapSettingsSchema, hereMapSettingsSchema, imageMapSettingsSchema
+} from './schemes';
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 
 export type MapSettings = {
-    polygonKeyName: any;
     draggableMarker: boolean;
     initCallback?: () => any;
     posFunction: (origXPos, origYPos) => { x, y };
@@ -106,7 +112,8 @@ export interface FormattedData {
 
 export type PolygonSettings = {
     showPolygon: boolean;
-    showTooltip: any;
+    polygonKeyName: string;
+    polKeyName: string;// deprecated
     polygonStrokeOpacity: number;
     polygonOpacity: number;
     polygonStrokeWeight: number;
@@ -114,12 +121,12 @@ export type PolygonSettings = {
     polygonColor: string;
     showPolygonTooltip: boolean;
     autocloseTooltip: boolean;
-    tooltipFunction: GenericFunction;
     showTooltipAction: string;
     tooltipAction: { [name: string]: actionsHandler };
-    tooltipPattern: string;
-    useTooltipFunction: boolean;
+    polygonTooltipPattern: string;
+    usePolygonTooltipFunction: boolean;
     polygonClick: { [name: string]: actionsHandler };
+    polygonTooltipFunction: GenericFunction;
     polygonColorFunction?: GenericFunction;
 }
 
@@ -155,3 +162,79 @@ export interface HistorySelectSettings {
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;
 
 export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings;
+
+interface IProvider {
+    MapClass: Type<LeafletMap>,
+    schema: JsonSettingsSchema,
+    name: string
+}
+
+export const providerSets: { [key: string]: IProvider } = {
+    'openstreet-map': {
+        MapClass: OpenStreetMap,
+        schema: openstreetMapSettingsSchema,
+        name: 'openstreet-map',
+    },
+    'tencent-map': {
+        MapClass: TencentMap,
+        schema: tencentMapSettingsSchema,
+        name: 'tencent-map'
+    },
+    'google-map': {
+        MapClass: GoogleMap,
+        schema: googleMapSettingsSchema,
+        name: 'google-map'
+    },
+    here: {
+        MapClass: HEREMap,
+        schema: hereMapSettingsSchema,
+        name: 'here'
+    },
+    'image-map': {
+        MapClass: ImageMap,
+        schema: imageMapSettingsSchema,
+        name: 'image-map'
+    }
+};
+
+export const defaultSettings: any = {
+    xPosKeyName: 'xPos',
+    yPosKeyName: 'yPos',
+    markerOffsetX: 0.5,
+    markerOffsetY: 1,
+    latKeyName: 'latitude',
+    lngKeyName: 'longitude',
+    polygonKeyName: 'coordinates',
+    showLabel: false,
+    label: '${entityName}',
+    showTooltip: false,
+    useDefaultCenterPosition: false,
+    showTooltipAction: 'click',
+    autocloseTooltip: false,
+    showPolygon: false,
+    labelColor: '#000000',
+    color: '#FE7569',
+    polygonColor: '#0000ff',
+    polygonStrokeColor: '#fe0001',
+    polygonOpacity: 0.5,
+    polygonStrokeOpacity: 1,
+    polygonStrokeWeight: 1,
+    useLabelFunction: false,
+    markerImages: [],
+    strokeWeight: 2,
+    strokeOpacity: 1.0,
+    initCallback: () => { },
+    defaultZoomLevel: 8,
+    disableScrollZooming: false,
+    minZoomLevel: 16,
+    credentials: '',
+    markerClusteringSetting: null,
+    draggableMarker: false,
+    fitMapBounds: true
+};
+
+export const hereProviders = [
+    'HERE.normalDay',
+    'HERE.normalNight',
+    'HERE.hybridDay',
+    'HERE.terrainDay']

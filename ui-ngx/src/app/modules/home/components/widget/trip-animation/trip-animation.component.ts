@@ -22,8 +22,8 @@ import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
 import { MapProviders } from '../lib/maps/map-models';
-import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
-import { tripAnimationSchema } from '../lib/maps/schemes';
+import { initSchema, addToSchema, addGroupInfo, addCondition } from '@app/core/schema-utils';
+import { tripAnimationSchema, mapPolygonSchema, pathSchema, pointSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { findAngle, getRatio, parseArray, parseWithTranslation, safeExecute } from '../lib/maps/maps-utils';
@@ -61,10 +61,16 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
 
   static getSettingsSchema(): JsonSettingsSchema {
     const schema = initSchema();
-    addToSchema(schema, TbMapWidgetV2.getProvidersSchema());
+    addToSchema(schema, TbMapWidgetV2.getProvidersSchema(null, true));
     addGroupInfo(schema, 'Map Provider Settings');
     addToSchema(schema, tripAnimationSchema);
     addGroupInfo(schema, 'Trip Animation Settings');
+    addToSchema(schema, pathSchema);
+    addGroupInfo(schema, 'Path Settings');
+    addToSchema(schema, addCondition(pointSchema, 'model.showPoint === true', ['showPoint']));
+    addGroupInfo(schema, 'Polygon Settings');
+    addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
+    addGroupInfo(schema, 'Polygon Settings');
     return schema;
   }
 
@@ -79,7 +85,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     }
     this.settings = { ...settings, ...this.ctx.settings };
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
-    if (subscription) subscription.callbacks.onDataUpdated = (updated) => {
+    if (subscription) subscription.callbacks.onDataUpdated = () => {
       this.historicalData = parseArray(this.ctx.data);
       this.activeTrip = this.historicalData[0][0];
       this.calculateIntervals();
@@ -106,6 +112,9 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     if (this.mapWidget) {
       if (this.settings.showPolygon) {
         this.mapWidget.map.updatePolygons(this.interpolatedData);
+      }
+      if(this.settings.showPoint){
+        this.mapWidget.map.updateMarkers(this.interpolatedData)
       }
       this.mapWidget.map.updateMarkers(currentPosition);
     }
