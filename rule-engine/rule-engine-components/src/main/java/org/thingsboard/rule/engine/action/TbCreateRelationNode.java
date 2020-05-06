@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -80,7 +79,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
             }
             container.setResult(result);
             return container;
-        }, MoreExecutors.directExecutor());
+        }, ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<Boolean> createIfAbsent(TbContext ctx, TbMsg msg, EntityContainer entityContainer, String relationType) {
@@ -118,7 +117,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
                 for (EntityRelation relation : entityRelations) {
                     list.add(ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), relation));
                 }
-                return Futures.transform(Futures.allAsList(list), result -> false, MoreExecutors.directExecutor());
+                return Futures.transform(Futures.allAsList(list), result -> false, ctx.getDbCallbackExecutor());
             }
             return Futures.immediateFuture(false);
         }, ctx.getDbCallbackExecutor());
@@ -159,7 +158,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
             } else {
                 return Futures.immediateFuture(true);
             }
-        }, MoreExecutors.directExecutor());
+        }, ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<Boolean> processAsset(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
