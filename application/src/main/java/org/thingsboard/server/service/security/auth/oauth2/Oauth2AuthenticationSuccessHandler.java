@@ -27,6 +27,7 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -65,6 +66,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
         JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
 
-        getRedirectStrategy().sendRedirect(request, response, "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());
+        String baseUrl = MiscUtils.constructBaseUrl(request);
+        getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());
     }
 }

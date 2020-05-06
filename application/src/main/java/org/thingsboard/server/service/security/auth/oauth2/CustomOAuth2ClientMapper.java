@@ -38,7 +38,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     @Override
     public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig config) {
         OAuth2User oauth2User = getOAuth2User(token, config.getCustom());
-        return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.getBasic().isAllowUserCreation());
+        return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.isAllowUserCreation(), config.isActivateUser());
     }
 
     private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig.CustomOAuth2ClientMapperConfig custom) {

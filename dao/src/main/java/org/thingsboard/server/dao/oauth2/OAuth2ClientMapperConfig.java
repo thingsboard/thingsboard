@@ -20,13 +20,14 @@ import lombok.Data;
 @Data
 public class OAuth2ClientMapperConfig {
 
+    private boolean allowUserCreation;
+    private boolean activateUser;
     private String type;
     private BasicOAuth2ClientMapperConfig basic;
     private CustomOAuth2ClientMapperConfig custom;
 
     @Data
     public static class BasicOAuth2ClientMapperConfig {
-        private boolean allowUserCreation;
         private String emailAttributeKey;
         private String firstNameAttributeKey;
         private String lastNameAttributeKey;
