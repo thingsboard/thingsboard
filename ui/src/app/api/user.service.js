@@ -22,7 +22,7 @@ export default angular.module('thingsboard.api.user', [thingsboardApiLogin,
     .name;
 
 /*@ngInject*/
-function UserService($http, $q, $rootScope, adminService, dashboardService, timeService, loginService, toast, store, jwtHelper, $translate, $state, $location) {
+function UserService($http, $q, $rootScope, adminService, dashboardService, timeService, loginService, toast, store, jwtHelper, $translate, $state, $location, $mdDialog) {
     var currentUser = null,
         currentUserDetails = null,
         lastPublicDashboardId = null,
@@ -406,6 +406,10 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
                 }, function fail() {
                     deferred.reject();
                 });
+            } else if (locationSearch.loginError) {
+                showLoginErrorDialog(locationSearch.loginError);
+                $location.search('loginError', null);
+                deferred.reject();
             } else {
                 procceedJwtTokenValidate();
             }
@@ -413,6 +417,17 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
             deferred.resolve();
         }
         return deferred.promise;
+    }
+
+    function showLoginErrorDialog(loginError) {
+        $translate(['login.error',
+          'action.close']).then(function (translations) {
+          var alert = $mdDialog.alert()
+            .title(translations['login.error'])
+            .htmlContent(loginError)
+            .ok(translations['action.close']);
+          $mdDialog.show(alert);
+        });
     }
 
     function loadIsUserTokenAccessEnabled() {

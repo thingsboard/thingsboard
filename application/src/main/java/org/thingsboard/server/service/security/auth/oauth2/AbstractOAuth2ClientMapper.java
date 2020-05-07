@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
@@ -27,13 +28,16 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
@@ -46,14 +50,20 @@ public abstract class AbstractOAuth2ClientMapper {
     private UserService userService;
 
     @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
     private TenantService tenantService;
 
     @Autowired
     private CustomerService customerService;
 
+    @Autowired
+    private InstallScripts installScripts;
+
     private final Lock userCreationLock = new ReentrantLock();
 
-    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, boolean allowUserCreation) {
+    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, boolean allowUserCreation, boolean activateUser) {
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, oauth2User.getEmail());
 
         User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, oauth2User.getEmail());
@@ -83,7 +93,14 @@ public abstract class AbstractOAuth2ClientMapper {
                     user.setFirstName(oauth2User.getFirstName());
                     user.setLastName(oauth2User.getLastName());
                     user = userService.saveUser(user);
+                    if (activateUser) {
+                        UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+                        userService.activateUserCredentials(user.getTenantId(), userCredentials.getActivateToken(), passwordEncoder.encode(""));
+                    }
                 }
+            } catch (Exception e) {
+                log.error("Can't get or create security user from oauth2 user", e);
+                throw new RuntimeException("Can't get or create security user from oauth2 user", e);
             } finally {
                 userCreationLock.unlock();
             }
@@ -98,13 +115,14 @@ public abstract class AbstractOAuth2ClientMapper {
         }
     }
 
-    private TenantId getTenantId(String tenantName) {
+    private TenantId getTenantId(String tenantName) throws IOException {
         List<Tenant> tenants = tenantService.findTenants(new TextPageLink(1, tenantName)).getData();
         Tenant tenant;
         if (tenants == null || tenants.isEmpty()) {
             tenant = new Tenant();
             tenant.setTitle(tenantName);
             tenant = tenantService.saveTenant(tenant);
+            installScripts.createDefaultRuleChains(tenant.getId());
         } else {
             tenant = tenants.get(0);
         }

@@ -1334,7 +1334,8 @@
         "password-link-sent-message": "Password reset link was successfully sent!",
         "email": "Email",
         "login-with": "Login with {{name}}",
-        "or": "or"
+        "or": "or",
+        "error": "Login error"
     },
     "position": {
         "top": "Top",

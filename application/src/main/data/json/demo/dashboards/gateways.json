@@ -5,7 +5,7 @@
       "94715984-ae74-76e4-20b7-2f956b01ed80": {
         "isSystemType": true,
         "bundleAlias": "entity_admin_widgets",
-        "typeAlias": "device_admin_table2",
+        "typeAlias": "device_admin_table",
         "type": "latest",
         "title": "New widget",
         "sizeX": 24,
