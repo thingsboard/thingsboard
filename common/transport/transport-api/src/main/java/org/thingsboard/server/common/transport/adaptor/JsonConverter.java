@@ -391,6 +391,7 @@ public class JsonConverter {
                     break;
                 case JSON_V:
                     result.add(de.getKv().getKey(), JSON_PARSER.parse(de.getKv().getJsonV()));
+                    break;
                 default:
                     throw new IllegalArgumentException("Unsupported data type: " + de.getKv().getType());
             }
