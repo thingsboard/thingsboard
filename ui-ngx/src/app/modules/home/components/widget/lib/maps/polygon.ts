@@ -72,9 +72,9 @@ export class Polygon {
         this.map.removeLayer(this.leafletPoly);
     }
 
-    updatePolygonColor(settings) {
+    updatePolygonColor(settings: PolygonSettings) {
         const color = settings.usePolygonColorFunction ?
-            safeExecute(settings.polygoncolorFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonColor;
+            safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonColor;
         const style: L.PathOptions = {
             fill: true,
             fillColor: color,

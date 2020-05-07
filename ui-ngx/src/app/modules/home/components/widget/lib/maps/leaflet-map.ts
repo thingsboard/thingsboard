@@ -49,6 +49,7 @@ export default abstract class LeafletMap {
     datasources: FormattedData[];
     markersCluster;
     points: FeatureGroup;
+    markersData = [];
 
     protected constructor(public $container: HTMLElement, options: UnitedMapSettings) {
         this.options = options;
@@ -159,9 +160,9 @@ export default abstract class LeafletMap {
         this.map = map;
         if (this.options.useDefaultCenterPosition) {
             this.map.panTo(this.options.defaultCenterPosition);
-            //  this.bounds = map.getBounds();
+              this.bounds = map.getBounds();
         }
-        //  else this.bounds = new L.LatLngBounds(null, null);
+          else this.bounds = new L.LatLngBounds(null, null);
         if (this.options.draggableMarker) {
             this.addMarkerControl();
         }
@@ -269,6 +270,7 @@ export default abstract class LeafletMap {
                 this.createMarker(data.entityName, data, markersData, this.options as MarkerSettings);
             }
         });
+        this.markersData = markersData;
     }
 
     dragMarker = (e, data?) => {

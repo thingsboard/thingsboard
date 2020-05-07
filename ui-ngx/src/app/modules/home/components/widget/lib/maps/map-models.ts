@@ -128,6 +128,7 @@ export type PolygonSettings = {
     polygonTooltipPattern: string;
     usePolygonTooltipFunction: boolean;
     polygonClick: { [name: string]: actionsHandler };
+    usePolygonColorFunction: boolean;
     polygonTooltipFunction: GenericFunction;
     polygonColorFunction?: GenericFunction;
 }
