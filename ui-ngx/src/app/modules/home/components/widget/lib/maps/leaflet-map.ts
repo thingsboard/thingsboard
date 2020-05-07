@@ -380,7 +380,7 @@ export default abstract class LeafletMap {
 
     updatePolygons(polyData: FormattedData[]) {
         polyData.forEach((data: FormattedData) => {
-            if (this.options.polygonKeyName in data) {
+            if (data.hasOwnProperty(this.options.polygonKeyName)) {
                 if (typeof (data[this.options.polygonKeyName]) === 'string') {
                     data[this.options.polygonKeyName] = JSON.parse(data[this.options.polygonKeyName]) as LatLngTuple[];
                 }
