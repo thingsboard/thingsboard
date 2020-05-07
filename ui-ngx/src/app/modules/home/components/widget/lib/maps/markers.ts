@@ -29,8 +29,8 @@ export class Marker {
     data: FormattedData;
     dataSources: FormattedData[];
 
-    constructor(location: L.LatLngExpression, public settings: MarkerSettings,
-        data?: FormattedData, dataSources?, onDragendListener?) {
+  constructor(location: L.LatLngExpression, public settings: MarkerSettings,
+              data?: FormattedData, dataSources?, onDragendListener?) {
         this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
             draggable: settings.draggableMarker

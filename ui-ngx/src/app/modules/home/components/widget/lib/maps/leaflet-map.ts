@@ -40,7 +40,6 @@ export default abstract class LeafletMap {
     markers: Map<string, Marker> = new Map();
     polylines: Map<string, Polyline> = new Map();
     polygons: Map<string, Polygon> = new Map();
-    dragMode = false;
     map: L.Map;
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
@@ -240,7 +239,7 @@ export default abstract class LeafletMap {
 
     convertToCustomFormat(position: L.LatLng): object {
         return {
-            [this.options.latKeyName]: position.lat % 180,
+            [this.options.latKeyName]: position.lat % 90,
             [this.options.lngKeyName]: position.lng % 180
         }
     }
