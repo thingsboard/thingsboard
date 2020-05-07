@@ -28,8 +28,7 @@ export class Polygon {
     constructor(public map, polyData: FormattedData, dataSources, private settings: PolygonSettings) {
         this.dataSources = dataSources;
         this.data = polyData;
-        const polygonColor = settings.usePolygonColorFunction ?
-          safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonColor;
+        const polygonColor = this.getPolygonColor(settings);
 
         this.leafletPoly = L.polygon(polyData[this.settings.polygonKeyName], {
           fill: true,
@@ -76,8 +75,7 @@ export class Polygon {
     }
 
     updatePolygonColor(settings: PolygonSettings) {
-        const polygonColor = settings.usePolygonColorFunction ?
-            safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonColor;
+        const polygonColor = this.getPolygonColor(settings);
         const style: L.PathOptions = {
             fill: true,
             fillColor: polygonColor,
@@ -96,5 +94,13 @@ export class Polygon {
     setPolygonLatLngs(latLngs: LatLngExpression[]) {
         this.leafletPoly.setLatLngs(latLngs);
         this.leafletPoly.redraw();
+    }
+
+    private getPolygonColor(settings: PolygonSettings): string | null {
+      if (settings.usePolygonColorFunction) {
+        return safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]);
+      } else {
+        return settings.polygonColor;
+      }
     }
 }
