@@ -217,6 +217,7 @@ export class MapWidgetController implements MapWidgetInterface {
             tooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
             colorFunction: parseFunction(settings.colorFunction, functionParams),
             polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
+            polygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             labelColor: this.ctx.widgetConfig.color,
             polygonKeyName: settings.polKeyName ? settings.polKeyName : settings.polygonKeyName,
@@ -236,7 +237,7 @@ export class MapWidgetController implements MapWidgetInterface {
         if (this.drawRoutes)
             this.map.updatePolylines(parseArray(this.data));
         if (this.settings.showPolygon) {
-            this.map.updatePolygons(this.data);
+            this.map.updatePolygons(parseData(this.data));
         }
         if (this.settings.draggableMarker) {
             this.map.setDataSources(parseData(this.data));

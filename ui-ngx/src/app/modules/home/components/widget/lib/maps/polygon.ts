@@ -16,8 +16,7 @@
 
 import L, { LatLngExpression, LatLngTuple, LeafletMouseEvent } from 'leaflet';
 import { createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
-import { PolygonSettings } from './map-models';
-import { DatasourceData } from '@app/shared/models/widget.models';
+import { FormattedData, PolygonSettings } from './map-models';
 
 export class Polygon {
 
@@ -26,19 +25,23 @@ export class Polygon {
     data;
     dataSources;
 
-    constructor(public map, polyData: DatasourceData, dataSources, private settings: PolygonSettings) {
-        this.leafletPoly = L.polygon(polyData.data, {
-            fill: true,
-            fillColor: settings.polygonColor,
-            color: settings.polygonStrokeColor,
-            weight: settings.polygonStrokeWeight,
-            fillOpacity: settings.polygonOpacity,
-            opacity: settings.polygonStrokeOpacity
-        }).addTo(this.map);
+    constructor(public map, polyData: FormattedData, dataSources, private settings: PolygonSettings) {
         this.dataSources = dataSources;
         this.data = polyData;
+        const polygonColor = settings.usePolygonColorFunction ?
+          safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonColor;
+
+        this.leafletPoly = L.polygon(polyData[this.settings.polygonKeyName], {
+          fill: true,
+          fillColor: polygonColor,
+          color: settings.polygonStrokeColor,
+          weight: settings.polygonStrokeWeight,
+          fillOpacity: settings.polygonOpacity,
+          opacity: settings.polygonStrokeOpacity
+        }).addTo(this.map);
+
         if (settings.showPolygonTooltip) {
-            this.tooltip = createTooltip(this.leafletPoly, settings, polyData.datasource);
+            this.tooltip = createTooltip(this.leafletPoly, settings, polyData.$datasource);
             this.updateTooltip(polyData);
         }
         if (settings.polygonClick) {
@@ -52,17 +55,17 @@ export class Polygon {
         }
     }
 
-    updateTooltip(data: DatasourceData) {
+    updateTooltip(data: FormattedData) {
         const pattern = this.settings.usePolygonTooltipFunction ?
             safeExecute(this.settings.polygonTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
             this.settings.polygonTooltipPattern;
         this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
     }
 
-    updatePolygon(data: LatLngTuple[], dataSources: DatasourceData[], settings: PolygonSettings) {
+    updatePolygon(data: LatLngTuple[], dataSources: FormattedData[], settings: PolygonSettings) {
         this.data = data;
         this.dataSources = dataSources;
-        this.leafletPoly.setLatLngs(data);
+        this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
         if (settings.showPolygonTooltip)
             this.updateTooltip(this.data);
         this.updatePolygonColor(settings);
@@ -73,11 +76,11 @@ export class Polygon {
     }
 
     updatePolygonColor(settings: PolygonSettings) {
-        const color = settings.usePolygonColorFunction ?
+        const polygonColor = settings.usePolygonColorFunction ?
             safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonColor;
         const style: L.PathOptions = {
             fill: true,
-            fillColor: color,
+            fillColor: polygonColor,
             color: settings.polygonStrokeColor,
             weight: settings.polygonStrokeWeight,
             fillOpacity: settings.polygonOpacity,
