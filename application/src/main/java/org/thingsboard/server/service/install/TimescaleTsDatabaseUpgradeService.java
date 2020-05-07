@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.curator.shaded.com.google.common.io.Files;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -47,14 +49,13 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     private static final String CREATE_NEW_TS_KV_TABLE = "create_new_ts_kv_table()";
     private static final String CREATE_TS_KV_DICTIONARY_TABLE = "create_ts_kv_dictionary_table()";
     private static final String INSERT_INTO_DICTIONARY = "insert_into_dictionary()";
-    private static final String INSERT_INTO_TS_KV = "insert_into_ts_kv()";
+    private static final String INSERT_INTO_TS_KV = "insert_into_ts_kv(IN path_to_file varchar)";
     private static final String INSERT_INTO_TS_KV_LATEST = "insert_into_ts_kv_latest()";
 
     private static final String CALL_CREATE_TS_KV_LATEST_TABLE = CALL_REGEX + CREATE_TS_KV_LATEST_TABLE;
     private static final String CALL_CREATE_NEW_TENANT_TS_KV_TABLE = CALL_REGEX + CREATE_NEW_TS_KV_TABLE;
     private static final String CALL_CREATE_TS_KV_DICTIONARY_TABLE = CALL_REGEX + CREATE_TS_KV_DICTIONARY_TABLE;
     private static final String CALL_INSERT_INTO_DICTIONARY = CALL_REGEX + INSERT_INTO_DICTIONARY;
-    private static final String CALL_INSERT_INTO_TS_KV = CALL_REGEX + INSERT_INTO_TS_KV;
     private static final String CALL_INSERT_INTO_TS_KV_LATEST = CALL_REGEX + INSERT_INTO_TS_KV_LATEST;
 
     private static final String DROP_OLD_TENANT_TS_KV_TABLE = DROP_TABLE + TENANT_TS_KV_OLD_TABLE;
@@ -63,7 +64,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     private static final String DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY = DROP_PROCEDURE_IF_EXISTS + CREATE_NEW_TS_KV_TABLE;
     private static final String DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_TS_KV_DICTIONARY_TABLE;
     private static final String DROP_PROCEDURE_INSERT_INTO_DICTIONARY = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_DICTIONARY;
-    private static final String DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV;
+    private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV;
     private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV_LATEST;
 
     @Autowired
@@ -91,7 +92,16 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
 
                             executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                             executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
-                            executeQuery(conn, CALL_INSERT_INTO_TS_KV);
+
+                            File tempDir = Files.createTempDir();
+                            Path tempDirPath = tempDir.toPath();
+                            boolean writable = tempDir.setWritable(true, false);
+                            if (writable) {
+                                Path pathToTempTsKvFile = tempDirPath.resolve(TS_KV_SQL).toAbsolutePath();
+                                executeQuery(conn, "call insert_into_ts_kv('" + pathToTempTsKvFile + "')");
+                            } else {
+                                throw new RuntimeException("Failed to grant write permissions for the: " + tempDir + "folder!");
+                            }
                             executeQuery(conn, CALL_INSERT_INTO_TS_KV_LATEST);
 
                             executeQuery(conn, DROP_OLD_TENANT_TS_KV_TABLE);
@@ -100,7 +110,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                             executeQuery(conn, DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY);
                             executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_DICTIONARY);
-                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV);
+                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
 
                             executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN IF NOT EXISTS json_v json;");

@@ -34,6 +34,7 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
     protected static final String CALL_REGEX = "call ";
     protected static final String DROP_TABLE = "DROP TABLE ";
     protected static final String DROP_PROCEDURE_IF_EXISTS = "DROP PROCEDURE IF EXISTS ";
+    protected static final String TS_KV_SQL = "ts_kv.sql";
 
     @Value("${spring.datasource.url}")
     protected String dbUrl;
