@@ -109,8 +109,10 @@ export function aspectCache(imageUrl: string): Observable<number> {
   }
 }
 
+export type TranslateFunc = (key: string, defaultTranslation?: string) => string;
+
 function parseTemplate(template: string, data: { $datasource?: Datasource, [key: string]: any },
-                              translateFn?: (key: string) => string) {
+                              translateFn?: TranslateFunc) {
   let res = '';
   try {
     if (template.match(/<link-act/g)) {
@@ -145,8 +147,6 @@ function parseTemplate(template: string, data: { $datasource?: Datasource, [key:
   }
   return res;
 }
-
-type TranslateFunc = (key: string, defaultTranslation?: string) => string;
 
 export const parseWithTranslation = {
 

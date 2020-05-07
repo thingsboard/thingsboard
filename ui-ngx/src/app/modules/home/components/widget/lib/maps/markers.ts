@@ -18,10 +18,12 @@ import L, { LeafletMouseEvent } from 'leaflet';
 import { FormattedData, MarkerSettings } from './map-models';
 import { aspectCache, createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
 import tinycolor from 'tinycolor2';
+import { isDefined } from '@core/utils';
 
 export class Marker {
     leafletMarker: L.Marker;
     tooltipOffset: [number, number];
+    markerOffset: [number, number];
     tooltip: L.Popup;
     location: L.LatLngExpression;
     data: FormattedData;
@@ -34,9 +36,14 @@ export class Marker {
             draggable: settings.draggableMarker
         });
 
+        this.markerOffset = [
+          isDefined(settings.markerOffsetX) ? settings.markerOffsetX : 0.5,
+          isDefined(settings.markerOffsetY) ? settings.markerOffsetY : 1,
+        ];
+
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
-            this.tooltipOffset = [0, -iconInfo.size[1] + 10];
+            this.tooltipOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
             this.updateMarkerLabel(settings);
         });
 
@@ -95,7 +102,7 @@ export class Marker {
     updateMarkerIcon(settings: MarkerSettings) {
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
-            this.tooltipOffset = [0, -iconInfo.size[1] + 10];
+            this.tooltipOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
             this.updateMarkerLabel(settings);
         });
     }
@@ -129,7 +136,7 @@ export class Marker {
                         const icon = L.icon({
                             iconUrl: currentImage.url,
                             iconSize: [width, height],
-                            iconAnchor: [width / 2, height],
+                            iconAnchor: [width * this.markerOffset[0], height * this.markerOffset[1]],
                             popupAnchor: [0, -height]
                         });
                         const iconInfo = {
@@ -151,7 +158,7 @@ export class Marker {
         const icon = L.icon({
             iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + color,
             iconSize: [21, 34],
-            iconAnchor: [10, 34],
+            iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
             popupAnchor: [0, -34],
             shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
             shadowSize: [40, 37],

@@ -97,7 +97,7 @@ export class MapWidgetController implements MapWidgetInterface {
         const schema = initSchema();
         addToSchema(schema, this.getProvidersSchema(mapProvider));
         addGroupInfo(schema, 'Map Provider Settings');
-        addToSchema(schema, addCondition(commonMapSettingsSchema, 'model.provider !== "image-map"'));
+        addToSchema(schema, commonMapSettingsSchema);
         addGroupInfo(schema, 'Common Map Settings');
         addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
         addGroupInfo(schema, 'Polygon Settings');

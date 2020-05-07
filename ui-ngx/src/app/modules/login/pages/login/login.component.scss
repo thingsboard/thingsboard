@@ -65,11 +65,17 @@
         min-width: 20px;
       }
 
+      a.centered {
+        &:hover {
+          border-bottom: 0px;
+        }
+      }
 
       .centered ::ng-deep .mat-button-wrapper {
         display: flex;
         justify-content: center;
         align-items: center;
+        text-transform: uppercase;
       }
     }
   }

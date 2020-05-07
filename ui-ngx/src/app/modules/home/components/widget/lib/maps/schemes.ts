@@ -275,6 +275,16 @@ export const commonMapSettingsSchema =
                 type: 'string',
                 default: 'longitude'
             },
+            xPosKeyName: {
+                title: 'X position key name',
+                type: 'string',
+                default: 'xPos'
+            },
+            yPosKeyName: {
+                title: 'Y position key name',
+                type: 'string',
+                default: 'yPos'
+            },
             showLabel: {
                 title: 'Show label',
                 type: 'boolean',
@@ -323,6 +333,21 @@ export const commonMapSettingsSchema =
                 title: 'Tooltip function: f(data, dsData, dsIndex)',
                 type: 'string'
             },
+            posFunction: {
+                title: 'Position conversion function: f(origXPos, origYPos), should return x,y coordinates as double from 0 to 1 each',
+                type: 'string',
+                default: 'return {x: origXPos, y: origYPos};'
+            },
+            markerOffsetX: {
+                title: 'Marker X offset relative to position',
+                type: 'number',
+                default: 0.5
+            },
+            markerOffsetY: {
+                title: 'Marker Y offset relative to position',
+                type: 'number',
+                default: 1
+            },
             color: {
                 title: 'Color',
                 type: 'string'
@@ -366,14 +391,40 @@ export const commonMapSettingsSchema =
         required: []
     },
     form: [
-        'defaultZoomLevel',
-        'useDefaultCenterPosition',
-        'defaultCenterPosition',
-        'fitMapBounds',
+        {
+            key: 'defaultZoomLevel',
+            condition: 'model.provider !== "image-map"'
+        },
+        {
+            key: 'useDefaultCenterPosition',
+            condition: 'model.provider !== "image-map"'
+        },
+        {
+            key: 'defaultCenterPosition',
+            condition: 'model.provider !== "image-map"'
+        },
+        {
+            key: 'fitMapBounds',
+            condition: 'model.provider !== "image-map"'
+        },
         'draggableMarker',
         'disableScrollZooming',
-        'latKeyName',
-        'lngKeyName',
+        {
+            key: 'latKeyName',
+            condition: 'model.provider !== "image-map"'
+        },
+        {
+            key: 'lngKeyName',
+            condition: 'model.provider !== "image-map"'
+        },
+        {
+            key: 'xPosKeyName',
+            condition: 'model.provider === "image-map"'
+        },
+        {
+            key: 'yPosKeyName',
+            condition: 'model.provider === "image-map"'
+        },
         'showLabel',
         'label',
         'useLabelFunction',
@@ -406,6 +457,19 @@ export const commonMapSettingsSchema =
         {
             key: 'tooltipFunction',
             type: 'javascript'
+        },
+        {
+            key: 'markerOffsetX',
+            condition: 'model.provider === "image-map"'
+        },
+        {
+            key: 'markerOffsetY',
+            condition: 'model.provider === "image-map"'
+        },
+        {
+            key: 'posFunction',
+            type: 'javascript',
+            condition: 'model.provider === "image-map"'
         },
         {
             key: 'color',
@@ -654,123 +718,6 @@ export const imageMapSettingsSchema =
                 title: 'Image URL source entity attribute',
                 type: 'string',
                 default: ''
-            },
-            disableScrollZooming: {
-                title: 'Disable scroll zooming',
-                type: 'boolean',
-                default: false
-            },
-            xPosKeyName: {
-                title: 'X position key name',
-                type: 'string',
-                default: 'xPos'
-            },
-            yPosKeyName: {
-                title: 'Y position key name',
-                type: 'string',
-                default: 'yPos'
-            },
-            showLabel: {
-                title: 'Show label',
-                type: 'boolean',
-                default: true
-            },
-            label: {
-                title: 'Label (pattern examples: \'${entityName}\', \'${entityName}: (Text ${keyName} units.)\' )',
-                type: 'string',
-                default: '${entityName}'
-            },
-            useLabelFunction: {
-                title: 'Use label function',
-                type: 'boolean',
-                default: false
-            },
-            labelFunction: {
-                title: 'Label function: f(data, dsData, dsIndex)',
-                type: 'string'
-            },
-            showTooltip: {
-                title: 'Show tooltip',
-                type: 'boolean',
-                default: true
-            },
-            showTooltipAction: {
-                title: 'Action for displaying the tooltip',
-                type: 'string',
-                default: 'click'
-            },
-            autocloseTooltip: {
-                title: 'Auto-close tooltips',
-                type: 'boolean',
-                default: true
-            },
-            tooltipPattern: {
-                title: 'Tooltip (for ex. \'Text ${keyName} units.\' or <link-act name=\'my-action\'>Link text</link-act>\')',
-                type: 'string',
-                default: '<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}'
-            },
-            useTooltipFunction: {
-                title: 'Use tooltip function',
-                type: 'boolean',
-                default: false
-            },
-            tooltipFunction: {
-                title: 'Tooltip function: f(data, dsData, dsIndex)',
-                type: 'string'
-            },
-            color: {
-                title: 'Color',
-                type: 'string'
-            },
-            posFunction: {
-                title: 'Position conversion function: f(origXPos, origYPos), should return x,y coordinates as double from 0 to 1 each',
-                type: 'string',
-                default: 'return {x: origXPos, y: origYPos};'
-            },
-            markerOffsetX: {
-                title: 'Marker X offset relative to position',
-                type: 'number',
-                default: 0.5
-            },
-            markerOffsetY: {
-                title: 'Marker Y offset relative to position',
-                type: 'number',
-                default: 1
-            },
-            useColorFunction: {
-                title: 'Use color function',
-                type: 'boolean',
-                default: false
-            },
-            colorFunction: {
-                title: 'Color function: f(data, dsData, dsIndex)',
-                type: 'string'
-            },
-            markerImage: {
-                title: 'Custom marker image',
-                type: 'string'
-            },
-            markerImageSize: {
-                title: 'Custom marker image size (px)',
-                type: 'number',
-                default: 34
-            },
-            useMarkerImageFunction: {
-                title: 'Use marker image function',
-                type: 'boolean',
-                default: false
-            },
-            markerImageFunction: {
-                title: 'Marker image function: f(data, images, dsData, dsIndex)',
-                type: 'string'
-            },
-            markerImages: {
-                title: 'Marker images',
-                type: 'array',
-                items: {
-                    title: 'Marker image',
-                    type: 'string'
-                }
             }
         },
         required: []
@@ -781,77 +728,7 @@ export const imageMapSettingsSchema =
             type: 'image'
         },
         'imageEntityAlias',
-        'imageUrlAttribute',
-        'disableScrollZooming',
-        'xPosKeyName',
-        'yPosKeyName',
-        'showLabel',
-        'label',
-        'useLabelFunction',
-        {
-            key: 'labelFunction',
-            type: 'javascript'
-        },
-        'showTooltip',
-        {
-            key: 'showTooltipAction',
-            type: 'rc-select',
-            multiple: false,
-            items: [
-                {
-                    value: 'click',
-                    label: 'Show tooltip on click (Default)'
-                },
-                {
-                    value: 'hover',
-                    label: 'Show tooltip on hover'
-                }
-            ]
-        },
-        'autocloseTooltip',
-        {
-            key: 'tooltipPattern',
-            type: 'textarea'
-        },
-        'useTooltipFunction',
-        {
-            key: 'tooltipFunction',
-            type: 'javascript'
-        },
-        {
-            key: 'color',
-            type: 'color'
-        },
-        {
-            key: 'posFunction',
-            type: 'javascript'
-        },
-        'markerOffsetX',
-        'markerOffsetY',
-        'useColorFunction',
-        {
-            key: 'colorFunction',
-            type: 'javascript'
-        },
-        {
-            key: 'markerImage',
-            type: 'image'
-        },
-        'markerImageSize',
-        'useMarkerImageFunction',
-        {
-            key: 'markerImageFunction',
-            type: 'javascript'
-        },
-        {
-            key: 'markerImages',
-            items: [
-                {
-                    key: 'markerImages[]',
-                    type: 'image'
-                }
-            ]
-        }
+        'imageUrlAttribute'
     ]
 };
 

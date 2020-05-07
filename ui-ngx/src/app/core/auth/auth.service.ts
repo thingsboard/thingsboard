@@ -43,6 +43,8 @@ import { DashboardInfo } from '@shared/models/dashboard.models';
 import { PageData } from '@app/shared/models/page/page-data';
 import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 
 @Injectable({
     providedIn: 'root'
@@ -60,7 +62,8 @@ export class AuthService {
     private utils: UtilsService,
     private dashboardService: DashboardService,
     private adminService: AdminService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private dialog: MatDialog
   ) {
   }
 
@@ -273,6 +276,7 @@ export class AuthService {
       const refreshToken = this.utils.getQueryParam('refreshToken');
       const username = this.utils.getQueryParam('username');
       const password = this.utils.getQueryParam('password');
+      const loginError = this.utils.getQueryParam('loginError');
       if (publicId) {
         return this.publicLogin(publicId).pipe(
           mergeMap((response) => {
@@ -317,11 +321,31 @@ export class AuthService {
             }
           )
         );
+      } else if (loginError) {
+        this.showLoginErrorDialog(loginError);
+        this.utils.updateQueryParam('loginError', null);
+        return throwError(Error());
       }
       return this.procceedJwtTokenValidate(doTokenRefresh);
     } else {
       return of({} as AuthPayload);
     }
+  }
+
+  private showLoginErrorDialog(loginError: string) {
+    this.translate.get(['login.error', 'action.close']).subscribe(
+      (translations) => {
+        const dialogConfig: MatDialogConfig = {
+          disableClose: true,
+          data: {
+            title: translations['login.error'],
+            message: loginError,
+            ok: translations['action.close']
+          }
+        };
+        this.dialog.open(AlertDialogComponent, dialogConfig);
+      }
+    );
   }
 
   private procceedJwtTokenValidate(doTokenRefresh?: boolean): Observable<AuthPayload> {
