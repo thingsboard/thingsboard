@@ -120,7 +120,6 @@ export class Marker {
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
         const currentColor = tinycolor(this.settings.useColorFunction ? safeExecute(this.settings.colorFunction,
             [this.data, this.dataSources, this.data.dsIndex]) : this.settings.color).toHex();
-
         if (currentImage && currentImage.url) {
             aspectCache(currentImage.url).subscribe(
                 (aspect) => {

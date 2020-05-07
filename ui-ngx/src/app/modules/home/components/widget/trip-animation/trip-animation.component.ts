@@ -21,9 +21,9 @@ import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
-import { MapProviders } from '../lib/maps/map-models';
-import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
-import { tripAnimationSchema } from '../lib/maps/schemes';
+import { MapProviders, FormattedData } from '../lib/maps/map-models';
+import { initSchema, addToSchema, addGroupInfo, addCondition } from '@app/core/schema-utils';
+import { tripAnimationSchema, mapPolygonSchema, pathSchema, pointSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { findAngle, getRatio, parseArray, parseWithTranslation, safeExecute } from '../lib/maps/maps-utils';
@@ -58,13 +58,21 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   label;
   minTime;
   maxTime;
+  anchors = [];
+  useAnchors = false;
 
   static getSettingsSchema(): JsonSettingsSchema {
     const schema = initSchema();
-    addToSchema(schema, TbMapWidgetV2.getProvidersSchema());
+    addToSchema(schema, TbMapWidgetV2.getProvidersSchema(null, true));
     addGroupInfo(schema, 'Map Provider Settings');
     addToSchema(schema, tripAnimationSchema);
     addGroupInfo(schema, 'Trip Animation Settings');
+    addToSchema(schema, pathSchema);
+    addGroupInfo(schema, 'Path Settings');
+    addToSchema(schema, addCondition(pointSchema, 'model.showPoints === true', ['showPoints']));
+    addGroupInfo(schema, 'Path Points Settings');
+    addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
+    addGroupInfo(schema, 'Polygon Settings');
     return schema;
   }
 
@@ -78,14 +86,15 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       rotationAngle: 0
     }
     this.settings = { ...settings, ...this.ctx.settings };
+    this.useAnchors = this.settings.usePointAsAnchor && this.settings.showPoints;
+    this.settings.fitMapBounds = true;
+    this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
-    if (subscription) subscription.callbacks.onDataUpdated = (updated) => {
+    if (subscription) subscription.callbacks.onDataUpdated = () => {
       this.historicalData = parseArray(this.ctx.data);
       this.activeTrip = this.historicalData[0][0];
       this.calculateIntervals();
       this.timeUpdated(this.intervals[0]);
-      this.mapWidget.map.updatePolylines(this.interpolatedData.map(ds => _.values(ds)));
-
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
     }
@@ -104,8 +113,16 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.calcLabel();
     this.calcTooltip();
     if (this.mapWidget) {
+      this.mapWidget.map.updatePolylines(this.interpolatedData.map(ds => _.values(ds)));
       if (this.settings.showPolygon) {
         this.mapWidget.map.updatePolygons(this.interpolatedData);
+      }
+      if (this.settings.showPoints) {
+        this.mapWidget.map.updatePoints(this.historicalData[0], this.calcTooltip);
+        this.anchors = this.historicalData[0]
+          .filter(data =>
+            this.settings.usePointAsAnchor ||
+            safeExecute(this.settings.pointAsAnchorFunction, [this.historicalData, data, data.dsIndex])).map(data => data.time);
       }
       this.mapWidget.map.updateMarkers(currentPosition);
     }
@@ -117,23 +134,29 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   calculateIntervals() {
     this.historicalData.forEach((dataSource, index) => {
       this.intervals = [];
-
       for (let time = dataSource[0]?.time; time < dataSource[dataSource.length - 1]?.time; time += this.normalizationStep) {
         this.intervals.push(time);
       }
-
       this.intervals.push(dataSource[dataSource.length - 1]?.time);
       this.interpolatedData[index] = this.interpolateArray(dataSource, this.intervals);
     });
 
   }
 
-  calcTooltip() {
-    const data = { ...this.activeTrip, maxTime: this.maxTime, minTime: this.minTime }
-    const tooltipText: string = this.settings.useTooltipFunction ?
+  calcTooltip = (point?: FormattedData, setTooltip = true) => {
+    if (!point) {
+      point = this.activeTrip;
+    }
+    const data = { ...point, maxTime: this.maxTime, minTime: this.minTime }
+    const tooltipPattern: string = this.settings.useTooltipFunction ?
       safeExecute(this.settings.tooolTipFunction, [data, this.historicalData, 0]) : this.settings.tooltipPattern;
-    this.mainTooltip = this.sanitizer.sanitize(
-      SecurityContext.HTML, (parseWithTranslation.parseTemplate(tooltipText, data, true)));
+    const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
+    if (setTooltip) {
+      this.mainTooltip = this.sanitizer.sanitize(
+        SecurityContext.HTML, tooltipText);
+      this.cd.detectChanges();
+    }
+    return tooltipText;
   }
 
   calcLabel() {

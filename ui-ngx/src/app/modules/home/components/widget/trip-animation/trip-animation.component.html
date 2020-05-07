@@ -32,6 +32,6 @@
             [ngStyle]="{'background-color': settings.tooltipColor, 'opacity': settings.tooltipOpacity, 'color': settings.tooltipFontColor}">
         </div>
     </div>
-    <tb-history-selector *ngIf="historicalData" [settings]="settings" [intervals]="intervals"
+    <tb-history-selector *ngIf="historicalData" [settings]="settings" [intervals]="intervals" [anchors]="anchors" [useAnchors]="useAnchors"
         (timeUpdated)="timeUpdated($event)"></tb-history-selector>
 </div>

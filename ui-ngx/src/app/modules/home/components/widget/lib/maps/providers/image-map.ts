@@ -109,13 +109,13 @@ export class ImageMap extends LeafletMap {
                     lastCenterPos.y /= prevHeight;
                     this.updateBounds(updateImage, lastCenterPos);
                     this.map.invalidateSize(true);
-                    // TODO: need add update marker position
+                    this.updateMarkers(this.markersData);
                 }
             }
         }
     }
 
-    fitBounds(bounds: LatLngBounds, useDefaultZoom = false, padding?: LatLngTuple) { }
+    fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) { }
 
     initMap(updateImage?) {
         if (!this.map && this.aspect > 0) {

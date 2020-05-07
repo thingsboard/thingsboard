@@ -26,7 +26,7 @@ export interface MapWidgetInterface {
 
 export interface MapWidgetStaticInterface {
     settingsSchema(mapProvider?: MapProviders, drawRoutes?: boolean): JsonSettingsSchema;
-    getProvidersSchema(mapProvider?: MapProviders): JsonSettingsSchema
+    getProvidersSchema(mapProvider?: MapProviders, ignoreImageMap?: boolean): JsonSettingsSchema
     dataKeySettingsSchema(): object;
     actionSources(): object;
 }

@@ -53,8 +53,9 @@ export class Polygon {
     }
 
     updateTooltip(data: DatasourceData) {
-        const pattern = this.settings.useTooltipFunction ?
-            safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
+        const pattern = this.settings.usePolygonTooltipFunction ?
+            safeExecute(this.settings.polygonTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
+            this.settings.polygonTooltipPattern;
         this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
     }
 
@@ -71,10 +72,12 @@ export class Polygon {
         this.map.removeLayer(this.leafletPoly);
     }
 
-    updatePolygonColor(settings) {
+    updatePolygonColor(settings: PolygonSettings) {
+        const color = settings.usePolygonColorFunction ?
+            safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonColor;
         const style: L.PathOptions = {
             fill: true,
-            fillColor: settings.polygonColor,
+            fillColor: color,
             color: settings.polygonStrokeColor,
             weight: settings.polygonStrokeWeight,
             fillOpacity: settings.polygonOpacity,
