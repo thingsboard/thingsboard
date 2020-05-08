@@ -55,7 +55,7 @@ public class TbKafkaSettings {
     @Getter
     private short replicationFactor;
 
-    @Value("${queue.kafka.max_poll_records:8196}")
+    @Value("${queue.kafka.max_poll_records:8192}")
     @Getter
     private int maxPollRecords;
 
