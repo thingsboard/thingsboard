@@ -67,10 +67,6 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         this.type = ruleChain.getType();
         this.firstRuleNodeId = ruleChain.getFirstRuleNodeId();
         this.root = ruleChain.isRoot();
-
-        // TODO: VOBA - check that this is needed
-        // this.debugMode = ruleChain.isDebugMode();
-
         this.assignedEdges = ruleChain.getAssignedEdges();
         this.setConfiguration(ruleChain.getConfiguration());
     }
