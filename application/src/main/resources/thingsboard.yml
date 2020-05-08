@@ -583,6 +583,9 @@ queue:
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
+    max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
+    fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
     topic-properties:
       rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
       core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
