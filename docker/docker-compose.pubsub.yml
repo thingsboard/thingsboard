@@ -17,41 +17,55 @@
 version: '2.2'
 
 services:
-  postgres:
-    restart: always
-    image: "postgres:11.6"
-    ports:
-    - "5432"
-    environment:
-      POSTGRES_DB: thingsboard
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - ./tb-node/postgres:/var/lib/postgresql/data
+  tb-js-executor:
+    env_file:
+      - queue-pubsub.env.env
   tb-core1:
     env_file:
-      - tb-node.postgres.env
+      - queue-pubsub.env.env
     depends_on:
       - zookeeper
       - redis
-      - postgres
   tb-core2:
     env_file:
-      - tb-node.postgres.env
+      - queue-pubsub.env
     depends_on:
       - zookeeper
       - redis
-      - postgres
   tb-rule-engine1:
     env_file:
-      - tb-node.postgres.env
+      - queue-pubsub.env
     depends_on:
       - zookeeper
       - redis
-      - postgres
   tb-rule-engine2:
     env_file:
-      - tb-node.postgres.env
+      - queue-pubsub.env
     depends_on:
       - zookeeper
       - redis
-      - postgres
+  tb-mqtt-transport1:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
+  tb-mqtt-transport2:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
+  tb-http-transport1:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
+  tb-http-transport2:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
+  tb-coap-transport:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
