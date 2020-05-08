@@ -942,6 +942,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Одне правило} other {Список # правил} }",
         "rulenode-name-starts-with": "Список правил, імена яких починаються '{{prefix}}'",
         "type-current-customer": "Поточний клієнт",
+        "type-current-tenant": "Поточний власник",
         "search": "Пошук сутностей",
         "selected-entities": "{ count, plural, 1 {1 сутність} other {# сутності} } вибрано",
         "entity-name": "Ім'я сутності",
@@ -1645,7 +1646,7 @@
         }
     },
     "login": {
-        "login": "Вхід",
+        "login": "Увійти",
         "request-password-reset": "Запит скидання пароля",
         "reset-password": "Скинути пароль",
         "create-password": "Створити пароль",
@@ -1660,7 +1661,9 @@
         "new-password": "Новий пароль",
         "new-password-again": "Повторіть новий пароль",
         "password-link-sent-message": "Посилання для скидання пароля було успішно надіслано!",
-        "email": "Електронна пошта"
+        "email": "Електронна пошта",
+        "login-with": "Увійти через {{name}}",
+        "or": "або"
     },
     "position": {
         "top": "Угорі",
@@ -1818,6 +1821,12 @@
         "test": "Тест",
         "help": "Допомога",
         "reset-debug-mode": "Вимкнути режим налогодження у всіх правилах"
+    },
+    "queue": {
+        "select_name": "Виберіть ім'я для Queue",
+        "name": "Iм'я для Queue",
+        "name_required": "Поле 'Имя для Queue' обязательно к заполнению!"
+
     },
     "scheduler": {
         "scheduler": "Планувальник",

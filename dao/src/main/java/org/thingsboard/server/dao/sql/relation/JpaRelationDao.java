@@ -42,7 +42,6 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.springframework.data.jpa.domain.Specifications.where;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 /**
@@ -192,9 +191,9 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
         Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "toId");
         Specification<RelationEntity> fieldsSpec = getEntityFieldsSpec(from, relationType, typeGroup, childType);
         Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, "toId");
+        Pageable pageable = PageRequest.of(0, pageLink.getLimit(), sortDirection, "toId");
         return service.submit(() ->
-                DaoUtil.convertDataList(relationRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent()));
+                DaoUtil.convertDataList(relationRepository.findAll(Specification.where(timeSearchSpec).and(fieldsSpec), pageable).getContent()));
     }
 
     private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {

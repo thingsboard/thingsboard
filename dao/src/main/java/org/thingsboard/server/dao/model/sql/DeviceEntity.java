@@ -73,7 +73,7 @@ public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchT
 
     public DeviceEntity(Device device) {
         if (device.getId() != null) {
-            this.setId(device.getId().getId());
+            this.setUuid(device.getId().getId());
         }
         if (device.getTenantId() != null) {
             this.tenantId = toString(device.getTenantId().getId());
@@ -102,8 +102,8 @@ public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchT
 
     @Override
     public Device toData() {
-        Device device = new Device(new DeviceId(getId()));
-        device.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        Device device = new Device(new DeviceId(this.getUuid()));
+        device.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         if (tenantId != null) {
             device.setTenantId(new TenantId(toUUID(tenantId)));
         }

@@ -934,7 +934,9 @@
         "new-password": "새 비밀번호",
         "new-password-again": "새 비밀번호 확인",
         "password-link-sent-message": "비밀번호 재설정 링크가 성공적으로 전송되었습니다!",
-        "email": "이메일"
+        "email": "이메일",
+        "login-with": "{{name}}으로 로그인",
+        "or": "또는"
     },
     "position": {
         "top": "상단",

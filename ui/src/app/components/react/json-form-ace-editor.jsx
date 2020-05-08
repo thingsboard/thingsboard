@@ -83,9 +83,9 @@ class ThingsboardAceEditor extends React.Component {
         fixAceEditor(editor);
     }
 
-    onToggleFull(groupId) {
+    onToggleFull() {
         this.setState({ isFull: !this.state.isFull });
-        this.props.onToggleFullscreen(groupId);
+        this.props.onToggleFullscreen();
         this.updateAceEditorSize = true;
     }
 
@@ -140,7 +140,7 @@ class ThingsboardAceEditor extends React.Component {
                     <div className="title-panel">
                         <label>{this.props.mode}</label>
                         <FlatButton style={ styles.tidyButtonStyle } className="tidy-button" label={'Tidy'} onTouchTap={this.onTidy}/>
-                        <FlatButton style={ styles.tidyButtonStyle } className="tidy-button" label={this.state.isFull ? 'Exit fullscreen' : 'Fullscreen'} onTouchTap={() => this.onToggleFull(this.props.groupId)}/>
+                        <FlatButton style={ styles.tidyButtonStyle } className="tidy-button" label={this.state.isFull ? 'Exit fullscreen' : 'Fullscreen'} onTouchTap={this.onToggleFull}/>
                     </div>
                     <AceEditor mode={this.props.mode}
                                height={this.state.isFull ? "100%" : "150px"}

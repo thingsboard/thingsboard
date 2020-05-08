@@ -277,6 +277,7 @@ public class DefaultMailService implements MailService {
         } else {
             message = exception.getMessage();
         }
+        log.warn("Unable to send mail: {}", message);
         return new ThingsboardException(String.format("Unable to send mail: %s", message),
                 ThingsboardErrorCode.GENERAL);
     }

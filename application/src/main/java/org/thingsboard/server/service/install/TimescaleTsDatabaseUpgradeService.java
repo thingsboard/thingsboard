@@ -39,6 +39,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     private long chunkTimeInterval;
 
     private static final String LOAD_FUNCTIONS_SQL = "schema_update_timescale_ts.sql";
+    private static final String LOAD_TTL_FUNCTIONS_SQL = "schema_update_ttl.sql";
 
     private static final String TENANT_TS_KV_OLD_TABLE = "tenant_ts_kv_old;";
 
@@ -79,31 +80,37 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         throw new RuntimeException("PostgreSQL version should be at least more than 11, please upgrade your PostgreSQL and restart the script!");
                     } else {
                         log.info("PostgreSQL version is valid!");
-                        log.info("Load upgrade functions ...");
-                        loadSql(conn);
-                        log.info("Updating timescale schema ...");
-                        executeQuery(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
-                        executeQuery(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
+                        if (isOldSchema(conn, 2004003)) {
+                            log.info("Load upgrade functions ...");
+                            loadSql(conn, LOAD_FUNCTIONS_SQL);
+                            log.info("Updating timescale schema ...");
+                            executeQuery(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
+                            executeQuery(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
 
-                        executeQuery(conn, "SELECT create_hypertable('ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
+                            executeQuery(conn, "SELECT create_hypertable('ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
 
-                        executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
-                        executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
-                        executeQuery(conn, CALL_INSERT_INTO_TS_KV);
-                        executeQuery(conn, CALL_INSERT_INTO_TS_KV_LATEST);
+                            executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
+                            executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
+                            executeQuery(conn, CALL_INSERT_INTO_TS_KV);
+                            executeQuery(conn, CALL_INSERT_INTO_TS_KV_LATEST);
 
-                        executeQuery(conn, DROP_OLD_TENANT_TS_KV_TABLE);
+                            executeQuery(conn, DROP_OLD_TENANT_TS_KV_TABLE);
 
-                        executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_LATEST_TABLE);
-                        executeQuery(conn, DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY);
-                        executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE);
-                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_DICTIONARY);
-                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV);
-                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
+                            executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_LATEST_TABLE);
+                            executeQuery(conn, DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY);
+                            executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE);
+                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_DICTIONARY);
+                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV);
+                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
 
-                        executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN json_v json;");
-                        executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");
+                            executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN IF NOT EXISTS json_v json;");
+                            executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN IF NOT EXISTS json_v json;");
+                        }
 
+                        log.info("Load TTL functions ...");
+                        loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
+
+                        executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005000");
                         log.info("schema timescale updated!");
                     }
                 }
@@ -113,13 +120,14 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
         }
     }
 
-    protected void loadSql(Connection conn) {
-        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.3", LOAD_FUNCTIONS_SQL);
+    @Override
+    protected void loadSql(Connection conn, String fileName) {
+        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.3", fileName);
         try {
             loadFunctions(schemaUpdateFile, conn);
-            log.info("Upgrade functions successfully loaded!");
+            log.info("Functions successfully loaded!");
         } catch (Exception e) {
-            log.info("Failed to load Timescale upgrade functions due to: {}", e.getMessage());
+            log.info("Failed to load PostgreSQL upgrade functions due to: {}", e.getMessage());
         }
     }
 }

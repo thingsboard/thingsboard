@@ -1024,7 +1024,9 @@
 		"new-password": "新しいパスワード",
 		"new-password-again": "新しいパスワードを再入力",
 		"password-link-sent-message": "パスワードリセットリンクが正常に送信されました！",
-		"email": "Eメール"
+		"email": "Eメール",
+		"login-with": "{{name}}でログイン",
+		"or": "または"
 	},
 	"position": {
 		"top": "上",

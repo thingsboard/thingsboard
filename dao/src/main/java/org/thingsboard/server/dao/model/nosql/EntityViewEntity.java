@@ -170,4 +170,14 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         entityView.setAdditionalInfo(additionalInfo);
         return entityView;
     }
+
+    @Override
+    public UUID getUuid() {
+        return getId();
+    }
+
+    @Override
+    public void setUuid(UUID id) {
+        this.id = id;
+    }
 }

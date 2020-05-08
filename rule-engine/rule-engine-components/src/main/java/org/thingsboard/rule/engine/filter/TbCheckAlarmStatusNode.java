@@ -38,7 +38,7 @@ import java.io.IOException;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "checks alarm status",
+        name = "check alarm status",
         configClazz = TbCheckAlarmStatusNodeConfig.class,
         relationTypes = {"True", "False"},
         nodeDescription = "Checks alarm status.",
@@ -72,14 +72,13 @@ public class TbCheckAlarmStatusNode implements TbNode {
                                 break;
                             }
                         }
-
                         if (isPresent) {
                             ctx.tellNext(msg, "True");
                         } else {
                             ctx.tellNext(msg, "False");
                         }
                     } else {
-                        ctx.tellFailure(msg, new TbNodeException("No such Alarm found."));
+                        ctx.tellFailure(msg, new TbNodeException("No such alarm found."));
                     }
                 }
 

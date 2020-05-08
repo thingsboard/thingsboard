@@ -57,7 +57,7 @@ public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentia
 
     public DeviceCredentialsEntity(DeviceCredentials deviceCredentials) {
         if (deviceCredentials.getId() != null) {
-            this.setId(deviceCredentials.getId().getId());
+            this.setUuid(deviceCredentials.getId().getId());
         }
         if (deviceCredentials.getDeviceId() != null) {
             this.deviceId = toString(deviceCredentials.getDeviceId().getId());
@@ -69,8 +69,8 @@ public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentia
 
     @Override
     public DeviceCredentials toData() {
-        DeviceCredentials deviceCredentials = new DeviceCredentials(new DeviceCredentialsId(getId()));
-        deviceCredentials.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        DeviceCredentials deviceCredentials = new DeviceCredentials(new DeviceCredentialsId(this.getUuid()));
+        deviceCredentials.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         if (deviceId != null) {
             deviceCredentials.setDeviceId(new DeviceId(toUUID(deviceId)));
         }

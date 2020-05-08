@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.UUID;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
@@ -52,15 +54,22 @@ public class TbSendRPCReplyNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        String serviceIdStr = msg.getMetaData().getValue(config.getServiceIdMetaDataAttribute());
+        String sessionIdStr = msg.getMetaData().getValue(config.getSessionIdMetaDataAttribute());
         String requestIdStr = msg.getMetaData().getValue(config.getRequestIdMetaDataAttribute());
         if (msg.getOriginator().getEntityType() != EntityType.DEVICE) {
             ctx.tellFailure(msg, new RuntimeException("Message originator is not a device entity!"));
         } else if (StringUtils.isEmpty(requestIdStr)) {
             ctx.tellFailure(msg, new RuntimeException("Request id is not present in the metadata!"));
+        } else if (StringUtils.isEmpty(serviceIdStr)) {
+            ctx.tellFailure(msg, new RuntimeException("Service id is not present in the metadata!"));
+        } else if (StringUtils.isEmpty(sessionIdStr)) {
+            ctx.tellFailure(msg, new RuntimeException("Session id is not present in the metadata!"));
         } else if (StringUtils.isEmpty(msg.getData())) {
             ctx.tellFailure(msg, new RuntimeException("Request body is empty!"));
         } else {
-            ctx.getRpcService().sendRpcReply(new DeviceId(msg.getOriginator().getId()), Integer.parseInt(requestIdStr), msg.getData());
+            ctx.getRpcService().sendRpcReplyToDevice(serviceIdStr, UUID.fromString(sessionIdStr), Integer.parseInt(requestIdStr), msg.getData());
+            ctx.tellSuccess(msg);
         }
     }
 

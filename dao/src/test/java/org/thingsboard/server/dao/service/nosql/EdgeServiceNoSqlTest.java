@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.service.nosql;
 
-import org.thingsboard.server.dao.service.BaseEdgeServiceTest;
+import org.thingsboard.server.dao.service.EdgeServiceImplTest;
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
 
 @DaoNoSqlTest
-public class EdgeServiceNoSqlTest extends BaseEdgeServiceTest {
+public class EdgeServiceNoSqlTest extends EdgeServiceImplTest {
 }

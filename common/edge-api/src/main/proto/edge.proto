@@ -160,15 +160,17 @@ message DeviceUpdateMsg {
   UpdateMsgType msgType = 1;
   string name = 2;
   string type = 3;
-  string credentialsType = 4;
-  string credentialsId = 5;
-  string credentialsValue = 6;
+  string label = 4;
+  string credentialsType = 5;
+  string credentialsId = 6;
+  string credentialsValue = 7;
 }
 
 message AssetUpdateMsg {
   UpdateMsgType msgType = 1;
   string name = 2;
   string type = 3;
+  string label = 4;
 }
 
 message EntityViewUpdateMsg {

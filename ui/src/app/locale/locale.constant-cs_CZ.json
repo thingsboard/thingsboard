@@ -770,6 +770,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Jeden uzel pravidla} other {Seznam # uzlů pravidel} }",
         "rulenode-name-starts-with": "Uzly pravidel, jejichž název začíná '{{prefix}}'",
         "type-current-customer": "Stávající zákazník",
+        "type-current-tenant": "Stávající tenant",
         "search": "Vyhledat entity",
         "selected-entities": "{ count, plural, 1 {1 entita} other {# entit} } zvoleno",
         "entity-name": "Název entity",
@@ -1135,7 +1136,7 @@
         "total": "celkem"
     },
     "login": {
-        "login": "Přihlásit",
+        "login": "Přihlásit se",
         "request-password-reset": "Vyžádat reset hesla",
         "reset-password": "Reset hesla",
         "create-password": "Vytvořit heslo",
@@ -1149,7 +1150,9 @@
         "new-password": "Nové heslo",
         "new-password-again": "Nové heslo znovu",
         "password-link-sent-message": "Odkaz pro reset hesla byl úspěšně odeslán!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Přihlásit se přes {{name}}",
+        "or": "nebo"
     },
     "position": {
         "top": "Nahoře",

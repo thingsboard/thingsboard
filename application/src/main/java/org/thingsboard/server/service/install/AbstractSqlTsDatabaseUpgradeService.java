@@ -47,7 +47,7 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
     @Autowired
     protected InstallScripts installScripts;
 
-    protected abstract void loadSql(Connection conn);
+    protected abstract void loadSql(Connection conn, String fileName);
 
     protected void loadFunctions(Path sqlFile, Connection conn) throws Exception {
         String sql = new String(Files.readAllBytes(sqlFile), StandardCharsets.UTF_8);
@@ -70,6 +70,26 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
         return versionValid;
     }
 
+    protected boolean isOldSchema(Connection conn, long fromVersion) {
+        boolean isOldSchema = true;
+        try {
+            Statement statement = conn.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS tb_schema_settings ( schema_version bigint NOT NULL, CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version));");
+            Thread.sleep(1000);
+            ResultSet resultSet = statement.executeQuery("SELECT schema_version FROM tb_schema_settings;");
+            if (resultSet.next()) {
+                isOldSchema = resultSet.getLong(1) <= fromVersion;
+            } else {
+                resultSet.close();
+                statement.execute("INSERT INTO tb_schema_settings (schema_version) VALUES (" + fromVersion + ")");
+            }
+            statement.close();
+        } catch (InterruptedException | SQLException e) {
+            log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
+        }
+        return isOldSchema;
+    }
+
     protected void executeQuery(Connection conn, String query) {
         try {
             Statement statement = conn.createStatement();
@@ -83,10 +103,11 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
                     nextWarning = nextWarning.getNextWarning();
                 }
             }
-            Thread.sleep(5000);
+            Thread.sleep(2000);
             log.info("Successfully executed query: {}", query);
         } catch (InterruptedException | SQLException e) {
-            log.info("Failed to execute query: {} due to: {}", query, e.getMessage());
+            log.error("Failed to execute query: {} due to: {}", query, e.getMessage());
+            throw new RuntimeException("Failed to execute query:" + query + " due to: ", e);
         }
     }
 

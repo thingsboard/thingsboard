@@ -72,7 +72,7 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
 
     public DashboardInfoEntity(DashboardInfo dashboardInfo) {
         if (dashboardInfo.getId() != null) {
-            this.setId(dashboardInfo.getId().getId());
+            this.setUuid(dashboardInfo.getId().getId());
         }
         if (dashboardInfo.getTenantId() != null) {
             this.tenantId = toString(dashboardInfo.getTenantId().getId());
@@ -110,8 +110,8 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
 
     @Override
     public DashboardInfo toData() {
-        DashboardInfo dashboardInfo = new DashboardInfo(new DashboardId(getId()));
-        dashboardInfo.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        DashboardInfo dashboardInfo = new DashboardInfo(new DashboardId(this.getUuid()));
+        dashboardInfo.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         if (tenantId != null) {
             dashboardInfo.setTenantId(new TenantId(toUUID(tenantId)));
         }

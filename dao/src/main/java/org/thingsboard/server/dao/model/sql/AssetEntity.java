@@ -83,7 +83,7 @@ public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTex
 
     public AssetEntity(Asset asset) {
         if (asset.getId() != null) {
-            this.setId(asset.getId().getId());
+            this.setUuid(asset.getId().getId());
         }
         if (asset.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(asset.getTenantId().getId());

@@ -33,14 +33,6 @@ import java.sql.SQLException;
 @Slf4j
 public class TimescaleTsDatabaseSchemaService extends SqlAbstractDatabaseSchemaService implements TsDatabaseSchemaService {
 
-    private static final String QUERY = "query: {}";
-    private static final String SUCCESSFULLY_EXECUTED = "Successfully executed ";
-    private static final String FAILED_TO_EXECUTE = "Failed to execute ";
-    private static final String FAILED_DUE_TO = " due to: {}";
-
-    private static final String SUCCESSFULLY_EXECUTED_QUERY = SUCCESSFULLY_EXECUTED + QUERY;
-    private static final String FAILED_TO_EXECUTE_QUERY = FAILED_TO_EXECUTE + QUERY + FAILED_DUE_TO;
-
     @Value("${sql.timescale.chunk_time_interval:86400000}")
     private long chunkTimeInterval;
 
@@ -53,16 +45,5 @@ public class TimescaleTsDatabaseSchemaService extends SqlAbstractDatabaseSchemaS
         super.createDatabaseSchema();
         executeQuery("SELECT create_hypertable('ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
     }
-
-    private void executeQuery(String query) {
-        try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-            conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-            log.info(SUCCESSFULLY_EXECUTED_QUERY, query);
-            Thread.sleep(5000);
-        } catch (InterruptedException | SQLException e) {
-            log.info(FAILED_TO_EXECUTE_QUERY, query, e.getMessage());
-        }
-    }
-
 
 }

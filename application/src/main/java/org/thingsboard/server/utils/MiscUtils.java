@@ -18,8 +18,8 @@ package org.thingsboard.server.utils;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
+import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.Charset;
-import java.util.Random;
 
 
 /**
@@ -46,5 +46,37 @@ public class MiscUtils {
             default:
                 throw new IllegalArgumentException("Can't find hash function with name " + name);
         }
+    }
+
+    public static String constructBaseUrl(HttpServletRequest request) {
+        String scheme = request.getScheme();
+
+        String forwardedProto = request.getHeader("x-forwarded-proto");
+        if (forwardedProto != null) {
+            scheme = forwardedProto;
+        }
+
+        int serverPort = request.getServerPort();
+        if (request.getHeader("x-forwarded-port") != null) {
+            try {
+                serverPort = request.getIntHeader("x-forwarded-port");
+            } catch (NumberFormatException e) {
+            }
+        } else if (forwardedProto != null) {
+            switch (forwardedProto) {
+                case "http":
+                    serverPort = 80;
+                    break;
+                case "https":
+                    serverPort = 443;
+                    break;
+            }
+        }
+
+        String baseUrl = String.format("%s://%s:%d",
+                scheme,
+                request.getServerName(),
+                serverPort);
+        return baseUrl;
     }
 }

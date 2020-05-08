@@ -60,7 +60,7 @@ public class TbLogNode implements TbNode {
                 toString -> {
                     ctx.logJsEvalResponse();
                     log.info(toString);
-                    ctx.tellNext(msg, SUCCESS);
+                    ctx.tellSuccess(msg);
                 },
                 t -> {
                     ctx.logJsEvalResponse();

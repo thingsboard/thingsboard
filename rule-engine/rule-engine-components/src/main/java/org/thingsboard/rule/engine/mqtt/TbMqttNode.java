@@ -74,12 +74,12 @@ public class TbMqttNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(this.config.getTopicPattern(), msg.getMetaData());
         this.mqttClient.publish(topic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE)
                 .addListener(future -> {
                     if (future.isSuccess()) {
-                        ctx.tellNext(msg, TbRelationTypes.SUCCESS);
+                        ctx.tellSuccess(msg);
                     } else {
                         TbMsg next = processException(ctx, msg, future.cause());
                         ctx.tellFailure(next, future.cause());

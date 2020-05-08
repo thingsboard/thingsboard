@@ -282,7 +282,32 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                 break;
             case "2.4.3":
                 log.info("Updating schema ...");
+                String updateAttributeKvTableStmt = "alter table attributes_kv_cf add json_v text";
+                try {
+                    log.info("Updating attributes ...");
+                    cluster.getSession().execute(updateAttributeKvTableStmt);
+                    Thread.sleep(2500);
+                    log.info("Attributes updated.");
+                } catch (InvalidQueryException e) {
+                }
 
+                String updateTenantCoreTableStmt = "alter table tenant add isolated_tb_core boolean";
+                String updateTenantRuleEngineTableStmt = "alter table tenant add isolated_tb_rule_engine boolean";
+
+                try {
+                    log.info("Updating tenant...");
+                    cluster.getSession().execute(updateTenantCoreTableStmt);
+                    Thread.sleep(2500);
+
+                    cluster.getSession().execute(updateTenantRuleEngineTableStmt);
+                    Thread.sleep(2500);
+                    log.info("Tenant updated.");
+                } catch (InvalidQueryException e) {
+                }
+                log.info("Schema updated.");
+                break;
+            case "2.5.0":
+                log.info("Updating schema ...");
                 schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.x", SCHEMA_UPDATE_CQL);
                 loadCql(schemaUpdateFile);
 
@@ -310,16 +335,6 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                     cluster.getSession().execute("alter table rule_chain add type text");
                     Thread.sleep(2500);
                 } catch (InvalidQueryException e) {}
-
-                String updateAttributeKvTableStmt = "alter table attributes_kv_cf add json_v text";
-                try {
-                    log.info("Updating attributes ...");
-                    cluster.getSession().execute(updateAttributeKvTableStmt);
-                    Thread.sleep(2500);
-                    log.info("Attributes updated.");
-                } catch (InvalidQueryException e) {
-                }
-
                 log.info("Schema updated.");
                 break;
             default:

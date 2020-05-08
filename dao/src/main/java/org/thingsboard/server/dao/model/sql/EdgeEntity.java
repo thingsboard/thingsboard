@@ -95,7 +95,7 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
 
     public EdgeEntity(Edge edge) {
         if (edge.getId() != null) {
-            this.setId(edge.getId().getId());
+            this.setUuid(edge.getId().getId());
         }
         if (edge.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(edge.getTenantId().getId());

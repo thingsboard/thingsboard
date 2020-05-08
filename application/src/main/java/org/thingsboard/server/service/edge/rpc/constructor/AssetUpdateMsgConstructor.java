@@ -30,6 +30,9 @@ public class AssetUpdateMsgConstructor {
                 .setMsgType(msgType)
                 .setName(asset.getName())
                 .setType(asset.getType());
+        if (asset.getLabel() != null) {
+            builder.setLabel(asset.getLabel());
+        }
         return builder.build();
     }
 

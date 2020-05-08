@@ -32,6 +32,9 @@ public class ModelConstants {
     public static final String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
     public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
 
+    // this is the difference between midnight October 15, 1582 UTC and midnight January 1, 1970 UTC as 100 nanosecond units
+    public static final long EPOCH_DIFF = 122192928000000000L;
+
     /**
      * Generic constants.
      */
@@ -112,6 +115,8 @@ public class ModelConstants {
     public static final String TENANT_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String TENANT_REGION_PROPERTY = "region";
     public static final String TENANT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String TENANT_ISOLATED_TB_CORE = "isolated_tb_core";
+    public static final String TENANT_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
 
     public static final String TENANT_BY_REGION_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "tenant_by_region_and_search_text";
 

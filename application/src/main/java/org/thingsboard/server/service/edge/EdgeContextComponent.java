@@ -37,6 +37,8 @@ import org.thingsboard.server.service.edge.rpc.constructor.DeviceUpdateMsgConstr
 import org.thingsboard.server.service.edge.rpc.constructor.EntityViewUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.init.InitEdgeService;
 import org.thingsboard.server.service.edge.rpc.constructor.RuleChainUpdateMsgConstructor;
+import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.state.DeviceStateService;
 
 @Component
 @Data
@@ -81,6 +83,14 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private ActorService actorService;
+
+    @Lazy
+    @Autowired
+    private DeviceStateService deviceStateService;
+
+    @Lazy
+    @Autowired
+    private TbClusterService tbClusterService;
 
     @Lazy
     @Autowired

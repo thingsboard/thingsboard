@@ -584,51 +584,53 @@ export default class TbMapWidgetV2 {
 				var latData = data[location.latIndex].data;
 				var lngData = data[location.lngIndex].data;
 				var lat, lng, latLng;
-				if (latData.length > 0 && lngData.length > 0) {
-					if (tbMap.drawRoutes) {
-						// Create or update route
-						var latLngs = [];
-						for (var i = 0; i < latData.length; i++) {
-							lat = latData[i][1];
-							lng = lngData[i][1];
-							if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
-								latLng = tbMap.map.createLatLng(lat, lng);
-								if (i == 0 || !latLngs[latLngs.length - 1].equals(latLng)) {
-									latLngs.push(latLng);
-								}
-							}
-						}
-						if (latLngs.length > 0) {
-							var markerLocation = latLngs[latLngs.length - 1];
-							createOrUpdateLocationMarker(location, markerLocation, dataMap);
-						}
-						if (!location.polyline) {
-							location.polyline = tbMap.map.createPolyline(latLngs, location.settings);
-							tbMap.polylines.push(location.polyline);
-							locationChanged = true;
-						} else {
-							var prevPath = tbMap.map.getPolylineLatLngs(location.polyline);
-							if (!prevPath || !arraysEqual(prevPath, latLngs)) {
-								tbMap.map.setPolylineLatLngs(location.polyline, latLngs);
-								locationChanged = true;
-							}
-						}
-					} else {
-						// Create or update marker
-						lat = latData[latData.length - 1][1];
-						lng = lngData[lngData.length - 1][1];
+
+				if (tbMap.drawRoutes) {
+					// Create or update route
+					var latLngs = [];
+					for (var i = 0; i < latData.length; i++) {
+						lat = latData[i][1];
+						lng = lngData[i][1];
 						if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
 							latLng = tbMap.map.createLatLng(lat, lng);
-							if (createOrUpdateLocationMarker(location, latLng, dataMap)) {
-								locationChanged = true;
+							if (i == 0 || !latLngs[latLngs.length - 1].equals(latLng)) {
+								latLngs.push(latLng);
 							}
 						}
 					}
-					if (location.marker) {
-						updateLocationStyle(location, dataMap);
+					if (latLngs.length > 0) {
+						var markerLocation = latLngs[latLngs.length - 1];
+						createOrUpdateLocationMarker(location, markerLocation, dataMap);
+					} else if (location.marker) {
+						tbMap.map.removeMarker(location.marker);
+						delete location.marker;
 					}
-
+					if (!location.polyline) {
+						location.polyline = tbMap.map.createPolyline(latLngs, location.settings);
+						tbMap.polylines.push(location.polyline);
+						locationChanged = true;
+					} else {
+						var prevPath = tbMap.map.getPolylineLatLngs(location.polyline);
+						if (!prevPath || !arraysEqual(prevPath, latLngs)) {
+							tbMap.map.setPolylineLatLngs(location.polyline, latLngs);
+							locationChanged = true;
+						}
+					}
+				} else if (latData.length > 0 && lngData.length > 0) {
+					// Create or update marker
+					lat = latData[latData.length - 1][1];
+					lng = lngData[lngData.length - 1][1];
+					if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
+						latLng = tbMap.map.createLatLng(lat, lng);
+						if (createOrUpdateLocationMarker(location, latLng, dataMap)) {
+							locationChanged = true;
+						}
+					}
 				}
+				if (location.marker) {
+					updateLocationStyle(location, dataMap);
+				}
+
 			}
 			return locationChanged;
 		}

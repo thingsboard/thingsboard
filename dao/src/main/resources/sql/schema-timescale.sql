@@ -45,3 +45,121 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest (
     json_v json,
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
+
+CREATE TABLE IF NOT EXISTS tb_schema_settings
+(
+    schema_version bigint NOT NULL,
+    CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
+);
+
+INSERT INTO tb_schema_settings (schema_version) VALUES (2005000) ON CONFLICT (schema_version) DO UPDATE SET schema_version = 2005000;
+
+CREATE OR REPLACE FUNCTION to_uuid(IN entity_id varchar, OUT uuid_id uuid) AS
+$$
+BEGIN
+    uuid_id := substring(entity_id, 8, 8) || '-' || substring(entity_id, 4, 4) || '-1' || substring(entity_id, 1, 3) ||
+               '-' || substring(entity_id, 16, 4) || '-' || substring(entity_id, 20, 12);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION delete_device_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+                                                            OUT deleted bigint) AS
+$$
+BEGIN
+    EXECUTE format(
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(device.id) as entity_id FROM device WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            tenant_id, customer_id, ttl) into deleted;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION delete_asset_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+                                                           OUT deleted bigint) AS
+$$
+BEGIN
+    EXECUTE format(
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(asset.id) as entity_id FROM asset WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            tenant_id, customer_id, ttl) into deleted;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION delete_customer_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+                                                              OUT deleted bigint) AS
+$$
+BEGIN
+    EXECUTE format(
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(customer.id) as entity_id FROM customer WHERE tenant_id = %L and id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            tenant_id, customer_id, ttl) into deleted;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE cleanup_timeseries_by_ttl(IN null_uuid varchar(31),
+                                                      IN system_ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    tenant_cursor CURSOR FOR select tenant.id as tenant_id
+                             from tenant;
+    tenant_id_record     varchar;
+    customer_id_record   varchar;
+    tenant_ttl           bigint;
+    customer_ttl         bigint;
+    deleted_for_entities bigint;
+    tenant_ttl_ts        bigint;
+    customer_ttl_ts      bigint;
+BEGIN
+    OPEN tenant_cursor;
+    FETCH tenant_cursor INTO tenant_id_record;
+    WHILE FOUND
+        LOOP
+            EXECUTE format(
+                    'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = %L',
+                    tenant_id_record, 'TTL') INTO tenant_ttl;
+            if tenant_ttl IS NULL THEN
+                tenant_ttl := system_ttl;
+            END IF;
+            IF tenant_ttl > 0 THEN
+                tenant_ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - tenant_ttl::bigint * 1000)::bigint;
+                deleted_for_entities := delete_device_records_from_ts_kv(tenant_id_record, null_uuid, tenant_ttl_ts);
+                deleted := deleted + deleted_for_entities;
+                RAISE NOTICE '% telemetry removed for devices where tenant_id = %', deleted_for_entities, tenant_id_record;
+                deleted_for_entities := delete_asset_records_from_ts_kv(tenant_id_record, null_uuid, tenant_ttl_ts);
+                deleted := deleted + deleted_for_entities;
+                RAISE NOTICE '% telemetry removed for assets where tenant_id = %', deleted_for_entities, tenant_id_record;
+            END IF;
+            FOR customer_id_record IN
+                SELECT customer.id AS customer_id FROM customer WHERE customer.tenant_id = tenant_id_record
+                LOOP
+                    EXECUTE format(
+                            'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = %L',
+                            customer_id_record, 'TTL') INTO customer_ttl;
+                    IF customer_ttl IS NULL THEN
+                        customer_ttl_ts := tenant_ttl_ts;
+                    ELSE
+                        IF customer_ttl > 0 THEN
+                            customer_ttl_ts :=
+                                    (EXTRACT(EPOCH FROM current_timestamp) * 1000 -
+                                     customer_ttl::bigint * 1000)::bigint;
+                        END IF;
+                    END IF;
+                    IF customer_ttl_ts IS NOT NULL AND customer_ttl_ts > 0 THEN
+                        deleted_for_entities :=
+                                delete_customer_records_from_ts_kv(tenant_id_record, customer_id_record,
+                                                                   customer_ttl_ts);
+                        deleted := deleted + deleted_for_entities;
+                        RAISE NOTICE '% telemetry removed for customer with id = % where tenant_id = %', deleted_for_entities, customer_id_record, tenant_id_record;
+                        deleted_for_entities :=
+                                delete_device_records_from_ts_kv(tenant_id_record, customer_id_record,
+                                                                 customer_ttl_ts);
+                        deleted := deleted + deleted_for_entities;
+                        RAISE NOTICE '% telemetry removed for devices where tenant_id = % and customer_id = %', deleted_for_entities, tenant_id_record, customer_id_record;
+                        deleted_for_entities := delete_asset_records_from_ts_kv(tenant_id_record,
+                                                                                customer_id_record,
+                                                                                customer_ttl_ts);
+                        deleted := deleted + deleted_for_entities;
+                        RAISE NOTICE '% telemetry removed for assets where tenant_id = % and customer_id = %', deleted_for_entities, tenant_id_record, customer_id_record;
+                    END IF;
+                END LOOP;
+            FETCH tenant_cursor INTO tenant_id_record;
+        END LOOP;
+END
+$$;

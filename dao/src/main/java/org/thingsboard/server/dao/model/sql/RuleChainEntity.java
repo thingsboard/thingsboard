@@ -99,7 +99,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
 
     public RuleChainEntity(RuleChain ruleChain) {
         if (ruleChain.getId() != null) {
-            this.setId(ruleChain.getUuidId());
+            this.setUuid(ruleChain.getUuidId());
         }
         this.tenantId = toString(DaoUtil.getId(ruleChain.getTenantId()));
         this.name = ruleChain.getName();
@@ -133,8 +133,8 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
 
     @Override
     public RuleChain toData() {
-        RuleChain ruleChain = new RuleChain(new RuleChainId(getId()));
-        ruleChain.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        RuleChain ruleChain = new RuleChain(new RuleChainId(this.getUuid()));
+        ruleChain.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         ruleChain.setTenantId(new TenantId(toUUID(tenantId)));
         ruleChain.setName(name);
         ruleChain.setType(type);

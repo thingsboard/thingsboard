@@ -45,7 +45,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -98,7 +98,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -1646,7 +1645,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         addPageLinkToParam(params, pageLink);
 
         Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&" + getUrlParams(pageLink),
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&" + getUrlParamsTs(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
@@ -1998,12 +1997,20 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     private String getUrlParams(TimePageLink pageLink) {
+        return getUrlParams(pageLink, "startTime", "endTime");
+    }
+
+    private String getUrlParamsTs(TimePageLink pageLink) {
+        return getUrlParams(pageLink, "startTs", "endTs");
+    }
+
+    private String getUrlParams(TimePageLink pageLink, String startTime, String endTime) {
         String urlParams = "limit={limit}&ascOrder={ascOrder}";
         if (pageLink.getStartTime() != null) {
-            urlParams += "&startTime={startTime}";
+            urlParams += "&" + startTime + "={startTime}";
         }
         if (pageLink.getEndTime() != null) {
-            urlParams += "&endTime={endTime}";
+            urlParams += "&" + endTime + "={endTime}";
         }
         if (pageLink.getIdOffset() != null) {
             urlParams += "&offset={offset}";

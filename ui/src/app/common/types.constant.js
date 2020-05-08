@@ -423,7 +423,8 @@ export default angular.module('thingsboard.types', [])
                 }
             },
             aliasEntityType: {
-                current_customer: "CURRENT_CUSTOMER"
+                current_customer: "CURRENT_CUSTOMER",
+                current_tenant: "CURRENT_TENANT"
             },
             entityTypeTranslations: {
                 "DEVICE": {
@@ -490,12 +491,16 @@ export default angular.module('thingsboard.types', [])
                     type: 'entity.type-current-customer',
                     list: 'entity.type-current-customer'
                 },
+                "CURRENT_TENANT": {
+                    type: 'entity.type-current-tenant',
+                    list: 'entity.type-current-tenant'
+                },
                 "EDGE": {
                     type: 'entity.type-edge',
                     typePlural: 'entity.type-edges',
                     list: 'entity.list-of-edges',
                     nameStartsWith: 'entity.edge-name-starts-with'
-                },
+                }
             },
             entityField: {
                 createdTime: {
@@ -622,13 +627,29 @@ export default angular.module('thingsboard.types', [])
                     value: "modbus",
                     name: "Modbus"
                 },
-                opc_ua:  {
+                opcua:  {
                     value: "opcua",
                     name: "OPC-UA"
                 },
                 ble:  {
                     value: "ble",
                     name: "BLE"
+                },
+                request:  {
+                    value: "request",
+                    name: "Request"
+                },
+                can:  {
+                    value: "can",
+                    name: "CAN"
+                },
+                bacnet: {
+                    value: "bacnet",
+                    name: "BACnet"
+                },
+                custom:  {
+                    value: "custom",
+                    name: "Custom"
                 }
             },
             gatewayLogLevel: {

@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -78,6 +79,14 @@ public class EdgeController extends BaseController {
             edge.setTenantId(tenantId);
             boolean created = edge.getId() == null;
 
+            RuleChain defaultRootEdgeRuleChain = null;
+            if (created) {
+                defaultRootEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenantId);
+                if (defaultRootEdgeRuleChain == null) {
+                    throw new DataValidationException("Root edge rule chain is not available!");
+                }
+            }
+
             Operation operation = created ? Operation.CREATE : Operation.WRITE;
 
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation,
@@ -86,7 +95,6 @@ public class EdgeController extends BaseController {
             Edge result = checkNotNull(edgeService.saveEdge(edge));
 
             if (created) {
-                RuleChain defaultRootEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenantId);
                 ruleChainService.assignRuleChainToEdge(tenantId, defaultRootEdgeRuleChain.getId(), result.getId());
                 edgeService.setRootRuleChain(tenantId, result, defaultRootEdgeRuleChain.getId());
             }

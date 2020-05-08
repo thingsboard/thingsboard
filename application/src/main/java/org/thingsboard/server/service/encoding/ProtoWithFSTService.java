@@ -15,25 +15,19 @@
  */
 package org.thingsboard.server.service.encoding;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 
 import java.util.Optional;
-
-import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE;
-
 
 @Slf4j
 @Service
 public class ProtoWithFSTService implements DataDecodingEncodingService {
 
-
     private final FSTConfiguration config = FSTConfiguration.createDefaultConfiguration();
+
     @Override
     public Optional<TbActorMsg> decode(byte[] byteArray) {
         try {
@@ -42,7 +36,7 @@ public class ProtoWithFSTService implements DataDecodingEncodingService {
 
         } catch (IllegalArgumentException e) {
             log.error("Error during deserialization message, [{}]", e.getMessage());
-           return Optional.empty();
+            return Optional.empty();
         }
     }
 
@@ -51,18 +45,4 @@ public class ProtoWithFSTService implements DataDecodingEncodingService {
         return config.asByteArray(msq);
     }
 
-    @Override
-    public ClusterAPIProtos.ClusterMessage convertToProtoDataMessage(ServerAddress serverAddress,
-                                                                     TbActorMsg msg) {
-        return ClusterAPIProtos.ClusterMessage
-                .newBuilder()
-                .setServerAddress(ClusterAPIProtos.ServerAddress
-                        .newBuilder()
-                        .setHost(serverAddress.getHost())
-                        .setPort(serverAddress.getPort())
-                        .build())
-                .setMessageType(CLUSTER_ACTOR_MESSAGE)
-                .setPayload(ByteString.copyFrom(encode(msg))).build();
-
-    }
 }

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class ComponentDescriptorController extends BaseController {
 

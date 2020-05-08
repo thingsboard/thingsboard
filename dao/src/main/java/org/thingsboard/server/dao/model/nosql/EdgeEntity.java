@@ -93,6 +93,16 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         super();
     }
 
+    @Override
+    public UUID getUuid() {
+        return getId();
+    }
+
+    @Override
+    public void setUuid(UUID id) {
+        this.id = id;
+    }
+
     public EdgeEntity(Edge edge) {
         if (edge.getId() != null) {
             this.id = edge.getId().getId();

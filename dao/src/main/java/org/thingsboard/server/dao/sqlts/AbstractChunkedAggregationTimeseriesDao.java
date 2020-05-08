@@ -54,7 +54,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     @Autowired
     protected InsertTsRepository<TsKvEntity> insertRepository;
 
-    protected TbSqlBlockingQueue<EntityContainer<TsKvEntity>> tsQueue;
+    protected TbSqlBlockingQueue<TsKvEntity> tsQueue;
 
     @PostConstruct
     protected void init() {
@@ -150,8 +150,8 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 keyId,
                 query.getStartTs(),
                 query.getEndTs(),
-                new PageRequest(0, query.getLimit(),
-                        new Sort(Sort.Direction.fromString(
+                PageRequest.of(0, query.getLimit(),
+                        Sort.by(Sort.Direction.fromString(
                                 query.getOrderBy()), "ts")));
         tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
