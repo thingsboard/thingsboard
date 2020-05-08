@@ -16,7 +16,8 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.curator.shaded.com.google.common.io.Files;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -25,6 +26,8 @@ import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -93,15 +96,48 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                             executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                             executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
 
-                            File tempDir = Files.createTempDir();
-                            Path tempDirPath = tempDir.toPath();
-                            boolean writable = tempDir.setWritable(true, false);
-                            if (writable) {
-                                Path pathToTempTsKvFile = tempDirPath.resolve(TS_KV_SQL).toAbsolutePath();
-                                executeQuery(conn, "call insert_into_ts_kv('" + pathToTempTsKvFile + "')");
+                            Path pathToTempTsKvFile;
+                            if (SystemUtils.IS_OS_WINDOWS) {
+                                Path pathToDir;
+                                log.info("Lookup for environment variable: " + THINGSBOARD_WINDOWS_UPGRADE_DIR + " ...");
+                                String thingsboardWindowsUpgradeDir = System.getenv(THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                                if (StringUtils.isNotEmpty(thingsboardWindowsUpgradeDir)) {
+                                    log.info("Environment variable: " + THINGSBOARD_WINDOWS_UPGRADE_DIR + " found!");
+                                    pathToDir = Paths.get(thingsboardWindowsUpgradeDir);
+                                } else {
+                                    log.info("Failed to lookup environment variable: " + THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                                    pathToDir = Paths.get(PATH_TO_USERS_PUBLIC_FOLDER);
+                                }
+                                log.info("Directory: " + pathToDir + " will be used for creation temporary upgrade file!");
+                                try {
+                                    Path tsKvFile = Files.createTempFile(pathToDir, "ts_kv", ".sql");
+                                    pathToTempTsKvFile = tsKvFile.toAbsolutePath();
+                                    executeQuery(conn, "call insert_into_ts_kv('" + pathToTempTsKvFile + "')");
+                                    pathToTempTsKvFile.toFile().deleteOnExit();
+                                } catch (IOException | SecurityException e) {
+                                    throw new RuntimeException("Failed to create time-series upgrade files due to: " + e);
+                                }
                             } else {
-                                throw new RuntimeException("Failed to grant write permissions for the: " + tempDir + "folder!");
+                                Path tempDirPath = Files.createTempDirectory("ts_kv");
+                                File tempDirAsFile = tempDirPath.toFile();
+                                boolean writable = tempDirAsFile.setWritable(true, false);
+                                boolean readable = tempDirAsFile.setReadable(true, false);
+                                boolean executable = tempDirAsFile.setExecutable(true, false);
+                                if (writable && readable && executable) {
+                                    pathToTempTsKvFile = tempDirPath.resolve(TS_KV_SQL).toAbsolutePath();
+                                    executeQuery(conn, "call insert_into_ts_kv('" + pathToTempTsKvFile + "')");
+                                } else {
+                                    throw new RuntimeException("Failed to grant write permissions for the: " + tempDirPath + "folder!");
+                                }
                             }
+
+                            if (pathToTempTsKvFile.toFile().exists()) {
+                                boolean deleteTsKvFile = pathToTempTsKvFile.toFile().delete();
+                                if (deleteTsKvFile) {
+                                    log.info("Successfully deleted the temp file for ts_kv table upgrade!");
+                                }
+                            }
+
                             executeQuery(conn, CALL_INSERT_INTO_TS_KV_LATEST);
 
                             executeQuery(conn, DROP_OLD_TENANT_TS_KV_TABLE);
