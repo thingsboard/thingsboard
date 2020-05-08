@@ -90,7 +90,7 @@ spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
-            storage: 1Gi
+            storage: 100Mi
 ---
 apiVersion: v1
 kind: Service
@@ -120,7 +120,7 @@ metadata:
 spec:
   serviceName: "tb-kafka"
   replicas: 3
-  podManagementPolicy: OrderedReady
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       app: tb-kafka
@@ -136,8 +136,6 @@ spec:
           ports:
             - containerPort: 9092
               name: kafka-int
-            - containerPort: 9093
-              name: kafka-ext
           readinessProbe:
             periodSeconds: 5
             timeoutSeconds: 5
@@ -160,17 +158,17 @@ spec:
             - name: KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE
               value: "true"
             - name: KAFKA_LISTENERS
-              value: "INSIDE://:9092,OUTSIDE://:9093"
+              value: "INSIDE://:9092"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "INSIDE://:9092,OUTSIDE://:9093"
+              value: "INSIDE://:9092"
             - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
-              value: "INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT"
+              value: "INSIDE:PLAINTEXT"
             - name: KAFKA_INTER_BROKER_LISTENER_NAME
               value: "INSIDE"
             - name: KAFKA_CONTROLLER_SHUTDOWN_ENABLE
               value: "true"
             - name: KAFKA_CREATE_TOPICS
-              value: "js.eval.requests:100:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600,tb.transport.api.requests:30:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600,tb.rule-engine:30:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600"
+              value: "js_eval.requests:100:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600,tb_transport.api.requests:30:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600"
             - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
               value: "false"
             - name: KAFKA_LOG_RETENTION_BYTES
@@ -197,7 +195,7 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 10Gi
+            storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
@@ -210,9 +208,6 @@ spec:
     - port: 9092
       targetPort: 9092
       name: kafka-int
-    - port: 9093
-      targetPort: 9093
-      name: kafka-ext
   selector:
     app: tb-kafka
 ---
@@ -285,7 +280,7 @@ spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
-            storage: 1Gi
+            storage: 100Mi
 ---
 apiVersion: v1
 kind: Service
