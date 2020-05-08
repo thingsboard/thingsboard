@@ -52,6 +52,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.nosql.CassandraAbstractAsyncDao;
+import org.thingsboard.server.dao.nosql.TbResultSet;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.util.NoSqlTsDao;
 
@@ -238,14 +239,14 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
             BoundStatement stmt = stmtBuilder.build();
 
-            Futures.addCallback(executeAsyncRead(tenantId, stmt), new FutureCallback<AsyncResultSet>() {
+            Futures.addCallback(executeAsyncRead(tenantId, stmt), new FutureCallback<TbResultSet>() {
                 @Override
-                public void onSuccess(@Nullable AsyncResultSet result) {
+                public void onSuccess(@Nullable TbResultSet result) {
                     if (result == null) {
                         cursor.addData(convertResultToTsKvEntryList(Collections.emptyList()));
                         findAllAsyncSequentiallyWithLimit(tenantId, cursor, resultFuture);
                     } else {
-                        Futures.addCallback(allRows(result), new FutureCallback<List<Row>>() {
+                        Futures.addCallback(result.allRows(readResultsProcessingExecutor), new FutureCallback<List<Row>>() {
 
                             @Override
                             public void onSuccess(@Nullable List<Row> result) {
@@ -278,21 +279,21 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         final long endTs = query.getEndTs();
         final long ts = startTs + (endTs - startTs) / 2;
         ListenableFuture<List<Long>> partitionsListFuture = getPartitionsFuture(tenantId, query, entityId, minPartition, maxPartition);
-        ListenableFuture<List<AsyncResultSet>> aggregationChunks = Futures.transformAsync(partitionsListFuture,
+        ListenableFuture<List<TbResultSet>> aggregationChunks = Futures.transformAsync(partitionsListFuture,
                 getFetchChunksAsyncFunction(tenantId, entityId, key, aggregation, startTs, endTs), readResultsProcessingExecutor);
 
         return Futures.transformAsync(aggregationChunks, new AggregatePartitionsFunction(aggregation, key, ts, readResultsProcessingExecutor), readResultsProcessingExecutor);
     }
 
-    private AsyncFunction<AsyncResultSet, List<Long>> getPartitionsArrayFunction() {
+    private AsyncFunction<TbResultSet, List<Long>> getPartitionsArrayFunction() {
         return rs ->
-            Futures.transform(allRows(rs), rows ->
+            Futures.transform(rs.allRows(readResultsProcessingExecutor), rows ->
                 rows.stream()
                 .map(row -> row.getLong(ModelConstants.PARTITION_COLUMN)).collect(Collectors.toList()),
                     readResultsProcessingExecutor);
     }
 
-    private AsyncFunction<List<Long>, List<AsyncResultSet>> getFetchChunksAsyncFunction(TenantId tenantId, EntityId entityId, String key, Aggregation aggregation, long startTs, long endTs) {
+    private AsyncFunction<List<Long>, List<TbResultSet>> getFetchChunksAsyncFunction(TenantId tenantId, EntityId entityId, String key, Aggregation aggregation, long startTs, long endTs) {
         return partitions -> {
             try {
                 PreparedStatement proto = getFetchStmt(aggregation, DESC_ORDER);
@@ -684,8 +685,8 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         return deletePartitionStmt;
     }
 
-    private ListenableFuture<List<TsKvEntry>> convertAsyncResultSetToTsKvEntryList(AsyncResultSet rs) {
-        return Futures.transform(this.allRows(rs),
+    private ListenableFuture<List<TsKvEntry>> convertAsyncResultSetToTsKvEntryList(TbResultSet rs) {
+        return Futures.transform(rs.allRows(readResultsProcessingExecutor),
                 rows -> this.convertResultToTsKvEntryList(rows), readResultsProcessingExecutor);
     }
 

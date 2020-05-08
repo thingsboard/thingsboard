@@ -52,21 +52,21 @@ public abstract class CassandraAbstractAsyncDao extends CassandraAbstractDao {
         }
     }
 
-    protected <T> ListenableFuture<T> getFuture(TbResultSetFuture future, java.util.function.Function<AsyncResultSet, T> transformer) {
-        return Futures.transform(future, new Function<AsyncResultSet, T>() {
+    protected <T> ListenableFuture<T> getFuture(TbResultSetFuture future, java.util.function.Function<TbResultSet, T> transformer) {
+        return Futures.transform(future, new Function<TbResultSet, T>() {
             @Nullable
             @Override
-            public T apply(@Nullable AsyncResultSet input) {
+            public T apply(@Nullable TbResultSet input) {
                 return transformer.apply(input);
             }
         }, readResultsProcessingExecutor);
     }
 
-    protected <T> ListenableFuture<T> getFutureAsync(TbResultSetFuture future, com.google.common.util.concurrent.AsyncFunction<AsyncResultSet, T> transformer) {
-        return Futures.transformAsync(future, new AsyncFunction<AsyncResultSet, T>() {
+    protected <T> ListenableFuture<T> getFutureAsync(TbResultSetFuture future, com.google.common.util.concurrent.AsyncFunction<TbResultSet, T> transformer) {
+        return Futures.transformAsync(future, new AsyncFunction<TbResultSet, T>() {
             @Nullable
             @Override
-            public ListenableFuture<T> apply(@Nullable AsyncResultSet input) {
+            public ListenableFuture<T> apply(@Nullable TbResultSet input) {
                 try {
                     return transformer.apply(input);
                 } catch (Exception e) {
@@ -74,10 +74,6 @@ public abstract class CassandraAbstractAsyncDao extends CassandraAbstractDao {
                 }
             }
         }, readResultsProcessingExecutor);
-    }
-
-    protected ListenableFuture<List<Row>> allRows(AsyncResultSet resultSet) {
-        return ResultSetUtils.allRows(resultSet, readResultsProcessingExecutor);
     }
 
 }

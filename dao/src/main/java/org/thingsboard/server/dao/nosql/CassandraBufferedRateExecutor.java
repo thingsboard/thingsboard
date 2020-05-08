@@ -39,7 +39,7 @@ import java.util.Map;
 @Component
 @Slf4j
 @NoSqlAnyDao
-public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<CassandraStatementTask, TbResultSetFuture, AsyncResultSet> {
+public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<CassandraStatementTask, TbResultSetFuture, TbResultSet> {
 
     @Autowired
     private EntityService entityService;
@@ -107,19 +107,22 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
     }
 
     @Override
-    protected SettableFuture<AsyncResultSet> create() {
+    protected SettableFuture<TbResultSet> create() {
         return SettableFuture.create();
     }
 
     @Override
-    protected TbResultSetFuture wrap(CassandraStatementTask task, SettableFuture<AsyncResultSet> future) {
+    protected TbResultSetFuture wrap(CassandraStatementTask task, SettableFuture<TbResultSet> future) {
         return new TbResultSetFuture(future);
     }
 
     @Override
-    protected ListenableFuture<AsyncResultSet> execute(AsyncTaskContext<CassandraStatementTask, AsyncResultSet> taskCtx) {
+    protected ListenableFuture<TbResultSet> execute(AsyncTaskContext<CassandraStatementTask, TbResultSet> taskCtx) {
         CassandraStatementTask task = taskCtx.getTask();
-        return task.getSession().executeAsync(task.getStatement());
+        return task.executeAsync(
+                statement ->
+                    this.submit(new CassandraStatementTask(task.getTenantId(), task.getSession(), statement))
+        );
     }
 
 }

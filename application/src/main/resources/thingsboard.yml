@@ -176,9 +176,9 @@ cassandra:
   # Enable/disable secure connection
   ssl: "${CASSANDRA_USE_SSL:false}"
   # Enable/disable JMX
-  jmx: "${CASSANDRA_USE_JMX:true}"
+  jmx: "${CASSANDRA_USE_JMX:false}"
   # Enable/disable metrics collection.
-  metrics: "${CASSANDRA_USE_METRICS:true}"
+  metrics: "${CASSANDRA_USE_METRICS:false}"
   # NONE SNAPPY LZ4
   compression: "${CASSANDRA_COMPRESSION:none}"
   # Specify cassandra cluster initialization timeout in milliseconds (if no hosts available during startup)

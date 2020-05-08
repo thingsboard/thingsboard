@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.nosql.ResultSetUtils;
+import org.thingsboard.server.dao.nosql.TbResultSet;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 20.02.17.
  */
 @Slf4j
-public class AggregatePartitionsFunction implements com.google.common.util.concurrent.AsyncFunction<List<AsyncResultSet>, Optional<TsKvEntry>> {
+public class AggregatePartitionsFunction implements com.google.common.util.concurrent.AsyncFunction<List<TbResultSet>, Optional<TsKvEntry>> {
 
     private static final int LONG_CNT_POS = 0;
     private static final int DOUBLE_CNT_POS = 1;
@@ -67,14 +67,14 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
     }
 
     @Override
-    public ListenableFuture<Optional<TsKvEntry>> apply(@Nullable List<AsyncResultSet> rsList) {
+    public ListenableFuture<Optional<TsKvEntry>> apply(@Nullable List<TbResultSet> rsList) {
     log.trace("[{}][{}][{}] Going to aggregate data", key, ts, aggregation);
     if (rsList == null || rsList.isEmpty()) {
         return Futures.immediateFuture(Optional.empty());
     }
     return Futures.transform(
         Futures.allAsList(
-            rsList.stream().map(rs -> ResultSetUtils.allRows(rs, this.executor))
+            rsList.stream().map(rs -> rs.allRows(this.executor))
                 .collect(Collectors.toList())),
         rowsList -> {
             try {

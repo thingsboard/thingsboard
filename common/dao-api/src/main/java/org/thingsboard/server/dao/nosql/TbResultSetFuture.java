@@ -27,19 +27,19 @@ import java.util.concurrent.TimeoutException;
 /**
  * Created by ashvayka on 24.10.18.
  */
-public class TbResultSetFuture implements ListenableFuture<AsyncResultSet> {
+public class TbResultSetFuture implements ListenableFuture<TbResultSet> {
 
-    private final SettableFuture<AsyncResultSet> mainFuture;
+    private final SettableFuture<TbResultSet> mainFuture;
 
-    public TbResultSetFuture(SettableFuture<AsyncResultSet> mainFuture) {
+    public TbResultSetFuture(SettableFuture<TbResultSet> mainFuture) {
         this.mainFuture = mainFuture;
     }
 
-    public AsyncResultSet getUninterruptibly() {
+    public TbResultSet getUninterruptibly() {
         return getSafe();
     }
 
-    public AsyncResultSet getUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
+    public TbResultSet getUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
         return getSafe(timeout, unit);
     }
 
@@ -59,12 +59,12 @@ public class TbResultSetFuture implements ListenableFuture<AsyncResultSet> {
     }
 
     @Override
-    public AsyncResultSet get() throws InterruptedException, ExecutionException {
+    public TbResultSet get() throws InterruptedException, ExecutionException {
         return mainFuture.get();
     }
 
     @Override
-    public AsyncResultSet get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public TbResultSet get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         return mainFuture.get(timeout, unit);
     }
 
@@ -73,7 +73,7 @@ public class TbResultSetFuture implements ListenableFuture<AsyncResultSet> {
         mainFuture.addListener(listener, executor);
     }
 
-    private AsyncResultSet getSafe() {
+    private TbResultSet getSafe() {
         try {
             return mainFuture.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -81,7 +81,7 @@ public class TbResultSetFuture implements ListenableFuture<AsyncResultSet> {
         }
     }
 
-    private AsyncResultSet getSafe(long timeout, TimeUnit unit) throws TimeoutException {
+    private TbResultSet getSafe(long timeout, TimeUnit unit) throws TimeoutException {
         try {
             return mainFuture.get(timeout, unit);
         } catch (InterruptedException | ExecutionException e) {
