@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.customer;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
@@ -43,8 +43,8 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindByTenantId() {
-        UUID tenantId1 = UUIDs.timeBased();
-        UUID tenantId2 = UUIDs.timeBased();
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
 
         for (int i = 0; i < 20; i++) {
             createCustomer(tenantId1, i);
@@ -62,7 +62,7 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindCustomersByTenantIdAndTitle() {
-        UUID tenantId = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
 
         for (int i = 0; i < 10; i++) {
             createCustomer(tenantId, i);
@@ -75,7 +75,7 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
 
     private void createCustomer(UUID tenantId, int index) {
         Customer customer = new Customer();
-        customer.setId(new CustomerId(UUIDs.timeBased()));
+        customer.setId(new CustomerId(Uuids.timeBased()));
         customer.setTenantId(new TenantId(tenantId));
         customer.setTitle("CUSTOMER_" + index);
         customerDao.save(new TenantId(tenantId), customer);

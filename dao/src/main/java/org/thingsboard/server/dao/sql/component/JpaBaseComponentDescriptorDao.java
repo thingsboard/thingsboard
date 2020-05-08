@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.component;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -64,7 +64,7 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     @Override
     public Optional<ComponentDescriptor> saveIfNotExist(TenantId tenantId, ComponentDescriptor component) {
         if (component.getId() == null) {
-            component.setId(new ComponentDescriptorId(UUIDs.timeBased()));
+            component.setId(new ComponentDescriptorId(Uuids.timeBased()));
         }
         if (!componentDescriptorRepository.existsById(UUIDConverter.fromTimeUUID(component.getId().getId()))) {
             ComponentDescriptorEntity componentDescriptorEntity = new ComponentDescriptorEntity(component);

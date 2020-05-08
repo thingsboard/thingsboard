@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.install.migrate;
 
-import com.datastax.driver.core.Row;
+import com.datastax.oss.driver.api.core.cql.Row;
 
 import java.util.UUID;
 
@@ -29,7 +29,7 @@ public class CassandraToSqlEventTsColumn extends CassandraToSqlColumn {
 
     @Override
     public String getColumnValue(Row row) {
-        UUID id = row.getUUID(getIndex());
+        UUID id = row.getUuid(getIndex());
         long ts = getTs(id);
         return ts + "";
     }

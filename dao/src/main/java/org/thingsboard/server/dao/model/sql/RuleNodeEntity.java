@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -95,7 +95,7 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
     @Override
     public RuleNode toData() {
         RuleNode ruleNode = new RuleNode(new RuleNodeId(this.getUuid()));
-        ruleNode.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
+        ruleNode.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
         if (ruleChainId != null) {
             ruleNode.setRuleChainId(new RuleChainId(toUUID(ruleChainId)));
         }

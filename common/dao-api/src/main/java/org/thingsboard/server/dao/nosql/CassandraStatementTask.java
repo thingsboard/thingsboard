@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.nosql;
 
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.Statement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
 import org.thingsboard.server.dao.util.AsyncTask;
 
 /**
@@ -28,7 +28,7 @@ import org.thingsboard.server.dao.util.AsyncTask;
 public class CassandraStatementTask implements AsyncTask {
 
     private final TenantId tenantId;
-    private final Session session;
+    private final GuavaSession session;
     private final Statement statement;
 
 }

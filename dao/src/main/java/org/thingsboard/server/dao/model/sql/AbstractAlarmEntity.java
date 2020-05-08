@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -154,7 +154,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
 
     protected Alarm toAlarm() {
         Alarm alarm = new Alarm(new AlarmId(UUIDConverter.fromString(id)));
-        alarm.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
+        alarm.setCreatedTime(Uuids.unixTimestamp(UUIDConverter.fromString(id)));
         if (tenantId != null) {
             alarm.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         }

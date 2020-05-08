@@ -15,20 +15,17 @@
  */
 package org.thingsboard.server.service.install.migrate;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.Statement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.internal.util.JdbcExceptionHelper;
 import org.postgresql.util.PSQLException;
 import org.thingsboard.server.common.data.UUIDConverter;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
 
-import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -38,7 +35,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Data
 @Slf4j
@@ -78,7 +74,7 @@ public class CassandraToSqlTable {
         }
     }
 
-    public void migrateToSql(Session session, Connection conn) throws SQLException {
+    public void migrateToSql(GuavaSession session, Connection conn) throws SQLException {
         log.info("[{}] Migrating data from cassandra '{}' Column Family to '{}' SQL table...", this.sqlTableName, this.cassandraCf, this.sqlTableName);
         DatabaseMetaData metadata = conn.getMetaData();
         java.sql.ResultSet resultSet = metadata.getColumns(null, null, this.sqlTableName, null);
@@ -92,7 +88,7 @@ public class CassandraToSqlTable {
         }
         this.sqlInsertStatement = createSqlInsertStatement(conn);
         Statement cassandraSelectStatement = createCassandraSelectStatement();
-        cassandraSelectStatement.setFetchSize(100);
+        cassandraSelectStatement.setPageSize(100);
         ResultSet rs = session.execute(cassandraSelectStatement);
         Iterator<Row> iter = rs.iterator();
         int rowCounter = 0;
@@ -281,7 +277,7 @@ public class CassandraToSqlTable {
         }
         selectStatementBuilder.deleteCharAt(selectStatementBuilder.length() - 1);
         selectStatementBuilder.append(" FROM ").append(cassandraCf);
-        return new SimpleStatement(selectStatementBuilder.toString());
+        return SimpleStatement.newInstance(selectStatementBuilder.toString());
     }
 
     private PreparedStatement createSqlInsertStatement(Connection conn) throws SQLException {

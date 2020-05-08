@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -84,13 +84,13 @@ public class TbChangeOriginatorNodeTest {
     @Test
     public void originatorCanBeChangedToCustomerId() throws TbNodeException {
         init();
-        AssetId assetId = new AssetId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        AssetId assetId = new AssetId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
         TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -112,13 +112,13 @@ public class TbChangeOriginatorNodeTest {
     @Test
     public void newChainCanBeStarted() throws TbNodeException {
         init();
-        AssetId assetId = new AssetId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        AssetId assetId = new AssetId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
         TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId);
 
@@ -139,13 +139,13 @@ public class TbChangeOriginatorNodeTest {
     @Test
     public void exceptionThrownIfCannotFindNewOriginator() throws TbNodeException {
         init();
-        AssetId assetId = new AssetId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        AssetId assetId = new AssetId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
         TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId);
 

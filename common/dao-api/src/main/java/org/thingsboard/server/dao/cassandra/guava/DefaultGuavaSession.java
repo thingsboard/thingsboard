@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.wrapper;
+package org.thingsboard.server.dao.cassandra.guava;
 
+import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.internal.core.session.SessionWrapper;
 
-import com.datastax.driver.core.ResultSet;
+public class DefaultGuavaSession extends SessionWrapper implements GuavaSession {
 
-public class EntityResultSet<T> {
-
-  private ResultSet resultSet;
-  private T entity;
-
-  public EntityResultSet(ResultSet resultSet, T entity) {
-    this.resultSet = resultSet;
-    this.entity = entity;
-  }
-
-  public T getEntity() {
-    return entity;
-  }
-
-  public boolean wasApplied() {
-    return resultSet.wasApplied();
-  }
+    public DefaultGuavaSession(Session delegate) {
+        super(delegate);
+    }
 }

@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
@@ -57,9 +57,9 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testSaveIfNotExists() {
-        UUID eventId = UUIDs.timeBased();
-        UUID tenantId = UUIDs.timeBased();
-        UUID entityId = UUIDs.timeBased();
+        UUID eventId = Uuids.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID entityId = Uuids.timeBased();
         Event event = getEvent(eventId, tenantId, entityId);
         Optional<Event> optEvent1 = eventDao.saveIfNotExists(event);
         assertTrue("Optional is expected to be non-empty", optEvent1.isPresent());
@@ -83,9 +83,9 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void findEventsByEntityIdAndPageLink() {
-        UUID tenantId = UUIDs.timeBased();
-        UUID entityId1 = UUIDs.timeBased();
-        UUID entityId2 = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID entityId1 = Uuids.timeBased();
+        UUID entityId2 = Uuids.timeBased();
         long startTime = System.currentTimeMillis();
         long endTime = createEventsTwoEntities(tenantId, entityId1, entityId2, startTime, 20);
 
@@ -117,9 +117,9 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void findEventsByEntityIdAndEventTypeAndPageLink() {
-        UUID tenantId = UUIDs.timeBased();
-        UUID entityId1 = UUIDs.timeBased();
-        UUID entityId2 = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID entityId1 = Uuids.timeBased();
+        UUID entityId2 = Uuids.timeBased();
         long startTime = System.currentTimeMillis();
         long endTime = createEventsTwoEntitiesTwoTypes(tenantId, entityId1, entityId2, startTime, 20);
 
@@ -147,10 +147,10 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     private long createEventsTwoEntitiesTwoTypes(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
         for (int i = 0; i < count / 2; i++) {
             String type = i % 2 == 0 ? STATS : ALARM;
-            UUID eventId1 = UUIDs.timeBased();
+            UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1, type);
             eventDao.save(new TenantId(tenantId), event1);
-            UUID eventId2 = UUIDs.timeBased();
+            UUID eventId2 = Uuids.timeBased();
             Event event2 = getEvent(eventId2, tenantId, entityId2, type);
             eventDao.save(new TenantId(tenantId), event2);
         }
@@ -159,10 +159,10 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
         for (int i = 0; i < count / 2; i++) {
-            UUID eventId1 = UUIDs.timeBased();
+            UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1);
             eventDao.save(new TenantId(tenantId), event1);
-            UUID eventId2 = UUIDs.timeBased();
+            UUID eventId2 = Uuids.timeBased();
             Event event2 = getEvent(eventId2, tenantId, entityId2);
             eventDao.save(new TenantId(tenantId), event2);
         }

@@ -178,7 +178,7 @@ cassandra:
   # Enable/disable JMX
   jmx: "${CASSANDRA_USE_JMX:true}"
   # Enable/disable metrics collection.
-  metrics: "${CASSANDRA_DISABLE_METRICS:true}"
+  metrics: "${CASSANDRA_USE_METRICS:true}"
   # NONE SNAPPY LZ4
   compression: "${CASSANDRA_COMPRESSION:none}"
   # Specify cassandra cluster initialization timeout in milliseconds (if no hosts available during startup)

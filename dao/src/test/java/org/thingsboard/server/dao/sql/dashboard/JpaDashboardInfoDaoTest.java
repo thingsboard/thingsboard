@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.dashboard;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +41,8 @@ public class JpaDashboardInfoDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindDashboardsByTenantId() {
-        UUID tenantId1 = UUIDs.timeBased();
-        UUID tenantId2 = UUIDs.timeBased();
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
 
         for (int i = 0; i < 20; i++) {
             createDashboard(tenantId1, i);
@@ -59,7 +59,7 @@ public class JpaDashboardInfoDaoTest extends AbstractJpaDaoTest {
 
     private void createDashboard(UUID tenantId, int index) {
         DashboardInfo dashboardInfo = new DashboardInfo();
-        dashboardInfo.setId(new DashboardId(UUIDs.timeBased()));
+        dashboardInfo.setId(new DashboardId(Uuids.timeBased()));
         dashboardInfo.setTenantId(new TenantId(tenantId));
         dashboardInfo.setTitle("DASHBOARD_" + index);
         dashboardInfoDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, dashboardInfo);

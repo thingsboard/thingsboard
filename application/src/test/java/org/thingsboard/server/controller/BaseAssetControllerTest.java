@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
@@ -206,7 +206,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         asset.setType("default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
-        doPost("/api/customer/" + UUIDs.timeBased().toString()
+        doPost("/api/customer/" + Uuids.timeBased().toString()
                 + "/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
