@@ -34,7 +34,7 @@ services:
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
-    scale: 2
+    scale: 20
     env_file:
       - tb-js-executor.env
   tb-core1:
