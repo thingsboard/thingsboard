@@ -216,7 +216,6 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
         }
     }
 
-
     @Bean
     @ConditionalOnMissingBean(CorsFilter.class)
     public CorsFilter corsFilter(@Autowired MvcCorsProperties mvcCorsProperties) {
