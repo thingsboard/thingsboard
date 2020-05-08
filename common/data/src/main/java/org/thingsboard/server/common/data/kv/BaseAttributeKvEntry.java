@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.util.Optional;
 
 /**
@@ -28,6 +30,10 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     public BaseAttributeKvEntry(KvEntry kv, long lastUpdateTs) {
         this.kv = kv;
         this.lastUpdateTs = lastUpdateTs;
+    }
+
+    public BaseAttributeKvEntry(long lastUpdateTs, KvEntry kv) {
+        this(kv, lastUpdateTs);
     }
 
     @Override
@@ -63,6 +69,11 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     @Override
     public Optional<Double> getDoubleValue() {
         return kv.getDoubleValue();
+    }
+
+    @Override
+    public Optional<String> getJsonValue() {
+        return kv.getJsonValue();
     }
 
     @Override

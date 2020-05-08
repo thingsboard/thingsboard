@@ -23,7 +23,7 @@ usage() {
     echo "    -d | --dir directory              Server keystore directory, where the generated keystore file will be copied. If specified, overrides the value from the properties file"
     echo "                                      Default value is SERVER_KEYSTORE_DIR property from properties file"
     echo "    -p | --props | --properties file  Properties file. default value is ./keygen.properties"
-	echo "    -h | --help | ?                   Show this message"
+    echo "    -h | --help | ?                   Show this message"
 }
 
 COPY=true;
@@ -71,7 +71,7 @@ while :
             echo "Done"
             exit 0
             ;;
-        [yY]|[yY][eE]|[yY][eE]|[sS]|[yY]|"")
+        [yY]|[yY][eE]|[yY][eE][sS]|"")
             echo "Cleaning up files"
             rm -rf $SERVER_FILE_PREFIX.jks
             rm -rf $SERVER_FILE_PREFIX.pub.pem
@@ -129,7 +129,7 @@ if [[ $COPY = true ]]; then
                 [nN]|[nN][oO])
                     break
                     ;;
-                [yY]|[yY][eE]|[yY][eE]|[sS]|[yY]|"")
+                [yY]|[yY][eE]|[yY][eE][sS]|"")
                     read -p "(Default: $SERVER_KEYSTORE_DIR): " dir
                      if [[ !  -z  $dir  ]]; then
                         DESTINATION=$dir;

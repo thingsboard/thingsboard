@@ -94,11 +94,11 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
         this.additionalInfo = asset.getAdditionalInfo();
     }
 
-    public UUID getId() {
+    public UUID getUuid() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 

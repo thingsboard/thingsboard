@@ -103,7 +103,7 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
 
     public AuditLogEntity(AuditLog auditLog) {
         if (auditLog.getId() != null) {
-            this.setId(auditLog.getId().getId());
+            this.setUuid(auditLog.getId().getId());
         }
         if (auditLog.getTenantId() != null) {
             this.tenantId = toString(auditLog.getTenantId().getId());
@@ -128,8 +128,8 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
 
     @Override
     public AuditLog toData() {
-        AuditLog auditLog = new AuditLog(new AuditLogId(getId()));
-        auditLog.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        AuditLog auditLog = new AuditLog(new AuditLogId(this.getUuid()));
+        auditLog.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         if (tenantId != null) {
             auditLog.setTenantId(new TenantId(toUUID(tenantId)));
         }

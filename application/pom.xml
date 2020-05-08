@@ -133,6 +133,18 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-oauth2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>
         </dependency>
@@ -181,8 +193,8 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.curator</groupId>
@@ -218,6 +230,11 @@
         <dependency>
             <groupId>org.thingsboard</groupId>
             <artifactId>tools</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>rest-client</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -547,7 +564,7 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.fortasoft</groupId>
+                <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
                 <configuration>
                     <tasks>

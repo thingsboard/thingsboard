@@ -71,7 +71,6 @@ class ThingsboardSchemaForm extends React.Component {
     }
 
     onChange(key, val) {
-        //console.log('SchemaForm.onChange', key, val);
         this.props.onModelChange(key, val);
         if (this.hasConditions) {
             this.forceUpdate();
@@ -90,7 +89,7 @@ class ThingsboardSchemaForm extends React.Component {
         this.props.onToggleFullscreen();
     }
 
-    
+
     builder(form, model, index, onChange, onColorClick, onIconClick, onToggleFullscreen, mapper) {
         var type = form.type;
         let Field = this.mapper[type];
@@ -161,8 +160,8 @@ class ThingsboardSchemaGroup extends React.Component{
     render() {
         let theCla = "pull-right fa fa-chevron-down md-toggle-icon"+(this.state.showGroup?"":" tb-toggled")
         return (<section className="md-whiteframe-z1" style={{marginTop: '10px'}}>
-                    <div className='SchemaGroupname md-button-toggle' onClick={this.toogleGroup.bind(this)}>{this.props.info.GroupTitle}<span className={theCla}></span></div>
-                    <div style={{padding: '20px'}} className={this.state.showGroup?"":"invisible"}>{this.props.forms}</div>
-                </section>);
+            <div className='SchemaGroupname md-button-toggle' onClick={this.toogleGroup.bind(this)}>{this.props.info.GroupTitle}<span className={theCla}></span></div>
+            <div style={{padding: '20px'}} className={this.state.showGroup?"":"invisible"}>{this.props.forms}</div>
+        </section>);
     }
-} 
+}

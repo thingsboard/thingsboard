@@ -50,6 +50,14 @@ function JsonObjectEdit($compile, $templateCache, $document, toast, utils) {
             updateEditorSize();
         };
 
+        scope.beautifyJSON = function () {
+            scope.contentBody = angular.toJson(scope.object, 4);
+        };
+
+        scope.minifyJSON = function () {
+            scope.contentBody = angular.toJson(scope.object);
+        };
+
         function updateEditorSize() {
             if (scope.json_editor) {
                 scope.json_editor.resize();
@@ -169,7 +177,7 @@ function JsonObjectEdit($compile, $templateCache, $document, toast, utils) {
         });
 
         $compile(element.contents())(scope);
-    }
+    };
 
     return {
         restrict: "E",

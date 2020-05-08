@@ -28,7 +28,7 @@ services:
       ZOO_SERVERS: server.1=zookeeper:2888:3888;zookeeper:2181
   kafka:
     restart: always
-    image: "wurstmeister/kafka:2.12-2.2.1"
+    image: "wurstmeister/kafka:2.12-2.3.0"
     ports:
       - "9092:9092"
     env_file:
@@ -48,7 +48,7 @@ services:
       - tb-js-executor.env
     depends_on:
       - kafka
-  tb1:
+  tb-core1:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
@@ -59,8 +59,8 @@ services:
         max-size: "200m"
         max-file: "30"
     environment:
-      TB_HOST: tb1
-      CLUSTER_NODE_ID: tb1
+      TB_SERVICE_ID: tb-core1
+      TB_SERVICE_TYPE: tb-core
     env_file:
       - tb-node.env
     volumes:
@@ -70,7 +70,9 @@ services:
       - kafka
       - redis
       - tb-js-executor
-  tb2:
+      - tb-rule-engine1
+      - tb-rule-engine2
+  tb-core2:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
@@ -81,8 +83,54 @@ services:
         max-size: "200m"
         max-file: "30"
     environment:
-      TB_HOST: tb2
-      CLUSTER_NODE_ID: tb2
+      TB_SERVICE_ID: tb-core2
+      TB_SERVICE_TYPE: tb-core
+    env_file:
+      - tb-node.env
+    volumes:
+      - ./tb-node/conf:/config
+      - ./tb-node/log:/var/log/thingsboard
+    depends_on:
+      - kafka
+      - redis
+      - tb-js-executor
+      - tb-rule-engine1
+      - tb-rule-engine2
+  tb-rule-engine1:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "30"
+    environment:
+      TB_SERVICE_ID: tb-rule-engine1
+      TB_SERVICE_TYPE: tb-rule-engine
+    env_file:
+      - tb-node.env
+    volumes:
+      - ./tb-node/conf:/config
+      - ./tb-node/log:/var/log/thingsboard
+    depends_on:
+      - kafka
+      - redis
+      - tb-js-executor
+  tb-rule-engine2:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "30"
+    environment:
+      TB_SERVICE_ID: tb-rule-engine2
+      TB_SERVICE_TYPE: tb-rule-engine
     env_file:
       - tb-node.env
     volumes:
@@ -98,8 +146,7 @@ services:
     ports:
       - "1883"
     environment:
-      TB_HOST: tb-mqtt-transport1
-      CLUSTER_NODE_ID: tb-mqtt-transport1
+      TB_SERVICE_ID: tb-mqtt-transport1
     env_file:
       - tb-mqtt-transport.env
     volumes:
@@ -113,8 +160,7 @@ services:
     ports:
       - "1883"
     environment:
-      TB_HOST: tb-mqtt-transport2
-      CLUSTER_NODE_ID: tb-mqtt-transport2
+      TB_SERVICE_ID: tb-mqtt-transport2
     env_file:
       - tb-mqtt-transport.env
     volumes:
@@ -128,8 +174,7 @@ services:
     ports:
       - "8081"
     environment:
-      TB_HOST: tb-http-transport1
-      CLUSTER_NODE_ID: tb-http-transport1
+      TB_SERVICE_ID: tb-http-transport1
     env_file:
       - tb-http-transport.env
     volumes:
@@ -143,8 +188,7 @@ services:
     ports:
       - "8081"
     environment:
-      TB_HOST: tb-http-transport2
-      CLUSTER_NODE_ID: tb-http-transport2
+      TB_SERVICE_ID: tb-http-transport2
     env_file:
       - tb-http-transport.env
     volumes:
@@ -158,8 +202,7 @@ services:
     ports:
       - "5683:5683/udp"
     environment:
-      TB_HOST: tb-coap-transport
-      CLUSTER_NODE_ID: tb-coap-transport
+      TB_SERVICE_ID: tb-coap-transport
     env_file:
       - tb-coap-transport.env
     volumes:
@@ -202,8 +245,8 @@ services:
       MQTT_PORT: 1883
       FORCE_HTTPS_REDIRECT: "false"
     links:
-        - tb1
-        - tb2
+        - tb-core1
+        - tb-core2
         - tb-web-ui1
         - tb-web-ui2
         - tb-mqtt-transport1

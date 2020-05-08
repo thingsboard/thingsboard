@@ -3,7 +3,7 @@ Description=${pkg.name}
 After=syslog.target
 
 [Service]
-User=${pkg.name}
+User=${pkg.user}
 ExecStart=${pkg.installFolder}/bin/${pkg.name}.jar
 SuccessExitStatus=143
 

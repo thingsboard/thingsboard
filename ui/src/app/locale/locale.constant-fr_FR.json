@@ -56,6 +56,7 @@
         "base-url": "URL de base",
         "base-url-required": "L'URL de base est requise.",
         "enable-tls": "Activer TLS",
+        "tls-version": "Version TLS",
         "general": "Général",
         "general-settings": "Paramètres généraux",
         "mail-from": "Mail de",
@@ -1169,23 +1170,7 @@
         "value": "Valeur"
     },
     "language": {
-        "language": "Language",
-        "locales": {
-            "de_DE": "Allemand",
-            "en_US": "Anglais",
-            "fr_FR": "Français",
-            "es_ES": "Espagnol",
-            "it_IT": "Italien",
-            "ko_KR": "Coréen",
-            "ru_RU": "Russe",
-            "zh_CN": "Chinois",
-            "ja_JA": "Japonaise",
-            "tr_TR": "Turc",
-            "fa_IR": "Persane",
-            "uk_UA": "Ukrainien",
-            "cs_CZ": "Tchèque",
-            "el_GR": "Grec"
-        }
+        "language": "Language"
     },
     "layout": {
         "color": "Couleur",
@@ -1212,7 +1197,7 @@
         "create-password": "Créer un mot de passe",
         "email": "Email",
         "forgot-password": "Mot de passe oublié?",
-        "login": "Login",
+        "login": "Connexion",
         "new-password": "Nouveau mot de passe",
         "new-password-again": "nouveau mot de passe",
         "password-again": "Mot de passe à nouveau",
@@ -1223,7 +1208,9 @@
         "request-password-reset": "Demander la réinitialisation du mot de passe",
         "reset-password": "Réinitialiser le mot de passe",
         "sign-in": "Veuillez vous connecter",
-        "username": "Nom d'utilisateur (courriel)"
+        "username": "Nom d'utilisateur (courriel)",
+        "login-with": "Se connecter avec {{name}}",
+        "or": "ou"
     },
     "position": {
         "bottom": "Bas",

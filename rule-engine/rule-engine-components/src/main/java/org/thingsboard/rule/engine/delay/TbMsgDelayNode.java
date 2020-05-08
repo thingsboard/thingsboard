@@ -41,7 +41,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         name = "delay",
         configClazz = TbMsgDelayNodeConfiguration.class,
         nodeDescription = "Delays incoming message",
-        nodeDetails = "Delays messages for configurable period.",
+        nodeDetails = "Delays messages for configurable period. Please note, this node acknowledges the message from the current queue (message will be removed from queue)",
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig"
@@ -65,15 +65,16 @@ public class TbMsgDelayNode implements TbNode {
         if (msg.getType().equals(TB_MSG_DELAY_NODE_MSG)) {
             TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
             if (pendingMsg != null) {
-                ctx.tellNext(pendingMsg, SUCCESS);
+                ctx.enqueueForTellNext(pendingMsg, SUCCESS);
             }
         } else {
-            if(pendingMsgs.size() < config.getMaxPendingMsgs()) {
+            if (pendingMsgs.size() < config.getMaxPendingMsgs()) {
                 pendingMsgs.put(msg.getId(), msg);
                 TbMsg tickMsg = ctx.newMsg(TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), msg.getId().toString());
                 ctx.tellSelf(tickMsg, getDelay(msg));
+                ctx.ack(msg);
             } else {
-                ctx.tellNext(msg, FAILURE, new RuntimeException("Max limit of pending messages reached!"));
+                ctx.tellFailure(msg, new RuntimeException("Max limit of pending messages reached!"));
             }
         }
     }

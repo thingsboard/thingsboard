@@ -36,7 +36,6 @@
         <main.dir>${basedir}/../..</main.dir>
         <pkg.name>tb-js-executor</pkg.name>
         <docker.name>tb-js-executor</docker.name>
-        <pkg.user>thingsboard</pkg.user>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
@@ -231,7 +230,7 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.fortasoft</groupId>
+                <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
                 <configuration>
                     <tasks>

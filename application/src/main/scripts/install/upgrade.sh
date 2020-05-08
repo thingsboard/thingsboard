@@ -43,7 +43,7 @@ installDir=${pkg.installFolder}/data
 
 source "${CONF_FOLDER}/${configfile}"
 
-run_user=${pkg.name}
+run_user=${pkg.user}
 
 su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \

@@ -93,5 +93,10 @@
             <artifactId>spring-data-redis</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

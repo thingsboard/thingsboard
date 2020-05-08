@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.dashboard;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -85,7 +86,7 @@ public class CassandraDashboardInfoDao extends CassandraAbstractSearchTextDao<Da
                 dashboardFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
             }
             return Futures.successfulAsList(dashboardFutures);
-        });
+        }, MoreExecutors.directExecutor());
     }
 
 }

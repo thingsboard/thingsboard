@@ -1,0 +1,141 @@
+{
+  "ruleChain": {
+    "additionalInfo": null,
+    "name": "Thermostat Alarms",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": false,
+    "configuration": null
+  },
+  "metadata": {
+    "firstNodeIndex": 5,
+    "nodes": [
+      {
+        "additionalInfo": {
+          "layoutX": 929,
+          "layoutY": 67
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Create Temp Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmType": "High Temperature",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\ndetails.triggerValue = msg.temperature;\nreturn details;",
+          "severity": "MAJOR",
+          "propagate": true,
+          "useMessageAlarmData": false,
+          "relationTypes": [
+            "ToAlarmPropagationAsset"
+          ]
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 930,
+          "layoutY": 201
+        },
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Clear Temp Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmType": "High Temperature",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nreturn details;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 930,
+          "layoutY": 131
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Create Humidity Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmType": "Low Humidity",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\ndetails.triggerValue = msg.humidity;\nreturn details;",
+          "severity": "MINOR",
+          "propagate": true,
+          "useMessageAlarmData": false,
+          "relationTypes": [
+            "ToAlarmPropagationAsset"
+          ]
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 929,
+          "layoutY": 275
+        },
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Clear Humidity Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmType": "Low Humidity",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nreturn details;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 586,
+          "layoutY": 148
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
+        "name": "Check Alarms",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "var relations = [];\nif(metadata[\"ss_alarmTemperature\"] === \"true\"){\n    if(msg.temperature > metadata[\"ss_thresholdTemperature\"]){\n        relations.push(\"NewTempAlarm\");\n    } else {\n        relations.push(\"ClearTempAlarm\");\n    }\n}\nif(metadata[\"ss_alarmHumidity\"] === \"true\"){\n    if(msg.humidity < metadata[\"ss_thresholdHumidity\"]){\n        relations.push(\"NewHumidityAlarm\");\n    } else {\n        relations.push(\"ClearHumidityAlarm\");\n    }\n}\n\nreturn relations;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 321,
+          "layoutY": 149
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Configuration",
+        "debugMode": false,
+        "configuration": {
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "alarmTemperature",
+            "thresholdTemperature",
+            "alarmHumidity",
+            "thresholdHumidity"
+          ],
+          "latestTsKeyNames": [],
+          "tellFailureIfAbsent": false,
+          "getLatestValueWithTs": false
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 4,
+        "toIndex": 0,
+        "type": "NewTempAlarm"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 1,
+        "type": "ClearTempAlarm"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 2,
+        "type": "NewHumidityAlarm"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 3,
+        "type": "ClearHumidityAlarm"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 4,
+        "type": "Success"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}

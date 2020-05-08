@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.device;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hibernate.exception.ConstraintViolationException;
@@ -291,7 +292,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 }
             }
             return Futures.successfulAsList(futures);
-        });
+        }, MoreExecutors.directExecutor());
 
         devices = Futures.transform(devices, new Function<List<Device>, List<Device>>() {
             @Nullable
@@ -299,7 +300,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             public List<Device> apply(@Nullable List<Device> deviceList) {
                 return deviceList == null ? Collections.emptyList() : deviceList.stream().filter(device -> query.getDeviceTypes().contains(device.getType())).collect(Collectors.toList());
             }
-        });
+        }, MoreExecutors.directExecutor());
 
         return devices;
     }
@@ -313,7 +314,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 deviceTypes -> {
                     deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return deviceTypes;
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     private DataValidator<Device> deviceValidator =
@@ -374,18 +375,18 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             };
 
     private PaginatedRemover<TenantId, Device> tenantDevicesRemover =
-        new PaginatedRemover<TenantId, Device>() {
+            new PaginatedRemover<TenantId, Device>() {
 
-            @Override
-            protected List<Device> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
-                return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
-            }
+                @Override
+                protected List<Device> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
+                    return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
+                }
 
-            @Override
-            protected void removeEntity(TenantId tenantId, Device entity) {
-                deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
-            }
-        };
+                @Override
+                protected void removeEntity(TenantId tenantId, Device entity) {
+                    deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
+                }
+            };
 
     private PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<CustomerId, Device>() {
 

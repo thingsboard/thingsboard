@@ -25,6 +25,8 @@ export LOADER_PATH=/config,${LOADER_PATH}
 
 echo "Starting '${project.name}' ..."
 
+cd ${pkg.installFolder}/bin
+
 exec java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.mqtt.ThingsboardMqttTransportApplication \
                     -Dspring.jpa.hibernate.ddl-auto=none \
                     -Dlogging.config=/config/logback.xml \

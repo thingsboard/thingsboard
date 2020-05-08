@@ -38,7 +38,6 @@
         <tb.docker.name>tb</tb.docker.name>
         <tb-postgres.docker.name>tb-postgres</tb-postgres.docker.name>
         <tb-cassandra.docker.name>tb-cassandra</tb-cassandra.docker.name>
-        <pkg.user>thingsboard</pkg.user>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.upgradeVersion>2.4.2</pkg.upgradeVersion>
     </properties>

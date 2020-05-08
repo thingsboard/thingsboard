@@ -52,6 +52,11 @@ public abstract class BasicKvEntry implements KvEntry {
     }
 
     @Override
+    public Optional<String> getJsonValue() {
+        return Optional.ofNullable(null);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof BasicKvEntry)) return false;

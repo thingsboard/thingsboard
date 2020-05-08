@@ -103,7 +103,18 @@ public class DefaultMailService implements MailService {
         javaMailProperties.put(MAIL_PROP + protocol + ".port", jsonConfig.get("smtpPort").asText());
         javaMailProperties.put(MAIL_PROP + protocol + ".timeout", jsonConfig.get("timeout").asText());
         javaMailProperties.put(MAIL_PROP + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(jsonConfig.get("username").asText())));
-        javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", jsonConfig.has("enableTls") ? jsonConfig.get("enableTls").asText() : "false");
+        boolean enableTls = false;
+        if (jsonConfig.has("enableTls")) {
+            if (jsonConfig.get("enableTls").isBoolean() && jsonConfig.get("enableTls").booleanValue()) {
+                enableTls = true;
+            } else if (jsonConfig.get("enableTls").isTextual()) {
+                enableTls = "true".equalsIgnoreCase(jsonConfig.get("enableTls").asText());
+            }
+        }
+        javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", enableTls);
+        if (enableTls && jsonConfig.has("tlsVersion") && StringUtils.isNoneEmpty(jsonConfig.get("tlsVersion").asText())) {
+            javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", jsonConfig.get("tlsVersion").asText());
+        }
         return javaMailProperties;
     }
 
@@ -213,7 +224,7 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendAccountLockoutEmail( String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException {
+    public void sendAccountLockoutEmail(String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException {
         String subject = messages.getMessage("account.lockout.subject", null, Locale.US);
 
         Map<String, Object> model = new HashMap<String, Object>();
@@ -244,7 +255,7 @@ public class DefaultMailService implements MailService {
     }
 
     private static String mergeTemplateIntoString(VelocityEngine velocityEngine, String templateLocation,
-                                                 String encoding, Map<String, Object> model) throws VelocityException {
+                                                  String encoding, Map<String, Object> model) throws VelocityException {
 
         StringWriter result = new StringWriter();
         mergeTemplate(velocityEngine, templateLocation, encoding, model, result);
@@ -266,6 +277,7 @@ public class DefaultMailService implements MailService {
         } else {
             message = exception.getMessage();
         }
+        log.warn("Unable to send mail: {}", message);
         return new ThingsboardException(String.format("Unable to send mail: %s", message),
                 ThingsboardErrorCode.GENERAL);
     }

@@ -38,7 +38,8 @@ VALUES ( '1e746126eaaefa6a91992ebcb67fe33', 'mail', '{
 	"smtpHost": "localhost",
 	"smtpPort": "25",
 	"timeout": "10000",
-	"enableTls": "false",
+	"enableTls": false,
+	"tlsVersion": "TLSv1.2",
 	"username": "",
 	"password": ""
 }' );

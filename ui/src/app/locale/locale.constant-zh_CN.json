@@ -83,6 +83,7 @@
         "timeout-required": "超时必填。",
         "timeout-invalid": "这看起来不像有效的超时值。",
         "enable-tls": "启用TLS",
+        "tls-version" : "TLS版本",
         "send-test-mail": "发送测试邮件"
     },
     "alarm": {
@@ -1601,22 +1602,6 @@
         }
     },
     "language": {
-        "language": "语言",
-        "locales": {
-            "de_DE": "德文",
-            "en_US": "英文",
-            "fr_FR": "法文",
-            "ko_KR": "韩文",
-            "zh_CN": "简体中文",
-            "zh_TW": "繁体中文",
-            "ru_RU": "俄文",
-            "es_ES": "西班牙文",
-            "it_IT": "意大利文",
-            "ja_JA": "日文",
-            "tr_TR": "土耳其文",
-            "fa_IR": "波斯文",
-            "uk_UA": "乌克兰文",
-            "cs_CZ": "捷克文"            
-        }
+        "language": "语言"
     }
 }

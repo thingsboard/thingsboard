@@ -225,6 +225,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
         if (!vm.isVerticalAlignment && vm.settings.fieldsInRow) {
             vm.inputWidthSettings = 100 / vm.settings.fieldsInRow + '%';
         }
+        updateWidgetDisplaying();
     }
 
     function updateDatasources() {

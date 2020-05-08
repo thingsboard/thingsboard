@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,6 +40,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class DashboardController extends BaseController {
 

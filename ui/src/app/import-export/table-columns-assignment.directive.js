@@ -44,6 +44,7 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
     vm.columnTypes.name = types.importEntityColumnType.name;
     vm.columnTypes.type = types.importEntityColumnType.type;
     vm.columnTypes.label = types.importEntityColumnType.label;
+    vm.columnTypes.description = types.importEntityColumnType.description;
 
     switch (vm.entityType) {
         case types.entityType.device:
@@ -51,6 +52,7 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             vm.columnTypes.serverAttribute = types.importEntityColumnType.serverAttribute;
             vm.columnTypes.timeseries = types.importEntityColumnType.timeseries;
             vm.columnTypes.accessToken = types.importEntityColumnType.accessToken;
+            vm.columnTypes.gateway = types.importEntityColumnType.isGateway;
             break;
         case types.entityType.asset:
             vm.columnTypes.serverAttribute = types.importEntityColumnType.serverAttribute;
@@ -58,12 +60,23 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             break;
     }
 
+    $scope.isColumnTypeDiffers = function(columnType) {
+       return columnType !== types.importEntityColumnType.name.value &&
+            columnType !== types.importEntityColumnType.type.value &&
+            columnType !== types.importEntityColumnType.label.value &&
+            columnType !== types.importEntityColumnType.accessToken.value&&
+            columnType !== types.importEntityColumnType.isGateway.value&&
+            columnType !== types.importEntityColumnType.description.value;
+    };
+
     $scope.$watch('vm.columns', function(newVal){
         if (newVal) {
             var isSelectName = false;
             var isSelectType = false;
             var isSelectLabel = false;
             var isSelectCredentials = false;
+            var isSelectGateway = false;
+            var isSelectDescription = false;
             for (var i = 0; i < newVal.length; i++) {
                 switch (newVal[i].type) {
                     case types.importEntityColumnType.name.value:
@@ -78,9 +91,14 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                     case types.importEntityColumnType.accessToken.value:
                         isSelectCredentials = true;
                         break;
+                    case types.importEntityColumnType.isGateway.value:
+                        isSelectGateway = true;
+                        break;
+                    case types.importEntityColumnType.description.value:
+                        isSelectDescription = true;
                 }
             }
-            if(isSelectName && isSelectType) {
+            if (isSelectName && isSelectType) {
                 vm.theForm.$setDirty();
             } else {
                 vm.theForm.$setPristine();
@@ -89,6 +107,8 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                 vm.columnTypes.name.disable = isSelectName;
                 vm.columnTypes.type.disable = isSelectType;
                 vm.columnTypes.label.disable = isSelectLabel;
+                vm.columnTypes.gateway.disable = isSelectGateway;
+                vm.columnTypes.description.disable = isSelectDescription;
                 if (angular.isDefined(vm.columnTypes.accessToken)) {
                     vm.columnTypes.accessToken.disable = isSelectCredentials;
                 }

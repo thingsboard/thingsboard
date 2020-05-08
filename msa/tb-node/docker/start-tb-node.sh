@@ -18,11 +18,13 @@
 CONF_FOLDER="/config"
 jarfile=${pkg.installFolder}/bin/${pkg.name}.jar
 configfile=${pkg.name}.conf
-run_user=${pkg.name}
+run_user=${pkg.user}
 
 source "${CONF_FOLDER}/${configfile}"
 
 export LOADER_PATH=/config,${LOADER_PATH}
+
+cd ${pkg.installFolder}/bin
 
 if [ "$INSTALL_TB" == "true" ]; then
 
