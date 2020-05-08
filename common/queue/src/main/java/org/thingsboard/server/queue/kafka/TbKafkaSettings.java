@@ -55,6 +55,18 @@ public class TbKafkaSettings {
     @Getter
     private short replicationFactor;
 
+    @Value("${queue.kafka.max_poll_records:8192}")
+    @Getter
+    private int maxPollRecords;
+
+    @Value("${queue.kafka.max_partition_fetch_bytes:16777216}")
+    @Getter
+    private int maxPartitionFetchBytes;
+
+    @Value("${queue.kafka.fetch_max_bytes:134217728}")
+    @Getter
+    private  int fetchMaxBytes;
+
     @Value("${kafka.other:#{null}}")
     private List<TbKafkaProperty> other;
 
