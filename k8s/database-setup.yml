@@ -32,7 +32,7 @@ spec:
   containers:
   - name: tb-db-setup
     imagePullPolicy: Never
-    image: thingsboard/tb-node:2.4.8
+    image: thingsboard/tb-node:2.5.0-SNAPSHOT
     envFrom:
     - configMapRef:
         name: tb-node-db-config
