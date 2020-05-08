@@ -31,8 +31,8 @@ spec:
         path: logback.xml
   containers:
   - name: tb-db-setup
-    imagePullPolicy: Never
-    image: thingsboard/tb-node:2.5.0-SNAPSHOT
+    imagePullPolicy: Always
+    image: thingsboard/tb-node:latest
     envFrom:
     - configMapRef:
         name: tb-node-db-config
