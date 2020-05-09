@@ -70,6 +70,9 @@ public class TbOriginatorTypeSwitchNode implements TbNode {
             case ENTITY_VIEW:
                 relationType = "Entity View";
                 break;
+            case EDGE:
+                relationType = "Edge";
+                break;
             case RULE_CHAIN:
                 relationType = "Rule chain";
                 break;

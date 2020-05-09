@@ -69,6 +69,9 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
             case ENTITY_VIEW:
                 processAssignEntityView(ctx, msg, customerId);
                 break;
+            case EDGE:
+                processAssignEdge(ctx, msg, customerId);
+                break;
             case DASHBOARD:
                 processAssignDashboard(ctx, msg, customerId);
                 break;
@@ -89,6 +92,10 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
 
     private void processAssignEntityView(TbContext ctx, TbMsg msg, CustomerId customerId) {
         ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId()), customerId);
+    }
+
+    private void processAssignEdge(TbContext ctx, TbMsg msg, CustomerId customerId) {
+        ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId()), customerId);
     }
 
     private void processAssignDashboard(TbContext ctx, TbMsg msg, CustomerId customerId) {

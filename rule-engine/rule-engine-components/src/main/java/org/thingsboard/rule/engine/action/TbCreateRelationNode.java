@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -137,6 +138,8 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
                 return processDashboard(ctx, entityContainer, sdId, relationType);
             case ENTITY_VIEW:
                 return processView(ctx, entityContainer, sdId, relationType);
+            case EDGE:
+                return processEdge(ctx, entityContainer, sdId, relationType);
             case TENANT:
                 return processTenant(ctx, entityContainer, sdId, relationType);
         }
@@ -146,6 +149,16 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     private ListenableFuture<Boolean> processView(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
         return Futures.transformAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), new EntityViewId(entityContainer.getEntityId().getId())), entityView -> {
             if (entityView != null) {
+                return processSave(ctx, sdId, relationType);
+            } else {
+                return Futures.immediateFuture(true);
+            }
+        }, ctx.getDbCallbackExecutor());
+    }
+
+    private ListenableFuture<Boolean> processEdge(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+        return Futures.transformAsync(ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), new EdgeId(entityContainer.getEntityId().getId())), edge -> {
+            if (edge != null) {
                 return processSave(ctx, sdId, relationType);
             } else {
                 return Futures.immediateFuture(true);

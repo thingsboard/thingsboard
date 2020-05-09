@@ -62,6 +62,9 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
             case ENTITY_VIEW:
                 processUnassignEntityView(ctx, msg);
                 break;
+            case EDGE:
+                processUnassignEdge(ctx, msg);
+                break;
             case DASHBOARD:
                 processUnnasignDashboard(ctx, msg, customerId);
                 break;
@@ -86,5 +89,9 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
 
     private void processUnassignEntityView(TbContext ctx, TbMsg msg) {
         ctx.getEntityViewService().unassignEntityViewFromCustomer(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId()));
+    }
+
+    private void processUnassignEdge(TbContext ctx, TbMsg msg) {
+        ctx.getEdgeService().unassignEdgeFromCustomer(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId()));
     }
 }
