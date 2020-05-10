@@ -126,6 +126,20 @@
                    aria-label="{{ 'entity-view.name-starts-with' | translate }}">
         </md-input-container>
     </section>
+    <section layout="column" ng-if="filter.type == types.aliasFilterType.edgeType.value" id="edgeTypeFilter">
+        <tb-entity-subtype-autocomplete
+                tb-required="true"
+                the-form="theForm"
+                ng-model="filter.edgeType"
+                entity-type="types.entityType.edge">
+        </tb-entity-subtype-autocomplete>
+        <md-input-container class="md-block">
+            <label translate>edge.name-starts-with</label>
+            <input name="edgeNameFilter"
+                   ng-model="filter.edgeNameFilter"
+                   aria-label="{{ 'edge.name-starts-with' | translate }}">
+        </md-input-container>
+    </section>
     <section layout="column" ng-if="filter.type == types.aliasFilterType.relationsQuery.value" id="relationsQueryFilter">
         <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
         <section class="tb-root-state-entity-switch" layout="row" layout-align="start center" style="padding-left: 0px;">
@@ -424,6 +438,83 @@
                 tb-required="true"
                 entity-type="types.entityType.entityView"
                 ng-model="filter.entityViewTypes">
+        </tb-entity-subtype-list>
+    </section>
+    <section layout="column" ng-if="filter.type == types.aliasFilterType.edgeSearchQuery.value" id="edgeSearchQueryFilter">
+        <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
+        <section class="tb-root-state-entity-switch" layout="row" layout-align="start center" style="padding-left: 0px;">
+            <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                       aria-label="{{ 'alias.root-state-entity' | translate }}">
+            </md-switch>
+            <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+        </section>
+        <div flex layout="row" ng-if="!filter.rootStateEntity">
+            <tb-entity-select flex
+                              the-form="theForm"
+                              tb-required="!filter.rootStateEntity"
+                              ng-disabled="filter.rootStateEntity"
+                              use-alias-entity-types="true"
+                              ng-model="filter.rootEntity">
+            </tb-entity-select>
+        </div>
+        <div flex layout="row" ng-if="filter.rootStateEntity">
+            <md-input-container class="md-block" style="margin-top: 32px;">
+                <label translate>alias.state-entity-parameter-name</label>
+                <input name="stateEntityParamName"
+                       placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                       ng-model="filter.stateEntityParamName"
+                       aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+            </md-input-container>
+            <div flex layout="column">
+                <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
+                <tb-entity-select flex
+                                  the-form="theForm"
+                                  tb-required="false"
+                                  use-alias-entity-types="true"
+                                  ng-model="filter.defaultStateEntity">
+                </tb-entity-select>
+            </div>
+        </div>
+        <div flex layout="row">
+            <section class="tb-root-state-entity-switch" layout="row" layout-align="start center" style="padding-left: 0px;">
+                <md-switch class="root-state-entity-switch" ng-model="filter.fetchLastLevelOnly"
+                           aria-label="{{ 'alias.last-level-relation' | translate }}">
+                </md-switch>
+                <label class="tb-small root-state-entity-label" translate>alias.last-level-relation</label>
+            </section>
+        </div>
+        <div flex layout="row">
+            <md-input-container class="md-block" style="min-width: 100px;">
+                <label translate>relation.direction</label>
+                <md-select required ng-model="filter.direction">
+                    <md-option ng-repeat="direction in types.entitySearchDirection" ng-value="direction">
+                        {{ ('relation.search-direction.' + direction) | translate}}
+                    </md-option>
+                </md-select>
+            </md-input-container>
+            <md-input-container flex class="md-block">
+                <label translate>alias.max-relation-level</label>
+                <input name="maxRelationLevel"
+                       type="number"
+                       min="1"
+                       step="1"
+                       placeholder="{{ 'alias.unlimited-level' | translate }}"
+                       ng-model="filter.maxLevel"
+                       aria-label="{{ 'alias.max-relation-level' | translate }}">
+            </md-input-container>
+        </div>
+        <div class="md-caption" style="color: rgba(0,0,0,0.57);" translate>relation.relation-type</div>
+        <tb-relation-type-autocomplete flex
+                                       hide-label
+                                       the-form="theForm"
+                                       ng-model="filter.relationType"
+                                       tb-required="false">
+        </tb-relation-type-autocomplete>
+        <div class="md-caption tb-required" style="color: rgba(0,0,0,0.57);" translate>edge.edge-types</div>
+        <tb-entity-subtype-list
+                tb-required="true"
+                entity-type="types.entityType.edge"
+                ng-model="filter.edgeTypes">
         </tb-entity-subtype-list>
     </section>
 </div>

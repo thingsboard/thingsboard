@@ -508,6 +508,9 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
                 case types.entityType.entityView:
                     materialIcon = 'view_quilt';
                     break;
+                case types.entityType.edge:
+                    materialIcon = 'router';
+                    break;
             }
         }
         return {

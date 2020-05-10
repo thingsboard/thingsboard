@@ -86,6 +86,15 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                             scope.filterDisplayValue = $translate.instant('alias.filter-type-entity-view-type-description', {entityViewType: entityViewType});
                         }
                         break;
+                    case types.aliasFilterType.edgeType.value:
+                        var edgeType = scope.filter.edgeType;
+                        prefix = scope.filter.edgeNameFilter;
+                        if (prefix && prefix.length) {
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-edge-type-and-name-description', {edgeType: edgeType, prefix: prefix});
+                        } else {
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-edge-type-description', {edgeType: edgeType});
+                        }
+                        break;
                     case types.aliasFilterType.relationsQuery.value:
                         var rootEntityText;
                         var directionText;
