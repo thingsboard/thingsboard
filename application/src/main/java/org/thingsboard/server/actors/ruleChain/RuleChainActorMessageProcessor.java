@@ -313,7 +313,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             switch (target.getEntityType()) {
                 case RULE_NODE:
                     pushMsgToNode(nodeActors.get(new RuleNodeId(target.getId())), msg, fromRelationType);
-                    pushUpdatesToEdges(msg);
                     break;
                 case RULE_CHAIN:
                     parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, msg, fromRelationType), self);
@@ -347,6 +346,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg, String fromRelationType) {
         if (nodeCtx != null) {
+            pushUpdatesToEdges(msg);
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg, fromRelationType), self);
         } else {
             log.error("[{}][{}] RuleNodeCtx is empty", entityId, ruleChainName);

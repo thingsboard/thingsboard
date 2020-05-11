@@ -567,7 +567,7 @@ transport:
 edges:
   rpc:
     enabled: "${EDGES_RPC_ENABLED:true}"
-    port: "${EDGES_RPC_PORT:60061}"
+    port: "${EDGES_RPC_PORT:60100}"
     ssl:
       # Enable/disable SSL support
       enabled: "${EDGES_RPC_SSL_ENABLED:false}"
