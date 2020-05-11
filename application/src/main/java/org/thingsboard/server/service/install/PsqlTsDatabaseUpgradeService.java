@@ -102,17 +102,17 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                             Path pathToTempTsKvFile;
                             Path pathToTempTsKvLatestFile;
                             if (SystemUtils.IS_OS_WINDOWS) {
-                                log.info("Lookup for environment variable: " + THINGSBOARD_WINDOWS_UPGRADE_DIR + " ...");
+                                log.info("Lookup for environment variable: {} ...", THINGSBOARD_WINDOWS_UPGRADE_DIR);
                                 Path pathToDir;
                                 String thingsboardWindowsUpgradeDir = System.getenv("THINGSBOARD_WINDOWS_UPGRADE_DIR");
                                 if (StringUtils.isNotEmpty(thingsboardWindowsUpgradeDir)) {
-                                    log.info("Environment variable: " + THINGSBOARD_WINDOWS_UPGRADE_DIR + " found!");
+                                    log.info("Environment variable: {} was found!", THINGSBOARD_WINDOWS_UPGRADE_DIR);
                                     pathToDir = Paths.get(thingsboardWindowsUpgradeDir);
                                 } else {
-                                    log.info("Failed to lookup environment variable: " + THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                                    log.info("Failed to lookup environment variable: {}", THINGSBOARD_WINDOWS_UPGRADE_DIR);
                                     pathToDir = Paths.get(PATH_TO_USERS_PUBLIC_FOLDER);
                                 }
-                                log.info("Directory: " + pathToDir + " will be used for creation temporary upgrade files!");
+                                log.info("Directory: {} will be used for creation temporary upgrade files!", pathToDir);
                                 try {
                                     Path tsKvFile = Files.createTempFile(pathToDir, "ts_kv", ".sql");
                                     Path tsKvLatestFile = Files.createTempFile(pathToDir, "ts_kv_latest", ".sql");
