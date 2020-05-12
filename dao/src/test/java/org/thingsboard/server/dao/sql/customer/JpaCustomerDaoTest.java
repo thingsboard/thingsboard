@@ -15,13 +15,14 @@
  */
 package org.thingsboard.server.dao.sql.customer;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.customer.CustomerDao;
 
@@ -42,26 +43,26 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindByTenantId() {
-        UUID tenantId1 = UUIDs.timeBased();
-        UUID tenantId2 = UUIDs.timeBased();
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
 
         for (int i = 0; i < 20; i++) {
             createCustomer(tenantId1, i);
             createCustomer(tenantId2, i * 2);
         }
 
-        TextPageLink pageLink1 = new TextPageLink(15, "CUSTOMER");
-        List<Customer> customers1 = customerDao.findCustomersByTenantId(tenantId1, pageLink1);
-        assertEquals(15, customers1.size());
+        PageLink pageLink = new PageLink(15, 0,  "CUSTOMER");
+        PageData<Customer> customers1 = customerDao.findCustomersByTenantId(tenantId1, pageLink);
+        assertEquals(15, customers1.getData().size());
 
-        TextPageLink pageLink2 = new TextPageLink(15, "CUSTOMER", customers1.get(14).getId().getId(), null);
-        List<Customer> customers2 = customerDao.findCustomersByTenantId(tenantId1, pageLink2);
-        assertEquals(5, customers2.size());
+        pageLink = pageLink.nextPageLink();
+        PageData<Customer> customers2 = customerDao.findCustomersByTenantId(tenantId1, pageLink);
+        assertEquals(5, customers2.getData().size());
     }
 
     @Test
     public void testFindCustomersByTenantIdAndTitle() {
-        UUID tenantId = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
 
         for (int i = 0; i < 10; i++) {
             createCustomer(tenantId, i);
@@ -74,7 +75,7 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
 
     private void createCustomer(UUID tenantId, int index) {
         Customer customer = new Customer();
-        customer.setId(new CustomerId(UUIDs.timeBased()));
+        customer.setId(new CustomerId(Uuids.timeBased()));
         customer.setTenantId(new TenantId(tenantId));
         customer.setTitle("CUSTOMER_" + index);
         customerDao.save(new TenantId(tenantId), customer);

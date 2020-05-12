@@ -15,25 +15,27 @@
  */
 package org.thingsboard.server.service.install.cql;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.KeyspaceMetadata;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.TableMetadata;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -44,12 +46,12 @@ import static org.thingsboard.server.service.install.DatabaseHelper.CSV_DUMP_FOR
 
 public class CassandraDbHelper {
 
-    public static Path dumpCfIfExists(KeyspaceMetadata ks, Session session, String cfName,
+    public static Path dumpCfIfExists(KeyspaceMetadata ks, GuavaSession session, String cfName,
                                       String[] columns, String[] defaultValues, String dumpPrefix) throws Exception {
         return dumpCfIfExists(ks, session, cfName, columns, defaultValues, dumpPrefix, false);
     }
 
-    public static Path dumpCfIfExists(KeyspaceMetadata ks, Session session, String cfName,
+    public static Path dumpCfIfExists(KeyspaceMetadata ks, GuavaSession session, String cfName,
                                       String[] columns, String[] defaultValues, String dumpPrefix, boolean printHeader) throws Exception {
         if (ks.getTable(cfName) != null) {
             Path dumpFile = Files.createTempFile(dumpPrefix, null);
@@ -59,8 +61,8 @@ public class CassandraDbHelper {
                 csvFormat = csvFormat.withHeader(columns);
             }
             try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(dumpFile), csvFormat)) {
-                Statement stmt = new SimpleStatement("SELECT * FROM " + cfName);
-                stmt.setFetchSize(1000);
+                Statement stmt = SimpleStatement.newInstance("SELECT * FROM " + cfName);
+                stmt.setPageSize(1000);
                 ResultSet rs = session.execute(stmt);
                 Iterator<Row> iter = rs.iterator();
                 while (iter.hasNext()) {
@@ -95,12 +97,12 @@ public class CassandraDbHelper {
         Files.move(tmp, targetDumpFile, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    public static void loadCf(KeyspaceMetadata ks, Session session, String cfName, String[] columns, Path sourceFile) throws Exception {
+    public static void loadCf(KeyspaceMetadata ks, GuavaSession session, String cfName, String[] columns, Path sourceFile) throws Exception {
         loadCf(ks, session, cfName, columns, sourceFile, false);
     }
 
-    public static void loadCf(KeyspaceMetadata ks, Session session, String cfName, String[] columns, Path sourceFile, boolean parseHeader) throws Exception {
-        TableMetadata tableMetadata = ks.getTable(cfName);
+    public static void loadCf(KeyspaceMetadata ks, GuavaSession session, String cfName, String[] columns, Path sourceFile, boolean parseHeader) throws Exception {
+        TableMetadata tableMetadata = ks.getTable(cfName).get();
         PreparedStatement prepared = session.prepare(createInsertStatement(cfName, columns));
         CSVFormat csvFormat = CSV_DUMP_FORMAT;
         if (parseHeader) {
@@ -110,11 +112,11 @@ public class CassandraDbHelper {
         }
         try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(sourceFile), csvFormat)) {
             csvParser.forEach(record -> {
-                BoundStatement boundStatement = prepared.bind();
+                BoundStatementBuilder boundStatementBuilder = new BoundStatementBuilder(prepared.bind());
                 for (String column : columns) {
-                    setColumnValue(tableMetadata, column, record, boundStatement);
+                    setColumnValue(tableMetadata, column, record, boundStatementBuilder);
                 }
-                session.execute(boundStatement);
+                session.execute(boundStatementBuilder.build());
             });
         }
     }
@@ -136,27 +138,27 @@ public class CassandraDbHelper {
     }
 
     private static String getColumnValue(String column, String defaultValue, Row row) {
-        int index = row.getColumnDefinitions().getIndexOf(column);
+        int index = row.getColumnDefinitions().firstIndexOf(column);
         if (index > -1) {
             String str;
-            DataType type = row.getColumnDefinitions().getType(index);
+            DataType type = row.getColumnDefinitions().get(index).getType();
             try {
                 if (row.isNull(index)) {
                     return null;
-                } else if (type == DataType.cdouble()) {
+                } else if (type.getProtocolCode() == ProtocolConstants.DataType.DOUBLE) {
                     str = new Double(row.getDouble(index)).toString();
-                } else if (type == DataType.cint()) {
+                } else if (type.getProtocolCode() == ProtocolConstants.DataType.INT) {
                     str = new Integer(row.getInt(index)).toString();
-                } else if (type == DataType.bigint()) {
+                } else if (type.getProtocolCode() == ProtocolConstants.DataType.BIGINT) {
                     str = new Long(row.getLong(index)).toString();
-                } else if (type == DataType.uuid()) {
-                    str = row.getUUID(index).toString();
-                } else if (type == DataType.timeuuid()) {
-                    str = row.getUUID(index).toString();
-                } else if (type == DataType.cfloat()) {
+                } else if (type.getProtocolCode() == ProtocolConstants.DataType.UUID) {
+                    str = row.getUuid(index).toString();
+                } else if (type.getProtocolCode() == ProtocolConstants.DataType.TIMEUUID) {
+                    str = row.getUuid(index).toString();
+                } else if (type.getProtocolCode() == ProtocolConstants.DataType.FLOAT) {
                     str = new Float(row.getFloat(index)).toString();
-                } else if (type == DataType.timestamp()) {
-                    str = ""+row.getTimestamp(index).getTime();
+                } else if (type.getProtocolCode() == ProtocolConstants.DataType.TIMESTAMP) {
+                    str = ""+row.getInstant(index).toEpochMilli();
                 } else {
                     str = row.getString(index);
                 }
@@ -186,27 +188,27 @@ public class CassandraDbHelper {
     }
 
     private static void setColumnValue(TableMetadata tableMetadata, String column,
-                                       CSVRecord record, BoundStatement boundStatement) {
+                                       CSVRecord record, BoundStatementBuilder boundStatementBuilder) {
         String value = record.get(column);
-        DataType type = tableMetadata.getColumn(column).getType();
+        DataType type = tableMetadata.getColumn(column).get().getType();
         if (value == null) {
-            boundStatement.setToNull(column);
-        } else if (type == DataType.cdouble()) {
-            boundStatement.setDouble(column, Double.valueOf(value));
-        } else if (type == DataType.cint()) {
-            boundStatement.setInt(column, Integer.valueOf(value));
-        } else if (type == DataType.bigint()) {
-            boundStatement.setLong(column, Long.valueOf(value));
-        } else if (type == DataType.uuid()) {
-            boundStatement.setUUID(column, UUID.fromString(value));
-        } else if (type == DataType.timeuuid()) {
-            boundStatement.setUUID(column, UUID.fromString(value));
-        } else if (type == DataType.cfloat()) {
-            boundStatement.setFloat(column, Float.valueOf(value));
-        } else if (type == DataType.timestamp()) {
-            boundStatement.setTimestamp(column, new Date(Long.valueOf(value)));
+            boundStatementBuilder.setToNull(column);
+        } else if (type.getProtocolCode() == ProtocolConstants.DataType.DOUBLE) {
+            boundStatementBuilder.setDouble(column, Double.valueOf(value));
+        } else if (type.getProtocolCode() == ProtocolConstants.DataType.INT) {
+            boundStatementBuilder.setInt(column, Integer.valueOf(value));
+        } else if (type.getProtocolCode() == ProtocolConstants.DataType.BIGINT) {
+            boundStatementBuilder.setLong(column, Long.valueOf(value));
+        } else if (type.getProtocolCode() == ProtocolConstants.DataType.UUID) {
+            boundStatementBuilder.setUuid(column, UUID.fromString(value));
+        } else if (type.getProtocolCode() == ProtocolConstants.DataType.TIMEUUID) {
+            boundStatementBuilder.setUuid(column, UUID.fromString(value));
+        } else if (type.getProtocolCode() == ProtocolConstants.DataType.FLOAT) {
+            boundStatementBuilder.setFloat(column, Float.valueOf(value));
+        } else if (type.getProtocolCode() == ProtocolConstants.DataType.TIMESTAMP) {
+            boundStatementBuilder.setInstant(column, Instant.ofEpochMilli(Long.valueOf(value)));
         } else {
-            boundStatement.setString(column, value);
+            boundStatementBuilder.setString(column, value);
         }
     }
 

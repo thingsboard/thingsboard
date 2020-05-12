@@ -1,0 +1,110 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons" fxLayout.xs="column">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit">
+    {{'dashboard.open-dashboard' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'export')"
+          [fxShow]="!isEdit && dashboardScope === 'tenant'">
+    {{'dashboard.export' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'makePublic')"
+          [fxShow]="!isEdit && dashboardScope === 'tenant' && !isPublic(entity)">
+    {{'dashboard.make-public' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'makePrivate')"
+          [fxShow]="!isEdit && (dashboardScope === 'tenant' && isPublic(entity)
+                                || dashboardScope === 'customer' && isCurrentPublicCustomer(entity))">
+    {{'dashboard.make-private' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'manageAssignedCustomers')"
+          [fxShow]="!isEdit && dashboardScope === 'tenant'">
+    {{'dashboard.manage-assigned-customers' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'unassignFromCustomer')"
+          [fxShow]="!isEdit && dashboardScope === 'customer' && !isCurrentPublicCustomer(entity)">
+    {{ 'dashboard.unassign-from-customer' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [fxShow]="!hideDelete() && !isEdit">
+    {{'dashboard.delete' | translate }}
+  </button>
+</div>
+<div class="mat-padding" fxLayout="column">
+  <mat-form-field class="mat-block"
+                  [fxShow]="!isEdit && assignedCustomersText?.length
+                              && dashboardScope === 'tenant'">
+    <mat-label translate>dashboard.assignedToCustomers</mat-label>
+    <input matInput disabled [ngModel]="assignedCustomersText">
+  </mat-form-field>
+  <div fxLayout="column" [fxShow]="!isEdit && (dashboardScope === 'tenant' && isPublic(entity)
+                                || dashboardScope === 'customer' && isCurrentPublicCustomer(entity))">
+    <tb-social-share-panel style="padding-bottom: 1.25em;"
+                           shareTitle="{{ 'dashboard.socialshare-title' | translate:{dashboardTitle: entity?.title} }}"
+                           shareText="{{ 'dashboard.socialshare-text' | translate:{dashboardTitle: entity?.title} }}"
+                           shareLink="{{ publicLink }}"
+                           shareHashTags="thingsboard, iot">
+    </tb-social-share-panel>
+    <div fxLayout="row">
+      <mat-form-field class="mat-block" fxFlex>
+        <mat-label translate>dashboard.public-link</mat-label>
+        <input matInput disabled [ngModel]="publicLink">
+      </mat-form-field>
+      <button mat-button mat-icon-button style="margin-top: 8px;"
+              ngxClipboard
+              (cbOnSuccess)="onPublicLinkCopied($event)"
+              cbContent="{{ publicLink }}"
+              matTooltipPosition="above"
+              matTooltip="{{ 'dashboard.copy-public-link' | translate }}">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      </button>
+    </div>
+  </div>
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block">
+        <mat-label translate>dashboard.title</mat-label>
+        <input matInput formControlName="title" required>
+        <mat-error *ngIf="entityForm.get('title').hasError('required')">
+          {{ 'dashboard.title-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <div formGroupName="configuration" fxLayout="column">
+        <mat-form-field class="mat-block">
+          <mat-label translate>dashboard.description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+    </fieldset>
+  </form>
+</div>

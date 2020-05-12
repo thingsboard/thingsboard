@@ -1,0 +1,43 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2 translate>audit-log.audit-log-details</h2>
+  <span fxFlex></span>
+  <button mat-button mat-icon-button
+          [mat-dialog-close]="false"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content fxLayout="column">
+  <label translate class="tb-title no-padding">audit-log.action-data</label>
+  <div #actionDataEditor class="tb-audit-log-action-data">
+  </div>
+  <span style="min-height: 30px;"></span>
+  <label [fxShow]="displayFailureDetails" translate class="tb-title no-padding">audit-log.failure-details</label>
+  <div #failureDetailsEditor [fxShow]="displayFailureDetails" class="tb-audit-log-failure-details">
+  </div>
+</div>
+<div mat-dialog-actions fxLayoutAlign="end center">
+  <button mat-button color="primary"
+          type="button"
+          [disabled]="(isLoading$ | async)"
+          [mat-dialog-close]="false" cdkFocusInitial>
+    {{ 'action.close' | translate }}
+  </button>
+</div>

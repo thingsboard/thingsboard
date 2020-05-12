@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -88,8 +88,8 @@ public class TbGetCustomerAttributeNodeTest {
 
     private TbMsg msg;
 
-    private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-    private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+    private RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+    private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Before
     public void init() throws TbNodeException {
@@ -107,8 +107,8 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void errorThrownIfCannotLoadAttributes() {
-        UserId userId = new UserId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        UserId userId = new UserId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         User user = new User();
         user.setCustomerId(customerId);
 
@@ -132,8 +132,8 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void errorThrownIfCannotLoadAttributesAsync() {
-        UserId userId = new UserId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        UserId userId = new UserId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         User user = new User();
         user.setCustomerId(customerId);
 
@@ -157,8 +157,8 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void failedChainUsedIfCustomerCannotBeFound() {
-        UserId userId = new UserId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        UserId userId = new UserId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         User user = new User();
         user.setCustomerId(customerId);
 
@@ -175,15 +175,15 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void customerAttributeAddedInMetadata() {
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         msg = TbMsg.newMsg( "CUSTOMER", customerId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         entityAttributeFetched(customerId);
     }
 
     @Test
     public void usersCustomerAttributesFetched() {
-        UserId userId = new UserId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        UserId userId = new UserId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         User user = new User();
         user.setCustomerId(customerId);
 
@@ -197,8 +197,8 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void assetsCustomerAttributesFetched() {
-        AssetId assetId = new AssetId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        AssetId assetId = new AssetId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
@@ -212,8 +212,8 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void deviceCustomerAttributesFetched() {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Device device = new Device();
         device.setCustomerId(customerId);
 
@@ -239,8 +239,8 @@ public class TbGetCustomerAttributeNodeTest {
         node.init(null, nodeConfiguration);
 
 
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Device device = new Device();
         device.setCustomerId(customerId);
 

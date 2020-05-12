@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>2.5.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -45,7 +45,7 @@
     <dependencies>
         <dependency>
             <groupId>org.thingsboard</groupId>
-            <artifactId>ui</artifactId>
+            <artifactId>ui-ngx</artifactId>
             <version>${project.version}</version>
             <type>jar</type>
             <scope>provided</scope>
@@ -104,7 +104,7 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.thingsboard</groupId>
-                                    <artifactId>ui</artifactId>
+                                    <artifactId>ui-ngx</artifactId>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/web</outputDirectory>
