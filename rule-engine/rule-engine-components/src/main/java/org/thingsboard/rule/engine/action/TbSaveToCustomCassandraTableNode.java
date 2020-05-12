@@ -15,12 +15,16 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,23 +33,34 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
+import org.thingsboard.server.dao.model.type.AuthorityCodec;
+import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
+import org.thingsboard.server.dao.model.type.ComponentScopeCodec;
+import org.thingsboard.server.dao.model.type.ComponentTypeCodec;
+import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
+import org.thingsboard.server.dao.model.type.EntityTypeCodec;
+import org.thingsboard.server.dao.model.type.JsonCodec;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
-import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
@@ -70,7 +85,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     private static final String ENTITY_ID = "$entityId";
 
     private TbSaveToCustomCassandraTableNodeConfiguration config;
-    private GuavaSession session;
+    private Session session;
     private CassandraCluster cassandraCluster;
     private ConsistencyLevel defaultWriteLevel;
     private PreparedStatement saveStmt;
@@ -114,13 +129,30 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         return getSession().prepare(query);
     }
 
-    private GuavaSession getSession() {
+    private Session getSession() {
         if (session == null) {
             session = cassandraCluster.getSession();
             defaultWriteLevel = cassandraCluster.getDefaultWriteConsistencyLevel();
+            CodecRegistry registry = session.getCluster().getConfiguration().getCodecRegistry();
+            registerCodecIfNotFound(registry, new JsonCodec());
+            registerCodecIfNotFound(registry, new DeviceCredentialsTypeCodec());
+            registerCodecIfNotFound(registry, new AuthorityCodec());
+            registerCodecIfNotFound(registry, new ComponentLifecycleStateCodec());
+            registerCodecIfNotFound(registry, new ComponentTypeCodec());
+            registerCodecIfNotFound(registry, new ComponentScopeCodec());
+            registerCodecIfNotFound(registry, new EntityTypeCodec());
         }
         return session;
     }
+
+    private void registerCodecIfNotFound(CodecRegistry registry, TypeCodec<?> codec) {
+        try {
+            registry.codecFor(codec.getCqlType(), codec.getJavaType());
+        } catch (CodecNotFoundException e) {
+            registry.register(codec);
+        }
+    }
+
 
     private PreparedStatement getSaveStmt() {
         fieldsMap = config.getFieldsMapping();
@@ -167,22 +199,22 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             throw new IllegalStateException("Invalid message structure, it is not a JSON Object:" + data);
         } else {
             JsonObject dataAsObject = data.getAsJsonObject();
-            BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(saveStmt.bind());
+            BoundStatement stmt = saveStmt.bind();
             AtomicInteger i = new AtomicInteger(0);
             fieldsMap.forEach((key, value) -> {
                 if (key.equals(ENTITY_ID)) {
-                    stmtBuilder.setUuid(i.get(), msg.getOriginator().getId());
+                    stmt.setUUID(i.get(), msg.getOriginator().getId());
                 } else if (dataAsObject.has(key)) {
                     if (dataAsObject.get(key).isJsonPrimitive()) {
                         JsonPrimitive primitive = dataAsObject.get(key).getAsJsonPrimitive();
                         if (primitive.isNumber()) {
-                            stmtBuilder.setLong(i.get(), dataAsObject.get(key).getAsLong());
+                            stmt.setLong(i.get(), dataAsObject.get(key).getAsLong());
                         } else if (primitive.isBoolean()) {
-                            stmtBuilder.setBoolean(i.get(), dataAsObject.get(key).getAsBoolean());
+                            stmt.setBool(i.get(), dataAsObject.get(key).getAsBoolean());
                         } else if (primitive.isString()) {
-                            stmtBuilder.setString(i.get(), dataAsObject.get(key).getAsString());
+                            stmt.setString(i.get(), dataAsObject.get(key).getAsString());
                         } else {
-                            stmtBuilder.setToNull(i.get());
+                            stmt.setToNull(i.get());
                         }
                     } else {
                         throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Primitive!");
@@ -192,15 +224,15 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 }
                 i.getAndIncrement();
             });
-            return getFuture(executeAsyncWrite(ctx, stmtBuilder.build()), rs -> null);
+            return getFuture(executeAsyncWrite(ctx, stmt), rs -> null);
         }
     }
 
-    private TbResultSetFuture executeAsyncWrite(TbContext ctx, Statement statement) {
+    private ResultSetFuture executeAsyncWrite(TbContext ctx, Statement statement) {
         return executeAsync(ctx, statement, defaultWriteLevel);
     }
 
-    private TbResultSetFuture executeAsync(TbContext ctx, Statement statement, ConsistencyLevel level) {
+    private ResultSetFuture executeAsync(TbContext ctx, Statement statement, ConsistencyLevel level) {
         if (log.isDebugEnabled()) {
             log.debug("Execute cassandra async statement {}", statementToString(statement));
         }
@@ -212,17 +244,17 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
 
     private static String statementToString(Statement statement) {
         if (statement instanceof BoundStatement) {
-            return ((BoundStatement) statement).getPreparedStatement().getQuery();
+            return ((BoundStatement) statement).preparedStatement().getQueryString();
         } else {
             return statement.toString();
         }
     }
 
-    private <T> ListenableFuture<T> getFuture(TbResultSetFuture future, java.util.function.Function<AsyncResultSet, T> transformer) {
-        return Futures.transform(future, new Function<AsyncResultSet, T>() {
+    private <T> ListenableFuture<T> getFuture(ResultSetFuture future, java.util.function.Function<ResultSet, T> transformer) {
+        return Futures.transform(future, new Function<ResultSet, T>() {
             @Nullable
             @Override
-            public T apply(@Nullable AsyncResultSet input) {
+            public T apply(@Nullable ResultSet input) {
                 return transformer.apply(input);
             }
         }, readResultsProcessingExecutor);

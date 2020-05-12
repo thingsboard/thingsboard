@@ -15,17 +15,28 @@
  */
 package org.thingsboard.server.dao.nosql;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
+import org.thingsboard.server.dao.model.type.AuthorityCodec;
+import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
+import org.thingsboard.server.dao.model.type.ComponentScopeCodec;
+import org.thingsboard.server.dao.model.type.ComponentTypeCodec;
+import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
+import org.thingsboard.server.dao.model.type.EntityTypeCodec;
+import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -42,16 +53,24 @@ public abstract class CassandraAbstractDao {
     @Autowired
     private CassandraBufferedRateExecutor rateLimiter;
 
-    private GuavaSession session;
+    private Session session;
 
     private ConsistencyLevel defaultReadLevel;
     private ConsistencyLevel defaultWriteLevel;
 
-    private GuavaSession getSession() {
+    private Session getSession() {
         if (session == null) {
             session = cluster.getSession();
             defaultReadLevel = cluster.getDefaultReadConsistencyLevel();
             defaultWriteLevel = cluster.getDefaultWriteConsistencyLevel();
+            CodecRegistry registry = session.getCluster().getConfiguration().getCodecRegistry();
+            registerCodecIfNotFound(registry, new JsonCodec());
+            registerCodecIfNotFound(registry, new DeviceCredentialsTypeCodec());
+            registerCodecIfNotFound(registry, new AuthorityCodec());
+            registerCodecIfNotFound(registry, new ComponentLifecycleStateCodec());
+            registerCodecIfNotFound(registry, new ComponentTypeCodec());
+            registerCodecIfNotFound(registry, new ComponentScopeCodec());
+            registerCodecIfNotFound(registry, new EntityTypeCodec());
         }
         return session;
     }
@@ -60,30 +79,38 @@ public abstract class CassandraAbstractDao {
         return preparedStatementMap.computeIfAbsent(query, i -> getSession().prepare(i));
     }
 
-    protected AsyncResultSet executeRead(TenantId tenantId, Statement statement) {
+    private void registerCodecIfNotFound(CodecRegistry registry, TypeCodec<?> codec) {
+        try {
+            registry.codecFor(codec.getCqlType(), codec.getJavaType());
+        } catch (CodecNotFoundException e) {
+            registry.register(codec);
+        }
+    }
+
+    protected ResultSet executeRead(TenantId tenantId, Statement statement) {
         return execute(tenantId, statement, defaultReadLevel);
     }
 
-    protected AsyncResultSet executeWrite(TenantId tenantId, Statement statement) {
+    protected ResultSet executeWrite(TenantId tenantId, Statement statement) {
         return execute(tenantId, statement, defaultWriteLevel);
     }
 
-    protected TbResultSetFuture executeAsyncRead(TenantId tenantId, Statement statement) {
+    protected ResultSetFuture executeAsyncRead(TenantId tenantId, Statement statement) {
         return executeAsync(tenantId, statement, defaultReadLevel);
     }
 
-    protected TbResultSetFuture executeAsyncWrite(TenantId tenantId, Statement statement) {
+    protected ResultSetFuture executeAsyncWrite(TenantId tenantId, Statement statement) {
         return executeAsync(tenantId, statement, defaultWriteLevel);
     }
 
-    private AsyncResultSet execute(TenantId tenantId, Statement statement, ConsistencyLevel level) {
+    private ResultSet execute(TenantId tenantId, Statement statement, ConsistencyLevel level) {
         if (log.isDebugEnabled()) {
             log.debug("Execute cassandra statement {}", statementToString(statement));
         }
         return executeAsync(tenantId, statement, level).getUninterruptibly();
     }
 
-    private TbResultSetFuture executeAsync(TenantId tenantId, Statement statement, ConsistencyLevel level) {
+    private ResultSetFuture executeAsync(TenantId tenantId, Statement statement, ConsistencyLevel level) {
         if (log.isDebugEnabled()) {
             log.debug("Execute cassandra async statement {}", statementToString(statement));
         }
@@ -95,7 +122,7 @@ public abstract class CassandraAbstractDao {
 
     private static String statementToString(Statement statement) {
         if (statement instanceof BoundStatement) {
-            return ((BoundStatement) statement).getPreparedStatement().getQuery();
+            return ((BoundStatement) statement).preparedStatement().getQueryString();
         } else {
             return statement.toString();
         }

@@ -15,14 +15,7 @@
  */
 package org.thingsboard.server.dao.util;
 
-import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
-import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.type.DataType;
-import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.driver.core.*;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -219,7 +212,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         CassandraStatementTask cassStmtTask = (CassandraStatementTask) taskCtx.getTask();
         if (cassStmtTask.getStatement() instanceof BoundStatement) {
             BoundStatement stmt = (BoundStatement) cassStmtTask.getStatement();
-            String query = stmt.getPreparedStatement().getQuery();
+            String query = stmt.preparedStatement().getQueryString();
             try {
                 query = toStringWithValues(stmt, ProtocolVersion.V5);
             } catch (Exception e) {
@@ -232,16 +225,16 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     }
 
     private static String toStringWithValues(BoundStatement boundStatement, ProtocolVersion protocolVersion) {
-        CodecRegistry codecRegistry = boundStatement.codecRegistry();
-        PreparedStatement preparedStatement = boundStatement.getPreparedStatement();
-        String query = preparedStatement.getQuery();
-        ColumnDefinitions defs = preparedStatement.getVariableDefinitions();
+        CodecRegistry codecRegistry = boundStatement.preparedStatement().getCodecRegistry();
+        PreparedStatement preparedStatement = boundStatement.preparedStatement();
+        String query = preparedStatement.getQueryString();
+        ColumnDefinitions defs = preparedStatement.getVariables();
         int index = 0;
-        for (ColumnDefinition def : defs) {
+        for (ColumnDefinitions.Definition def : defs) {
             DataType type = def.getType();
             TypeCodec<Object> codec = codecRegistry.codecFor(type);
             if (boundStatement.getBytesUnsafe(index) != null) {
-                Object value = codec.decode(boundStatement.getBytesUnsafe(index), protocolVersion);
+                Object value = codec.deserialize(boundStatement.getBytesUnsafe(index), protocolVersion);
                 String replacement = Matcher.quoteReplacement(codec.format(value));
                 query = query.replaceFirst("\\?", replacement);
             }

@@ -22,8 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
@@ -150,14 +150,14 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         widgetsBundles.addAll(sysWidgetsBundles);
 
         List<WidgetsBundle> loadedWidgetsBundles = new ArrayList<>();
-        PageLink pageLink = new PageLink(14);
-        PageData<WidgetsBundle> pageData;
+        TextPageLink pageLink = new TextPageLink(14);
+        TextPageData<WidgetsBundle> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/widgetsBundles?",
-                    new TypeReference<PageData<WidgetsBundle>>(){}, pageLink);
+                    new TypeReference<TextPageData<WidgetsBundle>>(){}, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
+                pageLink = pageData.getNextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -186,14 +186,14 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         widgetsBundles.addAll(sysWidgetsBundles);
 
         List<WidgetsBundle> loadedWidgetsBundles = new ArrayList<>();
-        PageLink pageLink = new PageLink(14);
-        PageData<WidgetsBundle> pageData;
+        TextPageLink pageLink = new TextPageLink(14);
+        TextPageData<WidgetsBundle> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/widgetsBundles?",
-                    new TypeReference<PageData<WidgetsBundle>>(){}, pageLink);
+                    new TypeReference<TextPageData<WidgetsBundle>>(){}, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
+                pageLink = pageData.getNextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -207,14 +207,14 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
                     .andExpect(status().isOk());
         }
 
-        pageLink = new PageLink(17);
+        pageLink = new TextPageLink(17);
         loadedWidgetsBundles.clear();
         do {
             pageData = doGetTypedWithPageLink("/api/widgetsBundles?",
-                    new TypeReference<PageData<WidgetsBundle>>(){}, pageLink);
+                    new TypeReference<TextPageData<WidgetsBundle>>(){}, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
+                pageLink = pageData.getNextPageLink();
             }
         } while (pageData.hasNext());
 

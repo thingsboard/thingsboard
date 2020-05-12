@@ -44,7 +44,7 @@ import java.util.HashSet;
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
                 "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded.<br/>" +
                 "Alarm Originator found only in case original Originator is <code>Alarm</code> entity.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbTransformationNodeChangeOriginatorConfig",
         icon = "find_replace"
 )

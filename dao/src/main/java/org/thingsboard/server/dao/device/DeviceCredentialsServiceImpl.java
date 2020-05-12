@@ -80,14 +80,18 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
-        try {
+        if (!sqlDatabaseUsed) {
             return deviceCredentialsDao.save(tenantId, deviceCredentials);
-        } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key")) {
-                throw new DataValidationException("Specified credentials are already registered!");
-            } else {
-                throw t;
+        } else {
+            try {
+                return deviceCredentialsDao.save(tenantId, deviceCredentials);
+            } catch (Exception t) {
+                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key")) {
+                    throw new DataValidationException("Specified credentials are already registered!");
+                } else {
+                    throw t;
+                }
             }
         }
     }
@@ -111,6 +115,12 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
+                    if (!sqlDatabaseUsed) {
+                        DeviceCredentials existingCredentialsEntity = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
+                        if (existingCredentialsEntity != null) {
+                            throw new DataValidationException("Create of existent device credentials!");
+                        }
+                    }
                 }
 
                 @Override
@@ -118,6 +128,12 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     DeviceCredentials existingCredentials = deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId());
                     if (existingCredentials == null) {
                         throw new DataValidationException("Unable to update non-existent device credentials!");
+                    }
+                    if (!sqlDatabaseUsed) {
+                        DeviceCredentials sameCredentialsId = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
+                        if (sameCredentialsId != null && !sameCredentialsId.getUuidId().equals(deviceCredentials.getUuidId())) {
+                            throw new DataValidationException("Specified credentials are already registered!");
+                        }
                     }
                 }
 

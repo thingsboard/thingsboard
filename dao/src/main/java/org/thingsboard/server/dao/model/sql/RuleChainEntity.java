@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -101,7 +101,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
     @Override
     public RuleChain toData() {
         RuleChain ruleChain = new RuleChain(new RuleChainId(this.getUuid()));
-        ruleChain.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
+        ruleChain.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         ruleChain.setTenantId(new TenantId(toUUID(tenantId)));
         ruleChain.setName(name);
         if (firstRuleNodeId != null) {

@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -25,8 +25,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.device.DeviceDao;
 
@@ -49,26 +48,25 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindDevicesByTenantId() {
-        UUID tenantId1 = Uuids.timeBased();
-        UUID tenantId2 = Uuids.timeBased();
-        UUID customerId1 = Uuids.timeBased();
-        UUID customerId2 = Uuids.timeBased();
+        UUID tenantId1 = UUIDs.timeBased();
+        UUID tenantId2 = UUIDs.timeBased();
+        UUID customerId1 = UUIDs.timeBased();
+        UUID customerId2 = UUIDs.timeBased();
         createDevices(tenantId1, tenantId2, customerId1, customerId2, 40);
 
-        PageLink pageLink = new PageLink(15, 0,  "SEARCH_TEXT");
-        PageData<Device> devices1 = deviceDao.findDevicesByTenantId(tenantId1, pageLink);
-        assertEquals(15, devices1.getData().size());
+        TextPageLink pageLink1 = new TextPageLink(15, "SEARCH_TEXT");
+        List<Device> devices1 = deviceDao.findDevicesByTenantId(tenantId1, pageLink1);
+        assertEquals(15, devices1.size());
 
-        pageLink = pageLink.nextPageLink();
-
-        PageData<Device> devices2 = deviceDao.findDevicesByTenantId(tenantId1, pageLink);
-        assertEquals(5, devices2.getData().size());
+        TextPageLink pageLink2 = new TextPageLink(15, "SEARCH_TEXT",  devices1.get(14).getId().getId(), null);
+        List<Device> devices2 = deviceDao.findDevicesByTenantId(tenantId1, pageLink2);
+        assertEquals(5, devices2.size());
     }
 
     @Test
     public void testFindAsync() throws ExecutionException, InterruptedException {
-        UUID tenantId = Uuids.timeBased();
-        UUID customerId = Uuids.timeBased();
+        UUID tenantId = UUIDs.timeBased();
+        UUID customerId = UUIDs.timeBased();
         Device device = getDevice(tenantId, customerId);
         deviceDao.save(new TenantId(tenantId), device);
 
@@ -85,16 +83,16 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindDevicesByTenantIdAndIdsAsync() throws ExecutionException, InterruptedException {
-        UUID tenantId1 = Uuids.timeBased();
-        UUID customerId1 = Uuids.timeBased();
-        UUID tenantId2 = Uuids.timeBased();
-        UUID customerId2 = Uuids.timeBased();
+        UUID tenantId1 = UUIDs.timeBased();
+        UUID customerId1 = UUIDs.timeBased();
+        UUID tenantId2 = UUIDs.timeBased();
+        UUID customerId2 = UUIDs.timeBased();
 
         List<UUID> deviceIds = new ArrayList<>();
 
         for(int i = 0; i < 5; i++) {
-            UUID deviceId1 = Uuids.timeBased();
-            UUID deviceId2 = Uuids.timeBased();
+            UUID deviceId1 = UUIDs.timeBased();
+            UUID deviceId2 = UUIDs.timeBased();
             deviceDao.save(new TenantId(tenantId1), getDevice(tenantId1, customerId1, deviceId1));
             deviceDao.save(new TenantId(tenantId2), getDevice(tenantId2, customerId2, deviceId2));
             deviceIds.add(deviceId1);
@@ -108,16 +106,16 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindDevicesByTenantIdAndCustomerIdAndIdsAsync() throws ExecutionException, InterruptedException {
-        UUID tenantId1 = Uuids.timeBased();
-        UUID customerId1 = Uuids.timeBased();
-        UUID tenantId2 = Uuids.timeBased();
-        UUID customerId2 = Uuids.timeBased();
+        UUID tenantId1 = UUIDs.timeBased();
+        UUID customerId1 = UUIDs.timeBased();
+        UUID tenantId2 = UUIDs.timeBased();
+        UUID customerId2 = UUIDs.timeBased();
 
         List<UUID> deviceIds = new ArrayList<>();
 
         for(int i = 0; i < 20; i++) {
-            UUID deviceId1 = Uuids.timeBased();
-            UUID deviceId2 = Uuids.timeBased();
+            UUID deviceId1 = UUIDs.timeBased();
+            UUID deviceId2 = UUIDs.timeBased();
             deviceDao.save(new TenantId(tenantId1), getDevice(tenantId1, customerId1, deviceId1));
             deviceDao.save(new TenantId(tenantId2), getDevice(tenantId2, customerId2, deviceId2));
             deviceIds.add(deviceId1);
@@ -137,7 +135,7 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
     }
 
     private Device getDevice(UUID tenantId, UUID customerID) {
-        return getDevice(tenantId, customerID, Uuids.timeBased());
+        return getDevice(tenantId, customerID, UUIDs.timeBased());
     }
 
     private Device getDevice(UUID tenantId, UUID customerID, UUID deviceId) {

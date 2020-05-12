@@ -54,11 +54,6 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
 
     @Override
     public void createDatabaseSchema() throws Exception {
-        this.createDatabaseSchema(true);
-    }
-
-    @Override
-    public void createDatabaseSchema(boolean createIndexes) throws Exception {
 
         log.info("Installing SQL DataBase schema part: " + schemaSql);
 
@@ -68,15 +63,9 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
             conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to load initial thingsboard database schema
         }
 
-        if (createIndexes) {
-            this.createDatabaseIndexes();
-        }
-    }
-
-    @Override
-    public void createDatabaseIndexes() throws Exception {
         if (schemaIdxSql != null) {
             log.info("Installing SQL DataBase schema indexes part: " + schemaIdxSql);
+
             Path schemaIdxFile = Paths.get(installScripts.getDataDir(), SQL_DIR, schemaIdxSql);
             try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                 String sql = new String(Files.readAllBytes(schemaIdxFile), Charset.forName("UTF-8"));

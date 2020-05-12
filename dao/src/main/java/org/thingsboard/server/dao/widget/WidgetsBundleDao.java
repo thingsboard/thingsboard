@@ -16,8 +16,7 @@
 package org.thingsboard.server.dao.widget;
 
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.Dao;
 
@@ -53,7 +52,7 @@ public interface WidgetsBundleDao extends Dao<WidgetsBundle> {
      * @param pageLink the page link
      * @return the list of widgets bundles objects
      */
-    PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, PageLink pageLink);
+    List<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, TextPageLink pageLink);
 
     /**
      * Find tenant widgets bundles by tenantId and page link.
@@ -62,7 +61,7 @@ public interface WidgetsBundleDao extends Dao<WidgetsBundle> {
      * @param pageLink the page link
      * @return the list of widgets bundles objects
      */
-    PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, PageLink pageLink);
+    List<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
      * Find all tenant widgets bundles (including system) by tenantId and page link.
@@ -71,7 +70,7 @@ public interface WidgetsBundleDao extends Dao<WidgetsBundle> {
      * @param pageLink the page link
      * @return the list of widgets bundles objects
      */
-    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, PageLink pageLink);
+    List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink);
 
 }
 

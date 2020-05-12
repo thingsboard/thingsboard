@@ -433,7 +433,7 @@ export default class TbMapWidgetV2 {
 		function calculateLocationColor(location, dataMap) {
 			if (location.settings.useColorFunction && location.settings.colorFunction) {
 				var color;
-				try {					
+				try {
 					color = location.settings.colorFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);
 				} catch (e) {/**/
 				}
@@ -450,7 +450,7 @@ export default class TbMapWidgetV2 {
 			if (location.settings.usePolygonColorFunction && location.settings.polygonColorFunction) {
 				var color;
 				try {
-					color = location.settings.polygonColorFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);					
+					color = location.settings.polygonColorFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);
 				} catch (e) {/**/
 				}
 				if (!color) {
@@ -484,7 +484,7 @@ export default class TbMapWidgetV2 {
 		function calculateLocationMarkerImage(location, dataMap) {
 			if (location.settings.useMarkerImageFunction && location.settings.markerImageFunction) {
 				var image = null;
-				try {					
+				try {
 					image = location.settings.markerImageFunction(dataMap.dataMap, location.settings.markerImages, dataMap.dsDataMap, location.dsIndex);
 				} catch (e) {
 					image = null;

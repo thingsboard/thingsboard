@@ -17,8 +17,7 @@ package org.thingsboard.server.dao.tenant;
 
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -40,6 +39,6 @@ public interface TenantDao extends Dao<Tenant> {
      * @param pageLink the page link
      * @return the list of tenant objects
      */
-    PageData<Tenant> findTenantsByRegion(TenantId tenantId, String region, PageLink pageLink);
+    List<Tenant> findTenantsByRegion(TenantId tenantId, String region, TextPageLink pageLink);
     
 }

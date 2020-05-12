@@ -16,12 +16,12 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -60,33 +61,36 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
     }
 
     @Override
-    public PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
+    public List<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(
                 widgetsBundleRepository
                         .findSystemWidgetsBundles(
                                 NULL_UUID_STR,
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                DaoUtil.toPageable(pageLink)));
+                                pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
+                                PageRequest.of(0, pageLink.getLimit())));
     }
 
     @Override
-    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
+    public List<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(
                 widgetsBundleRepository
                         .findTenantWidgetsBundlesByTenantId(
                                 UUIDConverter.fromTimeUUID(tenantId),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                DaoUtil.toPageable(pageLink)));
+                                pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
+                                PageRequest.of(0, pageLink.getLimit())));
     }
 
     @Override
-    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
+    public List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(
                 widgetsBundleRepository
                         .findAllTenantWidgetsBundlesByTenantId(
                                 UUIDConverter.fromTimeUUID(tenantId),
                                 NULL_UUID_STR,
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                DaoUtil.toPageable(pageLink)));
+                                pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
+                                PageRequest.of(0, pageLink.getLimit())));
     }
 }

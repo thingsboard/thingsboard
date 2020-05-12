@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -109,7 +109,7 @@ public abstract class BaseDeviceCredentialsServiceTest extends AbstractServiceTe
         device.setTenantId(tenantId);
         device = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
-        DeviceCredentials newDeviceCredentials = new DeviceCredentials(new DeviceCredentialsId(Uuids.timeBased()));
+        DeviceCredentials newDeviceCredentials = new DeviceCredentials(new DeviceCredentialsId(UUIDs.timeBased()));
         newDeviceCredentials.setCreatedTime(deviceCredentials.getCreatedTime());
         newDeviceCredentials.setDeviceId(deviceCredentials.getDeviceId());
         newDeviceCredentials.setCredentialsType(deviceCredentials.getCredentialsType());
@@ -129,7 +129,7 @@ public abstract class BaseDeviceCredentialsServiceTest extends AbstractServiceTe
         device.setTenantId(tenantId);
         device = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
-        deviceCredentials.setDeviceId(new DeviceId(Uuids.timeBased()));
+        deviceCredentials.setDeviceId(new DeviceId(UUIDs.timeBased()));
         try {
             deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
         } finally {

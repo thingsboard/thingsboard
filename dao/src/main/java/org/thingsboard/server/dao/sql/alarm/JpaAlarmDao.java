@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -28,7 +31,8 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.BaseAlarmService;
@@ -37,13 +41,9 @@ import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
-
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
-import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
@@ -91,7 +91,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query) {
+    public ListenableFuture<List<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
         String searchStatusName;
@@ -103,19 +103,15 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
             searchStatusName = query.getStatus().name();
         }
         String relationType = BaseAlarmService.ALARM_RELATION_PREFIX + searchStatusName;
-
-        return DaoUtil.toPageData(
-            alarmRepository.findAlarms(
-                    fromTimeUUID(tenantId.getId()),
-                    fromTimeUUID(affectedEntity.getId()),
-                    affectedEntity.getEntityType().name(),
-                    relationType,
-                    startTimeToId(query.getPageLink().getStartTime()),
-                    endTimeToId(query.getPageLink().getEndTime()),
-                    query.getIdOffset() != null ? UUIDConverter.fromTimeUUID(query.getIdOffset()) : null,
-                    Objects.toString(query.getPageLink().getTextSearch(), ""),
-                    DaoUtil.toPageable(query.getPageLink())
-            )
-        );
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(tenantId, affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                alarmFutures.add(Futures.transform(
+                        findAlarmByIdAsync(tenantId, relation.getTo().getId()),
+                        AlarmInfo::new, MoreExecutors.directExecutor()));
+            }
+            return Futures.successfulAsList(alarmFutures);
+        }, MoreExecutors.directExecutor());
     }
 }

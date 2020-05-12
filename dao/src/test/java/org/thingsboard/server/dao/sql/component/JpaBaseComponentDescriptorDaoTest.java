@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.component;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -47,13 +46,13 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
             createComponentDescriptor(ComponentType.ACTION, ComponentScope.TENANT, i + 20);
         }
 
-        PageLink pageLink = new PageLink(15, 0, "COMPONENT_");
-        PageData<ComponentDescriptor> components1 = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID, ComponentType.FILTER, pageLink);
-        assertEquals(15, components1.getData().size());
+        TextPageLink pageLink1 = new TextPageLink(15, "COMPONENT_");
+        List<ComponentDescriptor> components1 = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID, ComponentType.FILTER, pageLink1);
+        assertEquals(15, components1.size());
 
-        pageLink = pageLink.nextPageLink();
-        PageData<ComponentDescriptor> components2 = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,ComponentType.FILTER, pageLink);
-        assertEquals(5, components2.getData().size());
+        TextPageLink pageLink2 = new TextPageLink(15, "COMPONENT_", components1.get(14).getId().getId(), null);
+        List<ComponentDescriptor> components2 = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,ComponentType.FILTER, pageLink2);
+        assertEquals(5, components2.size());
     }
 
     @Test
@@ -64,20 +63,20 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
             createComponentDescriptor(ComponentType.FILTER, ComponentScope.SYSTEM, i + 40);
         }
 
-        PageLink pageLink = new PageLink(15, 0,  "COMPONENT_");
-        PageData<ComponentDescriptor> components1 = componentDescriptorDao.findByScopeAndTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
-                ComponentScope.SYSTEM, ComponentType.FILTER, pageLink);
-        assertEquals(15, components1.getData().size());
+        TextPageLink pageLink1 = new TextPageLink(15, "COMPONENT_");
+        List<ComponentDescriptor> components1 = componentDescriptorDao.findByScopeAndTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
+                ComponentScope.SYSTEM, ComponentType.FILTER, pageLink1);
+        assertEquals(15, components1.size());
 
-        pageLink = pageLink.nextPageLink();
-        PageData<ComponentDescriptor> components2 = componentDescriptorDao.findByScopeAndTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
-                ComponentScope.SYSTEM, ComponentType.FILTER, pageLink);
-        assertEquals(5, components2.getData().size());
+        TextPageLink pageLink2 = new TextPageLink(15, "COMPONENT_", components1.get(14).getId().getId(), null);
+        List<ComponentDescriptor> components2 = componentDescriptorDao.findByScopeAndTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
+                ComponentScope.SYSTEM, ComponentType.FILTER, pageLink2);
+        assertEquals(5, components2.size());
     }
 
     private void createComponentDescriptor(ComponentType type, ComponentScope scope, int index) {
         ComponentDescriptor component = new ComponentDescriptor();
-        component.setId(new ComponentDescriptorId(Uuids.timeBased()));
+        component.setId(new ComponentDescriptorId(UUIDs.timeBased()));
         component.setType(type);
         component.setScope(scope);
         component.setName("COMPONENT_" + index);

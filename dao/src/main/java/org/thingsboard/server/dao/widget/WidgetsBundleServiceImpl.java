@@ -22,8 +22,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -88,42 +88,42 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
-    public PageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TenantId tenantId, PageLink pageLink) {
+    public TextPageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TenantId tenantId, TextPageLink pageLink) {
         log.trace("Executing findSystemWidgetsBundles, pageLink [{}]", pageLink);
-        Validator.validatePageLink(pageLink);
-        return widgetsBundleDao.findSystemWidgetsBundles(tenantId, pageLink);
+        Validator.validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
+        return new TextPageData<>(widgetsBundleDao.findSystemWidgetsBundles(tenantId, pageLink), pageLink);
     }
 
     @Override
     public List<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId) {
         log.trace("Executing findSystemWidgetsBundles");
         List<WidgetsBundle> widgetsBundles = new ArrayList<>();
-        PageLink pageLink = new PageLink(DEFAULT_WIDGETS_BUNDLE_LIMIT);
-        PageData<WidgetsBundle> pageData;
+        TextPageLink pageLink = new TextPageLink(DEFAULT_WIDGETS_BUNDLE_LIMIT);
+        TextPageData<WidgetsBundle> pageData;
         do {
             pageData = findSystemWidgetsBundlesByPageLink(tenantId, pageLink);
             widgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
+                pageLink = pageData.getNextPageLink();
             }
         } while (pageData.hasNext());
         return widgetsBundles;
     }
 
     @Override
-    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, PageLink pageLink) {
+    public TextPageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, TextPageLink pageLink) {
         log.trace("Executing findTenantWidgetsBundlesByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validatePageLink(pageLink);
-        return widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId.getId(), pageLink);
+        Validator.validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
+        return new TextPageData<>(widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId.getId(), pageLink), pageLink);
     }
 
     @Override
-    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
+    public TextPageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink) {
         log.trace("Executing findAllTenantWidgetsBundlesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validatePageLink(pageLink);
-        return widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId.getId(), pageLink);
+        Validator.validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
+        return new TextPageData<>(widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId.getId(), pageLink), pageLink);
     }
 
     @Override
@@ -131,13 +131,13 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
         log.trace("Executing findAllTenantWidgetsBundlesByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         List<WidgetsBundle> widgetsBundles = new ArrayList<>();
-        PageLink pageLink = new PageLink(DEFAULT_WIDGETS_BUNDLE_LIMIT);
-        PageData<WidgetsBundle> pageData;
+        TextPageLink pageLink = new TextPageLink(DEFAULT_WIDGETS_BUNDLE_LIMIT);
+        TextPageData<WidgetsBundle> pageData;
         do {
             pageData = findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
             widgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
+                pageLink = pageData.getNextPageLink();
             }
         } while (pageData.hasNext());
         return widgetsBundles;
@@ -204,7 +204,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
             new PaginatedRemover<TenantId, WidgetsBundle>() {
 
                 @Override
-                protected PageData<WidgetsBundle> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                protected List<WidgetsBundle> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
                     return widgetsBundleDao.findTenantWidgetsBundlesByTenantId(id.getId(), pageLink);
                 }
 

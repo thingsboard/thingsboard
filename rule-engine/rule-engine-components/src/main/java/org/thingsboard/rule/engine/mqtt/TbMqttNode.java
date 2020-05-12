@@ -47,7 +47,7 @@ import java.util.concurrent.TimeoutException;
         configClazz = TbMqttNodeConfiguration.class,
         nodeDescription = "Publish messages to the MQTT broker",
         nodeDetails = "Will publish message payload to the MQTT broker with QoS <b>AT_LEAST_ONCE</b>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeMqttConfig",
         icon = "call_split"
 )
