@@ -496,7 +496,7 @@ export function padValue(val: any, dec: number): string {
   val = Math.abs(val);
 
   if (dec > 0) {
-    strVal = val.toFixed(dec).toString()
+    strVal = val.toFixed(dec);
   } else {
     strVal = Math.round(val).toString();
   }
