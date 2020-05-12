@@ -152,7 +152,7 @@ function parseTemplate(template: string, data: { $datasource?: Datasource, [key:
         }
       }
 
-      const value = data[label];
+      const value = data[label] || '';
       let textValue: string;
       if (isNumber(value)) {
         textValue = padValue(value, valDec);
