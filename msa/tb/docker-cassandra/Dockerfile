@@ -49,6 +49,21 @@ ENV DATABASE_ENTITIES_TYPE=cassandra
 
 ENV CASSANDRA_HOST=localhost
 ENV CASSANDRA_PORT=9042
+ENV CASSANDRA_HOME=/opt/cassandra
+ENV PATH $CASSANDRA_HOME/bin:$PATH
+
+RUN rm -rf /var/lib/cassandra
+
+RUN chmod a+w /var/lib
+
+RUN mkdir -p $DATA_FOLDER
+RUN chown -R cassandra:cassandra /data
+
+RUN chown -R cassandra:cassandra /var/log/${pkg.name}
+RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
+
+
+USER cassandra
 
 EXPOSE 9090
 EXPOSE 1883
