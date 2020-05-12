@@ -17,52 +17,55 @@
 version: '2.2'
 
 services:
-  postgres:
-    restart: always
-    image: "postgres:11.6"
-    ports:
-      - "5432"
-    environment:
-      POSTGRES_DB: thingsboard
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - ./tb-node/postgres:/var/lib/postgresql/data
-  cassandra:
-    restart: always
-    image: "cassandra:3.11.3"
-    ports:
-      - "9042"
-    volumes:
-      - ./tb-node/cassandra:/var/lib/cassandra
+  tb-js-executor:
+    env_file:
+      - queue-pubsub.env.env
   tb-core1:
     env_file:
-      - tb-node.hybrid.env
+      - queue-pubsub.env.env
     depends_on:
       - zookeeper
       - redis
-      - postgres
-      - cassandra
   tb-core2:
     env_file:
-      - tb-node.hybrid.env
+      - queue-pubsub.env
     depends_on:
       - zookeeper
       - redis
-      - postgres
-      - cassandra
   tb-rule-engine1:
     env_file:
-      - tb-node.hybrid.env
+      - queue-pubsub.env
     depends_on:
       - zookeeper
       - redis
-      - postgres
-      - cassandra
   tb-rule-engine2:
     env_file:
-      - tb-node.hybrid.env
+      - queue-pubsub.env
     depends_on:
       - zookeeper
       - redis
-      - postgres
-      - cassandra
+  tb-mqtt-transport1:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
+  tb-mqtt-transport2:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
+  tb-http-transport1:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
+  tb-http-transport2:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
+  tb-coap-transport:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper

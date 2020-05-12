@@ -17,52 +17,66 @@
 version: '2.2'
 
 services:
-  postgres:
+  kafka:
     restart: always
-    image: "postgres:11.6"
+    image: "wurstmeister/kafka:2.12-2.3.0"
     ports:
-      - "5432"
-    environment:
-      POSTGRES_DB: thingsboard
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - ./tb-node/postgres:/var/lib/postgresql/data
-  cassandra:
-    restart: always
-    image: "cassandra:3.11.3"
-    ports:
-      - "9042"
-    volumes:
-      - ./tb-node/cassandra:/var/lib/cassandra
+      - "9092:9092"
+    env_file:
+      - kafka.env
+    depends_on:
+      - zookeeper
+  tb-js-executor:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka
   tb-core1:
     env_file:
-      - tb-node.hybrid.env
+      - queue-kafka.env
     depends_on:
-      - zookeeper
+      - kafka
       - redis
-      - postgres
-      - cassandra
   tb-core2:
     env_file:
-      - tb-node.hybrid.env
+      - queue-kafka.env
     depends_on:
-      - zookeeper
+      - kafka
       - redis
-      - postgres
-      - cassandra
   tb-rule-engine1:
     env_file:
-      - tb-node.hybrid.env
+      - queue-kafka.env
     depends_on:
-      - zookeeper
+      - kafka
       - redis
-      - postgres
-      - cassandra
   tb-rule-engine2:
     env_file:
-      - tb-node.hybrid.env
+      - queue-kafka.env
     depends_on:
-      - zookeeper
+      - kafka
       - redis
-      - postgres
-      - cassandra
+  tb-mqtt-transport1:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka
+  tb-mqtt-transport2:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka
+  tb-http-transport1:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka
+  tb-http-transport2:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka
+  tb-coap-transport:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka
