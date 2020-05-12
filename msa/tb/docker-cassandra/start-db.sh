@@ -35,12 +35,8 @@ cassandra_data_dir=${CASSANDRA_DATA}
 cassandra_data_link=/var/lib/cassandra
 
 if [ ! -L ${cassandra_data_link} ]; then
-    if [ -d ${cassandra_data_link} ]; then
-        rm -rf ${cassandra_data_link}
-    fi
     if [ ! -d ${cassandra_data_dir} ]; then
         mkdir -p ${cassandra_data_dir}
-        chown -R cassandra:cassandra ${cassandra_data_dir}
     fi
     ln -s ${cassandra_data_dir} ${cassandra_data_link}
 fi
