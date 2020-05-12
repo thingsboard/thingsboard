@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngBounds, LatLngTuple, markerClusterGroup, MarkerClusterGroupOptions, FeatureGroup, LayerGroup } from 'leaflet';
+import L, { FeatureGroup, LatLngBounds, LatLngTuple, markerClusterGroup, MarkerClusterGroupOptions } from 'leaflet';
 
 import 'leaflet-providers';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
@@ -32,15 +32,13 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
-import { DatasourceData } from '@app/shared/models/widget.models';
-import { safeExecute, createTooltip } from '@home/components/widget/lib/maps/maps-utils';
+import { createTooltip, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
 
 export default abstract class LeafletMap {
 
     markers: Map<string, Marker> = new Map();
     polylines: Map<string, Polyline> = new Map();
     polygons: Map<string, Polygon> = new Map();
-    dragMode = false;
     map: L.Map;
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
@@ -240,7 +238,7 @@ export default abstract class LeafletMap {
 
     convertToCustomFormat(position: L.LatLng): object {
         return {
-            [this.options.latKeyName]: position.lat % 180,
+            [this.options.latKeyName]: position.lat % 90,
             [this.options.lngKeyName]: position.lng % 180
         }
     }
@@ -380,13 +378,13 @@ export default abstract class LeafletMap {
 
     // Polygon
 
-    updatePolygons(polyData: DatasourceData[]) {
-        polyData.forEach((data: DatasourceData) => {
-            if (data.data.length && data.dataKey.name === this.options.polygonKeyName) {
-                if (typeof (data?.data[0][1]) === 'string') {
-                    data.data = JSON.parse(data.data[0][1]) as LatLngTuple[];
+    updatePolygons(polyData: FormattedData[]) {
+        polyData.forEach((data: FormattedData) => {
+            if (data.hasOwnProperty(this.options.polygonKeyName)) {
+                if (typeof (data[this.options.polygonKeyName]) === 'string') {
+                    data[this.options.polygonKeyName] = JSON.parse(data[this.options.polygonKeyName]) as LatLngTuple[];
                 }
-                if (this.polygons.get(data.datasource.entityName)) {
+                if (this.polygons.get(data.$datasource.entityName)) {
                     this.updatePolygon(data, polyData, this.options);
                 }
                 else {
@@ -396,16 +394,16 @@ export default abstract class LeafletMap {
         });
     }
 
-    createPolygon(polyData: DatasourceData, dataSources: DatasourceData[], settings: PolygonSettings) {
+    createPolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
             const polygon = new Polygon(this.map, polyData, dataSources, settings);
             const bounds = polygon.leafletPoly.getBounds();
             this.fitBounds(bounds);
-            this.polygons.set(polyData.datasource.entityName, polygon);
+            this.polygons.set(polyData.$datasource.entityName, polygon);
         });
     }
 
-    updatePolygon(polyData: DatasourceData, dataSources: DatasourceData[], settings: PolygonSettings) {
+    updatePolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
             const poly = this.polygons.get(polyData.datasource.entityName);
             poly.updatePolygon(polyData.data, dataSources, settings);

@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -176,7 +176,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testAssignEntityViewToNonExistentCustomer() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
-        doPost("/api/customer/" + UUIDs.timeBased().toString() + "/device/" + savedView.getId().getId().toString())
+        doPost("/api/customer/" + Uuids.timeBased().toString() + "/device/" + savedView.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
 

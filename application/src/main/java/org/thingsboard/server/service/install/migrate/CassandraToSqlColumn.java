@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.install.migrate;
 
-import com.datastax.driver.core.Row;
+import com.datastax.oss.driver.api.core.cql.Row;
 import lombok.Data;
 import org.thingsboard.server.common.data.UUIDConverter;
 
@@ -105,7 +105,7 @@ public class CassandraToSqlColumn {
         } else {
             switch (this.type) {
                 case ID:
-                    return UUIDConverter.fromTimeUUID(row.getUUID(index));
+                    return UUIDConverter.fromTimeUUID(row.getUuid(index));
                 case DOUBLE:
                     return Double.toString(row.getDouble(index));
                 case INTEGER:
@@ -115,7 +115,7 @@ public class CassandraToSqlColumn {
                 case BIGINT:
                     return Long.toString(row.getLong(index));
                 case BOOLEAN:
-                    return Boolean.toString(row.getBool(index));
+                    return Boolean.toString(row.getBoolean(index));
                 case STRING:
                 case JSON:
                 case ENUM_TO_INT:

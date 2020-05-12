@@ -101,7 +101,7 @@
                 <mat-icon>{{actionDescriptor.icon}}</mat-icon>
               </button>
             </div>
-            <div fxHide fxShow.lt-lg>
+            <div fxHide fxShow.lt-lg *ngIf="actionCellDescriptors.length">
               <button mat-button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">

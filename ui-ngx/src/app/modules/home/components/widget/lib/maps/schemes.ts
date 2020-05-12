@@ -22,7 +22,8 @@ export const googleMapSettingsSchema =
         properties: {
             gmApiKey: {
                 title: 'Google Maps API Key',
-                type: 'string'
+                type: 'string',
+                default: 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q'
             },
             gmDefaultMapType: {
                 title: 'Default map type',
@@ -30,8 +31,7 @@ export const googleMapSettingsSchema =
                 default: 'roadmap'
             }
         },
-        required: [
-        ]
+        required: []
     },
     form: [
         'gmApiKey',
@@ -69,7 +69,8 @@ export const tencentMapSettingsSchema =
         properties: {
             tmApiKey: {
                 title: 'Tencent Maps API Key',
-                type: 'string'
+                type: 'string',
+                default: '84d6d83e0e51e481e50454ccbe8986b'
             },
             tmDefaultMapType: {
                 title: 'Default map type',
@@ -77,8 +78,7 @@ export const tencentMapSettingsSchema =
                 default: 'roadmap'
             }
         },
-        required: [
-        ]
+        required: []
     },
     form: [
         'tmApiKey',
@@ -117,6 +117,7 @@ export const hereMapSettingsSchema =
             },
             credentials: {
                 type: 'object',
+                title: 'Credentials',
                 properties: {
                     app_id: {
                         title: 'HERE app id',

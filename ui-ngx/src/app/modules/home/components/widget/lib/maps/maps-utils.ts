@@ -75,7 +75,7 @@ const imageAspectMap = {};
 
 function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
   return new Observable((observer: Observer<HTMLImageElement>) => {
-    const image = new Image();
+    const image = document.createElement('img'); // support IE
     image.style.position = 'absolute';
     image.style.left = '-99999px';
     image.style.top = '-99999px';
@@ -235,4 +235,14 @@ export function safeExecute(func: (...args: any[]) => any, params = []) {
     }
   }
   return res;
+}
+
+export function calculateNewPointCoordinate(coordinate: number, imageSize: number): number {
+  let pointCoordinate = coordinate / imageSize;
+  if (pointCoordinate < 0) {
+    pointCoordinate = 0;
+  } else if (pointCoordinate > 1) {
+    pointCoordinate = 1;
+  }
+  return pointCoordinate;
 }

@@ -38,7 +38,7 @@ services:
     env_file:
       - tb-node.hybrid.env
     depends_on:
-      - kafka
+      - zookeeper
       - redis
       - postgres
       - cassandra
@@ -46,7 +46,7 @@ services:
     env_file:
       - tb-node.hybrid.env
     depends_on:
-      - kafka
+      - zookeeper
       - redis
       - postgres
       - cassandra
@@ -54,7 +54,7 @@ services:
     env_file:
       - tb-node.hybrid.env
     depends_on:
-      - kafka
+      - zookeeper
       - redis
       - postgres
       - cassandra
@@ -62,7 +62,7 @@ services:
     env_file:
       - tb-node.hybrid.env
     depends_on:
-      - kafka
+      - zookeeper
       - redis
       - postgres
       - cassandra

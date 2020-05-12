@@ -177,6 +177,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 } catch (IOException e) {
                     throw new JsonParseException("Can't parse jsonValue: " + r.getJsonValue().get(), e);
                 }
+                break;
         }
         msg.getMetaData().putValue(r.getKey(), value.toString());
     }

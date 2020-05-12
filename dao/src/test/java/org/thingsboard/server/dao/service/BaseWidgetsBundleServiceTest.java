@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -88,7 +88,7 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
     public void testSaveWidgetsBundleWithInvalidTenant() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
-        widgetsBundle.setTenantId(new TenantId(UUIDs.timeBased()));
+        widgetsBundle.setTenantId(new TenantId(Uuids.timeBased()));
         widgetsBundleService.saveWidgetsBundle(widgetsBundle);
     }
 

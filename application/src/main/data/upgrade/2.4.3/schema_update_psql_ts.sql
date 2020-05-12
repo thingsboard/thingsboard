@@ -164,25 +164,24 @@ BEGIN
 END;
 $$;
 
--- call insert_into_ts_kv();
+CREATE OR REPLACE FUNCTION to_uuid(IN entity_id varchar, OUT uuid_id uuid) AS
+$$
+BEGIN
+    uuid_id := substring(entity_id, 8, 8) || '-' || substring(entity_id, 4, 4) || '-1' || substring(entity_id, 1, 3) ||
+               '-' || substring(entity_id, 16, 4) || '-' || substring(entity_id, 20, 12);
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE insert_into_ts_kv() LANGUAGE plpgsql AS $$
-DECLARE
-    insert_size CONSTANT integer := 10000;
-    insert_counter       integer DEFAULT 0;
-    insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(entity_id_uuid_first_part, '-', entity_id_uuid_second_part, '-1', entity_id_uuid_third_part, '-', entity_id_uuid_fourth_part, '-', entity_id_uuid_fifth_part)::uuid AS entity_id,
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv(IN path_to_file varchar) LANGUAGE plpgsql AS $$
+BEGIN
+    EXECUTE format ('COPY (SELECT to_uuid(entity_id)                                                          AS entity_id,
                                     ts_kv_records.key                                                         AS key,
                                     ts_kv_records.ts                                                          AS ts,
                                     ts_kv_records.bool_v                                                      AS bool_v,
                                     ts_kv_records.str_v                                                       AS str_v,
                                     ts_kv_records.long_v                                                      AS long_v,
                                     ts_kv_records.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS entity_id_uuid_first_part,
-                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_uuid_second_part,
-                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_uuid_third_part,
-                                          SUBSTRING(entity_id, 16, 4) AS entity_id_uuid_fourth_part,
-                                          SUBSTRING(entity_id, 20)    AS entity_id_uuid_fifth_part,
+                             FROM (SELECT entity_id                   AS entity_id,
                                           key_id                      AS key,
                                           ts,
                                           bool_v,
@@ -190,46 +189,23 @@ DECLARE
                                           long_v,
                                           dbl_v
                                    FROM ts_kv_old
-                                            INNER JOIN ts_kv_dictionary ON (ts_kv_old.key = ts_kv_dictionary.key)) AS ts_kv_records;
-BEGIN
-    OPEN insert_cursor;
-    LOOP
-        insert_counter := insert_counter + 1;
-        FETCH insert_cursor INTO insert_record;
-        IF NOT FOUND THEN
-            RAISE NOTICE '% records have been inserted into the partitioned ts_kv!',insert_counter - 1;
-            EXIT;
-        END IF;
-        INSERT INTO ts_kv(entity_id, key, ts, bool_v, str_v, long_v, dbl_v)
-        VALUES (insert_record.entity_id, insert_record.key, insert_record.ts, insert_record.bool_v, insert_record.str_v,
-                insert_record.long_v, insert_record.dbl_v);
-        IF MOD(insert_counter, insert_size) = 0 THEN
-            RAISE NOTICE '% records have been inserted into the partitioned ts_kv!',insert_counter;
-        END IF;
-    END LOOP;
-    CLOSE insert_cursor;
-END;
+                                            INNER JOIN ts_kv_dictionary ON (ts_kv_old.key = ts_kv_dictionary.key)) AS ts_kv_records) TO %L;', path_to_file);
+    EXECUTE format ('COPY ts_kv FROM %L', path_to_file);
+END
 $$;
 
 -- call insert_into_ts_kv_latest();
 
-CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest() LANGUAGE plpgsql AS $$
-DECLARE
-    insert_size CONSTANT integer := 10000;
-    insert_counter       integer DEFAULT 0;
-    insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(entity_id_uuid_first_part, '-', entity_id_uuid_second_part, '-1', entity_id_uuid_third_part, '-', entity_id_uuid_fourth_part, '-', entity_id_uuid_fifth_part)::uuid AS entity_id,
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest(IN path_to_file varchar) LANGUAGE plpgsql AS $$
+BEGIN
+    EXECUTE format ('COPY (SELECT to_uuid(entity_id)      	                                                     AS entity_id,
                                     ts_kv_latest_records.key                                                         AS key,
                                     ts_kv_latest_records.ts                                                          AS ts,
                                     ts_kv_latest_records.bool_v                                                      AS bool_v,
                                     ts_kv_latest_records.str_v                                                       AS str_v,
                                     ts_kv_latest_records.long_v                                                      AS long_v,
                                     ts_kv_latest_records.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS entity_id_uuid_first_part,
-                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_uuid_second_part,
-                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_uuid_third_part,
-                                          SUBSTRING(entity_id, 16, 4) AS entity_id_uuid_fourth_part,
-                                          SUBSTRING(entity_id, 20)    AS entity_id_uuid_fifth_part,
+                             FROM (SELECT entity_id                   AS entity_id,
                                           key_id                      AS key,
                                           ts,
                                           bool_v,
@@ -237,24 +213,8 @@ DECLARE
                                           long_v,
                                           dbl_v
                                    FROM ts_kv_latest_old
-                                            INNER JOIN ts_kv_dictionary ON (ts_kv_latest_old.key = ts_kv_dictionary.key)) AS ts_kv_latest_records;
-BEGIN
-    OPEN insert_cursor;
-    LOOP
-        insert_counter := insert_counter + 1;
-        FETCH insert_cursor INTO insert_record;
-        IF NOT FOUND THEN
-            RAISE NOTICE '% records have been inserted into the ts_kv_latest!',insert_counter - 1;
-            EXIT;
-        END IF;
-        INSERT INTO ts_kv_latest(entity_id, key, ts, bool_v, str_v, long_v, dbl_v)
-        VALUES (insert_record.entity_id, insert_record.key, insert_record.ts, insert_record.bool_v, insert_record.str_v,
-                insert_record.long_v, insert_record.dbl_v);
-        IF MOD(insert_counter, insert_size) = 0 THEN
-            RAISE NOTICE '% records have been inserted into the ts_kv_latest!',insert_counter;
-        END IF;
-    END LOOP;
-    CLOSE insert_cursor;
+                                            INNER JOIN ts_kv_dictionary ON (ts_kv_latest_old.key = ts_kv_dictionary.key)) AS ts_kv_latest_records) TO %L;', path_to_file);
+    EXECUTE format ('COPY ts_kv_latest FROM %L', path_to_file);
 END;
 $$;
 

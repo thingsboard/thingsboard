@@ -32,6 +32,32 @@ function additionalComposeArgs() {
     echo $ADDITIONAL_COMPOSE_ARGS
 }
 
+function additionalComposeQueueArgs() {
+    source .env
+    ADDITIONAL_COMPOSE_QUEUE_ARGS=""
+    case $TB_QUEUE_TYPE in
+        kafka)
+        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.kafka.yml"
+        ;;
+        aws-sqs)
+        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.aws-sqs.yml"
+        ;;
+        pubsub)
+        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.pubsub.yml"
+        ;;
+        rabbitmq)
+        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.rabbitmq.yml"
+        ;;
+        service-bus)
+        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.service-bus.yml"
+        ;;
+        *)
+        echo "Unknown Queue service value specified: '${TB_QUEUE_TYPE}'. Should be either kafka or aws-sqs or pubsub or rabbitmq or service-bus." >&2
+        exit 1
+    esac
+    echo $ADDITIONAL_COMPOSE_QUEUE_ARGS
+}
+
 function additionalStartupServices() {
     source .env
     ADDITIONAL_STARTUP_SERVICES=""

@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.component;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
@@ -77,7 +77,7 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
 
     private void createComponentDescriptor(ComponentType type, ComponentScope scope, int index) {
         ComponentDescriptor component = new ComponentDescriptor();
-        component.setId(new ComponentDescriptorId(UUIDs.timeBased()));
+        component.setId(new ComponentDescriptorId(Uuids.timeBased()));
         component.setType(type);
         component.setScope(scope);
         component.setName("COMPONENT_" + index);

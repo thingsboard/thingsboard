@@ -176,9 +176,9 @@ cassandra:
   # Enable/disable secure connection
   ssl: "${CASSANDRA_USE_SSL:false}"
   # Enable/disable JMX
-  jmx: "${CASSANDRA_USE_JMX:true}"
+  jmx: "${CASSANDRA_USE_JMX:false}"
   # Enable/disable metrics collection.
-  metrics: "${CASSANDRA_DISABLE_METRICS:true}"
+  metrics: "${CASSANDRA_USE_METRICS:false}"
   # NONE SNAPPY LZ4
   compression: "${CASSANDRA_COMPRESSION:none}"
   # Specify cassandra cluster initialization timeout in milliseconds (if no hosts available during startup)
@@ -258,11 +258,11 @@ sql:
     ttl:
       ts:
         enabled: "${SQL_TTL_TS_ENABLED:true}"
-        execution_interval_ms: "${SQL_TTL_TS_EXECUTION_INTERVAL:86400000}" # Number of miliseconds. The current value corresponds to one day
+        execution_interval_ms: "${SQL_TTL_TS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
         ts_key_value_ttl: "${SQL_TTL_TS_TS_KEY_VALUE_TTL:0}" # Number of seconds
       events:
         enabled: "${SQL_TTL_EVENTS_ENABLED:true}"
-        execution_interval_ms: "${SQL_TTL_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of miliseconds. The current value corresponds to one day
+        execution_interval_ms: "${SQL_TTL_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
         events_ttl: "${SQL_TTL_EVENTS_EVENTS_TTL:0}" # Number of seconds
         debug_events_ttl: "${SQL_TTL_EVENTS_DEBUG_EVENTS_TTL:604800}" # Number of seconds. The current value corresponds to one week
 
@@ -583,6 +583,9 @@ queue:
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
+    max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
+    fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
     topic-properties:
       rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
       core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"

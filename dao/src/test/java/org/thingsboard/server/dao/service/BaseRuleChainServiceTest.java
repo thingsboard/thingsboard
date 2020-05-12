@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
@@ -94,7 +94,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     public void testSaveRuleChainWithInvalidTenant() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
-        ruleChain.setTenantId(new TenantId(UUIDs.timeBased()));
+        ruleChain.setTenantId(new TenantId(Uuids.timeBased()));
         ruleChainService.saveRuleChain(ruleChain);
     }
 

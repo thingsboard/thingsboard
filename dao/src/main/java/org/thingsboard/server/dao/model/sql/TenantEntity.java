@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -122,7 +122,7 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
     @Override
     public Tenant toData() {
         Tenant tenant = new Tenant(new TenantId(this.getUuid()));
-        tenant.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
+        tenant.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
         tenant.setTitle(title);
         tenant.setRegion(region);
         tenant.setCountry(country);

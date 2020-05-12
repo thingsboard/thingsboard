@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,12 +50,12 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindAssetsByTenantId() {
-        UUID tenantId1 = UUIDs.timeBased();
-        UUID tenantId2 = UUIDs.timeBased();
-        UUID customerId1 = UUIDs.timeBased();
-        UUID customerId2 = UUIDs.timeBased();
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
+        UUID customerId1 = Uuids.timeBased();
+        UUID customerId2 = Uuids.timeBased();
         for (int i = 0; i < 60; i++) {
-            UUID assetId = UUIDs.timeBased();
+            UUID assetId = Uuids.timeBased();
             UUID tenantId = i % 2 == 0 ? tenantId1 : tenantId2;
             UUID customerId = i % 2 == 0 ? customerId1 : customerId2;
             saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
@@ -77,12 +77,12 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindAssetsByTenantIdAndCustomerId() {
-        UUID tenantId1 = UUIDs.timeBased();
-        UUID tenantId2 = UUIDs.timeBased();
-        UUID customerId1 = UUIDs.timeBased();
-        UUID customerId2 = UUIDs.timeBased();
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
+        UUID customerId1 = Uuids.timeBased();
+        UUID customerId2 = Uuids.timeBased();
         for (int i = 0; i < 60; i++) {
-            UUID assetId = UUIDs.timeBased();
+            UUID assetId = Uuids.timeBased();
             UUID tenantId = i % 2 == 0 ? tenantId1 : tenantId2;
             UUID customerId = i % 2 == 0 ? customerId1 : customerId2;
             saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
@@ -103,11 +103,11 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindAssetsByTenantIdAndIdsAsync() throws ExecutionException, InterruptedException {
-        UUID tenantId = UUIDs.timeBased();
-        UUID customerId = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID customerId = Uuids.timeBased();
         List<UUID> searchIds = new ArrayList<>();
         for (int i = 0; i < 30; i++) {
-            UUID assetId = UUIDs.timeBased();
+            UUID assetId = Uuids.timeBased();
             saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
             if (i % 3 == 0) {
                 searchIds.add(assetId);
@@ -123,12 +123,12 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindAssetsByTenantIdCustomerIdAndIdsAsync() throws ExecutionException, InterruptedException {
-        UUID tenantId = UUIDs.timeBased();
-        UUID customerId1 = UUIDs.timeBased();
-        UUID customerId2 = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID customerId1 = Uuids.timeBased();
+        UUID customerId2 = Uuids.timeBased();
         List<UUID> searchIds = new ArrayList<>();
         for (int i = 0; i < 30; i++) {
-            UUID assetId = UUIDs.timeBased();
+            UUID assetId = Uuids.timeBased();
             UUID customerId = i%2 == 0 ? customerId1 : customerId2;
             saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
             if (i % 3 == 0) {
@@ -145,12 +145,12 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindAssetsByTenantIdAndName() {
-        UUID assetId1 = UUIDs.timeBased();
-        UUID assetId2 = UUIDs.timeBased();
-        UUID tenantId1 = UUIDs.timeBased();
-        UUID tenantId2 = UUIDs.timeBased();
-        UUID customerId1 = UUIDs.timeBased();
-        UUID customerId2 = UUIDs.timeBased();
+        UUID assetId1 = Uuids.timeBased();
+        UUID assetId2 = Uuids.timeBased();
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
+        UUID customerId1 = Uuids.timeBased();
+        UUID customerId2 = Uuids.timeBased();
         String name = "TEST_ASSET";
         saveAsset(assetId1, tenantId1, customerId1, name, "TYPE_1");
         saveAsset(assetId2, tenantId2, customerId2, name, "TYPE_1");
@@ -175,22 +175,22 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindTenantAssetTypesAsync() throws ExecutionException, InterruptedException {
-        UUID assetId1 = UUIDs.timeBased();
-        UUID assetId2 = UUIDs.timeBased();
-        UUID tenantId1 = UUIDs.timeBased();
-        UUID tenantId2 = UUIDs.timeBased();
-        UUID customerId1 = UUIDs.timeBased();
-        UUID customerId2 = UUIDs.timeBased();
-        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_1", "TYPE_1");
-        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_2", "TYPE_1");
-        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_3", "TYPE_2");
-        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_4", "TYPE_3");
-        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_5", "TYPE_3");
-        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_6", "TYPE_3");
+        UUID assetId1 = Uuids.timeBased();
+        UUID assetId2 = Uuids.timeBased();
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
+        UUID customerId1 = Uuids.timeBased();
+        UUID customerId2 = Uuids.timeBased();
+        saveAsset(Uuids.timeBased(), tenantId1, customerId1, "TEST_ASSET_1", "TYPE_1");
+        saveAsset(Uuids.timeBased(), tenantId1, customerId1, "TEST_ASSET_2", "TYPE_1");
+        saveAsset(Uuids.timeBased(), tenantId1, customerId1, "TEST_ASSET_3", "TYPE_2");
+        saveAsset(Uuids.timeBased(), tenantId1, customerId1, "TEST_ASSET_4", "TYPE_3");
+        saveAsset(Uuids.timeBased(), tenantId1, customerId1, "TEST_ASSET_5", "TYPE_3");
+        saveAsset(Uuids.timeBased(), tenantId1, customerId1, "TEST_ASSET_6", "TYPE_3");
 
-        saveAsset(UUIDs.timeBased(), tenantId2, customerId2, "TEST_ASSET_7", "TYPE_4");
-        saveAsset(UUIDs.timeBased(), tenantId2, customerId2, "TEST_ASSET_8", "TYPE_1");
-        saveAsset(UUIDs.timeBased(), tenantId2, customerId2, "TEST_ASSET_9", "TYPE_1");
+        saveAsset(Uuids.timeBased(), tenantId2, customerId2, "TEST_ASSET_7", "TYPE_4");
+        saveAsset(Uuids.timeBased(), tenantId2, customerId2, "TEST_ASSET_8", "TYPE_1");
+        saveAsset(Uuids.timeBased(), tenantId2, customerId2, "TEST_ASSET_9", "TYPE_1");
 
         List<EntitySubtype> tenant1Types = assetDao.findTenantAssetTypesAsync(tenantId1).get();
         assertNotNull(tenant1Types);

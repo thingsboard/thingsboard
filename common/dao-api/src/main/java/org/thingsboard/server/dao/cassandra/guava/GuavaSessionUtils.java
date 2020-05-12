@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.type;
+package org.thingsboard.server.dao.cassandra.guava;
 
-import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
-import org.thingsboard.server.common.data.EntityType;
-
-public class EntityTypeCodec extends EnumNameCodec<EntityType> {
-
-    public EntityTypeCodec() {
-        super(EntityType.class);
+public class GuavaSessionUtils {
+    public static GuavaSessionBuilder builder() {
+        return new GuavaSessionBuilder();
     }
-
 }

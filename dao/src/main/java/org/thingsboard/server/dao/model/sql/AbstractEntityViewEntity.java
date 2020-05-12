@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -147,7 +147,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
 
     protected EntityView toEntityView() {
         EntityView entityView = new EntityView(new EntityViewId(getUuid()));
-        entityView.setCreatedTime(UUIDs.unixTimestamp(getUuid()));
+        entityView.setCreatedTime(Uuids.unixTimestamp(getUuid()));
 
         if (entityId != null) {
             entityView.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));

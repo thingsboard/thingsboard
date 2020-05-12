@@ -16,7 +16,6 @@
 package org.thingsboard.server.rules.flow;
 
 import akka.actor.ActorRef;
-import com.datastax.driver.core.utils.UUIDs;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;

@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
@@ -89,13 +89,13 @@ public class TbAlarmNodeTest {
     @Captor
     private ArgumentCaptor<Consumer<Throwable>> failureCaptor;
 
-    private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-    private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+    private RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+    private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     private ListeningExecutor dbExecutor;
 
-    private EntityId originator = new DeviceId(UUIDs.timeBased());
-    private TenantId tenantId = new TenantId(UUIDs.timeBased());
+    private EntityId originator = new DeviceId(Uuids.timeBased());
+    private TenantId tenantId = new TenantId(Uuids.timeBased());
     private TbMsgMetaData metaData = new TbMsgMetaData();
     private String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 

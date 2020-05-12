@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.rpc;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -82,7 +82,7 @@ public class TbSendRPCRequestNode implements TbNode {
             boolean oneway = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
 
             tmp = msg.getMetaData().getValue("requestUUID");
-            UUID requestUUID = !StringUtils.isEmpty(tmp) ? UUID.fromString(tmp) : UUIDs.timeBased();
+            UUID requestUUID = !StringUtils.isEmpty(tmp) ? UUID.fromString(tmp) : Uuids.timeBased();
             tmp = msg.getMetaData().getValue("originServiceId");
             String originServiceId = !StringUtils.isEmpty(tmp) ? tmp : null;
 

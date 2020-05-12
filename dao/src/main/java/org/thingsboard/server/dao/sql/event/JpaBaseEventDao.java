@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -75,7 +75,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     public Event save(TenantId tenantId, Event event) {
         log.debug("Save event [{}] ", event);
         if (event.getId() == null) {
-            event.setId(new EventId(UUIDs.timeBased()));
+            event.setId(new EventId(Uuids.timeBased()));
         }
         if (StringUtils.isEmpty(event.getUid())) {
             event.setUid(event.getId().toString());
@@ -87,7 +87,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     public ListenableFuture<Event> saveAsync(Event event) {
         log.debug("Save event [{}] ", event);
         if (event.getId() == null) {
-            event.setId(new EventId(UUIDs.timeBased()));
+            event.setId(new EventId(Uuids.timeBased()));
         }
         if (StringUtils.isEmpty(event.getUid())) {
             event.setUid(event.getId().toString());
@@ -152,7 +152,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
             entity.setTenantId(UUIDConverter.fromTimeUUID(systemTenantId));
         }
         if (entity.getUuid() == null) {
-            entity.setUuid(UUIDs.timeBased());
+            entity.setUuid(Uuids.timeBased());
         }
         if (StringUtils.isEmpty(entity.getEventUid())) {
             entity.setEventUid(entity.getUuid().toString());

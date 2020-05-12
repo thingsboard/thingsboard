@@ -70,10 +70,8 @@ export class TelemetryWebsocketService implements TelemetryService {
               private ngZone: NgZone,
               @Inject(WINDOW) private window: Window) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
-      (authenticated: boolean) => {
-        if (!authenticated) {
-          this.reset(true);
-        }
+      () => {
+        this.reset(true);
       }
     );
 

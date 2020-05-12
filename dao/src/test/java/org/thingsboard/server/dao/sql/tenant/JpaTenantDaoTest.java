@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.tenant;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +69,7 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
 
     private void createTenant(String region, String title, int index) {
         Tenant tenant = new Tenant();
-        tenant.setId(new TenantId(UUIDs.timeBased()));
+        tenant.setId(new TenantId(Uuids.timeBased()));
         tenant.setRegion(region);
         tenant.setTitle(title + "_" + index);
         tenantDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, tenant);

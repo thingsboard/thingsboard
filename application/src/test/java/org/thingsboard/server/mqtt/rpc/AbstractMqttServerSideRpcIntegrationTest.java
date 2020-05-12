@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.mqtt.rpc;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -143,7 +143,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
     @Test
     public void testServerMqttOneWayRpcDeviceDoesNotExist() throws Exception {
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"25\",\"value\": 1}}";
-        String nonExistentDeviceId = UUIDs.timeBased().toString();
+        String nonExistentDeviceId = Uuids.timeBased().toString();
 
         String result = doPostAsync("/api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class,
                 status().isNotFound());
@@ -200,7 +200,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
     @Test
     public void testServerMqttTwoWayRpcDeviceDoesNotExist() throws Exception {
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"28\",\"value\": 1}}";
-        String nonExistentDeviceId = UUIDs.timeBased().toString();
+        String nonExistentDeviceId = Uuids.timeBased().toString();
 
         String result = doPostAsync("/api/plugins/rpc/twoway/" + nonExistentDeviceId, setGpioRequest, String.class,
                 status().isNotFound());

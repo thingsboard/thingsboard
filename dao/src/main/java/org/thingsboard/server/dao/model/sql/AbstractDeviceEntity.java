@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -104,7 +104,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
 
     protected Device toDevice() {
         Device device = new Device(new DeviceId(getUuid()));
-        device.setCreatedTime(UUIDs.unixTimestamp(getUuid()));
+        device.setCreatedTime(Uuids.unixTimestamp(getUuid()));
         if (tenantId != null) {
             device.setTenantId(new TenantId(toUUID(tenantId)));
         }

@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -105,7 +105,7 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
     public void testSaveCustomerWithInvalidTenant() {
         Customer customer = new Customer();
         customer.setTitle("My customer");
-        customer.setTenantId(new TenantId(UUIDs.timeBased()));
+        customer.setTenantId(new TenantId(Uuids.timeBased()));
         customerService.saveCustomer(customer);
     }
 
