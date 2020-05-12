@@ -22,11 +22,11 @@ function additionalComposeArgs() {
         postgres)
         ADDITIONAL_COMPOSE_ARGS="-f docker-compose.postgres.yml"
         ;;
-        cassandra)
-        ADDITIONAL_COMPOSE_ARGS="-f docker-compose.cassandra.yml"
+        hybrid)
+        ADDITIONAL_COMPOSE_ARGS="-f docker-compose.hybrid.yml"
         ;;
         *)
-        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or cassandra." >&2
+        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or hybrid." >&2
         exit 1
     esac
     echo $ADDITIONAL_COMPOSE_ARGS
@@ -65,11 +65,11 @@ function additionalStartupServices() {
         postgres)
         ADDITIONAL_STARTUP_SERVICES=postgres
         ;;
-        cassandra)
-        ADDITIONAL_STARTUP_SERVICES=cassandra
+        hybrid)
+        ADDITIONAL_STARTUP_SERVICES="postgres cassandra"
         ;;
         *)
-        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or cassandra." >&2
+        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or hybrid." >&2
         exit 1
     esac
     echo $ADDITIONAL_STARTUP_SERVICES

@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.dao.sql.entityview;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
+import org.thingsboard.server.dao.model.sql.EntityViewInfoEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -28,47 +31,89 @@ import java.util.List;
  * Created by Victor Basanets on 8/31/2017.
  */
 @SqlDao
-public interface EntityViewRepository extends CrudRepository<EntityViewEntity, String> {
+public interface EntityViewRepository extends PagingAndSortingRepository<EntityViewEntity, String> {
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EntityViewInfoEntity(e, c.title, c.additionalInfo) " +
+            "FROM EntityViewEntity e " +
+            "LEFT JOIN CustomerEntity c on c.id = e.customerId " +
+            "WHERE e.id = :entityViewId")
+    EntityViewInfoEntity findEntityViewInfoById(@Param("entityViewId") String entityViewId);
 
     @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND e.id > :idOffset ORDER BY e.id")
-    List<EntityViewEntity> findByTenantId(@Param("tenantId") String tenantId,
+            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<EntityViewEntity> findByTenantId(@Param("tenantId") String tenantId,
                                           @Param("textSearch") String textSearch,
-                                          @Param("idOffset") String idOffset,
                                           Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EntityViewInfoEntity(e, c.title, c.additionalInfo) " +
+            "FROM EntityViewEntity e " +
+            "LEFT JOIN CustomerEntity c on c.id = e.customerId " +
+            "WHERE e.tenantId = :tenantId " +
+            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<EntityViewInfoEntity> findEntityViewInfosByTenantId(@Param("tenantId") String tenantId,
+                                                             @Param("textSearch") String textSearch,
+                                                             Pageable pageable);
+
     @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
             "AND e.type = :type " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND e.id > :idOffset ORDER BY e.id")
-    List<EntityViewEntity> findByTenantIdAndType(@Param("tenantId") String tenantId,
+            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<EntityViewEntity> findByTenantIdAndType(@Param("tenantId") String tenantId,
                                                  @Param("type") String type,
                                                  @Param("textSearch") String textSearch,
-                                                 @Param("idOffset") String idOffset,
                                                  Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EntityViewInfoEntity(e, c.title, c.additionalInfo) " +
+            "FROM EntityViewEntity e " +
+            "LEFT JOIN CustomerEntity c on c.id = e.customerId " +
+            "WHERE e.tenantId = :tenantId " +
+            "AND e.type = :type " +
+            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndType(@Param("tenantId") String tenantId,
+                                                                    @Param("type") String type,
+                                                                    @Param("textSearch") String textSearch,
+                                                                    Pageable pageable);
 
     @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
             "AND e.customerId = :customerId " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND e.id > :idOffset ORDER BY e.id")
-    List<EntityViewEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
+            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<EntityViewEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
                                                        @Param("customerId") String customerId,
                                                        @Param("searchText") String searchText,
-                                                       @Param("idOffset") String idOffset,
                                                        Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EntityViewInfoEntity(e, c.title, c.additionalInfo) " +
+            "FROM EntityViewEntity e " +
+            "LEFT JOIN CustomerEntity c on c.id = e.customerId " +
+            "WHERE e.tenantId = :tenantId " +
+            "AND e.customerId = :customerId " +
+            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
+                                                                          @Param("customerId") String customerId,
+                                                                          @Param("searchText") String searchText,
+                                                                          Pageable pageable);
 
     @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
             "AND e.customerId = :customerId " +
             "AND e.type = :type " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND e.id > :idOffset ORDER BY e.id")
-    List<EntityViewEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") String tenantId,
+            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<EntityViewEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") String tenantId,
                                                               @Param("customerId") String customerId,
                                                               @Param("type") String type,
                                                               @Param("searchText") String searchText,
-                                                              @Param("idOffset") String idOffset,
                                                               Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EntityViewInfoEntity(e, c.title, c.additionalInfo) " +
+            "FROM EntityViewEntity e " +
+            "LEFT JOIN CustomerEntity c on c.id = e.customerId " +
+            "WHERE e.tenantId = :tenantId " +
+            "AND e.customerId = :customerId " +
+            "AND e.type = :type " +
+            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") String tenantId,
+                                                                                 @Param("customerId") String customerId,
+                                                                                 @Param("type") String type,
+                                                                                 @Param("textSearch") String textSearch,
+                                                                                 Pageable pageable);
 
     EntityViewEntity findByTenantIdAndName(String tenantId, String name);
 

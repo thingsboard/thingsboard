@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.cluster.routing;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
@@ -101,7 +101,7 @@ public class HashPartitionServiceTest {
     public void testDispersionOnMillionDevices() {
         List<DeviceId> devices = new ArrayList<>();
         for (int i = 0; i < ITERATIONS; i++) {
-            devices.add(new DeviceId(UUIDs.timeBased()));
+            devices.add(new DeviceId(Uuids.timeBased()));
         }
         testDevicesDispersion(devices);
     }
