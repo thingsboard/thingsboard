@@ -20,12 +20,10 @@ RUN apt-get update
 RUN apt-get install -y curl
 RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
 RUN curl -L https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+ENV PG_MAJOR 11
 RUN apt-get update
 RUN apt-get install -y postgresql-11
 RUN update-rc.d postgresql disable
-
-RUN mkdir -p /var/log/postgres
-RUN chown -R postgres:postgres /var/log/postgres
 
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
@@ -49,12 +47,28 @@ ENV HTTP_BIND_PORT=9090
 ENV DATABASE_TS_TYPE=sql
 
 ENV PGDATA=/data/db
+ENV PATH=$PATH:/usr/lib/postgresql/$PG_MAJOR/bin
 
 ENV SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
 ENV SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
 ENV SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/thingsboard
-ENV SPRING_DATASOURCE_USERNAME=postgres
+ENV SPRING_DATASOURCE_USERNAME=${pkg.user}
 ENV SPRING_DATASOURCE_PASSWORD=postgres
+
+
+ENV PGLOG=/var/log/postgres
+RUN mkdir -p $PGLOG
+RUN chown -R ${pkg.user}:${pkg.user} $PGLOG
+
+RUN chown -R ${pkg.user}:${pkg.user} /var/run/postgresql
+
+RUN mkdir -p /data
+RUN chown -R ${pkg.user}:${pkg.user} /data
+
+RUN chown -R ${pkg.user}:${pkg.user} /var/log/${pkg.name}
+RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
+
+USER ${pkg.user}
 
 EXPOSE 9090
 EXPOSE 1883
