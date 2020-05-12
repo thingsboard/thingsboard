@@ -106,10 +106,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   timeUpdated(time: number) {
-    const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]);
+    this.minTime = moment(this.intervals[this.intervals.length - 1]).format('YYYY-MM-DD HH:mm:ss');
+    this.maxTime = moment(this.intervals[0]).format('YYYY-MM-DD HH:mm:ss');
+    const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]).map(ds => {
+      ds.minTime = this.minTime;
+      ds.maxTime = this.maxTime;
+      return ds;
+    });
     this.activeTrip = currentPosition[0];
-    this.minTime = moment(this.intervals[this.intervals.length - 1]).format('YYYY-MM-DD HH:mm:ss')
-    this.maxTime = moment(this.intervals[0]).format('YYYY-MM-DD HH:mm:ss')
     this.calcLabel();
     this.calcTooltip();
     if (this.mapWidget) {
