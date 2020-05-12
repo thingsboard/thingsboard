@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

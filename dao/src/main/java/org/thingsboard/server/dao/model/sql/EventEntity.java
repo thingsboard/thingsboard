@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -103,7 +103,7 @@ public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Eve
     @Override
     public Event toData() {
         Event event = new Event(new EventId(this.getUuid()));
-        event.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
+        event.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         event.setTenantId(new TenantId(toUUID(tenantId)));
         event.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, toUUID(entityId)));
         event.setBody(body);

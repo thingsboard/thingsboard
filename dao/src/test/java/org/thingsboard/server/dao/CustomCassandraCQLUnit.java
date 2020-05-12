@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.dao;
 
-import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
 import org.cassandraunit.BaseCassandraUnit;
 import org.cassandraunit.CQLDataLoader;
 import org.cassandraunit.dataset.CQLDataSet;
@@ -26,7 +27,8 @@ import java.util.List;
 public class CustomCassandraCQLUnit extends BaseCassandraUnit {
     protected List<CQLDataSet> dataSets;
 
-    public CqlSession session;
+    public Session session;
+    public Cluster cluster;
 
     public CustomCassandraCQLUnit(List<CQLDataSet> dataSets) {
         this.dataSets = dataSets;
@@ -63,26 +65,33 @@ public class CustomCassandraCQLUnit extends BaseCassandraUnit {
 
     @Override
     protected void load() {
-        session = EmbeddedCassandraServerHelper.getSession();
+        String hostIp = EmbeddedCassandraServerHelper.getHost();
+        int port = EmbeddedCassandraServerHelper.getNativeTransportPort();
+        cluster = new Cluster.Builder().addContactPoints(hostIp).withPort(port).withSocketOptions(getSocketOptions())
+                .build();
+        session = cluster.connect();
         CQLDataLoader dataLoader = new CQLDataLoader(session);
         dataSets.forEach(dataLoader::load);
         session = dataLoader.getSession();
-        System.setSecurityManager(null);
     }
 
     @Override
     protected void after() {
         super.after();
-        try (CqlSession s = session) {
+        try (Cluster c = cluster; Session s = session) {
             session = null;
+            cluster = null;
         }
         System.setSecurityManager(null);
     }
 
     // Getters for those who do not like to directly access fields
 
-    public CqlSession getSession() {
+    public Session getSession() {
         return session;
     }
 
+    public Cluster getCluster() {
+        return cluster;
+    }
 }

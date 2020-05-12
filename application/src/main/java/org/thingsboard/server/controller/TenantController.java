@@ -30,8 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -102,15 +102,14 @@ public class TenantController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenants", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenants", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Tenant> getTenants(@RequestParam int pageSize,
-                                       @RequestParam int page,
-                                       @RequestParam(required = false) String textSearch,
-                                       @RequestParam(required = false) String sortProperty,
-                                       @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public TextPageData<Tenant> getTenants(@RequestParam int limit,
+                                           @RequestParam(required = false) String textSearch,
+                                           @RequestParam(required = false) String idOffset,
+                                           @RequestParam(required = false) String textOffset) throws ThingsboardException {
         try {
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
             return checkNotNull(tenantService.findTenants(pageLink));
         } catch (Exception e) {
             throw handleException(e);

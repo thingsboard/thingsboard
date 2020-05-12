@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -129,7 +129,7 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
     @Override
     public AuditLog toData() {
         AuditLog auditLog = new AuditLog(new AuditLogId(this.getUuid()));
-        auditLog.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
+        auditLog.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         if (tenantId != null) {
             auditLog.setTenantId(new TenantId(toUUID(tenantId)));
         }

@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -189,16 +187,13 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
-    public ListenableFuture<PageData<EntityRelation>> findRelations(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
+    public ListenableFuture<List<EntityRelation>> findRelations(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
         Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "toId");
         Specification<RelationEntity> fieldsSpec = getEntityFieldsSpec(from, relationType, typeGroup, childType);
-        Sort.Direction sortDirection = Sort.Direction.DESC;
-        if (pageLink.getSortOrder() != null) {
-            sortDirection = pageLink.getSortOrder().getDirection() == SortOrder.Direction.ASC ? Sort.Direction.ASC : Sort.Direction.DESC;
-        }
-        Pageable pageable = PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), sortDirection, "toId");
+        Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(0, pageLink.getLimit(), sortDirection, "toId");
         return service.submit(() ->
-                DaoUtil.toPageData(relationRepository.findAll(Specification.where(timeSearchSpec).and(fieldsSpec), pageable)));
+                DaoUtil.convertDataList(relationRepository.findAll(Specification.where(timeSearchSpec).and(fieldsSpec), pageable).getContent()));
     }
 
     private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {

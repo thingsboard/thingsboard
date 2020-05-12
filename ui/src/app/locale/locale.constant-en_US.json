@@ -1317,7 +1317,7 @@
         }
     },
     "login": {
-        "login": "Log in",
+        "login": "Login",
         "request-password-reset": "Request Password Reset",
         "reset-password": "Reset Password",
         "create-password": "Create Password",

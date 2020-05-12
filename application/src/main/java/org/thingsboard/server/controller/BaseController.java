@@ -26,8 +26,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.thingsboard.server.actors.service.ActorService;
-import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -43,7 +41,6 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -62,8 +59,7 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -268,27 +264,21 @@ public abstract class BaseController {
         return UUID.fromString(id);
     }
 
-    PageLink createPageLink(int pageSize, int page, String textSearch, String sortProperty, String sortOrder) throws ThingsboardException {
-        if (!StringUtils.isEmpty(sortProperty)) {
-            SortOrder.Direction direction = SortOrder.Direction.ASC;
-            if (!StringUtils.isEmpty(sortOrder)) {
-                try {
-                    direction = SortOrder.Direction.valueOf(sortOrder.toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    throw new ThingsboardException("Unsupported sort order '" + sortOrder + "'! Only 'ASC' or 'DESC' types are allowed.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-                }
-            }
-            SortOrder sort = new SortOrder(sortProperty, direction);
-            return new PageLink(pageSize, page, textSearch, sort);
-        } else {
-            return new PageLink(pageSize, page, textSearch);
+    TimePageLink createPageLink(int limit, Long startTime, Long endTime, boolean ascOrder, String idOffset) {
+        UUID idOffsetUuid = null;
+        if (StringUtils.isNotEmpty(idOffset)) {
+            idOffsetUuid = toUUID(idOffset);
         }
+        return new TimePageLink(limit, startTime, endTime, ascOrder, idOffsetUuid);
     }
 
-    TimePageLink createTimePageLink(int pageSize, int page, String textSearch,
-                                    String sortProperty, String sortOrder, Long startTime, Long endTime) throws ThingsboardException {
-        PageLink pageLink = this.createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return new TimePageLink(pageLink, startTime, endTime);
+
+    TextPageLink createPageLink(int limit, String textSearch, String idOffset, String textOffset) {
+        UUID idOffsetUuid = null;
+        if (StringUtils.isNotEmpty(idOffset)) {
+            idOffsetUuid = toUUID(idOffset);
+        }
+        return new TextPageLink(limit, textSearch, idOffsetUuid, textOffset);
     }
 
     protected SecurityUser getCurrentUser() throws ThingsboardException {
@@ -392,18 +382,6 @@ public abstract class BaseController {
         }
     }
 
-    DeviceInfo checkDeviceInfoId(DeviceId deviceId, Operation operation) throws ThingsboardException {
-        try {
-            validateId(deviceId, "Incorrect deviceId " + deviceId);
-            DeviceInfo device = deviceService.findDeviceInfoById(getCurrentUser().getTenantId(), deviceId);
-            checkNotNull(device);
-            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation, deviceId, device);
-            return device;
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
     protected EntityView checkEntityViewId(EntityViewId entityViewId, Operation operation) throws ThingsboardException {
         try {
             validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
@@ -416,34 +394,10 @@ public abstract class BaseController {
         }
     }
 
-    EntityViewInfo checkEntityViewInfoId(EntityViewId entityViewId, Operation operation) throws ThingsboardException {
-        try {
-            validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
-            EntityViewInfo entityView = entityViewService.findEntityViewInfoById(getCurrentUser().getTenantId(), entityViewId);
-            checkNotNull(entityView);
-            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation, entityViewId, entityView);
-            return entityView;
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
     Asset checkAssetId(AssetId assetId, Operation operation) throws ThingsboardException {
         try {
             validateId(assetId, "Incorrect assetId " + assetId);
             Asset asset = assetService.findAssetById(getCurrentUser().getTenantId(), assetId);
-            checkNotNull(asset);
-            accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, operation, assetId, asset);
-            return asset;
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
-    AssetInfo checkAssetInfoId(AssetId assetId, Operation operation) throws ThingsboardException {
-        try {
-            validateId(assetId, "Incorrect assetId " + assetId);
-            AssetInfo asset = assetService.findAssetInfoById(getCurrentUser().getTenantId(), assetId);
             checkNotNull(asset);
             accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, operation, assetId, asset);
             return asset;

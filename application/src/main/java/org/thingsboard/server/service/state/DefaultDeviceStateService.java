@@ -35,13 +35,13 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -329,13 +329,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
             //TODO 3.0: replace this dummy search with new functionality to search by partitions using SQL capabilities.
             // Adding only devices that are in new partitions
-            List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
+            List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
             for (Tenant tenant : tenants) {
-                PageLink pageLink = new PageLink(initFetchPackSize);
+                TextPageLink pageLink = new TextPageLink(initFetchPackSize);
                 while (pageLink != null) {
                     List<ListenableFuture<Void>> fetchFutures = new ArrayList<>();
-                    PageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
-                    pageLink = page.hasNext() ? pageLink.nextPageLink() : null;
+                    TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
+                    pageLink = page.getNextPageLink();
                     for (Device device : page.getData()) {
                         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), device.getId());
                         if (addedPartitions.contains(tpi)) {

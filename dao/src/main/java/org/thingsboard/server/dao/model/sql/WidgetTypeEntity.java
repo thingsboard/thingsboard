@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -76,7 +76,7 @@ public final class WidgetTypeEntity  extends BaseSqlEntity<WidgetType> implement
     @Override
     public WidgetType toData() {
         WidgetType widgetType = new WidgetType(new WidgetTypeId(this.getUuid()));
-        widgetType.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
+        widgetType.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         if (tenantId != null) {
             widgetType.setTenantId(new TenantId(toUUID(tenantId)));
         }

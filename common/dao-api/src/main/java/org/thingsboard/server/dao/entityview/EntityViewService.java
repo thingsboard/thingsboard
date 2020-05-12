@@ -18,15 +18,14 @@ package org.thingsboard.server.dao.entityview;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 
 import java.util.List;
 
@@ -43,27 +42,17 @@ public interface EntityViewService {
 
     void unassignCustomerEntityViews(TenantId tenantId, CustomerId customerId);
 
-    EntityViewInfo findEntityViewInfoById(TenantId tenantId, EntityViewId entityViewId);
-
     EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId);
 
     EntityView findEntityViewByTenantIdAndName(TenantId tenantId, String name);
 
-    PageData<EntityView> findEntityViewByTenantId(TenantId tenantId, PageLink pageLink);
+    TextPageData<EntityView> findEntityViewByTenantId(TenantId tenantId, TextPageLink pageLink);
 
-    PageData<EntityViewInfo> findEntityViewInfosByTenantId(TenantId tenantId, PageLink pageLink);
+    TextPageData<EntityView> findEntityViewByTenantIdAndType(TenantId tenantId, TextPageLink pageLink, String type);
 
-    PageData<EntityView> findEntityViewByTenantIdAndType(TenantId tenantId, PageLink pageLink, String type);
+    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
 
-    PageData<EntityViewInfo> findEntityViewInfosByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink);
-
-    PageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
-
-    PageData<EntityViewInfo> findEntityViewInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
-
-    PageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, PageLink pageLink, String type);
-
-    PageData<EntityViewInfo> findEntityViewInfosByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, PageLink pageLink);
+    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, TextPageLink pageLink, String type);
 
     ListenableFuture<List<EntityView>> findEntityViewsByQuery(TenantId tenantId, EntityViewSearchQuery query);
 

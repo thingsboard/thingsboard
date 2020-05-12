@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.mail;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,12 +47,12 @@ public class TbMsgToEmailNodeTest {
     @Mock
     private TbContext ctx;
 
-    private EntityId originator = new DeviceId(Uuids.timeBased());
+    private EntityId originator = new DeviceId(UUIDs.timeBased());
     private TbMsgMetaData metaData = new TbMsgMetaData();
     private String rawJson = "{\"name\": \"temp\", \"passed\": 5 , \"complex\": {\"val\":12, \"count\":100}}";
 
-    private RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-    private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
+    private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+    private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
 
     @Test
     public void msgCanBeConverted() throws IOException {

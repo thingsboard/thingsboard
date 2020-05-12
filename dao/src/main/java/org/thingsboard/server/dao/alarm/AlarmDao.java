@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -40,5 +39,5 @@ public interface AlarmDao extends Dao<Alarm> {
 
     Alarm save(TenantId tenantId, Alarm alarm);
 
-    PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query);
+    ListenableFuture<List<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
 }

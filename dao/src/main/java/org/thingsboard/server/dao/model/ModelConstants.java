@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import org.apache.commons.lang3.ArrayUtils;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,7 +28,7 @@ public class ModelConstants {
     private ModelConstants() {
     }
 
-    public static final UUID NULL_UUID = Uuids.startOf(0);
+    public static final UUID NULL_UUID = UUIDs.startOf(0);
     public static final String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
     public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
 

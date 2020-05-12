@@ -66,8 +66,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
@@ -315,20 +314,22 @@ public abstract class AbstractControllerTest {
     }
 
     protected <T> T doGetTypedWithPageLink(String urlTemplate, TypeReference<T> responseType,
-                                           PageLink pageLink,
+                                           TextPageLink pageLink,
                                            Object... urlVariables) throws Exception {
         List<Object> pageLinkVariables = new ArrayList<>();
-        urlTemplate += "pageSize={pageSize}&page={page}";
-        pageLinkVariables.add(pageLink.getPageSize());
-        pageLinkVariables.add(pageLink.getPage());
+        urlTemplate += "limit={limit}";
+        pageLinkVariables.add(pageLink.getLimit());
         if (StringUtils.isNotEmpty(pageLink.getTextSearch())) {
             urlTemplate += "&textSearch={textSearch}";
             pageLinkVariables.add(pageLink.getTextSearch());
         }
-        if (pageLink.getSortOrder() != null) {
-            urlTemplate += "&sortProperty={sortProperty}&sortOrder={sortOrder}";
-            pageLinkVariables.add(pageLink.getSortOrder().getProperty());
-            pageLinkVariables.add(pageLink.getSortOrder().getDirection().name());
+        if (pageLink.getIdOffset() != null) {
+            urlTemplate += "&idOffset={idOffset}";
+            pageLinkVariables.add(pageLink.getIdOffset().toString());
+        }
+        if (StringUtils.isNotEmpty(pageLink.getTextOffset())) {
+            urlTemplate += "&textOffset={textOffset}";
+            pageLinkVariables.add(pageLink.getTextOffset());
         }
 
         Object[] vars = new Object[urlVariables.length + pageLinkVariables.size()];
@@ -342,9 +343,8 @@ public abstract class AbstractControllerTest {
                                                 TimePageLink pageLink,
                                                 Object... urlVariables) throws Exception {
         List<Object> pageLinkVariables = new ArrayList<>();
-        urlTemplate += "pageSize={pageSize}&page={page}";
-        pageLinkVariables.add(pageLink.getPageSize());
-        pageLinkVariables.add(pageLink.getPage());
+        urlTemplate += "limit={limit}";
+        pageLinkVariables.add(pageLink.getLimit());
         if (pageLink.getStartTime() != null) {
             urlTemplate += "&startTime={startTime}";
             pageLinkVariables.add(pageLink.getStartTime());
@@ -353,14 +353,13 @@ public abstract class AbstractControllerTest {
             urlTemplate += "&endTime={endTime}";
             pageLinkVariables.add(pageLink.getEndTime());
         }
-        if (StringUtils.isNotEmpty(pageLink.getTextSearch())) {
-            urlTemplate += "&textSearch={textSearch}";
-            pageLinkVariables.add(pageLink.getTextSearch());
+        if (pageLink.getIdOffset() != null) {
+            urlTemplate += "&offset={offset}";
+            pageLinkVariables.add(pageLink.getIdOffset().toString());
         }
-        if (pageLink.getSortOrder() != null) {
-            urlTemplate += "&sortProperty={sortProperty}&sortOrder={sortOrder}";
-            pageLinkVariables.add(pageLink.getSortOrder().getProperty());
-            pageLinkVariables.add(pageLink.getSortOrder().getDirection().name());
+        if (pageLink.isAscOrder()) {
+            urlTemplate += "&ascOrder={ascOrder}";
+            pageLinkVariables.add(pageLink.isAscOrder());
         }
         Object[] vars = new Object[urlVariables.length + pageLinkVariables.size()];
         System.arraycopy(urlVariables, 0, vars, 0, urlVariables.length);

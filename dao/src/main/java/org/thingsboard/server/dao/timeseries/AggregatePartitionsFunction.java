@@ -15,10 +15,8 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.Row;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -29,19 +27,16 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.nosql.TbResultSet;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 20.02.17.
  */
 @Slf4j
-public class AggregatePartitionsFunction implements com.google.common.util.concurrent.AsyncFunction<List<TbResultSet>, Optional<TsKvEntry>> {
+public class AggregatePartitionsFunction implements com.google.common.base.Function<List<ResultSet>, Optional<TsKvEntry>> {
 
     private static final int LONG_CNT_POS = 0;
     private static final int DOUBLE_CNT_POS = 1;
@@ -57,39 +52,33 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
     private final Aggregation aggregation;
     private final String key;
     private final long ts;
-    private final Executor executor;
 
-    public AggregatePartitionsFunction(Aggregation aggregation, String key, long ts, Executor executor) {
+    public AggregatePartitionsFunction(Aggregation aggregation, String key, long ts) {
         this.aggregation = aggregation;
         this.key = key;
         this.ts = ts;
-        this.executor = executor;
     }
 
     @Override
-    public ListenableFuture<Optional<TsKvEntry>> apply(@Nullable List<TbResultSet> rsList) {
-    log.trace("[{}][{}][{}] Going to aggregate data", key, ts, aggregation);
-    if (rsList == null || rsList.isEmpty()) {
-        return Futures.immediateFuture(Optional.empty());
-    }
-    return Futures.transform(
-        Futures.allAsList(
-            rsList.stream().map(rs -> rs.allRows(this.executor))
-                .collect(Collectors.toList())),
-        rowsList -> {
-            try {
-                AggregationResult aggResult = new AggregationResult();
-                for (List<Row> rs : rowsList) {
-                    for (Row row : rs) {
-                        processResultSetRow(row, aggResult);
-                    }
-                }
-                return processAggregationResult(aggResult);
-            } catch (Exception e) {
-                log.error("[{}][{}][{}] Failed to aggregate data", key, ts, aggregation, e);
+    public Optional<TsKvEntry> apply(@Nullable List<ResultSet> rsList) {
+        try {
+            log.trace("[{}][{}][{}] Going to aggregate data", key, ts, aggregation);
+            if (rsList == null || rsList.isEmpty()) {
                 return Optional.empty();
             }
-        }, this.executor);
+
+            AggregationResult aggResult = new AggregationResult();
+
+            for (ResultSet rs : rsList) {
+                for (Row row : rs.all()) {
+                    processResultSetRow(row, aggResult);
+                }
+            }
+            return processAggregationResult(aggResult);
+        } catch (Exception e) {
+            log.error("[{}][{}][{}] Failed to aggregate data", key, ts, aggregation, e);
+            return Optional.empty();
+        }
     }
 
     private void processResultSetRow(Row row, AggregationResult aggResult) {
@@ -192,7 +181,7 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
 
     private Boolean getBooleanValue(Row row) {
         if (aggregation == Aggregation.MIN || aggregation == Aggregation.MAX) {
-            return row.getBoolean(BOOL_POS);
+            return row.getBool(BOOL_POS);
         } else {
             return null; //NOSONAR, null is used for further comparison
         }

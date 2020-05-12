@@ -18,10 +18,12 @@ package org.thingsboard.server.dao.entity;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.relation.RelationService;
 
+import javax.annotation.PostConstruct;
 import java.util.Optional;
 
 @Slf4j
@@ -29,6 +31,16 @@ public abstract class AbstractEntityService {
 
     @Autowired
     protected RelationService relationService;
+
+    @Value("${database.entities.type:sql}")
+    private String databaseType;
+
+    protected boolean sqlDatabaseUsed;
+
+    @PostConstruct
+    public void init() {
+        sqlDatabaseUsed = "sql".equalsIgnoreCase(databaseType);
+    }
 
     protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);

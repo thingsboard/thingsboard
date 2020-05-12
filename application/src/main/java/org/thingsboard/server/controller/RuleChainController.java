@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,8 +45,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -222,17 +223,16 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChains", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/ruleChains", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<RuleChain> getRuleChains(
-            @RequestParam int pageSize,
-            @RequestParam int page,
+    public TextPageData<RuleChain> getRuleChains(
+            @RequestParam int limit,
             @RequestParam(required = false) String textSearch,
-            @RequestParam(required = false) String sortProperty,
-            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+            @RequestParam(required = false) String idOffset,
+            @RequestParam(required = false) String textOffset) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
             return checkNotNull(ruleChainService.findTenantRuleChains(tenantId, pageLink));
         } catch (Exception e) {
             throw handleException(e);

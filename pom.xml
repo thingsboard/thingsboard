@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>2.5.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -43,9 +43,8 @@
         <logback.version>1.2.3</logback.version>
         <mockito.version>1.9.5</mockito.version>
         <rat.version>0.10</rat.version>
-        <cassandra.version>4.6.0</cassandra.version>
-        <metrics.version>4.0.5</metrics.version>
-        <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
+        <cassandra.version>3.6.0</cassandra.version>
+        <cassandra-unit.version>3.5.0.1</cassandra-unit.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
         <guava.version>28.2-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
@@ -111,7 +110,7 @@
         <module>rule-engine</module>
         <module>dao</module>
         <module>transport</module>
-        <module>ui-ngx</module>
+        <module>ui</module>
         <module>tools</module>
         <module>application</module>
         <module>msa</module>
@@ -328,16 +327,12 @@
                             <exclude>**/*.proto.js</exclude>
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
-                            <exclude>ui/**</exclude>
-                            <exclude>src/browserslist</exclude>
-                            <exclude>**/*.raw</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
                             <cql>DOUBLEDASHES_STYLE</cql>
                             <scss>JAVADOC_STYLE</scss>
                             <jsx>SLASHSTAR_STYLE</jsx>
-                            <tsx>SLASHSTAR_STYLE</tsx>
                             <conf>SCRIPT_STYLE</conf>
                             <gradle>JAVADOC_STYLE</gradle>
                         </mapping>
@@ -658,19 +653,19 @@
                 <version>${netty.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.datastax.oss</groupId>
-                <artifactId>java-driver-core</artifactId>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
                 <version>${cassandra.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.datastax.oss</groupId>
-                <artifactId>java-driver-query-builder</artifactId>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-mapping</artifactId>
                 <version>${cassandra.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.dropwizard.metrics</groupId>
-                <artifactId>metrics-jmx</artifactId>
-                <version>${metrics.version}</version>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-extras</artifactId>
+                <version>${cassandra.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>

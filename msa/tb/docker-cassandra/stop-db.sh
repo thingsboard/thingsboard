@@ -15,7 +15,4 @@
 # limitations under the License.
 #
 
-export PG_CTL=$(find /usr/lib/postgresql/ -name pg_ctl)
-
 service cassandra stop
-su postgres -c '${PG_CTL} stop'

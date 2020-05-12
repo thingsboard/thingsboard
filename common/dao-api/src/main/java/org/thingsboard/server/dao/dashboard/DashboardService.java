@@ -21,8 +21,9 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
 public interface DashboardService {
@@ -43,11 +44,11 @@ public interface DashboardService {
 
     void deleteDashboard(TenantId tenantId, DashboardId dashboardId);
 
-    PageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, PageLink pageLink);
+    TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink);
 
     void deleteDashboardsByTenantId(TenantId tenantId);
 
-    PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
+    ListenableFuture<TimePageData<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink);
 
     void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
 

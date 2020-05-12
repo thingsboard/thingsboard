@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.dao.nosql;
 
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ import java.util.Map;
 @Component
 @Slf4j
 @NoSqlAnyDao
-public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<CassandraStatementTask, TbResultSetFuture, TbResultSet> {
+public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<CassandraStatementTask, ResultSetFuture, ResultSet> {
 
     @Autowired
     private EntityService entityService;
@@ -107,22 +107,19 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
     }
 
     @Override
-    protected SettableFuture<TbResultSet> create() {
+    protected SettableFuture<ResultSet> create() {
         return SettableFuture.create();
     }
 
     @Override
-    protected TbResultSetFuture wrap(CassandraStatementTask task, SettableFuture<TbResultSet> future) {
+    protected ResultSetFuture wrap(CassandraStatementTask task, SettableFuture<ResultSet> future) {
         return new TbResultSetFuture(future);
     }
 
     @Override
-    protected ListenableFuture<TbResultSet> execute(AsyncTaskContext<CassandraStatementTask, TbResultSet> taskCtx) {
+    protected ResultSetFuture execute(AsyncTaskContext<CassandraStatementTask, ResultSet> taskCtx) {
         CassandraStatementTask task = taskCtx.getTask();
-        return task.executeAsync(
-                statement ->
-                    this.submit(new CassandraStatementTask(task.getTenantId(), task.getSession(), statement))
-        );
+        return task.getSession().executeAsync(task.getStatement());
     }
 
 }

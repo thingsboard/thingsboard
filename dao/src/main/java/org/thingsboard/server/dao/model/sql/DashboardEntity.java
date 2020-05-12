@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -104,7 +104,7 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
     @Override
     public Dashboard toData() {
         Dashboard dashboard = new Dashboard(new DashboardId(this.getUuid()));
-        dashboard.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
+        dashboard.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         if (tenantId != null) {
             dashboard.setTenantId(new TenantId(toUUID(tenantId)));
         }
