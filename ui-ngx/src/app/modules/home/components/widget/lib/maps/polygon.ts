@@ -61,7 +61,7 @@ export class Polygon {
         this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
     }
 
-    updatePolygon(data: LatLngTuple[], dataSources: FormattedData[], settings: PolygonSettings) {
+    updatePolygon(data:{[coordinates:string]: LatLngTuple[]}, dataSources: FormattedData[], settings: PolygonSettings) {
         this.data = data;
         this.dataSources = dataSources;
         this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);

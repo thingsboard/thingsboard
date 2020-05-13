@@ -244,7 +244,7 @@ export default abstract class LeafletMap {
     }
 
     // Markers
-    updateMarkers(markersData) {
+    updateMarkers(markersData, callback?) {
         markersData.filter(mdata => !!this.convertPosition(mdata)).forEach(data => {
             if (data.rotationAngle || data.rotationAngle === 0) {
                 const currentImage = this.options.useMarkerImageFunction ?
@@ -265,7 +265,7 @@ export default abstract class LeafletMap {
                 this.updateMarker(data.entityName, data, markersData, this.options)
             }
             else {
-                this.createMarker(data.entityName, data, markersData, this.options as MarkerSettings);
+                this.createMarker(data.entityName, data, markersData, this.options as MarkerSettings, callback);
             }
         });
         this.markersData = markersData;
@@ -276,9 +276,11 @@ export default abstract class LeafletMap {
         this.saveMarkerLocation({ ...data, ...this.convertToCustomFormat(e.target._latlng) });
     }
 
-    private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings) {
+    private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings, callback?) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.convertPosition(data), settings, data, dataSources, this.dragMarker);
+            if(callback)
+            newMarker.leafletMarker.on('click', ()=>{callback(data, true)});
             if (this.bounds)
                 this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
             this.markers.set(key, newMarker);
@@ -380,7 +382,7 @@ export default abstract class LeafletMap {
 
     updatePolygons(polyData: FormattedData[]) {
         polyData.forEach((data: FormattedData) => {
-            if (data.hasOwnProperty(this.options.polygonKeyName)) {
+            if (data && data.hasOwnProperty(this.options.polygonKeyName)) {
                 if (typeof (data[this.options.polygonKeyName]) === 'string') {
                     data[this.options.polygonKeyName] = JSON.parse(data[this.options.polygonKeyName]) as LatLngTuple[];
                 }
@@ -405,8 +407,8 @@ export default abstract class LeafletMap {
 
     updatePolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
-            const poly = this.polygons.get(polyData.datasource.entityName);
-            poly.updatePolygon(polyData.data, dataSources, settings);
+            const poly = this.polygons.get(polyData.entityName);
+            poly.updatePolygon(polyData, dataSources, settings);
         });
     }
 }

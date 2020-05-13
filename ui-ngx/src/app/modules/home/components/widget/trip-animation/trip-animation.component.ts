@@ -47,7 +47,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
 
   mapWidget: MapWidgetController;
   historicalData;
-  intervals;
+  intervals=[];
   normalizationStep = 1000;
   interpolatedData = [];
   widgetConfig: WidgetConfig;
@@ -91,10 +91,12 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = () => {
-      this.historicalData = parseArray(this.ctx.data);
+      this.historicalData = parseArray(this.ctx.data).filter(arr=>arr.length);
+      if(this.historicalData.length){
       this.activeTrip = this.historicalData[0][0];
       this.calculateIntervals();
       this.timeUpdated(this.intervals[0]);
+    }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
     }
@@ -128,7 +130,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
             this.settings.usePointAsAnchor ||
             safeExecute(this.settings.pointAsAnchorFunction, [this.historicalData, data, data.dsIndex])).map(data => data.time);
       }
-      this.mapWidget.map.updateMarkers(currentPosition);
+      this.mapWidget.map.updateMarkers(currentPosition, this.calcTooltip);
     }
   }
 
@@ -144,7 +146,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       this.intervals.push(dataSource[dataSource.length - 1]?.time);
       this.interpolatedData[index] = this.interpolateArray(dataSource, this.intervals);
     });
-
   }
 
   calcTooltip = (point?: FormattedData, setTooltip = true) => {
