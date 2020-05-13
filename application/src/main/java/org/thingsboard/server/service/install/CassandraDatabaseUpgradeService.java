@@ -308,7 +308,7 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                 break;
             case "2.5.0":
                 log.info("Updating schema ...");
-                schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.x", SCHEMA_UPDATE_CQL);
+                schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.6.0", SCHEMA_UPDATE_CQL);
                 loadCql(schemaUpdateFile);
 
                 try {

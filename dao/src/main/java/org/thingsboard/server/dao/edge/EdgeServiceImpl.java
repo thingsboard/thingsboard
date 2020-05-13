@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -301,7 +302,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         log.trace("Executing unassignCustomerEdges, tenantId [{}], customerId [{}]", tenantId, customerId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        customerEdgeUnasigner.removeEntities(tenantId, customerId);
+        customerEdgeUnassigner.removeEntities(tenantId, customerId);
     }
 
     @Override
@@ -387,7 +388,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         EdgeQueueEntityType edgeQueueEntityType = getEdgeQueueTypeByEntityType(tbMsg.getOriginator().getEntityType());
         if (edgeId != null && edgeQueueEntityType != null) {
             try {
-                saveEventToEdgeQueue(tenantId, edgeId, edgeQueueEntityType, tbMsg.getType(), mapper.writeValueAsString(tbMsg), callback);
+                saveEventToEdgeQueue(tenantId, edgeId, edgeQueueEntityType, tbMsg.getType(), Base64.encodeBase64String(TbMsg.toByteArray(tbMsg)), callback);
             } catch (IOException e) {
                 log.error("Error while saving custom tbMsg into Edge Queue", e);
             }
@@ -723,7 +724,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                 }
             };
 
-    private PaginatedRemover<CustomerId, Edge> customerEdgeUnasigner = new PaginatedRemover<CustomerId, Edge>() {
+    private PaginatedRemover<CustomerId, Edge> customerEdgeUnassigner = new PaginatedRemover<CustomerId, Edge>() {
 
         @Override
         protected List<Edge> findEntities(TenantId tenantId, CustomerId id, TextPageLink pageLink) {

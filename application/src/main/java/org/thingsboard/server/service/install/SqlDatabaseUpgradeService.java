@@ -211,26 +211,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             case "2.4.3":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.x", SCHEMA_UPDATE_SQL);
-                    loadSql(schemaUpdateFile, conn);
-                    try {
-                        conn.createStatement().execute("ALTER TABLE asset ADD edge_id varchar(31)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
-                    try {
-                        conn.createStatement().execute("ALTER TABLE device ADD edge_id varchar(31)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
-                    try {
-                        conn.createStatement().execute("ALTER TABLE entity_view ADD edge_id varchar(31)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
-                    try {
-                        conn.createStatement().execute("ALTER TABLE dashboard ADD assigned_edges varchar(10000000)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
-                    try {
-                        conn.createStatement().execute("ALTER TABLE rule_chain ADD assigned_edges varchar(10000000)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
-                    try {
-                        conn.createStatement().execute("ALTER TABLE rule_chain ADD type varchar(255) DEFAULT 'SYSTEM'"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
                     try {
                         conn.createStatement().execute("ALTER TABLE attribute_kv ADD COLUMN json_v json;");
                     } catch (Exception e) {
@@ -250,6 +230,32 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         conn.createStatement().execute("ALTER TABLE event ADD COLUMN ts bigint DEFAULT " + ts + ";"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                     } catch (Exception e) {
                     }
+                    log.info("Schema updated.");
+                }
+                break;
+            case "2.5.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.6.0", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    try {
+                        conn.createStatement().execute("ALTER TABLE asset ADD edge_id varchar(31)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
+                    try {
+                        conn.createStatement().execute("ALTER TABLE device ADD edge_id varchar(31)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
+                    try {
+                        conn.createStatement().execute("ALTER TABLE entity_view ADD edge_id varchar(31)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
+                    try {
+                        conn.createStatement().execute("ALTER TABLE dashboard ADD assigned_edges varchar(10000000)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
+                    try {
+                        conn.createStatement().execute("ALTER TABLE rule_chain ADD assigned_edges varchar(10000000)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
+                    try {
+                        conn.createStatement().execute("ALTER TABLE rule_chain ADD type varchar(255) DEFAULT 'SYSTEM'"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
                     log.info("Schema updated.");
                 }
                 break;

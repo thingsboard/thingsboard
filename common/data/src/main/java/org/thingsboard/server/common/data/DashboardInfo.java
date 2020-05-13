@@ -124,52 +124,26 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     }
 
     public boolean isAssignedToEdge(EdgeId edgeId) {
-        return this.assignedEdges != null && this.assignedEdges.contains(new ShortEdgeInfo(edgeId, null, null));
+        return EdgeUtils.isAssignedToEdge(this.assignedEdges, edgeId);
     }
 
     public ShortEdgeInfo getAssignedEdgeInfo(EdgeId edgeId) {
-        if (this.assignedEdges != null) {
-            for (ShortEdgeInfo edgeInfo : this.assignedEdges) {
-                if (edgeInfo.getEdgeId().equals(edgeId)) {
-                    return edgeInfo;
-                }
-            }
-        }
-        return null;
+        return EdgeUtils.getAssignedEdgeInfo(this.assignedEdges, edgeId);
     }
 
     public boolean addAssignedEdge(Edge edge) {
-        ShortEdgeInfo edgeInfo = edge.toShortEdgeInfo();
-        if (this.assignedEdges != null && this.assignedEdges.contains(edgeInfo)) {
-            return false;
-        } else {
-            if (this.assignedEdges == null) {
-                this.assignedEdges = new HashSet<>();
-            }
-            this.assignedEdges.add(edgeInfo);
-            return true;
+        if (this.assignedEdges == null) {
+            this.assignedEdges = new HashSet<>();
         }
+        return EdgeUtils.addAssignedEdge(this.assignedEdges, edge);
     }
 
     public boolean updateAssignedEdge(Edge edge) {
-        ShortEdgeInfo edgeInfo = edge.toShortEdgeInfo();
-        if (this.assignedEdges != null && this.assignedEdges.contains(edgeInfo)) {
-            this.assignedEdges.remove(edgeInfo);
-            this.assignedEdges.add(edgeInfo);
-            return true;
-        } else {
-            return false;
-        }
+        return EdgeUtils.updateAssignedEdge(this.assignedEdges, edge);
     }
 
     public boolean removeAssignedEdge(Edge edge) {
-        ShortEdgeInfo edgeInfo = edge.toShortEdgeInfo();
-        if (this.assignedEdges != null && this.assignedEdges.contains(edgeInfo)) {
-            this.assignedEdges.remove(edgeInfo);
-            return true;
-        } else {
-            return false;
-        }
+        return EdgeUtils.removeAssignedEdge(this.assignedEdges, edge);
     }
 
     @Override
