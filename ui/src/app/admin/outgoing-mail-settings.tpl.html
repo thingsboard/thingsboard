@@ -88,6 +88,37 @@
 							</md-option>
 						</md-select>
 					</md-input-container>
+					<md-checkbox class="md-block" flex="100" flex-gt-sm="60" ng-disabled="$root.loading" aria-label="{{ 'admin.enable-proxy' | translate }}" ng-model="vm.settings.jsonValue.enableProxy">
+						{{ 'admin.enable-proxy' | translate }}
+					</md-checkbox>
+					<div layout-gt-sm="row">
+					<md-input-container class="md-block" flex="100" flex-gt-sm="60" ng-if="vm.settings.jsonValue.enableProxy">
+						<label translate>admin.proxy-host</label>
+						<input required name="proxyHost" ng-model="vm.settings.jsonValue.proxyHost">
+						<div ng-messages="vm.settingsForm.proxyHost.$error">
+							<div translate ng-message="required">admin.proxy-host-required</div>
+						</div>
+					</md-input-container>
+					<md-input-container ng-if="vm.settings.jsonValue.enableProxy" class="md-block" flex="100" flex-gt-sm="40">
+						<label translate>admin.proxy-port</label>
+						<input required name="proxyPort" ng-model="vm.settings.jsonValue.proxyPort"
+							   ng-pattern="/^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/"
+							   md-maxlength="5">
+						<div ng-messages="vm.settingsForm.proxyPort.$error" role="alert" multiple>
+							<div translate ng-message="required">admin.proxy-port-required</div>
+							<div translate ng-message="pattern">admin.proxy-port-invalid</div>
+							<div translate ng-message="md-maxlength">admin.proxy-port-invalid</div>
+						</div>
+					</md-input-container>
+					</div>
+					<md-input-container class="md-block" ng-if="vm.settings.jsonValue.enableProxy">
+						<label translate>admin.proxy-user</label>
+						<input name="proxyUser" ng-model="vm.settings.jsonValue.proxyUser">
+					</md-input-container>
+					<md-input-container class="md-block" ng-if="vm.settings.jsonValue.enableProxy">
+						<label translate>admin.proxy-password</label>
+						<input name="proxyPassword" ng-model="vm.settings.jsonValue.proxyPassword">
+					</md-input-container>
 					<md-input-container class="md-block">
 						<label translate>common.username</label>
 						<input name="username" placeholder="{{ 'common.enter-username' | translate }}" ng-model="vm.settings.jsonValue.username">
