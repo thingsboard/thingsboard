@@ -17,18 +17,17 @@
 
 firstlaunch=${DATA_FOLDER}/.firstlaunch
 
-export PG_CTL=$(find /usr/lib/postgresql/ -name pg_ctl)
+PG_CTL=$(find /usr/lib/postgresql/ -name pg_ctl)
 
 if [ ! -d ${PGDATA} ]; then
     mkdir -p ${PGDATA}
-    chown -R postgres:postgres ${PGDATA}
-    su postgres -c '${PG_CTL} initdb -U postgres'
+    ${PG_CTL} initdb
 fi
 
-su postgres -c '${PG_CTL} -l /var/log/postgres/postgres.log -w start'
+exec setsid nohup postgres >> ${PGLOG}/postgres.log 2>&1 &
 
 if [ ! -f ${firstlaunch} ]; then
-    su postgres -c 'psql -U postgres -d postgres -c "CREATE DATABASE thingsboard"'
+    psql -U ${pkg.user} -d postgres -c "CREATE DATABASE thingsboard"
 fi
 
 cassandra_data_dir=${CASSANDRA_DATA}
@@ -41,7 +40,7 @@ if [ ! -L ${cassandra_data_link} ]; then
     ln -s ${cassandra_data_dir} ${cassandra_data_link}
 fi
 
-service cassandra start
+exec setsid nohup cassandra >> ${CASSANDRA_LOG}/cassandra.log 2>&1 &
 
 until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open"
 do
