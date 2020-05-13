@@ -43,6 +43,13 @@ ENV SPRING_DATASOURCE_URL=jdbc:hsqldb:file:/data/db/thingsboardDb;sql.enforce_si
 ENV SPRING_DATASOURCE_USERNAME=sa
 ENV SPRING_DATASOURCE_PASSWORD=
 
+RUN mkdir -p /data
+RUN chown -R ${pkg.user}:${pkg.user} /data
+
+RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
+
+USER ${pkg.user}
+
 EXPOSE 9090
 EXPOSE 1883
 EXPOSE 5683/udp
