@@ -59,22 +59,22 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${js.remote.stats.enabled:false}")
     private boolean statsEnabled;
 
-    private final AtomicInteger kafkaPushedMsgs = new AtomicInteger(0);
-    private final AtomicInteger kafkaInvokeMsgs = new AtomicInteger(0);
-    private final AtomicInteger kafkaEvalMsgs = new AtomicInteger(0);
-    private final AtomicInteger kafkaFailedMsgs = new AtomicInteger(0);
-    private final AtomicInteger kafkaTimeoutMsgs = new AtomicInteger(0);
+    private final AtomicInteger queuePushedMsgs = new AtomicInteger(0);
+    private final AtomicInteger queueInvokeMsgs = new AtomicInteger(0);
+    private final AtomicInteger queueEvalMsgs = new AtomicInteger(0);
+    private final AtomicInteger queueFailedMsgs = new AtomicInteger(0);
+    private final AtomicInteger queueTimeoutMsgs = new AtomicInteger(0);
 
     @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
     public void printStats() {
         if (statsEnabled) {
-            int pushedMsgs = kafkaPushedMsgs.getAndSet(0);
-            int invokeMsgs = kafkaInvokeMsgs.getAndSet(0);
-            int evalMsgs = kafkaEvalMsgs.getAndSet(0);
-            int failed = kafkaFailedMsgs.getAndSet(0);
-            int timedOut = kafkaTimeoutMsgs.getAndSet(0);
+            int pushedMsgs = queuePushedMsgs.getAndSet(0);
+            int invokeMsgs = queueInvokeMsgs.getAndSet(0);
+            int evalMsgs = queueEvalMsgs.getAndSet(0);
+            int failed = queueFailedMsgs.getAndSet(0);
+            int timedOut = queueTimeoutMsgs.getAndSet(0);
             if (pushedMsgs > 0 || invokeMsgs > 0 || evalMsgs > 0 || failed > 0 || timedOut > 0) {
-                log.info("Kafka JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
+                log.info("Queue JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
                         pushedMsgs, invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed, timedOut);
             }
         }
@@ -116,19 +116,19 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         if (maxRequestsTimeout > 0) {
             future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
-        kafkaPushedMsgs.incrementAndGet();
+        queuePushedMsgs.incrementAndGet();
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
             public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
-                kafkaEvalMsgs.incrementAndGet();
+                queueEvalMsgs.incrementAndGet();
             }
 
             @Override
             public void onFailure(Throwable t) {
                 if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
-                    kafkaTimeoutMsgs.incrementAndGet();
+                    queueTimeoutMsgs.incrementAndGet();
                 }
-                kafkaFailedMsgs.incrementAndGet();
+                queueFailedMsgs.incrementAndGet();
             }
         }, MoreExecutors.directExecutor());
         return Futures.transform(future, response -> {
@@ -170,20 +170,20 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         if (maxRequestsTimeout > 0) {
             future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
-        kafkaPushedMsgs.incrementAndGet();
+        queuePushedMsgs.incrementAndGet();
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
             public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
-                kafkaInvokeMsgs.incrementAndGet();
+                queueInvokeMsgs.incrementAndGet();
             }
 
             @Override
             public void onFailure(Throwable t) {
                 onScriptExecutionError(scriptId);
                 if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
-                    kafkaTimeoutMsgs.incrementAndGet();
+                    queueTimeoutMsgs.incrementAndGet();
                 }
-                kafkaFailedMsgs.incrementAndGet();
+                queueFailedMsgs.incrementAndGet();
             }
         }, MoreExecutors.directExecutor());
         return Futures.transform(future, response -> {
