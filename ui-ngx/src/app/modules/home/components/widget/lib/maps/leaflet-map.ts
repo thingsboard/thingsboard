@@ -20,12 +20,12 @@ import 'leaflet-providers';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 
 import {
-    FormattedData,
-    MapSettings,
-    MarkerSettings,
-    PolygonSettings,
-    PolylineSettings,
-    UnitedMapSettings
+  FormattedData,
+  MapSettings,
+  MarkerSettings,
+  PolygonSettings,
+  PolylineSettings,
+  UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -405,8 +405,8 @@ export default abstract class LeafletMap {
 
     updatePolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
-            const poly = this.polygons.get(polyData.datasource.entityName);
-            poly.updatePolygon(polyData.data, dataSources, settings);
+            const poly = this.polygons.get(polyData.$datasource.entityName);
+            poly.updatePolygon(polyData, dataSources, settings);
         });
     }
 }
