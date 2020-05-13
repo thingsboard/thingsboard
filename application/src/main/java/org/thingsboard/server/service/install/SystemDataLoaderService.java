@@ -23,6 +23,8 @@ public interface SystemDataLoaderService {
 
     void loadSystemWidgets() throws Exception;
 
+    void updateSystemWidgets() throws Exception;
+
     void loadDemoData() throws Exception;
 
     void deleteSystemWidgetBundle(String bundleAlias) throws Exception;

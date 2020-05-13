@@ -1,0 +1,68 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-relation-filters" [formGroup]="relationFiltersFormGroup">
+  <div class="container">
+    <div class="header" [fxShow]="relationFiltersFormArray().length">
+      <div fxLayout="row" fxLayoutAlign="start center">
+        <span class="cell" style="width: 200px; min-width: 200px;" translate>relation.type</span>
+        <span class="cell" fxFlex translate>entity.entity-types</span>
+        <span class="cell" style="width: 40px; min-width: 40px;">&nbsp;</span>
+      </div>
+    </div>
+    <div class="body" [fxShow]="relationFiltersFormArray().length">
+      <div class="row" fxFlex fxLayout="row"
+           fxLayoutAlign="start center" formArrayName="relationFilters"
+           *ngFor="let relationFilterControl of relationFiltersFormArray().controls; let $index = index">
+        <div class="mat-elevation-z1" fxFlex fxLayout="row" fxLayoutAlign="start center">
+          <tb-relation-type-autocomplete
+            class="cell" style="width: 200px; min-width: 200px;"
+            [formControl]="relationFilterControl.get('relationType')">
+          </tb-relation-type-autocomplete>
+          <tb-entity-type-list class="cell" fxFlex
+            [allowedEntityTypes]="allowedEntityTypes"
+            [formControl]="relationFilterControl.get('entityTypes')">
+          </tb-entity-type-list>
+          <button mat-icon-button color="primary"
+                  type="button"
+                  style="width: 40px; min-width: 40px;"
+                  (click)="removeFilter($index)"
+                  [disabled]="isLoading$ | async"
+                  matTooltip="{{ 'relation.remove-relation-filter' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="any-filter" [fxShow]="!relationFiltersFormArray().length">
+        <span fxLayoutAlign="center center"
+              class="tb-prompt" translate>relation.any-relation</span>
+  </div>
+  <div>
+    <button mat-raised-button color="primary"
+            [disabled]="isLoading$ | async"
+            (click)="addFilter()"
+            type="button"
+            matTooltip="{{ 'relation.add-relation-filter' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>add</mat-icon>
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</div>

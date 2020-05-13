@@ -1,0 +1,256 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="mat-padding tb-entity-table tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="mode === 'default' && !textSearchMode && dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
+          <span class="tb-entity-table-title">{{telemetryTypeTranslationsMap.get(attributeScope) | translate}}</span>
+          <mat-form-field class="mat-block tb-attribute-scope" *ngIf="!disableAttributeScopeSelection">
+            <mat-label translate>attribute.attributes-scope</mat-label>
+            <mat-select [disabled]="(isLoading$ | async) || attributeScopeSelectionReadonly"
+                        [ngModel]="attributeScope"
+                        (ngModelChange)="attributeScopeChanged($event)">
+              <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
+                {{ telemetryTypeTranslationsMap.get(toTelemetryTypeFunc(scope)) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <span fxFlex></span>
+        <button mat-icon-button
+                *ngIf="!isClientSideTelemetryTypeMap.get(attributeScope)"
+                [disabled]="isLoading$ | async"
+                (click)="addAttribute($event)"
+                matTooltip="{{ 'action.add' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button mat-icon-button
+                *ngIf="!isClientSideTelemetryTypeMap.get(attributeScope)"
+                [disabled]="isLoading$ | async"
+                (click)="reloadAttributes()"
+                matTooltip="{{ 'action.refresh' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-icon-button
+                [disabled]="isLoading$ | async"
+                (click)="enterFilterMode()"
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="mode === 'default' && textSearchMode && dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field fxFlex>
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [(ngModel)]="pageLink.textSearch"
+                 placeholder="{{ 'common.enter-search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="mode === 'default' && !dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools" fxLayout.xs="row wrap">
+        <span class="tb-entity-table-info">
+          {{ (attributeScope === latestTelemetryTypes.LATEST_TELEMETRY ?
+                'attribute.selected-telemetry' : 'attribute.selected-attributes') | translate:{count: dataSource.selection.selected.length} }}
+        </span>
+        <span fxFlex></span>
+        <button [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)"
+                class="button-widget-action"
+                mat-icon-button [disabled]="isLoading$ | async"
+                matTooltip="{{ 'action.delete' | translate }}"
+                matTooltipPosition="above"
+                (click)="deleteAttributes($event)">
+          <mat-icon>delete</mat-icon>
+        </button>
+        <button mat-raised-button color="accent"
+                class="button-widget-action"
+                [disabled]="isLoading$ | async"
+                matTooltip="{{ 'attribute.show-on-widget' | translate }}"
+                matTooltipPosition="above"
+                (click)="enterWidgetMode()">
+          <mat-icon>now_widgets</mat-icon>
+          <span translate>attribute.show-on-widget</span>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="mode === 'widget'">
+      <div class="mat-toolbar-tools" fxLayoutGap="8px" fxLayout.xs="row wrap">
+        <div fxFlex fxLayout="row" fxLayoutAlign="start">
+          <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
+          <tb-widgets-bundle-select fxFlexOffset="5"
+                                    fxFlex
+                                    [selectFirstBundle]="false"
+                                    [selectBundleAlias]="selectedWidgetsBundleAlias"
+                                    [(ngModel)]="widgetsBundle"
+                                    (ngModelChange)="onWidgetsBundleChanged()">
+          </tb-widgets-bundle-select>
+        </div>
+        <button mat-raised-button [fxShow]="widgetsList.length > 0"
+                color="accent"
+                class="button-widget-action"
+                [disabled]="isLoading$ | async"
+                matTooltip="{{ 'attribute.add-to-dashboard' | translate }}"
+                matTooltipPosition="above"
+                (click)="addWidgetToDashboard()">
+          <mat-icon>dashboard</mat-icon>
+          <span translate>attribute.add-to-dashboard</span>
+        </button>
+        <button mat-icon-button
+                [disabled]="isLoading$ | async"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above"
+                (click)="exitWidgetMode()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div fxFlex class="table-container" [fxShow]="mode !== 'widget'">
+      <table mat-table [dataSource]="dataSource"
+                 matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        <ng-container matColumnDef="select" sticky>
+          <mat-header-cell *matHeaderCellDef style="width: 30px;">
+            <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
+                          [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+                          [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
+            </mat-checkbox>
+          </mat-header-cell>
+          <mat-cell *matCellDef="let attribute">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                          (change)="$event ? dataSource.selection.toggle(attribute) : null"
+                          [checked]="dataSource.selection.isSelected(attribute)">
+            </mat-checkbox>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="lastUpdateTs">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'attribute.last-update-time' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let attribute">
+            {{ attribute.lastUpdateTs | date:'yyyy-MM-dd HH:mm:ss' }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="key">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'attribute.key' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let attribute">
+            {{ attribute.key }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="value">
+          <mat-header-cell *matHeaderCellDef style="width: 60%"> {{ 'attribute.value' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let attribute"
+                    class="tb-value-cell"
+                    (click)="editAttribute($event, attribute)">
+            <div fxLayout="row" style="align-items: center">
+              <span fxFlex>{{attribute.value | tbJson}}</span>
+              <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
+                <mat-icon>edit</mat-icon>
+              </span>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row [ngClass]="{'mat-row-select': true,
+                             'mat-selected': dataSource.selection.isSelected(attribute)}"
+                 *matRowDef="let attribute; columns: displayedColumns;" (click)="dataSource.selection.toggle(attribute)"></mat-row>
+      </table>
+      <span [fxShow]="dataSource.isEmpty() | async"
+            fxLayoutAlign="center center"
+            class="no-data-found" translate>{{
+          attributeScope === latestTelemetryTypes.LATEST_TELEMETRY
+              ? 'attribute.no-telemetry-text'
+              : 'attribute.no-attributes-text'
+        }}</span>
+    </div>
+    <mat-divider [fxShow]="mode !== 'widget'"></mat-divider>
+    <mat-paginator [fxShow]="mode !== 'widget'"
+                   [length]="dataSource.total() | async"
+                   [pageIndex]="pageLink.page"
+                   [pageSize]="pageLink.pageSize"
+                   [pageSizeOptions]="[10, 20, 30]"></mat-paginator>
+    <ngx-hm-carousel fxFlex *ngIf="mode === 'widget' && widgetsList.length > 0"
+                     #carousel
+                     [(ngModel)]="widgetsCarouselIndex"
+                     (ngModelChange)="onWidgetsCarouselIndexChanged()"
+                     [data]="widgetsList"
+                     [infinite]="false"
+                     class="carousel c-accent">
+      <section ngx-hm-carousel-container class="content">
+        <article class="item cursor-pointer"
+                 ngx-hm-carousel-item
+                 *ngFor="let widgets of widgetsList">
+          <tb-dashboard class="tb-absolute-fill"
+            [aliasController]="aliasController"
+            [widgets]="widgets"
+            [columns]="20"
+            [isEdit]="false"
+            [isMobileDisabled]="true"
+            [isEditActionEnabled]="false"
+            [isRemoveActionEnabled]="false">
+          </tb-dashboard>
+        </article>
+      </section>
+
+      <ng-template #carouselPrev>
+        <button mat-icon-button
+                *ngIf="widgetsCarouselIndex > 0"
+                matTooltip="{{ 'attribute.prev-widget' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>keyboard_arrow_left</mat-icon>
+        </button>
+      </ng-template>
+      <ng-template #carouselNext>
+        <button mat-icon-button
+                *ngIf="widgetsCarouselIndex < widgetsList.length - 1"
+                matTooltip="{{ 'attribute.next-widget' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>keyboard_arrow_right</mat-icon>
+        </button>
+      </ng-template>
+
+      <ng-template #carouselDot let-model>
+        <div class="ball"
+             [class.visible]="model.index === model.currentIndex"></div>
+      </ng-template>
+
+    </ngx-hm-carousel>
+    <span translate *ngIf="mode === 'widget' && widgetsLoaded &&
+                           widgetsList.length === 0 &&
+                           widgetsBundle"
+          fxFlex fxLayoutAlign="center center"
+          style="text-transform: uppercase; display: flex;"
+          class="mat-headline">widgets-bundle.empty</span>
+    <span translate *ngIf="mode === 'widget' && !widgetsBundle"
+          fxFlex fxLayoutAlign="center center"
+          style="text-transform: uppercase; display: flex;"
+          class="mat-headline">widget.select-widgets-bundle</span>
+  </div>
+</div>

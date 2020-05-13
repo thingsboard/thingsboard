@@ -21,7 +21,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RuleChainEntity;
@@ -54,13 +55,12 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     }
 
     @Override
-    public List<RuleChain> findRuleChainsByTenantId(UUID tenantId, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(ruleChainRepository
+    public PageData<RuleChain> findRuleChainsByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(ruleChainRepository
                 .findByTenantId(
                         UUIDConverter.fromTimeUUID(tenantId),
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
-                        PageRequest.of(0, pageLink.getLimit())));
+                        DaoUtil.toPageable(pageLink)));
     }
 
 }

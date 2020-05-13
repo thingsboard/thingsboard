@@ -45,10 +45,18 @@ public abstract class CassandraAbstractDatabaseSchemaService implements Database
 
     @Override
     public void createDatabaseSchema() throws Exception {
+        this.createDatabaseSchema(true);
+    }
+
+    @Override
+    public void createDatabaseSchema(boolean createIndexes) throws Exception {
         log.info("Installing Cassandra DataBase schema part: " + schemaCql);
         Path schemaFile = Paths.get(installScripts.getDataDir(), CASSANDRA_DIR, schemaCql);
         loadCql(schemaFile);
+    }
 
+    @Override
+    public void createDatabaseIndexes() throws Exception {
     }
 
     private void loadCql(Path cql) throws Exception {

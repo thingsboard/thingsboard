@@ -1,0 +1,161 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="widgetActionFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+  <mat-toolbar color="primary">
+    <h2>{{ (isAdd ? 'widget-config.add-action' : 'widget-config.edit-action' ) | translate }}</h2>
+    <span fxFlex></span>
+    <button mat-button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <mat-form-field class="mat-block">
+        <mat-label translate>widget-config.action-source</mat-label>
+        <mat-select required formControlName="actionSourceId">
+          <mat-option *ngFor="let actionSourceItem of data.actionsData.actionSources | keyvalue" [value]="actionSourceItem.key">
+            {{ actionSourceName(actionSourceItem.value) }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="widgetActionFormGroup.get('actionSourceId').hasError('required')">
+          {{ 'widget-config.action-source-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label translate>widget-config.action-name</mat-label>
+        <input required matInput formControlName="name">
+        <mat-error *ngIf="widgetActionFormGroup.get('name').hasError('required')">
+          {{ 'widget-config.action-name-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="widgetActionFormGroup.get('name').hasError('actionNameNotUnique')"
+          [innerHTML]="'widget-config.action-name-not-unique' | translate">
+        </mat-error>
+      </mat-form-field>
+      <tb-material-icon-select
+        formControlName="icon">
+      </tb-material-icon-select>
+      <mat-form-field class="mat-block">
+        <mat-label translate>widget-config.action-type</mat-label>
+        <mat-select required formControlName="type">
+          <mat-option *ngFor="let actionType of widgetActionTypes" [value]="actionType">
+            {{ widgetActionTypeTranslations.get(widgetActionType[actionType]) | translate }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="widgetActionFormGroup.get('type').hasError('required')">
+          {{ 'widget-config.action-type-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <section fxLayout="column" [formGroup]="actionTypeFormGroup" [ngSwitch]="widgetActionFormGroup.get('type').value">
+        <ng-template [ngSwitchCase]="widgetActionType.openDashboard">
+          <div fxLayout="column">
+            <div class="mat-caption tb-required"
+                 style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>widget-action.target-dashboard</div>
+            <tb-dashboard-autocomplete
+              formControlName="targetDashboardId"
+              required
+              [selectFirstDashboard]="true"
+            ></tb-dashboard-autocomplete>
+          </div>
+        </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+                                     widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
+                                     widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
+                                     widgetActionFormGroup.get('type').value : ''">
+          <mat-form-field class="mat-block">
+            <input matInput type="text" placeholder="{{ 'widget-action.target-dashboard-state' | translate }}"
+                   #dashboardStateInput
+                   formControlName="targetDashboardStateId"
+                   [required]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState"
+                   [matAutocomplete]="targetDashboardStateAutocomplete">
+            <button *ngIf="actionTypeFormGroup.get('targetDashboardStateId').value"
+                    type="button"
+                    matSuffix mat-icon-button aria-label="Clear"
+                    (click)="clearTargetDashboardState()">
+              <mat-icon class="material-icons">close</mat-icon>
+            </button>
+            <mat-autocomplete
+              class="tb-autocomplete"
+              #targetDashboardStateAutocomplete="matAutocomplete">
+              <mat-option *ngFor="let state of filteredDashboardStates | async" [value]="state">
+                <span [innerHTML]="state | highlight:targetDashboardStateSearchText"></span>
+              </mat-option>
+            </mat-autocomplete>
+            <mat-error *ngIf="actionTypeFormGroup.get('targetDashboardStateId').hasError('required')">
+              {{ 'widget-action.target-dashboard-state-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+                                     widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ?
+                                     widgetActionFormGroup.get('type').value : ''">
+          <mat-checkbox formControlName="openRightLayout">
+            {{ 'widget-action.open-right-layout' | translate }}
+          </mat-checkbox>
+        </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+                                     widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
+                                     widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
+                                     widgetActionFormGroup.get('type').value : ''">
+          <div fxFlex fxLayout="column">
+            <mat-checkbox formControlName="setEntityId">
+              {{ 'widget-action.set-entity-from-widget' | translate }}
+            </mat-checkbox>
+            <mat-form-field *ngIf="actionTypeFormGroup.get('setEntityId').value"
+                            floatLabel="always"
+                            class="mat-block">
+              <mat-label translate>alias.state-entity-parameter-name</mat-label>
+              <input matInput
+                     placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                     formControlName="stateEntityParamName">
+            </mat-form-field>
+          </div>
+        </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionType.custom">
+          <tb-js-func
+            formControlName="customFunction"
+            [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+            [validationArgs]="[]"
+          ></tb-js-func>
+        </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionType.customPretty">
+          <tb-custom-action-pretty-editor
+            formControlName="customAction">
+          </tb-custom-action-pretty-editor>
+        </ng-template>
+      </section>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || widgetActionFormGroup.invalid || actionTypeFormGroup.invalid || (!widgetActionFormGroup.dirty && !actionTypeFormGroup.dirty)">
+      {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
+    </button>
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+  </div>
+</form>
