@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.script;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +41,7 @@ public class RuleNodeJsScriptEngineTest {
     private ScriptEngine scriptEngine;
     private TestNashornJsInvokeService jsSandboxService;
 
-    private EntityId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+    private EntityId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Before
     public void beforeTest() throws Exception {

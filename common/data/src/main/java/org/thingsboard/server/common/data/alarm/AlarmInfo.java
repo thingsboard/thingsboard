@@ -29,6 +29,11 @@ public class AlarmInfo extends Alarm {
         super(alarm);
     }
 
+    public AlarmInfo(Alarm alarm, String originatorName) {
+        super(alarm);
+        this.originatorName = originatorName;
+    }
+
     public String getOriginatorName() {
         return originatorName;
     }

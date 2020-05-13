@@ -17,7 +17,8 @@ package org.thingsboard.server.dao.user;
 
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -48,7 +49,7 @@ public interface UserDao extends Dao<User> {
      * @param pageLink the page link
      * @return the list of user entities
      */
-    List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink);
+    PageData<User> findTenantAdmins(UUID tenantId, PageLink pageLink);
     
     /**
      * Find customer users by tenantId, customerId and page link.
@@ -58,6 +59,6 @@ public interface UserDao extends Dao<User> {
      * @param pageLink the page link
      * @return the list of user entities
      */
-    List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink);
+    PageData<User> findCustomerUsers(UUID tenantId, UUID customerId, PageLink pageLink);
     
 }
