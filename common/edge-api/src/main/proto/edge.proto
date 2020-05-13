@@ -154,6 +154,7 @@ message DashboardUpdateMsg {
   int64 idLSB = 3;
   string title = 4;
   string configuration = 5;
+  string groupName = 6;
 }
 
 message DeviceUpdateMsg {
@@ -164,6 +165,7 @@ message DeviceUpdateMsg {
   string credentialsType = 5;
   string credentialsId = 6;
   string credentialsValue = 7;
+  string groupName = 8;
 }
 
 message AssetUpdateMsg {
@@ -171,6 +173,7 @@ message AssetUpdateMsg {
   string name = 2;
   string type = 3;
   string label = 4;
+  string groupName = 5;
 }
 
 message EntityViewUpdateMsg {
@@ -180,6 +183,7 @@ message EntityViewUpdateMsg {
   string relatedName = 4;
   string relatedType = 5;
   EntityType relatedEntityType = 6;
+  string groupName = 7;
 }
 
 message AlarmUpdateMsg {
