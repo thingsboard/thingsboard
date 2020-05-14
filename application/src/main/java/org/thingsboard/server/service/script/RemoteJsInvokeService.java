@@ -49,8 +49,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${queue.js.max_eval_requests_timeout}")
     private long maxEvalRequestsTimeout;
 
-    @Value("${queue.js.max_invoke_requests_timeout}")
-    private long maxInvokeRequestsTimeout;
+    @Value("${queue.js.max_requests_timeout}")
+    private long maxRequestsTimeout;
 
     @Getter
     @Value("${js.remote.max_errors}")
@@ -90,7 +90,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
     @PostConstruct
     public void init() {
-        super.init(maxInvokeRequestsTimeout);
+        super.init(maxRequestsTimeout);
         requestTemplate.init();
     }
 
@@ -158,7 +158,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setScriptIdMSB(scriptId.getMostSignificantBits())
                 .setScriptIdLSB(scriptId.getLeastSignificantBits())
                 .setFunctionName(functionName)
-                .setTimeout((int) maxInvokeRequestsTimeout)
+                .setTimeout((int) maxRequestsTimeout)
                 .setScriptBody(scriptIdToBodysMap.get(scriptId));
 
         for (Object arg : args) {
@@ -170,8 +170,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .build();
 
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
-        if (maxInvokeRequestsTimeout > 0) {
-            future = Futures.withTimeout(future, maxInvokeRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
+        if (maxRequestsTimeout > 0) {
+            future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
         queuePushedMsgs.incrementAndGet();
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
@@ -213,8 +213,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .build();
 
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
-        if (maxInvokeRequestsTimeout > 0) {
-            future = Futures.withTimeout(future, maxInvokeRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
+        if (maxRequestsTimeout > 0) {
+            future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
         JsInvokeProtos.RemoteJsResponse response = future.get().getValue();
 
