@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+	<Object ObjectType="MODefinition">
+		<Name>emmStateValue</Name>
+		<Description1><![CDATA[EMM context information]]></Description1>
+		<ObjectID>3361</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3361</ObjectURN>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Single</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="0"><Name>EmmState</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[1 = EmmNull
+2 = EmmDeregistered
+3 = EmmRegisteredInitiated
+4 = EmmRegistered
+5 = EmmTrackingAreaUpdatingInitiated
+6 = EmmServiceRequestInitiated
+7 = EmmDeregisteredInitiated]]></Description>
+			</Item>
+			<Item ID="1"><Name>emmSubstate</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[ -- If EMM state is EmmDeregistered(2), EMM sub-state
+    -- EmmDeregisteredNoImsi(1)
+    -- EmmDeregisteredPlmnSearch(2)
+    -- EmmDeregisteredAttachNeeded(3)
+    -- EmmDeregisteredNoCellAvailable(4)
+    -- EmmDeregisteredAttemptingToAttach(5)
+    -- EmmDeregisteredNormalService(6)
+    -- EmmDeregisteredLimitedService(7)
+    -- If EMM state is EmmRegistered(4), EMM sub-state
+    -- EmmRegisteredNormalService(1)
+    -- EmmRegisteredUpdateNeeded(2)
+    -- EmmRegisteredAttemptingToUpdate(3)
+    -- EmmRegisteredNoCellAvailable(4)
+    -- EmmRegisteredPlmnSearch(5)
+    -- EmmRegisteredLimitedService(6)
+    -- EmmRegisteredImsiDetachInitiated(7)
+    -- EmmRegisteredAttemptingToUpdateMm(8)
+    -- Others use invalid EMM Substate value (0)
+]]></Description>
+			</Item>		
+			</Resources>
+		<Description2 />
+	</Object>
+</LWM2M>

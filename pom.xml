@@ -58,7 +58,7 @@
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <scala.version>2.13</scala.version>
         <akka.version>2.6.3</akka.version>
-        <californium.version>1.0.2</californium.version>
+        <californium.version>2.2.3</californium.version>
         <gson.version>2.6.2</gson.version>
         <velocity.version>1.7</velocity.version>
         <velocity-tools.version>2.0</velocity-tools.version>
@@ -420,9 +420,14 @@
                 <artifactId>http</artifactId>
                 <version>${project.version}</version>
             </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.thingsboard.common.transport</groupId>-->
+<!--                <artifactId>coap</artifactId>-->
+<!--                <version>${project.version}</version>-->
+<!--            </dependency>-->
             <dependency>
                 <groupId>org.thingsboard.common.transport</groupId>
-                <artifactId>coap</artifactId>
+                <artifactId>lwm2m</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

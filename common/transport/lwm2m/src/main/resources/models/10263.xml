@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+    <Object ObjectType="MODefinition">
+        <Name>Event Data Delivery</Name>
+        <Description1><![CDATA[The Event Data Delivery object provides a simple means for managing the delivery of event data from multiple Event Data Object instances. ]]></Description1>
+        <ObjectID>10263</ObjectID>
+        <ObjectURN>urn:oma:lwm2m:x:10263</ObjectURN>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Resources>
+            <Item ID="0">
+                <Name>Name</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The Name resource provides a way to identify different Event Data Delivery instances. Name is a readable and writable attribute. Name is defined as an arbitrary length text string]]></Description>
+            </Item>
+            <Item ID="1">
+                <Name>Event Data Links</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Multiple</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Objlnk</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The Event Data Links resource is a set of object links that point to each of the Event Data Object Instances that are managed by this Event Data Delivery Object Instance. An Object Link is two 16-bit integer values representing the Object ID and the Object Instance ID. This resource can have multiple instances allowing this Event Data Delivery object to manage many Event Data instances.]]></Description>
+            </Item>
+            <Item ID="2">
+                <Name>Latest Eventlog</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Multiple</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Opaque</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The Latest Eventlog resource is a multiple instance resource representing the Latest Eventlog resource from each of the Event Data objects defined in the Event Data Links Resource. When this payload is delivered to the LwM2M server, via either a read request or a confirmed observation on this Object, Object Instance or Resource, the Latest Delivered Event Time for each of the Event Data objects defined in the Event Data Links Resource must be updated. When no new event data exists for any of the linked Event Data instances an empty Opaque value should be provided.
+
+If this resource has an LwM2M server observation and one of the Event Data Instance is configured as Realtime and has been triggered, the Event Data Delivery object must send all undelivered events for all linked Event Data objects. 
+]]></Description>
+            </Item>
+            <Item ID="3">
+                <Name>Schedule</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Objlnk</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The Schedule resource provides link to a schedule object. This Schedule object is used to provide fine grain control the Notification schedule delivery when the default LwM2M NOTIFICATION attributes do not provide sufficient control. If no schedule is required, an Object Link referencing no Object Instance will contain the concatenation of 2 MAX-ID values (null link).]]></Description>
+            </Item>
+        </Resources>
+        <Description2></Description2>
+    </Object>
+</LWM2M>
+
