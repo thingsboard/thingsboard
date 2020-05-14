@@ -14,22 +14,28 @@
 /// limitations under the License.
 ///
 
-import { MapProviders, UnitedMapSettings, providerSets, hereProviders, defaultSettings } from './map-models';
+import { defaultSettings, hereProviders, MapProviders, providerSets, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
-    commonMapSettingsSchema,
-    routeMapSettingsSchema,
-    markerClusteringSettingsSchema,
-    markerClusteringSettingsSchemaLeaflet,
-    mapProviderSchema,
-    mapPolygonSchema
+  commonMapSettingsSchema,
+  mapPolygonSchema,
+  mapProviderSchema,
+  markerClusteringSettingsSchema,
+  markerClusteringSettingsSchemaLeaflet,
+  routeMapSettingsSchema
 } from './schemes';
-import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
-import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
+import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
+import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { of, Subject } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition, parseArray, parseData, parseFunction, parseWithTranslation } from './maps-utils';
-import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType, Datasource } from '@shared/models/widget.models';
+import {
+  Datasource,
+  DatasourceType,
+  JsonSettingsSchema,
+  WidgetActionDescriptor,
+  widgetType
+} from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -39,7 +45,13 @@ import { UtilsService } from '@core/services/utils.service';
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
 
-    constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement, isEdit?) {
+    constructor(
+        public mapProvider: MapProviders,
+        private drawRoutes: boolean,
+        public ctx: WidgetContext,
+        $element: HTMLElement,
+        isEdit?: boolean
+    ) {
         if (this.map) {
             this.map.map.remove();
             delete this.map;
