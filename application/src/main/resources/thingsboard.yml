@@ -461,7 +461,7 @@ js:
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
-    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:false}"
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
@@ -538,6 +538,16 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+  # Local LwM2M transport parameters
+  lwm2m:
+    # Enable/disable lvm2m transport protocol.
+    enabled: "${LWM2M_ENABLED:true}"
+    bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
+    bind_port: "${LWM2M_BIND_PORT:5685}"
+    timeout: "${LWM2M_TIMEOUT:10000}"
+    secure:
+      bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
+      bind_port: "${LWM2M_BIND_PORT:5686}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
