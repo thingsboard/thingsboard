@@ -21,9 +21,9 @@ import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
-import { MapProviders, FormattedData } from '../lib/maps/map-models';
-import { initSchema, addToSchema, addGroupInfo, addCondition } from '@app/core/schema-utils';
-import { tripAnimationSchema, mapPolygonSchema, pathSchema, pointSchema } from '../lib/maps/schemes';
+import { FormattedData, MapProviders } from '../lib/maps/map-models';
+import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
+import { mapPolygonSchema, pathSchema, pointSchema, tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { findAngle, getRatio, parseArray, parseWithTranslation, safeExecute } from '../lib/maps/maps-utils';
@@ -86,17 +86,19 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       rotationAngle: 0
     }
     this.settings = { ...settings, ...this.ctx.settings };
-    this.useAnchors = this.settings.usePointAsAnchor && this.settings.showPoints;
+    this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
     this.settings.fitMapBounds = true;
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
-    if (subscription) subscription.callbacks.onDataUpdated = () => {
-      this.historicalData = parseArray(this.ctx.data);
-      this.activeTrip = this.historicalData[0][0];
-      this.calculateIntervals();
-      this.timeUpdated(this.intervals[0]);
-      this.mapWidget.map.map?.invalidateSize();
-      this.cd.detectChanges();
+    if (subscription) {
+      subscription.callbacks.onDataUpdated = () => {
+        this.historicalData = parseArray(this.ctx.data);
+        this.activeTrip = this.historicalData[0][0];
+        this.calculateIntervals();
+        this.timeUpdated(this.intervals[0]);
+        this.mapWidget.map.map?.invalidateSize();
+        this.cd.detectChanges();
+      }
     }
   }
 
@@ -174,12 +176,12 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       const before = originData[i - 1];
       const after = originData[i];
       const interpolation = interpolateOnPointSegment(
-        new L.Point(before.latitude, before.longitude),
-        new L.Point(after.latitude, after.longitude),
+        new L.Point(before[this.settings.latKeyName], before[this.settings.lngKeyName]),
+        new L.Point(after[this.settings.latKeyName], after[this.settings.lngKeyName]),
         getRatio(before.time, after.time, currentTime));
       result[currentTime] = ({
         ...originData[i],
-        rotationAngle: findAngle(before, after) + this.settings.rotationAngle,
+        rotationAngle: findAngle(before, after, this.settings.latKeyName, this.settings.lngKeyName) + this.settings.rotationAngle,
         latitude: interpolation.x,
         longitude: interpolation.y
       });

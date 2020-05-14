@@ -56,10 +56,10 @@ export function getRatio(firsMoment: number, secondMoment: number, intermediateM
     return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
 }
 
-export function findAngle(startPoint, endPoint) {
-    let angle = -Math.atan2(endPoint.latitude - startPoint.latitude, endPoint.longitude - startPoint.longitude);
-    angle = angle * 180 / Math.PI;
-    return parseInt(angle.toFixed(2), 10);
+export function findAngle(startPoint: FormattedData, endPoint: FormattedData, latKeyName: string, lngKeyName: string): number {
+  let angle = -Math.atan2(endPoint[latKeyName] - startPoint[latKeyName], endPoint[lngKeyName] - startPoint[lngKeyName]);
+  angle = angle * 180 / Math.PI;
+  return parseInt(angle.toFixed(2), 10);
 }
 
 
