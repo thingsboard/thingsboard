@@ -69,7 +69,7 @@
         <protobuf.version>3.11.4</protobuf.version>
         <grpc.version>1.22.1</grpc.version>
         <lombok.version>1.16.18</lombok.version>
-        <paho.client.version>1.1.0</paho.client.version>
+        <paho.client.version>1.2.4</paho.client.version>
         <netty.version>4.1.49.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
