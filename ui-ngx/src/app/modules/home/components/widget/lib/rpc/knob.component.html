@@ -1,0 +1,45 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-knob" fxLayout="column" [ngStyle]="{'pointerEvents': ctx.isEdit ? 'none' : 'all'}">
+  <div #knobContainer id="knob-container" fxFlex fxLayout="column" fxLayoutAlign="center center">
+    <div #knob class="knob">
+      <div #knobValueContainer class="value-container" fxLayout="row" fxLayoutAlign="center center">
+        <span #knobValue class="knob-value">{{ value }}</span>
+      </div>
+      <div class="canvas-background"></div>
+      <canvas #canvasBar id="canvasBar"></canvas>
+      <div #knobTopPointerContainer class="top-pointer-container">
+        <div #knobTopPointer class="top-pointer"></div>
+      </div>
+      <div class="top"></div>
+      <div #knobErrorContainer class="error-container" [ngStyle]="{'background': error?.length ? 'rgba(255,255,255,0.25)' : 'none'}"
+           fxLayout="row" fxLayoutAlign="center center">
+        <span #knobError class="knob-error" [innerHTML]="error"></span>
+      </div>
+      <div #knobTitleContainer class="title-container" fxLayout="row" fxLayoutAlign="center center">
+        <span #knobTitle class="knob-title">{{ title }}</span>
+      </div>
+      <div #knobMinmaxContainer class="minmax-container" fxLayout="row" fxLayoutAlign="start center">
+        <span class="minmax-label">min</span>
+        <span fxFlex></span>
+        <span class="minmax-label">max</span>
+      </div>
+      <div #textMeasure id="text-measure"></div>
+    </div>
+  </div>
+</div>

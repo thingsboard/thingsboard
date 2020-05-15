@@ -1,0 +1,200 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "thingsboard": {
+      "root": "",
+      "sourceRoot": "src",
+      "projectType": "application",
+      "prefix": "tb",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "architect": {
+        "build": {
+          "builder": "@angular-builders/custom-webpack:browser",
+          "options": {
+            "outputPath": "target/generated-resources/public",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "polyfills": "src/polyfills.ts",
+            "tsConfig": "src/tsconfig.app.json",
+            "assets": [
+              "src/thingsboard.ico",
+              "src/assets",
+              { "glob": "worker-html.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
+              { "glob": "worker-css.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
+              { "glob": "worker-json.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
+              { "glob": "worker-javascript.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" }
+            ],
+            "styles": [
+              "src/styles.scss",
+              "node_modules/jquery.terminal/css/jquery.terminal.min.css",
+              "node_modules/tooltipster/dist/css/tooltipster.bundle.min.css",
+              "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
+              "src/app/shared/components/json-form/react/json-form.scss",
+              "node_modules/rc-select/assets/index.less",
+              "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
+              "node_modules/leaflet/dist/leaflet.css",
+              "src/app/modules/home/components/widget/lib/maps/markers.scss",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css"
+            ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                  "src/scss"
+              ]
+            },
+            "scripts": [
+              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/jquery.terminal/js/jquery.terminal.min.js",
+              "node_modules/flot/lib/jquery.colorhelpers.js",
+              "node_modules/flot/src/jquery.flot.js",
+              "node_modules/flot/src/plugins/jquery.flot.time.js",
+              "node_modules/flot/src/plugins/jquery.flot.selection.js",
+              "node_modules/flot/src/plugins/jquery.flot.pie.js",
+              "node_modules/flot/src/plugins/jquery.flot.crosshair.js",
+              "node_modules/flot/src/plugins/jquery.flot.stack.js",
+              "node_modules/flot/src/plugins/jquery.flot.symbol.js",
+              "node_modules/flot.curvedlines/curvedLines.js",
+              "node_modules/tinycolor2/dist/tinycolor-min.js",
+              "node_modules/tooltipster/dist/js/tooltipster.bundle.min.js",
+              "node_modules/split.js/dist/split.js",
+              "node_modules/js-beautify/js/lib/beautify.js",
+              "node_modules/js-beautify/js/lib/beautify-css.js",
+              "node_modules/js-beautify/js/lib/beautify-html.js",
+              "node_modules/ace-builds/src-min/ace.js",
+              "node_modules/ace-builds/src-min/ext-language_tools.js",
+              "node_modules/ace-builds/src-min/ext-searchbox.js",
+              "node_modules/ace-builds/src-min/theme-github.js",
+              "node_modules/ace-builds/src-min/mode-text.js",
+              "node_modules/ace-builds/src-min/mode-markdown.js",
+              "node_modules/ace-builds/src-min/mode-html.js",
+              "node_modules/ace-builds/src-min/mode-css.js",
+              "node_modules/ace-builds/src-min/mode-json.js",
+              "node_modules/ace-builds/src-min/mode-java.js",
+              "node_modules/ace-builds/src-min/mode-javascript.js",
+              "node_modules/ace-builds/src-min/snippets/text.js",
+              "node_modules/ace-builds/src-min/snippets/markdown.js",
+              "node_modules/ace-builds/src-min/snippets/html.js",
+              "node_modules/ace-builds/src-min/snippets/css.js",
+              "node_modules/ace-builds/src-min/snippets/json.js",
+              "node_modules/ace-builds/src-min/snippets/java.js",
+              "node_modules/ace-builds/src-min/snippets/javascript.js",
+              "node_modules/systemjs/dist/system.js",
+              "node_modules/jstree/dist/jstree.min.js"
+            ],
+            "es5BrowserSupport": true,
+            "customWebpackConfig": {
+              "path": "./extra-webpack.config.js"
+            }
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "9mb",
+                  "maximumError": "12mb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-builders/custom-webpack:dev-server",
+          "options": {
+            "browserTarget": "thingsboard:build",
+            "proxyConfig": "proxy.conf.js"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "thingsboard:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "thingsboard:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "src/test.ts",
+            "polyfills": "src/polyfills.ts",
+            "tsConfig": "src/tsconfig.spec.json",
+            "karmaConfig": "src/karma.conf.js",
+            "styles": [
+              "src/styles.scss"
+            ],
+            "scripts": [],
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "src/tsconfig.app.json",
+              "src/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "thingsboard-e2e": {
+      "root": "e2e/",
+      "projectType": "application",
+      "prefix": "",
+      "architect": {
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "e2e/protractor.conf.js",
+            "devServerTarget": "thingsboard:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "thingsboard:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": "e2e/tsconfig.e2e.json",
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "defaultProject": "thingsboard"
+}

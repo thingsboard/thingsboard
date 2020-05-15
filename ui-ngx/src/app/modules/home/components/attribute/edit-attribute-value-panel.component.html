@@ -1,0 +1,41 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form class="mat-elevation-z1"
+      [formGroup]="attributeFormGroup" (ngSubmit)="update()" style="width: 400px; padding: 5px;">
+  <fieldset [disabled]="isLoading$ | async">
+    <tb-value-input
+      formControlName="value"
+      requiredText="attribute.value-required">
+    </tb-value-input>
+  </fieldset>
+  <div fxLayout="row" class="tb-panel-actions">
+    <span fxFlex></span>
+    <button mat-button color="primary"
+            style="margin-right: 20px;"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || attributeFormGroup.invalid || !attributeFormGroup.dirty">
+      {{ 'action.update' | translate }}
+    </button>
+  </div>
+</form>

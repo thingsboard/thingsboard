@@ -31,27 +31,27 @@ services:
     env_file:
       - tb-node.postgres.env
     depends_on:
-      - kafka
+      - zookeeper
       - redis
       - postgres
   tb-core2:
     env_file:
       - tb-node.postgres.env
     depends_on:
-      - kafka
+      - zookeeper
       - redis
       - postgres
   tb-rule-engine1:
     env_file:
       - tb-node.postgres.env
     depends_on:
-      - kafka
+      - zookeeper
       - redis
       - postgres
   tb-rule-engine2:
     env_file:
       - tb-node.postgres.env
     depends_on:
-      - kafka
+      - zookeeper
       - redis
       - postgres

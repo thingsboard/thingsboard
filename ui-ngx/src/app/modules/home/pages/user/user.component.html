@@ -1,0 +1,102 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons" fxLayout.xs="column">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'disableAccount')"
+          [fxShow]="!isEdit && isUserCredentialsEnabled()">
+    {{'user.disable-account' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'enableAccount')"
+          [fxShow]="!isEdit && !isUserCredentialsEnabled()">
+    {{'user.enable-account' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'displayActivationLink')"
+          [fxShow]="!isEdit">
+    {{'user.display-activation-link' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'resendActivation')"
+          [fxShow]="!isEdit">
+    {{'user.resend-activation' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'loginAsUser')"
+          *ngIf="loginAsUserEnabled$ | async"
+          [fxShow]="!isEdit">
+    {{ (entity?.authority === authority.TENANT_ADMIN ? 'user.login-as-tenant-admin' : 'user.login-as-customer-user') | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [fxShow]="!hideDelete() && !isEdit">
+    {{'user.delete' | translate }}
+  </button>
+</div>
+<div class="mat-padding" fxLayout="column">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block">
+        <mat-label translate>user.email</mat-label>
+        <input matInput formControlName="email" required>
+        <mat-error *ngIf="entityForm.get('email').hasError('email')">
+          {{ 'user.invalid-email-format' | translate }}
+        </mat-error>
+        <mat-error *ngIf="entityForm.get('email').hasError('required')">
+          {{ 'user.email-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label translate>user.first-name</mat-label>
+        <input matInput formControlName="firstName">
+      </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label translate>user.last-name</mat-label>
+        <input matInput formControlName="lastName">
+      </mat-form-field>
+      <div formGroupName="additionalInfo" fxLayout="column">
+        <mat-form-field class="mat-block">
+          <mat-label translate>user.description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+        <section class="tb-default-dashboard" fxFlex fxLayout="column" *ngIf="entity?.id">
+          <section fxFlex fxLayout="column" fxLayout.gt-sm="row">
+            <tb-dashboard-autocomplete
+              fxFlex
+              placeholder="{{ 'user.default-dashboard' | translate }}"
+              formControlName="defaultDashboardId"
+              [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
+              [tenantId]="entity?.tenantId?.id"
+              [customerId]="entity?.customerId?.id"
+              [selectFirstDashboard]="false"
+            ></tb-dashboard-autocomplete>
+            <mat-checkbox fxFlex formControlName="defaultDashboardFullscreen">
+              {{ 'user.always-fullscreen' | translate }}
+            </mat-checkbox>
+          </section>
+        </section>
+      </div>
+    </fieldset>
+  </form>
+</div>
