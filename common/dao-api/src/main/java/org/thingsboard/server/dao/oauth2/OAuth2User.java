@@ -19,8 +19,6 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.List;
-
 @Data
 public class OAuth2User {
     private String tenantName;
@@ -30,7 +28,4 @@ public class OAuth2User {
     private String email;
     private String firstName;
     private String lastName;
-    private List<String> userGroups;
-    private String parentCustomerName;
-    private CustomerId parentCustomerId;
 }
