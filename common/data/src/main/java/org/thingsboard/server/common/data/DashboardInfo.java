@@ -135,15 +135,15 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         if (this.assignedEdges == null) {
             this.assignedEdges = new HashSet<>();
         }
-        return EdgeUtils.addAssignedEdge(this.assignedEdges, edge);
+        return EdgeUtils.addAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
     }
 
     public boolean updateAssignedEdge(Edge edge) {
-        return EdgeUtils.updateAssignedEdge(this.assignedEdges, edge);
+        return EdgeUtils.updateAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
     }
 
     public boolean removeAssignedEdge(Edge edge) {
-        return EdgeUtils.removeAssignedEdge(this.assignedEdges, edge);
+        return EdgeUtils.removeAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
     }
 
     @Override

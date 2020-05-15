@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.edge.EdgeDao;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -78,7 +79,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private TenantDao tenantDao;
 
     @Autowired
-    private EdgeDao edgeDao;
+    private EdgeService edgeService;
 
     @Override
     public RuleChain saveRuleChain(RuleChain ruleChain) {
@@ -395,7 +396,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId) {
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
-        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
             throw new DataValidationException("Can't assign ruleChain to non-existent edge!");
         }
@@ -417,7 +418,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId, boolean remove) {
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
-        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
             throw new DataValidationException("Can't unassign rule chain from non-existent edge!");
         }
@@ -441,7 +442,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public void unassignEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing unassignEdgeRuleChains, edgeId [{}]", edgeId);
         Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
-        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
             throw new DataValidationException("Can't unassign ruleChains from non-existent edge!");
         }
@@ -452,7 +453,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public void updateEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing updateEdgeRuleChains, edgeId [{}]", edgeId);
         Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
-        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
             throw new DataValidationException("Can't update ruleChains for non-existent edge!");
         }
