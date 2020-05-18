@@ -29,6 +29,7 @@ import {
   getRatio,
   interpolateOnLineSegment,
   parseArray,
+  parseFunction,
   parseWithTranslation,
   safeExecute
 } from '../lib/maps/maps-utils';
@@ -65,7 +66,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   minTimeFormat: string;
   maxTime: number;
   maxTimeFormat: string;
-  anchors = [];
+  anchors: number[] = [];
   useAnchors: boolean;
 
   static getSettingsSchema(): JsonSettingsSchema {
@@ -94,6 +95,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     }
     this.settings = { ...settings, ...this.ctx.settings };
     this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
+    this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
     this.settings.fitMapBounds = true;
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
@@ -141,11 +143,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
         this.mapWidget.map.updatePolygons(this.interpolatedTimeData);
       }
       if (this.settings.showPoints) {
-        this.mapWidget.map.updatePoints(this.interpolatedTimeData, this.calcTooltip);
-        // this.anchors = this.interpolatedTimeData
-        //   .filter(data =>
-        //     this.settings.usePointAsAnchor ||
-        //     safeExecute(this.settings.pointAsAnchorFunction, [this.interpolatedTimeData, data, data.dsIndex])).map(data => data.time);
+        this.mapWidget.map.updatePoints(_.values(_.union(this.interpolatedTimeData)[0]), this.calcTooltip);
       }
       this.mapWidget.map.updateMarkers(currentPosition);
     }
@@ -162,7 +160,12 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       this.maxTimeFormat = this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '';
       this.interpolatedTimeData[index] = this.interpolateArray(dataSource);
     });
-
+    if (this.useAnchors) {
+      const anchorDate = Object.entries(_.union(this.interpolatedTimeData)[0]);
+      this.anchors = anchorDate
+        .filter((data: [string, FormattedData]) => safeExecute(this.settings.pointAsAnchorFunction, [data[1], anchorDate, data[1].dsIndex]))
+        .map(data => parseInt(data[0], 10));
+    }
   }
 
   calcTooltip = (point?: FormattedData, setTooltip = true) => {
@@ -200,20 +203,17 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     const result = {};
     const latKeyName = this.settings.latKeyName;
     const lngKeyName = this.settings.lngKeyName;
-    for (let i = 0; i < originData.length; i++) {
-      const currentTime = originData[i].time;
+    for (const data of originData) {
+      const currentTime = data.time;
       const normalizeTime = this.minTime + Math.ceil((currentTime - this.minTime) / this.normalizationStep) * this.normalizationStep;
-      if (i !== originData.length - 1) {
-        result[normalizeTime] = {
-          ...originData[i],
-          rotationAngle: this.settings.rotationAngle + findAngle(originData[i], originData[i + 1], latKeyName, lngKeyName)
-        };
-      } else {
-        result[normalizeTime] = {
-          ...originData[i],
-          rotationAngle: this.settings.rotationAngle + findAngle(originData[i - 1], originData[i], latKeyName, lngKeyName)
-        };
-      }
+      result[normalizeTime] = {
+        ...data,
+        rotationAngle: this.settings.rotationAngle
+      };
+    }
+    const timeStamp = Object.keys(result);
+    for(let i = 0; i < timeStamp.length - 1; i++){
+      result[timeStamp[i]].rotationAngle += findAngle(result[timeStamp[i]], result[timeStamp[i + 1]], latKeyName, lngKeyName)
     }
     return result;
   }
