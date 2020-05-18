@@ -343,12 +343,12 @@ export default abstract class LeafletMap {
 
     // Polyline
 
-    updatePolylines(polyData: FormattedData[][]) {
-        polyData.forEach((data: FormattedData[]) => {
-            if (data.length) {
-                const dataSource = polyData.map(arr => arr[0]);
-                if (this.polylines.get(data[0].entityName)) {
-                    this.updatePolyline(data[0].entityName, data, dataSource, this.options);
+    updatePolylines(polyData: FormattedData[][], data?: FormattedData) {
+        polyData.forEach((dataSource) => {
+            data = data || dataSource[0];
+            if (dataSource.length) {
+                if (this.polylines.get(data.$datasource.entityName)) {
+                    this.updatePolyline(data, dataSource, this.options);
                 }
                 else {
                     this.createPolyline(data, dataSource, this.options);
@@ -357,22 +357,20 @@ export default abstract class LeafletMap {
         })
     }
 
-    createPolyline(data: FormattedData[], dataSources: FormattedData[], settings: PolylineSettings) {
-        if (data.length)
-            this.ready$.subscribe(() => {
-                const poly = new Polyline(this.map,
-                    data.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
-                const bounds = poly.leafletPoly.getBounds();
-                this.fitBounds(bounds);
-                this.polylines.set(data[0].entityName, poly);
-            });
+    createPolyline(data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings) {
+        this.ready$.subscribe(() => {
+            const poly = new Polyline(this.map,
+              dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
+            const bounds = poly.leafletPoly.getBounds();
+            this.fitBounds(bounds);
+            this.polylines.set(data.$datasource.entityName, poly);
+        });
     }
 
-    updatePolyline(key: string, data: FormattedData[], dataSources: FormattedData[], settings: PolylineSettings) {
+    updatePolyline(data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings) {
         this.ready$.subscribe(() => {
-            const poly = this.polylines.get(key);
-            poly.updatePolyline(settings, data.map(el => this.convertPosition(el)), dataSources);
-            const bounds = poly.leafletPoly.getBounds();
+            const poly = this.polylines.get(data.$datasource.entityName);
+            poly.updatePolyline(dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
         });
     }
 

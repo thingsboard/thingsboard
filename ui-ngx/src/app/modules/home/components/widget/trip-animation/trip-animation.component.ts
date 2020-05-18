@@ -136,7 +136,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.calcLabel();
     this.calcTooltip();
     if (this.mapWidget) {
-      this.mapWidget.map.updatePolylines(this.interpolatedTimeData.map(ds => _.values(ds)));
+      this.mapWidget.map.updatePolylines(this.interpolatedTimeData.map(ds => _.values(ds)), this.activeTrip);
       if (this.settings.showPolygon) {
         this.mapWidget.map.updatePolygons(this.interpolatedTimeData);
       }
@@ -211,7 +211,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       } else {
         result[normalizeTime] = {
           ...originData[i],
-          rotationAngle: findAngle(originData[i - 1], originData[i], latKeyName, lngKeyName) + this.settings.rotationAngle
+          rotationAngle: this.settings.rotationAngle + findAngle(originData[i - 1], originData[i], latKeyName, lngKeyName)
         };
       }
     }
