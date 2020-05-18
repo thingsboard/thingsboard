@@ -22,6 +22,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbAwsSqsSettings;
 
 import java.util.Map;
 import java.util.Set;

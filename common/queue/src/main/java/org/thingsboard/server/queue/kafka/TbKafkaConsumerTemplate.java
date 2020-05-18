@@ -24,6 +24,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
+import org.thingsboard.server.queue.settings.TbKafkaSettings;
 
 import java.io.IOException;
 import java.time.Duration;

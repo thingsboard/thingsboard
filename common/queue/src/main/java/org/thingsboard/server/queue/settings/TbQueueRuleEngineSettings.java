@@ -31,6 +31,7 @@ import java.util.List;
 @EnableAutoConfiguration
 @Configuration
 @ConfigurationProperties(prefix = "queue.rule-engine")
+@Deprecated
 public class TbQueueRuleEngineSettings {
 
     private String topic;

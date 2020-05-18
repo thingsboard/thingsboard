@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.dao.queue;
 
-public interface SystemDataLoaderService {
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.model.sql.QueueEntity;
 
-    void createSysAdmin() throws Exception;
+import java.util.List;
 
-    void createAdminSettings() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
-    void createQueues();
-
+public interface QueueDao extends Dao<Queue> {
+    Queue findQueueByTopic(String topic);
 }

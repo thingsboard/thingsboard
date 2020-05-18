@@ -30,6 +30,7 @@ import com.google.pubsub.v1.Topic;
 import com.google.pubsub.v1.TopicName;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbPubSubSettings;
 
 import java.io.IOException;
 import java.util.Map;

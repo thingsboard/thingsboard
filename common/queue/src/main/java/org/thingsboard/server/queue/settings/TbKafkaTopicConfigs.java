@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.pubsub;
+package org.thingsboard.server.queue.settings;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,40 +25,40 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='pubsub'")
-public class TbPubSubSubscriptionSettings {
-    @Value("${queue.pubsub.queue-properties.core}")
+@ConditionalOnExpression("'${queue.type:null}'=='kafka'")
+public class TbKafkaTopicConfigs {
+    @Value("${queue.kafka.topic-properties.core}")
     private String coreProperties;
-    @Value("${queue.pubsub.queue-properties.rule-engine}")
+    @Value("${queue.kafka.topic-properties.rule-engine}")
     private String ruleEngineProperties;
-    @Value("${queue.pubsub.queue-properties.transport-api}")
+    @Value("${queue.kafka.topic-properties.transport-api}")
     private String transportApiProperties;
-    @Value("${queue.pubsub.queue-properties.notifications}")
+    @Value("${queue.kafka.topic-properties.notifications}")
     private String notificationsProperties;
-    @Value("${queue.pubsub.queue-properties.js-executor}")
+    @Value("${queue.kafka.topic-properties.js-executor}")
     private String jsExecutorProperties;
 
     @Getter
-    private Map<String, String> coreSettings;
+    private Map<String, String> coreConfigs;
     @Getter
-    private Map<String, String> ruleEngineSettings;
+    private Map<String, String> ruleEngineConfigs;
     @Getter
-    private Map<String, String> transportApiSettings;
+    private Map<String, String> transportApiConfigs;
     @Getter
-    private Map<String, String> notificationsSettings;
+    private Map<String, String> notificationsConfigs;
     @Getter
-    private Map<String, String> jsExecutorSettings;
+    private Map<String, String> jsExecutorConfigs;
 
     @PostConstruct
     private void init() {
-        coreSettings = getSettings(coreProperties);
-        ruleEngineSettings = getSettings(ruleEngineProperties);
-        transportApiSettings = getSettings(transportApiProperties);
-        notificationsSettings = getSettings(notificationsProperties);
-        jsExecutorSettings = getSettings(jsExecutorProperties);
+        coreConfigs = getConfigs(coreProperties);
+        ruleEngineConfigs = getConfigs(ruleEngineProperties);
+        transportApiConfigs = getConfigs(transportApiProperties);
+        notificationsConfigs = getConfigs(notificationsProperties);
+        jsExecutorConfigs = getConfigs(jsExecutorProperties);
     }
 
-    private Map<String, String> getSettings(String properties) {
+    private Map<String, String> getConfigs(String properties) {
         Map<String, String> configs = new HashMap<>();
         for (String property : properties.split(";")) {
             int delimiterPosition = property.indexOf(":");

@@ -19,6 +19,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbRabbitMqSettings;
 
 import java.io.IOException;
 import java.util.Map;

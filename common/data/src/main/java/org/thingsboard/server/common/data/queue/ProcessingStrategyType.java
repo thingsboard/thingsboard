@@ -13,22 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.common.data.queue;
 
-public interface SystemDataLoaderService {
-
-    void createSysAdmin() throws Exception;
-
-    void createAdminSettings() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
-    void createQueues();
-
+public enum ProcessingStrategyType {
+    SKIP_ALL_FAILURES, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
 }

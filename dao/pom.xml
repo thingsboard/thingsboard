@@ -49,6 +49,10 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
+            <artifactId>queue</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
             <artifactId>util</artifactId>
         </dependency>
         <dependency>

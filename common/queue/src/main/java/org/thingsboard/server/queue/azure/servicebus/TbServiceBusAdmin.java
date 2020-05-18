@@ -22,6 +22,7 @@ import com.microsoft.azure.servicebus.primitives.MessagingEntityAlreadyExistsExc
 import com.microsoft.azure.servicebus.primitives.ServiceBusException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbServiceBusSettings;
 
 import java.io.IOException;
 import java.time.Duration;

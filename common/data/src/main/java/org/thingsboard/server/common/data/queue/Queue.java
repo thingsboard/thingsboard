@@ -13,20 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.settings;
+package org.thingsboard.server.common.data.queue;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-@Deprecated
-public class TbRuleEngineQueueConfiguration {
-
+public class Queue extends BaseData<QueueId> implements HasName, HasTenantId {
+    private TenantId tenantId;
     private String name;
     private String topic;
     private int pollInterval;
     private int partitions;
     private long packProcessingTimeout;
-    private TbRuleEngineQueueSubmitStrategyConfiguration submitStrategy;
-    private TbRuleEngineQueueAckStrategyConfiguration processingStrategy;
+    private SubmitStrategy submitStrategy;
+    private ProcessingStrategy processingStrategy;
 
+    public Queue() {
+    }
+
+    public Queue(QueueId id) {
+        super(id);
+    }
 }
