@@ -327,7 +327,7 @@
                             <exclude>**/*.proto.js</exclude>
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
-<!--                            <exclude>src/main/resources/models/*.xml</exclude>-->
+                            <exclude>src/main/resources/models/*.xml</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
