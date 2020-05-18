@@ -56,6 +56,19 @@ export function getRatio(firsMoment: number, secondMoment: number, intermediateM
     return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
 }
 
+export function interpolateOnLineSegment(
+  pointA: FormattedData,
+  oointB: FormattedData,
+  latKeyName: string,
+  lngKeyName: string,
+  ratio: number
+): { [key: string]: number } {
+   return {
+    [latKeyName]: (pointA[latKeyName] + (oointB[latKeyName] - pointA[latKeyName]) * ratio),
+    [lngKeyName]: (pointA[lngKeyName] + (oointB[lngKeyName] - pointA[lngKeyName]) * ratio)
+  };
+}
+
 export function findAngle(startPoint: FormattedData, endPoint: FormattedData, latKeyName: string, lngKeyName: string): number {
   let angle = -Math.atan2(endPoint[latKeyName] - startPoint[latKeyName], endPoint[lngKeyName] - startPoint[lngKeyName]);
   angle = angle * 180 / Math.PI;
