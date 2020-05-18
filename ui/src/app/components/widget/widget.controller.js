@@ -496,6 +496,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 if (!params) {
                     params = {};
                 }
+                params.additionalParams = additionalParams;
                 updateEntityParams(params, targetEntityParamName, targetEntityId, entityName);
                 if (type == types.widgetActionTypes.openDashboardState.value) {
                     widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
