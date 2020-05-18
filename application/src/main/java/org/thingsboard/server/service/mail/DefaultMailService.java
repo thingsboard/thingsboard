@@ -114,6 +114,21 @@ public class DefaultMailService implements MailService {
                 javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", tlsVersion);
             }
         }
+
+        boolean enableProxy = jsonConfig.has("enableProxy") && jsonConfig.get("enableProxy").asBoolean();
+
+        if (enableProxy) {
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", jsonConfig.get("proxyHost").asText());
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", jsonConfig.get("proxyPort").asText());
+            String proxyUser = jsonConfig.get("proxyUser").asText();
+            if (StringUtils.isNoneEmpty(proxyUser)) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", proxyUser);
+            }
+            String proxyPassword = jsonConfig.get("proxyPassword").asText();
+            if (StringUtils.isNoneEmpty(proxyPassword)) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", proxyPassword);
+            }
+        }
         return javaMailProperties;
     }
 
