@@ -59,6 +59,8 @@
         <scala.version>2.13</scala.version>
         <akka.version>2.6.3</akka.version>
         <californium.version>2.2.3</californium.version>
+        <leshan-server.version>1.0.1</leshan-server.version>
+        <leshan-client.version>1.0.0</leshan-client.version>
         <gson.version>2.6.2</gson.version>
         <velocity.version>1.7</velocity.version>
         <velocity-tools.version>2.0</velocity-tools.version>
@@ -728,6 +730,26 @@
                 <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-slf4j_${scala.version}</artifactId>
                 <version>${akka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.leshan</groupId>
+                <artifactId>leshan-server-cf</artifactId>
+                <version>${leshan-server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.leshan</groupId>
+                <artifactId>leshan-client-cf</artifactId>
+                <version>${leshan-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.leshan</groupId>
+                <artifactId>leshan-server-cf</artifactId>
+                <version>${leshan-server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.leshan</groupId>
+                <artifactId>leshan-server-redis</artifactId>
+                <version>${leshan-server.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.californium</groupId>

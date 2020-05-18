@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.transport;
 
+import org.thingsboard.server.gen.transport.TransportProtos.LwM2MRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.LwM2MResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
@@ -49,6 +51,9 @@ public interface TransportService {
 
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg> callback);
+
+    void process(LwM2MRequestMsg msg,
+                 TransportServiceCallback<LwM2MResponseMsg> callback);
 
     boolean checkLimits(SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback);
 

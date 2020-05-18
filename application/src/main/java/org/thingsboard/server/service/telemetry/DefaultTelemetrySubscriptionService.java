@@ -127,8 +127,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     }
 
     @Override
-    public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback) {
-        ListenableFuture<List<Void>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
+    public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback) { ListenableFuture<List<Void>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes));
     }

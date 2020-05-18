@@ -563,11 +563,12 @@ transport:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
     bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-    bind_port: "${LWM2M_BIND_PORT:5685}"
+    bind_port: "${LWM2M_BIND_PORT:5683}"
     timeout: "${LWM2M_TIMEOUT:10000}"
+    tenantId: "${LWM2M_DEFAULT_TENANT_ID:bf9873b0-98ea-11ea-b211-1fb93cb6349f}"
     secure:
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-      bind_port: "${LWM2M_BIND_PORT:5686}"
+      bind_port: "${LWM2M_BIND_PORT:5684}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"

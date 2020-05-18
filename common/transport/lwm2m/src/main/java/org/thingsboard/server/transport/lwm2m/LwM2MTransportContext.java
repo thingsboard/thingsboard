@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import org.thingsboard.server.common.transport.TransportContext;
 @Slf4j
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 @Component
-public class LwM2MTransportCtx extends TransportContext {
+public class LwM2MTransportContext extends TransportContext {
     @Getter
     @Value("${transport.lwm2m.bind_address}")
     private String host;
@@ -45,5 +45,10 @@ public class LwM2MTransportCtx extends TransportContext {
     @Getter
     @Value("${transport.lwm2m.timeout}")
     private Long timeout;
+
+    @Getter
+    @Value("${transport.lwm2m.tenantId}")
+    private String tenantId;
+
 
 }

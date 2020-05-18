@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,6 +35,7 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
@@ -89,14 +90,21 @@ public class DefaultTransportApiService implements TransportApiService {
         TransportApiRequestMsg transportApiRequestMsg = tbProtoQueueMsg.getValue();
         if (transportApiRequestMsg.hasValidateTokenRequestMsg()) {
             ValidateDeviceTokenRequestMsg msg = transportApiRequestMsg.getValidateTokenRequestMsg();
-            return Futures.transform(validateCredentials(msg.getToken(), DeviceCredentialsType.ACCESS_TOKEN), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+            return Futures.transform(validateCredentials(msg.getToken(), DeviceCredentialsType.ACCESS_TOKEN),
+                    value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
             ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
-            return Futures.transform(validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+            return Futures.transform(validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE),
+                    value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
-            return Futures.transform(handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+            return Futures.transform(handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg()),
+                    value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         } else if (transportApiRequestMsg.hasGetTenantRoutingInfoRequestMsg()) {
-            return Futures.transform(handle(transportApiRequestMsg.getGetTenantRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+            return Futures.transform(handle(transportApiRequestMsg.getGetTenantRoutingInfoRequestMsg()),
+                    value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+        } else if (transportApiRequestMsg.hasLwM2MRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getLwM2MRequestMsg()),
+                    value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
         return Futures.transform(getEmptyTransportApiResponseFuture(), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
     }
@@ -131,12 +139,47 @@ public class DefaultTransportApiService implements TransportApiService {
                 return TransportApiResponseMsg.newBuilder()
                         .setGetOrCreateDeviceResponseMsg(GetOrCreateDeviceFromGatewayResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).build()).build();
             } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by gateway id and name", gatewayId, requestMsg.getDeviceName(), e);
+                log.warn("[{}][{}] Failed to lookup device by gateway id and name", gatewayId, requestMsg.getDeviceName(), e);
                 throw new RuntimeException(e);
             } finally {
                 deviceCreationLock.unlock();
             }
         }, dbCallbackExecutorService);
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.LwM2MRequestMsg requestMsg) {
+        if (requestMsg.hasRegistrationMsg()) {
+            return handleRegistration(requestMsg.getRegistrationMsg());
+        } else {
+            return Futures.immediateFailedFuture(new RuntimeException("Not supported!"));
+        }
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handleRegistration(TransportProtos.LwM2MRegistrationRequestMsg msg) {
+        TenantId tenantId = new TenantId(UUID.fromString(msg.getTenantId()));
+        String deviceName = msg.getEndpoint();
+        deviceCreationLock.lock();
+        try {
+            Device device = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
+            if (device == null) {
+                device = new Device();
+                device.setTenantId(tenantId);
+                device.setName(deviceName);
+                device.setType("LwM2M");
+                device = deviceService.saveDevice(device);
+                deviceStateService.onDeviceAdded(device);
+            }
+            TransportProtos.LwM2MRegistrationResponseMsg registrationResponseMsg =
+                    TransportProtos.LwM2MRegistrationResponseMsg.newBuilder()
+                            .setDeviceInfo(getDeviceInfoProto(device)).build();
+            TransportProtos.LwM2MResponseMsg responseMsg = TransportProtos.LwM2MResponseMsg.newBuilder().setRegistrationMsg(registrationResponseMsg).build();
+            return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setLwM2MResponseMsg(responseMsg).build());
+        } catch (JsonProcessingException e) {
+            log.warn("[{}][{}] Failed to lookup device by gateway id and name", tenantId, deviceName, e);
+            throw new RuntimeException(e);
+        } finally {
+            deviceCreationLock.unlock();
+        }
     }
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetTenantRoutingInfoRequestMsg requestMsg) {

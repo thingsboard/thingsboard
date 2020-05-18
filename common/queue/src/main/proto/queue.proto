@@ -160,6 +160,25 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
   DeviceInfoProto deviceInfo = 1;
 }
 
+message LwM2MRegistrationRequestMsg {
+  string tenantId = 1;
+  string endpoint = 2;
+  string smsNumber = 3;
+  string lwM2MVersion = 4;
+}
+
+message LwM2MRegistrationResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+}
+
+message LwM2MRequestMsg {
+  LwM2MRegistrationRequestMsg registrationMsg = 1;
+}
+
+message LwM2MResponseMsg {
+  LwM2MRegistrationResponseMsg registrationMsg = 1;
+}
+
 message GetTenantRoutingInfoRequestMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -362,6 +381,7 @@ message TransportApiRequestMsg {
   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
+  LwM2MRequestMsg lwM2MRequestMsg = 5;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -369,6 +389,7 @@ message TransportApiResponseMsg {
   ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
+  LwM2MResponseMsg lwM2MResponseMsg = 5;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
