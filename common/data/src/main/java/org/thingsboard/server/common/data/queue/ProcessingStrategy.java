@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.common.data.queue;
 
-public interface SystemDataLoaderService {
+import lombok.Data;
 
-    void createSysAdmin() throws Exception;
-
-    void createAdminSettings() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
-    void createQueues();
-
+@Data
+public class ProcessingStrategy {
+    private ProcessingStrategyType type;
+    private int retries;
+    private double failurePercentage;
+    private long pauseBetweenRetries;
 }

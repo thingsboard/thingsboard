@@ -21,6 +21,7 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbKafkaSettings;
 
 import java.util.Collections;
 import java.util.Map;

@@ -15,17 +15,22 @@
  */
 package org.thingsboard.server.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,18 +39,65 @@ import java.util.List;
 @RequestMapping("/api")
 public class QueueController extends BaseController {
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @Autowired
+    private QueueService queueService;
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
     @ResponseBody
-    public List<String> getTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
+    public List<Queue> getTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
             ServiceType type = ServiceType.valueOf(serviceType);
             switch (type) {
                 case TB_RULE_ENGINE:
-                    return Arrays.asList("Main", "HighPriority", "SequentialByOriginator");
+                    return queueService.findQueues(getTenantId());
                 default:
                     return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.POST)
+    @ResponseBody
+    public Queue saveQueue(@RequestBody Queue queue,
+                           @RequestParam String serviceType) throws ThingsboardException {
+        checkParameter("serviceType", serviceType);
+        checkNotNull(queue);
+        try {
+            ServiceType type = ServiceType.valueOf(serviceType);
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    queue.setTenantId(getTenantId());
+                    Queue savedQueue = queueService.createOrUpdateQueue(queue);
+                    checkNotNull(savedQueue);
+                    return savedQueue;
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues/{queueId}", params = {"serviceType"}, method = RequestMethod.DELETE)
+    @ResponseBody
+    public boolean deleteQueue(@RequestParam String serviceType,
+                               @PathVariable("queueId") String queueIdStr) throws ThingsboardException {
+        checkParameter("serviceType", serviceType);
+        checkParameter("queueId", queueIdStr);
+        try {
+            ServiceType type = ServiceType.valueOf(serviceType);
+            QueueId queueId = new QueueId(toUUID(queueIdStr));
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    return queueService.deleteQueue(getTenantId(), queueId);
+                default:
+                    return false;
             }
         } catch (Exception e) {
             throw handleException(e);

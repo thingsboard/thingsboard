@@ -35,6 +35,7 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.common.AbstractParallelTbQueueConsumerTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
+import org.thingsboard.server.queue.settings.TbPubSubSettings;
 
 import java.io.IOException;
 import java.util.ArrayList;

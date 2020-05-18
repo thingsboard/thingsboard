@@ -20,8 +20,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.SubmitStrategy;
+import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.util.SqlDao;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -73,6 +82,12 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     @Autowired
     private InstallScripts installScripts;
+
+    @Autowired
+    private TbQueueRuleEngineSettings ruleEngineSettings;
+
+    @Autowired
+    private QueueService queueService;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -183,18 +198,22 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Updating schema ...");
                     try {
                         conn.createStatement().execute("ALTER TABLE asset ADD COLUMN label varchar(255)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.2", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     try {
                         conn.createStatement().execute("ALTER TABLE device ADD CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     try {
                         conn.createStatement().execute("ALTER TABLE device_credentials ADD CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     try {
                         conn.createStatement().execute("ALTER TABLE asset ADD CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     log.info("Schema updated.");
                 }
                 break;
@@ -233,6 +252,61 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Schema updated.");
                 }
                 break;
+            case "3.0.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    try {
+                        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS queue(" +
+                                "id varchar(31) NOT NULL CONSTRAINT queue_pkey PRIMARY KEY," +
+                                "tenant_id varchar(31)," +
+                                "name varchar(255)," +
+                                "topic varchar(255) UNIQUE," +
+                                "poll_interval int," +
+                                "partitions int," +
+                                "pack_processing_timeout bigint," +
+                                "submit_strategy varchar(255)," +
+                                "processing_strategy varchar(255)" +
+                                ");");
+                    } catch (Exception e) {
+                    }
+
+//                    try {
+                        if (!CollectionUtils.isEmpty(ruleEngineSettings.getQueues())) {
+                            ruleEngineSettings.getQueues().forEach(queueSettings -> {
+                                Queue queue = new Queue();
+                                queue.setTenantId(TenantId.SYS_TENANT_ID);
+                                queue.setName(queueSettings.getName());
+                                queue.setTopic(queueSettings.getTopic());
+                                queue.setPollInterval(queueSettings.getPollInterval());
+                                queue.setPartitions(queueSettings.getPartitions());
+                                queue.setPackProcessingTimeout(queueSettings.getPackProcessingTimeout());
+
+                                SubmitStrategy submitStrategy = new SubmitStrategy();
+                                submitStrategy.setBatchSize(queueSettings.getSubmitStrategy().getBatchSize());
+                                submitStrategy.setType(SubmitStrategyType.valueOf(queueSettings.getSubmitStrategy().getType()));
+                                queue.setSubmitStrategy(submitStrategy);
+
+                                ProcessingStrategy processingStrategy = new ProcessingStrategy();
+                                processingStrategy.setType(ProcessingStrategyType.valueOf(queueSettings.getProcessingStrategy().getType()));
+                                processingStrategy.setRetries(queueSettings.getProcessingStrategy().getRetries());
+                                processingStrategy.setFailurePercentage(queueSettings.getProcessingStrategy().getFailurePercentage());
+                                processingStrategy.setPauseBetweenRetries(queueSettings.getProcessingStrategy().getPauseBetweenRetries());
+                                queue.setProcessingStrategy(processingStrategy);
+                                queueService.createOrUpdateQueue(queue);
+                            });
+                        } else {
+                            createDefaultQueues();
+                        }
+//                    } catch (Exception e) {
+//                    }
+
+                    try {
+                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN number_ofQueues int DEFAULT (1), ADD COLUMN max_number_of_partitions_per_queue int DEFAULT (10)");
+                    } catch (Exception e) {
+                    }
+                    log.info("Schema updated.");
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
@@ -242,5 +316,64 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         String sql = new String(Files.readAllBytes(sqlFile), Charset.forName("UTF-8"));
         conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
         Thread.sleep(5000);
+    }
+
+    private void createDefaultQueues() {
+        Queue mainQueue = new Queue();
+        mainQueue.setTenantId(TenantId.SYS_TENANT_ID);
+        mainQueue.setName("Main");
+        mainQueue.setTopic("tb_rule_engine.main");
+        mainQueue.setPollInterval(25);
+        mainQueue.setPartitions(10);
+        mainQueue.setPackProcessingTimeout(60000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueue.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
+        queueService.createOrUpdateQueue(mainQueue);
+
+        Queue highPriorityQueue = new Queue();
+        highPriorityQueue.setTenantId(TenantId.SYS_TENANT_ID);
+        highPriorityQueue.setName("HighPriority");
+        highPriorityQueue.setTopic("tb_rule_engine.hp");
+        highPriorityQueue.setPollInterval(25);
+        highPriorityQueue.setPartitions(10);
+        highPriorityQueue.setPackProcessingTimeout(60000);
+        SubmitStrategy highPriorityQueueSubmitStrategy = new SubmitStrategy();
+        highPriorityQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        highPriorityQueueSubmitStrategy.setBatchSize(100);
+        highPriorityQueue.setSubmitStrategy(highPriorityQueueSubmitStrategy);
+        ProcessingStrategy highPriorityQueueProcessingStrategy = new ProcessingStrategy();
+        highPriorityQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
+        highPriorityQueueProcessingStrategy.setRetries(0);
+        highPriorityQueueProcessingStrategy.setFailurePercentage(0);
+        highPriorityQueueProcessingStrategy.setPauseBetweenRetries(5);
+        highPriorityQueue.setProcessingStrategy(highPriorityQueueProcessingStrategy);
+        queueService.createOrUpdateQueue(highPriorityQueue);
+
+        Queue sequentialByOriginatorQueue = new Queue();
+        sequentialByOriginatorQueue.setTenantId(TenantId.SYS_TENANT_ID);
+        sequentialByOriginatorQueue.setName("SequentialByOriginator");
+        sequentialByOriginatorQueue.setTopic("tb_rule_engine.sq");
+        sequentialByOriginatorQueue.setPollInterval(25);
+        sequentialByOriginatorQueue.setPartitions(10);
+        sequentialByOriginatorQueue.setPackProcessingTimeout(60000);
+        SubmitStrategy sequentialByOriginatorQueueSubmitStrategy = new SubmitStrategy();
+        sequentialByOriginatorQueueSubmitStrategy.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
+        sequentialByOriginatorQueueSubmitStrategy.setBatchSize(100);
+        sequentialByOriginatorQueue.setSubmitStrategy(sequentialByOriginatorQueueSubmitStrategy);
+        ProcessingStrategy sequentialByOriginatorQueueProcessingStrategy = new ProcessingStrategy();
+        sequentialByOriginatorQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
+        sequentialByOriginatorQueueProcessingStrategy.setRetries(3);
+        sequentialByOriginatorQueueProcessingStrategy.setFailurePercentage(0);
+        sequentialByOriginatorQueueProcessingStrategy.setPauseBetweenRetries(5);
+        sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
+        queueService.createOrUpdateQueue(sequentialByOriginatorQueue);
     }
 }
