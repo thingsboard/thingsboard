@@ -345,8 +345,8 @@ export default abstract class LeafletMap {
 
     updatePolylines(polyData: FormattedData[][], data?: FormattedData) {
         polyData.forEach((dataSource) => {
-            data = data || dataSource[0];
             if (dataSource.length) {
+                data = data || dataSource[0];
                 if (this.polylines.get(data.$datasource.entityName)) {
                     this.updatePolyline(data, dataSource, this.options);
                 }
