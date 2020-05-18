@@ -20,7 +20,7 @@ import { Datasource } from '@app/shared/models/widget.models';
 import _ from 'lodash';
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { createLabelFromDatasource, hashCode, isNumber, padValue } from '@core/utils';
+import { createLabelFromDatasource, hashCode, isNumber, isUndefined, padValue } from '@core/utils';
 
 export function createTooltip(target: L.Layer,
     settings: MarkerSettings | PolylineSettings | PolygonSettings,
@@ -70,6 +70,9 @@ export function interpolateOnLineSegment(
 }
 
 export function findAngle(startPoint: FormattedData, endPoint: FormattedData, latKeyName: string, lngKeyName: string): number {
+  if(isUndefined(startPoint) || isUndefined(endPoint)){
+    return 0;
+  }
   let angle = -Math.atan2(endPoint[latKeyName] - startPoint[latKeyName], endPoint[lngKeyName] - startPoint[lngKeyName]);
   angle = angle * 180 / Math.PI;
   return parseInt(angle.toFixed(2), 10);
