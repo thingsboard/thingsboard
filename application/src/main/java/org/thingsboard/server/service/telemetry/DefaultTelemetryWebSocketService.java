@@ -345,7 +345,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 keys.forEach(key -> subState.put(key, 0L));
                 attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
-                TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.SERVER_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
+                TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.ANY_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
 
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
@@ -442,7 +442,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 Map<String, Long> subState = new HashMap<>(attributesData.size());
                 attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
-                TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.SERVER_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
+                TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.ANY_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
 
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
