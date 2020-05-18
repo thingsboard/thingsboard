@@ -24,7 +24,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
+import org.thingsboard.server.transport.mqtt.adaptors.JsonV1MqttAdaptor;
+import org.thingsboard.server.transport.mqtt.adaptors.JsonV2MqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
+import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 
 /**
  * Created by ashvayka on 04.10.18.
@@ -40,7 +43,15 @@ public class MqttTransportContext extends TransportContext {
 
     @Getter
     @Autowired
-    private MqttTransportAdaptor adaptor;
+    private JsonV1MqttAdaptor jsonV1MqttAdaptor;
+
+    @Getter
+    @Autowired
+    private JsonV2MqttAdaptor jsonV2MqttAdaptor;
+
+    @Getter
+    @Autowired
+    private ProtoMqttAdaptor protoMqttAdaptor;
 
     @Getter
     @Value("${transport.mqtt.netty.max_payload_size}")
