@@ -955,11 +955,6 @@
                 <version>${commons-collections.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.struts</groupId>
                 <artifactId>struts-core</artifactId>
                 <version>${struts.version}</version>
