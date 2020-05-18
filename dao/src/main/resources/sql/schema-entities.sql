@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS tenant (
     title varchar(255),
     zip varchar(255),
     isolated_tb_core boolean,
-    isolated_tb_rule_engine boolean
+    isolated_tb_rule_engine boolean,
     number_ofQueues int ,
     max_number_of_partitions_per_queue int
 );
