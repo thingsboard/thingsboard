@@ -1,6 +1,0 @@
-/*!
- * AngularJS Material Design
- * https://github.com/angular/material
- * @license MIT
- * v1.1.18-master-97a1616
- */md-divider{display:block;border-top-width:1px;border-top-style:solid;margin:0}md-divider[md-inset]{margin-left:80px}[dir=rtl] md-divider[md-inset]{margin-left:auto;margin-right:80px}.layout-gt-lg-row>md-divider,.layout-gt-md-row>md-divider,.layout-gt-sm-row>md-divider,.layout-gt-xs-row>md-divider,.layout-lg-row>md-divider,.layout-md-row>md-divider,.layout-row>md-divider,.layout-sm-row>md-divider,.layout-xl-row>md-divider,.layout-xs-row>md-divider{border-top-width:0;border-right-width:1px;border-right-style:solid}

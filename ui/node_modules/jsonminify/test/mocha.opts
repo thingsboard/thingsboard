@@ -1,4 +1,0 @@
---ui bdd
---reporter spec
---timeout 5000
---require should

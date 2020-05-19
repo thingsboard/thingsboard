@@ -1,7 +1,0 @@
-{
-  "name": "tooltipster",
-  "main": ["dist/js/tooltipster.bundle.js", "dist/css/tooltipster.bundle.css"],
-  "dependencies": {
-    "jquery": ">=1.10"
-  }
-}

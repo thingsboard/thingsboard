@@ -1,1 +1,0 @@
-{"version":3,"file":"simple-traverse.d.ts","sourceRoot":"","sources":["../src/simple-traverse.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,sCAAsC,CAAC;AAehE,UAAU,qBAAqB;IAC7B,KAAK,EAAE,CAAC,IAAI,EAAE,QAAQ,CAAC,IAAI,EAAE,MAAM,EAAE,QAAQ,CAAC,IAAI,GAAG,SAAS,KAAK,IAAI,CAAC;CACzE;AAmCD,wBAAgB,cAAc,CAC5B,YAAY,EAAE,QAAQ,CAAC,IAAI,EAC3B,OAAO,EAAE,qBAAqB,QAG/B"}

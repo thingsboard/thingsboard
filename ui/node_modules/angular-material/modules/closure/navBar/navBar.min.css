@@ -1,6 +1,0 @@
-/*!
- * AngularJS Material Design
- * https://github.com/angular/material
- * @license MIT
- * v1.1.18-master-97a1616
- */.md-nav-bar{border-style:solid;border-width:0 0 1px;height:48px;position:relative}._md-nav-bar-list{outline:none;list-style:none;margin:0;padding:0;box-sizing:border-box;display:flex;flex-direction:row}.md-nav-item:first-of-type{margin-left:8px}.md-button._md-nav-button{line-height:24px;margin:0 4px;padding:12px 16px;transition:background-color .35s cubic-bezier(.35,0,.25,1)}.md-button._md-nav-button:focus{outline:none}md-nav-ink-bar{bottom:0;height:2px;left:auto;position:absolute;right:auto;background-color:#000}md-nav-ink-bar._md-left{transition:left .125s cubic-bezier(.35,0,.25,1),right .25s cubic-bezier(.35,0,.25,1)}md-nav-ink-bar._md-right{transition:left .25s cubic-bezier(.35,0,.25,1),right .125s cubic-bezier(.35,0,.25,1)}md-nav-ink-bar.ng-animate{transition:none}md-nav-extra-content{min-height:48px;padding-right:12px}

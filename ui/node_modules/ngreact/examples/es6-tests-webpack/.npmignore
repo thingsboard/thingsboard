@@ -1,7 +1,0 @@
-app/*.*
-!app/index.html
-.DS_STORE
-.idea
-*.iml
-node_modules
-*.log

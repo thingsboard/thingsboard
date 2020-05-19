@@ -1,6 +1,0 @@
-node_modules
-npm-debug.log
-.idea
-*.sublime-project
-*.sublime-workspace
-.DS_STORE

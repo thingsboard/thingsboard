@@ -1,2 +1,0 @@
-SyntaxError: Error in {path}plugin-error.js on line 1, column 8:
-1 throw new Error('Error');

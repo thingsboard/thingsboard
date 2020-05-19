@@ -1,3 +1,0 @@
-SyntaxError: Operation node returned by a function is not valid here in {path}functions-11-operation.less on line 2, column 1:
-1 @plugin "../plugin/plugin-tree-nodes";
-2 test-operation();

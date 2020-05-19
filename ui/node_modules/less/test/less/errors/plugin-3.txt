@@ -1,4 +1,0 @@
-SyntaxError: Plugin error during evaluation in {path}plugin-error-3.js on line 3, column 16:
-2     eval: function() {
-3         throw new Error('An error was here.')
-4     }

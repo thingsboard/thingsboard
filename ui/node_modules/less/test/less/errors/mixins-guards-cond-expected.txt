@@ -1,3 +1,0 @@
-SyntaxError: expected condition in {path}mixins-guards-cond-expected.less on line 1, column 20:
-1 .max (@a, @b) when @a {
-2   width: @b;

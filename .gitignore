@@ -18,6 +18,7 @@ build/
 tmp_deb_control/
 tmp_rpm_control/
 tmp_sh/
+ui/
 .gwt/
 .settings/
 /bin
