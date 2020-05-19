@@ -135,7 +135,7 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
                 stringColumn("entity_type"),
                 stringColumn("attribute_type"),
                 stringColumn("attribute_key"),
-                booleanColumn("bool_v"),
+                booleanColumn("bool_v", true),
                 stringColumn("str_v"),
                 bigintColumn("long_v"),
                 doubleColumn("dbl_v"),
