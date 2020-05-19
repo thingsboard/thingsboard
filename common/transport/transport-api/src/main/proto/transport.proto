@@ -60,6 +60,16 @@ message ClaimDevice {
   int64 durationMs = 2;
 }
 
+message AttributesRequest {
+  string clientKeys = 1;
+  string sharedKeys = 2;
+}
+
+message RpcRequest {
+  string method = 1;
+  string params = 2;
+}
+
 message TelemetryMsg {
   string deviceName = 1;
   string deviceType = 2;

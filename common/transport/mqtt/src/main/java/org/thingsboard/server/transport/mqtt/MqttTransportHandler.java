@@ -54,6 +54,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenR
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonV1MqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonV2MqttAdaptor;
+import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
@@ -92,7 +93,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private final UUID sessionId;
     private final MqttTransportContext context;
-    // TODO: 5/15/20 fetch adaptor from  deviceSessionCtx
     private final JsonV1MqttAdaptor jsonV1MqttAdaptor;
     private final JsonV2MqttAdaptor jsonV2MqttAdaptor;
     private final ProtoMqttAdaptor protoMqttAdaptor;
@@ -108,7 +108,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     MqttTransportHandler(MqttTransportContext context, SslHandler sslHandler) {
         this.sessionId = UUID.randomUUID();
         this.context = context;
-        // TODO: 5/15/20 fetch adaptor from  deviceSessionCtx
         this.transportService = context.getTransportService();
         this.jsonV1MqttAdaptor = context.getJsonV1MqttAdaptor();
         this.jsonV2MqttAdaptor = context.getJsonV2MqttAdaptor();
@@ -177,7 +176,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         int msgId = mqttMsg.variableHeader().packetId();
         log.trace("[{}][{}] Processing publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
 
-        if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V1_JSON)) {
+        if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V1_JSON) || topicName.startsWith(MqttTopics.BASE_GATEWAY_API_V2_TOPIC)) {
             if (gatewaySessionHandler != null) {
                 handleGatewayPublishMsg(topicName, msgId, mqttMsg);
                 transportService.reportActivity(sessionInfo);
@@ -191,25 +190,53 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             switch (topicName) {
                 case MqttTopics.GATEWAY_TELEMETRY_TOPIC_V1_JSON:
-                    gatewaySessionHandler.onDeviceTelemetry(mqttMsg);
+                case MqttTopics.GATEWAY_TELEMETRY_TOPIC_V2_JSON:
+                    gatewaySessionHandler.onDeviceTelemetryJson(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_CLAIM_TOPIC_V1_JSON:
-                    gatewaySessionHandler.onDeviceClaim(mqttMsg);
+                case MqttTopics.GATEWAY_CLAIM_TOPIC_V2_JSON:
+                    gatewaySessionHandler.onDeviceClaimJson(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V1_JSON:
-                    gatewaySessionHandler.onDeviceAttributes(mqttMsg);
+                case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_JSON:
+                    gatewaySessionHandler.onDeviceAttributesJson(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V1_JSON:
-                    gatewaySessionHandler.onDeviceAttributesRequest(mqttMsg);
+                case MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V2_JSON:
+                    gatewaySessionHandler.onDeviceAttributesRequestJson(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_RPC_TOPIC_V1_JSON:
-                    gatewaySessionHandler.onDeviceRpcResponse(mqttMsg);
+                case MqttTopics.GATEWAY_RPC_TOPIC_V2_JSON:
+                    gatewaySessionHandler.onDeviceRpcResponseJson(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_CONNECT_TOPIC_V1_JSON:
-                    gatewaySessionHandler.onDeviceConnect(mqttMsg);
+                case MqttTopics.GATEWAY_CONNECT_TOPIC_V2_JSON:
+                    gatewaySessionHandler.onDeviceConnectJson(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_DISCONNECT_TOPIC_V1_JSON:
-                    gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
+                case MqttTopics.GATEWAY_DISCONNECT_TOPIC_V2_JSON:
+                    gatewaySessionHandler.onDeviceDisconnectJson(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_TELEMETRY_TOPIC_V2_PROTO:
+                    gatewaySessionHandler.onDeviceTelemetryProto(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_CLAIM_TOPIC_V2_PROTO:
+                    gatewaySessionHandler.onDeviceClaimProto(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_PROTO:
+                    gatewaySessionHandler.onDeviceAttributesProto(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V2_PROTO:
+                    gatewaySessionHandler.onDeviceAttributesRequestProto(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_RPC_TOPIC_V2_PROTO:
+                    gatewaySessionHandler.onDeviceRpcResponseProto(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_CONNECT_TOPIC_V2_PROTO:
+                    gatewaySessionHandler.onDeviceConnectProto(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_DISCONNECT_TOPIC_V2_PROTO:
+                    gatewaySessionHandler.onDeviceDisconnectProto(mqttMsg);
                     break;
             }
         } catch (RuntimeException | AdaptorException e) {
@@ -268,7 +295,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     TransportProtos.PostTelemetryMsg postTelemetryMsg = protoMqttAdaptor.convertToPostTelemetry(deviceSessionCtx, mqttMsg);
                     transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
                 } else if (topicName.equals(MqttTopics.DEVICE_TELEMETRY_ARRAY_TOPIC_V2_PROTO)) {
-                    TransportProtos.PostTelemetryMsg postTelemetryMsg = protoMqttAdaptor.convertToPostTelemetryArray(deviceSessionCtx, mqttMsg);
+                    TransportProtos.PostTelemetryMsg postTelemetryMsg = protoMqttAdaptor.convertToPostTelemetryArray(mqttMsg);
                     transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
                 } else if (topicName.equals(MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO)) {
                     TransportProtos.PostAttributeMsg postAttributeMsg = protoMqttAdaptor.convertToPostAttributes(deviceSessionCtx, mqttMsg);
@@ -323,26 +350,51 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         boolean activityReported = false;
         for (MqttTopicSubscription subscription : mqttMsg.payload().topicSubscriptions()) {
             String topic = subscription.topicName();
+            if (topic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC_V1_JSON) || topic.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V1_JSON)) {
+                deviceSessionCtx.setTransportAdaptor(jsonV1MqttAdaptor);
+            } else if (topic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC_V2_JSON) || topic.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V2_JSON)) {
+                deviceSessionCtx.setTransportAdaptor(jsonV2MqttAdaptor);
+            } else {
+                deviceSessionCtx.setTransportAdaptor(protoMqttAdaptor);
+            }
             MqttQoS reqQoS = subscription.qualityOfService();
             try {
                 switch (topic) {
-                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V1_JSON: {
+                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V1_JSON:
+                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_JSON:
+                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO: {
                         transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         activityReported = true;
                         break;
                     }
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC_V1_JSON: {
+                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC_V1_JSON:
+                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC_V2_JSON:
+                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC_V2_PROTO: {
                         transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().build(), null);
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         activityReported = true;
                         break;
                     }
                     case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC_V1_JSON:
+                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC_V2_JSON:
+                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC_V2_PROTO:
+
                     case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V1_JSON:
+                    case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_JSON:
+                    case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_PROTO:
+
                     case MqttTopics.GATEWAY_RPC_TOPIC_V1_JSON:
+                    case MqttTopics.GATEWAY_RPC_TOPIC_V2_JSON:
+                    case MqttTopics.GATEWAY_RPC_TOPIC_V2_PROTO:
+
                     case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V1_JSON:
+                    case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V2_JSON:
+                    case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V2_PROTO:
+
                     case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V1_JSON:
+                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V2_JSON:
+                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V2_PROTO:
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
                     default:
@@ -376,12 +428,16 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             mqttQoSMap.remove(new MqttTopicMatcher(topicName));
             try {
                 switch (topicName) {
-                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V1_JSON: {
+                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V1_JSON:
+                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_JSON:
+                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO: {
                         transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(), null);
                         activityReported = true;
                         break;
                     }
-                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC_V1_JSON: {
+                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC_V1_JSON:
+                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC_V2_JSON:
+                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC_V2_PROTO: {
                         transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(), null);
                         activityReported = true;
                         break;
@@ -586,13 +642,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-
-    // TODO: 5/13/20 Fetch mqttAdaptor from deviceSessionCtx
-
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
         try {
-            jsonV1MqttAdaptor.convertToPublish(deviceSessionCtx, response).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            MqttTransportAdaptor transportAdaptor = deviceSessionCtx.getTransportAdaptor();
+            transportAdaptor.convertToPublish(deviceSessionCtx, response).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
         }
@@ -601,7 +655,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg notification) {
         try {
-            jsonV1MqttAdaptor.convertToPublish(deviceSessionCtx, notification).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            MqttTransportAdaptor transportAdaptor = deviceSessionCtx.getTransportAdaptor();
+            transportAdaptor.convertToPublish(deviceSessionCtx, notification).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes update to MQTT msg", sessionId, e);
         }
@@ -617,7 +672,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
         log.trace("[{}] Received RPC command to device", sessionId);
         try {
-            jsonV1MqttAdaptor.convertToPublish(deviceSessionCtx, rpcRequest).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            MqttTransportAdaptor transportAdaptor = deviceSessionCtx.getTransportAdaptor();
+            transportAdaptor.convertToPublish(deviceSessionCtx, rpcRequest).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device RPC command to MQTT msg", sessionId, e);
         }
@@ -627,7 +683,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg rpcResponse) {
         log.trace("[{}] Received RPC command to device", sessionId);
         try {
-            jsonV1MqttAdaptor.convertToPublish(deviceSessionCtx, rpcResponse).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            MqttTransportAdaptor transportAdaptor = deviceSessionCtx.getTransportAdaptor();
+            transportAdaptor.convertToPublish(deviceSessionCtx, rpcResponse).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device RPC command to MQTT msg", sessionId, e);
         }

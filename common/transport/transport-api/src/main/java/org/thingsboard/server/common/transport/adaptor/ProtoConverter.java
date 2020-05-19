@@ -26,6 +26,7 @@ import org.thingsboard.server.gen.gw.GatewayProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -72,11 +73,28 @@ public class ProtoConverter {
         }
     }
 
-    public static TransportProtos.ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, byte[] bytes) throws IllegalArgumentException, InvalidProtocolBufferException {
+    public static TransportProtos.ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, byte[] bytes) throws InvalidProtocolBufferException {
         GatewayProtos.ClaimDevice proto = GatewayProtos.ClaimDevice.parseFrom(bytes);
         String secretKey = proto.getSecretKey() != null ? proto.getSecretKey() : DataConstants.DEFAULT_SECRET_KEY;
         long durationMs = proto.getDurationMs();
         return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
+    }
+
+    public static TransportProtos.GetAttributeRequestMsg convertToGetAttributeRequestMessage(byte[] bytes, int requestId) throws InvalidProtocolBufferException, RuntimeException {
+        GatewayProtos.AttributesRequest proto = GatewayProtos.AttributesRequest.parseFrom(bytes);
+        TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+        result.setRequestId(requestId);
+        String clientKeys = proto.getClientKeys();
+        String sharedKeys = proto.getSharedKeys();
+        if (!StringUtils.isEmpty(clientKeys)) {
+            List<String> clientKeysList = Arrays.asList(clientKeys.split(","));
+            result.addAllClientAttributeNames(clientKeysList);
+        }
+        if (sharedKeys != null) {
+            List<String> sharedKeysList = Arrays.asList(sharedKeys.split(","));
+            result.addAllSharedAttributeNames(sharedKeysList);
+        }
+        return result.build();
     }
 
     private static TransportProtos.ClaimDeviceMsg buildClaimDeviceMsg(DeviceId deviceId, String secretKey, long durationMs) {
@@ -163,5 +181,12 @@ public class ProtoConverter {
             }
         });
         return keyValueListProtos;
+    }
+
+    public static TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(byte[] bytes, int requestId) throws InvalidProtocolBufferException {
+        GatewayProtos.RpcRequest proto = GatewayProtos.RpcRequest.parseFrom(bytes);
+        String method = proto.getMethod();
+        String params = proto.getParams();
+        return TransportProtos.ToServerRpcRequestMsg.newBuilder().setRequestId(requestId).setMethodName(method).setParams(params).build();
     }
 }

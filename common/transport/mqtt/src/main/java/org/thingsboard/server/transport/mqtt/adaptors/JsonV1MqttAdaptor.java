@@ -78,54 +78,6 @@ public class JsonV1MqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
-    public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
-        String topicName = inbound.variableHeader().topicName();
-        try {
-            TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
-            result.setRequestId(Integer.parseInt(topicName.substring(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V1_JSON.length())));
-            String payload = inbound.payload().toString(UTF8);
-            JsonElement requestBody = new JsonParser().parse(payload);
-            Set<String> clientKeys = toStringSet(requestBody, "clientKeys");
-            Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
-            if (clientKeys != null) {
-                result.addAllClientAttributeNames(clientKeys);
-            }
-            if (sharedKeys != null) {
-                result.addAllSharedAttributeNames(sharedKeys);
-            }
-            return result.build();
-        } catch (RuntimeException e) {
-            log.warn("Failed to decode get attributes request", e);
-            throw new AdaptorException(e);
-        }
-    }
-
-    @Override
-    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
-        String topicName = inbound.variableHeader().topicName();
-        try {
-            int requestId = Integer.parseInt(topicName.substring(MqttTopics.DEVICE_RPC_RESPONSE_TOPIC_V1_JSON.length()));
-            String payload = inbound.payload().toString(UTF8);
-            return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(payload).build();
-        } catch (RuntimeException e) {
-            log.warn("Failed to decode get attributes request", e);
-            throw new AdaptorException(e);
-        }
-    }
-
-    @Override
-    public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
-        String topicName = inbound.variableHeader().topicName();
-        String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
-        try {
-            int requestId = Integer.parseInt(topicName.substring(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC_V1_JSON.length()));
-            return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), requestId);
-        } catch (IllegalStateException | JsonSyntaxException ex) {
-            throw new AdaptorException(ex);
-        }
-    }
-
-    @Override
     public TransportProtos.ClaimDeviceMsg convertToClaimDevice(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload(), true);
         try {
@@ -136,28 +88,28 @@ public class JsonV1MqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        return processGetAttributeRequestMsg(inbound, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V1_JSON);
+    }
+
+    @Override
+    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        return processToDeviceRpcResponseMsg(inbound, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC_V1_JSON);
+    }
+
+    @Override
+    public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        return processToServerRpcRequestMsg(ctx, inbound, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC_V1_JSON);
+    }
+
+    @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        if (!StringUtils.isEmpty(responseMsg.getError())) {
-            throw new AdaptorException(responseMsg.getError());
-        } else {
-            Integer requestId = responseMsg.getRequestId();
-            if (requestId >= 0) {
-                return Optional.of(createMqttPublishMsg(ctx,
-                        MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V1_JSON + requestId,
-                        JsonConverter.toJson(responseMsg)));
-            }
-            return Optional.empty();
-        }
+        return processConvertFromAttributeResponseMsg(ctx, responseMsg, MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V1_JSON);
     }
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        if (!StringUtils.isEmpty(responseMsg.getError())) {
-            throw new AdaptorException(responseMsg.getError());
-        } else {
-            JsonObject result = JsonConverter.getJsonObjectForGateway(deviceName, responseMsg);
-            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V1_JSON, result));
-        }
+        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V1_JSON);
     }
 
     @Override
@@ -195,6 +147,74 @@ public class JsonV1MqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
+    protected TransportProtos.GetAttributeRequestMsg processGetAttributeRequestMsg(MqttPublishMessage inbound, String topic) throws AdaptorException {
+        String topicName = inbound.variableHeader().topicName();
+        try {
+            TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+            result.setRequestId(getRequestId(topicName, topic));
+            String payload = inbound.payload().toString(UTF8);
+            JsonElement requestBody = new JsonParser().parse(payload);
+            Set<String> clientKeys = toStringSet(requestBody, "clientKeys");
+            Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
+            if (clientKeys != null) {
+                result.addAllClientAttributeNames(clientKeys);
+            }
+            if (sharedKeys != null) {
+                result.addAllSharedAttributeNames(sharedKeys);
+            }
+            return result.build();
+        } catch (RuntimeException e) {
+            log.warn("Failed to decode get attributes request", e);
+            throw new AdaptorException(e);
+        }
+    }
+
+    protected TransportProtos.ToDeviceRpcResponseMsg processToDeviceRpcResponseMsg(MqttPublishMessage inbound, String topic) throws AdaptorException {
+        String topicName = inbound.variableHeader().topicName();
+        try {
+            int requestId = getRequestId(topicName, topic);
+            String payload = inbound.payload().toString(UTF8);
+            return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(payload).build();
+        } catch (RuntimeException e) {
+            log.warn("Failed to decode Rpc response", e);
+            throw new AdaptorException(e);
+        }
+    }
+
+    protected TransportProtos.ToServerRpcRequestMsg processToServerRpcRequestMsg(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound, String topic) throws AdaptorException {
+        String topicName = inbound.variableHeader().topicName();
+        String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
+        try {
+            int requestId = getRequestId(topicName, topic);
+            return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), requestId);
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
+    }
+
+    protected Optional<MqttMessage> processConvertFromAttributeResponseMsg(MqttDeviceAwareSessionContext ctx, TransportProtos.GetAttributeResponseMsg responseMsg, String topic) throws AdaptorException {
+        if (!StringUtils.isEmpty(responseMsg.getError())) {
+            throw new AdaptorException(responseMsg.getError());
+        } else {
+            int requestId = responseMsg.getRequestId();
+            if (requestId >= 0) {
+                return Optional.of(createMqttPublishMsg(ctx,
+                        topic + requestId,
+                        JsonConverter.toJson(responseMsg)));
+            }
+            return Optional.empty();
+        }
+    }
+
+    protected Optional<MqttMessage> processConvertFromGatewayAttributeResponseMsg(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg, String topic) throws AdaptorException {
+        if (!StringUtils.isEmpty(responseMsg.getError())) {
+            throw new AdaptorException(responseMsg.getError());
+        } else {
+            JsonObject result = JsonConverter.getJsonObjectForGateway(deviceName, responseMsg);
+            return Optional.of(createMqttPublishMsg(ctx, topic, result));
+        }
+    }
+
     protected MqttPublishMessage createMqttPublishMsg(MqttDeviceAwareSessionContext ctx, String topic, JsonElement json) {
         MqttFixedHeader mqttFixedHeader =
                 new MqttFixedHeader(MqttMessageType.PUBLISH, false, ctx.getQoSForTopic(topic), false, 0);
@@ -222,6 +242,10 @@ public class JsonV1MqttAdaptor implements MqttTransportAdaptor {
             }
         }
         return payload;
+    }
+
+    private int getRequestId(String topicName, String topic) {
+        return Integer.parseInt(topicName.substring(topic.length()));
     }
 
 }

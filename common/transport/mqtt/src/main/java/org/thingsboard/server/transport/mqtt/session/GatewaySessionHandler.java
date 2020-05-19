@@ -90,12 +90,12 @@ public class GatewaySessionHandler {
         this.channel = deviceSessionCtx.getChannel();
     }
 
-    public void onDeviceConnect(MqttPublishMessage msg) throws AdaptorException {
+    public void onDeviceConnectJson(MqttPublishMessage msg) throws AdaptorException {
         JsonElement json = getJson(msg);
         String deviceName = checkDeviceName(getDeviceName(json));
         String deviceType = getDeviceType(json);
         log.trace("[{}] onDeviceConnect: {}", sessionId, deviceName);
-        Futures.addCallback(onDeviceConnect(deviceName, deviceType), new FutureCallback<GatewayDeviceSessionCtx>() {
+        Futures.addCallback(onDeviceConnectJson(deviceName, deviceType), new FutureCallback<GatewayDeviceSessionCtx>() {
             @Override
             public void onSuccess(@Nullable GatewayDeviceSessionCtx result) {
                 ack(msg);
@@ -110,7 +110,7 @@ public class GatewaySessionHandler {
         }, context.getExecutor());
     }
 
-    private ListenableFuture<GatewayDeviceSessionCtx> onDeviceConnect(String deviceName, String deviceType) {
+    private ListenableFuture<GatewayDeviceSessionCtx> onDeviceConnectJson(String deviceName, String deviceType) {
         GatewayDeviceSessionCtx result = devices.get(deviceName);
         if (result == null) {
             deviceCreationLock.lock();
@@ -178,7 +178,7 @@ public class GatewaySessionHandler {
         return future;
     }
 
-    public void onDeviceDisconnect(MqttPublishMessage msg) throws AdaptorException {
+    public void onDeviceDisconnectJson(MqttPublishMessage msg) throws AdaptorException {
         String deviceName = checkDeviceName(getDeviceName(getJson(msg)));
         deregisterSession(deviceName);
         ack(msg);
@@ -197,7 +197,7 @@ public class GatewaySessionHandler {
         devices.forEach(this::deregisterSession);
     }
 
-    public void onDeviceTelemetry(MqttPublishMessage mqttMsg) throws AdaptorException {
+    public void onDeviceTelemetryJson(MqttPublishMessage mqttMsg) throws AdaptorException {
         JsonElement json = JsonV1MqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
         int msgId = mqttMsg.variableHeader().packetId();
         if (json.isJsonObject()) {
@@ -231,7 +231,7 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceClaim(MqttPublishMessage mqttMsg) throws AdaptorException {
+    public void onDeviceClaimJson(MqttPublishMessage mqttMsg) throws AdaptorException {
         JsonElement json = JsonV1MqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
         int msgId = mqttMsg.variableHeader().packetId();
         if (json.isJsonObject()) {
@@ -266,7 +266,7 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceAttributes(MqttPublishMessage mqttMsg) throws AdaptorException {
+    public void onDeviceAttributesJson(MqttPublishMessage mqttMsg) throws AdaptorException {
         JsonElement json = JsonV1MqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
         int msgId = mqttMsg.variableHeader().packetId();
         if (json.isJsonObject()) {
@@ -295,7 +295,7 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceRpcResponse(MqttPublishMessage mqttMsg) throws AdaptorException {
+    public void onDeviceRpcResponseJson(MqttPublishMessage mqttMsg) throws AdaptorException {
         JsonElement json = JsonV1MqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
         int msgId = mqttMsg.variableHeader().packetId();
         if (json.isJsonObject()) {
@@ -322,7 +322,7 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceAttributesRequest(MqttPublishMessage msg) throws AdaptorException {
+    public void onDeviceAttributesRequestJson(MqttPublishMessage msg) throws AdaptorException {
         JsonElement json = JsonV1MqttAdaptor.validateJsonPayload(sessionId, msg.payload());
         if (json.isJsonObject()) {
             JsonObject jsonObj = json.getAsJsonObject();
@@ -367,11 +367,39 @@ public class GatewaySessionHandler {
         }
     }
 
+    public void onDeviceTelemetryProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+        // TODO: 5/19/20 add implementation
+    }
+
+    public void onDeviceClaimProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+        // TODO: 5/19/20 add implementation
+    }
+
+    public void onDeviceAttributesProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+        // TODO: 5/19/20 add implementation
+    }
+
+    public void onDeviceRpcResponseProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+        // TODO: 5/19/20 add implementation
+    }
+
+    public void onDeviceAttributesRequestProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+        // TODO: 5/19/20 add implementation
+    }
+
+    public void onDeviceConnectProto(MqttPublishMessage mqttMsg) {
+        // TODO: 5/19/20 add implementation
+    }
+
+    public void onDeviceDisconnectProto(MqttPublishMessage mqttMsg) {
+        // TODO: 5/19/20 add implementation
+    }
+
     private ListenableFuture<GatewayDeviceSessionCtx> checkDeviceConnected(String deviceName) {
         GatewayDeviceSessionCtx ctx = devices.get(deviceName);
         if (ctx == null) {
             log.debug("[{}] Missing device [{}] for the gateway session", sessionId, deviceName);
-            return onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
+            return onDeviceConnectJson(deviceName, DEFAULT_DEVICE_TYPE);
         } else {
             return Futures.immediateFuture(ctx);
         }
