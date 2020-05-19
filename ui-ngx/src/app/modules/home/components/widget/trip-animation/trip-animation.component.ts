@@ -47,7 +47,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
 
   mapWidget: MapWidgetController;
   historicalData;
-  intervals=[];
+  intervals = [];
   normalizationStep = 1000;
   interpolatedData = [];
   widgetConfig: WidgetConfig;
@@ -91,12 +91,12 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = () => {
-      this.historicalData = parseArray(this.ctx.data).filter(arr=>arr.length);
-      if(this.historicalData.length){
-      this.activeTrip = this.historicalData[0][0];
-      this.calculateIntervals();
-      this.timeUpdated(this.intervals[0]);
-    }
+      this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
+      if (this.historicalData.length) {
+        this.activeTrip = this.historicalData[0][0];
+        this.calculateIntervals();
+        this.timeUpdated(this.intervals[0]);
+      }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
     }
@@ -110,11 +110,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   timeUpdated(time: number) {
     this.minTime = moment(this.intervals[this.intervals.length - 1]).format('YYYY-MM-DD HH:mm:ss');
     this.maxTime = moment(this.intervals[0]).format('YYYY-MM-DD HH:mm:ss');
-    const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]).map(ds => {
-      ds.minTime = this.minTime;
-      ds.maxTime = this.maxTime;
-      return ds;
-    });
+    const currentPosition = this.interpolatedData
+      .map(dataSource => dataSource[time])
+      .filter(ds => ds)
+      .map(ds => {
+        ds.minTime = this.minTime;
+        ds.maxTime = this.maxTime;
+        return ds;
+      });
     this.activeTrip = currentPosition[0];
     this.calcLabel();
     this.calcTooltip();

@@ -158,9 +158,9 @@ export default abstract class LeafletMap {
         this.map = map;
         if (this.options.useDefaultCenterPosition) {
             this.map.panTo(this.options.defaultCenterPosition);
-              this.bounds = map.getBounds();
+            this.bounds = map.getBounds();
         }
-          else this.bounds = new L.LatLngBounds(null, null);
+        else this.bounds = new L.LatLngBounds(null, null);
         if (this.options.draggableMarker) {
             this.addMarkerControl();
         }
@@ -279,8 +279,8 @@ export default abstract class LeafletMap {
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings, callback?) {
         this.ready$.subscribe(() => {
             const newMarker = new Marker(this.convertPosition(data), settings, data, dataSources, this.dragMarker);
-            if(callback)
-            newMarker.leafletMarker.on('click', ()=>{callback(data, true)});
+            if (callback)
+                newMarker.leafletMarker.on('click', () => { callback(data, true) });
             if (this.bounds)
                 this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
             this.markers.set(key, newMarker);
@@ -373,8 +373,12 @@ export default abstract class LeafletMap {
     updatePolyline(key: string, data: FormattedData[], dataSources: FormattedData[], settings: PolylineSettings) {
         this.ready$.subscribe(() => {
             const poly = this.polylines.get(key);
+            const oldBounds = poly.leafletPoly.getBounds();
             poly.updatePolyline(settings, data.map(el => this.convertPosition(el)), dataSources);
-            const bounds = poly.leafletPoly.getBounds();
+            const newBounds = poly.leafletPoly.getBounds();
+            if (oldBounds.toBBoxString() !== newBounds.toBBoxString()) {
+                this.fitBounds(newBounds);
+            }
         });
     }
 
@@ -408,7 +412,12 @@ export default abstract class LeafletMap {
     updatePolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.ready$.subscribe(() => {
             const poly = this.polygons.get(polyData.entityName);
+            const oldBounds = poly.leafletPoly.getBounds();
             poly.updatePolygon(polyData, dataSources, settings);
+            const newBounds = poly.leafletPoly.getBounds();
+            if (oldBounds.toBBoxString() !== newBounds.toBBoxString()) {
+                this.fitBounds(newBounds);
+            }
         });
     }
 }
