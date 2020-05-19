@@ -1,0 +1,29 @@
+{
+  "generator-angularjs-library": {
+    "props": {
+      "author": {
+        "name": "Łukasz Wątroba",
+        "email": "l@lukaszwatroba.com"
+      },
+      "libraryName": {
+        "original": "v-accordion",
+        "camelized": "vAccordion",
+        "dasherized": "v-accordion",
+        "slugified": "v-accordion",
+        "parts": [
+          "v",
+          "accordion"
+        ]
+      },
+      "includeModuleDirectives": false,
+      "includeModuleFilters": false,
+      "includeModuleServices": false,
+      "includeAngularModuleResource": false,
+      "includeAngularModuleCookies": false,
+      "includeAngularModuleSanitize": false,
+      "librarySrcDirectory": "src/vAccordion",
+      "libraryUnitTestDirectory": "test/unit/vAccordion",
+      "libraryUnitE2eDirectory": "test/e2e/vAccordion"
+    }
+  }
+}

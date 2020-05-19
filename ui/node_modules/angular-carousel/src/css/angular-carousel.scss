@@ -1,0 +1,74 @@
+input[type=range] {
+  width:300px;
+}
+
+ul[rn-carousel] {
+  overflow:hidden;
+  padding:0;
+  white-space: nowrap;
+  position: relative;
+  perspective:1000px;
+  -ms-touch-action: pan-y;
+  touch-action: pan-y;
+  > li {
+    color:black;
+    backface-visibility: hidden;
+    overflow: visible;
+    vertical-align: top;
+    position:absolute;
+    left:0;
+    right:0;
+    white-space: normal;
+    padding:0;
+    margin:0;
+    list-style-type:none;
+    width:100%;
+    height:100%;
+    display:inline-block;
+  }
+}
+
+/* prevent flickering when moving buffer */
+ul[rn-carousel-buffered] > li {
+  display:none;
+}
+
+ul[rn-carousel-transition="hexagon"] {
+  overflow:visible;
+}
+
+/* indicators */
+div.rn-carousel-indicator span {
+  cursor:pointer;
+  color: #666;
+  &.active {
+    color: white
+  }
+}
+
+/* prev/next controls */
+.rn-carousel-control {
+  transition: opacity 0.2s ease-out;
+  font-size: 2rem;
+  position: absolute;
+  top: 40%;
+  opacity: 0.75;
+  cursor: pointer;
+  &:hover {
+    opacity: 1;
+  }
+
+  &.rn-carousel-control-prev {
+    left: 0.5em;
+    &:before {
+      content: "<";
+    }
+  }
+
+  &.rn-carousel-control-next {
+    right: 0.5em;
+    &:before {
+      content: ">";
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "generator-angularjs-library": {
+    "props": {
+      "author": {
+        "name": "Martin Gontovnikas",
+        "email": "martin@gon.to"
+      },
+      "libraryName": {
+        "original": "angular-jwt",
+        "camelized": "angularJwt",
+        "dasherized": "angular-jwt",
+        "slugified": "angular-jwt",
+        "parts": [
+          "angular",
+          "jwt"
+        ]
+      },
+      "includeModuleDirectives": false,
+      "includeModuleFilters": false,
+      "includeModuleServices": true,
+      "includeAngularModuleResource": false,
+      "includeAngularModuleCookies": false,
+      "includeAngularModuleSanitize": false,
+      "librarySrcDirectory": "src/angularJwt",
+      "libraryUnitTestDirectory": "test/unit/angularJwt",
+      "libraryUnitE2eDirectory": "test/e2e/angularJwt"
+    }
+  }
+}

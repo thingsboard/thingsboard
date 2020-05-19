@@ -1,0 +1,60 @@
+// ======================================================
+//                    VARIABLES
+//     Change the variables here to set your own theme
+//      Could be improved, pull request are welcome !
+// ======================================================
+
+// -------------------
+// BASE COLOR
+// -------------------
+$base-color:  #2980b9;
+$body-background-color: #ecf0f1;
+
+// Assets url
+$fontUrl: '../flickr-full/font/';
+$imgUrl: '../flickr-full/img/';
+
+// FONTS
+$main-font: 'Andika', sans-serif;  // don't forget to change link rel
+$alt-font: 'Arvo', sans-serif;     // in index.html !
+
+// ICON FONT
+$icon-color: #fff;
+$icon-size: 24px;
+
+// BAR-TITLE :
+$bar-title-height: 45px;
+$bar-title-padding: 5px;
+$bar-title-color: $base-color;
+$bar-title-font-color: #fff;
+
+//SIDEBAR NAVIGATION :
+  //category
+$list-divider-background-color: darken($base-color, 6);
+$list-divider-font-color: #fff;
+$list-divider-font-size: 1em;
+$list-divider-padding: 8px 5px;
+  // items
+$items-font-size: 0.8em;
+$items-padding: 10px;
+$items-font-color: #111;
+
+$items-background-color: $body-background-color;
+
+// BORDER
+//$items-border-top-color: #fff;
+$items-border-bottom-color: lighten($items-background-color, 4%);
+
+$img-caption-color: #111;
+$img-caption-background-color:rgba(224, 224, 224, 0.62);
+
+// =================================
+//             FILES
+// =================================
+
+@import "scss/base";
+@import "scss/assets/title-bar";
+@import "scss/assets/navigation";
+@import "scss/assets/carousel";
+@import "scss/assets/loader";
+@import "scss/assets/modal";

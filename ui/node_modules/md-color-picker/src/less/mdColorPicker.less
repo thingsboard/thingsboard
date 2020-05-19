@@ -1,0 +1,389 @@
+
+@cubic-trans: cubic-bezier(.25,.8,.25,1) .25s;
+.checkered_bg() {
+	background-color: #fff;
+	background-image: linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd),
+					  linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+	background-size: 8px 8px;
+	background-position:0 0, 4px 4px;
+}
+
+md-color-picker .md-color-picker-input-container,
+[md-color-picker] .md-color-picker-input-container {
+	position: relative;
+	.md-placeholder, label:not(.md-no-float) {
+		//padding-left: 30px;
+		//transition: transform @cubic-trans, padding-left @cubic-trans;
+	}
+	&.md-input-focused label:not(.md-no-float), &.md-input-has-value label:not(.md-no-float) {
+		//padding-left: 2px;
+	}
+	input {
+	//	margin-left: 30px;
+	}
+	.md-color-picker-preview {
+	//	position: absolute;
+		content: '';
+	//	background-color: attr('data-color');
+		width: 24px;
+		height: 24px;
+		border: 2px solid #fff;
+		border-radius: 50%;
+		box-shadow: 0 3px 1px -2px rgba(0,0,0,.14),0 2px 2px 0 rgba(0,0,0,.098),0 1px 5px 0 rgba(0,0,0,.084);
+		position: relative;
+		top: 22px;
+	//	left: 0;
+		overflow: hidden;
+		//z-index: 10;
+		.checkered_bg();
+
+		.md-color-picker-result {
+			width: 100%;
+			height: 100%;
+		}
+	}
+	.md-color-picker-input {
+
+	}
+	.md-color-picker-clear {
+		position: absolute;
+
+		bottom: 42px;
+		right: -16px;
+
+		color: rgba(0,0,0,0.26);
+
+
+	}
+}
+
+
+.md-color-picker-container {
+	padding: 8px;
+	background: #fff;
+
+	outline: none;
+
+	height: 397px;
+	width: 347px;
+	opacity: 1;
+	overflow: hidden;
+
+	z-index: 1000;
+
+	.md-color-picker-arrow {
+
+		border: 0 solid transparent;
+
+		border-right-width: 30px;
+		border-bottom-width: 0px;
+
+		position: absolute;
+		left: 0;
+		top: 0px;
+
+		transition: border-bottom-width @cubic-trans, top @cubic-trans;
+	}
+
+
+
+
+
+
+	.md-color-picker-preview {
+		flex: 1;
+		font-weight: bold;
+		font-size: 18px;
+		color: #fff;
+		margin: -8px -8px 0px;
+		//margin-bottom: 8px;
+		position: relative;
+
+		.md-color-picker-result {
+			position: absolute;
+			height: 100%;
+			opacity: 1;
+			background: rgba(255,0,0,1);
+			& > input {
+				position: relative;
+
+				top: -15px;
+				opacity: 0;
+			}
+			& > div {
+				position: relative;
+				width: 100%;
+					& > input {
+					border-width: 0;
+					background: transparent;
+					text-align: center;
+					position: absolute;
+					top: -15px;
+					bottom: 0;
+					left: 0;
+					right: 0;
+					color: #eee;
+
+					outline: none;
+					opacity: 0;
+					&.switch {
+						transition: top @cubic-trans, .25s opacity ease-out;
+						top: 0px;
+						opacity: 1;
+					}
+				}
+			}
+		}
+		.md-color-picker-tabs {
+			.md-tab, md-tabs-wrapper, md-tabs-canvas, md-pagination-wrapper {
+				max-height: 28px;
+				height: 28px;
+			}
+
+			md-ink-bar {
+				background: rgba(255,255,255,0.5);
+			}
+			.md-tab {
+				padding-top: 2px;
+				padding-top: 2px;
+				background: rgba( 255,255,255,.25);
+				color: #eee;
+
+				/* hack for https://github.com/angular/material/issues/4237 */
+				max-width:none !important;
+
+				&.md-active {
+					background: transparent;
+
+				}
+			}
+		}
+
+		&.dark {
+			color: #333;
+			.md-color-picker-preview-input {
+				color: #333;
+			}
+			.md-tab {
+				background: rgba( 0,0,0,.25);
+				color: #333;
+				&.md-active {
+					background: transparent;
+
+				}
+			}
+			md-ink-bar {
+				background: rgba(0,0,0,0.5);
+			}
+		}
+
+	}
+	.md-color-picker-tabs {
+		margin: 0px -8px 0;
+		md-ink-bar {
+			//top: 0;
+		}
+		md-tabs[md-align-tabs=bottom] {
+			padding-bottom: 0;
+		}
+
+		.md-tab, md-tabs-wrapper, md-tabs-canvas, md-pagination-wrapper {
+			max-height: 36px;
+			height: 36px;
+		}
+		.md-tab {
+			padding: 7px 24px;
+			background: transparent;
+
+			&:last-of-type {
+				margin-right: -2px;
+			}
+		}
+		md-tabs:not(.md-no-tab-content):not(.md-dynamic-height) {
+			min-height: 298px;
+			md-tabs-content-wrapper {
+				height: 255px;
+				margin-bottom: 8px;
+
+				md-tab-content {
+					height: 255px;
+					padding: 0px 8px 0;
+
+					[md-tabs-template] {
+						height: 100%;
+					}
+				}
+			}
+		}
+
+
+		&.md-color-picker-colors {
+			margin: 8px -8px -8px;
+			md-ink-bar {
+				top: auto;
+			}
+			.md-tab {
+				background: rgba(0,0,0,0.075);
+				&.md-active {
+					background: #fff;
+				}
+			}
+		}
+	}
+
+	.md-color-picker-colors {
+		overflow: hidden;
+		margin-top: 8px;
+
+
+
+		.md-color-picker-marker {
+			position: absolute;
+			border: 2px solid #fff;
+			box-shadow: 0 0 2px 0 rgba(0,0,0,0.5);
+		}
+		[md-color-picker-spectrum] {
+			position: relative;
+			cursor: crosshair;
+			overflow: hidden;
+			height: 255px;
+			width: 255px;
+
+			.md-color-picker-marker {
+				width: 11px;
+				height: 11px;
+
+				border-radius: 50%;
+
+				box-shadow: 0 0 2px 0 rgba(0,0,0,0.5), inset 0 0 2px 0 rgba(0,0,0,0.5);
+
+				top: -5px;
+				left: calc( 100% - 5px );
+
+			}
+		}
+
+		[md-color-picker-hue], [md-color-picker-alpha] {
+			position: relative;
+			cursor: crosshair;
+			overflow: hidden;
+			width: 30px;
+
+			&.md-color-picker-wide {
+				width: 67px;
+			}
+
+			.md-color-picker-marker {
+				height: 5px;
+				width: 100%;
+				border-left: 0;
+				border-right: 0;
+				top: -2px;
+				left: 0;
+
+			}
+			canvas {
+				//width: 100%;
+			}
+		}
+	}
+
+	.md-color-picker-sliders {
+
+		md-slider.red-slider {
+			.md-track-fill {
+				background: #d01515;
+			}
+			.md-thumb {
+			//	background: #d01515;
+				&:after {
+					background-color: #d01515;
+					border-color: #d01515;
+				}
+			}
+		}
+		md-slider.green-slider {
+			.md-track-fill {
+				background: #19d015;
+			}
+			.md-thumb {
+			//	background: #d01515;
+				&:after {
+					background-color: #19d015;
+					border-color: #19d015;
+				}
+			}
+		}
+		md-slider.blue-slider {
+			.md-track-fill {
+				background: #1560d0;
+			}
+			.md-thumb {
+			//	background: #d01515;
+				&:after {
+					background-color: #1560d0;
+					border-color: #1560d0;
+				}
+			}
+		}
+	}
+
+	.md-color-picker-material-palette {
+		> div:not(:first-child) {
+
+		}
+		.md-color-picker-material-title {
+			font-size: 22px;
+			line-height: 75px;
+			padding: 0 15px;
+			color: rgba(0,0,0,0.85);
+
+			text-transform: capitalize;
+			&.dark {
+				color: rgba(255,255,255,0.85);
+			}
+			&:not(:first-child){
+				margin-top: 16px;
+			}
+		}
+		.md-color-picker-with-label {
+			font-size: 12px;
+			line-height: 33px;
+			padding: 0 5px;
+			color: rgba(0,0,0,0.7);
+			&.dark {
+				color: rgba(255,255,255,0.7);
+			}
+		}
+		.md-color-picker-material-colors {
+			position: absolute;
+			transition: left @cubic-trans, right @cubic-trans, top @cubic-trans, bottom @cubic-trans;
+
+		}
+	}
+
+	.md-color-picker-history {
+		& > div > div {
+			height: 20px;
+			margin: 4px;
+			.checkered_bg();
+
+			& > div {
+				width: 100%;
+				height: 100%;
+			}
+
+		}
+
+		button {
+			margin-top: auto;
+			margin-left: auto;
+		}
+	}
+
+
+}
+
+.md-color-picker-checkered-bg {
+	.checkered_bg();
+}

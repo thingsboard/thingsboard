@@ -1,0 +1,52 @@
+<!doctype html>
+<html ng-app="DemoApp">
+
+<head>
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.1/angular.min.js"></script>
+	<script src="../src/angular-fullscreen.js"></script>
+	<script src="app.js"></script>
+</head>
+
+
+<body>
+
+	<div ng-controller="MainCtrl">
+
+		<h2>Angular Fullscreen demo</h2>
+
+		<div class="column">
+
+			<!-- enable/disable fullscreen using the 'Fullscreen' service -->
+			<button ng-click="goFullscreen()">Enable/Disable Document Fullscreen</button>
+
+			<p>or click the images</p>
+
+			<input	type="text" placeholder="support fullscreen mode">
+			
+			<!--
+				enable fullscreen to a specific element using the 'fullscreen' directive
+				NOTE: you must set the element ID
+			-->
+			<img src="imgs/P1030188.JPG" fullscreen />
+			<img src="imgs/P1030296.JPG" fullscreen />
+
+			<hr />
+			<h3>Set an image in fullScreen mode changing the model and disable click on it</h3>
+			<button ng-click="goFullScreenViaWatcher()">Toggle FullScreen</button>
+			
+			<img src="imgs/P1030293.JPG" fullscreen="isFullScreen" only-watched-property/>
+			
+
+			<p>
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin non neque eget sem luctus rutrum. Vivamus vestibulum fermentum dolor, ac rhoncus nisi blandit ac. Vestibulum in ante quis eros cursus congue id in lorem. Maecenas ut odio vitae nibh fringilla sagittis. Mauris pharetra porttitor lorem et dignissim. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam vitae vehicula elit, sit amet cursus tellus. Integer eu tellus mauris.
+			Fusce eros leo, gravida et tellus consectetur, pharetra rutrum nisi. In dictum nunc ac eros dapibus convallis. Vestibulum vehicula venenatis justo, id malesuada mi tempor et. Nam mattis commodo rhoncus. Cras sed nunc consectetur elit auctor accumsan. Vestibulum congue lectus eu enim fringilla, ac cursus enim blandit. In sagittis fringilla elementum.
+			Cras adipiscing sem nulla, sed congue erat blandit eget. Donec vitae viverra urna, nec lobortis ipsum. Aenean dignissim lorem id viverra porttitor. Nullam eleifend elementum arcu. Nulla porta tortor in risus imperdiet, eu imperdiet risus faucibus. Interdum et malesuada fames ac ante ipsum primis in faucibus. Vestibulum cursus egestas massa ac dictum. Aenean vel nisi nec dolor tempus commodo vel sit amet elit. Vestibulum venenatis, odio eget aliquam interdum, diam ipsum semper massa, sit amet dictum nisi mi in mauris. Fusce a adipiscing libero. Phasellus viverra, arcu a commodo cursus, justo tellus suscipit tortor, quis aliquet urna turpis vel massa. Pellentesque dignissim ipsum quam, malesuada malesuada sem tempus eget. Vestibulum ac eros ante.
+			</p>
+
+		</div>
+
+	</div>
+
+</body>
+</html>

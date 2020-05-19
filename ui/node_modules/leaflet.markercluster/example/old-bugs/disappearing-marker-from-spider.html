@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet debug page</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ==" crossorigin="" />
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js" integrity="sha512-WXoSHqw/t26DszhdMhOXOkI7qCiv5QWXhH9R7CgvgZMHz1ImlkVQ3uNsiQKu5wwbbxtPzFXd1hK4tzno2VqhpA==" crossorigin=""></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../screen.css" />
+
+	<link rel="stylesheet" href="../../dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="../../dist/MarkerCluster.Default.css" />
+	<script src="../../dist/leaflet.markercluster-src.js"></script>
+</head>
+<body style="font-family: verdana; font-size: 80%;">
+
+	<div id="map"></div>
+	Click on the cluster to <strong>spiderfy</strong> and then <button id="moveTrain">move train</button><br/>
+	<br/>
+	<div style="color: #888;"><strong>Note:</strong> The marker on the old cluster position comes back on next move or on map scrolling.</div>
+
+	<script type="text/javascript">
+
+		var stationJson = {
+			"type":"FeatureCollection",
+			"features":[
+				{"type":"Feature","id":1,"properties":{"type":"station","name":"Appenzell"},"geometry":{"type":"Point","coordinates":[9.40991,47.32849]}},
+				{"type":"Feature","id":2,"properties":{"type":"station","name":"Gais"},"geometry":{"type":"Point","coordinates":[9.45107,47.36073]}},
+				{"type":"Feature","id":3,"properties":{"type":"station","name":"St. Gallen"},"geometry":{"type":"Point","coordinates":[9.36901,47.42208]}},
+				{"type":"Feature","id":4,"properties":{"type":"station","name":"Teufen"},"geometry":{"type":"Point","coordinates":[9.390178,47.390157]}}
+			]};
+
+		var trainJson = [{
+			"type":"FeatureCollection",
+			"features":[
+				{"type":"Feature","id":10,"properties":{"type":"train","name":"Testtrain"},"geometry":{"type":"Point","coordinates":[9.36901,47.42208]}}
+			]},{
+			"type":"FeatureCollection",
+			"features":[
+				{"type":"Feature","id":10,"properties":{"type":"train","name":"Testtrain"},"geometry":{"type":"Point","coordinates":[9.390178,47.390157]}}
+			]},{
+			"type":"FeatureCollection",
+			"features":[
+				{"type":"Feature","id":10,"properties":{"type":"train","name":"Testtrain"},"geometry":{"type":"Point","coordinates":[9.45107,47.36073]}}
+			]},{
+			"type":"FeatureCollection",
+			"features":[
+				{"type":"Feature","id":10,"properties":{"type":"train","name":"Testtrain"},"geometry":{"type":"Point","coordinates":[9.40991,47.32849]}}
+			]}];
+
+		var trainPosition = 0,
+			trainDirection = 'up';
+
+		var tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 18,
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}),
+			map = new L.Map('map', {zoom: 15, layers: [tiles]}),
+			markers = new L.MarkerClusterGroup({ spiderfyOnMaxZoom: false, showCoverageOnHover: false, zoomToBoundsOnClick: false });
+
+		var stationGeoJsonLayer = L.geoJson(stationJson, {
+				onEachFeature: function (feature, layer) {
+					layer.bindPopup(feature.properties.name);
+				}
+			}),
+			trainGeoJsonLayer = L.geoJson(trainJson[trainPosition], {
+				onEachFeature: function (feature, layer) {
+					layer.bindPopup(feature.properties.name);
+				}
+			});
+
+		// initial load
+		markers.addLayer(stationGeoJsonLayer);
+		markers.addLayer(trainGeoJsonLayer);
+		map.fitBounds(markers.getBounds());
+
+		markers.on('clusterclick', function (a) {
+			a.layer.spiderfy();
+		});
+
+		map.addLayer(markers);
+
+		/**
+		 * Demonstration method that simulates that we got a new geoJson object with updated train positions.
+		 */
+		function moveTrain() {
+			if (trainDirection == 'up') trainPosition++;
+			else if (trainDirection == 'down') trainPosition--;
+			if (trainPosition == trainJson.length-1) trainDirection = 'down';
+			else if (trainPosition == 0) trainDirection = 'up';
+
+			// build a new geoJson layer with the new train information
+			trainGeoJsonLayer = L.geoJson(trainJson[trainPosition], {});
+
+			// update the cluster markers with both layers (stations first so that the station marker is always the first on spider.
+			markers.clearLayers();
+			markers.addLayer(stationGeoJsonLayer);
+			markers.addLayer(trainGeoJsonLayer);
+		}
+
+		L.DomUtil.get('moveTrain').onclick = function () {
+			moveTrain();
+		};
+	</script>
+</body>
+</html>

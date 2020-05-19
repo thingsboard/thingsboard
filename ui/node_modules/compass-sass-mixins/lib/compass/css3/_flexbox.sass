@@ -1,0 +1,68 @@
+@import ../support
+@import shared
+
+// This is the underlying implementation for all the other mixins in this module.
+// It is the only way to access prefix support for older versions of the spec.
+// Deviates from canonical Compass implementation by dropping support for
+// older versions of the Flexbox spec.
+//
+// `$properties`: map of property-value pairs that should be prefixed
+=flexbox($properties)
+  @each $prop, $value in $properties
+    @if $prop == display
+      +experimental-value(display, $value, not -moz, -webkit, not -o, not -ms, not -khtml, official)
+    @else
+      +experimental($prop, $value, not -moz, -webkit, not -o, not -ms, not -khtml, official)
+
+// Values for $display are: flex (default), inline-flex
+=display-flex($display: flex)
+  +flexbox((display: $display))
+
+// Values: row | row-reverse | column | column-reverse
+=flex-direction($direction)
+  +flexbox((flex-direction: $direction))
+
+// Values: nowrap | wrap | wrap-reverse
+=flex-wrap($wrap)
+  +flexbox((flex-wrap: $wrap))
+
+// Shorthand for flex-direction and flex-wrap.
+=flex-flow($flow)
+  +flexbox((flex-flow: $flow))
+
+// Accepts an integer
+=order($order)
+  +flexbox((order: $order))
+
+// Shorthand for flex-grow, flex-shrink and optionally flex-basis.
+// Space separated, in that order.
+=flex($flex)
+  +flexbox((flex: $flex))
+
+// Accepts a number.
+=flex-grow($flex-grow)
+  +flexbox((flex-grow: $flex-grow))
+
+// Accepts a number.
+=flex-shrink($flex-shrink)
+  +flexbox((flex-shrink: $flex-shrink))
+
+// Accepts any legal value for the width property.
+=flex-basis($flex-basis)
+  +flexbox((flex-basis: $flex-basis))
+
+// Legal values: flex-start | flex-end | center | space-between | space-around
+=justify-content($justify-content)
+  +flexbox((justify-content: $justify-content))
+
+// Legal values: flex-start | flex-end | center | baseline | stretch
+=align-items($align-items)
+  +flexbox((align-items: $align-items))
+
+// Legal values: auto | flex-start | flex-end | center | baseline | stretch
+=align-self($align-self)
+  +flexbox((align-self: $align-self))
+
+// Legal values: flex-start | flex-end | center | space-between | space-around | stretch
+=align-content($align-content)
+  +flexbox((align-content: $align-content))

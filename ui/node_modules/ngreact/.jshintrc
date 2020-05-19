@@ -1,0 +1,37 @@
+{
+  "undef"        : true,
+  "expr"         : true,
+  "unused"       : "vars",
+  "trailing"     : false,
+  "sub"          : true,
+  "laxcomma"     : true,
+  "globalstrict" : true,
+  "immed"        : true,
+  "eqeqeq"       : true,
+  "latedef"      : "nofunc",
+  "noarg"        : true,
+  "boss"         : true,
+  "validthis"    : true,
+  "esnext"       : true,
+
+  "browser"      : true,
+  "devel"        : true,
+  "node"         : true,
+
+  "globals" : {
+    "describe"    : false,
+    "xdescribe"   : false,
+    "beforeEach"  : false,
+    "afterEach"   : false,
+    "it"          : false,
+    "xit"         : false,
+    "expect"      : false,
+    "inject"      : false,
+    "spyOn"       : false,
+    "jasmine"     : false,
+    "setFixtures" : false,
+    "waits"       : false,
+    "waitsFor"    : false,
+    "runs"        : false
+  }
+}

@@ -1,0 +1,58 @@
+<div layout="row" flex>
+    <div style="width: 300px">
+      <div style="height: 400px">
+        <h2>Service</h2>
+        <md-button  class="md-primary md-raised" ng-click="selectDateRange($event)">Select Date Range</md-button>
+        <md-button  class="md-primary md-raised" ng-click="selectDateRange($event, true)">Select Date Range Auto Confirm</md-button>
+      </div>
+    </div>
+    <div layout="column" style="width: 380px">
+      <h2>Bindings</h2>
+      <code flex>
+        <table style="text-align: left" cellspacing="10">
+          <tr>
+            <th>Property</th>
+            <th>Value</th>
+          </tr>
+          <tr>
+            <td>selectedTemplate</td>
+            <td>{{serviceModel.selectedTemplate}}</td>
+          </tr>
+          <tr>
+            <td>selectedTemplateName</td>
+            <td>{{serviceModel.selectedTemplateName}}</td>
+          </tr>
+          <tr>
+            <td>dateStart</td>
+            <td>{{serviceModel.dateStart | date : 'medium'}}</td>
+          </tr>
+          <tr>
+            <td>dateEnd</td>
+            <td>{{serviceModel.dateEnd | date : 'medium'}}</td>
+          </tr>
+          <tr>
+            <td>firstDayOfWeek</td>
+            <td>1 Default</td>
+          </tr>
+        </table>
+      </code> 
+    </div>
+    <div layout="column" flex>
+    <h2>Html</h2>
+    <textarea readonly flex style="font-family: Lucida Console, Monaco, monospace">
+$scope.serviceModel = {};
+
+$scope.selectDateRange = function ($event, autoConfirm) {
+  $mdDateRangePicker.show({
+    model: $scope.serviceModel,
+    autoConfirm: autoConfirm,
+    targetEvent: $event,
+  }).then(function (result) {
+    $scope.serviceModel = result;
+  }).catch(function () {
+    console.log('Cancelled');
+  }
+}
+    </textarea>
+  </div>
+  </div>

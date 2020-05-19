@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Split.js</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css">
+  <style>
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    padding: 8px;
+    background-color: #F6F6F6;
+    box-sizing: border-box;
+  }
+
+  .split {
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .content {
+    border: 1px solid #C0C0C0;
+    box-shadow: inset 0 1px 2px #e4e4e4;
+    background-color: #fff;
+  }
+
+  .gutter {
+    background-color: transparent;
+
+    background-repeat: no-repeat;
+    background-position: 50%;
+  }
+
+  .gutter.gutter-horizontal {
+    cursor: col-resize;
+    background-image: url('../grips/vertical.png');
+  }
+
+  .gutter.gutter-vertical {
+    cursor: row-resize;
+    background-image: url('../grips/horizontal.png');
+  }
+
+  .split.split-horizontal, .gutter.gutter-horizontal {
+    height: 100%;
+    float: left;
+  }
+  </style>
+</head>
+<body>
+    <div id="a" class="split split-horizontal">
+      <div id="c" class="split content"></div>
+      <div id="d" class="split content"></div>
+    </div>
+    <div id="b" class="split split-horizontal">
+      <div id="e" class="split content"></div>
+      <div id="f" class="split content"></div>
+    </div>
+</body>
+<script src="../split.js"></script>
+<script>
+    Split(['#a', '#b'], {
+      gutterSize: 8,
+      cursor: 'col-resize'
+    })
+
+    Split(['#c', '#d'], {
+      direction: 'vertical',
+      sizes: [25, 75],
+      gutterSize: 8,
+      cursor: 'row-resize'
+    })
+
+    Split(['#e', '#f'], {
+      direction: 'vertical',
+      sizes: [25, 75],
+      gutterSize: 8,
+      cursor: 'row-resize'
+    })
+</script>
+</html>

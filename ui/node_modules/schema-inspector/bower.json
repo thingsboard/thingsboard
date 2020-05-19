@@ -1,0 +1,33 @@
+{
+  "name": "schema-inspector",
+  "version": "1.4.8",
+  "homepage": "https://github.com/Atinux/schema-inspector",
+  "authors": [
+    {
+      "name": "Aaron Blum",
+      "email": "atinux@gmail.com",
+      "homepage": "https://twitter.com/atinux"
+    }
+  ],
+  "description": "Schema-Inspector is a powerful tool to sanitize and validate JS objects.",
+  "main": "index.js",
+  "keywords": [
+    "schema-inspector",
+    "validation",
+    "sanitization",
+    "inspector",
+    "node-inspector",
+    "json",
+    "validator"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test"
+  ],
+  "dependencies": {
+    "async": "*"
+  }
+}

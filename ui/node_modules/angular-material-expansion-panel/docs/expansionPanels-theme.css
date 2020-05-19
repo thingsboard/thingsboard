@@ -1,0 +1,23 @@
+md-expansion-panel {
+  background: #FFF; }
+  md-expansion-panel md-expansion-panel-collapsed,
+  md-expansion-panel .md-expansion-panel-footer-container,
+  md-expansion-panel .md-expansion-panel-header-container {
+    background: #FFF; }
+    md-expansion-panel md-expansion-panel-collapsed .md-title,
+    md-expansion-panel md-expansion-panel-collapsed .md-summary,
+    md-expansion-panel .md-expansion-panel-footer-container .md-title,
+    md-expansion-panel .md-expansion-panel-footer-container .md-summary,
+    md-expansion-panel .md-expansion-panel-header-container .md-title,
+    md-expansion-panel .md-expansion-panel-header-container .md-summary {
+      color: #333; }
+  md-expansion-panel md-expansion-panel-footer .md-expansion-panel-footer-container,
+  md-expansion-panel md-expansion-panel-header .md-expansion-panel-header-container {
+    border-color: #DDD; }
+  md-expansion-panel .md-expansion-panel-icon svg {
+    fill: #999; }
+  md-expansion-panel[disabled] md-expansion-panel-collapsed {
+    color: #DDD; }
+  md-expansion-panel:not(.md-open):not([disabled]):focus,
+  md-expansion-panel:not(.md-open):not([disabled]):focus md-expansion-panel-collapsed {
+    background: #EEE; }

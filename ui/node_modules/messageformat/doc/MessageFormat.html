@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: MessageFormat</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Class: MessageFormat</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>MessageFormat</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+
+    <h4 class="name" id="MessageFormat"><span class="type-signature"></span>new MessageFormat<span class="signature">(locale<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Create a new message formatter</p>
+<p> If <code>locale</code> is not set, calls to <code>compile()</code> will fetch the default locale
+ each time. A string <code>locale</code> will create a single-locale MessageFormat
+ instance, with pluralisation rules fetched from the Unicode CLDR using
+ <a href="http://github.com/eemeli/make-plural.js">make-plural</a>.</p>
+<p> Using an array of strings as <code>locale</code> will create a MessageFormat object
+ with multi-language support, with pluralisation rules fetched as above. To
+ select which to use, use the second parameter of <code>compile()</code>, or use message
+ keys corresponding to your locales.</p>
+<p> Using an object <code>locale</code> with all properties of type <code>function</code> allows for
+ the use of custom/externally defined pluralisation rules.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>locale</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+|
+
+<span class="param-type">Object.&lt;string, function()></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>The locale(s) to use</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line54">line 54</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+        <h3 class="subsection-title">Namespaces</h3>
+
+        <dl>
+            <dt><a href="MessageFormat.formatters.html">formatters</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".defaultLocale"><span class="type-signature">(static) </span>defaultLocale<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>The default locale</p>
+<p> Read by <code>compile()</code> when no locale has been previously set</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">Default Value:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>'en'</li>
+        </ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line80">line 80</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id=".escape"><span class="type-signature">(static) </span>escape<span class="signature">(str)</span><span class="type-signature"> &rarr; {string}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Escape special characaters</p>
+<p> Prefix the characters <code>#</code>, <code>{</code>, <code>}</code> and <code>\</code> in the input string with a <code>\</code>.
+ This will allow those characters to not be considered as MessageFormat
+ control characters.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>str</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The input string</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line92">line 92</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The escaped string</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="addFormatters"><span class="type-signature"></span>addFormatters<span class="signature">(fmt)</span><span class="type-signature"> &rarr; {<a href="MessageFormat.html">MessageFormat</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Add custom formatter functions to this MessageFormat instance</p>
+<p> The general syntax for calling a formatting function in MessageFormat is
+ <code>{var, fn[, args]*}</code>, where <code>var</code> is the variable that will be set by the
+ user code, <code>fn</code> determines the formatting function, and <code>args</code> is an
+ optional comma-separated list of additional arguments.</p>
+<p> In JavaScript, each formatting function is called with three parameters;
+ the variable value <code>v</code>, the current locale <code>lc</code>, and (if set) <code>args</code> as a
+ single string, or an array of strings. Formatting functions should not have
+ side effects.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>fmt</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object.&lt;string, function()></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A map of formatting functions</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line253">line 253</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="MessageFormat.formatters.html">MessageFormat.formatters</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The MessageFormat instance, to allow for chaining</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="MessageFormat.html">MessageFormat</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>var mf = new MessageFormat('en-GB');
+mf.addFormatters({
+  upcase: function(v) { return v.toUpperCase(); },
+  locale: function(v, lc) { return lc; },
+  prop: function(v, lc, p) { return v[p] }
+});
+
+mf.compile('This is {VAR, upcase}.')({ VAR: 'big' })
+// 'This is BIG.'
+
+mf.compile('The current locale is {_, locale}.')({ _: '' })
+// 'The current locale is en-GB.'
+
+mf.compile('Answer: {obj, prop, a}')({ obj: {q: 3, a: 42} })
+// 'Answer: 42'</code></pre>
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="compile"><span class="type-signature"></span>compile<span class="signature">(messages, locale<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {function|Object}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Compile messages into storable functions</p>
+<p> If <code>messages</code> is a single string including ICU MessageFormat declarations,
+ the result of <code>compile()</code> is a function taking a single Object parameter
+ <code>d</code> representing each of the input's defined variables.</p>
+<p> If <code>messages</code> is a hierarchical structure of such strings, the output of
+ <code>compile()</code> will match that structure, with each string replaced by its
+ corresponding JavaScript function.</p>
+<p> If the input <code>messages</code> -- and therefore the output -- of <code>compile()</code> is an
+ object, the output object will have a <code>toString(global)</code> method that may be
+ used to store or cache the compiled functions to disk, for later inclusion
+ in any JS environment, without a local MessageFormat instance required. Its
+ <code>global</code> parameters sets the name (if any) of the resulting global variable,
+ with special handling for <code>exports</code>, <code>module.exports</code>, and <code>export default</code>.
+ If <code>global</code> does not contain a <code>.</code>, the output defaults to an UMD pattern.</p>
+<p> If <code>locale</code> is not set, the first locale set in the object's constructor
+ will be used by default; using a key at any depth of <code>messages</code> that is a
+ declared locale will set its child elements to use that locale.</p>
+<p> If <code>locale</code> is set, it is used for all messages. If the constructor
+ declared any locales, <code>locale</code> needs to be one of them.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>messages</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>The input message(s) to be compiled, in ICU MessageFormat</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>locale</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>A locale to use for the messages</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line444">line 444</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The first match found for the given locale(s)</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+|
+
+<span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Examples</h5>
+    
+    <pre class="prettyprint"><code>var mf = new MessageFormat('en');
+var cf = mf.compile('A {TYPE} example.');
+
+cf({ TYPE: 'simple' })
+// 'A simple example.'</code></pre>
+
+    <pre class="prettyprint"><code>var mf = new MessageFormat(['en', 'fi']);
+var cf = mf.compile({
+  en: { a: 'A {TYPE} example.',
+        b: 'This is the {COUNT, selectordinal, one{#st} two{#nd} few{#rd} other{#th}} example.' },
+  fi: { a: '{TYPE} esimerkki.',
+        b: 'Tämä on {COUNT, selectordinal, other{#.}} esimerkki.' }
+});
+
+cf.en.b({ COUNT: 2 })
+// 'This is the 2nd example.'
+
+cf.fi.b({ COUNT: 2 })
+// 'Tämä on 2. esimerkki.'</code></pre>
+
+    <pre class="prettyprint"><code>var fs = require('fs');
+var mf = new MessageFormat('en').setIntlSupport();
+var msgSet = {
+  a: 'A {TYPE} example.',
+  b: 'This has {COUNT, plural, one{one member} other{# members}}.',
+  c: 'We have {P, number, percent} code coverage.'
+};
+var cfStr = mf.compile(msgSet).toString('module.exports');
+fs.writeFileSync('messages.js', cfStr);
+...
+var messages = require('./messages');
+
+messages.a({ TYPE: 'more complex' })
+// 'A more complex example.'
+
+messages.b({ COUNT: 3 })
+// 'This has 3 members.'</code></pre>
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="disablePluralKeyChecks"><span class="type-signature"></span>disablePluralKeyChecks<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="MessageFormat.html">MessageFormat</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Disable the validation of plural &amp; selectordinal keys</p>
+<p> Previous versions of messageformat.js allowed the use of plural &amp;
+ selectordinal statements with any keys; now we throw an error when a
+ statement uses a non-numerical key that will never be matched as a
+ pluralization category for the current locale.</p>
+<p> Use this method to disable the validation and allow usage as previously.
+ To re-enable, you'll need to create a new MessageFormat instance.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line285">line 285</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The MessageFormat instance, to allow for chaining</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="MessageFormat.html">MessageFormat</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>var mf = new MessageFormat('en');
+var msg = '{X, plural, zero{no answers} one{an answer} other{# answers}}';
+
+mf.compile(msg);
+// Error: Invalid key `zero` for argument `X`. Valid plural keys for this
+//        locale are `one`, `other`, and explicit keys like `=0`.
+
+mf.disablePluralKeyChecks();
+mf.compile(msg)({ X: 0 });
+// '0 answers'</code></pre>
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setBiDiSupport"><span class="type-signature"></span>setBiDiSupport<span class="signature">(enable<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="MessageFormat.html">MessageFormat</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Enable or disable the addition of Unicode control characters to all input
+ to preserve the integrity of the output when mixing LTR and RTL text.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>enable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line315">line 315</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="http://cldr.unicode.org/development/development-process/design-proposals/bidi-handling-of-structured-text">http://cldr.unicode.org/development/development-process/design-proposals/bidi-handling-of-structured-text</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The MessageFormat instance, to allow for chaining</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="MessageFormat.html">MessageFormat</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>// upper case stands for RTL characters, output is shown as rendered
+var mf = new MessageFormat('en');
+
+mf.compile('{0} >> {1} >> {2}')(['first', 'SECOND', 'THIRD']);
+// 'first >> THIRD &lt;&lt; SECOND'
+
+mf.setBiDiSupport(true);
+mf.compile('{0} >> {1} >> {2}')(['first', 'SECOND', 'THIRD']);
+// 'first >> SECOND >> THIRD'</code></pre>
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setIntlSupport"><span class="type-signature"></span>setIntlSupport<span class="signature">(enable<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="MessageFormat.html">MessageFormat</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Enable or disable support for the default formatters, which require the
+ <code>Intl</code> object. Note that this can't be autodetected, as the environment
+ in which the formatted text is compiled into Javascript functions is not
+ necessarily the same environment in which they will get executed.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>enable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line332">line 332</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="MessageFormat.formatters.html">MessageFormat.formatters</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The MessageFormat instance, to allow for chaining</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="MessageFormat.html">MessageFormat</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setStrictNumberSign"><span class="type-signature"></span>setStrictNumberSign<span class="signature">(enable<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="MessageFormat.html">MessageFormat</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>According to the ICU MessageFormat spec, a <code>#</code> character directly inside a
+ <code>plural</code> or <code>selectordinal</code> statement should be replaced by the number
+ matching the surrounding statement. By default, messageformat.js will
+ replace <code>#</code> signs with the value of the nearest surrounding <code>plural</code> or
+ <code>selectordinal</code> statement.</p>
+<p> Set this to true to follow the stricter ICU MessageFormat spec, and to
+ throw a runtime error if <code>#</code> is used with non-numeric input.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>enable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line366">line 366</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The MessageFormat instance, to allow for chaining</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="MessageFormat.html">MessageFormat</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>var mf = new MessageFormat('en');
+
+var cookieMsg = '#: {X, plural, =0{no cookies} one{a cookie} other{# cookies}}';
+mf.compile(cookieMsg)({ X: 3 });
+// '#: 3 cookies'
+
+var pastryMsg = '{X, plural, one{{P, select, cookie{a cookie} other{a pie}}} other{{P, select, cookie{# cookies} other{# pies}}}}';
+mf.compile(pastryMsg)({ X: 3, P: 'pie' });
+// '3 pies'
+
+mf.setStrictNumberSign(true);
+mf.compile(pastryMsg)({ X: 3, P: 'pie' });
+// '# pies'</code></pre>
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Compiler.html">Compiler</a></li><li><a href="MessageFormat.html">MessageFormat</a></li><li><a href="Runtime.html">Runtime</a></li></ul><h3>Namespaces</h3><ul><li><a href="MessageFormat.formatters.html">formatters</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue Sep 27 2016 00:30:24 GMT+0300 (EEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

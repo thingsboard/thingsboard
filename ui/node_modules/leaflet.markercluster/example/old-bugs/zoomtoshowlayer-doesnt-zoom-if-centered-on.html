@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet debug page</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ==" crossorigin="" />
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js" integrity="sha512-WXoSHqw/t26DszhdMhOXOkI7qCiv5QWXhH9R7CgvgZMHz1ImlkVQ3uNsiQKu5wwbbxtPzFXd1hK4tzno2VqhpA==" crossorigin=""></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../screen.css" />
+
+	<link rel="stylesheet" href="../../dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="../../dist/MarkerCluster.Default.css" />
+	<script src="../../src/DistanceGrid.js"></script>
+	<script src="../../src/MarkerCluster.js"></script>
+	<script src="../../src/MarkerClusterGroup.js"></script>
+	<script src="../../src/MarkerCluster.QuickHull.js"></script>
+	<script src="../../src/MarkerCluster.Spiderfier.js"></script>
+</head>
+<body>
+
+	<div id="map"></div>
+	<button id="doit">open popup</button><br/>
+	<span>Bug <a href="https://github.com/danzel/Leaflet.markercluster/issues/286">#286 (from @Grsmto)</a>. Click the button. The cluster should spiderfy and show the popup, old behaviour did nothing.</span><br/>
+	<span id="time"></span>
+	<script type="text/javascript">
+
+		var tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 18,
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}),
+			latlng = new L.LatLng(50.5, 30.51);
+
+		var map = new L.Map('map', {center: latlng, zoom: 18, layers: [tiles]});
+
+		var markers = new L.MarkerClusterGroup();
+		var markersList = [];
+		
+		for (var i = 0; i < 3; i++) {
+			var m = new L.Marker(latlng);
+			m.bindPopup('asdasd' + i);
+			markersList.push(m);
+			markers.addLayer(m);
+		}
+
+		map.addLayer(markers);
+
+		L.DomUtil.get('doit').onclick = function () {
+			//debugger;
+			markers.zoomToShowLayer(markersList[0], function () {
+				markersList[0].openPopup();
+			});
+		};
+
+	</script>
+</body>
+</html>

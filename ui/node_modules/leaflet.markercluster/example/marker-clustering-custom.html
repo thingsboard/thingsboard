@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet debug page</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ==" crossorigin="" />
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js" integrity="sha512-WXoSHqw/t26DszhdMhOXOkI7qCiv5QWXhH9R7CgvgZMHz1ImlkVQ3uNsiQKu5wwbbxtPzFXd1hK4tzno2VqhpA==" crossorigin=""></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="screen.css" />
+	
+	<link rel="stylesheet" href="../dist/MarkerCluster.css" />
+	<script src="../dist/leaflet.markercluster-src.js"></script>
+
+	<style>
+		.mycluster {
+			width: 40px;
+			height: 40px;
+			background-color: greenyellow;
+			text-align: center;
+			font-size: 24px;
+		}
+
+	</style>
+</head>
+<body>
+
+	<div id="map"></div>
+
+	<script type="text/javascript">
+
+		var tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 18,
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}),
+			latlng = L.latLng(50.5, 30.51);
+
+		var map = L.map('map', {center: latlng, zoom: 15, layers: [tiles]});
+
+
+		//Custom radius and icon create function
+		var markers = L.markerClusterGroup({
+			maxClusterRadius: 120,
+			iconCreateFunction: function (cluster) {
+				var markers = cluster.getAllChildMarkers();
+				var n = 0;
+				for (var i = 0; i < markers.length; i++) {
+					n += markers[i].number;
+				}
+				return L.divIcon({ html: n, className: 'mycluster', iconSize: L.point(40, 40) });
+			},
+			//Disable all of the defaults:
+			spiderfyOnMaxZoom: false, showCoverageOnHover: false, zoomToBoundsOnClick: false
+		});
+
+
+		function populate() {
+			for (var i = 0; i < 100; i++) {
+				var m = L.marker(getRandomLatLng(map), { title: i });
+				m.number = i;
+				markers.addLayer(m);
+			}
+			return false;
+		}
+		function populateRandomVector() {
+			for (var i = 0, latlngs = [], len = 20; i < len; i++) {
+				latlngs.push(getRandomLatLng(map));
+			}
+			var path = L.polyline(latlngs);
+			map.addLayer(path);
+		}
+		function getRandomLatLng(map) {
+			var bounds = map.getBounds(),
+				southWest = bounds.getSouthWest(),
+				northEast = bounds.getNorthEast(),
+				lngSpan = northEast.lng - southWest.lng,
+				latSpan = northEast.lat - southWest.lat;
+
+			return L.latLng(
+					southWest.lat + latSpan * Math.random(),
+					southWest.lng + lngSpan * Math.random());
+		}
+
+		populate();
+		map.addLayer(markers);
+
+
+
+		var shownLayer, polygon;
+
+		function removePolygon() {
+			if (shownLayer) {
+				shownLayer.setOpacity(1);
+				shownLayer = null;
+			}
+			if (polygon) {
+				map.removeLayer(polygon);
+				polygon = null;
+			}
+		};
+
+		markers.on('clustermouseover', function (a) {
+			removePolygon();
+
+			a.layer.setOpacity(0.2);
+			shownLayer = a.layer;
+			polygon = L.polygon(a.layer.getConvexHull());
+			map.addLayer(polygon);
+		});
+		markers.on('clustermouseout', removePolygon);
+		map.on('zoomend', removePolygon);
+
+	</script>
+</body>
+</html>

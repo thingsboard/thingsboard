@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet debug page</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ==" crossorigin="" />
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js" integrity="sha512-WXoSHqw/t26DszhdMhOXOkI7qCiv5QWXhH9R7CgvgZMHz1ImlkVQ3uNsiQKu5wwbbxtPzFXd1hK4tzno2VqhpA==" crossorigin=""></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="screen.css" />
+
+	<link rel="stylesheet" href="../dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="../dist/MarkerCluster.Default.css" />
+	<script src="../dist/leaflet.markercluster-src.js"></script>
+</head>
+<body>
+
+	<div id="map"></div>
+	<button id="populate">Populate 1 marker</button>
+	<button id="remove">Remove 1 marker</button>
+
+	<script type="text/javascript">
+
+		var tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 18,
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}),
+			latlng = new L.LatLng(50.5, 30.51);
+
+		var map = new L.Map('map', {center: latlng, zoom: 15, layers: [tiles]});
+
+		var markers = new L.MarkerClusterGroup();
+		var markersList = [];
+
+		function populate() {
+			for (var i = 0; i < 100; i++) {
+				var m = new L.Marker(getRandomLatLng(map));
+				markersList.push(m);
+				markers.addLayer(m);
+			}
+			return false;
+		}
+		function populateRandomVector() {
+			for (var i = 0, latlngs = [], len = 20; i < len; i++) {
+				latlngs.push(getRandomLatLng(map));
+			}
+			var path = new L.Polyline(latlngs);
+			map.addLayer(path);
+		}
+		function getRandomLatLng(map) {
+			var bounds = map.getBounds(),
+				southWest = bounds.getSouthWest(),
+				northEast = bounds.getNorthEast(),
+				lngSpan = northEast.lng - southWest.lng,
+				latSpan = northEast.lat - southWest.lat;
+
+			return new L.LatLng(
+					southWest.lat + latSpan * Math.random(),
+					southWest.lng + lngSpan * Math.random());
+		}
+
+		markers.on('clusterclick', function (a) {
+			alert('cluster ' + a.layer.getAllChildMarkers().length);
+		});
+		markers.on('click', function (a) {
+			alert('marker ' + a.layer);
+		});
+
+		populate();
+		map.addLayer(markers);
+
+		L.DomUtil.get('populate').onclick = function () {
+			var bounds = map.getBounds(),
+			southWest = bounds.getSouthWest(),
+			northEast = bounds.getNorthEast(),
+			lngSpan = northEast.lng - southWest.lng,
+			latSpan = northEast.lat - southWest.lat;
+			var m = new L.Marker(new L.LatLng(
+					southWest.lat + latSpan * 0.5,
+					southWest.lng + lngSpan * 0.5));
+			markersList.push(m);
+			markers.addLayer(m);
+		};
+		L.DomUtil.get('remove').onclick = function () {
+			markers.removeLayer(markersList.pop());
+		};
+	</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "classes",
+  "version": "1.2.6",
+  "description": "Cross-browser element class list",
+  "keywords": [
+    "dom",
+    "html",
+    "classList",
+    "class",
+    "ui"
+  ],
+  "scripts": [
+    "index.js"
+  ],
+  "dependencies": {
+    "component/indexof": "*"
+  },
+  "development": {
+    "component/assert": "*"
+  }
+}

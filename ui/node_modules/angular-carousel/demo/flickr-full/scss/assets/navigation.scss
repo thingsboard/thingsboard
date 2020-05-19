@@ -1,0 +1,75 @@
+// ===========================
+//    SNAP.JS
+// ===========================
+
+.ngSnap.ngSnap-content,
+.ngSnap.ngSnap-shelves,
+.ngSnap .ngSnap-shelf {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.ngSnap .ngSnap-shelf {
+  overflow-y: auto;
+  -webkit-transition: top 0.2s linear;
+  -moz-transition: top 0.2s linear;
+  -o-transition: top 0.2s linear;
+  transition: top 0.2s linear;
+  -webkit-transition: bottom 0.2s linear;
+  -moz-transition: bottom 0.2s linear;
+  -o-transition: bottom 0.2s linear;
+  transition: bottom 0.2s linear;
+  -webkit-overflow-scrolling: touch;
+  -moz-overflow-scrolling: touch;
+  -o-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+.ngSnap .ngSnap-shelf.right {
+  right: 0;
+}
+ul.list {
+  //background-color: #333;
+  font-size: 0.8em;
+  margin-left: -40px;
+  margin-top: 0;
+  width:200px !important;
+}
+ul.list li {
+  font-family: $alt-font;
+  padding:$items-padding;
+  background-color: $items-background-color;
+  border-bottom: 1px solid $items-border-bottom-color;
+  // border-top: 1px solid $lists-border-top-color;
+  color: $items-font-color;
+  &.close {
+    text-align: center;
+    height: $bar-title-height;
+    line-height: $bar-title-height;
+    background-color: $bar-title-color;
+    padding: 0;
+    border-bottom: none;
+  }
+}
+ul.list li.list-divider {
+  font-family: $main-font;
+  background: $list-divider-background-color;
+  color: $list-divider-font-color;
+  font-size: $list-divider-font-size;
+  padding:$list-divider-padding;
+  text-transform: uppercase;
+  -webkit-box-shadow: 0 8px 6px -6px black;
+    -moz-box-shadow: 0 8px 6px -6px black;
+    box-shadow: 0 8px 6px -6px black;
+}
+.loading {
+  width:100%;
+  height:100%;
+  background: #333;
+  font-size:22px;
+}
+.ngSnap-shelf {
+  overflow-x: hidden;
+}
+.ngSnap-content {
+  overflow-x: hidden;
+}

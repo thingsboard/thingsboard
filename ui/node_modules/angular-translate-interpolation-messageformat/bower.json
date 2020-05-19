@@ -1,0 +1,13 @@
+{
+  "name": "angular-translate-interpolation-messageformat",
+  "description": "A plugin for Angular Translate",
+  "version": "2.18.1",
+  "main": "./angular-translate-interpolation-messageformat.js",
+  "ignore": [],
+  "author": "Pascal Precht",
+  "license": "MIT",
+  "dependencies": {
+    "angular-translate": "~2.18.1",
+    "messageformat": "~1.0.2"
+  }
+}

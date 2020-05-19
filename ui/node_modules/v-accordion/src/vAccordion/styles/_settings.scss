@@ -1,0 +1,21 @@
+// -------------------------------------
+// Settings
+// -------------------------------------
+
+
+$v-accordion-default-theme:         true !default;
+
+
+// Accordion
+// -------------------------------------
+
+$v-accordion-spacing:               20px !default;
+
+$v-pane-border-color:               #D8D8D8 !default;
+$v-pane-expanded-border-color:      #2196F3 !default;
+$v-pane-icon-color:                 #2196F3 !default;
+$v-pane-hover-color:                #2196F3 !default;
+$v-pane-disabled-opacity:           0.6 !default;
+
+$v-pane-expand-animation-duration:  0.5s  !default;
+$v-pane-hover-animation-duration:   0.25s !default;

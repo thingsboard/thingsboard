@@ -1,0 +1,96 @@
+{
+    "name": "@types/jasmine",
+    "version": "3.4.5",
+    "description": "TypeScript definitions for Jasmine",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Boris Yankov",
+            "url": "https://github.com/borisyankov",
+            "githubUsername": "borisyankov"
+        },
+        {
+            "name": "Theodore Brown",
+            "url": "https://github.com/theodorejb",
+            "githubUsername": "theodorejb"
+        },
+        {
+            "name": "David Pärsson",
+            "url": "https://github.com/davidparsson",
+            "githubUsername": "davidparsson"
+        },
+        {
+            "name": "Gabe Moothart",
+            "url": "https://github.com/gmoothart",
+            "githubUsername": "gmoothart"
+        },
+        {
+            "name": "Lukas Zech",
+            "url": "https://github.com/lukas-zech-software",
+            "githubUsername": "lukas-zech-software"
+        },
+        {
+            "name": "Boris Breuer",
+            "url": "https://github.com/Engineer2B",
+            "githubUsername": "Engineer2B"
+        },
+        {
+            "name": "Chris Yungmann",
+            "url": "https://github.com/cyungmann",
+            "githubUsername": "cyungmann"
+        },
+        {
+            "name": "Giles Roadnight",
+            "url": "https://github.com/Roaders",
+            "githubUsername": "Roaders"
+        },
+        {
+            "name": "Yaroslav Admin",
+            "url": "https://github.com/devoto13",
+            "githubUsername": "devoto13"
+        },
+        {
+            "name": "Domas Trijonis",
+            "url": "https://github.com/fdim",
+            "githubUsername": "fdim"
+        },
+        {
+            "name": "Moshe Kolodny",
+            "url": "https://github.com/kolodny",
+            "githubUsername": "kolodny"
+        },
+        {
+            "name": "Stephen Farrar",
+            "url": "https://github.com/stephenfarrar",
+            "githubUsername": "stephenfarrar"
+        },
+        {
+            "name": "Mochamad Arfin",
+            "url": "https://github.com/ndunks",
+            "githubUsername": "ndunks"
+        },
+        {
+            "name": "Alex Povar",
+            "url": "https://github.com/zvirja",
+            "githubUsername": "zvirja"
+        }
+    ],
+    "main": "",
+    "types": "index",
+    "typesVersions": {
+        ">=3.1.0-0": {
+            "*": [
+                "ts3.1/*"
+            ]
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/jasmine"
+    },
+    "scripts": {},
+    "dependencies": {},
+    "typesPublisherContentHash": "95fd696e9847f92b1e29e3cb0f84a1f0d35c4a11e3bb99da7e5c049b4c48f5d9",
+    "typeScriptVersion": "2.8"
+}

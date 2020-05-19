@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="nutritionApp">
+
+  <head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Nutrition</title>
+
+    <link href="angular-material/angular-material.css" rel="stylesheet" type="text/css"/>
+    <link href="md-data-table.css" rel="stylesheet" type="text/css"/>
+    <link href="app.css" rel="stylesheet" type="text/css"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  </head>
+
+  <body layout="column">
+
+    <md-toolbar>
+      <div class="md-toolbar-tools">
+        <div class="md-title">Material Design Data Table</div>
+      </div>
+    </md-toolbar>
+
+    <md-content laout="column" flex ng-controller="nutritionController">
+
+      <md-card>
+        <div layout="row" layout-wrap class="checkboxes">
+          <md-checkbox ng-model="options.rowSelection">Row Selection</md-checkbox>
+          <md-checkbox ng-model="options.multiSelect">Multiple Selection</md-checkbox>
+          <md-checkbox ng-model="options.autoSelect">Auto Selection</md-checkbox>
+          <md-checkbox ng-model="options.decapitate">Decapitate</md-checkbox>
+          <md-checkbox ng-model="options.largeEditDialog">Lard Edit Dialogs</md-checkbox>
+          <md-checkbox ng-model="options.boundaryLinks">Pagination Boundary Links</md-checkbox>
+          <md-checkbox ng-model="options.limitSelect" ng-click="toggleLimitOptions()">Pagination Limit Select</md-checkbox>
+          <md-checkbox ng-model="options.pageSelect">Pagination Page Select</md-checkbox>
+        </div>
+      </md-card>
+
+      <md-card ng-include="'templates/nutrition-table.html'"></md-card>
+
+    </md-content>
+
+    <script type="text/javascript" src="angular/angular.min.js"></script>
+    <script type="text/javascript" src="angular-animate/angular-animate.min.js"></script>
+    <script type="text/javascript" src="angular-aria/angular-aria.min.js"></script>
+    <script type="text/javascript" src="angular-material/angular-material.min.js"></script>
+    <script type="text/javascript" src="md-data-table.js"></script>
+
+    <script type="text/javascript" src="app.js"></script>
+    <script type="text/javascript" src="scripts/nutritionController.js"></script>
+
+  </body>
+</html>

@@ -1,0 +1,295 @@
+<h2>Panels</h2>
+
+
+<p>
+  <b>Expansion Panels</b> have an collapsed section and a expanded section. Optionally you can add a header and footer to the expanded sections. By default bothe the header and footer will stick to the tops and bottoms of the md-content container they are in, but you can disable that.
+</p>
+
+<div style="padding-top: 12px; padding-bottom: 36px;">
+  <md-divider></md-divider>
+</div>
+
+<md-expansion-panel>
+        <md-expansion-panel-collapsed>
+            <div class="md-title">+ Dodaj</div>
+            <div class="md-summary"> </div>
+            <md-expansion-panel-icon></md-expansion-panel-icon>
+        </md-expansion-panel-collapsed>
+
+
+        <md-expansion-panel-expanded>
+
+            <md-expansion-panel-header  ng-click="$panel.collapse()">
+                <div class="md-title">+ Dodaj</div>
+                <div class="md-summary"> </div>
+                <md-expansion-panel-icon></md-expansion-panel-icon>
+            </md-expansion-panel-header>
+
+            <md-expansion-panel-content>
+              <md-input-container>
+                <label>label</label>
+                <input ng-model="test" />
+              </md-input-container>
+
+              <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+              <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+              <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+              <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+               <p>
+                c
+              </p>
+            </md-expansion-panel-content>
+
+            <md-expansion-panel-footer>
+                <div flex></div>
+                <md-button class="md-warn" ng-click="$panel.collapse()">Anuluj</md-button>
+                <md-button type="submit" class="md-primary md-raised">Zapisz</md-button>
+            </md-expansion-panel-footer>
+
+        </md-expansion-panel-expanded>
+</md-expansion-panel>
+
+
+
+<md-expansion-panel md-component-id="expansionPanelOne">
+
+  <md-expansion-panel-collapsed>
+    <div class="md-title">Title</div>
+    <div class="md-summary">Summary</div>
+    <md-expansion-panel-icon></md-expansion-panel-icon>
+  </md-expansion-panel-collapsed>
+
+  <md-expansion-panel-expanded>
+
+    <md-expansion-panel-header>
+      <div class="md-title">Expanded Title</div>
+      <div class="md-summary">Expanded Summary</div>
+      <md-expansion-panel-icon></md-expansion-panel-icon>
+    </md-expansion-panel-header>
+
+    <md-expansion-panel-content>
+      <div>
+        <md-input-container>
+          <label>label</label>
+          <input ng-model="test" />
+        </md-input-container>
+      </div>
+      <h4>Content</h4>
+      <p>Put content in here</p>
+    </md-expansion-panel-content>
+
+    <md-expansion-panel-footer>
+      <div flex></div>
+      <md-button class="md-warn" ng-click="collapseOne()">Collapse</md-button>
+    </md-expansion-panel-footer>
+
+  </md-expansion-panel-expanded>
+
+</md-expansion-panel>
+
+
+<md-expansion-panel>
+
+  <md-expansion-panel-collapsed>
+    <md-expansion-panel-icon></md-expansion-panel-icon>
+    <div class="md-title">Sticky</div>
+    <div class="md-summary">header and footer will stick</div>
+  </md-expansion-panel-collapsed>
+
+  <md-expansion-panel-expanded>
+
+    <md-expansion-panel-header>
+      <md-expansion-panel-icon></md-expansion-panel-icon>
+      <div class="md-title">Sticky</div>
+      <div class="md-summary">header and footer will stick</div>
+    </md-expansion-panel-header>
+
+    <md-expansion-panel-content>
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+    </md-expansion-panel-content>
+
+    <md-expansion-panel-footer>
+      <div flex></div>
+      <md-button class="md-warn" ng-click="$panel.collapse()">Collapse</md-button>
+    </md-expansion-panel-footer>
+
+  </md-expansion-panel-expanded>
+
+</md-expansion-panel>
+
+
+
+
+<md-expansion-panel>
+
+  <md-expansion-panel-collapsed>
+    <div class="md-title">No Sticky</div>
+    <div class="md-summary">header and footer sticky disabled</div>
+  </md-expansion-panel-collapsed>
+
+  <md-expansion-panel-expanded>
+
+    <md-expansion-panel-header md-no-sticky>
+      <div class="md-title">No Sticky</div>
+      <div class="md-summary">header and footer sticky disabled</div>
+    </md-expansion-panel-header>
+
+    <md-expansion-panel-content>
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+
+      <h4>Content</h4>
+      <p>Put content in here</p>
+    </md-expansion-panel-content>
+
+    <md-expansion-panel-footer md-no-sticky>
+      <div flex></div>
+      <md-button class="md-warn" ng-click="$panel.collapse()">Collapse</md-button>
+    </md-expansion-panel-footer>
+
+  </md-expansion-panel-expanded>
+
+</md-expansion-panel>
+
+
+
+<md-expansion-panel ng-disabled="isDisabled">
+
+  <md-expansion-panel-collapsed>
+    <div class="md-title">Disabled Panel</div>
+    <span flex></span>
+    <md-expansion-panel-icon></md-expansion-panel-icon>
+  </md-expansion-panel-collapsed>
+
+  <md-expansion-panel-expanded>
+
+    <md-expansion-panel-header>
+      <div class="md-title">Disabled Panel</div>
+      <div class="md-summary">Expanded Summary</div>
+      <md-expansion-panel-icon></md-expansion-panel-icon>
+    </md-expansion-panel-header>
+
+    <md-expansion-panel-content>
+      <h4>Content</h4>
+      <p>Put content in here</p>
+    </md-expansion-panel-content>
+
+    <md-expansion-panel-footer>
+      <div flex></div>
+      <md-button class="md-warn" ng-click="$panel.collapse()">Collapse</md-button>
+    </md-expansion-panel-footer>
+
+  </md-expansion-panel-expanded>
+
+</md-expansion-panel>

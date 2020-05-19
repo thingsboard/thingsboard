@@ -1,0 +1,34 @@
+{
+    "env": {
+        "browser": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "sourceType": "module"
+    },
+    "plugins": [
+        "html"
+    ],
+    "globals": {
+        "$": true
+    },
+    "rules": {
+        "indent": [
+            "error",
+            4
+        ],
+        // "linebreak-style": [
+        //     "error",
+        //     "unix"
+        // ],
+        "quotes": [
+            "error",
+            "single"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ],
+        "no-console": "off"
+    }
+}

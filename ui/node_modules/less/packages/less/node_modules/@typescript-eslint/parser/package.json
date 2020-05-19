@@ -1,0 +1,53 @@
+{
+  "name": "@typescript-eslint/parser",
+  "version": "1.13.0",
+  "description": "An ESLint custom parser which leverages TypeScript ESTree",
+  "main": "dist/parser.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^6.14.0 || ^8.10.0 || >=9.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/typescript-eslint/typescript-eslint.git",
+    "directory": "packages/parser"
+  },
+  "bugs": {
+    "url": "https://github.com/typescript-eslint/typescript-eslint/issues"
+  },
+  "license": "BSD-2-Clause",
+  "keywords": [
+    "ast",
+    "ecmascript",
+    "javascript",
+    "typescript",
+    "parser",
+    "syntax",
+    "eslint"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rimraf dist/",
+    "format": "prettier --write \"./**/*.{ts,js,json,md}\" --ignore-path ../../.prettierignore",
+    "prebuild": "npm run clean",
+    "test": "jest --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "eslint": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/eslint-visitor-keys": "^1.0.0",
+    "@typescript-eslint/experimental-utils": "1.13.0",
+    "@typescript-eslint/typescript-estree": "1.13.0",
+    "eslint-visitor-keys": "^1.0.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/shared-fixtures": "1.13.0"
+  },
+  "gitHead": "c367b34abd8c58eddd2c15685ed8c17b983f0da1"
+}

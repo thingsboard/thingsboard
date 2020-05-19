@@ -1,0 +1,13 @@
+body {
+  overflow: hidden;
+  max-width: 100%;
+  max-height: 100%; }
+
+.view-container {
+  padding-left: 12px;
+  padding-right: 12px; }
+
+.nav-bar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  background: #FFF;
+  z-index: 9; }

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<div id="content"></div>
+<input type="button" value="en" id="en" />
+<input type="button" value="fr" id="fr" />
+
+<script src="i18n.js"></script>
+<script>
+  function showContents(lc) {
+    var colors = window.i18n[lc].colors;
+    var plural = window.i18n[lc].sub.folder.plural;
+    var el = document.getElementById('content');
+    el.innerHTML = '';
+    [ colors.red(), colors.blue(), colors.green(),
+      plural.test({ NUM: 1 }), plural.test({ NUM: 2 })
+    ].forEach(function(s) {
+      el.innerHTML += '<div>' + s + '</div>';
+    });
+    localStorage.setItem('lang', lc);
+  }
+
+  showContents(localStorage.getItem('lang') || 'en');
+  document.getElementById('en').onclick = showContents.bind(null, 'en');
+  document.getElementById('fr').onclick = showContents.bind(null, 'fr');
+</script>

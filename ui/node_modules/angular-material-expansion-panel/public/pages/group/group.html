@@ -1,0 +1,52 @@
+<h2>Group</h2>
+
+<p>
+  <b>Expansion Panel Groups</b> allow you to controll a set of panels. You can add panels using templates and controllers. You can also register panels to add by a given name; and you can pass in locals.
+</p>
+
+<div style="padding-top: 12px; padding-bottom: 36px;">
+  <md-divider></md-divider>
+</div>
+
+
+
+<md-expansion-panel-group md-component-id="expansionPanelGroup">
+</md-expansion-panel-group>
+
+<div style="padding-top: 64px; padding-bottom: 64px;">
+  <md-divider></md-divider>
+</div>
+
+<div>
+  <form name="theForm">
+    <div layout="row" layout-wrap>
+      <md-input-container>
+        <label>Title</label>
+        <input name="title" ng-model="vm.title" required />
+        <div ng-messages="theForm.title.$error">
+          <div ng-message="required">required</div>
+        </div>
+      </md-input-container>
+
+      <md-input-container>
+        <label>Summary</label>
+        <input name="summary" ng-model="vm.summary" required />
+        <div ng-messages="theForm.summary.$error">
+          <div ng-message="required">required</div>
+        </div>
+      </md-input-container>
+    </div>
+
+    <div layout="row">
+      <md-input-container flex>
+        <label>Content</label>
+        <textarea name="content" ng-model="vm.content" required></textarea>
+        <div ng-messages="theForm.content.$error">
+          <div ng-message="required">required</div>
+        </div>
+      </md-input-container>
+    </div>
+
+    <md-button class="md-primary" ng-disabled="theForm.$invalid" ng-click="vm.addTemplated()">Add Panel</md-button>
+  </form>
+</div>

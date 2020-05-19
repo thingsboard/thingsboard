@@ -1,0 +1,14 @@
+#container {
+	/*display: none;*/
+}
+
+#resizable-element {
+	/*display: inline-block;*/
+	float: left;
+}
+
+#content {
+	color: red;
+	width: 20px;
+	height: 15px;
+}

@@ -1,0 +1,158 @@
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.9.7
+ */
+/* mixin definition ; sets LTR and RTL within the same style call */
+
+md-autocomplete button ng-md-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate3d(-50%, -50%, 0) scale(0.9);
+    transform: translate3d(-50%, -50%, 0) scale(0.9);
+}
+
+md-autocomplete button ng-md-icon path {
+    stroke-width: 0;
+}
+
+.md-button.ng-md-icon {
+    padding: 0;
+    background: none;
+}
+
+.md-button.md-fab ng-md-icon {
+    margin-top: 0;
+}
+
+md-checkbox .ng-md-icon {
+    transition: 240ms;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 18px;
+    height: 18px;
+    border: 2px solid;
+    border-radius: 2px;
+}
+
+md-checkbox.md-checked .ng-md-icon {
+    border: none;
+}
+
+md-checkbox.md-checked .ng-md-icon:after {
+    -webkit-transform: rotate(45deg);
+    transform: rotate(45deg);
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    display: table;
+    width: 6px;
+    height: 12px;
+    border: 2px solid;
+    border-top: 0;
+    border-left: 0;
+    content: '';
+}
+
+.md-chips .md-chip .md-chip-remove ng-md-icon {
+    height: 18px;
+    width: 18px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate3d(-50%, -50%, 0);
+    transform: translate3d(-50%, -50%, 0);
+}
+
+ng-md-icon {
+    margin: auto;
+    background-repeat: no-repeat no-repeat;
+    display: inline-block;
+    vertical-align: middle;
+    fill: currentColor;
+    height: 24px;
+    width: 24px;
+}
+
+ng-md-icon svg {
+    pointer-events: none;
+    display: block;
+}
+
+ng-md-icon[md-font-icon] {
+    line-height: 1;
+    width: auto;
+}
+
+md-input-container > ng-md-icon {
+    position: absolute;
+    top: 5px;
+    left: 2px;
+}
+
+md-input-container > ng-md-icon + input {
+    margin-left: 36px;
+}
+
+md-input-container.md-icon-float > ng-md-icon {
+    top: 26px;
+    left: 2px;
+}
+
+md-input-container.md-icon-float > ng-md-icon + input {
+    margin-left: 36px;
+}
+
+@media screen and (-ms-high-contrast: active) {
+    md-input-container.md-default-theme > ng-md-icon {
+        fill: #fff;
+    }
+}
+
+md-list-item > div.md-primary > ng-md-icon,
+md-list-item > div.md-secondary > ng-md-icon,
+md-list-item > ng-md-icon:first-child,
+md-list-item > ng-md-icon.md-secondary,
+md-list-item .md-list-item-inner > div.md-primary > ng-md-icon,
+md-list-item .md-list-item-inner > div.md-secondary > ng-md-icon,
+md-list-item .md-list-item-inner > ng-md-icon:first-child,
+md-list-item .md-list-item-inner > ng-md-icon.md-secondary {
+    width: 24px;
+    margin-top: 16px;
+    margin-bottom: 12px;
+    box-sizing: content-box;
+}
+
+md-list-item > ng-md-icon:first-child,
+md-list-item .md-list-item-inner > ng-md-icon:first-child {
+    margin-right: 32px;
+}
+
+md-list-item.md-2-line > ng-md-icon:first-child,
+md-list-item.md-2-line > .md-no-style > ng-md-icon:first-child {
+    -webkit-align-self: flex-start;
+    -ms-flex-item-align: start;
+    align-self: flex-start;
+}
+
+md-list-item.md-3-line > ng-md-icon:first-child,
+md-list-item.md-3-line > .md-no-style > ng-md-icon:first-child {
+    margin-top: 16px;
+}
+
+md-tabs-wrapper md-prev-button ng-md-icon,
+md-tabs-wrapper md-next-button ng-md-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate3d(-50%, -50%, 0);
+    transform: translate3d(-50%, -50%, 0);
+}
+
+md-tabs-wrapper md-next-button ng-md-icon {
+    -webkit-transform: translate3d(-50%, -50%, 0) rotate(180deg);
+    transform: translate3d(-50%, -50%, 0) rotate(180deg);
+}

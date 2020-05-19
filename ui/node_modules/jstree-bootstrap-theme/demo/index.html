@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>jsTree</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!--[if lt IE 9]><script src="./assets/html5.js"></script><![endif]-->
+
+    <meta name="robots" content="index,follow" />
+    <link rel="stylesheet" href="./assets/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="./assets/dist/themes/proton/style.css" />
+    <link rel="stylesheet" href="./assets/docs.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <!--[if lt IE 9]><script src="./assets/respond.js"></script><![endif]-->
+
+    <link rel="icon" href="./assets/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon-precomposed" href="./assets/apple-touch-icon-precomposed.png" />
+    <script src="./assets/jquery-1.10.2.min.js"></script>
+    <script src="./assets/dist/jstree.min.js"></script>
+
+    <style>
+        .proton-demo{
+            max-width: 100%;
+            padding: 10px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <header id="head">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 style="display: block; margin: 10px auto; color: #fff; font-size: 30px; border: none;">JSTREE BOOTSTRAP THEME DEMO</h3>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="container" id="content">
+        <div class="row page" style="display: block;" id="docs">
+            <div class="col-md-12">
+                <h3>What is jsTree Bootstrap Theme?</h3>
+                <div class="row">
+                    <div class="col-md-12">
+                        <p>jsTree Bootstrap Theme is created as a part of <a href="http://themeforest.net/item/proton-ui-responsive-admin-panel-theme/6240793">Proton UI Responsive Admin Panel Theme</a>.</p>
+                        <p>Since there aren't many jsTree 3 themes out there, we thought we'd make this one freely available. Enjoy!</p>
+                        <p>Download from Github: <a href="https://github.com/orangehill/jstree-bootstrap-theme">https://github.com/orangehill/jstree-bootstrap-theme</a></p>
+                    </div>
+                </div>
+
+                <h3>Responsiveness</h3>
+                <div class="row">
+                    <div class="col-md-12">
+                        <p>jsTree Bootstrap Theme is responsive. To see the effect go ahead and scale a browser window down until the window width is less then 768 pixels. Mobile friendly design should make it easier to tap nodes with more precision</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div id="jstree-proton-1" style="margin-top:20px;" class="proton-demo">
+                            <ul>
+                                <li>Root node (basic)
+                                    <ul>
+                                        <li data-jstree='{ "selected" : true }'>
+                                            <a href="#">
+                                                <em>initially</em>
+                                                <strong>selected</strong>
+                                            </a>
+                                        </li>
+                                        <li data-jstree='{ "icon" : "./assets/images/tree_icon.png" }'>custom icon URL</li>
+                                        <li data-jstree='{ "opened" : true }'>initially open
+                                            <ul>
+                                                <li>Another node</li>
+                                            </ul>
+                                        </li>
+                                        <li data-jstree='{ "icon" : "glyphicon glyphicon-leaf" }'>Custom icon class (bootstrap)</li>
+                                        <li data-jstree='{ "icon" : "fa fa-pagelines" }'>Custom icon class (font-awesome)</li>
+                                    </ul>
+                                </li>
+                                <li><a href="http://www.jstree.com">Root node 2</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8" style="margin-top:20px;">
+    <pre><code><span class="comment">// An example of simple responsive jsTree</span>
+    $('#jstree-proton-1').jstree({
+        'core': {
+            'themes': {
+                'name': 'proton',
+                'responsive': true
+            }
+        }
+    });
+    </code></pre>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div id="jstree-proton-2" style="margin-top:20px;" class="proton-demo">
+                            <ul>
+                                <li>Root node (wholerow mode)
+                                    <ul>
+                                        <li data-jstree='{ "selected" : true }'>
+                                            <a href="#">
+                                                <em>initially</em>
+                                                <strong>selected</strong>
+                                            </a>
+                                        </li>
+                                        <li data-jstree='{ "icon" : "./assets/images/tree_icon.png" }'>custom icon URL</li>
+                                        <li data-jstree='{ "opened" : true }'>initially open
+                                            <ul>
+                                                <li>Another node</li>
+                                            </ul>
+                                        </li>
+                                        <li data-jstree='{ "icon" : "glyphicon glyphicon-leaf" }'>Custom icon class (bootstrap)</li>
+                                        <li data-jstree='{ "icon" : "fa fa-pagelines" }'>Custom icon class (font-awesome)</li>
+                                    </ul>
+                                </li>
+                                <li><a href="http://www.jstree.com">Root node 2</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-8" style="margin-top:20px;">
+    <pre><code><span class="comment">// An example of responsive jsTree with wholerow plugin.</span>
+    $('#jstree-proton-2').jstree({
+        'plugins': ["wholerow"],
+        'core': {
+            'themes': {
+                'name': 'proton',
+                'responsive': true
+            }
+        }
+    });
+    </code></pre>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div id="jstree-proton-3" style="margin-top:20px;" class="proton-demo"></div>
+                    </div>
+                    <div class="col-md-8" style="margin-top:20px;">
+    <pre><code><span class="comment">// An example of responsive jsTree with wholerow and checbox plugins.</span>
+    $('#jstree-proton-3').jstree({
+        'plugins': ["wholerow", "checkbox"],
+        'core': {
+            'data': [{
+                    "text": "Wholerow with checkboxes",
+                    "children": [{
+                        "text": "initially selected",
+                        "state": {
+                            "selected": true
+                        }
+                    }, {
+                        "text": "custom icon URL",
+                        "icon": "./assets/images/tree_icon.png"
+                    }, {
+                        "text": "initially open",
+                        "state": {
+                            "opened": true
+                        },
+                        "children": ["Another node"]
+                    }, {
+                        "text": "custom icon class",
+                        "icon": "glyphicon glyphicon-leaf"
+                    }, {
+                        "text": "fontawesome icon class",
+                        "icon": "fa fa-pagelines"
+                    }]
+                },
+                "And wholerow selection"
+            ],
+            'themes': {
+                'name': 'proton',
+                'responsive': true
+            }
+        }
+    });
+    </code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    $(function() {
+        $('#jstree-proton-1').jstree({
+            'core': {
+                'themes': {
+                    'name': 'proton',
+                    'responsive': true
+                }
+            }
+        });
+        $('#jstree-proton-2').jstree({
+            'plugins': ["wholerow"],
+            'core': {
+                'themes': {
+                    'name': 'proton',
+                    'responsive': true
+                }
+            }
+        });
+        $('#jstree-proton-3').jstree({
+            'plugins': ["wholerow", "checkbox"],
+            'core': {
+                'data': [{
+                        "text": "Wholerow with checkboxes",
+                        "children": [{
+                            "text": "initially selected",
+                            "state": {
+                                "selected": true
+                            }
+                        }, {
+                            "text": "custom icon URL",
+                            "icon": "./assets/images/tree_icon.png"
+                        }, {
+                            "text": "initially open",
+                            "state": {
+                                "opened": true
+                            },
+                            "children": ["Another node"]
+                        }, {
+                            "text": "custom icon class",
+                            "icon": "glyphicon glyphicon-leaf"
+                        }, {
+                        "text": "fontawesome icon class",
+                        "icon": "fa fa-pagelines"
+                        }]
+                    },
+                    "And wholerow selection"
+                ],
+                'themes': {
+                    'name': 'proton',
+                    'responsive': true
+                }
+            }
+        });
+    });
+    </script>
+    <a class="hidden-xs hidden-sm" href="https://github.com/orangehill/jstree-bootstrap-theme">
+        <img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_green_007200.png" alt="Fork me on GitHub">
+    </a>
+</body>
+
+</html>

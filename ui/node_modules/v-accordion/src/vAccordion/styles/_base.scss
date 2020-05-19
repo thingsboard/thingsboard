@@ -1,0 +1,51 @@
+/* Base styles
+ ***************************************/
+
+
+v-accordion {
+  display: block;
+}
+
+v-pane {
+  display: block;
+
+  &.is-expanded {
+    > v-pane-content {
+      > div {
+        display: visible;
+      }
+    }
+  }
+
+  &[disabled] > v-pane-header {
+    opacity: $v-pane-disabled-opacity;
+    pointer-events: none;
+  }
+}
+
+v-pane-header {
+  display: block;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+
+  &:focus {
+    outline: none;
+  }
+
+  > div {
+    display: block;
+  }
+}
+
+v-pane-content {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  max-height: 0px;
+
+  > div {
+    visibility: none;
+  }
+}

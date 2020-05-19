@@ -1,0 +1,32 @@
+.column {
+    width: 300px;
+}
+
+img {
+    width: 100%;
+    cursor: pointer;
+}
+
+
+:-webkit-full-screen .column {
+    width: 100%;
+}
+
+:-moz-full-screen .column {
+    width: 100%;
+}
+
+
+:-ms-full-screen .column {
+    width: 100%;
+}
+
+
+:-o-full-screen .column {
+    width: 100%;
+}
+
+
+:full-screen .column {
+    width: 100%;
+}

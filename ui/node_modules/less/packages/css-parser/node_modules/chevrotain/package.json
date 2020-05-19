@@ -1,0 +1,142 @@
+{
+    "name": "chevrotain",
+    "version": "6.5.0",
+    "description": "Chevrotain is a high performance fault tolerant javascript parsing DSL for building recursive decent parsers",
+    "keywords": [
+        "parser",
+        "syntax",
+        "lexical",
+        "analysis",
+        "grammar",
+        "lexer",
+        "tokenizer",
+        "generator",
+        "compiler",
+        "fault",
+        "tolerant"
+    ],
+    "bugs": {
+        "url": "https://github.com/SAP/chevrotain/issues"
+    },
+    "license": "Apache-2.0",
+    "author": {
+        "name": "Shahar Soel"
+    },
+    "files": [
+        "lib_esm/src/**/*.js",
+        "lib/src/**/*.js",
+        "lib/chevrotain.d.ts",
+        "lib/chevrotain.min.js",
+        "lib/chevrotain.js",
+        "readme.md",
+        "LICENSE.TXT",
+        "diagrams/**/*.*",
+        "CHANGELOG.md"
+    ],
+    "main": "lib/src/api.js",
+    "module": "lib_esm/src/api.js",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/SAP/chevrotain.git"
+    },
+    "homepage": "https://sap.github.io/chevrotain/docs/",
+    "scripts": {
+        "---------- CI FLOWS --------": "",
+        "build": "npm-run-all clean lint compile build:esm dts api-site:build bundle",
+        "build:esm": "npm-run-all clean:esm compile:esm",
+        "test": "npm-run-all test:esm compile:def coverage check-coverage karma",
+        "test:esm": "mocha \"./lib_esm/test/**/*spec.js\" --require esm",
+        "version": "tsc ./src/version.ts --outDir lib/src && node ./scripts/version-update.js",
+        "postversion": "npm-run-all website:build website:upload api-site:build api-site:upload",
+        "---------- DEV FLOWS --------": "",
+        "watch": "tsc -w",
+        "unit-tests": "mocha \"./lib/test/**/*spec.js\"",
+        "quick-build": "tsc && yarn run bundle",
+        "---------- BUILD STEPS --------": "",
+        "clean": "shx rm -rf coverage dev lib",
+        "clean:esm": "shx rm -rf lib_esm",
+        "lint": "tslint --project tsconfig.json",
+        "compile": "tsc && node ./scripts/fix-coverage-report.js",
+        "compile:esm": "tsc --project tsconfig.esm.json",
+        "compile:watch": "tsc -w",
+        "compile:def": "npm-run-all compile-def-api compile-def-modules compile-def-namespace",
+        "dts": "node scripts/process-docs.js",
+        "coverage": "nyc mocha \"./lib/test/**/*spec.js\"",
+        "check-coverage": "nyc check-coverage --lines 100 --branches 100 --statements 100 --functions 100",
+        "bundle": "npm-run-all bundle:regular bundle:min bundle:spec",
+        "api-site:build": "typedoc api.d.ts --mode file --out dev/docs --module commonjs --excludeExternals --includeDeclarations --excludePrivate",
+        "api-site:upload": "./scripts/api-site-upload.sh",
+        "website:dev": "vuepress dev docs",
+        "website:build": "vuepress build docs",
+        "website:upload": "./scripts/website-upload.sh",
+        "dead-links": "awesome_bot docs/*.md docs/*/*.md diagrams/*.md examples/*.md examples/*/*.md examples/*/*/*.md readme.md --allow-dupe --allow-redirect --skip-save-results",
+        "karma": "grunt browsers_tests",
+        "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+        "---------- DEFINITIONS --------": "",
+        "compile-def-api": "tsc --noImplicitAny test_integration/definitions/api_type_checking.ts --outDir dev/garbage --lib \"es2015\"",
+        "compile-def-modules": "tsc --noImplicitAny test_integration/definitions/es6_modules.ts --outDir dev/garbage --lib \"es2015\"",
+        "compile-def-namespace": "tsc --noImplicitAny test_integration/definitions/namespaces.ts --module none --outDir dev/garbage --lib \"es2015\"",
+        "---------- BUNDLING --------": "",
+        "bundle:regular": "webpack --config webpack_release.config.js",
+        "bundle:min": "webpack --config webpack_release_min.config.js",
+        "bundle:spec": "webpack --config webpack_specs.config.js"
+    },
+    "dependencies": {
+        "regexp-to-ast": "0.4.0"
+    },
+    "devDependencies": {
+        "@types/chai": "^4.0.10",
+        "@types/mocha": "^5.0.0",
+        "@types/sinon-chai": "^3.2.0",
+        "chai": "^4.1.2",
+        "coveralls": "^3.0.0",
+        "esm": "^3.2.25",
+        "gitty": "^3.6.0",
+        "grunt": "^1.0.1",
+        "grunt-cli": "~1.3.1",
+        "grunt-karma": "~3.0.0",
+        "if-env": "^1.0.0",
+        "jsdom": "13.2.0",
+        "jsonfile": "^5.0.0",
+        "karma": "4.0.0",
+        "karma-chai": "^0.1.0",
+        "karma-chrome-launcher": "~2.2.0",
+        "karma-edge-launcher": "^0.4.2",
+        "karma-firefox-launcher": "~1.1.0",
+        "karma-ie-launcher": "~1.0",
+        "karma-mocha": "^1.3.0",
+        "karma-requirejs": "^1.1.0",
+        "karma-safari-launcher": "^1.0.0",
+        "load-grunt-tasks": "^4.0.0",
+        "nyc": "^13.0.1",
+        "require-from-string": "^2.0.2",
+        "requirejs": "2.3.6",
+        "sinon": "^7.2.3",
+        "sinon-chai": "^3.0.0",
+        "tslint": "^5.8.0",
+        "typedoc": "0.14.2",
+        "typescript": "3.5.3",
+        "vuepress": "^0.14.2",
+        "webpack": "4.29.6",
+        "webpack-cli": "^3.0.0",
+        "xregexp": "^4.2.0"
+    },
+    "typings": "lib/chevrotain.d.ts",
+    "nyc": {
+        "reporter": [
+            "lcov",
+            "text"
+        ],
+        "exclude": [
+            "lib/test/**/*.*",
+            "test/test.config.js"
+        ]
+    },
+    "mocha": {
+        "recursive": true,
+        "reporter": "spec",
+        "require": "./test/test.config",
+        "ui": "bdd"
+    },
+    "gitHead": "d8593c78e919f8f03fce04c2c4860a3022af7e4f"
+}

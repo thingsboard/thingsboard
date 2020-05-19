@@ -1,0 +1,87 @@
+<html>
+<head>
+<title>Shows how different settings and styles can be mixed in one canvas</title>
+<style>
+.chart-style {
+    width: 600px;
+    height: 340px;
+    margin-bottom: 15px;
+}
+.text-block {
+    margin-bottom: 15px;
+}
+</style>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.rawgit.com/flot/flot/v0.8.3/jquery.flot.js"></script>
+<script type="text/javascript" src="https://rawgit.com/MichaelZinsmaier/CurvedLines/master/curvedLines.js"></script>
+
+<script type="text/javascript">
+$(function() {
+
+//some random data
+var d1 = []; var last = 0;
+for (var i = 0; i <= 40; i += (2 + parseInt(Math.random() * 5))) {
+    last = last + ((Math.random() * 3) - 1.5)
+    d1.push([i, parseInt(last)]);
+}
+
+var d2 = [];
+for (var i = 2; i <= $(d1).get(-1)[0]; i += (2 + parseInt(Math.random() * 5))) {
+    d2.push([i, parseInt(Math.random() * 8)]);
+}
+
+
+//default flot options
+var options = {
+    series: { curvedLines: { active: true } },
+    grid: { hoverable: true }  // <- generally activate hover
+};
+
+
+//plotting with per series adjustments
+$.plot($("#flotContainer"), [
+{ //series 1
+    data: d1,
+    lines: { show: true, lineWidth: 3 },
+    hoverable: false, // <- overwrite hoverable with false               
+    curvedLines: {
+        apply: true  // <- set apply <- curve only this data series
+    }
+}, { //series 2
+    data: d1,
+    points: { show: true }
+}, { //series 3
+    data: d2,
+    points: { show: true, radius: 5 }
+}], options);
+
+
+//adding hover text
+$("#flotContainer").bind("plothover", function (event, pos, item) {
+    if (item) {
+        $("#hoverText").text("point at: " + pos.x.toFixed(2) + " / " + pos.y.toFixed(2))
+    } else {
+        $("#hoverText").text("point at: - / -")
+    }
+});
+
+});
+</script>
+
+
+</head>
+
+<h4>CurvedLines: customizing and mixing</h4>
+
+<div class="text-block"> <span id="hoverText">point at: - / -</span>
+
+</div>
+<div id="flotContainer" class="chart-style"></div>
+<div class="text-block">The example shows two datasets (d1, d2) plotted using different styles (curved line, points, bigger points). The points are hoverable, the curved line is not.</div>
+<div class="text-block">To achieve such mixed plots you have to define some settings on a per series level. In the example the curved line plugin is generally set to active (as default in the options object) but will be applied only to the first series. Similarly hovering is deactivated for the first series. The combination of "replotting" (series 1 and 2 both origin form dataset d1) and per series settings allows you to mix different plotting styles and settings in one canvas.</div>
+
+<a href="index.html">Return to CurvedLines Examples list</a>
+
+</body>
+</html>

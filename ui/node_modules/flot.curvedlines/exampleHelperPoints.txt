@@ -1,0 +1,53 @@
+### html ###
+
+<h4>CurvedLines: random data points </h4>
+<div id="flotContainer" class="chart-style"></div>
+
+<h4>CurvedLines: internally created helper points</h4>
+<div id="flotContainer2" class="chart-style"></div>
+
+### css ###
+
+.chart-style {
+    width: 600px;
+    height: 260px;
+}
+
+### javascript ###
+
+//random data
+var d1 = []; var last = 0;
+for (var i = 0; i <= 40; i += (2 + parseInt(Math.random() * 5))) {
+    last = last + ((Math.random() * 3) - 1.5)
+    d1.push([i, parseInt(last)]);
+}
+
+//flot options
+var options = {
+                 series: {
+                     curvedLines: {
+                                   active: true,
+                                   nrSplinePoints: 20 // <- control nr of helper points
+                     }                                // between two poins
+                 }
+              };
+//plotting
+$.plot($("#flotContainer"),[
+    { //curved line
+        data: d1,
+        lines: {show: true, lineWidth: 3},
+        curvedLines: {apply: true } // <- curve line
+    }, { //original data points
+        data: d1,
+        points: {show: true}
+    }      
+], options);
+
+$.plot($("#flotContainer2"),[
+    { // <- helper points that are used to curve the lines
+        data: d1,
+        color: '#CC0000',
+        points: {show: true},
+        curvedLines: {apply: true}  //<- "curve" points
+     }        
+], options);

@@ -1,0 +1,19 @@
+/* Put your css in here */
+
+* {
+  box-sizing: border-box;
+}
+
+.text-preview {
+  padding: 20px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 7px 0;
+  color: rgb(75,125,175);
+}
+p, ul {
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 14px;
+}

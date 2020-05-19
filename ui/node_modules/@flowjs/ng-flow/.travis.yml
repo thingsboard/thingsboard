@@ -1,0 +1,26 @@
+language: node_js
+sudo: false
+cache:
+  directories:
+    - node_modules
+env:
+  global:
+  - SAUCE_USERNAME=ng-flow
+  - SAUCE_ACCESS_KEY=008c40ec-dbaf-4edc-abad-6c6afcc5d13a
+matrix:
+  fast_finish: true
+  include:
+    - env: TEST='unit-tests'
+      node_js: "4.2"
+    - env: TEST='browser-tests'
+      node_js: "4.2"
+      addons:
+        sauce_connect: true
+  allow_failures:
+    - env: TEST='browser-tests'
+before_install: npm install -g grunt-cli bower codeclimate-test-reporter
+install:
+    - npm install
+    - bower update
+script:
+  - $TRAVIS_BUILD_DIR/travis.sh

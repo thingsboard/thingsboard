@@ -1,0 +1,1076 @@
+
+[class*="bar-"] {
+  position: fixed;
+  right: 0;
+  left: 0;
+  z-index: 10;
+  height: 44px;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+///* Modifier class to dock any bar below .bar-title */
+//.bar-header-secondary {
+//  top: 45px;
+//}
+//
+///* Modifier class to dock any bar to bottom of viewport */
+//.bar-footer {
+//  bottom: 0;
+//}
+//
+/* Generic bar for wrapping buttons, segmented controllers, etc. */
+.bar-standard {
+  background-color: #f2f2f2;
+  background-image: -webkit-linear-gradient(top, #f2f2f2 0, #e5e5e5 100%);
+  background-image: linear-gradient(to bottom, #f2f2f2 0, #e5e5e5 100%);
+  border-bottom: 1px solid #aaa;
+  box-shadow: inset 0 1px 1px -1px #fff;
+}
+
+/* Flip border position to top for footer bars */
+.bar-footer.bar-standard,
+.bar-footer-secondary.bar-standard {
+  border-top: 1px solid #aaa;
+  border-bottom-width: 0;
+}
+
+/* Title bar
+-------------------------------------------------- */
+
+/* Bar docked to top of viewport for showing page title and actions */
+.bar-title {
+  top: 0;
+  display: -webkit-box;
+  display: box;
+  background: #4d7fb8; /* Old browsers */
+  background: -moz-linear-gradient(top, #4d7fb8 0%, #4572a5 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#4d7fb8), color-stop(100%,#4572a5)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #4d7fb8 0%,#4572a5 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, #4d7fb8 0%,#4572a5 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, #4d7fb8 0%,#4572a5 100%); /* IE10+ */
+  background: linear-gradient(to bottom, #4d7fb8 0%,#4572a5 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4d7fb8', endColorstr='#4572a5',GradientType=0 ); /* IE6-9 */
+  box-shadow: inset 0 1px 1px -1px rgba(255, 255, 255, .8);
+  -webkit-box-orient: horizontal;
+          box-orient: horizontal;
+}
+
+/* Centered text in the .bar-title */
+.bar-title .title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 16px;
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 -1px rgba(0, 0, 0, .5);
+  white-space: nowrap;
+}
+
+.bar-title > a:not([class*="button"]) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Retain specified title color */
+.bar-title .title a {
+  color: inherit;
+}
+
+/* Tab bar
+-------------------------------------------------- */
+
+/* Bar docked to bottom used for primary app navigation */
+.bar-tab {
+  bottom: 0;
+  height: 50px;
+  padding: 0;
+  background-color: #393939;
+  background-image: -webkit-linear-gradient(top, #393939 0, #2b2b2b 100%);
+  background-image: linear-gradient(to bottom, #393939 0, #2b2b2b 100%);
+  border-top: 1px solid #000;
+  border-bottom-width: 0;
+  box-shadow: inset 0 1px 1px -1px rgba(255, 255, 255, .6);
+}
+
+/* Wrapper for individual tab */
+.tab-inner {
+  display: -webkit-box;
+  display: box;
+  height: 100%;
+  list-style: none;
+  -webkit-box-orient: horizontal;
+          box-orient: horizontal;
+}
+
+/* Navigational tab */
+.tab-item {
+  height: 100%;
+  padding-top: 9px;
+  text-align: center;
+  box-sizing: border-box;
+  -webkit-box-flex: 1;
+          box-flex: 1;
+}
+
+/* Active state for tab */
+.tab-item.active {
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, .5);
+}
+
+/* Icon for tab  */
+.tab-icon {
+  display: block;
+  height: 18px;
+  margin: 0 auto;
+}
+
+/* Label for tab */
+.tab-label {
+  margin-top: 1px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px rgba(0, 0, 0, .3);
+}
+
+/* Buttons in title bars
+-------------------------------------------------- */
+
+/* Generic style for all buttons in .bar-title */
+.bar-title [class*="button"] {
+  position: relative;
+  z-index: 10; /* Places buttons over full width title */
+  font-size: 12px;
+  line-height: 23px;
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, .3);
+  background-color: #1eb0e9;
+  background-image: -webkit-linear-gradient(top, #1eb0e9 0, #0984c6 100%);
+  background-image: linear-gradient(to bottom, #1eb0e9 0, #0984c6 100%);
+  border: 1px solid #0e5895;
+  box-shadow: 0 1px rgba(255, 255, 255, .25);
+  -webkit-box-flex: 0;
+          box-flex: 0;
+}
+
+
+/* Hacky way to right align buttons outside of flex-box system
+   Note: is only absolutely positioned button, would be better if flex-box had an "align right" option */
+.bar-title .title + [class*="button"]:last-child,
+.bar-title .button + [class*="button"]:last-child,
+.bar-title [class*="button"].pull-right {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+/* Override standard button active states */
+.bar-title .button:active {
+  color: #fff;
+  background-color: #0876b1;
+}
+
+/* Directional buttons in title bars (thanks to @GregorAdams for solution - http://cssnerd.com/2011/11/30/the-best-pure-css3-ios-style-arrow-back-button/)
+-------------------------------------------------- */
+
+/* Add relative positioning so :before content is positioned properly */
+//.bar-title .button-prev,
+//.bar-title .button-next {
+//  position: relative;
+//}
+//
+///* Prev/next button base styles */
+//.bar-title .button-prev {
+//  margin-left: 7px; /* Push over to make room for :before content */
+//  border-left: 0;
+//  border-bottom-left-radius: 10px 15px;
+//  border-top-left-radius: 10px 15px;
+//}
+//.bar-title .button-next {
+//  margin-right: 7px; /* Push over to make room for :before content */
+//  border-right: 0;
+//  border-top-right-radius: 10px 15px;
+//  border-bottom-right-radius: 10px 15px;
+//}
+//
+///* Pointed part of directional button */
+//.bar-title .button-prev:before,
+//.bar-title .button-next:before {
+//  position: absolute;
+//  top: 2px;
+//  width: 27px;
+//  height: 27px;
+//  border-radius: 30px 100px 2px 40px / 2px 40px 30px 100px;
+//  content: '';
+//  box-shadow: inset 1px 0 #0e5895, inset 0 1px #0e5895;
+//  -webkit-mask-image: -webkit-gradient(linear, left top, right bottom, from(#000), color-stop(.33, #000), color-stop(.5, transparent), to(transparent));
+//                  mask-image: gradient(linear, left top, right bottom, from(#000), color-stop(.33, #000), color-stop(.5, transparent), to(transparent));
+//}
+//.bar-title .button-prev:before {
+//  left: -5px;
+//  background-image: -webkit-gradient(linear, left bottom, right top, from(#0984c6), to(#1eb0e9));
+//  background-image: gradient(linear, left bottom, right top, from(#0984c6), to(#1eb0e9));
+//  border-left: 1.5px solid rgba(255, 255, 255, .25);
+//  -webkit-transform: rotate(-45deg) skew(-10deg, -10deg);
+//          transform: rotate(-45deg) skew(-10deg, -10deg);
+//}
+//.bar-title .button-next:before {
+//  right: -5px;
+//  background-image: -webkit-gradient(linear, left bottom, right top, from(#1eb0e9), to(#0984c6));
+//  background-image: gradient(linear, left bottom, right top, from(#1eb0e9), to(#0984c6));
+//  border-top: 1.5px solid rgba(255, 255, 255, .25);
+//  -webkit-transform: rotate(135deg) skew(-10deg, -10deg);
+//          transform: rotate(135deg) skew(-10deg, -10deg);
+//}
+//
+///* Active states for the directional buttons */
+//.bar-title .button-prev:active,
+//.bar-title .button-next:active,
+//.bar-title .button-prev:active:before,
+//.bar-title .button-next:active:before {
+//  color: #fff;
+//  background-color: #0876b1;
+//  background-image: none;
+//}
+//.bar-title .button-prev:active:before,
+//.bar-title .button-next:active:before {
+//  content: '';
+//}
+//.bar-title .button-prev:active:before {
+//  box-shadow: inset 0 3px 3px rgba(0, 0, 0, .2);
+//}
+//.bar-title .button-next:active:before {
+//  box-shadow: inset 0 -3px 3px rgba(0, 0, 0, .2);
+//}
+
+/* Block buttons in any bar
+-------------------------------------------------- */
+
+/* Add proper padding and replace buttons normal dropshadow with a shine from bar */
+[class*="bar"] .button-block {
+  padding: 7px 0;
+  margin-bottom: 0;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .4), 0 1px rgba(255, 255, 255, .8);
+}
+
+/* Override standard padding changes for .button-blocks */
+[class*="bar"] .button-block:active {
+  padding: 7px 0;
+}
+
+/* Segmented controller in any bar
+-------------------------------------------------- */
+
+/* Remove standard segmented bottom margin */
+[class*="bar-"] .segmented-controller {
+  margin-bottom: 0;
+}
+
+/* Add margins between segmented controllers and buttons */
+[class*="bar-"] .segmented-controller + [class*="button"],
+[class*="bar-"] [class*="button"] + .segmented-controller {
+  margin-left: 5px;
+}
+
+/* Segmented controller in a title bar
+-------------------------------------------------- */
+
+.bar-title .segmented-controller {
+  line-height: 18px;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+  background-color: #1eb0e9;
+  background-image: -webkit-linear-gradient(top, #1eb0e9 0, #0984c6 100%);
+  background-image: linear-gradient(to bottom, #1eb0e9 0, #0984c6 100%);
+  border: 1px solid #0e5895;
+  border-radius: 3px;
+  box-shadow: 0 1px rgba(255, 255, 255, .25);
+  -webkit-box-flex: 1;
+          box-flex: 1;
+}
+
+/* Set color for tab border and highlight */
+.bar-title .segmented-controller li {
+  border-left: 1px solid #0e5895;
+  box-shadow: inset 1px 0 rgba(255, 255, 255, .25);
+}
+
+/* Remove inset shadow from first tab or one to the right of the active tab  */
+.bar-title .segmented-controller .active + li,
+.bar-title .segmented-controller li:first-child {
+  box-shadow: none;
+}
+
+/* Remove left-hand border from first tab */
+.bar-title .segmented-controller li:first-child {
+  border-left-width: 0;
+}
+
+/* Depressed state (active) */
+.bar-title .segmented-controller li.active {
+  background-color: #0082c4;
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, .3);
+}
+
+/* Set color of links to white */
+.bar-title .segmented-controller li > a {
+  color: #fff;
+}
+
+
+/* Search forms in standard bar
+-------------------------------------------------- */
+
+/* Position/size search bar within the bar */
+.bar-standard input[type=search] {
+  height: 32px;
+  margin: 0;
+
+}
+
+/* Lists
+-------------------------------------------------- */
+
+/* Remove usual bullet styles from list */
+.list {
+  margin-bottom: 10px;
+  list-style: none;
+  background-color: #fff;
+}
+
+/* Pad each list item and add dividers */
+.list li {
+  position: relative;
+  padding: 20px 60px 20px 10px; /* Given extra right padding to accomodate counts, chevrons or buttons */
+  border-bottom: 1px solid rgba(0, 0, 0, .1);
+}
+
+/* Give top border to first list items */
+.list li:first-child {
+  border-top: 1px solid rgba(0, 0, 0, .1);
+}
+
+/* If a list of links, make sure the child <a> takes up full list item tap area (want to avoid selecting child buttons though) */
+.list li > a:not([class*="button"]) {
+  position: relative;
+  display: block;
+  padding: inherit;
+  margin: -20px -60px -20px -10px;
+  color: inherit;
+}
+
+/* Inset list
+-------------------------------------------------- */
+
+.list.inset {
+  width: auto;
+  margin-right: 10px;
+  margin-left: 10px;
+  border: 1px solid rgba(0, 0, 0, .1);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* Remove border from first/last standard list items to avoid double border at top/bottom of lists */
+.list.inset li:first-child {
+  border-top-width: 0;
+}
+.list.inset li:last-child {
+  border-bottom-width: 0;
+}
+
+
+/* List dividers
+-------------------------------------------------- */
+
+//.list .list-divider {
+//  position: relative;
+//  top: -1px;
+//  padding-top: 6px;
+//  padding-bottom: 6px;
+//  font-size: 12px;
+//  font-weight: bold;
+//  line-height: 18px;
+//  text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+//  background-color: #f8f8f8;
+//  background-image: -webkit-linear-gradient(top, #f8f8f8 0, #eee 100%);
+//  background-image: linear-gradient(to bottom, #f8f8f8 0, #eee 100%);
+//  border-top: 1px solid rgba(0, 0, 0, .1);
+//  border-bottom: 1px solid rgba(0, 0, 0, .1);
+//  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .4);
+//}
+
+/* Rounding first divider on inset lists and remove border on the top */
+.list.inset .list-divider:first-child {
+  top: 0;
+  border-top-width: 0;
+  border-radius: 6px 6px 0 0;
+}
+
+/* Rounding last divider on inset lists */
+.list.inset .list-divider:last-child {
+  border-radius: 0 0 6px 6px;
+}
+
+
+///* Forms
+//-------------------------------------------------- */
+//
+///* Force form elements to inherit font styles */
+//input,
+//textarea,
+//button,
+//select {
+//  font-family: inherit;
+//  font-size: inherit;
+//}
+//
+///* Stretch inputs/textareas to full width and add height to maintain a consistent baseline */
+//select,
+//textarea,
+//input[type="text"],
+//input[type=search],
+//input[type="password"],
+//input[type="datetime"],
+//input[type="datetime-local"],
+//input[type="date"],
+//input[type="month"],
+//input[type="time"],
+//input[type="week"],
+//input[type="number"],
+//input[type="email"],
+//input[type="url"],
+//input[type="tel"],
+//input[type="color"],
+//.input-group {
+//  width: 100%;
+//  height: 40px;
+//  padding: 10px;
+//  margin-bottom: 10px;
+//  background: #fff;
+//  border: 1px solid rgba(0, 0, 0, .2);
+//  border-radius: 3px;
+//  box-shadow: 0 1px 1px rgba(255, 255, 255, .2), inset 0 1px 1px rgba(0, 0, 0, .1);
+//  -webkit-appearance: none;
+//  box-sizing: border-box;
+//}
+//
+///* Fully round search input */
+//input[type=search] {
+//  height: 34px;
+//  font-size: 14px;
+//  border-radius: 30px;
+//}
+//
+///* Allow text area's height to grow larger than a normal input */
+//textarea {
+//  height: auto;
+//}
+//
+///* Style select button to look like part of the Ratchet's style */
+//select {
+//  height: auto;
+//  font-size: 14px;
+//  background-color: #f8f8f8;
+//  background-image: -webkit-linear-gradient(top, #f8f8f8 0%, #d4d4d4 100%);
+//  background-image: linear-gradient(to bottom, #f8f8f8 0%, #d4d4d4 100%);
+//  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .1);
+//}
+//
+
+/* Input groups (cluster multiple inputs together into a single group)
+-------------------------------------------------- */
+
+/* Reset from initial form setup styles */
+//.input-group {
+//  width: auto;
+//  height: auto;
+//  padding: 0;
+//}
+//
+///* Remove spacing, borders, shadows and rounding since it all belongs on the .input-group not the input */
+//.input-group input {
+//  margin-bottom: 0;
+//  background-color: transparent;
+//  border: 0;
+//  border-bottom: 1px solid rgba(0, 0, 0, .2);
+//  border-radius: 0;
+//  box-shadow: none;
+//}
+//
+///* Remove bottom border on last input to avoid double bottom border */
+//.input-group input:last-child {
+//  border-bottom-width: 0;
+//}
+//
+///* Input groups with labels
+//-------------------------------------------------- */
+//
+///* To use labels with input groups, wrap a label and an input in an .input-row */
+//.input-row {
+//  overflow: hidden;
+//  border-bottom: 1px solid rgba(0, 0, 0, .2);
+//}
+//
+///* Remove bottom border on last input-row to avoid double bottom border */
+//.input-row:last-child {
+//  border-bottom-width: 0;
+//}
+//
+///* Labels get floated left with a set percentage width */
+//.input-row label {
+//  float: left;
+//  width: 25%;
+//  padding: 11px 10px 9px 13px; /* Optimizing the baseline for mobile. */
+//  font-weight: bold;
+//}
+//
+///* Actual inputs float to right of labels and also have a set percentage */
+//.input-row label + input {
+//  float: right;
+//  width: 65%;
+//  padding-left: 0;
+//  margin-bottom: 0;
+//  border-bottom: 0;
+//}/* General button styles
+//-------------------------------------------------- */
+
+[class*="button"] {
+  position: relative;
+  display: inline-block;
+  padding: 4px 12px;
+  margin: 0;
+  font-weight: bold;
+  line-height: 18px;
+  color: #333;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  vertical-align: top;
+  cursor: pointer;
+  background-color: #f8f8f8;
+  background-image: -webkit-linear-gradient(top, #f8f8f8 0, #d4d4d4 100%);
+  background-image: linear-gradient(to bottom, #f8f8f8 0, #d4d4d4 100%);
+  border: 1px solid rgba(0, 0, 0, .3);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .4), 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+/* Active */
+[class*="button"]:active {
+  padding-top: 5px;
+  padding-bottom: 3px;
+  color: #333;
+  background-color: #ccc;
+  background-image: none;
+  box-shadow: inset 0 3px 3px rgba(0, 0, 0, .2);
+}
+
+/* Button modifiers
+-------------------------------------------------- */
+
+///* Overriding styles for buttons with modifiers  */
+//.button-main,
+//.button-positive,
+//.button-negative {
+//  color: #fff;
+//  text-shadow: 0 -1px 0 rgba(0, 0, 0, .3);
+//}
+//
+///* Main button */
+//.button-main {
+//  background-color: #1eafe7;
+//  background-image: -webkit-linear-gradient(top, #1eafe7 0, #1a97c8 100%);
+//  background-image: linear-gradient(to bottom, #1eafe7 0, #1a97c8 100%);
+//  border: 1px solid #117aaa;
+//}
+//
+///* Positive button  */
+//.button-positive {
+//  background-color: #34ba15;
+//  background-image: -webkit-linear-gradient(top, #34ba15 0, #2da012 100%);
+//  background-image: linear-gradient(to bottom, #34ba15 0, #2da012 100%);
+//  border: 1px solid #278f0f;
+//}
+//
+///* Negative button  */
+//.button-negative {
+//  background-color: #e71e1e;
+//  background-image: -webkit-linear-gradient(top, #e71e1e 0,#c71a1a 100%);
+//  background-image: linear-gradient(to bottom, #e71e1e 0, #c71a1a 100%);
+//  border: 1px solid #b51a1a;
+//}
+//
+///* Active state for buttons with modifiers */
+//.button-main:active,
+//.button-positive:active,
+//.button-negative:active {
+//  color: #fff;
+//}
+//.button-main:active {
+//  background-color: #0876b1;
+//}
+//.button-positive:active {
+//  background-color: #298f11;
+//}
+//.button-negative:active {
+//  background-color: #b21a1a;
+//}
+//
+///* Block level buttons (full width buttons) */
+//.button-block {
+//  display: block;
+//  padding: 11px 0 13px;
+//  margin-bottom: 10px;
+//  font-size: 16px;
+//}
+//
+///* Active state for block level buttons */
+//.button-block:active {
+//  padding: 12px 0;
+//}
+//
+///* Counts in buttons
+//-------------------------------------------------- */
+//
+///* Generic styles for all counts within buttons */
+//[class*="button"] [class*="count"] {
+//  padding-top: 2px;
+//  padding-bottom: 2px;
+//  margin-right: -4px;
+//  margin-left: 4px;
+//  text-shadow: none;
+//  background-color: rgba(0, 0, 0, .2);
+//  box-shadow: inset 0 1px 1px -1px #000000, 0 1px 1px -1px #fff;
+//}
+//
+///* Position counts within block level buttons
+//   Note: These are absolutely positioned so that text of button isn't "pushed" by count and always
+//   stays at true center of button */
+//.button-block [class*="count"] {
+//  position: absolute;
+//  right: 0;
+//  padding-top: 4px;
+//  padding-bottom: 4px;
+//  margin-right: 10px;
+//}/* Chevrons
+//-------------------------------------------------- */
+
+.chevron {
+  display: block;
+  height: 20px;
+}
+
+/* Base styles for both 1/2's of the chevron */
+.chevron:before,
+.chevron:after {
+  position: relative;
+  display: block;
+  width: 12px;
+  height: 4px;
+  background-color: #999;
+  content: '';
+}
+
+/* Position and rotate respective 1/2's of the chevron */
+.chevron:before {
+  top: 5px;
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+}
+.chevron:after {
+  top: 7px;
+  -webkit-transform: rotate(-45deg);
+          transform: rotate(-45deg);
+}/* General count styles
+-------------------------------------------------- */
+
+//[class*="count"] {
+//  display: inline-block;
+//  padding: 4px 9px;
+//  font-size: 12px;
+//  font-weight: bold;
+//  line-height: 13px;
+//  color: #fff;
+//  background-color: rgba(0, 0, 0, .3);
+//  border-radius: 100px;
+//}
+//
+///* Count modifiers
+//-------------------------------------------------- */
+//
+///* Overriding styles for counts with modifiers  */
+//.count-main,
+//.count-positive,
+//.count-negative {
+//  color: #fff;
+//  text-shadow: 0 -1px 0 rgba(0, 0, 0, .3);
+//}
+//
+///* Main count  */
+//.count-main {
+//  background-color: #1eafe7;
+//  background-image: -webkit-linear-gradient(top, #1eafe7 0, #1a97c8 100%);
+//  background-image: linear-gradient(to bottom, #1eafe7 0, #1a97c8 100%);
+//}
+//
+///* Positive count  */
+//.count-positive {
+//  background-color: #34ba15;
+//  background-image: -webkit-linear-gradient(top, #34ba15 0, #2da012 100%);
+//  background-image: linear-gradient(to bottom, #34ba15 0, #2da012 100%);
+//}
+//
+///* Negative count  */
+//.count-negative {
+//  background-color: #e71e1e;
+//  background-image: -webkit-linear-gradient(top, #e71e1e 0,#c71a1a 100%);
+//  background-image: linear-gradient(to bottom, #e71e1e 0, #c71a1a 100%);
+//}/* Segmented controllers
+//-------------------------------------------------- */
+//
+//.segmented-controller {
+//  display: -webkit-box;
+//  display: box;
+//  margin-bottom: 10px;
+//  overflow: hidden;
+//  font-size: 12px;
+//  font-weight: bold;
+//  text-shadow: 0 1px rgba(255, 255, 255, .5);
+//  list-style: none;
+//  background-color: #f8f8f8;
+//  background-image: -webkit-linear-gradient(top, #f8f8f8 0, #d4d4d4 100%);
+//  background-image: linear-gradient(to bottom, #f8f8f8 0, #d4d4d4 100%);
+//  border: 1px solid #aaa;
+//  border-radius: 3px;
+//  box-shadow: inset 0 1px rgba(255, 255, 255, 0.5), 0 1px rgba(255, 255, 255, .8);
+//  -webkit-box-orient: horizontal;
+//          box-orient: horizontal;
+//}
+//
+///* Section within controller */
+//.segmented-controller li {
+//  overflow: hidden;
+//  text-align: center;
+//  white-space: nowrap;
+//  border-left: 1px solid #aaa;
+//  box-shadow: inset 1px 0 rgba(255, 255, 255, .5);
+//  -webkit-box-flex: 1;
+//          box-flex: 1;
+//}
+//
+///* Link that fills each section */
+//.segmented-controller li > a {
+//  display: block;
+//  padding: 8px 16px;
+//  overflow: hidden;
+//  line-height: 15px;
+//  color: #333;
+//  text-overflow: ellipsis;
+//}
+//
+///* Remove border-left and shadow from first section */
+//.segmented-controller li:first-child {
+//  border-left-width: 0;
+//  box-shadow: none;
+//}
+//
+///* Active segment of controller */
+//.segmented-controller li.active {
+//  background-color: #ccc;
+//  box-shadow: inset 0 1px 5px rgba(0, 0, 0, .3);
+//}
+//
+//.segmented-controller-item {
+//  display: none;
+//}
+//
+//.segmented-controller-item.active {
+//  display: block;
+//}/* Popovers (to be used with popovers.js)
+//-------------------------------------------------- */
+
+//.popover {
+//  position: fixed;
+//  top: 55px;
+//  left: 50%;
+//  z-index: 20;
+//  display: none;
+//  width: 280px;
+//  padding: 5px;
+//  margin-left: -146px;
+//  background-color: #555;
+//  background-image: -webkit-linear-gradient(top, #555 5%, #555 6%, #111 30%);
+//  background-image: linear-gradient(to bottom, #555 5%, #555 6%,#111 30%);
+//  border: 1px solid #111;
+//  border-radius: 6px;
+//  opacity: 0;
+//  box-shadow: inset 0 1px 1px -1px #fff, 0 3px 10px rgba(0, 0, 0, .3);
+//  -webkit-transform: translate3d(0, -15px, 0);
+//          transform: translate3d(0, -15px, 0);
+//  -webkit-transition: -webkit-transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+//                  transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+//}
+//
+///* Caret on top of popover using CSS triangles (thanks to @chriscoyier for solution) */
+//.popover:before,
+//.popover:after {
+//  position: absolute;
+//  left: 50%;
+//  width: 0;
+//  height: 0;
+//  content: '';
+//}
+//.popover:before {
+//  top: -20px;
+//  margin-left: -21px;
+//  border-right: 21px solid transparent;
+//  border-bottom: 21px solid #111;
+//  border-left: 21px solid transparent;
+//}
+//.popover:after {
+//  top: -19px;
+//  margin-left: -20px;
+//  border-right: 20px solid transparent;
+//  border-bottom: 20px solid #555;
+//  border-left: 20px solid transparent;
+//}
+//
+///* Wrapper for a title and buttons */
+//.popover-header {
+//  display: -webkit-box;
+//  display: box;
+//  height: 34px;
+//  margin-bottom: 5px;
+//}
+//
+///* Centered title for popover */
+//.popover-header .title {
+//  position: absolute;
+//  top: 0;
+//  left: 0;
+//  width: 100%;
+//  margin: 15px 0;
+//  font-size: 16px;
+//  font-weight: bold;
+//  line-height: 12px;
+//  color: #fff;
+//  text-align: center;
+//  text-shadow: 0 -1px rgba(0, 0, 0, .5);
+//}
+//
+///* Generic style for all buttons in .popover-header */
+//.popover-header [class*="button"] {
+//  z-index: 25;
+//  font-size: 12px;
+//  line-height: 22px;
+//  color: #fff;
+//  text-shadow: 0 -1px 0 rgba(0, 0, 0, .3);
+//  background-color: #454545;
+//  background-image: -webkit-linear-gradient(top, #454545 0, #353535 100%);
+//  background-image: linear-gradient(to bottom, #454545 0, #353535 100%);
+//  border: 1px solid #111;
+//  -webkit-box-flex: 0;
+//          box-flex: 0;
+//}
+//
+///* Hacky way to right align buttons outside of flex-box system
+//   Note: is only absolutely positioned button, would be better if flex-box had an "align right" option */
+//.popover-header .title + [class*="button"]:last-child,
+//.popover-header .button + [class*="button"]:last-child,
+//.popover-header [class*="button"].pull-right {
+//  position: absolute;
+//  top: 5px;
+//  right: 5px;
+//}
+//
+///* Active state for popover header buttons */
+//.popover-header .button:active {
+//  color: #fff;
+//  background-color: #0876b1;
+//}
+//
+///* Popover animation
+//-------------------------------------------------- */
+//
+//.popover.visible {
+//  opacity: 1;
+//  -webkit-transform: translate3d(0, 0, 0);
+//          transform: translate3d(0, 0, 0);
+//}
+//
+///* Backdrop (used as invisible touch escape)
+//-------------------------------------------------- */
+//
+//.backdrop {
+//  position: fixed;
+//  top: 0;
+//  right: 0;
+//  bottom: 0;
+//  left: 0;
+//  z-index: 10;
+//}
+//
+///* Block level buttons in popovers
+//-------------------------------------------------- */
+//
+///* Positioning and giving darker border to look sharp against dark popover */
+//.popover .button-block {
+//  margin-bottom: 5px;
+//  border: 1px solid #111;
+//}
+//
+///* Remove extra margin on bottom of last button */
+//.popover .button-block:last-child {
+//  margin-bottom: 0;
+//}
+//
+///* Lists in popovers
+//-------------------------------------------------- */
+//
+//.popover .list {
+//  width: auto;
+//  max-height: 250px;
+//  margin-right: 0;
+//  margin-bottom: 0;
+//  margin-left: 0;
+//  overflow: auto;
+//  background-color: #fff;
+//  border: 1px solid #000;
+//  border-radius: 3px;
+//  -webkit-overflow-scrolling: touch;
+//}/* Slider styles (to be used with sliders.js)
+//-------------------------------------------------- */
+//
+///* Width/height of slider */
+//.slider,
+//.slider > li {
+//  width: 100%;
+//  height: 200px;
+//}
+//
+///* Outer wrapper for slider */
+//.slider {
+//  overflow: hidden;
+//  background-color: #000;
+//}
+//
+///* Inner wrapper for slider (width of all slides together) */
+//.slider > ul {
+//  position: relative;
+//  font-size: 0; /* Remove spaces from inline-block children */
+//  white-space: nowrap;
+//  -webkit-transition: all 0 linear;
+//          transition: all 0 linear;
+//}
+//
+///* Individual slide */
+//.slider > ul > li {
+//  display: inline-block;
+//  vertical-align: top; /* Ensure that li always aligns to top */
+//  width: 100%;
+//  height: 100%;
+//}
+//
+///* Required reset of font-size to same as standard body */
+//.slider > ul > li > * {
+//  font-size: 14px;
+//}/* Toggle styles (to be used with toggles.js)
+//-------------------------------------------------- */
+//
+//.toggle {
+//  position: relative;
+//  width: 75px;
+//  height: 28px;
+//  background-color: #eee;
+//  border: 1px solid #bbb;
+//  border-radius: 20px;
+//  box-shadow: inset 0 0 4px rgba(0, 0, 0, .1);
+//}
+//
+///* Text indicating "on" or "off". Default is "off" */
+//.toggle:before {
+//  position: absolute;
+//  right: 13px;
+//  font-weight: bold;
+//  line-height: 28px;
+//  color: #777;
+//  text-shadow: 0 1px #fff;
+//  text-transform: uppercase;
+//  content: "Off";
+//}
+//
+///* Sliding handle */
+//.toggle-handle {
+//  position: absolute;
+//  top: -1px;
+//  left: -1px;
+//  z-index: 2;
+//  width: 28px;
+//  height: 28px;
+//  background-color: #fff;
+//  background-image: -webkit-linear-gradient(top, #fff 0, #f2f2f2 100%);
+//  background-image: linear-gradient(to bottom, #fff 0, #f2f2f2 100%);
+//  border: 1px solid rgba(0, 0, 0, .2);
+//  border-radius: 100px;
+//  -webkit-transition: -webkit-transform 0.1s ease-in-out, border 0.1s ease-in-out;
+//                  transition: transform 0.1s ease-in-out, border 0.1s ease-in-out;
+//}
+//
+///* Active state for toggle */
+//.toggle.active {
+//  background-color: #19a8e4;
+//  background-image: -webkit-linear-gradient(top, #088cd4 0, #19a8e4 100%);
+//  background-image: linear-gradient(to bottom, #088cd4 0, #19a8e4 100%);
+//  border: 1px solid #096c9d;
+//  box-shadow: inset 0 0 15px rgba(255, 255, 255, .25);
+//}
+//
+///* Active state for toggle handle */
+//.toggle.active .toggle-handle {
+//  border-color: #0a76ad;
+//  -webkit-transform: translate3d(48px,0,0);
+//          transform: translate3d(48px,0,0);
+//}
+//
+///* Change "off" to "on" for active state */
+//.toggle.active:before {
+//  right: auto;
+//  left: 15px;
+//  color: #fff;
+//  text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
+//  content: "On";
+//}/* Push styles (to be used with push.js)
+//-------------------------------------------------- */
+//
+///* Fade animation */
+//.content.fade {
+//  left: 0;
+//  opacity: 0;
+//  -webkit-transition: opacity .2s ease-in-out;
+//          transition: opacity .2s ease-in-out;
+//}
+//.content.fade.in {
+//  opacity: 1;
+//}
+//
+///* Slide animation */
+//.content.slide {
+//  -webkit-transform: translate3d(0, 0, 0);
+//          transform: translate3d(0, 0, 0);
+// -webkit-transition: -webkit-transform .25s ease-in-out;
+//         transition:         transform .25s ease-in-out;
+//}
+//.content.slide.left {
+//  -webkit-transform: translate3d(-100%, 0, 0);
+//          transform: translate3d(-100%, 0, 0);
+//}
+//.content.slide.right {
+//  -webkit-transform: translate3d(100%, 0, 0);
+//          transform: translate3d(100%, 0, 0);
+//}//

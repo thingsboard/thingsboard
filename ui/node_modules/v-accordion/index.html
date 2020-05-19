@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="vAccordion - AngularJS multi-level accordion component.">
+    <meta name="author" content="Łukasz Wątroba">
+
+    <title>vAccordion</title>
+
+    <!-- Google fonts -->
+    <link href="http://fonts.googleapis.com/css?family=Lato:300,700,300italic" rel="stylesheet" type="text/css">
+
+    <!-- Styles -->
+    <link href="http://lukaszwatroba.github.io/valitycss/dist/vality.min.css" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="./bower/valitycss/dist/vality.css"> -->
+    <link href="./dist/v-accordion.css" rel="stylesheet">
+
+    <!-- Scripts -->
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular-animate.min.js"></script>
+    <!-- <script src="./bower/angular/angular.js"></script> -->
+    <!-- <script src="./bower/angular-animate/angular-animate.js"></script> -->
+    <script src="./dist/v-accordion.js"></script>
+    <script src="./demo/app.js"></script>
+  </head>
+
+  <body ng-app="myApp">
+
+    <div ng-cloak class="u-wideWrapper u-paddingHm u-paddingTl" ng-controller="MainController">
+
+      <header class="u-marginBl u-textCenter">
+        <div>
+          <svg class="u-inlineBlock" width="58px" height="58px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 54"><g><path fill="#4CAF50" d="M3.1,27.9c0,0,10.2-24.1,11.6-27.2c0.2-0.5,0.6-0.8,1.2-0.6c0.5,0.1,0.8,0.7,1.5,2.2c1.3,2.9,18,37.2,18.7,38.6c0.8,1.6,1,2.6,0.7,3.4c-0.3,0.6-1,1.1-1.8,1.4c-2.3,0.9-20.3,7.8-21.5,8.3c-0.7,0.3-0.8-0.4-1.4-1.7C11.6,51,3.7,32.1,3.1,30.7C2.5,29.3,3.1,27.9,3.1,27.9z"/><path fill="#2196F3" d="M50.9,17.3c-0.3-0.3-0.4-0.4-0.7-0.2c-0.3,0.1-11.5,8.6-16.8,12.5c2.7,5.5,4.7,9.7,5,10.2c0.4,0.8,0.8,1.7,1,2.6c0.1-0.2,0.2-0.3,0.3-0.5c0.9-1.8,11.3-23.4,11.5-23.8C51.3,17.7,51.2,17.7,50.9,17.3z"/></g></svg>
+          <h2 class="u-marginTs">vAccordion</h2>
+        </div>
+
+        <h5 class="u-marginBl">AngularJS multi-level accordion component.</h5>
+
+        <hr>
+
+      </header>
+
+      <div class="Grid Grid--gutters md-Grid--2col">
+        <div class="Grid-cell u-marginBl">
+          <h4 class="u-marginVm">Works with (or without) ng-repeat</h4>
+
+          <v-accordion id="accordionA" class="vAccordion--default" control="accordionA" onexpand="expandCallback(index, id)" oncollapse="collapseCallback(index, id)">
+
+            <v-pane id="{{ ::pane.id }}" ng-repeat="pane in panesA" expanded="pane.isExpanded">
+              <v-pane-header id="{{ ::pane.id }}-header" aria-controls="{{ ::pane.id }}-content">
+                <h5>{{ ::pane.header }}</h5>
+              </v-pane-header>
+
+              <v-pane-content id="{{ ::pane.id }}-content" aria-labelledby="{{ ::pane.id }}-header">
+                <p>{{ ::pane.content }}</p>
+
+                <v-accordion id="nestedAccordionA" ng-if="pane.subpanes">
+                  <v-pane id="{{ ::subpane.id }}" ng-repeat="subpane in pane.subpanes" ng-disabled="subpane.isDisabled">
+                    <v-pane-header id="{{ ::subpane.id }}-header" aria-controls="{{ ::subpane.id }}-header">
+                      <h5>{{ ::subpane.header }}</h5>
+                    </v-pane-header>
+                    <v-pane-content id="{{ ::subpane.id }}-content" aria-labelledby="{{ ::subpane.id }}-content">
+                      <p>{{ ::subpane.content }}</p>
+                    </v-pane-content>
+                  </v-pane>
+                </v-accordion>
+              </v-pane-content>
+            </v-pane>
+
+          </v-accordion>
+
+
+          <div class="ButtonGroup ButtonGroup--hz ButtonGroup--collapse u-marginVm">
+            <div class="ButtonGroup-item">
+              <button class="Button Button--default" ng-click="accordionA.toggle(panesA[0].id)">Toogle first</button>
+            </div>
+            <div class="ButtonGroup-item">
+              <button class="Button Button--default" ng-click="accordionA.toggle(panesA[2].id)">Toogle last</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="Grid-cell u-marginBl">
+          <h4 class="u-marginVm">Allows multiple sections open at once</h4>
+
+          <v-accordion id="accordionB" class="vAccordion--default" multiple control="accordionB">
+
+            <v-pane id="{{ ::pane.id }}" ng-repeat="pane in panesB" expanded="pane.isExpanded">
+              <v-pane-header id="{{ ::pane.id }}-header" aria-controls="{{ ::pane.id }}-header">
+                <h5>{{ ::pane.header }}</h5>
+              </v-pane-header>
+
+              <v-pane-content id="{{ ::pane.id }}-content" aria-labelledby="{{ ::pane.id }}-content">
+                <p>{{ ::pane.content }}</p>
+
+                <v-accordion id="nestedAccordionB" multiple ng-if="pane.subpanes">
+                  <v-pane id="{{ ::subpane.id }}" ng-repeat="subpane in pane.subpanes" ng-disabled="subpane.isDisabled">
+                    <v-pane-header id="{{ ::subpane.id }}-header" aria-controls="{{ ::subpane.id }}-header">
+                      <h5>{{ ::subpane.header }}</h5>
+                    </v-pane-header>
+                    <v-pane-content id="{{ ::subpane.id }}-content" aria-labelledby="{{ ::subpane.id }}-content">
+                      <p>{{ ::subpane.content }}</p>
+                    </v-pane-content>
+                  </v-pane>
+                </v-accordion>
+              </v-pane-content>
+            </v-pane>
+
+          </v-accordion>
+
+
+          <div class="ButtonGroup ButtonGroup--hz ButtonGroup--collapse u-marginVm">
+            <div class="ButtonGroup-item">
+              <button class="Button Button--default" ng-click="accordionB.expandAll()">Expand all</button>
+            </div>
+            <div class="ButtonGroup-item">
+              <button class="Button Button--default" ng-click="accordionB.collapseAll()">Collapse all</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <footer class="u-cf u-paddingBl">
+
+        <div class="u-textCenter">
+          <a href="https://github.com/LukaszWatroba" class="u-inlineBlock u-linkClean">
+            <svg width="28px" height="28px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 54"><g><path fill="#2196F3" d="M3.1,27.9c0,0,10.2-24.1,11.6-27.2c0.2-0.5,0.6-0.8,1.2-0.6c0.5,0.1,0.8,0.7,1.5,2.2c1.3,2.9,18,37.2,18.7,38.6c0.8,1.6,1,2.6,0.7,3.4c-0.3,0.6-1,1.1-1.8,1.4c-2.3,0.9-20.3,7.8-21.5,8.3c-0.7,0.3-0.8-0.4-1.4-1.7C11.6,51,3.7,32.1,3.1,30.7C2.5,29.3,3.1,27.9,3.1,27.9z"/><path fill="#2196F3" d="M50.9,17.3c-0.3-0.3-0.4-0.4-0.7-0.2c-0.3,0.1-11.5,8.6-16.8,12.5c2.7,5.5,4.7,9.7,5,10.2c0.4,0.8,0.8,1.7,1,2.6c0.1-0.2,0.2-0.3,0.3-0.5c0.9-1.8,11.3-23.4,11.5-23.8C51.3,17.7,51.2,17.7,50.9,17.3z"/></g></svg>
+            <br>
+            <small>
+              By Łukasz Wątroba
+            </small>
+          </a>
+        </div>
+
+      </footer>
+
+    </div>
+
+
+    <!-- Fork me on GitHub ribbon -->
+    <a href="https://github.com/LukaszWatroba/v-accordion"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+
+
+  </body>
+</html>

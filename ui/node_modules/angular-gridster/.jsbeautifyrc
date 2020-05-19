@@ -1,0 +1,15 @@
+{
+	"css": {
+		"indentSize": 4,
+		"indentWithTabs": true
+	},
+	"js": {
+		"indentSize": 4,
+		"indentWithTabs": true
+	},
+	"html": {
+		"indentSize": 4,
+		"indentWithTabs": true
+	}
+}
+

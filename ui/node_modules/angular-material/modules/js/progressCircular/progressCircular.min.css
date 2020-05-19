@@ -1,0 +1,6 @@
+/*!
+ * AngularJS Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v1.1.18-master-97a1616
+ */@-webkit-keyframes indeterminate-rotate{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}to{-webkit-transform:rotate(1turn);transform:rotate(1turn)}}@keyframes indeterminate-rotate{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}to{-webkit-transform:rotate(1turn);transform:rotate(1turn)}}md-progress-circular{position:relative;display:block}md-progress-circular._md-progress-circular-disabled{visibility:hidden}md-progress-circular.md-mode-indeterminate svg{-webkit-animation:indeterminate-rotate 1568.63ms linear infinite;animation:indeterminate-rotate 1568.63ms linear infinite}md-progress-circular svg{position:absolute;overflow:visible;top:0;left:0}

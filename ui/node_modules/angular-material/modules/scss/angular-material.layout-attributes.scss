@@ -1,0 +1,990 @@
+$font-family: Roboto, 'Helvetica Neue', sans-serif !default;
+$font-size:   10px !default;
+$display-4-font-size-base: rem(11.20) !default;
+$display-3-font-size-base: rem(5.600) !default;
+$display-2-font-size-base: rem(4.500) !default;
+$display-1-font-size-base: rem(3.400) !default;
+$headline-font-size-base:  rem(2.400) !default;
+$title-font-size-base:     rem(2.000) !default;
+$subhead-font-size-base:   rem(1.600) !default;
+$body-font-size-base:      rem(1.400) !default;
+$caption-font-size-base:   rem(1.200) !default;
+$baseline-grid:            8px !default;
+$layout-gutter-width:      ($baseline-grid * 2) !default;
+$layout-breakpoint-xs:     600px !default;
+$layout-breakpoint-sm:     960px !default;
+$layout-breakpoint-md:     1280px !default;
+$layout-breakpoint-lg:     1920px !default;
+$button-left-right-padding: rem(0.600) !default;
+$icon-size: rem(2.400) !default;
+$app-bar-height: 64px !default;
+$toast-height: $baseline-grid * 3 !default;
+$toast-margin: $baseline-grid * 1 !default;
+$shadow-key-umbra-opacity:      0.2 !default;
+$shadow-key-penumbra-opacity:   0.14 !default;
+$shadow-ambient-shadow-opacity: 0.12 !default;
+$whiteframe-shadow-1dp: 0px 1px 3px 0px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 1px 1px 0px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 2px 1px -1px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-2dp: 0px 1px 5px 0px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 2px 2px 0px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 3px 1px -2px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-3dp: 0px 1px 8px 0px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 3px 4px 0px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 3px 3px -2px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-4dp: 0px 2px 4px -1px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 4px 5px 0px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 1px 10px 0px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-5dp: 0px 3px 5px -1px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 5px 8px 0px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 1px 14px 0px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-6dp: 0px 3px 5px -1px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 6px 10px 0px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 1px 18px 0px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-7dp: 0px 4px 5px -2px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 7px 10px 1px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 2px 16px 1px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-8dp: 0px 5px 5px -3px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 8px 10px 1px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 3px 14px 2px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-9dp: 0px 5px 6px -3px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 9px 12px 1px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 3px 16px 2px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-10dp: 0px 6px 6px -3px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 10px 14px 1px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 4px 18px 3px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-11dp: 0px 6px 7px -4px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 11px 15px 1px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 4px 20px 3px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-12dp: 0px 7px 8px -4px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 12px 17px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 5px 22px 4px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-13dp: 0px 7px 8px -4px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 13px 19px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 5px 24px 4px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-14dp: 0px 7px 9px -4px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 14px 21px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 5px 26px 4px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-15dp: 0px 8px 9px -5px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 15px 22px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 6px 28px 5px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-16dp: 0px 8px 10px -5px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 16px 24px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 6px 30px 5px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-17dp: 0px 8px 11px -5px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 17px 26px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 6px 32px 5px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-18dp: 0px 9px 11px -5px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 18px 28px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 7px 34px 6px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-19dp: 0px 9px 12px -6px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 19px 29px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 7px 36px 6px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-20dp: 0px 10px 13px -6px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 20px 31px 3px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 8px 38px 7px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-21dp: 0px 10px 13px -6px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 21px 33px 3px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 8px 40px 7px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-22dp: 0px 10px 14px -6px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 22px 35px 3px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 8px 42px 7px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-23dp: 0px 11px 14px -7px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 23px 36px 3px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 9px 44px 8px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$whiteframe-shadow-24dp: 0px 11px 15px -7px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0px 24px 38px 3px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0px 9px 46px 8px rgba(0, 0, 0, $shadow-ambient-shadow-opacity) !default;
+$z-index-toast: 105 !default;
+$z-index-tooltip: 100 !default;
+$z-index-menu: 100 !default;
+$z-index-calendar-pane: 100 !default;
+$z-index-select: 90 !default;
+$z-index-dialog: 80 !default;
+$z-index-bottom-sheet: 70 !default;
+$z-index-scroll-mask: 50 !default;
+$z-index-scroll-mask-bar: 65 !default;
+$z-index-sidenav: 60 !default;
+$z-index-backdrop: 50 !default;
+$z-index-fab: 20 !default;
+$z-index-progress-circular: 2 !default; // Used to fix animation bug in Chrome
+$swift-ease-out-duration: 0.4s !default;
+$swift-ease-out-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
+$swift-ease-out: all $swift-ease-out-duration $swift-ease-out-timing-function !default;
+$swift-ease-in-duration: 0.3s !default;
+$swift-ease-in-timing-function: cubic-bezier(0.55, 0, 0.55, 0.2) !default;
+$swift-ease-in: all $swift-ease-in-duration $swift-ease-in-timing-function !default;
+$swift-ease-in-out-duration: 0.5s !default;
+$swift-ease-in-out-timing-function: cubic-bezier(0.35, 0, 0.25, 1) !default;
+$swift-ease-in-out: all $swift-ease-in-out-duration $swift-ease-in-out-timing-function !default;
+$swift-linear-duration: 0.08s !default;
+$swift-linear-timing-function: linear !default;
+$swift-linear: all $swift-linear-duration $swift-linear-timing-function !default;
+$material-enter-duration: 0.3s;
+$material-enter-timing-function: cubic-bezier(0.0, 0.0, 0.2, 1);
+$material-enter: all $material-enter-duration $material-enter-timing-function;
+$material-leave-duration: 0.3s;
+$material-leave-timing-function: cubic-bezier(0.4, 0.0, 1, 1);
+$material-leave: all $material-leave-duration $material-leave-timing-function;
+$button-fab-width: rem(5.600) !default;
+$button-fab-height: rem(5.600) !default;
+$button-fab-padding: rem(1.60) !default;
+$checkbox-width: 20px !default;
+$checkbox-height: $checkbox-width !default;
+$checkbox-border-radius: 2px !default;
+$checkbox-border-width: 2px !default;
+$baseline-grid:            8px !default;
+$layout-gutter-width:      ($baseline-grid * 2) !default;
+$layout-breakpoint-xs:     600px !default;
+$layout-breakpoint-sm:     960px !default;
+$layout-breakpoint-md:     1280px !default;
+$layout-breakpoint-lg:     1920px !default;
+// Typography
+// ------------------------------
+
+//-- Must be defined after $font-size and before variables that depend on the function.
+@function rem($multiplier) {
+  @return $multiplier * $font-size;
+}
+
+
+
+// Layout
+// ------------------------------
+
+
+
+// Button
+
+// Icon
+
+// App bar variables
+
+
+// Whiteframes
+
+
+// NOTE(shyndman): gulp-sass seems to be failing if I split the shadow defs across
+//    multiple lines. Ugly. Sorry.
+
+// Z-indexes
+//--------------------------------------------
+
+
+// Easing Curves
+//--------------------------------------------
+
+
+
+
+
+
+
+// Fab Buttons (shared between buttons.scss and fab*.scss)
+// -------------------------------------------
+
+
+// Shared Checkbox variables
+
+@mixin margin-selectors($before:1em, $after:1em, $start:0px, $end:0px) {
+  -webkit-margin-before: $before;
+  -webkit-margin-after: $after;
+  -webkit-margin-start: $start;
+  -webkit-margin-end: $end;
+}
+
+@mixin not-selectable($value:none) {
+  -webkit-touch-callout: $value;
+  -webkit-user-select: $value;
+  -khtml-user-select: $value;
+  -moz-user-select: $value;
+  -ms-user-select: $value;
+  user-select: $value;
+}
+
+@mixin input-placeholder-color($color) {
+  $pseudos: '::-webkit-input-placeholder', ':-moz-placeholder', '::-moz-placeholder',
+            ':-ms-input-placeholder',  '::-webkit-input-placeholder';
+
+  // It is important to export every pseudo within its own block, because otherwise the placeholder
+  // won't be set on the most browsers.
+  @each $pseudo in $pseudos {
+    &#{$pseudo} {
+      color: unquote($color);
+    }
+  }
+}
+
+@mixin pie-clearfix {
+  &:after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+@mixin md-shadow-bottom-z-1() {
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+}
+
+@mixin md-shadow-bottom-z-2() {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4);
+}
+
+// Mixin for a "flat" input that can be used for components that contain an input
+// (datepicker, autocomplete).
+@mixin md-flat-input() {
+  font-size: 14px;
+
+  box-sizing: border-box;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  background: transparent;
+
+  // The "clear X" that IE adds to input[type="search"]
+  &::-ms-clear {
+    display: none;
+  }
+}
+
+// Typography mixins
+
+@mixin md-title() {
+  font-size: $title-font-size-base;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+}
+
+@mixin md-body-1() {
+  font-size: $body-font-size-base;
+  font-weight: 400;
+  letter-spacing: 0.010em;
+  line-height: rem(2);
+}
+
+@mixin md-body-2() {
+  font-size: $body-font-size-base;
+  font-weight: 500;
+  letter-spacing: 0.010em;
+  line-height: rem(2.4);
+}
+
+@mixin md-subhead() {
+  font-size: $subhead-font-size-base;
+  font-weight: 400;
+  letter-spacing: 0.010em;
+  line-height: rem(2.4);
+}
+
+@function map-to-string($map) {
+  $map-str: '{';
+  $keys: map-keys($map);
+  $len: length($keys);
+  @for $i from 1 through $len {
+    $key: nth($keys, $i);
+    $value: map-get($map, $key);
+    $map-str: $map-str + '_' + $key + '_: _' + map-get($map, $key) + '_';
+    @if $i != $len {
+      $map-str: $map-str + ',';
+    }
+  }
+  @return $map-str + '}';
+}
+
+// This is a mixin, which fixes IE11's vertical alignment issue, when using `min-height`.
+// See https://connect.microsoft.com/IE/feedback/details/816293/
+@mixin ie11-min-height-flexbug($min-height) {
+  &::before {
+    content: '';
+    min-height: $min-height;
+    visibility: hidden;
+    display: inline-block;
+  }
+}
+
+// mixin definition ; sets LTR and RTL within the same style call
+// @see https://css-tricks.com/almanac/properties/d/direction/
+
+@mixin rtl($prop, $ltr-value, $rtl-value) {
+  #{$prop}: $ltr-value;
+  [dir=rtl] & {
+    #{$prop}: $rtl-value;
+  }
+}
+
+@mixin rtl-prop($ltr-prop, $rtl-prop, $value, $reset-value) {
+  #{$ltr-prop}: $value;
+  [dir=rtl] & {
+    #{$ltr-prop}: $reset-value;
+    #{$rtl-prop}: $value;
+  }
+}
+
+// To reverse padding (top left bottom right) -> (top right bottom left)
+@function rtl-value($list) {
+  @if length($list) == 4 {
+    @return nth($list, 1) nth($list, 4) nth($list, 3) nth($list, 2)
+  }
+  @if length($list) == 5 {
+    @return nth($list, 1) nth($list, 4) nth($list, 3) nth($list, 2) nth($list, 5)
+  }
+  @return $list;
+}
+
+// Position a FAB button.
+@mixin fab-position($spot, $top: auto, $right: auto, $bottom: auto, $left: auto) {
+  &.md-fab-#{$spot} {
+    top: $top;
+    right: $right;
+    bottom: $bottom;
+    left: $left;
+    position: absolute;
+  }
+}
+
+@mixin fab-all-positions() {
+  @include fab-position(bottom-right, auto, ($button-fab-width - $button-fab-padding)/2, ($button-fab-height - $button-fab-padding)/2, auto);
+  @include fab-position(bottom-left, auto, auto, ($button-fab-height - $button-fab-padding)/2, ($button-fab-width - $button-fab-padding)/2);
+  @include fab-position(top-right, ($button-fab-height - $button-fab-padding)/2, ($button-fab-width - $button-fab-padding)/2, auto, auto);
+  @include fab-position(top-left, ($button-fab-height - $button-fab-padding)/2, auto, auto, ($button-fab-width - $button-fab-padding)/2);
+}
+
+// This mixin allows a user to use the md-checkbox css outside of the
+// md-checkbox directive.
+// See src/components/select/select.scss for an example.
+@mixin checkbox-container(
+  $checkedSelector: '.md-checked',
+  $width: $checkbox-width,
+  $height: $checkbox-height,
+  $border-width: $checkbox-border-width,
+  $border-radius: $checkbox-border-radius) {
+  .md-container {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+
+    box-sizing: border-box;
+    display: inline-block;
+
+    width: $width;
+    height: $height;
+    @include rtl(left, 0, auto);
+    @include rtl(right, auto, 0);
+
+    &:before {
+      box-sizing: border-box;
+      background-color: transparent;
+      border-radius: 50%;
+      content: '';
+      position: absolute;
+      display: block;
+      height: auto;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      transition: all 0.5s;
+      width: auto;
+    }
+
+    &:after {
+      box-sizing: border-box;
+      content: '';
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      bottom: -10px;
+      left: -10px;
+    }
+
+    .md-ripple-container {
+      position: absolute;
+      display: block;
+      width: auto;
+      height: auto;
+      left: -15px;
+      top: -15px;
+      right: -15px;
+      bottom: -15px;
+    }
+  }
+
+  // unchecked
+  .md-icon {
+    box-sizing: border-box;
+    transition: 240ms;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: $width;
+    height: $height;
+    border-width: $border-width;
+    border-style: solid;
+    border-radius: $border-radius;
+  }
+
+  &#{$checkedSelector} .md-icon {
+    border-color: transparent;
+
+    &:after {
+      box-sizing: border-box;
+      transform: rotate(45deg);
+      position: absolute;
+      left: $width / 3 - $border-width;
+      top: $width / 9 - $border-width;
+      display: table;
+      width: $width / 3;
+      height: $width * 2 / 3;
+      border-width: $border-width;
+      border-style: solid;
+      border-top: 0;
+      border-left: 0;
+      content: '';
+    }
+  }
+
+  // disabled
+  &[disabled] {
+    cursor: default;
+  }
+
+  &.md-indeterminate .md-icon {
+    &:after {
+      box-sizing: border-box;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: table;
+      width: $width * 0.6;
+      height: $border-width;
+      border-width: $border-width;
+      border-style: solid;
+      border-top: 0;
+      border-left: 0;
+      content: '';
+    }
+  }
+}
+
+// Mixin to create a primary checkbox.
+// Used by the checkbox and select component.
+@mixin checkbox-primary($checkedSelector: '.md-checked') {
+  .md-ripple {
+    color: '{{primary-600}}';
+  }
+
+  &#{$checkedSelector} .md-ripple {
+    color: '{{background-600}}';
+  }
+
+  .md-ink-ripple {
+    color: '{{foreground-2}}';
+  }
+
+  &#{$checkedSelector} .md-ink-ripple {
+    color: '{{primary-color-0.87}}';
+  }
+
+  &:not(.md-checked) .md-icon {
+    border-color: '{{foreground-2}}';
+  }
+
+  &#{$checkedSelector} .md-icon {
+    background-color: '{{primary-color-0.87}}';
+  }
+
+  &#{$checkedSelector}.md-focused .md-container:before {
+    background-color: '{{primary-color-0.26}}';
+  }
+
+  &#{$checkedSelector} .md-icon:after {
+    border-color: '{{primary-contrast-0.87}}';
+  }
+
+  & .md-indeterminate[disabled] {
+    .md-container {
+      color: '{{foreground-3}}';
+    }
+  }
+}
+
+@mixin dense($prop, $normal, $dense) {
+  #{$prop}: $normal;
+  .md-dense > &:not(.md-dense-disabled),
+  .md-dense :not(.md-dense-disabled) &:not(.md-dense-disabled) {
+    #{$prop}: $dense;
+  }
+}
+
+@mixin dense-rtl($prop, $ltr-normal, $rtl-normal, $ltr-dense, $rtl-dense) {
+  @include rtl($prop, $ltr-normal, $rtl-normal);
+  .md-dense > &:not(.md-dense-disabled),
+  .md-dense :not(.md-dense-disabled) &:not(.md-dense-disabled) {
+    @include rtl($prop, $ltr-dense, $rtl-dense);
+  }
+}
+
+/*
+*  Responsive attributes
+*
+*  References:
+*  1) https://scotch.io/tutorials/a-visual-guide-to-css3-flexbox-properties#flex
+*  2) https://css-tricks.com/almanac/properties/f/flex/
+*  3) https://css-tricks.com/snippets/css/a-guide-to-flexbox/
+*  4) https://github.com/philipwalton/flexbugs#3-min-height-on-a-flex-container-wont-apply-to-its-flex-items
+*  5) http://godban.com.ua/projects/flexgrid
+*/
+
+// Layout
+// ------------------------------
+
+
+
+@-moz-document url-prefix() {
+  [layout-fill] {
+    margin: 0;
+    width: 100%;
+    min-height: 100%;
+    height: 100%;
+  }
+}
+
+
+@mixin flex-order-for-name($sizes:null) {
+  @if $sizes == null {
+    $sizes : '';
+
+    [flex-order] {
+     order : 0;
+    }
+  }
+
+  @for $i from -20 through 20 {
+    $order : '';
+    $suffix : '';
+
+    @each $s in $sizes {
+      @if $s != '' { $suffix : '-#{$s}="#{$i}"'; }
+      @else        { $suffix : '="#{$i}"';       }
+
+      $order : '[flex-order#{$suffix}]';
+    }
+
+    #{$order} {
+      order: #{$i};
+    }
+  }
+}
+@mixin offset-for-name($sizes:null) {
+  @if $sizes == null { $sizes : ''; }
+
+  @for $i from 0 through 19 {
+    $offsets : '';
+    $suffix : '';
+
+    @each $s in $sizes {
+      @if $s != '' { $suffix : '-#{$s}="#{$i * 5}"'; }
+      @else        { $suffix : '="#{$i * 5}"';       }
+
+      $offsets : $offsets + '[flex-offset#{$suffix}], ';
+    }
+
+    #{$offsets} {
+      margin-left: #{$i * 5 + '%'};
+    }
+  }
+
+  @each $i in 33 {
+    $offsets : '';
+    $suffix : '';
+
+    @each $s in $sizes {
+      @if $s != '' {  $suffix : '-#{$s}="#{$i}"';   }
+      @else        {  $suffix : '="#{$i}"';         }
+
+      $offsets : '[flex-offset#{$suffix}], ';
+    }
+
+    #{$offsets} {
+      margin-left: calc(100% / 3);
+    }
+  }
+
+  @each $i in 66  {
+    $offsets : '';
+    $suffix : '';
+
+    @each $s in $sizes {
+      @if $s != '' {  $suffix : '-#{$s}="#{$i}"';   }
+      @else        {  $suffix : '="#{$i}"';         }
+
+      $offsets : '[flex-offset#{$suffix}]';
+    }
+
+    #{$offsets} {
+      margin-left: calc(200% / 3);
+    }
+  }
+}
+
+@mixin layout-for-name($name: null) {
+  @if $name == null { $name : '';          }
+  @if $name != ''   { $name : '-#{$name}'; }
+
+  [layout#{$name}], [layout#{$name}="column"], [layout#{$name}="row"] {
+    box-sizing: border-box;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+  }
+  [layout#{$name}="column"] {  flex-direction: column;  }
+  [layout#{$name}="row"]    {  flex-direction: row;     }
+}
+
+@mixin flex-properties-for-name($name: null) {
+  $flexName: 'flex';
+  @if $name != null {
+    $flexName: 'flex-#{$name}';
+    $name : '-#{$name}';
+  } @else {
+    $name : '';
+  }
+
+  [#{$flexName}]             { flex: 1;         box-sizing: border-box; }  // === flex: 1 1 0%;
+
+  [#{$flexName}-grow]        { flex: 1 1 100%;  box-sizing: border-box; }
+  [#{$flexName}-initial]     { flex: 0 1 auto;  box-sizing: border-box; }
+  [#{$flexName}-auto]        { flex: 1 1 auto;  box-sizing: border-box; }
+  [#{$flexName}-none]        { flex: 0 0 auto;  box-sizing: border-box; }
+
+  // (1-20) * 5 = 0-100%
+  @for $i from 0 through 20 {
+    $value : #{$i * 5 + '%'};
+
+    [#{$flexName}="#{$i * 5}"] {
+      flex: 1 1 #{$value};
+      max-width: #{$value};
+      max-height: 100%;
+      box-sizing: border-box;
+    }
+
+    [layout="row"] > [#{$flexName}="#{$i * 5}"] {
+      flex: 1 1 #{$value};
+      max-width: #{$value};
+      max-height: 100%;
+      box-sizing: border-box;
+    }
+
+    [layout="column"] > [#{$flexName}="#{$i * 5}"] {
+      flex: 1 1 #{$value};
+      max-width: 100%;
+      max-height: #{$value};
+      box-sizing: border-box;
+    }
+
+    [layout="row"] {
+	    > [#{$flexName}="33"]   , > [#{$flexName}="33"]     {  flex: 1 1 33.33%;  max-width: 33.33%;  max-height: 100%; box-sizing: border-box; }
+	    > [#{$flexName}="66"]   , > [#{$flexName}="66"]     {  flex: 1 1 66.66%;  max-width: 66.66%;  max-height: 100%; box-sizing: border-box; }
+	  }
+	  
+	  [layout="column"] {
+	    > [#{$flexName}="33"]   , > [#{$flexName}="33"]     {  flex: 1 1 33.33%;  max-width: 100%;  max-height: 33.33%; box-sizing: border-box; }
+	    > [#{$flexName}="66"]   , > [#{$flexName}="66"]     {  flex: 1 1 66.66%;  max-width: 100%;  max-height: 66.66%; box-sizing: border-box; }
+	  }
+
+    [layout#{$name}="row"] > [#{$flexName}="#{$i * 5}"] {
+      flex: 1 1 #{$value};
+      max-width: #{$value};
+      max-height: 100%;
+      box-sizing: border-box;
+    }
+
+    [layout#{$name}="column"] > [#{$flexName}="#{$i * 5}"] {
+      flex: 1 1 #{$value};
+      max-width: 100%;
+      max-height: #{$value};
+      box-sizing: border-box;
+    }
+  }
+
+  [layout#{$name}="row"] {
+    > [#{$flexName}="33"]   , > [#{$flexName}="33"]     {  flex: 1 1 33.33%;  max-width: 33.33%;  max-height: 100%; box-sizing: border-box; }
+    > [#{$flexName}="66"]   , > [#{$flexName}="66"]     {  flex: 1 1 66.66%;  max-width: 66.66%;  max-height: 100%; box-sizing: border-box; }
+  }
+
+  [layout#{$name}="column"] {
+    > [#{$flexName}="33"]   , > [#{$flexName}="33"]     {  flex: 1 1 33.33%;  max-width: 100%;  max-height: 33.33%; box-sizing: border-box; }
+    > [#{$flexName}="66"]   , > [#{$flexName}="66"]     {  flex: 1 1 66.66%;  max-width: 100%;  max-height: 66.66%; box-sizing: border-box; }
+  }
+
+}
+@mixin layout-align-for-name($suffix: null) {
+
+  // Alignment attributes for layout containers' children
+  // Arrange on the Main Axis
+  // center, start, end, space-between, space-around
+  // flex-start is the default for justify-content
+  // ------------------------------
+
+  $name: 'layout-align';
+  @if $suffix != null {
+    $name: 'layout-align-#{$suffix}';
+  }
+  
+  [#{$name}],
+  [#{$name}="start stretch"] // defaults
+  {
+    justify-content :flex-start;
+    align-content : stretch;
+    align-items: stretch;
+  }
+  // Main Axis Center
+  [#{$name}="start"],
+  [#{$name}="start start"],
+  [#{$name}="start center"],
+  [#{$name}="start end"],
+  [#{$name}="start stretch"]
+  {
+    justify-content: flex-start;
+  }
+
+  // Main Axis Center
+  [#{$name}="center"],
+  [#{$name}="center start"],
+  [#{$name}="center center"],
+  [#{$name}="center end"],
+  [#{$name}="center stretch"]
+  {
+    justify-content: center;
+  }
+
+  // Main Axis End
+  [#{$name}="end"], //stretch
+  [#{$name}="end center"],
+  [#{$name}="end start"],
+  [#{$name}="end end"],
+  [#{$name}="end stretch"]
+  {
+    justify-content: flex-end;
+  }
+
+  // Main Axis Space Around
+  [#{$name}="space-around"], //stretch
+  [#{$name}="space-around center"],
+  [#{$name}="space-around start"],
+  [#{$name}="space-around end"],
+    [#{$name}="space-around stretch"]
+  {
+    justify-content: space-around;
+  }
+
+  // Main Axis Space Between
+  [#{$name}="space-between"], //stretch
+  [#{$name}="space-between center"],
+  [#{$name}="space-between start"],
+  [#{$name}="space-between end"],
+    [#{$name}="space-between stretch"]
+  {
+    justify-content: space-between;
+  }
+
+
+  // Arrange on the Cross Axis
+  // center, start, end
+  // stretch is the default for align-items
+  // ------------------------------
+
+  // Cross Axis Start
+  [#{$name}="start start"],
+  [#{$name}="center start"],
+  [#{$name}="end start"],
+  [#{$name}="space-between start"],
+  [#{$name}="space-around start"]
+  {
+    align-items: flex-start;
+    align-content: flex-start;
+  }
+
+  // Cross Axis Center
+  [#{$name}="start center"],
+  [#{$name}="center center"],
+  [#{$name}="end center"],
+  [#{$name}="space-between center"],
+  [#{$name}="space-around center"]
+  {
+    align-items: center;
+    align-content: center;
+    max-width: 100%;
+  }
+
+  // Cross Axis Center IE overflow fix
+  [#{$name}="start center"] > *,
+  [#{$name}="center center"] > *,
+  [#{$name}="end center"] > *,
+  [#{$name}="space-between center"] > *,
+  [#{$name}="space-around center"] > *
+  {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  // Cross Axis End
+  [#{$name}="start end"],
+  [#{$name}="center end"],
+  [#{$name}="end end"],
+  [#{$name}="space-between end"],
+  [#{$name}="space-around end"]
+  {
+    align-items: flex-end;
+    align-content: flex-end;
+  }
+
+  // Cross Axis  stretch
+  [#{$name}="start stretch"],
+  [#{$name}="center stretch"],
+  [#{$name}="end stretch"],
+  [#{$name}="space-between stretch"],
+  [#{$name}="space-around stretch"]
+  {
+    align-items: stretch;
+    align-content: stretch;
+  }
+}
+@mixin layout-padding-margin() {
+
+  [layout-padding] > [flex-sm],   [layout-padding] > [flex-lt-md] {
+    padding: $layout-gutter-width / 4;
+  }
+  [layout-padding],
+  [layout-padding] > [flex],
+  [layout-padding] > [flex-gt-sm],
+  [layout-padding] > [flex-md],
+  [layout-padding] > [flex-lt-lg]
+  {
+    padding: $layout-gutter-width / 2;
+  }
+  [layout-padding] > [flex-gt-md],
+  [layout-padding] > [flex-lg]
+  {
+    padding: $layout-gutter-width / 1;
+  }
+
+  [layout-margin] > [flex-sm],
+  [layout-margin] > [flex-lt-md]
+  {
+    margin: $layout-gutter-width / 4;
+  }
+
+  [layout-margin],
+  [layout-margin]  > [flex],
+  [layout-margin]  > [flex-gt-sm],
+  [layout-margin]  > [flex-md],
+  [layout-margin]  > [flex-lt-lg]
+  {
+    margin: $layout-gutter-width / 2;
+  }
+
+  [layout-margin]  > [flex-gt-md],
+  [layout-margin]  > [flex-lg]
+  {
+    margin: $layout-gutter-width / 1;
+  }
+
+  [layout-wrap] {
+    flex-wrap: wrap;
+  }
+
+  [layout-nowrap] {
+      flex-wrap: nowrap;
+  }
+
+  [layout-fill] {
+    margin: 0;
+    width: 100%;
+    min-height: 100%;
+    height: 100%;
+  }
+}
+
+@mixin layouts_for_breakpoint($name:null) {
+    @include flex-order-for-name($name);
+    @include offset-for-name($name);
+    @include layout-align-for-name($name);
+
+    @include flex-properties-for-name($name);
+    @include layout-for-name($name);
+}
+
+/*
+ *  Apply Mixins to create Layout/Flexbox styles
+ *
+ */
+
+
+@include layouts_for_breakpoint();
+@include layout-padding-margin();
+
+
+/**
+ * `hide-gt-sm show-gt-lg` should hide from 600px to 1200px
+ * `show-md hide-gt-sm` should show from 0px to 960px and hide at >960px
+ * `hide-gt-md show-gt-sm` should show everywhere (show overrides hide)`
+ *
+ *  hide means hide everywhere
+ *  Sizes:
+ *         $layout-breakpoint-xs:     600px !default;
+ *         $layout-breakpoint-sm:     960px !default;
+ *         $layout-breakpoint-md:     1280px !default;
+ *         $layout-breakpoint-lg:     1920px !default;
+ */
+
+
+@media (max-width: $layout-breakpoint-xs - 1) {
+  // Xtra-SMALL  SCREEN
+  [hide-xs], [hide] {
+    &:not([show-xs]):not([show]) {
+      display: none;
+    }
+  }
+  @include layouts_for_breakpoint(xs);
+}
+
+@media (min-width: $layout-breakpoint-xs) {
+  // BIGGER THAN Xtra-SMALL SCREEN
+  @include layouts_for_breakpoint(gt-xs);
+
+}
+
+@media (min-width: $layout-breakpoint-xs) and (max-width: $layout-breakpoint-sm - 1) {
+  // SMALL SCREEN
+  [hide], [hide-gt-xs] {
+    &:not([show-gt-xs]):not([show-sm]):not([show]) {
+      display: none;
+    }
+  }
+  [hide-sm]:not([show-gt-xs]):not([show-sm]):not([show]) {
+    display: none;
+  }
+  @include layouts_for_breakpoint(sm);
+}
+
+@media (min-width: $layout-breakpoint-sm) {
+  // BIGGER THAN SMALL SCREEN
+  @include layouts_for_breakpoint(gt-sm);
+
+}
+
+@media (min-width: $layout-breakpoint-sm) and (max-width: $layout-breakpoint-md - 1) {
+  // MEDIUM SCREEN
+  [hide], [hide-gt-xs], [hide-gt-sm] {
+      &:not([show-gt-xs]):not([show-gt-sm]):not([show-md]):not([show]) {
+        display: none;
+      }
+    }
+    [hide-md]:not([show-md]):not([show]) {
+      display: none;
+    }
+  @include layouts_for_breakpoint(md);
+}
+
+@media (min-width: $layout-breakpoint-md) {
+  // BIGGER THAN MEDIUM SCREEN
+  @include layouts_for_breakpoint(gt-md);
+}
+
+@media (min-width: $layout-breakpoint-md) and (max-width: $layout-breakpoint-lg - 1) {
+  // LARGE SCREEN
+  [hide],[hide-gt-xs], [hide-gt-sm], [hide-gt-md] {
+      &:not([show-gt-xs]):not([show-gt-sm]):not([show-gt-md]):not([show-lg]):not([show]) {
+        display: none;
+      }
+    }
+    [hide-lg]:not([show-lg]):not([show]) {
+      display: none;
+    }
+
+  @include layouts_for_breakpoint(lg);
+}
+
+@media (min-width: $layout-breakpoint-lg) {
+  // BIGGER THAN LARGE SCREEN
+  @include layouts_for_breakpoint(gt-lg);
+  @include layouts_for_breakpoint(xl);
+
+  // BIGGER THAN LARGE SCREEN
+  [hide], [hide-gt-xs], [hide-gt-sm], [hide-gt-md], [hide-gt-lg] {
+    &:not([show-gt-xs]):not([show-gt-sm]):not([show-gt-md]):not([show-gt-lg]):not([show-xl]):not([show]) {
+      display: none;
+    }
+  }
+  [hide-xl]:not([show-xl]):not([show-gt-lg]):not([show]) {
+    display: none;
+  }
+}
+
+@media print {
+  // PRINT
+  @include layouts_for_breakpoint(print);
+  
+  [hide-print]:not([show-print]):not([show]) {
+    display: none;
+  }
+}
+
+

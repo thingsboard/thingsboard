@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "context": {
+      "description": "A string indicating the root of your files.",
+      "type": "string"
+    },
+    "emitError": {
+      "description": "Will always return errors, if set to `true`.",
+      "type": "boolean"
+    },
+    "emitWarning": {
+      "description": "Will always return warnings, if set to `true`.",
+      "type": "boolean"
+    },
+    "failOnError": {
+      "description": "Will cause the module build to fail if there are any errors, if set to `true`.",
+      "type": "boolean"
+    },
+    "failOnWarning": {
+      "description": "Will cause the module build to fail if there are any warnings, if set to `true`.",
+      "type": "boolean"
+    },
+    "files": {
+      "description": "Specify the glob pattern for finding files. Must be relative to `options.context`.",
+      "anyOf": [{ "type": "string" }, { "type": "array" }]
+    },
+    "formatter": {
+      "description": "Specify the formatter that you would like to use to format your results.",
+      "anyOf": [{ "type": "string" }, { "instanceof": "Function" }]
+    },
+    "lintDirtyModulesOnly": {
+      "description": "Lint only changed files, skip lint on start.",
+      "type": "boolean"
+    },
+    "quiet": {
+      "description": "Will process and report errors only and ignore warnings, if set to `true`.",
+      "type": "boolean"
+    },
+    "stylelintPath": {
+      "description": "Path to `stylelint` instance that will be used for linting.",
+      "type": "string"
+    }
+  }
+}

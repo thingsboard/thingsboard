@@ -1,0 +1,83 @@
+@if $v-accordion-default-theme {
+  /* Theme: default
+   ***************************************/
+
+
+  .vAccordion--default {
+
+    v-accordion {
+      margin-top: $v-accordion-spacing;
+      padding-left: $v-accordion-spacing;
+    }
+
+    v-pane-content {
+      > div {
+        padding-bottom: $v-accordion-spacing;
+        opacity: 0;
+        transform: translate3d(0, 30px, 0);
+        transition: all $v-pane-expand-animation-duration;
+      }
+    }
+
+    v-pane {
+      overflow: hidden;
+
+      &.is-expanded {
+        > v-pane-header {
+          border-bottom-color: $v-pane-expanded-border-color;
+
+          &::after {
+            transform: rotate(90deg);
+            opacity: 0;
+          }
+          &::before {
+            transform: rotate(0deg);
+          }
+        }
+
+        > v-pane-content > div {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      &[disabled] v-pane-header {
+        &::after,
+        &::before {
+          display: none;
+        }
+    	}
+    }
+
+    v-pane-header {
+      padding: 5px 0;
+      margin-bottom: $v-accordion-spacing;
+      border-bottom: 2px solid $v-pane-border-color;
+      transition: all $v-pane-hover-animation-duration;
+
+      &::after,
+      &::before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 10px;
+        height: 1px;
+        background-color: $v-pane-icon-color;
+        transform-origin: 50% 50%;
+        will-change: transform;
+        transition: all $v-pane-hover-animation-duration;
+      }
+
+      &::before {
+        transform: rotate(-90deg);
+      }
+
+      &:hover,
+      &:focus {
+        color: $v-pane-hover-color;
+      }
+    }
+  }
+}

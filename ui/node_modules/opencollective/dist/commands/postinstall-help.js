@@ -1,0 +1,9 @@
+'use strict';
+
+var _chalk = require('chalk');
+
+var _chalk2 = _interopRequireDefault(_chalk);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+console.log('\n' + _chalk2.default.bold('opencollective') + ' postinstall [collective]\npwd\n  Print the post install message for [collective] (default: collective defined in ' + _chalk2.default.bold('package.json') + ')\n\n' + _chalk2.default.dim('Environment variables:') + '\n\n  npm_package_name                Slug of the collective (e.g. webpack)\n  npm_package_collective_url      Url of the collective (e.g. https://opencollective.com/webpack)\n  npm_package_collective_logo     Url of the logo of the collective (in ascii art)\n\n  Those environment variables are automatically set by npm if you run this command via an npm script (e.g. npm run postinstall)\n  Make sure you have defined your collective in your ' + _chalk2.default.bold('package.json') + ' as follows:\n    {\n      "collective": {\n        "type": "opencollective",\n        "url": "https://opencollective.com/[collective]",\n        "logo": "[logo]"\n      }\n    }\n\n\n' + _chalk2.default.dim('Options:') + '\n\n  -h, --help                      Output usage information\n\n' + _chalk2.default.dim('Examples:') + '\n\n' + _chalk2.default.gray('–') + ' Run post install:\n\n    ' + _chalk2.default.cyan('$ opencollective postinstall webpack') + '\n\n' + _chalk2.default.gray('–') + ' Run post install in plain text mode (no emoji, no ascii art):\n\n    ' + _chalk2.default.cyan('$ opencollective postinstall cyclejs --plain') + '\n\n');

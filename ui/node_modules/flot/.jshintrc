@@ -1,0 +1,24 @@
+{
+	"bitwise": true,
+	"boss": true,
+	"curly": true,
+	"eqeqeq": true,
+	"eqnull": true,
+	"expr": true,
+	"forin": true,
+	"immed": true,
+	"noarg": true,
+	"quotmark": "double",
+	"smarttabs": true,
+	"trailing": true,
+	"undef": true,
+	"unused": true,
+
+	"globals": {
+		"timezoneJS": true
+	},
+
+	"browser": true,
+	"jquery": true,
+	"indent": 4
+}

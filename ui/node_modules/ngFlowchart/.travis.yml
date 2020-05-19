@@ -1,0 +1,15 @@
+language: node_js
+node_js:
+- '0.10'
+before_install:
+- export DISPLAY=:99.0
+- sh -e /etc/init.d/xvfb start
+before_script:
+- npm install -g bower gulp
+- npm install
+- bower install
+script:
+- gulp test --verbose
+notifications:
+  slack:
+    secure: Uj5D1G4avyyrJaZbbkKF6yOD8IXCQSkoAqu8yPAJvP6rJJ0G3P56Nik6ydAkwtMaiWttTGgxa/t+aTWlKCkD3TkV/4XqZSI8ptz1OchhY86bqrFBiaeNAmxzpbhKuT6UKi2xxGg5h9VN5YBkp30C5C5KldX95Dlrn653UNa2Ho1xwJX8S3qjB22GqD8ZJBd+abMPCSWWCcSAcl6cRnzd9DbTOW9a3Jm1QWgfWZEqEjXX9/E/4PkgRTrtWlKtbutsJ6eE1jtFiK4eNk7xLv/EbmhXAT7NuupqJwKmWfC4vByd8BIRQ9S4Ka0UoJDuHcd6ZM0zCa2LTRgo63MipVuACZWE1Eez46TZfIeTURxkleRNTp2wZvI9WpaSOB7kkNcg8EI/gfgxzHs1z9RdlVtnnuhxt4t1lM60M+q1cH4ILNlzvU7EUS90KbfZtinsT5NB6A00Z4bnRW+3RtqEp8UnN9uMSKuIybUkmIDHLWt5xNNfseKbM1bVhbckLNZTSiIhshG9W+TAd9NUivSt0pzldpQRkRJXtycP+FCoCUyaN2edfsf0qya5xlc6fbsiwnaECe8oieQ3RC+CLW1LY/tH/P8jPqq4VwxMqsq7KbLpG6DxIUFr0fxLhKBrrmho1eQzps02p4QlUHDwo8ce0seScSYjtnk/FYG9k4bFLTRg13w=

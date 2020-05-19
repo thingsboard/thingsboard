@@ -1,0 +1,6 @@
+/*!
+ * AngularJS Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v1.1.18-master-97a1616
+ */.md-panel-outer-wrapper{height:100%;left:0;position:absolute;top:0;width:100%}._md-panel-hidden{display:none}._md-panel-offscreen{left:-9999px}._md-panel-fullscreen{border-radius:0;left:0;min-height:100%;min-width:100%;position:fixed;top:0}._md-panel-shown .md-panel{opacity:1;transition:none}.md-panel{opacity:0;position:fixed}.md-panel._md-panel-shown{opacity:1;transition:none}.md-panel._md-panel-animate-enter{opacity:1;transition:all .3s cubic-bezier(0,0,.2,1)}.md-panel._md-panel-animate-leave{opacity:1;transition:all .3s cubic-bezier(.4,0,1,1)}.md-panel._md-panel-animate-fade-out,.md-panel._md-panel-animate-scale-out{opacity:0}.md-panel._md-panel-backdrop{height:100%;position:absolute;width:100%}.md-panel._md-opaque-enter{opacity:.48;transition:opacity .3s cubic-bezier(0,0,.2,1)}.md-panel._md-opaque-leave{transition:opacity .3s cubic-bezier(.4,0,1,1)}

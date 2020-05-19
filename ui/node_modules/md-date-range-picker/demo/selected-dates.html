@@ -1,0 +1,32 @@
+<div layout="row" flex>
+    <div style="width: 300px">
+      <div>
+        <h2>Picker (Weekends Disabled, Max 10 Days)</h2>
+        <md-date-range ng-model="selectedDate" auto-confirm="true" show-template="true" md-on-select="selectedDates = $dates" is-disabled-date="isDisabledDate($date)" max-range="10"></md-date-range>
+      </div>
+    </div>
+    <div layout="column" style="height: 680px; width: 380px; overflow-y: auto">
+      <h2>Selected Dates</h2>
+      <code flex>
+        <table style="text-align: left" cellspacing="10">
+          <tr ng-repeat="date in selectedDates">
+            <td>{{date | date : 'yyyy - MM - dd - EEE'}}</td>
+          </tr>
+        </table>
+      </code> 
+    </div>
+    <div layout="column" flex>
+    <h2>Html</h2>
+    <textarea readonly flex style="font-family: Lucida Console, Monaco, monospace">
+<md-date-range
+  ng-model="selectedDate"
+  auto-confirm="true"
+  show-templates="true"
+  md-on-select="selectedDates = $dates"
+  is-disabled-date="isDisabledDate($date)"
+  max-range="10"
+>
+</md-date-range>
+    </textarea>
+  </div>
+  </div>

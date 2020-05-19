@@ -1,0 +1,25 @@
+{
+  "name": "tooltipster/tooltipster",
+  "description": "Tooltipster is a flexible and extensible jQuery plugin for modern tooltips.",
+  "keywords": [
+    "jquery",
+    "tooltip",
+    "plugin",
+    "replacement"
+  ],
+  "homepage": "http://iamceege.github.io/tooltipster/",
+  "authors": [
+    {
+      "name": "Caleb Jacob",
+      "homepage": "https://plus.google.com/+CalebJacob?rel=author"
+    },
+    {
+      "name": "Louis Ameline",
+      "homepage": "https://github.com/louisameline"
+    }
+  ],
+  "license": "MIT",
+  "suggest": {
+    "components/jquery": ">=1.10"
+  }
+}

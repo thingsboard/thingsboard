@@ -1,0 +1,56 @@
+<div layout="row" flex>
+    <div layout="column">
+      <h2>Disable First/Last Day of Week</h2>
+      <md-date-range-picker first-day-of-week="1" selected-template="calendarModel.selectedTemplate" selected-template-name="calendarModel.selectedTemplateName"
+        show-template="true" date-start="calendarModel.dateStart" date-end="calendarModel.dateEnd" is-disabled-date="isDisabledDate($date)"></md-date-range-picker>
+      <div>
+          <h2>Picker</h2>
+          <md-date-range ng-model="calendarModel" is-disabled-date="isDisabledDate($date)"></md-date-range>
+        </div>
+    </div>
+    <div layout="column" style="width: 380px">
+      <h2>Bindings</h2>
+      <code flex>
+        <table style="text-align: left" cellspacing="10">
+          <tr>
+            <th>Property</th>
+            <th>Value</th>
+          </tr>
+          <tr>
+            <td>selectedTemplate</td>
+            <td>{{calendarModel.selectedTemplate}}</td>
+          </tr>
+          <tr>
+            <td>selectedTemplateName</td>
+            <td>{{calendarModel.selectedTemplateName}}</td>
+          </tr>
+          <tr>
+            <td>dateStart</td>
+            <td>{{calendarModel.dateStart | date : 'medium'}}</td>
+          </tr>
+          <tr>
+            <td>dateEnd</td>
+            <td>{{calendarModel.dateEnd | date : 'medium'}}</td>
+          </tr>
+          <tr>
+            <td>firstDayOfWeek</td>
+            <td>0 Sunday</td>
+          </tr>
+        </table>
+      </code> 
+    </div>
+    <div layout="column" flex>
+    <h2>Html</h2>
+    <textarea readonly flex style="font-family: Lucida Console, Monaco, monospace">
+  <md-date-range-picker
+    first-day-of-week="0"
+    selected-template="calendarModel.selectedTemplate"
+    selected-template-name="calendarModel.selectedTemplateName"
+    show-template="true"
+    is-disabled-date="isDisabledDate($date)"
+    date-start="calendarModel.dateStart"
+    date-end="calendarModel.dateEnd">
+  </md-date-range-picker>
+    </textarea>
+  </div>
+  </div>

@@ -1,0 +1,6 @@
+/*!
+ * AngularJS Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v1.1.18-master-97a1616
+ */md-backdrop{transition:opacity .45s;position:absolute;top:0;bottom:0;left:0;right:0;z-index:50}md-backdrop.md-menu-backdrop{position:fixed!important;z-index:99}md-backdrop.md-select-backdrop{z-index:81;transition-duration:0}md-backdrop.md-dialog-backdrop{z-index:79}md-backdrop.md-bottom-sheet-backdrop{z-index:69}md-backdrop.md-sidenav-backdrop{z-index:59}md-backdrop.md-click-catcher{position:absolute}md-backdrop.md-opaque{opacity:.48}md-backdrop.md-opaque.ng-enter{opacity:0}md-backdrop.md-opaque.ng-enter.md-opaque.ng-enter-active{opacity:.48}md-backdrop.md-opaque.ng-leave{opacity:.48;transition:opacity .4s}md-backdrop.md-opaque.ng-leave.md-opaque.ng-leave-active{opacity:0}

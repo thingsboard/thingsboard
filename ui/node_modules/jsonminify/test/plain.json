@@ -1,0 +1,8 @@
+{
+    "foo": "bar",
+    "bar": [
+        "baz", "bum", "zam"
+    ],
+    "something": 10,
+    "else": 20
+}

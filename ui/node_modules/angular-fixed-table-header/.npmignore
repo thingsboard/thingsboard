@@ -1,0 +1,14 @@
+# hidden files
+.DS_Store
+
+# generated files
+app/app.css
+
+# folders
+app
+bower_components
+node_modules
+
+# files
+.jshintrc
+Gruntfile.js

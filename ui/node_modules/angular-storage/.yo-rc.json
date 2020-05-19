@@ -1,0 +1,29 @@
+{
+  "generator-angularjs-gulp-library": {
+    "props": {
+      "author": {
+        "name": "Martin Gontovnikas",
+        "email": "martin@gon.to"
+      },
+      "libraryName": {
+        "original": "angular-storage",
+        "camelized": "angularStorage",
+        "dasherized": "angular-storage",
+        "slugified": "angular-storage",
+        "parts": [
+          "angular",
+          "storage"
+        ]
+      },
+      "includeModuleDirectives": false,
+      "includeModuleFilters": false,
+      "includeModuleServices": true,
+      "includeAngularModuleResource": false,
+      "includeAngularModuleCookies": false,
+      "includeAngularModuleSanitize": false,
+      "librarySrcDirectory": "src/angularStorage",
+      "libraryUnitTestDirectory": "test/unit/angularStorage",
+      "libraryUnitE2eDirectory": "test/e2e/angularStorage"
+    }
+  }
+}

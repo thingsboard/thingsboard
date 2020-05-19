@@ -1,0 +1,100 @@
+/*!
+ * AngularJS Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v1.1.19
+ */
+md-fab-speed-dial {
+  position: relative;
+  display: flex;
+  align-items: center;
+  z-index: 20;
+  /*
+   * Hide some graphics glitches if switching animation types
+   */
+  /*
+   * Handle the animations
+   */ }
+  md-fab-speed-dial.md-fab-bottom-right {
+    top: auto;
+    right: 20px;
+    bottom: 20px;
+    left: auto;
+    position: absolute; }
+  md-fab-speed-dial.md-fab-bottom-left {
+    top: auto;
+    right: auto;
+    bottom: 20px;
+    left: 20px;
+    position: absolute; }
+  md-fab-speed-dial.md-fab-top-right {
+    top: 20px;
+    right: 20px;
+    bottom: auto;
+    left: auto;
+    position: absolute; }
+  md-fab-speed-dial.md-fab-top-left {
+    top: 20px;
+    right: auto;
+    bottom: auto;
+    left: 20px;
+    position: absolute; }
+  md-fab-speed-dial:not(.md-hover-full) {
+    pointer-events: none; }
+    md-fab-speed-dial:not(.md-hover-full) md-fab-trigger, md-fab-speed-dial:not(.md-hover-full) .md-fab-action-item {
+      pointer-events: auto; }
+    md-fab-speed-dial:not(.md-hover-full).md-is-open {
+      pointer-events: auto; }
+  md-fab-speed-dial ._md-css-variables {
+    z-index: 20; }
+  md-fab-speed-dial.md-is-open .md-fab-action-item {
+    align-items: center; }
+  md-fab-speed-dial md-fab-actions {
+    display: flex;
+    height: auto; }
+    md-fab-speed-dial md-fab-actions .md-fab-action-item {
+      transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2); }
+  md-fab-speed-dial.md-down {
+    flex-direction: column; }
+    md-fab-speed-dial.md-down md-fab-trigger {
+      order: 1; }
+    md-fab-speed-dial.md-down md-fab-actions {
+      flex-direction: column;
+      order: 2; }
+  md-fab-speed-dial.md-up {
+    flex-direction: column; }
+    md-fab-speed-dial.md-up md-fab-trigger {
+      order: 2; }
+    md-fab-speed-dial.md-up md-fab-actions {
+      flex-direction: column-reverse;
+      order: 1; }
+  md-fab-speed-dial.md-left {
+    flex-direction: row; }
+    md-fab-speed-dial.md-left md-fab-trigger {
+      order: 2; }
+    md-fab-speed-dial.md-left md-fab-actions {
+      flex-direction: row-reverse;
+      order: 1; }
+      md-fab-speed-dial.md-left md-fab-actions .md-fab-action-item {
+        transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2); }
+  md-fab-speed-dial.md-right {
+    flex-direction: row; }
+    md-fab-speed-dial.md-right md-fab-trigger {
+      order: 1; }
+    md-fab-speed-dial.md-right md-fab-actions {
+      flex-direction: row;
+      order: 2; }
+      md-fab-speed-dial.md-right md-fab-actions .md-fab-action-item {
+        transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2); }
+  md-fab-speed-dial.md-fling-remove .md-fab-action-item > *, md-fab-speed-dial.md-scale-remove .md-fab-action-item > * {
+    visibility: hidden; }
+  md-fab-speed-dial.md-fling .md-fab-action-item {
+    opacity: 1; }
+  md-fab-speed-dial.md-fling.md-animations-waiting .md-fab-action-item {
+    opacity: 0;
+    transition-duration: 0s; }
+  md-fab-speed-dial.md-scale .md-fab-action-item {
+    -webkit-transform: scale(0);
+            transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
+    transition-duration: 0.14286s; }

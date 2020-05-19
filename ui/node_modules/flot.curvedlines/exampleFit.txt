@@ -1,0 +1,50 @@
+### html ###
+
+<h4>CurvedLines: with standard settings (shows effects of tension parameter)</h4>
+<div id="flotContainer" class="chart-style"></div>
+
+<h4>CurvedLines: with monotonicFit (no overshooting/wiggles) </h4>
+<div id="flotContainer2" class="chart-style"></div>
+
+### css ###
+
+.chart-style {
+    width: 400px;
+    height: 240px;
+}
+
+### javascript ###
+//data
+var d1 = [[20, 20], [25, 50], [27.5, 35], [30, 20], [35, 20]];
+
+//flot options
+var options = {
+                 series: {
+                     curvedLines: {active: true}
+                 }
+              };
+
+//plotting
+$.plot($("#flotContainer"),[
+    {
+        data: d1, color: '#2b8cbe',
+        lines: {show: true, lineWidth: 3},
+        //choose tension from [0,1] to see overshooting effects (0.5 is default)
+        curvedLines: {apply: true, tension: 1}
+    }, {
+        data: d1, color: '#f03b20',
+        points: {show: true}
+    }    
+], options);
+
+$.plot($("#flotContainer2"),[
+    {
+        data: d1, color: '#2b8cbe',
+        lines: {show: true, lineWidth: 3},
+        //monotonicFit enforces monotonicity
+        curvedLines: {apply: true, monotonicFit: true}
+    }, {
+        data: d1, color: '#f03b20',
+        points: {show: true}
+    }    
+], options);

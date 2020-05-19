@@ -1,0 +1,105 @@
+\documentclass[a4paper]{article}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[fleqn]{amsmath}
+\usepackage{hyperref}
+
+\begin{document}
+
+\section{Math stuff}
+
+Cubic interpolation for one segment $[x_k, x_{k+1}]$ can be described as:
+
+\begin{equation*}
+	\begin{aligned}
+		f(t) &= c_{oef1}t^3 + c_{oef2}t^2 + c_{oef3}t + c_{oef4}  \hspace{1cm} with \\
+		t(x) &= \frac{x - x_k}{x_{k+1} - x_k}
+	\end{aligned}
+\end{equation*}
+
+\hspace{1cm} and
+
+\begin{equation*}
+	\begin{aligned}
+		c_{oef1} &= 2p_0 - 2p_1 - m_0 - m_1 \\
+		c_{oef2} &= -3p_0 + 3p_1 - 2m_0 - m_1 \\
+		c_{oef3} &= m_0 \\
+		c_{oef4} &= p_0
+	\end{aligned}
+\end{equation*}
+
+
+(see Wikipedia-Links below)\\
+\\
+If we rewrite this as function of $d = x - x_k$ we get
+
+\begin{equation*}
+	\begin{aligned}
+		f'(d) &= c_{oef1}' d^3 + c_{oef2}' d^2 + c_{oef3}' d + c_{oef4}' \hspace{1cm} with \\
+		c_{oef1}' &= \frac{c_{oef1}}{(x_{k+1} - x_k)^3} \\
+        c_{oef2}' &= \frac{c_{oef2}}{(x_{k+1} - x_k)^2} \\
+        c_{oef3}' &= \frac{c_{oef3}}{x_{k+1} - x_k} \\
+        c_{oef4}' &= c_{oef4}
+    \end{aligned}
+\end{equation*}
+\\
+The implemented algorithm uses two helper variables to calculate the coefficients of $f'$ efficiently:
+
+\begin{equation*}
+	\begin{aligned}
+		common = m_k + m_{k+1} - 2 \frac{p_{k+1} - p_k}{x_{k+1} - x_k} \\
+		invLength = \frac{1}{x_{k+1} - x_k}
+    \end{aligned}
+\end{equation*}
+\\
+We use $p_0 = p_k$, $p_1 = p_{k+1}$, $m_0 = m_k (x_{k+1} - x_k)$, $m_1 = m_{k+1} (x_{k+1} - x_k)$ and $s = \frac{p_{k+1}-p_k}{x_{k+1}-x_k}$. The tangents are scaled with the length of the segment. \\
+\\
+If we insert this into the equations for the coefficients we get the formulas that are used in the algorithm:
+
+\begin{equation*}
+\begin{aligned}
+	c_{oef1}' &= \frac{c_{oef1}}{(x_{k+1} - x_k)^3} \\
+	&= \frac{2p_0 - 2p_1 + m_0 + m_1}{(x_{k+1} - x_k)^3}\\
+	&= (2p_k - 2p_{k+1} + m_k (x_{k+1} - x_k) + m_{k+1} (x_{k+1} - x_k) / (x_{k+1} - x_k)^3 \\
+	&= \frac {(2p_k - 2p_{k+1} + m_k (x_{k+1} - x_k) + m_{k+1} (x_{k+1} - x_k)}{x_{k+1} - x_k} / (x_{k+1} - x_k)^2 \\
+	&= (\frac {2p_k - 2p_{k+1}}{x_{k+1} - x_k} + m_k + m_{k+1}  ) * invLength^2 \\
+	&= (-2\frac {p_{k+1}- p_k}{x_{k+1} - x_k} + m_k + m_{k+1}  ) * invLength^2 \\
+	&= common * invLenght^2
+\end{aligned}
+\end{equation*}
+ 
+\begin{equation*}
+\begin{aligned}
+	c_{oef2}' &= \frac{c_{oef2}}{(x_{k+1} - x_k)^2} \\
+	&= (-3p_0 + 3p_1 - 2m_0 - m_1) / (x_{k+1} - x_k)^2 \\
+	&= (-3p_k + 3p_{k+1} - 2* m_k (x_{k+1} - x_k) - m_{k+1} (x_{k+1} - x_k)) / (x_{k+1} - x_k)^2 \\
+	&= (\frac{-3p_k + 3p_{k+1}}{x_{k+1} - x_k} - 2m_k - m_{k+1}) * invLenght \\
+	&= (3\frac{p_{k+1} - p_k}{x_{k+1} - x_k} - 2m_k - m_{k+1}) * invLenght \\
+	&=(\frac{p_{k+1} - p_k}{x_{k+1} - x_k} + 2\frac{p_{k+1} - p_k}{x_{k+1} - x_k} - m_k - m_{k+1} - m_k) * invLenght \\
+	&= (s - common - m_k) * invLenght  
+\end{aligned}    
+\end{equation*}
+ 
+\begin{equation*}
+\begin{aligned}
+	c_{oef3}' &= \frac{c_{oef3}}{x_{k+1} - x_k} \\
+	&= \frac{m_0}{x_{k+1} - x_k} \\
+	&= \frac{m_k (x_{k+1} - x_k)}{x_{k+1} - x_k} \\
+ 	&= m_k
+\end{aligned}
+\end{equation*}
+
+\begin{equation*}
+\begin{aligned}
+	c_{oef4}' &= c_{oef4} = p_0 = p_k
+\end{aligned}
+\end{equation*}
+
+\section{Useful Links}
+
+\url{http://de.wikipedia.org/w/index.php?title=Kubisch_Hermitescher_Spline&oldid=130168003)}\\
+\url{http://en.wikipedia.org/w/index.php?title=Monotone_cubic_interpolation&oldid=622341725}\\
+\url{http://math.stackexchange.com/questions/45218/implementation-of-monotone-cubic-interpolation}\\
+\url{http://math.stackexchange.com/questions/4082/equation-of-a-curve-given-3-points-and-additional-constant-requirements#4104}
+
+\end{document}

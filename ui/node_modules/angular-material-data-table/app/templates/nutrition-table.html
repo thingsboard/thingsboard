@@ -1,0 +1,77 @@
+<md-toolbar class="md-table-toolbar md-default" ng-show="!options.rowSelection || !selected.length">
+  <div class="md-toolbar-tools">
+    <span>Nutrition</span>
+    <span flex></span>
+    <md-button class="md-icon-button" ng-click="loadStuff()">
+      <md-icon>refresh</md-icon>
+    </md-button>
+    <md-button class="md-icon-button">
+      <md-icon>filter_list</md-icon>
+    </md-button>
+    <md-button class="md-icon-button">
+      <md-icon>more_vert</md-icon>
+    </md-button>
+  </div>
+</md-toolbar>
+
+<md-toolbar class="md-table-toolbar alternate" ng-show="options.rowSelection && selected.length">
+  <div class="md-toolbar-tools">
+    <span>{{selected.length}} {{selected.length > 1 ? 'items' : 'item'}} selected</span>
+    <span flex></span>
+    <md-button class="md-icon-button">
+      <md-icon>delete</md-icon>
+    </md-button>
+  </div>
+</md-toolbar>
+
+<md-table-container>
+  <table data-md-table data-md-row-select="options.rowSelection" multiple="{{options.multiSelect}}" data-ng-model="selected" md-progress="promise">
+    <!-- <thead md-head md-order="query.order">
+      <tr md-row>
+        <th md-column ng-repeat="column in columns" md-numeric="column.numeric" md-order-by="{{column.orderBy}}">
+          <span>{{column.name}}</span>
+          <span ng-if="column.unit">({{column.unit}})</span>
+        </th>
+      </tr>
+    </thead> -->
+    <thead ng-if="!options.decapitate" md-head data-md-order="query.order" md-on-reorder="onReorder">
+      <tr md-row>
+        <th md-column md:order:by="name"><span>Dessert (100g serving)</span></th>
+        <th md-column md:order:by="type"><span>Type</span></th>
+        <th md-column data-md-numeric data-md-order-by="calories.value" data-md-desc><span>Calories</span></th>
+        <th md-column data-md-numeric data-md-order-by="fat.value"><span>Fat (g)</span></th>
+        <!-- <th md-column data-md-numeric data-md-order-by="carbs.value"><span>Carbs (g)</span></th> -->
+        <th md-column data-md-numeric data-md-order-by="protein.value"><span>Protein (g)</span></th>
+        <!-- <th md-column data-md-numeric data-md-order-by="sodium.value"><span>Sodium (mg)</span></th> -->
+        <!-- <th md-column data-md-numeric data-md-order-by="calcium.value"><span>Calcium (%)</span></th> -->
+        <th md-column data-md-numeric data-md-order-by="iron.value" data-hide-sm><span>Iron (%)</span></th>
+        <th md-column data-md-order-by="comment">
+          <md-icon>comments</md-icon>
+          <span>Comments</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody md-body>
+      <tr md-row md-select="dessert" md-select-id="name" data-md-on-select="log" md-on-deselect="deselect" x-md-auto-select="options.autoSelect" ng-disabled="dessert.calories.value > 400" data-ng-repeat="dessert in desserts.data | filter: filter.search | orderBy: query.order | limitTo: query.limit : (query.page - 1) * query.limit">
+        <td md-cell>{{dessert.name}}</td>
+        <td md-cell>
+          <md-select ng-model="dessert.type" placeholder="Other">
+            <md-option ng-value="type" ng-repeat="type in getTypes()">{{type}}</md-option>
+          </md-select>
+        </td>
+        <td md-cell>{{dessert.calories.value}}</td>
+        <td md-cell>{{dessert.fat.value | number: 2}}</td>
+        <!-- <td md-cell>{{dessert.carbs.value}}</td> -->
+        <td md-cell>{{dessert.protein.value | number: 2}}</td>
+        <!-- <td md-cell>{{dessert.sodium.value}}</td> -->
+        <!-- <td md-cell>{{dessert.calcium.value}}%</td> -->
+        <td md-cell hide-sm>{{dessert.iron.value}}%</td>
+        <td md-cell ng-click="editComment($event, dessert)" ng-class="{'md-placeholder': !dessert.comment}">
+          {{dessert.comment || 'Add a comment'}}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</md-table-container>
+
+<data-md-table-pagination md-limit="query.limit" md-limit-options="limitOptions" md-page="query.page" md-total="{{desserts.count}}" md-on-paginate="onPaginate" md-page-select="options.pageSelect" md-boundary-links="options.boundaryLinks"></data-md-table-pagination>

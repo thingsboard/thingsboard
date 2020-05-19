@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for ./src/ocLazyLoad.loaders.jsLoader.js</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../prettify.css">
+    <link rel="stylesheet" href="../base.css">
+    <style type='text/css'>
+        div.coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class="header high">
+    <h1>Code coverage report for <span class="entity">./src/ocLazyLoad.loaders.jsLoader.js</span></h1>
+    <h2>
+        Statements: <span class="metric">100% <small>(12 / 12)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Branches: <span class="metric">100% <small>(0 / 0)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Functions: <span class="metric">100% <small>(7 / 7)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Lines: <span class="metric">100% <small>(12 / 12)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Ignored: <span class="metric"><span class="ignore-none">none</span></span> &nbsp;&nbsp;&nbsp;&nbsp;
+    </h2>
+    <div class="path"><a href="../index.html">All files</a> &#187; <a href="index.html">./src/</a> &#187; ocLazyLoad.loaders.jsLoader.js</div>
+</div>
+<div class="body">
+<pre><table class="coverage">
+<tr><td class="line-count">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">29</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28</span>
+<span class="cline-any cline-yes">13</span>
+<span class="cline-any cline-yes">13</span>
+<span class="cline-any cline-yes">13</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13</span>
+<span class="cline-any cline-yes">12</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">'use strict';
+&nbsp;
+(function (angular) {
+    'use strict';
+&nbsp;
+    angular.module('oc.lazyLoad').config(function ($provide) {
+        $provide.decorator('$ocLazyLoad', function ($delegate, $q) {
+            /**
+             * jsLoader function
+             * @type Function
+             * @param paths array list of js files to load
+             * @param callback to call when everything is loaded. We use a callback and not a promise
+             * @param params object config parameters
+             * because the user can overwrite jsLoader and it will probably not use promises :(
+             */
+            $delegate.jsLoader = function (paths, callback, params) {
+                var promises = [];
+                angular.forEach(paths, function (path) {
+                    promises.push($delegate.buildElement('js', path, params));
+                });
+                $q.all(promises).then(function () {
+                    callback();
+                }, function (err) {
+                    callback(err);
+                });
+            };
+            $delegate.jsLoader.ocLazyLoadLoader = true;
+&nbsp;
+            return $delegate;
+        });
+    });
+})(angular);
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkM6L3d3dy9vY0xhenlMb2FkL3NyYy9vY0xhenlMb2FkLmxvYWRlcnMuanNMb2FkZXIuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSxDQUFDLFVBQUEsT0FBTyxFQUFJO0FBQ1IsZ0JBQVksQ0FBQzs7QUFFYixXQUFPLENBQUMsTUFBTSxDQUFDLGFBQWEsQ0FBQyxDQUFDLE1BQU0sQ0FBQyxVQUFTLFFBQVEsRUFBRTtBQUNwRCxnQkFBUSxDQUFDLFNBQVMsQ0FBQyxhQUFhLEVBQUUsVUFBVSxTQUFTLEVBQUUsRUFBRSxFQUFFOzs7Ozs7Ozs7QUFTdkQscUJBQVMsQ0FBQyxRQUFRLEdBQUcsVUFBUyxLQUFLLEVBQUUsUUFBUSxFQUFFLE1BQU0sRUFBRTtBQUNuRCxvQkFBSSxRQUFRLEdBQUcsRUFBRSxDQUFDO0FBQ2xCLHVCQUFPLENBQUMsT0FBTyxDQUFDLEtBQUssRUFBRSxVQUFBLElBQUksRUFBSTtBQUMzQiw0QkFBUSxDQUFDLElBQUksQ0FBQyxTQUFTLENBQUMsWUFBWSxDQUFDLElBQUksRUFBRSxJQUFJLEVBQUUsTUFBTSxDQUFDLENBQUMsQ0FBQztpQkFDN0QsQ0FBQyxDQUFDO0FBQ0gsa0JBQUUsQ0FBQyxHQUFHLENBQUMsUUFBUSxDQUFDLENBQUMsSUFBSSxDQUFDLFlBQU07QUFDeEIsNEJBQVEsRUFBRSxDQUFDO2lCQUNkLEVBQUUsVUFBQSxHQUFHLEVBQUk7QUFDTiw0QkFBUSxDQUFDLEdBQUcsQ0FBQyxDQUFDO2lCQUNqQixDQUFDLENBQUM7YUFDTixDQUFDO0FBQ0YscUJBQVMsQ0FBQyxRQUFRLENBQUMsZ0JBQWdCLEdBQUcsSUFBSSxDQUFDOztBQUUzQyxtQkFBTyxTQUFTLENBQUM7U0FDcEIsQ0FBQyxDQUFBO0tBQ0wsQ0FBQyxDQUFDO0NBRU4sQ0FBQSxDQUFFLE9BQU8sQ0FBQyxDQUFDIiwiZmlsZSI6IkM6L3d3dy9vY0xhenlMb2FkL3NyYy9vY0xhenlMb2FkLmxvYWRlcnMuanNMb2FkZXIuanMiLCJzb3VyY2VzQ29udGVudCI6WyIoYW5ndWxhciA9PiB7XHJcbiAgICAndXNlIHN0cmljdCc7XHJcblxyXG4gICAgYW5ndWxhci5tb2R1bGUoJ29jLmxhenlMb2FkJykuY29uZmlnKGZ1bmN0aW9uKCRwcm92aWRlKSB7XHJcbiAgICAgICAgJHByb3ZpZGUuZGVjb3JhdG9yKCckb2NMYXp5TG9hZCcsIGZ1bmN0aW9uICgkZGVsZWdhdGUsICRxKSB7XHJcbiAgICAgICAgICAgIC8qKlxyXG4gICAgICAgICAgICAgKiBqc0xvYWRlciBmdW5jdGlvblxyXG4gICAgICAgICAgICAgKiBAdHlwZSBGdW5jdGlvblxyXG4gICAgICAgICAgICAgKiBAcGFyYW0gcGF0aHMgYXJyYXkgbGlzdCBvZiBqcyBmaWxlcyB0byBsb2FkXHJcbiAgICAgICAgICAgICAqIEBwYXJhbSBjYWxsYmFjayB0byBjYWxsIHdoZW4gZXZlcnl0aGluZyBpcyBsb2FkZWQuIFdlIHVzZSBhIGNhbGxiYWNrIGFuZCBub3QgYSBwcm9taXNlXHJcbiAgICAgICAgICAgICAqIEBwYXJhbSBwYXJhbXMgb2JqZWN0IGNvbmZpZyBwYXJhbWV0ZXJzXHJcbiAgICAgICAgICAgICAqIGJlY2F1c2UgdGhlIHVzZXIgY2FuIG92ZXJ3cml0ZSBqc0xvYWRlciBhbmQgaXQgd2lsbCBwcm9iYWJseSBub3QgdXNlIHByb21pc2VzIDooXHJcbiAgICAgICAgICAgICAqL1xyXG4gICAgICAgICAgICAkZGVsZWdhdGUuanNMb2FkZXIgPSBmdW5jdGlvbihwYXRocywgY2FsbGJhY2ssIHBhcmFtcykge1xyXG4gICAgICAgICAgICAgICAgdmFyIHByb21pc2VzID0gW107XHJcbiAgICAgICAgICAgICAgICBhbmd1bGFyLmZvckVhY2gocGF0aHMsIHBhdGggPT4ge1xyXG4gICAgICAgICAgICAgICAgICAgIHByb21pc2VzLnB1c2goJGRlbGVnYXRlLmJ1aWxkRWxlbWVudCgnanMnLCBwYXRoLCBwYXJhbXMpKTtcclxuICAgICAgICAgICAgICAgIH0pO1xyXG4gICAgICAgICAgICAgICAgJHEuYWxsKHByb21pc2VzKS50aGVuKCgpID0+IHtcclxuICAgICAgICAgICAgICAgICAgICBjYWxsYmFjaygpO1xyXG4gICAgICAgICAgICAgICAgfSwgZXJyID0+IHtcclxuICAgICAgICAgICAgICAgICAgICBjYWxsYmFjayhlcnIpO1xyXG4gICAgICAgICAgICAgICAgfSk7XHJcbiAgICAgICAgICAgIH07XHJcbiAgICAgICAgICAgICRkZWxlZ2F0ZS5qc0xvYWRlci5vY0xhenlMb2FkTG9hZGVyID0gdHJ1ZTtcclxuXHJcbiAgICAgICAgICAgIHJldHVybiAkZGVsZWdhdGU7XHJcbiAgICAgICAgfSlcclxuICAgIH0pO1xyXG5cclxufSkoYW5ndWxhcik7XHJcbiJdfQ==</pre></td></tr>
+</table></pre>
+
+</div>
+<div class="footer">
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Feb 03 2017 10:04:58 GMT+0100 (Paris, Madrid)</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

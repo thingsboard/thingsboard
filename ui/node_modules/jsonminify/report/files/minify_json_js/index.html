@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - minify.json.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>minify.json.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">48.77</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">81</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">32.34</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.62</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/*! JSON.minify()
+    v0.1 (c) Kyle Simpson
+    MIT License
+*/
+/**
+ * @name minify.json.js
+ * @author Kei Funagayama &lt;kei.topaz@gmail.com
+ * @overview JSON.minify
+ */
+
+/**
+ * @namespace JSON
+ */
+(function(global){
+    &#039;use strict&#039;;
+
+    /**
+     * @function
+     * @memberof JSON
+     * @param {Object} Transformed data. format) json-like
+     * @return {String}
+     *
+     * @example
+     * var json = { // hoge
+     *     &quot;foo&quot;: &quot;bar&quot;,// this is cool
+     *     &quot;bar&quot;: [
+     *         &quot;baz&quot;, &quot;bum&quot;, &quot;zam&quot;   // this is cool
+     *     ]
+     * } // hoge
+     *
+     */
+    var minify = function (json) {
+
+        var tokenizer = /&quot;|(\/\*)|(\*\/)|(\/\/)|\n|\r|\[|]/g,
+            in_string = false,
+            in_multiline_comment = false,
+            in_singleline_comment = false,
+            tmp, tmp2, new_str = [], ns = 0, from = 0, lc, rc
+        ;
+
+        tokenizer.lastIndex = 0;
+
+        while ( tmp = tokenizer.exec(json) ) {
+            lc = RegExp.leftContext;
+            rc = RegExp.rightContext;
+            if (!in_multiline_comment &amp;&amp; !in_singleline_comment) {
+                tmp2 = lc.substring(from);
+                if (!in_string) {
+                    tmp2 = tmp2.replace(/(\n|\r|\s)*/g,&quot;&quot;);
+                }
+                new_str[ns++] = tmp2;
+            }
+            from = tokenizer.lastIndex;
+
+            if (tmp[0] === &quot;\&quot;&quot; &amp;&amp; !in_multiline_comment &amp;&amp; !in_singleline_comment) {
+                tmp2 = lc.match(/(\\)*$/);
+                if (!in_string || !tmp2 || (tmp2[0].length % 2) === 0) {    // start of string with &quot;, or unescaped &quot; character found to end string
+                    in_string = !in_string;
+                }
+                from--; // include &quot; character in next catch
+                rc = json.substring(from);
+            }
+            else if (tmp[0] === &quot;/*&quot; &amp;&amp; !in_string &amp;&amp; !in_multiline_comment &amp;&amp; !in_singleline_comment) {
+                in_multiline_comment = true;
+            }
+            else if (tmp[0] === &quot;*/&quot; &amp;&amp; !in_string &amp;&amp; in_multiline_comment &amp;&amp; !in_singleline_comment) {
+                in_multiline_comment = false;
+            }
+            else if (tmp[0] === &quot;//&quot; &amp;&amp; !in_string &amp;&amp; !in_multiline_comment &amp;&amp; !in_singleline_comment) {
+                in_singleline_comment = true;
+            }
+            else if ((tmp[0] === &quot;\n&quot; || tmp[0] === &quot;\r&quot;) &amp;&amp; !in_string &amp;&amp; !in_multiline_comment &amp;&amp; in_singleline_comment) {
+                in_singleline_comment = false;
+            }
+            else if (!in_multiline_comment &amp;&amp; !in_singleline_comment &amp;&amp; !(/\n|\r|\s/.test(tmp[0]))) {
+                new_str[ns++] = tmp[0];
+            }
+        }
+        new_str[ns++] = rc;
+        return new_str.join(&quot;&quot;);
+    };
+
+    if (typeof module !== &#039;undefined&#039; &amp;&amp; module.exports) {
+        // node
+        module.exports = minify;
+        JSON.minify = minify;
+    } else {
+        // others, export global
+        if (typeof global.JSON === &quot;undefined&quot; || !global.JSON) {
+            global.JSON = {};
+        }
+        global.JSON.minify = minify;
+    }
+})(this);</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

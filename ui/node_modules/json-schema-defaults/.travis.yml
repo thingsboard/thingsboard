@@ -1,0 +1,9 @@
+language: node_js
+node_js:
+  - "4"
+  - "0.10"
+script: ./node_modules/.bin/jasmine-node test/ && ./node_modules/karma/bin/karma start --single-run --browsers="PhantomJS"
+sudo: false
+cache:
+  directories:
+    - node_modules

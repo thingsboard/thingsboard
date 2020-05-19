@@ -1,0 +1,40 @@
+{
+    "test_framework": "jasmine2",
+    "test_path": "test/SpecRunner.html",
+    "browsers": [{
+        "browser": "chrome",
+        "browser_version": "22",
+        "os": "OS X",
+        "os_version": "Mountain Lion"
+    }, {
+        "browser": "firefox",
+        "browser_version": "6",
+        "os": "OS X",
+        "os_version": "Mountain Lion"
+    }, {
+        "browser": "ie",
+        "browser_version": "9",
+        "os": "Windows",
+        "os_version": "7"
+    }, {
+        "browser": "ie",
+        "browser_version": "10",
+        "os": "Windows",
+        "os_version": "7"
+    }, {
+        "browser": "ie",
+        "browser_version": "11",
+        "os": "Windows",
+        "os_version": "7"
+    }, {
+        "browser": "opera",
+        "browser_version": "16",
+        "os": "OS X",
+        "os_version": "Mountain Lion"
+    }, {
+        "browser": "safari",
+        "browser_version": "6.2",
+        "os": "OS X",
+        "os_version": "Mountain Lion"
+    }]
+}

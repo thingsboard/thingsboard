@@ -1,0 +1,32 @@
+{
+  "extends": [
+    "okonet"
+  ],
+  "rules": {
+    // React
+    "react/forbid-prop-types": [
+      2,
+      {
+        "forbid": [
+          "any",
+          "array"
+        ]
+      }
+    ],
+
+    // a11y
+    "jsx-a11y/no-static-element-interactions": 0,
+
+    // Import
+    "import/no-extraneous-dependencies": [
+      2,
+      {
+        "devDependencies": [
+          "webpack*.js",
+          "**/*.spec.js",
+          "**/testSetup.js"
+        ]
+      }
+    ]
+  }
+}

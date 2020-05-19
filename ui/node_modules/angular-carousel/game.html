@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html ng-app="DemoApp">
+    <head>
+        <meta charset="UTF-8">
+        <title>angular-carousel demo</title>
+        <meta name="viewport" content="width=620, user-scalable=no">
+        <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
+        <link href='./dist/angular-carousel.css' rel='stylesheet' type='text/css'>
+        <link href='./demo/demo.css' rel='stylesheet' type='text/css'>
+        <style>
+        html, body{
+            margin:0;
+            padding:0;
+        }
+        .carousel-demo-game {
+            height: 100%;
+        }
+
+        .carousel-demo-game ul[rn-carousel] {
+            overflow:hidden;
+            width:25%;
+            height:25%;
+            margin:0;
+            display:inline-block;
+        }
+        </style>
+    </head>
+    <body ng-controller="DemoCtrl">
+        <div class="carousel-demo-game">
+            <ul ng-repeat="carousel in carousels" rn-carousel rn-carousel-transition="hexagon" rn-carousel-buffered class="carousel1">
+                <li ng-repeat="slide in slides track by slide.id" ng-class="'id-' + slide.id">
+                    <div ng-style="{'background-image': 'url(' + slide.img + ')'}"  class="bgimage">
+                        #{{ slide.id }}
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+    </body>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular-touch.min.js"></script>
+    
+    <script src="./dist/angular-carousel.min.js"></script>
+    <!--<script src="./src/angular-carousel.js"></script>
+    <script src="./src/directives/rn-carousel.js"></script>
+    <script src="./src/directives/rn-carousel-indicators.js"></script>
+    <script src="./src/directives/sliceFilter.js"></script>
+    <script src="./src/directives/shifty.js"></script>
+     -->
+    <script>
+        angular.module('DemoApp', [
+            'angular-carousel'
+        ])
+
+        .controller('DemoCtrl', function($scope) {
+
+            $scope.carousels = [];
+            for (var i=0; i<16;i++) {
+                $scope.carousels.push({
+                    id:i
+                });
+            }
+            $scope.colors = ["#fc0003", "#f70008", "#f2000d", "#ed0012", "#e80017", "#e3001c", "#de0021", "#d90026", "#d4002b", "#cf0030", "#c90036", "#c4003b", "#bf0040", "#ba0045", "#b5004a", "#b0004f", "#ab0054", "#a60059", "#a1005e", "#9c0063", "#960069", "#91006e", "#8c0073", "#870078", "#82007d", "#7d0082", "#780087", "#73008c", "#6e0091", "#690096", "#63009c", "#5e00a1", "#5900a6", "#5400ab", "#4f00b0", "#4a00b5", "#4500ba", "#4000bf", "#3b00c4", "#3600c9", "#3000cf", "#2b00d4", "#2600d9", "#2100de", "#1c00e3", "#1700e8", "#1200ed", "#0d00f2", "#0800f7", "#0300fc"];
+
+            function addSlide(target, style) {
+                var i = target.length;
+                target.push({
+                    id: (i + 1),
+                    label: 'slide #' + (i + 1),
+                    img: 'http://lorempixel.com/450/300/' + style + '/' + ((i + 1) % 10) ,
+                    color: $scope.colors[ (i*10) % $scope.colors.length],
+                    odd: (i % 2 === 0)
+                });
+            };
+
+            $scope.carouselIndex = 3;
+           
+            function addSlides(target, style, qty) {
+                for (var i=0; i < qty; i++) {
+                    addSlide(target, style);
+                }
+            }
+
+            // 1st ngRepeat demo
+            $scope.slides = [];
+            addSlides($scope.slides, 'sports', 50);
+
+        });
+
+    </script>
+</html>

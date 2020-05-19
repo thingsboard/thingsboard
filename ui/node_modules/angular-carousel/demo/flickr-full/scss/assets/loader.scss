@@ -1,0 +1,110 @@
+/*
+======================================================
+       CSS LOADER COURTESY OF @geoffrey_crofte
+       http://codepen.io/CreativeJuiz/pen/vFBIh
+======================================================
+ */
+
+.loading {
+    width: 96px;
+    height: 96px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background-color: transparent;
+    .spacer {
+      height:20%;
+    }
+}
+.ouro {
+    position: relative;
+    display:inline-block;
+    height: 96px;
+    width: 96px;
+    margin: -48px 0 0 -48px;
+    //margin: 1em;
+    border-radius: 50%;
+    background: none repeat scroll 0 0 #fff;
+    overflow:hidden;
+    //box-shadow: 0 0 10px rgba(0,0,0,.1) inset, 0 0 25px rgba(0,0,255,0.075);
+}
+
+.ouro:after {
+    content: "";
+    position: absolute;
+    top: 20px; left: 20px;
+    display: block;
+    height: 56px; width: 56px;
+    background: none repeat scroll 0 0 $bar-title-color;
+    border-radius: 50%;
+    //box-shadow: 0 0 5px rgba(0,0,0,.6);
+}
+
+.ouro .anim {
+    position: absolute;
+    left: 100%; top: 0;
+    height: 100%; width: 100%;
+    border-radius: 999px;
+    background: none repeat scroll 0 0 lighten($bar-title-color, 30%);
+    //opacity: 0.8;
+    -webkit-animation: ui-spinner-rotate-left 2s infinite;
+    animation: ui-spinner-rotate-left 2s infinite;
+    -webkit-transform-origin: 0 50% 0;
+    transform-origin: 0 50% 0;
+}
+
+.ouro > span {
+    position: absolute;
+    height: 100%; width: 50%;
+    overflow: hidden;
+    &.left {
+      left:0;
+      .anim {
+          border-bottom-left-radius: 0;
+          border-top-left-radius: 0;
+      }
+    }
+    &.right {
+      left:50%;
+      .anim {
+          border-bottom-right-radius: 0;
+          border-top-right-radius: 0;
+          left: -100%;
+          -webkit-transform-origin: 100% 50% 0;
+          transform-origin: 100% 50% 0;
+      }
+    }
+}
+
+
+
+
+@keyframes ui-spinner-rotate-right{
+  0%{transform:rotate(0deg)}
+  //25%{transform:rotate(180deg)}
+  //50%{transform:rotate(180deg)}
+  //75%{transform:rotate(360deg)}
+  100%{transform:rotate(360deg)}
+}
+@keyframes ui-spinner-rotate-left{
+  0%{transform:rotate(0deg)}
+  //25%{transform:rotate(0deg)}
+  //50%{transform:rotate(180deg)}
+  //75%{transform:rotate(180deg)}
+  100%{transform:rotate(360deg)}
+}
+
+@-webkit-keyframes ui-spinner-rotate-right{
+  0%{-webkit-transform:rotate(0deg)}
+  //25%{-webkit-transform:rotate(180deg)}
+  //50%{-webkit-transform:rotate(180deg)}
+  //75%{-webkit-transform:rotate(360deg)}
+  100%{-webkit-transform:rotate(360deg)}
+}
+@-webkit-keyframes ui-spinner-rotate-left{
+  0%{-webkit-transform:rotate(0deg)}
+  //25%{-webkit-transform:rotate(0deg)}
+  //50%{-webkit-transform:rotate(180deg)}
+  //75%{-webkit-transform:rotate(180deg)}
+  100%{-webkit-transform:rotate(360deg)}
+}

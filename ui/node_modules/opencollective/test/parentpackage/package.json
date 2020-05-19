@@ -1,0 +1,14 @@
+{
+  "name": "parentpackage",
+  "version": "1.0.0",
+  "description": "test parent package",
+  "repository": {
+    "url": "https://github.com/opencollective/opencollective-postinstall"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}

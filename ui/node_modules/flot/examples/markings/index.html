@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Flot Examples: Markings</title>
+	<link href="../examples.css" rel="stylesheet" type="text/css">
+	<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
+    <script language="javascript" type="text/javascript" src="../../lib/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="../../lib/jquery.colorhelpers.js"></script>
+	<script language="javascript" type="text/javascript" src="../../src/jquery.flot.js"></script>
+    <script language="javascript" type="text/javascript" src="../../src/plugins/jquery.flot.image.js"></script>
+	<script type="text/javascript">
+
+	    $(function () {
+	        var yAxisLabels = ["", "Pre A1", "A1", "A2", "B1.1", "B1.2", "B2.1", "C1.1", "C1.2", "Level", "", ""];
+	        var xAxisLabels = ["", "", "Age", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", ""];
+
+	        function yAxisLabelGenerator(y) {
+	            return yAxisLabels[y];
+	        }
+
+	        function xAxisLabelGenerator(x) {
+	            return xAxisLabels[x];
+	        }
+
+	        var markings = [
+                // markings that has 3 pixels rounded and with single line html
+                { color: "rgba(87, 181, 255, 1)", xaxis: { from: 6, to: 10 }, yaxis: { from: 1.8, to: 2.2 }, text: "6 to 10", rounded: 3, aboveGrid: true, font: { color: "#fff" }, textAlign: "center", textBaseline: "middle" },
+                { color: "#57b5ff", xaxis: { from: 9.5, to: 10.5 }, yaxis: { from: 2.8, to: 3.2 }, text: "10", rounded: 3, aboveGrid: true, font: { color: "#fff" }, textAlign: "center", textBaseline: "middle" },
+                { color: "#57b5ff", xaxis: { from: 10, to: 14 }, yaxis: { from: 3.8, to: 4.2 }, text: "10 to 14", rounded: 3, aboveGrid: true, font: { color: "#fff" }, textAlign: "center", textBaseline: "middle" },
+                { color: "#57b5ff", xaxis: { from: 14, to: 15 }, yaxis: { from: 4.8, to: 5.2 }, text: "14 to 15", rounded: 3, aboveGrid: true, font: { color: "#fff" }, textAlign: "center", textBaseline: "middle" },
+                { color: "#d7048a", xaxis: { from: 15, to: 17 }, yaxis: { from: 5.8, to: 6.2 }, text: "15 to 17", rounded: 3, aboveGrid: true, font: { color: "#fff" }, textAlign: "center", textBaseline: "middle" },
+                { color: "#838383", xaxis: { from: 17, to: 19 }, yaxis: { from: 6.8, to: 7.2 }, text: "17 and up", rounded: 3, aboveGrid: true, font: { color: "#fff" }, textAlign: "center", textBaseline: "middle" },
+                { color: "#838383", xaxis: { from: 17, to: 19 }, yaxis: { from: 7.8, to: 8.2 }, text: "17 and up", rounded: 3, aboveGrid: true, font: { color: "#fff" }, textAlign: "center", textBaseline: "middle" },
+
+                { color: "#57b5ff", xaxis: { from: 6.9, to: 7 }, yaxis: { from: 1.2, to: 1.8 }, aboveGrid: true },
+	            // markings with multiline html.
+		        { color: "#e2f0f9", xaxis: { from: 7, to: 8 }, yaxis: { from: 1.2, to: 1.8 }, aboveGrid: true, text: "<strong>HF</strong><br />2A-2B", textAlign: "left", textBaseline: "middle", font: { color: "#000", size: "12px", family: "Arial" } },
+                { color: "#57b5ff", xaxis: { from: 7.9, to: 8 }, yaxis: { from: 2.2, to: 2.8 } },
+                { color: "#e2f0f9", xaxis: { from: 8, to: 9 }, yaxis: { from: 2.2, to: 2.8 }, aboveGrid: true, text: "<strong>HF</strong><br />2A-2B", textAlign: "left", textBaseline: "middle", font: { color: "#000", size: "12px", family: "Arial" } },
+                { color: "#57b5ff", xaxis: { from: 8.9, to: 9 }, yaxis: { from: 2.2, to: 2.8 } },
+		        { color: "#e9e9e9", xaxis: { from: 9, to: 10 }, yaxis: { from: 2.2, to: 2.8 }, aboveGrid: true, text: "<strong>HF</strong><br />2A-2B", textAlign: "left", textBaseline: "middle", font: { color: "#000", size: "12px", family: "Arial" } },
+
+                { color: "#e2f0f9", xaxis: { from: 10, to: 10.5 }, yaxis: { from: 2.2, to: 2.8 }, aboveGrid: true, text: "<strong>TB</strong><br />BX4", textAlign: "left", textBaseline: "middle", font: { color: "#000", size: "12px", family: "Arial" } },
+
+                { color: "#57b5ff", xaxis: { from: 10.4, to: 10.5 }, yaxis: { from: 3.2, to: 3.8 }, aboveGrid: true },
+                { color: "#e2f0f9", xaxis: { from: 10.5, to: 11.5 }, yaxis: { from: 3.2, to: 3.8 }, aboveGrid: true, text: "<strong>TB</strong><br />BX7-8", textAlign: "left", textBaseline: "middle", font: { color: "#000", size: "12px", family: "Arail" } },
+
+                { color: "#b8b8b8", xaxis: { from: 11.4, to: 11.5 }, yaxis: { from: 4.2, to: 4.8 }, aboveGrid: true },
+                { color: "#e6e6e6", xaxis: { from: 11.5, to: 12.5 }, yaxis: { from: 4.2, to: 4.8 }, aboveGrid: true, text: "<strong>TB</strong><br />BX7-8", textAlign: "left", textBaseline: "middle", font: { color: "#000", size: "12px", family: "Arial" } },
+
+                { color: "#b8b8b8", xaxis: { from: 12.4, to: 12.5 }, yaxis: { from: 5.2, to: 5.8 }, aboveGrid: true },
+		        { color: "#e6e6e6", xaxis: { from: 12.5, to: 13.5 }, yaxis: { from: 5.2, to: 5.8 }, aboveGrid: true, text: "<strong>FR</strong><br />BX3-10", textAlign: "left", textBaseline: "middle", font: { color: "#000", size: "12px", family: "Arial" } },
+
+                { color: "#b8b8b8", xaxis: { from: 13.4, to: 13.5 }, yaxis: { from: 6.2, to: 6.8 }, aboveGrid: true },
+		        { color: "#e6e6e6", xaxis: { from: 13.5, to: 14.5 }, yaxis: { from: 6.2, to: 6.8 }, aboveGrid: true, text: "<strong>FR</strong><br />BX11-12", textAlign: "left", textBaseline: "middle", font: { style: "", variant: "", weight: "", color: "#000", size: "12", lineHeight: "12", family: "Arial" } },
+
+                { color: "#b8b8b8", xaxis: { from: 14.4, to: 14.5 }, yaxis: { from: 7.2, to: 7.8 }, aboveGrid: true },
+                { color: "#e6e6e6", xaxis: { from: 14.5, to: 15.5 }, yaxis: { from: 7.2, to: 7.8 }, aboveGrid: true, text: "<div style='margin: 0 0 0 1px;'><strong>FR</strong><br />BX13-14</div>", textAlign: "left", textBaseline: "top", font: { color: "#000", size: "10", family: "Arial" } },
+
+                // A example marking that is behind the grid (by specify a color with a opacity value). 
+	            // By default the markings will be above the grid.
+	            { aboveGrid: false, color: "rgb(170, 170, 170)", xaxis: { from: 3.5, to: 6.5 }, yaxis: { from: 5.5, to: 8.5 }, text: "<strong>I'm behind the grid</strong>,<br />others are above it.", font: { color: "#00f", size: "13", family: "Arial" }, textAlign: "center", textBaseline: "middle" }
+	        ];
+
+	        var data = [[
+	            ["you_are_here.png", 10, 3.9, 11.1, 5.4]
+	        ]];
+
+	        var options = {
+	            series: { images: { show: true } },
+	            xaxis: {
+	                ticks: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+	                tickFormatter: xAxisLabelGenerator,
+	                min: 2,
+	                max: 19
+	            },
+	            yaxis: {
+	                ticks: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+	                tickFormatter: yAxisLabelGenerator,
+	                min: 0,
+	                max: 9
+	            },
+	            grid: {
+	                show: true,
+	                markings: markings,
+	                markingsAboveGrid: true,
+	                borderColor: "#000",
+	                backgroundColor: { colors: ["#fff", "#fff"] }
+	            }
+	        };
+
+	        $(document).ready(function () {
+	            $.plot.image.loadDataImages(data, options, function () {
+	                $.plot("#goal-map-canvas-wrapper", data, options);
+	            });
+	        });
+	    });
+
+	</script>
+</head>
+<body>
+
+	<div id="header">
+		<h2>Adding text into markings</h2>
+	</div>
+
+	<div id="content">
+	    <div class="demo-container">
+            <div id="goal-map-canvas-wrapper" class="demo-placeholder"></div>
+	    </div>
+        
+        <p>This example shows how to add text into markings, and how to draw markings with rounded corner.</p>
+        <p>The chart here is actually a goal ladder map, and it also shows how to use image plugin to draw icons on to your chart (Notice the "You are here" icon <img src="you_are_here.png" height="30" alt="You are here"/> on this chart.). If you don't need to draw images/icons onto your chart, you don't need to reference the image plugin.</p>
+
+	</div>
+
+	<div id="footer">
+		Copyright &copy; 2007 - 2013 IOLA and Ole Laursen
+	</div>
+
+</body>
+</html>

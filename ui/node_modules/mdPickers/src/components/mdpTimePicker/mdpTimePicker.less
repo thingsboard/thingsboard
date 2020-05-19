@@ -1,0 +1,145 @@
+@clock-size: 200px;
+@button-size: 32px;
+
+.mdp-clock {
+	width: @clock-size;
+    height: @clock-size;
+    border-radius: 50%;
+    cursor: pointer;
+    
+    padding: (@button-size / 2) + 8;
+    background: #ededed;
+	
+	.md-button {
+		box-shadow: none !important;
+    	background-color: transparent;
+		display: block;
+		position: absolute;
+		
+        min-height: @button-size;
+		width: @button-size;
+        height: @button-size;
+		
+		font-size: 12px;
+		line-height: @button-size;
+        margin: 0;
+        padding: 0;
+        
+        transform: translate(-50%, -50%);
+	}
+    
+    .mdp-clock-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        
+        display: block;
+    }
+    
+    .mdp-pointer {
+        min-height: 0px;
+        width: 1px;
+        height: 50%;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: 0 auto;
+        
+        transform-origin: top center;
+        z-index: 0;
+        pointer-events: none;
+    }
+    
+    .mdp-clock-center {
+        min-height: 0px;
+        height: 6px;
+        width: 6px;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        margin: auto;
+        border-radius: 50%;
+    }
+    
+    .md-button.mdp-clock-selected {
+        position: absolute;
+        border-radius: 50%;
+        width: 8px;
+        height: 8px;
+        bottom: -8px;
+        left: 0px;
+        min-width: 0;
+        min-height: 0;
+        
+        pointer-events: none;
+    }
+}
+
+.mdp-timepicker {
+    .mdp-clock-switch-container {
+        padding: 20px;
+        width: 309px;
+    }
+    
+    .mdp-timepicker-time {
+        padding: 15px;
+    }
+    
+    .mdp-timepicker-selected-time {
+        font-size: 3rem;
+    }
+    
+    &:not(.portrait) {
+        .mdp-timepicker-time {
+            width: 138px;
+        }
+    }
+    
+    &.portrait {
+        .mdp-timepicker-selected-time {
+            font-size: 4rem;
+            margin-right: 1.5rem;
+        }
+    }
+}
+
+mdp-time-picker {
+    md-input-container.md-has-icon {
+        padding-left: 40px;
+    }
+    
+    .mdp-time-picker-container {
+    }
+    
+    .md-button.md-icon-button {
+        margin: 18px 0 0 0;
+    }
+}
+
+.mdp-timepicker-selected-time > span,
+.mdp-timepicker-selected-ampm > span {
+    outline: 0;
+    opacity: 0.6; 
+    
+    &:not(.active) {
+        cursor: pointer;
+    }
+    
+    &.active {
+        opacity: 1;    
+    }
+}
+
+.generate-degree-classes(30);
+
+.generate-degree-classes(@step, @i: 0) when (@i <= 360) {
+    @degree: (270 + @i) - (floor((270 + @i) / 360) * 360);
+    .mdp-clock-deg@{i} {
+        top: ((1 + sin(@degree * 1deg)) * 100%) / 2;
+        left: ((1 + cos(@degree * 1deg)) * 100%) / 2;
+	}
+	.generate-degree-classes(@step, @i+@step);    // next iteration
+}

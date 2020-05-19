@@ -1,0 +1,15 @@
+sample
+src
+test
+.idea
+bower_components
+coverage
+testDependencies
+.bowerrc
+.coveralls.yml
+.gitignore
+.jshintrc
+.travis.yml
+gruntfile.js
+karma.conf.js
+libpeerconnection.log

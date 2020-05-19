@@ -1,0 +1,14 @@
+language: node_js
+cache: yarn
+notifications:
+  email: false
+node_js:
+  - '7'
+before_script:
+  - npm prune
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+  - npm run semantic-release
+branches:
+  except:
+    - /^v\d+\.\d+\.\d+$/

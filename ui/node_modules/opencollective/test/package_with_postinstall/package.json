@@ -1,0 +1,18 @@
+{
+  "name": "testpackage",
+  "version": "1.0.0",
+  "description": "test package",
+  "repository": {
+    "url": "https://github.com/opencollective/opencollective-postinstall"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "opencollective postinstall"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "opencollective": "../../"
+  }
+}

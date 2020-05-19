@@ -1,0 +1,302 @@
+/**
+ * md-color-picker - Angular-Material inspired color picker.
+ * @version v0.2.6
+ * @link https://github.com/brianpkelley/md-color-picker
+ * @license MIT
+ */
+md-color-picker .md-color-picker-input-container,
+[md-color-picker] .md-color-picker-input-container {
+  position: relative;
+}
+md-color-picker .md-color-picker-input-container .md-color-picker-preview,
+[md-color-picker] .md-color-picker-input-container .md-color-picker-preview {
+  content: '';
+  width: 24px;
+  height: 24px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.14), 0 2px 2px 0 rgba(0, 0, 0, 0.098), 0 1px 5px 0 rgba(0, 0, 0, 0.084);
+  position: relative;
+  top: 22px;
+  overflow: hidden;
+  background-color: #fff;
+  background-image: -webkit-linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd), -webkit-linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+  background-image: linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd), linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}
+md-color-picker .md-color-picker-input-container .md-color-picker-preview .md-color-picker-result,
+[md-color-picker] .md-color-picker-input-container .md-color-picker-preview .md-color-picker-result {
+  width: 100%;
+  height: 100%;
+}
+md-color-picker .md-color-picker-input-container .md-color-picker-clear,
+[md-color-picker] .md-color-picker-input-container .md-color-picker-clear {
+  position: absolute;
+  bottom: 42px;
+  right: -16px;
+  color: rgba(0, 0, 0, 0.26);
+}
+.md-color-picker-container {
+  padding: 8px;
+  background: #fff;
+  outline: none;
+  height: 397px;
+  width: 347px;
+  opacity: 1;
+  overflow: hidden;
+  z-index: 1000;
+}
+.md-color-picker-container .md-color-picker-arrow {
+  border: 0 solid transparent;
+  border-right-width: 30px;
+  border-bottom-width: 0px;
+  position: absolute;
+  left: 0;
+  top: 0px;
+  -webkit-transition: border-bottom-width cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, top cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
+  transition: border-bottom-width cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, top cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
+}
+.md-color-picker-container .md-color-picker-preview {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  font-weight: bold;
+  font-size: 18px;
+  color: #fff;
+  margin: -8px -8px 0px;
+  position: relative;
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-result {
+  position: absolute;
+  height: 100%;
+  opacity: 1;
+  background: #ff0000;
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-result > input {
+  position: relative;
+  top: -15px;
+  opacity: 0;
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-result > div {
+  position: relative;
+  width: 100%;
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-result > div > input {
+  border-width: 0;
+  background: transparent;
+  text-align: center;
+  position: absolute;
+  top: -15px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  color: #eee;
+  outline: none;
+  opacity: 0;
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-result > div > input.switch {
+  -webkit-transition: top cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, 0.25s opacity ease-out;
+  transition: top cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, 0.25s opacity ease-out;
+  top: 0px;
+  opacity: 1;
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-tabs .md-tab,
+.md-color-picker-container .md-color-picker-preview .md-color-picker-tabs md-tabs-wrapper,
+.md-color-picker-container .md-color-picker-preview .md-color-picker-tabs md-tabs-canvas,
+.md-color-picker-container .md-color-picker-preview .md-color-picker-tabs md-pagination-wrapper {
+  max-height: 28px;
+  height: 28px;
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-tabs md-ink-bar {
+  background: rgba(255, 255, 255, 0.5);
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-tabs .md-tab {
+  padding-top: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #eee;
+  /* hack for https://github.com/angular/material/issues/4237 */
+  max-width: none !important;
+}
+.md-color-picker-container .md-color-picker-preview .md-color-picker-tabs .md-tab.md-active {
+  background: transparent;
+}
+.md-color-picker-container .md-color-picker-preview.dark {
+  color: #333;
+}
+.md-color-picker-container .md-color-picker-preview.dark .md-color-picker-preview-input {
+  color: #333;
+}
+.md-color-picker-container .md-color-picker-preview.dark .md-tab {
+  background: rgba(0, 0, 0, 0.25);
+  color: #333;
+}
+.md-color-picker-container .md-color-picker-preview.dark .md-tab.md-active {
+  background: transparent;
+}
+.md-color-picker-container .md-color-picker-preview.dark md-ink-bar {
+  background: rgba(0, 0, 0, 0.5);
+}
+.md-color-picker-container .md-color-picker-tabs {
+  margin: 0px -8px 0;
+}
+.md-color-picker-container .md-color-picker-tabs md-tabs[md-align-tabs=bottom] {
+  padding-bottom: 0;
+}
+.md-color-picker-container .md-color-picker-tabs .md-tab,
+.md-color-picker-container .md-color-picker-tabs md-tabs-wrapper,
+.md-color-picker-container .md-color-picker-tabs md-tabs-canvas,
+.md-color-picker-container .md-color-picker-tabs md-pagination-wrapper {
+  max-height: 36px;
+  height: 36px;
+}
+.md-color-picker-container .md-color-picker-tabs .md-tab {
+  padding: 7px 24px;
+  background: transparent;
+}
+.md-color-picker-container .md-color-picker-tabs .md-tab:last-of-type {
+  margin-right: -2px;
+}
+.md-color-picker-container .md-color-picker-tabs md-tabs:not(.md-no-tab-content):not(.md-dynamic-height) {
+  min-height: 298px;
+}
+.md-color-picker-container .md-color-picker-tabs md-tabs:not(.md-no-tab-content):not(.md-dynamic-height) md-tabs-content-wrapper {
+  height: 255px;
+  margin-bottom: 8px;
+}
+.md-color-picker-container .md-color-picker-tabs md-tabs:not(.md-no-tab-content):not(.md-dynamic-height) md-tabs-content-wrapper md-tab-content {
+  height: 255px;
+  padding: 0px 8px 0;
+}
+.md-color-picker-container .md-color-picker-tabs md-tabs:not(.md-no-tab-content):not(.md-dynamic-height) md-tabs-content-wrapper md-tab-content [md-tabs-template] {
+  height: 100%;
+}
+.md-color-picker-container .md-color-picker-tabs.md-color-picker-colors {
+  margin: 8px -8px -8px;
+}
+.md-color-picker-container .md-color-picker-tabs.md-color-picker-colors md-ink-bar {
+  top: auto;
+}
+.md-color-picker-container .md-color-picker-tabs.md-color-picker-colors .md-tab {
+  background: rgba(0, 0, 0, 0.075);
+}
+.md-color-picker-container .md-color-picker-tabs.md-color-picker-colors .md-tab.md-active {
+  background: #fff;
+}
+.md-color-picker-container .md-color-picker-colors {
+  overflow: hidden;
+  margin-top: 8px;
+}
+.md-color-picker-container .md-color-picker-colors .md-color-picker-marker {
+  position: absolute;
+  border: 2px solid #fff;
+  box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+.md-color-picker-container .md-color-picker-colors [md-color-picker-spectrum] {
+  position: relative;
+  cursor: crosshair;
+  overflow: hidden;
+  height: 255px;
+  width: 255px;
+}
+.md-color-picker-container .md-color-picker-colors [md-color-picker-spectrum] .md-color-picker-marker {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.5), inset 0 0 2px 0 rgba(0, 0, 0, 0.5);
+  top: -5px;
+  left: calc(100% - 5px);
+}
+.md-color-picker-container .md-color-picker-colors [md-color-picker-hue],
+.md-color-picker-container .md-color-picker-colors [md-color-picker-alpha] {
+  position: relative;
+  cursor: crosshair;
+  overflow: hidden;
+  width: 30px;
+}
+.md-color-picker-container .md-color-picker-colors [md-color-picker-hue].md-color-picker-wide,
+.md-color-picker-container .md-color-picker-colors [md-color-picker-alpha].md-color-picker-wide {
+  width: 67px;
+}
+.md-color-picker-container .md-color-picker-colors [md-color-picker-hue] .md-color-picker-marker,
+.md-color-picker-container .md-color-picker-colors [md-color-picker-alpha] .md-color-picker-marker {
+  height: 5px;
+  width: 100%;
+  border-left: 0;
+  border-right: 0;
+  top: -2px;
+  left: 0;
+}
+.md-color-picker-container .md-color-picker-sliders md-slider.red-slider .md-track-fill {
+  background: #d01515;
+}
+.md-color-picker-container .md-color-picker-sliders md-slider.red-slider .md-thumb:after {
+  background-color: #d01515;
+  border-color: #d01515;
+}
+.md-color-picker-container .md-color-picker-sliders md-slider.green-slider .md-track-fill {
+  background: #19d015;
+}
+.md-color-picker-container .md-color-picker-sliders md-slider.green-slider .md-thumb:after {
+  background-color: #19d015;
+  border-color: #19d015;
+}
+.md-color-picker-container .md-color-picker-sliders md-slider.blue-slider .md-track-fill {
+  background: #1560d0;
+}
+.md-color-picker-container .md-color-picker-sliders md-slider.blue-slider .md-thumb:after {
+  background-color: #1560d0;
+  border-color: #1560d0;
+}
+.md-color-picker-container .md-color-picker-material-palette .md-color-picker-material-title {
+  font-size: 22px;
+  line-height: 75px;
+  padding: 0 15px;
+  color: rgba(0, 0, 0, 0.85);
+  text-transform: capitalize;
+}
+.md-color-picker-container .md-color-picker-material-palette .md-color-picker-material-title.dark {
+  color: rgba(255, 255, 255, 0.85);
+}
+.md-color-picker-container .md-color-picker-material-palette .md-color-picker-material-title:not(:first-child) {
+  margin-top: 16px;
+}
+.md-color-picker-container .md-color-picker-material-palette .md-color-picker-with-label {
+  font-size: 12px;
+  line-height: 33px;
+  padding: 0 5px;
+  color: rgba(0, 0, 0, 0.7);
+}
+.md-color-picker-container .md-color-picker-material-palette .md-color-picker-with-label.dark {
+  color: rgba(255, 255, 255, 0.7);
+}
+.md-color-picker-container .md-color-picker-material-palette .md-color-picker-material-colors {
+  position: absolute;
+  -webkit-transition: left cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, right cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, top cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, bottom cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
+  transition: left cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, right cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, top cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s, bottom cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
+}
+.md-color-picker-container .md-color-picker-history > div > div {
+  height: 20px;
+  margin: 4px;
+  background-color: #fff;
+  background-image: -webkit-linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd), -webkit-linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+  background-image: linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd), linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}
+.md-color-picker-container .md-color-picker-history > div > div > div {
+  width: 100%;
+  height: 100%;
+}
+.md-color-picker-container .md-color-picker-history button {
+  margin-top: auto;
+  margin-left: auto;
+}
+.md-color-picker-checkered-bg {
+  background-color: #fff;
+  background-image: -webkit-linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd), -webkit-linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+  background-image: linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd), linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}

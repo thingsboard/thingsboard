@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<!--
+  ~  angular-material-icons v0.7.1
+  ~  (c) 2014-2016 Klar Systems
+  ~  License: MIT
+  -->
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Angular Material Icons</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.0/angular.min.js"></script>
+    <script src="angular-material-icons.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/SVG-Morpheus/0.1.8/svg-morpheus.js"></script>
+    <script src="demo.js"></script>
+    <style>
+        @import url(https://fonts.googleapis.com/css?family=RobotoDraft&lang=en);
+        ng-md-icon {
+            fill: white;
+            -webkit-transition: fill 750ms ease-in-out;
+            -moz-transition: fill 750ms ease-in-out;
+            -o-transition: fill 750ms ease-in-out;
+            transition: fill 750ms ease-in-out;
+        }
+        ng-md-icon > svg {
+            -webkit-transition: width 750ms ease-in-out, height 750ms ease-in-out;
+            -moz-transition: width 750ms ease-in-out, height 750ms ease-in-out;
+            -o-transition: width 750ms ease-in-out, height 750ms ease-in-out;
+            transition: width 750ms ease-in-out, height 750ms ease-in-out;
+        }
+        body {
+            font-family: 'RobotoDraft', Arial, sans-serif;
+            font-size: 16px;
+            background-color: #3e4f56;
+            color: white;
+            padding: 6px;
+        }
+        div {
+            width: 180px;
+            display: inline-block;
+            text-align: center;
+            white-space: wrap;
+            vertical-align: top;
+            padding: 6px;
+        }
+        h1 {
+            font-size: 24px;
+        }
+        h2 {
+            font-size: 20px;
+        }
+        li {
+            padding-bottom: 12px;
+        }
+        h2:first-letter {
+            text-transform: capitalize;
+        }
+        code {
+            color: #ffff99;
+        }
+        a {
+            color: aqua;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body ng-app="demoapp" ng-controller="democtrl" ng-strict-di>
+
+    <!-- GitHub ribbon -->
+    <a href="https://github.com/klarsys/angular-material-icons"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
+
+    <h1>Angular Material Icons v0.7.1</h1>
+    AngularJS directive to use Material Design icons with custom fill-color and size.
+    <ul>
+        <li>For production, use minified version directly from CDN:
+            <!-- https://www.cdnperf.com/#cdnjs,jsdelivr/https/90 -->
+            <br><code>&lt;script src="//cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.1/angular-material-icons.min.js"&gt;&lt;/script&gt;</code>
+            <br>
+            <br>
+            For other purposes, project files are available via <a href="#" ng-click="command='bower install angular-material-icons';">bower</a> / <a href="#" ng-click="command='npm install angular-material-icons';">npm</a> or can be cloned directly from <a href="#" ng-click="command='git clone https://github.com/klarsys/angular-material-icons.git';">github</a>.
+            <br><code>{{command}}</code>
+        </li>
+        <li>Inject <code>ngMdIcons</code> to your angularjs application:
+            <br><code>angular.module('demoapp', ['ngMdIcons']);</code>
+        </li>
+        <li>Use <code>ng-md-icon</code> directive in your html, specifying fill-color through css:
+            <br><code>&lt;ng-md-icon icon="..." style="fill: ..." size="..."&gt;&lt;/ng-md-icon&gt;</code>
+            <br>
+            <br>
+            <div><ng-md-icon icon="send"></ng-md-icon><br>icon="send"</div>
+            <div><ng-md-icon icon="send" style="fill: pink"></ng-md-icon><br>icon="send"<br>style="fill: pink"</div>
+            <div><ng-md-icon icon="{{icon}}" ng-attr-style="fill: {{fill}}"></ng-md-icon><br>icon="{{icon}}"<br>style="fill: {{fill}}"</div>
+            <div><ng-md-icon icon="send" style="fill: #abcdef"></ng-md-icon><br>icon="send"<br>style="fill: #abcdef"</div>
+            <br>
+            <div><ng-md-icon icon="{{icon}}" ng-attr-style="fill: {{fill}}" size="20"></ng-md-icon><br>size="20"</div>
+            <div><ng-md-icon icon="{{icon}}" ng-attr-style="fill: {{fill}}"></ng-md-icon><br>-- no size --<br>(default is 24)</div>
+            <div><ng-md-icon icon="{{icon}}" ng-attr-style="fill: {{fill}}" size="{{size}}"></ng-md-icon><br>size="{{size}}"</div>
+            <div><ng-md-icon icon="{{icon}}" ng-attr-style="fill: {{fill}}" size="64"></ng-md-icon><br>size="64"</div>
+            <br>
+        </li>
+        <li>This directive is tested on Chrome, Firefox, Safari and Edge.
+            <br>For IE, use <code>ng-attr-style</code> instead of <code>style</code>. Also refer AngularJS documentation on <a href="https://docs.angularjs.org/guide/ie" target="_blank">IE Compatibility</a>.
+        </li>
+        <li>Optional: Include <a href="https://github.com/alexk111/SVG-Morpheus" target="_blank">SVG-Morpheus</a> in your project and changes to <code>icon</code> attribute that you do through your controller will go through delightful morphing as seen above.
+            <br>Refer code for this page (index.html and demo.js) for details.
+            <br><code>&lt;script src="//cdnjs.cloudflare.com/ajax/libs/SVG-Morpheus/0.1.8/svg-morpheus.js"&gt;&lt;/script&gt;</code>
+            <br>
+            <br>When SVG-Morpheus is included, you can use <code>options</code> attribute to control <a href="https://github.com/alexk111/SVG-Morpheus#options" target="_blank">morphing options</a>.
+            <br>
+            <br>
+            <div><ng-md-icon icon="{{icon}}" ng-attr-style="fill: {{fill}}" size="48" options='{"duration": 375}'></ng-md-icon><br>options=<br>'{"duration": 375}'<br>(default is 750)</div>
+            <div><ng-md-icon icon="{{icon}}" ng-attr-style="fill: {{fill}}" size="48" options='{"rotation": "none"}'></ng-md-icon><br>options=<br>'{"rotation": "none"}'<br>(default is clock)</div>
+            <div><ng-md-icon icon="{{icon}}" ng-attr-style="fill: {{fill}}" size="48" options='{"rotation": "counterclock"}'></ng-md-icon><br>options=<br>'{"rotation": "counterclock"}'</div>
+            <div><ng-md-icon icon="{{clickIcon}}" ng-attr-style="fill: {{fill}}" size="48" options='{"duration": 375, "rotation": "none"}' ng-click="clickIconMorph()"></ng-md-icon><br>Example:<br>Morph on ng-click</div>
+            <br>
+            <br>Note that <code>options</code> attribute is a JSON parse-able string so surround keys with double-quotes.
+        </li>
+        <li>Advanced: Refer <a href="https://github.com/klarsys/angular-material-icons/blob/master/demo.js" target="_blank">demo.js</a> to register custom icons for your project or to access default icon shapes from a controller or another service.
+            <br>
+            <div><ng-md-icon icon="standby" ng-attr-style="fill: {{fill}}" size="48"></ng-md-icon><br>standby</div>
+            <div><ng-md-icon icon="custom-delete" ng-attr-style="fill: {{fill}}" size="48"></ng-md-icon><br>custom-delete</div>
+            <div><ng-md-icon icon="marker" ng-attr-style="fill: {{fill}}" size="48"></ng-md-icon><br>marker</div>
+            <div><ng-md-icon icon="live_circle" ng-attr-style="fill: {{fill}}" size="48"></ng-md-icon><br>live_circle</div>
+        </li>
+    </ul>
+
+    <h1>Full list of icons:</h1>
+
+    <h2>From <a href="http://materialdesignicons.com" target="_blank">MaterialDesignIcons.com</a></h2>
+    <div><ng-md-icon icon="amazon" size="48"></ng-md-icon><br>amazon</div>
+    <div><ng-md-icon icon="apple" size="48"></ng-md-icon><br>apple</div>
+    <div><ng-md-icon icon="facebook-box" size="48"></ng-md-icon><br>facebook-box</div>
+    <div><ng-md-icon icon="facebook-messenger" size="48"></ng-md-icon><br>facebook-messenger</div>
+    <div><ng-md-icon icon="facebook" size="48"></ng-md-icon><br>facebook</div>
+    <div><ng-md-icon icon="github-box" size="48"></ng-md-icon><br>github-box</div>
+    <div><ng-md-icon icon="github-circle" size="48"></ng-md-icon><br>github-circle</div>
+    <div><ng-md-icon icon="google-plus-box" size="48"></ng-md-icon><br>google-plus-box</div>
+    <div><ng-md-icon icon="google-plus" size="48"></ng-md-icon><br>google-plus</div>
+    <div><ng-md-icon icon="hangouts" size="48"></ng-md-icon><br>hangouts</div>
+    <div><ng-md-icon icon="linkedin-box" size="48"></ng-md-icon><br>linkedin-box</div>
+    <div><ng-md-icon icon="linkedin" size="48"></ng-md-icon><br>linkedin</div>
+    <div><ng-md-icon icon="login" size="48"></ng-md-icon><br>login</div>
+    <div><ng-md-icon icon="logout" size="48"></ng-md-icon><br>logout</div>
+    <div><ng-md-icon icon="office" size="48"></ng-md-icon><br>office</div>
+    <div><ng-md-icon icon="twitter" size="48"></ng-md-icon><br>twitter</div>
+    <div><ng-md-icon icon="whatsapp" size="48"></ng-md-icon><br>whatsapp</div>
+    <div><ng-md-icon icon="windows" size="48"></ng-md-icon><br>windows</div>
+
+    <h2>Custom</a></h2>
+    <div><ng-md-icon icon="signal_wifi_0_bar" size="48"></ng-md-icon><br>signal_wifi_0_bar</div>
+    <div><ng-md-icon icon="signal_wifi_1_bar" size="48"></ng-md-icon><br>signal_wifi_1_bar</div>
+    <div><ng-md-icon icon="signal_wifi_2_bar" size="48"></ng-md-icon><br>signal_wifi_2_bar</div>
+    <div><ng-md-icon icon="signal_wifi_3_bar" size="48"></ng-md-icon><br>signal_wifi_3_bar</div>
+    <div><ng-md-icon icon="signal_cellular_connected_no_internet_0_bar" size="48"></ng-md-icon><br>signal_cellular_connected<br>_no_internet_0_bar</div>
+    <div><ng-md-icon icon="signal_cellular_connected_no_internet_1_bar" size="48"></ng-md-icon><br>signal_cellular_connected<br>_no_internet_1_bar</div>
+    <div><ng-md-icon icon="signal_cellular_connected_no_internet_2_bar" size="48"></ng-md-icon><br>signal_cellular_connected<br>_no_internet_2_bar</div>
+    <div><ng-md-icon icon="signal_cellular_connected_no_internet_3_bar" size="48"></ng-md-icon><br>signal_cellular_connected<br>_no_internet_3_bar</div>
+    <div><ng-md-icon icon="signal_cellular_0_bar" size="48"></ng-md-icon><br>signal_cellular_0_bar</div>
+    <div><ng-md-icon icon="signal_cellular_1_bar" size="48"></ng-md-icon><br>signal_cellular_1_bar</div>
+    <div><ng-md-icon icon="signal_cellular_2_bar" size="48"></ng-md-icon><br>signal_cellular_2_bar</div>
+    <div><ng-md-icon icon="signal_cellular_3_bar" size="48"></ng-md-icon><br>signal_cellular_3_bar</div>
+    <div><ng-md-icon icon="now_wallpaper" size="48"></ng-md-icon><br>now_wallpaper</div>
+    <div><ng-md-icon icon="now_widgets" size="48"></ng-md-icon><br>now_widgets</div>
+    <div><ng-md-icon icon="battery_20" size="48"></ng-md-icon><br>battery_20</div>
+    <div><ng-md-icon icon="battery_30" size="48"></ng-md-icon><br>battery_30</div>
+    <div><ng-md-icon icon="battery_50" size="48"></ng-md-icon><br>battery_50</div>
+    <div><ng-md-icon icon="battery_60" size="48"></ng-md-icon><br>battery_60</div>
+    <div><ng-md-icon icon="battery_80" size="48"></ng-md-icon><br>battery_80</div>
+    <div><ng-md-icon icon="battery_90" size="48"></ng-md-icon><br>battery_90</div>
+    <div><ng-md-icon icon="battery_alert" size="48"></ng-md-icon><br>battery_alert</div>
+    <div><ng-md-icon icon="battery_charging_20" size="48"></ng-md-icon><br>battery_charging_20</div>
+    <div><ng-md-icon icon="battery_charging_30" size="48"></ng-md-icon><br>battery_charging_30</div>
+    <div><ng-md-icon icon="battery_charging_50" size="48"></ng-md-icon><br>battery_charging_50</div>
+    <div><ng-md-icon icon="battery_charging_60" size="48"></ng-md-icon><br>battery_charging_60</div>
+    <div><ng-md-icon icon="battery_charging_80" size="48"></ng-md-icon><br>battery_charging_80</div>
+    <div><ng-md-icon icon="battery_charging_90" size="48"></ng-md-icon><br>battery_charging_90</div>
+    <div><ng-md-icon icon="account_child" size="48"></ng-md-icon><br>account_child</div>
+
+    <h2>From <a href="https://github.com/google/material-design-icons" target="_blank">Material Design icons by Google</a></h2>
+    <h2>Action</h2>
+    <div><ng-md-icon icon="3d_rotation" size="48"></ng-md-icon><br>3d_rotation</div>
+    <div><ng-md-icon icon="accessibility" size="48"></ng-md-icon><br>accessibility</div>
+    <div><ng-md-icon icon="accessible" size="48"></ng-md-icon><br>accessible</div>
+    <div><ng-md-icon icon="account_balance" size="48"></ng-md-icon><br>account_balance</div>
+    <div><ng-md-icon icon="account_balance_wallet" size="48"></ng-md-icon><br>account_balance_wallet</div>
+    <div><ng-md-icon icon="account_box" size="48"></ng-md-icon><br>account_box</div>
+    <div><ng-md-icon icon="account_circle" size="48"></ng-md-icon><br>account_circle</div>
+    <div><ng-md-icon icon="add_shopping_cart" size="48"></ng-md-icon><br>add_shopping_cart</div>
+    <div><ng-md-icon icon="alarm" size="48"></ng-md-icon><br>alarm</div>
+    <div><ng-md-icon icon="alarm_add" size="48"></ng-md-icon><br>alarm_add</div>
+    <div><ng-md-icon icon="alarm_off" size="48"></ng-md-icon><br>alarm_off</div>
+    <div><ng-md-icon icon="alarm_on" size="48"></ng-md-icon><br>alarm_on</div>
+    <div><ng-md-icon icon="all_out" size="48"></ng-md-icon><br>all_out</div>
+    <div><ng-md-icon icon="android" size="48"></ng-md-icon><br>android</div>
+    <div><ng-md-icon icon="announcement" size="48"></ng-md-icon><br>announcement</div>
+    <div><ng-md-icon icon="aspect_ratio" size="48"></ng-md-icon><br>aspect_ratio</div>
+    <div><ng-md-icon icon="assessment" size="48"></ng-md-icon><br>assessment</div>
+    <div><ng-md-icon icon="assignment" size="48"></ng-md-icon><br>assignment</div>
+    <div><ng-md-icon icon="assignment_ind" size="48"></ng-md-icon><br>assignment_ind</div>
+    <div><ng-md-icon icon="assignment_late" size="48"></ng-md-icon><br>assignment_late</div>
+    <div><ng-md-icon icon="assignment_return" size="48"></ng-md-icon><br>assignment_return</div>
+    <div><ng-md-icon icon="assignment_returned" size="48"></ng-md-icon><br>assignment_returned</div>
+    <div><ng-md-icon icon="assignment_turned_in" size="48"></ng-md-icon><br>assignment_turned_in</div>
+    <div><ng-md-icon icon="autorenew" size="48"></ng-md-icon><br>autorenew</div>
+    <div><ng-md-icon icon="backup" size="48"></ng-md-icon><br>backup</div>
+    <div><ng-md-icon icon="book" size="48"></ng-md-icon><br>book</div>
+    <div><ng-md-icon icon="bookmark" size="48"></ng-md-icon><br>bookmark</div>
+    <div><ng-md-icon icon="bookmark_outline" size="48"></ng-md-icon><br>bookmark_outline</div>
+    <div><ng-md-icon icon="bug_report" size="48"></ng-md-icon><br>bug_report</div>
+    <div><ng-md-icon icon="build" size="48"></ng-md-icon><br>build</div>
+    <div><ng-md-icon icon="cached" size="48"></ng-md-icon><br>cached</div>
+    <div><ng-md-icon icon="camera_enhanced" size="48"></ng-md-icon><br>camera_enhanced</div>
+    <div><ng-md-icon icon="card_giftcard" size="48"></ng-md-icon><br>card_giftcard</div>
+    <div><ng-md-icon icon="card_membership" size="48"></ng-md-icon><br>card_membership</div>
+    <div><ng-md-icon icon="card_travel" size="48"></ng-md-icon><br>card_travel</div>
+    <div><ng-md-icon icon="change_history" size="48"></ng-md-icon><br>change_history</div>
+    <div><ng-md-icon icon="check_circle" size="48"></ng-md-icon><br>check_circle</div>
+    <div><ng-md-icon icon="chrome_reader_mode" size="48"></ng-md-icon><br>chrome_reader_mode</div>
+    <div><ng-md-icon icon="class" size="48"></ng-md-icon><br>class</div>
+    <div><ng-md-icon icon="code" size="48"></ng-md-icon><br>code</div>
+    <div><ng-md-icon icon="compare_arrows" size="48"></ng-md-icon><br>compare_arrows</div>
+    <div><ng-md-icon icon="copyright" size="48"></ng-md-icon><br>copyright</div>
+    <div><ng-md-icon icon="credit_card" size="48"></ng-md-icon><br>credit_card</div>
+    <div><ng-md-icon icon="dashboard" size="48"></ng-md-icon><br>dashboard</div>
+    <div><ng-md-icon icon="date_range" size="48"></ng-md-icon><br>date_range</div>
+    <div><ng-md-icon icon="delete" size="48"></ng-md-icon><br>delete</div>
+    <div><ng-md-icon icon="delete_forever" size="48"></ng-md-icon><br>delete_forever</div>
+    <div><ng-md-icon icon="description" size="48"></ng-md-icon><br>description</div>
+    <div><ng-md-icon icon="dns" size="48"></ng-md-icon><br>dns</div>
+    <div><ng-md-icon icon="done" size="48"></ng-md-icon><br>done</div>
+    <div><ng-md-icon icon="done_all" size="48"></ng-md-icon><br>done_all</div>
+    <div><ng-md-icon icon="donut_large" size="48"></ng-md-icon><br>donut_large</div>
+    <div><ng-md-icon icon="donut_small" size="48"></ng-md-icon><br>donut_small</div>
+    <div><ng-md-icon icon="eject" size="48"></ng-md-icon><br>eject</div>
+    <div><ng-md-icon icon="euro_symbol" size="48"></ng-md-icon><br>euro_symbol</div>
+    <div><ng-md-icon icon="event" size="48"></ng-md-icon><br>event</div>
+    <div><ng-md-icon icon="event_seat" size="48"></ng-md-icon><br>event_seat</div>
+    <div><ng-md-icon icon="exit_to_app" size="48"></ng-md-icon><br>exit_to_app</div>
+    <div><ng-md-icon icon="explore" size="48"></ng-md-icon><br>explore</div>
+    <div><ng-md-icon icon="extension" size="48"></ng-md-icon><br>extension</div>
+    <div><ng-md-icon icon="face" size="48"></ng-md-icon><br>face</div>
+    <div><ng-md-icon icon="favorite" size="48"></ng-md-icon><br>favorite</div>
+    <div><ng-md-icon icon="favorite_border" size="48"></ng-md-icon><br>favorite_border</div>
+    <div><ng-md-icon icon="feedback" size="48"></ng-md-icon><br>feedback</div>
+    <div><ng-md-icon icon="find_in_page" size="48"></ng-md-icon><br>find_in_page</div>
+    <div><ng-md-icon icon="find_replace" size="48"></ng-md-icon><br>find_replace</div>
+    <div><ng-md-icon icon="fingerprint" size="48"></ng-md-icon><br>fingerprint</div>
+    <div><ng-md-icon icon="flight_land" size="48"></ng-md-icon><br>flight_land</div>
+    <div><ng-md-icon icon="flight_takeoff" size="48"></ng-md-icon><br>flight_takeoff</div>
+    <div><ng-md-icon icon="flip_to_back" size="48"></ng-md-icon><br>flip_to_back</div>
+    <div><ng-md-icon icon="flip_to_front" size="48"></ng-md-icon><br>flip_to_front</div>
+    <div><ng-md-icon icon="g_translate" size="48"></ng-md-icon><br>g_translate</div>
+    <div><ng-md-icon icon="gavel" size="48"></ng-md-icon><br>gavel</div>
+    <div><ng-md-icon icon="get_app" size="48"></ng-md-icon><br>get_app</div>
+    <div><ng-md-icon icon="gif" size="48"></ng-md-icon><br>gif</div>
+    <div><ng-md-icon icon="grade" size="48"></ng-md-icon><br>grade</div>
+    <div><ng-md-icon icon="group_work" size="48"></ng-md-icon><br>group_work</div>
+    <div><ng-md-icon icon="help" size="48"></ng-md-icon><br>help</div>
+    <div><ng-md-icon icon="help_outline" size="48"></ng-md-icon><br>help_outline</div>
+    <div><ng-md-icon icon="highlight_off" size="48"></ng-md-icon><br>highlight_off</div>
+    <div><ng-md-icon icon="history" size="48"></ng-md-icon><br>history</div>
+    <div><ng-md-icon icon="home" size="48"></ng-md-icon><br>home</div>
+    <div><ng-md-icon icon="hourglass_empty" size="48"></ng-md-icon><br>hourglass_empty</div>
+    <div><ng-md-icon icon="hourglass_full" size="48"></ng-md-icon><br>hourglass_full</div>
+    <div><ng-md-icon icon="http" size="48"></ng-md-icon><br>http</div>
+    <div><ng-md-icon icon="https" size="48"></ng-md-icon><br>https</div>
+    <div><ng-md-icon icon="important_devices" size="48"></ng-md-icon><br>important_devices</div>
+    <div><ng-md-icon icon="info" size="48"></ng-md-icon><br>info</div>
+    <div><ng-md-icon icon="info_outline" size="48"></ng-md-icon><br>info_outline</div>
+    <div><ng-md-icon icon="input" size="48"></ng-md-icon><br>input</div>
+    <div><ng-md-icon icon="invert_colors" size="48"></ng-md-icon><br>invert_colors</div>
+    <div><ng-md-icon icon="label" size="48"></ng-md-icon><br>label</div>
+    <div><ng-md-icon icon="label_outline" size="48"></ng-md-icon><br>label_outline</div>
+    <div><ng-md-icon icon="language" size="48"></ng-md-icon><br>language</div>
+    <div><ng-md-icon icon="launch" size="48"></ng-md-icon><br>launch</div>
+    <div><ng-md-icon icon="lightbulb_outline" size="48"></ng-md-icon><br>lightbulb_outline</div>
+    <div><ng-md-icon icon="line_style" size="48"></ng-md-icon><br>line_style</div>
+    <div><ng-md-icon icon="line_weight" size="48"></ng-md-icon><br>line_weight</div>
+    <div><ng-md-icon icon="list" size="48"></ng-md-icon><br>list</div>
+    <div><ng-md-icon icon="lock" size="48"></ng-md-icon><br>lock</div>
+    <div><ng-md-icon icon="lock_open" size="48"></ng-md-icon><br>lock_open</div>
+    <div><ng-md-icon icon="lock_outline" size="48"></ng-md-icon><br>lock_outline</div>
+    <div><ng-md-icon icon="loyalty" size="48"></ng-md-icon><br>loyalty</div>
+    <div><ng-md-icon icon="markunread_mailbox" size="48"></ng-md-icon><br>markunread_mailbox</div>
+    <div><ng-md-icon icon="motorcycle" size="48"></ng-md-icon><br>motorcycle</div>
+    <div><ng-md-icon icon="note_add" size="48"></ng-md-icon><br>note_add</div>
+    <div><ng-md-icon icon="offline_pin" size="48"></ng-md-icon><br>offline_pin</div>
+    <div><ng-md-icon icon="opacity" size="48"></ng-md-icon><br>opacity</div>
+    <div><ng-md-icon icon="open_in_browser" size="48"></ng-md-icon><br>open_in_browser</div>
+    <div><ng-md-icon icon="open_in_new" size="48"></ng-md-icon><br>open_in_new</div>
+    <div><ng-md-icon icon="open_with" size="48"></ng-md-icon><br>open_with</div>
+    <div><ng-md-icon icon="pageview" size="48"></ng-md-icon><br>pageview</div>
+    <div><ng-md-icon icon="pan_tool" size="48"></ng-md-icon><br>pan_tool</div>
+    <div><ng-md-icon icon="payment" size="48"></ng-md-icon><br>payment</div>
+    <div><ng-md-icon icon="perm_camera_mic" size="48"></ng-md-icon><br>perm_camera_mic</div>
+    <div><ng-md-icon icon="perm_contact_calendar" size="48"></ng-md-icon><br>perm_contact_calendar</div>
+    <div><ng-md-icon icon="perm_data_setting" size="48"></ng-md-icon><br>perm_data_setting</div>
+    <div><ng-md-icon icon="perm_device_information" size="48"></ng-md-icon><br>perm_device_information</div>
+    <div><ng-md-icon icon="perm_identity" size="48"></ng-md-icon><br>perm_identity</div>
+    <div><ng-md-icon icon="perm_media" size="48"></ng-md-icon><br>perm_media</div>
+    <div><ng-md-icon icon="perm_phone_msg" size="48"></ng-md-icon><br>perm_phone_msg</div>
+    <div><ng-md-icon icon="perm_scan_wifi" size="48"></ng-md-icon><br>perm_scan_wifi</div>
+    <div><ng-md-icon icon="pets" size="48"></ng-md-icon><br>pets</div>
+    <div><ng-md-icon icon="picture_in_picture" size="48"></ng-md-icon><br>picture_in_picture</div>
+    <div><ng-md-icon icon="picture_in_picture_alt" size="48"></ng-md-icon><br>picture_in_picture_alt</div>
+    <div><ng-md-icon icon="play_for_work" size="48"></ng-md-icon><br>play_for_work</div>
+    <div><ng-md-icon icon="polymer" size="48"></ng-md-icon><br>polymer</div>
+    <div><ng-md-icon icon="power_settings_new" size="48"></ng-md-icon><br>power_settings_new</div>
+    <div><ng-md-icon icon="pregnant_woman" size="48"></ng-md-icon><br>pregnant_woman</div>
+    <div><ng-md-icon icon="print" size="48"></ng-md-icon><br>print</div>
+    <div><ng-md-icon icon="query_builder" size="48"></ng-md-icon><br>query_builder</div>
+    <div><ng-md-icon icon="question_answer" size="48"></ng-md-icon><br>question_answer</div>
+    <div><ng-md-icon icon="receipt" size="48"></ng-md-icon><br>receipt</div>
+    <div><ng-md-icon icon="record_voice_over" size="48"></ng-md-icon><br>record_voice_over</div>
+    <div><ng-md-icon icon="redeem" size="48"></ng-md-icon><br>redeem</div>
+    <div><ng-md-icon icon="remove_shopping_cart" size="48"></ng-md-icon><br>remove_shopping_cart</div>
+    <div><ng-md-icon icon="reorder" size="48"></ng-md-icon><br>reorder</div>
+    <div><ng-md-icon icon="report_problem" size="48"></ng-md-icon><br>report_problem</div>
+    <div><ng-md-icon icon="restore" size="48"></ng-md-icon><br>restore</div>
+    <div><ng-md-icon icon="restore_page" size="48"></ng-md-icon><br>restore_page</div>
+    <div><ng-md-icon icon="room" size="48"></ng-md-icon><br>room</div>
+    <div><ng-md-icon icon="rounded_corner" size="48"></ng-md-icon><br>rounded_corner</div>
+    <div><ng-md-icon icon="rowing" size="48"></ng-md-icon><br>rowing</div>
+    <div><ng-md-icon icon="schedule" size="48"></ng-md-icon><br>schedule</div>
+    <div><ng-md-icon icon="search" size="48"></ng-md-icon><br>search</div>
+    <div><ng-md-icon icon="settings" size="48"></ng-md-icon><br>settings</div>
+    <div><ng-md-icon icon="settings_applications" size="48"></ng-md-icon><br>settings_applications</div>
+    <div><ng-md-icon icon="settings_backup_restore" size="48"></ng-md-icon><br>settings_backup_restore</div>
+    <div><ng-md-icon icon="settings_bluetooth" size="48"></ng-md-icon><br>settings_bluetooth</div>
+    <div><ng-md-icon icon="settings_brightness" size="48"></ng-md-icon><br>settings_brightness</div>
+    <div><ng-md-icon icon="settings_cell" size="48"></ng-md-icon><br>settings_cell</div>
+    <div><ng-md-icon icon="settings_ethernet" size="48"></ng-md-icon><br>settings_ethernet</div>
+    <div><ng-md-icon icon="settings_input_antenna" size="48"></ng-md-icon><br>settings_input_antenna</div>
+    <div><ng-md-icon icon="settings_input_component" size="48"></ng-md-icon><br>settings_input_component</div>
+    <div><ng-md-icon icon="settings_input_composite" size="48"></ng-md-icon><br>settings_input_composite</div>
+    <div><ng-md-icon icon="settings_input_hdmi" size="48"></ng-md-icon><br>settings_input_hdmi</div>
+    <div><ng-md-icon icon="settings_input_svideo" size="48"></ng-md-icon><br>settings_input_svideo</div>
+    <div><ng-md-icon icon="settings_overscan" size="48"></ng-md-icon><br>settings_overscan</div>
+    <div><ng-md-icon icon="settings_phone" size="48"></ng-md-icon><br>settings_phone</div>
+    <div><ng-md-icon icon="settings_power" size="48"></ng-md-icon><br>settings_power</div>
+    <div><ng-md-icon icon="settings_remote" size="48"></ng-md-icon><br>settings_remote</div>
+    <div><ng-md-icon icon="settings_voice" size="48"></ng-md-icon><br>settings_voice</div>
+    <div><ng-md-icon icon="shop" size="48"></ng-md-icon><br>shop</div>
+    <div><ng-md-icon icon="shop_two" size="48"></ng-md-icon><br>shop_two</div>
+    <div><ng-md-icon icon="shopping_basket" size="48"></ng-md-icon><br>shopping_basket</div>
+    <div><ng-md-icon icon="shopping_cart" size="48"></ng-md-icon><br>shopping_cart</div>
+    <div><ng-md-icon icon="speaker_notes" size="48"></ng-md-icon><br>speaker_notes</div>
+    <div><ng-md-icon icon="speaker_notes_off" size="48"></ng-md-icon><br>speaker_notes_off</div>
+    <div><ng-md-icon icon="spellcheck" size="48"></ng-md-icon><br>spellcheck</div>
+    <div><ng-md-icon icon="star_rate" size="48"></ng-md-icon><br>star_rate</div>
+    <div><ng-md-icon icon="stars" size="48"></ng-md-icon><br>stars</div>
+    <div><ng-md-icon icon="store" size="48"></ng-md-icon><br>store</div>
+    <div><ng-md-icon icon="subject" size="48"></ng-md-icon><br>subject</div>
+    <div><ng-md-icon icon="supervisor_account" size="48"></ng-md-icon><br>supervisor_account</div>
+    <div><ng-md-icon icon="swap_horiz" size="48"></ng-md-icon><br>swap_horiz</div>
+    <div><ng-md-icon icon="swap_vert" size="48"></ng-md-icon><br>swap_vert</div>
+    <div><ng-md-icon icon="swap_vertial_circle" size="48"></ng-md-icon><br>swap_vertial_circle</div>
+    <div><ng-md-icon icon="system_update_alt" size="48"></ng-md-icon><br>system_update_alt</div>
+    <div><ng-md-icon icon="tab" size="48"></ng-md-icon><br>tab</div>
+    <div><ng-md-icon icon="tab_unselected" size="48"></ng-md-icon><br>tab_unselected</div>
+    <div><ng-md-icon icon="theaters" size="48"></ng-md-icon><br>theaters</div>
+    <div><ng-md-icon icon="thumb_down" size="48"></ng-md-icon><br>thumb_down</div>
+    <div><ng-md-icon icon="thumb_up" size="48"></ng-md-icon><br>thumb_up</div>
+    <div><ng-md-icon icon="thumbs_up_down" size="48"></ng-md-icon><br>thumbs_up_down</div>
+    <div><ng-md-icon icon="timeline" size="48"></ng-md-icon><br>timeline</div>
+    <div><ng-md-icon icon="toc" size="48"></ng-md-icon><br>toc</div>
+    <div><ng-md-icon icon="today" size="48"></ng-md-icon><br>today</div>
+    <div><ng-md-icon icon="toll" size="48"></ng-md-icon><br>toll</div>
+    <div><ng-md-icon icon="touch_app" size="48"></ng-md-icon><br>touch_app</div>
+    <div><ng-md-icon icon="track_changes" size="48"></ng-md-icon><br>track_changes</div>
+    <div><ng-md-icon icon="translate" size="48"></ng-md-icon><br>translate</div>
+    <div><ng-md-icon icon="trending_down" size="48"></ng-md-icon><br>trending_down</div>
+    <div><ng-md-icon icon="trending_flat" size="48"></ng-md-icon><br>trending_flat</div>
+    <div><ng-md-icon icon="trending_up" size="48"></ng-md-icon><br>trending_up</div>
+    <div><ng-md-icon icon="turned_in" size="48"></ng-md-icon><br>turned_in</div>
+    <div><ng-md-icon icon="turned_in_not" size="48"></ng-md-icon><br>turned_in_not</div>
+    <div><ng-md-icon icon="update" size="48"></ng-md-icon><br>update</div>
+    <div><ng-md-icon icon="verified_user" size="48"></ng-md-icon><br>verified_user</div>
+    <div><ng-md-icon icon="view_agenda" size="48"></ng-md-icon><br>view_agenda</div>
+    <div><ng-md-icon icon="view_array" size="48"></ng-md-icon><br>view_array</div>
+    <div><ng-md-icon icon="view_carousel" size="48"></ng-md-icon><br>view_carousel</div>
+    <div><ng-md-icon icon="view_column" size="48"></ng-md-icon><br>view_column</div>
+    <div><ng-md-icon icon="view_day" size="48"></ng-md-icon><br>view_day</div>
+    <div><ng-md-icon icon="view_headline" size="48"></ng-md-icon><br>view_headline</div>
+    <div><ng-md-icon icon="view_list" size="48"></ng-md-icon><br>view_list</div>
+    <div><ng-md-icon icon="view_module" size="48"></ng-md-icon><br>view_module</div>
+    <div><ng-md-icon icon="view_quilt" size="48"></ng-md-icon><br>view_quilt</div>
+    <div><ng-md-icon icon="view_stream" size="48"></ng-md-icon><br>view_stream</div>
+    <div><ng-md-icon icon="view_week" size="48"></ng-md-icon><br>view_week</div>
+    <div><ng-md-icon icon="visibility" size="48"></ng-md-icon><br>visibility</div>
+    <div><ng-md-icon icon="visibility_off" size="48"></ng-md-icon><br>visibility_off</div>
+    <div><ng-md-icon icon="watch_later" size="48"></ng-md-icon><br>watch_later</div>
+    <div><ng-md-icon icon="work" size="48"></ng-md-icon><br>work</div>
+    <div><ng-md-icon icon="youtube_searched_for" size="48"></ng-md-icon><br>youtube_searched_for</div>
+    <div><ng-md-icon icon="zoom_in" size="48"></ng-md-icon><br>zoom_in</div>
+    <div><ng-md-icon icon="zoom_out" size="48"></ng-md-icon><br>zoom_out</div>
+
+    <h2>Alert</h2>
+    <div><ng-md-icon icon="add_alert" size="48"></ng-md-icon><br>add_alert</div>
+    <div><ng-md-icon icon="error" size="48"></ng-md-icon><br>error</div>
+    <div><ng-md-icon icon="error_outline" size="48"></ng-md-icon><br>error_outline</div>
+    <div><ng-md-icon icon="warning" size="48"></ng-md-icon><br>warning</div>
+
+    <h2>Av</h2>
+    <div><ng-md-icon icon="add_to_queue" size="48"></ng-md-icon><br>add_to_queue</div>
+    <div><ng-md-icon icon="airplay" size="48"></ng-md-icon><br>airplay</div>
+    <div><ng-md-icon icon="album" size="48"></ng-md-icon><br>album</div>
+    <div><ng-md-icon icon="art_track" size="48"></ng-md-icon><br>art_track</div>
+    <div><ng-md-icon icon="av_timer" size="48"></ng-md-icon><br>av_timer</div>
+    <div><ng-md-icon icon="branding_watermark" size="48"></ng-md-icon><br>branding_watermark</div>
+    <div><ng-md-icon icon="call_to_action" size="48"></ng-md-icon><br>call_to_action</div>
+    <div><ng-md-icon icon="closed_caption" size="48"></ng-md-icon><br>closed_caption</div>
+    <div><ng-md-icon icon="equalizer" size="48"></ng-md-icon><br>equalizer</div>
+    <div><ng-md-icon icon="explicit" size="48"></ng-md-icon><br>explicit</div>
+    <div><ng-md-icon icon="fast_forward" size="48"></ng-md-icon><br>fast_forward</div>
+    <div><ng-md-icon icon="fast_rewind" size="48"></ng-md-icon><br>fast_rewind</div>
+    <div><ng-md-icon icon="featured_play_list" size="48"></ng-md-icon><br>featured_play_list</div>
+    <div><ng-md-icon icon="featured_video" size="48"></ng-md-icon><br>featured_video</div>
+    <div><ng-md-icon icon="fibre_dvr" size="48"></ng-md-icon><br>fibre_dvr</div>
+    <div><ng-md-icon icon="fiber_manual_record" size="48"></ng-md-icon><br>fiber_manual_record</div>
+    <div><ng-md-icon icon="fibre_new" size="48"></ng-md-icon><br>fibre_new</div>
+    <div><ng-md-icon icon="fibre_pin" size="48"></ng-md-icon><br>fibre_pin</div>
+    <div><ng-md-icon icon="fibre_smart_record" size="48"></ng-md-icon><br>fibre_smart_record</div>
+    <div><ng-md-icon icon="forward_10" size="48"></ng-md-icon><br>forward_10</div>
+    <div><ng-md-icon icon="forward_30" size="48"></ng-md-icon><br>forward_30</div>
+    <div><ng-md-icon icon="forward_5" size="48"></ng-md-icon><br>forward_5</div>
+    <div><ng-md-icon icon="games" size="48"></ng-md-icon><br>games</div>
+    <div><ng-md-icon icon="hd" size="48"></ng-md-icon><br>hd</div>
+    <div><ng-md-icon icon="hearing" size="48"></ng-md-icon><br>hearing</div>
+    <div><ng-md-icon icon="high_quality" size="48"></ng-md-icon><br>high_quality</div>
+    <div><ng-md-icon icon="my_library_add" size="48"></ng-md-icon><br>my_library_add</div>
+    <div><ng-md-icon icon="my_library_books" size="48"></ng-md-icon><br>my_library_books</div>
+    <div><ng-md-icon icon="my_library_music" size="48"></ng-md-icon><br>my_library_music</div>
+    <div><ng-md-icon icon="loop" size="48"></ng-md-icon><br>loop</div>
+    <div><ng-md-icon icon="mic" size="48"></ng-md-icon><br>mic</div>
+    <div><ng-md-icon icon="mic_none" size="48"></ng-md-icon><br>mic_none</div>
+    <div><ng-md-icon icon="mic_off" size="48"></ng-md-icon><br>mic_off</div>
+    <div><ng-md-icon icon="movie" size="48"></ng-md-icon><br>movie</div>
+    <div><ng-md-icon icon="music_video" size="48"></ng-md-icon><br>music_video</div>
+    <div><ng-md-icon icon="new_releases" size="48"></ng-md-icon><br>new_releases</div>
+    <div><ng-md-icon icon="not_interested" size="48"></ng-md-icon><br>not_interested</div>
+    <div><ng-md-icon icon="note" size="48"></ng-md-icon><br>note</div>
+    <div><ng-md-icon icon="pause" size="48"></ng-md-icon><br>pause</div>
+    <div><ng-md-icon icon="pause_circle_filled" size="48"></ng-md-icon><br>pause_circle_filled</div>
+    <div><ng-md-icon icon="pause_circle_outline" size="48"></ng-md-icon><br>pause_circle_outline</div>
+    <div><ng-md-icon icon="play_arrow" size="48"></ng-md-icon><br>play_arrow</div>
+    <div><ng-md-icon icon="play_circle_fill" size="48"></ng-md-icon><br>play_circle_fill</div>
+    <div><ng-md-icon icon="play_circle_outline" size="48"></ng-md-icon><br>play_circle_outline</div>
+    <div><ng-md-icon icon="playlist_add" size="48"></ng-md-icon><br>playlist_add</div>
+    <div><ng-md-icon icon="playlist_add_check" size="48"></ng-md-icon><br>playlist_add_check</div>
+    <div><ng-md-icon icon="playlist_play" size="48"></ng-md-icon><br>playlist_play</div>
+    <div><ng-md-icon icon="queue" size="48"></ng-md-icon><br>queue</div>
+    <div><ng-md-icon icon="queue_music" size="48"></ng-md-icon><br>queue_music</div>
+    <div><ng-md-icon icon="queue_play_next" size="48"></ng-md-icon><br>queue_play_next</div>
+    <div><ng-md-icon icon="radio" size="48"></ng-md-icon><br>radio</div>
+    <div><ng-md-icon icon="recent_actors" size="48"></ng-md-icon><br>recent_actors</div>
+    <div><ng-md-icon icon="remove_from_queue" size="48"></ng-md-icon><br>remove_from_queue</div>
+    <div><ng-md-icon icon="repeat" size="48"></ng-md-icon><br>repeat</div>
+    <div><ng-md-icon icon="repeat_one" size="48"></ng-md-icon><br>repeat_one</div>
+    <div><ng-md-icon icon="replay" size="48"></ng-md-icon><br>replay</div>
+    <div><ng-md-icon icon="replay_10" size="48"></ng-md-icon><br>replay_10</div>
+    <div><ng-md-icon icon="replay_30" size="48"></ng-md-icon><br>replay_30</div>
+    <div><ng-md-icon icon="replay_5" size="48"></ng-md-icon><br>replay_5</div>
+    <div><ng-md-icon icon="shuffle" size="48"></ng-md-icon><br>shuffle</div>
+    <div><ng-md-icon icon="skip_next" size="48"></ng-md-icon><br>skip_next</div>
+    <div><ng-md-icon icon="skip_previous" size="48"></ng-md-icon><br>skip_previous</div>
+    <div><ng-md-icon icon="slow_motion_video" size="48"></ng-md-icon><br>slow_motion_video</div>
+    <div><ng-md-icon icon="snooze" size="48"></ng-md-icon><br>snooze</div>
+    <div><ng-md-icon icon="sort_by_alpha" size="48"></ng-md-icon><br>sort_by_alpha</div>
+    <div><ng-md-icon icon="stop" size="48"></ng-md-icon><br>stop</div>
+    <div><ng-md-icon icon="subscriptions" size="48"></ng-md-icon><br>subscriptions</div>
+    <div><ng-md-icon icon="subtitles" size="48"></ng-md-icon><br>subtitles</div>
+    <div><ng-md-icon icon="surround_sound" size="48"></ng-md-icon><br>surround_sound</div>
+    <div><ng-md-icon icon="video_call" size="48"></ng-md-icon><br>video_call</div>
+    <div><ng-md-icon icon="video_label" size="48"></ng-md-icon><br>video_label</div>
+    <div><ng-md-icon icon="video_library" size="48"></ng-md-icon><br>video_library</div>
+    <div><ng-md-icon icon="videocam" size="48"></ng-md-icon><br>videocam</div>
+    <div><ng-md-icon icon="videocam_off" size="48"></ng-md-icon><br>videocam_off</div>
+    <div><ng-md-icon icon="volume_down" size="48"></ng-md-icon><br>volume_down</div>
+    <div><ng-md-icon icon="volume_mute" size="48"></ng-md-icon><br>volume_mute</div>
+    <div><ng-md-icon icon="volume_off" size="48"></ng-md-icon><br>volume_off</div>
+    <div><ng-md-icon icon="volume_up" size="48"></ng-md-icon><br>volume_up</div>
+    <div><ng-md-icon icon="web" size="48"></ng-md-icon><br>web</div>
+    <div><ng-md-icon icon="web_asset" size="48"></ng-md-icon><br>web_asset</div>
+
+    <h2>Cummunikation</h2>
+    <div><ng-md-icon icon="business" size="48"></ng-md-icon><br>business</div>
+    <div><ng-md-icon icon="call" size="48"></ng-md-icon><br>call</div>
+    <div><ng-md-icon icon="call_end" size="48"></ng-md-icon><br>call_end</div>
+    <div><ng-md-icon icon="call_made" size="48"></ng-md-icon><br>call_made</div>
+    <div><ng-md-icon icon="call_merge" size="48"></ng-md-icon><br>call_merge</div>
+    <div><ng-md-icon icon="call_missed" size="48"></ng-md-icon><br>call_missed</div>
+    <div><ng-md-icon icon="call_missed_outgoing" size="48"></ng-md-icon><br>call_missed_outgoing</div>
+    <div><ng-md-icon icon="call_received" size="48"></ng-md-icon><br>call_received</div>
+    <div><ng-md-icon icon="call_split" size="48"></ng-md-icon><br>call_split</div>
+    <div><ng-md-icon icon="chat" size="48"></ng-md-icon><br>chat</div>
+    <div><ng-md-icon icon="chat_bubble" size="48"></ng-md-icon><br>chat_bubble</div>
+    <div><ng-md-icon icon="chat_bubble_outline" size="48"></ng-md-icon><br>chat_bubble_outline</div>
+    <div><ng-md-icon icon="clear_all" size="48"></ng-md-icon><br>clear_all</div>
+    <div><ng-md-icon icon="comment" size="48"></ng-md-icon><br>comment</div>
+    <div><ng-md-icon icon="contact_mail" size="48"></ng-md-icon><br>contact_mail</div>
+    <div><ng-md-icon icon="contact_phone" size="48"></ng-md-icon><br>contact_phone</div>
+    <div><ng-md-icon icon="contacts" size="48"></ng-md-icon><br>contacts</div>
+    <div><ng-md-icon icon="dialer_sip" size="48"></ng-md-icon><br>dialer_sip</div>
+    <div><ng-md-icon icon="dialpad" size="48"></ng-md-icon><br>dialpad</div>
+    <div><ng-md-icon icon="email" size="48"></ng-md-icon><br>email</div>
+    <div><ng-md-icon icon="forum" size="48"></ng-md-icon><br>forum</div>
+    <div><ng-md-icon icon="import_contacts" size="48"></ng-md-icon><br>import_contacts</div>
+    <div><ng-md-icon icon="import_export" size="48"></ng-md-icon><br>import_export</div>
+    <div><ng-md-icon icon="invert_colors_off" size="48"></ng-md-icon><br>invert_colors_off</div>
+    <div><ng-md-icon icon="live_help" size="48"></ng-md-icon><br>live_help</div>
+    <div><ng-md-icon icon="location_off" size="48"></ng-md-icon><br>location_off</div>
+    <div><ng-md-icon icon="location_on" size="48"></ng-md-icon><br>location_on</div>
+    <div><ng-md-icon icon="mail_outline" size="48"></ng-md-icon><br>mail_outline</div>
+    <div><ng-md-icon icon="message" size="48"></ng-md-icon><br>message</div>
+    <div><ng-md-icon icon="no_sim" size="48"></ng-md-icon><br>no_sim</div>
+    <div><ng-md-icon icon="phone" size="48"></ng-md-icon><br>phone</div>
+    <div><ng-md-icon icon="phonelink_erase" size="48"></ng-md-icon><br>phonelink_erase</div>
+    <div><ng-md-icon icon="phonelink_lock" size="48"></ng-md-icon><br>phonelink_lock</div>
+    <div><ng-md-icon icon="phonelink_ring" size="48"></ng-md-icon><br>phonelink_ring</div>
+    <div><ng-md-icon icon="phonelink_setup" size="48"></ng-md-icon><br>phonelink_setup</div>
+    <div><ng-md-icon icon="portable_wifi_off" size="48"></ng-md-icon><br>portable_wifi_off</div>
+    <div><ng-md-icon icon="present_to_all" size="48"></ng-md-icon><br>present_to_all</div>
+    <div><ng-md-icon icon="ring_volume" size="48"></ng-md-icon><br>ring_volume</div>
+    <div><ng-md-icon icon="rss_feed" size="48"></ng-md-icon><br>rss_feed</div>
+    <div><ng-md-icon icon="screen_share" size="48"></ng-md-icon><br>screen_share</div>
+    <div><ng-md-icon icon="stay_current_landscape" size="48"></ng-md-icon><br>stay_current_landscape</div>
+    <div><ng-md-icon icon="stay_current_portrait" size="48"></ng-md-icon><br>stay_current_portrait</div>
+    <div><ng-md-icon icon="stay_primary_landscape" size="48"></ng-md-icon><br>stay_primary_landscape</div>
+    <div><ng-md-icon icon="stay_primary_portrait" size="48"></ng-md-icon><br>stay_primary_portrait</div>
+    <div><ng-md-icon icon="stop_screen_share" size="48"></ng-md-icon><br>stop_screen_share</div>
+    <div><ng-md-icon icon="swap_calls" size="48"></ng-md-icon><br>swap_calls</div>
+    <div><ng-md-icon icon="textsms" size="48"></ng-md-icon><br>textsms</div>
+    <div><ng-md-icon icon="voicemail" size="48"></ng-md-icon><br>voicemail</div>
+    <div><ng-md-icon icon="vpn_key" size="48"></ng-md-icon><br>vpn_key</div>
+
+    <h2>Content</h2>
+    <div><ng-md-icon icon="add" size="48"></ng-md-icon><br>add</div>
+    <div><ng-md-icon icon="add_box" size="48"></ng-md-icon><br>add_box</div>
+    <div><ng-md-icon icon="add_circle" size="48"></ng-md-icon><br>add_circle</div>
+    <div><ng-md-icon icon="add_circle_outline" size="48"></ng-md-icon><br>add_circle_outline</div>
+    <div><ng-md-icon icon="archive" size="48"></ng-md-icon><br>archive</div>
+    <div><ng-md-icon icon="backspace" size="48"></ng-md-icon><br>backspace</div>
+    <div><ng-md-icon icon="block" size="48"></ng-md-icon><br>block</div>
+    <div><ng-md-icon icon="clear" size="48"></ng-md-icon><br>clear</div>
+    <div><ng-md-icon icon="content_copy" size="48"></ng-md-icon><br>content_copy</div>
+    <div><ng-md-icon icon="content_cut" size="48"></ng-md-icon><br>content_cut</div>
+    <div><ng-md-icon icon="content_paste" size="48"></ng-md-icon><br>content_paste</div>
+    <div><ng-md-icon icon="create" size="48"></ng-md-icon><br>create</div>
+    <div><ng-md-icon icon="delete_sweep" size="48"></ng-md-icon><br>delete_sweep</div>
+    <div><ng-md-icon icon="drafts" size="48"></ng-md-icon><br>drafts</div>
+    <div><ng-md-icon icon="filter_list" size="48"></ng-md-icon><br>filter_list</div>
+    <div><ng-md-icon icon="flag" size="48"></ng-md-icon><br>flag</div>
+    <div><ng-md-icon icon="font_download" size="48"></ng-md-icon><br>font_download</div>
+    <div><ng-md-icon icon="forward" size="48"></ng-md-icon><br>forward</div>
+    <div><ng-md-icon icon="gesture" size="48"></ng-md-icon><br>gesture</div>
+    <div><ng-md-icon icon="inbox" size="48"></ng-md-icon><br>inbox</div>
+    <div><ng-md-icon icon="link" size="48"></ng-md-icon><br>link</div>
+    <div><ng-md-icon icon="low_priority" size="48"></ng-md-icon><br>low_priority</div>
+    <div><ng-md-icon icon="mail" size="48"></ng-md-icon><br>mail</div>
+    <div><ng-md-icon icon="markunread" size="48"></ng-md-icon><br>markunread</div>
+    <div><ng-md-icon icon="move_to_inbox" size="48"></ng-md-icon><br>move_to_inbox</div>
+    <div><ng-md-icon icon="next_week" size="48"></ng-md-icon><br>next_week</div>
+    <div><ng-md-icon icon="redo" size="48"></ng-md-icon><br>redo</div>
+    <div><ng-md-icon icon="remove" size="48"></ng-md-icon><br>remove</div>
+    <div><ng-md-icon icon="remove_circle" size="48"></ng-md-icon><br>remove_circle</div>
+    <div><ng-md-icon icon="remove_circle_outline" size="48"></ng-md-icon><br>remove_circle_outline</div>
+    <div><ng-md-icon icon="reply" size="48"></ng-md-icon><br>reply</div>
+    <div><ng-md-icon icon="reply_all" size="48"></ng-md-icon><br>reply_all</div>
+    <div><ng-md-icon icon="report" size="48"></ng-md-icon><br>report</div>
+    <div><ng-md-icon icon="save" size="48"></ng-md-icon><br>save</div>
+    <div><ng-md-icon icon="select_all" size="48"></ng-md-icon><br>select_all</div>
+    <div><ng-md-icon icon="send" size="48"></ng-md-icon><br>send</div>
+    <div><ng-md-icon icon="sort" size="48"></ng-md-icon><br>sort</div>
+    <div><ng-md-icon icon="text_format" size="48"></ng-md-icon><br>text_format</div>
+    <div><ng-md-icon icon="unarchive" size="48"></ng-md-icon><br>unarchive</div>
+    <div><ng-md-icon icon="undo" size="48"></ng-md-icon><br>undo</div>
+    <div><ng-md-icon icon="weekend" size="48"></ng-md-icon><br>weekend</div>
+
+    <h2>Device</h2>
+    <div><ng-md-icon icon="access_alarms" size="48"></ng-md-icon><br>access_alarms</div>
+    <div><ng-md-icon icon="access_alarm" size="48"></ng-md-icon><br>access_alarm</div>
+    <div><ng-md-icon icon="access_time" size="48"></ng-md-icon><br>access_time</div>
+    <div><ng-md-icon icon="add_alarm" size="48"></ng-md-icon><br>add_alarm</div>
+    <div><ng-md-icon icon="airplanemode_on" size="48"></ng-md-icon><br>airplanemode_on</div>
+    <div><ng-md-icon icon="airplanemode_inactive" size="48"></ng-md-icon><br>airplanemode_inactive</div>
+    <div><ng-md-icon icon="battery_charging_full" size="48"></ng-md-icon><br>battery_charging_full</div>
+    <div><ng-md-icon icon="battery_full" size="48"></ng-md-icon><br>battery_full</div>
+    <div><ng-md-icon icon="battery_std" size="48"></ng-md-icon><br>battery_std</div>
+    <div><ng-md-icon icon="battery_unknown" size="48"></ng-md-icon><br>battery_unknown</div>
+    <div><ng-md-icon icon="bluetooth" size="48"></ng-md-icon><br>bluetooth</div>
+    <div><ng-md-icon icon="bluetooth_connected" size="48"></ng-md-icon><br>bluetooth_connected</div>
+    <div><ng-md-icon icon="bluetooth_disabled" size="48"></ng-md-icon><br>bluetooth_disabled</div>
+    <div><ng-md-icon icon="bluetooth_searching" size="48"></ng-md-icon><br>bluetooth_searching</div>
+    <div><ng-md-icon icon="brightness_auto" size="48"></ng-md-icon><br>brightness_auto</div>
+    <div><ng-md-icon icon="brightness_high" size="48"></ng-md-icon><br>brightness_high</div>
+    <div><ng-md-icon icon="brightness_low" size="48"></ng-md-icon><br>brightness_low</div>
+    <div><ng-md-icon icon="brightness_medium" size="48"></ng-md-icon><br>brightness_medium</div>
+    <div><ng-md-icon icon="data_usage" size="48"></ng-md-icon><br>data_usage</div>
+    <div><ng-md-icon icon="developer_mode" size="48"></ng-md-icon><br>developer_mode</div>
+    <div><ng-md-icon icon="devices" size="48"></ng-md-icon><br>devices</div>
+    <div><ng-md-icon icon="dvr" size="48"></ng-md-icon><br>dvr</div>
+    <div><ng-md-icon icon="gps_fixed" size="48"></ng-md-icon><br>gps_fixed</div>
+    <div><ng-md-icon icon="gps_not_fixed" size="48"></ng-md-icon><br>gps_not_fixed</div>
+    <div><ng-md-icon icon="gps_off" size="48"></ng-md-icon><br>gps_off</div>
+    <div><ng-md-icon icon="graphic_eq" size="48"></ng-md-icon><br>graphic_eq</div>
+    <div><ng-md-icon icon="location_disabled" size="48"></ng-md-icon><br>location_disabled</div>
+    <div><ng-md-icon icon="location_searching" size="48"></ng-md-icon><br>location_searching</div>
+    <div><ng-md-icon icon="network_cell" size="48"></ng-md-icon><br>network_cell</div>
+    <div><ng-md-icon icon="network_wifi" size="48"></ng-md-icon><br>network_wifi</div>
+    <div><ng-md-icon icon="nfc" size="48"></ng-md-icon><br>nfc</div>
+    <div><ng-md-icon icon="screen_lock_landscape" size="48"></ng-md-icon><br>screen_lock_landscape</div>
+    <div><ng-md-icon icon="screen_lock_portrait" size="48"></ng-md-icon><br>screen_lock_portrait</div>
+    <div><ng-md-icon icon="screen_lock_rotation" size="48"></ng-md-icon><br>screen_lock_rotation</div>
+    <div><ng-md-icon icon="screen_rotation" size="48"></ng-md-icon><br>screen_rotation</div>
+    <div><ng-md-icon icon="sd_storage" size="48"></ng-md-icon><br>sd_storage</div>
+    <div><ng-md-icon icon="settings_system_daydream" size="48"></ng-md-icon><br>settings_system_daydream</div>
+    <div><ng-md-icon icon="signal_cellular_4_bar" size="48"></ng-md-icon><br>signal_cellular_4_bar</div>
+    <div><ng-md-icon icon="signal_cellular_connected_no_internet_4_bar" size="48"></ng-md-icon><br>signal_cellular_connected_no_internet_4_bar</div>
+    <div><ng-md-icon icon="signal_cellular_no_sim" size="48"></ng-md-icon><br>signal_cellular_no_sim</div>
+    <div><ng-md-icon icon="signal_cellular_null" size="48"></ng-md-icon><br>signal_cellular_null</div>
+    <div><ng-md-icon icon="signal_cellular_off" size="48"></ng-md-icon><br>signal_cellular_off</div>
+    <div><ng-md-icon icon="signal_wifi_4_bar" size="48"></ng-md-icon><br>signal_wifi_4_bar</div>
+    <div><ng-md-icon icon="signal_wifi_4_bar_lock" size="48"></ng-md-icon><br>signal_wifi_4_bar_lock</div>
+    <div><ng-md-icon icon="signal_wifi_off" size="48"></ng-md-icon><br>signal_wifi_off</div>
+    <div><ng-md-icon icon="storage" size="48"></ng-md-icon><br>storage</div>
+    <div><ng-md-icon icon="usb" size="48"></ng-md-icon><br>usb</div>
+    <div><ng-md-icon icon="wallpaper" size="48"></ng-md-icon><br>wallpaper</div>
+    <div><ng-md-icon icon="wifi_lock" size="48"></ng-md-icon><br>wifi_lock</div>
+    <div><ng-md-icon icon="wifi_tethering" size="48"></ng-md-icon><br>wifi_tethering</div>
+
+    <h2>Editor</h2>
+    <div><ng-md-icon icon="attach_file" size="48"></ng-md-icon><br>attach_file</div>
+    <div><ng-md-icon icon="attach_money" size="48"></ng-md-icon><br>attach_money</div>
+    <div><ng-md-icon icon="border_all" size="48"></ng-md-icon><br>border_all</div>
+    <div><ng-md-icon icon="border_bottom" size="48"></ng-md-icon><br>border_bottom</div>
+    <div><ng-md-icon icon="border_clear" size="48"></ng-md-icon><br>border_clear</div>
+    <div><ng-md-icon icon="border_color" size="48"></ng-md-icon><br>border_color</div>
+    <div><ng-md-icon icon="border_horizontal" size="48"></ng-md-icon><br>border_horizontal</div>
+    <div><ng-md-icon icon="border_inner" size="48"></ng-md-icon><br>border_inner</div>
+    <div><ng-md-icon icon="border_left" size="48"></ng-md-icon><br>border_left</div>
+    <div><ng-md-icon icon="border_outer" size="48"></ng-md-icon><br>border_outer</div>
+    <div><ng-md-icon icon="border_right" size="48"></ng-md-icon><br>border_right</div>
+    <div><ng-md-icon icon="border_style" size="48"></ng-md-icon><br>border_style</div>
+    <div><ng-md-icon icon="border_top" size="48"></ng-md-icon><br>border_top</div>
+    <div><ng-md-icon icon="border_vertical" size="48"></ng-md-icon><br>border_vertical</div>
+    <div><ng-md-icon icon="bubble_chart" size="48"></ng-md-icon><br>bubble_chart</div>
+    <div><ng-md-icon icon="drag_handle" size="48"></ng-md-icon><br>drag_handle</div>
+    <div><ng-md-icon icon="format_align_center" size="48"></ng-md-icon><br>format_align_center</div>
+    <div><ng-md-icon icon="format_align_justify" size="48"></ng-md-icon><br>format_align_justify</div>
+    <div><ng-md-icon icon="format_align_left" size="48"></ng-md-icon><br>format_align_left</div>
+    <div><ng-md-icon icon="format_align_right" size="48"></ng-md-icon><br>format_align_right</div>
+    <div><ng-md-icon icon="format_bold" size="48"></ng-md-icon><br>format_bold</div>
+    <div><ng-md-icon icon="format_clear" size="48"></ng-md-icon><br>format_clear</div>
+    <div><ng-md-icon icon="format_color_fill" size="48"></ng-md-icon><br>format_color_fill</div>
+    <div><ng-md-icon icon="format_color_reset" size="48"></ng-md-icon><br>format_color_reset</div>
+    <div><ng-md-icon icon="format_color_text" size="48"></ng-md-icon><br>format_color_text</div>
+    <div><ng-md-icon icon="format_indent_decrease" size="48"></ng-md-icon><br>format_indent_decrease</div>
+    <div><ng-md-icon icon="format_indent_increase" size="48"></ng-md-icon><br>format_indent_increase</div>
+    <div><ng-md-icon icon="format_italic" size="48"></ng-md-icon><br>format_italic</div>
+    <div><ng-md-icon icon="format_line_spacing" size="48"></ng-md-icon><br>format_line_spacing</div>
+    <div><ng-md-icon icon="format_list_bulleted" size="48"></ng-md-icon><br>format_list_bulleted</div>
+    <div><ng-md-icon icon="format_list_numbered" size="48"></ng-md-icon><br>format_list_numbered</div>
+    <div><ng-md-icon icon="format_paint" size="48"></ng-md-icon><br>format_paint</div>
+    <div><ng-md-icon icon="format_quote" size="48"></ng-md-icon><br>format_quote</div>
+    <div><ng-md-icon icon="format_shapes" size="48"></ng-md-icon><br>format_shapes</div>
+    <div><ng-md-icon icon="format_size" size="48"></ng-md-icon><br>format_size</div>
+    <div><ng-md-icon icon="format_strikethrough" size="48"></ng-md-icon><br>format_strikethrough</div>
+    <div><ng-md-icon icon="format_textdirection_l_to_r" size="48"></ng-md-icon><br>format_textdirection_l_to_r</div>
+    <div><ng-md-icon icon="format_textdirection_r_to_l" size="48"></ng-md-icon><br>format_textdirection_r_to_l</div>
+    <div><ng-md-icon icon="format_underline" size="48"></ng-md-icon><br>format_underline</div>
+    <div><ng-md-icon icon="functions" size="48"></ng-md-icon><br>functions</div>
+    <div><ng-md-icon icon="highlight" size="48"></ng-md-icon><br>highlight</div>
+    <div><ng-md-icon icon="insert_chart" size="48"></ng-md-icon><br>insert_chart</div>
+    <div><ng-md-icon icon="insert_comment" size="48"></ng-md-icon><br>insert_comment</div>
+    <div><ng-md-icon icon="insert_drive_file" size="48"></ng-md-icon><br>insert_drive_file</div>
+    <div><ng-md-icon icon="insert_emoticon" size="48"></ng-md-icon><br>insert_emoticon</div>
+    <div><ng-md-icon icon="insert_invitation" size="48"></ng-md-icon><br>insert_invitation</div>
+    <div><ng-md-icon icon="insert_link" size="48"></ng-md-icon><br>insert_link</div>
+    <div><ng-md-icon icon="insert_photo" size="48"></ng-md-icon><br>insert_photo</div>
+    <div><ng-md-icon icon="linear_scale" size="48"></ng-md-icon><br>linear_scale</div>
+    <div><ng-md-icon icon="merge_type" size="48"></ng-md-icon><br>merge_type</div>
+    <div><ng-md-icon icon="mode_comment" size="48"></ng-md-icon><br>mode_comment</div>
+    <div><ng-md-icon icon="mode_edit" size="48"></ng-md-icon><br>mode_edit</div>
+    <div><ng-md-icon icon="monetization_on" size="48"></ng-md-icon><br>monetization_on</div>
+    <div><ng-md-icon icon="money_off" size="48"></ng-md-icon><br>money_off</div>
+    <div><ng-md-icon icon="multiline_chart" size="48"></ng-md-icon><br>multiline_chart</div>
+    <div><ng-md-icon icon="pie_chart" size="48"></ng-md-icon><br>pie_chart</div>
+    <div><ng-md-icon icon="pie_chart_outline" size="48"></ng-md-icon><br>pie_chart_outline</div>
+    <div><ng-md-icon icon="publish" size="48"></ng-md-icon><br>publish</div>
+    <div><ng-md-icon icon="short_text" size="48"></ng-md-icon><br>short_text</div>
+    <div><ng-md-icon icon="show_chart" size="48"></ng-md-icon><br>show_chart</div>
+    <div><ng-md-icon icon="space_bar" size="48"></ng-md-icon><br>space_bar</div>
+    <div><ng-md-icon icon="strikethrough_s" size="48"></ng-md-icon><br>strikethrough_s</div>
+    <div><ng-md-icon icon="text_fields" size="48"></ng-md-icon><br>text_fields</div>
+    <div><ng-md-icon icon="title" size="48"></ng-md-icon><br>title</div>
+    <div><ng-md-icon icon="vertical_align_bottom" size="48"></ng-md-icon><br>vertical_align_bottom</div>
+    <div><ng-md-icon icon="vertical_align_center" size="48"></ng-md-icon><br>vertical_align_center</div>
+    <div><ng-md-icon icon="vertical_align_top" size="48"></ng-md-icon><br>vertical_align_top</div>
+    <div><ng-md-icon icon="wrap_text" size="48"></ng-md-icon><br>wrap_text</div>
+
+    <h2>File</h2>
+    <div><ng-md-icon icon="attachment" size="48"></ng-md-icon><br>attachment</div>
+    <div><ng-md-icon icon="cloud" size="48"></ng-md-icon><br>cloud</div>
+    <div><ng-md-icon icon="cloud_circle" size="48"></ng-md-icon><br>cloud_circle</div>
+    <div><ng-md-icon icon="cloud_done" size="48"></ng-md-icon><br>cloud_done</div>
+    <div><ng-md-icon icon="cloud_download" size="48"></ng-md-icon><br>cloud_download</div>
+    <div><ng-md-icon icon="cloud_off" size="48"></ng-md-icon><br>cloud_off</div>
+    <div><ng-md-icon icon="cloud_queue" size="48"></ng-md-icon><br>cloud_queue</div>
+    <div><ng-md-icon icon="cloud_upload" size="48"></ng-md-icon><br>cloud_upload</div>
+    <div><ng-md-icon icon="create_new_folder" size="48"></ng-md-icon><br>create_new_folder</div>
+    <div><ng-md-icon icon="file_download" size="48"></ng-md-icon><br>file_download</div>
+    <div><ng-md-icon icon="file_upload" size="48"></ng-md-icon><br>file_upload</div>
+    <div><ng-md-icon icon="folder" size="48"></ng-md-icon><br>folder</div>
+    <div><ng-md-icon icon="folder_open" size="48"></ng-md-icon><br>folder_open</div>
+    <div><ng-md-icon icon="folder_shared" size="48"></ng-md-icon><br>folder_shared</div>
+
+    <h2>Hardware</h2>
+    <div><ng-md-icon icon="cast" size="48"></ng-md-icon><br>cast</div>
+    <div><ng-md-icon icon="cast_connected" size="48"></ng-md-icon><br>cast_connected</div>
+    <div><ng-md-icon icon="computer" size="48"></ng-md-icon><br>computer</div>
+    <div><ng-md-icon icon="desktop_mac" size="48"></ng-md-icon><br>desktop_mac</div>
+    <div><ng-md-icon icon="desktop_windows" size="48"></ng-md-icon><br>desktop_windows</div>
+    <div><ng-md-icon icon="developer_dashboard" size="48"></ng-md-icon><br>developer_dashboard</div>
+    <div><ng-md-icon icon="device_hub" size="48"></ng-md-icon><br>device_hub</div>
+    <div><ng-md-icon icon="devices_other" size="48"></ng-md-icon><br>devices_other</div>
+    <div><ng-md-icon icon="dock" size="48"></ng-md-icon><br>dock</div>
+    <div><ng-md-icon icon="gamepad" size="48"></ng-md-icon><br>gamepad</div>
+    <div><ng-md-icon icon="headset" size="48"></ng-md-icon><br>headset</div>
+    <div><ng-md-icon icon="headset_mic" size="48"></ng-md-icon><br>headset_mic</div>
+    <div><ng-md-icon icon="keyboard" size="48"></ng-md-icon><br>keyboard</div>
+    <div><ng-md-icon icon="keyboard_arrow_down" size="48"></ng-md-icon><br>keyboard_arrow_down</div>
+    <div><ng-md-icon icon="keyboard_arrow_left" size="48"></ng-md-icon><br>keyboard_arrow_left</div>
+    <div><ng-md-icon icon="keyboard_arrow_right" size="48"></ng-md-icon><br>keyboard_arrow_right</div>
+    <div><ng-md-icon icon="keyboard_arrow_up" size="48"></ng-md-icon><br>keyboard_arrow_up</div>
+    <div><ng-md-icon icon="keyboard_backspace" size="48"></ng-md-icon><br>keyboard_backspace</div>
+    <div><ng-md-icon icon="keyboard_capslock" size="48"></ng-md-icon><br>keyboard_capslock</div>
+    <div><ng-md-icon icon="keyboard_hide" size="48"></ng-md-icon><br>keyboard_hide</div>
+    <div><ng-md-icon icon="keyboard_return" size="48"></ng-md-icon><br>keyboard_return</div>
+    <div><ng-md-icon icon="keyboard_tab" size="48"></ng-md-icon><br>keyboard_tab</div>
+    <div><ng-md-icon icon="keyboard_voice" size="48"></ng-md-icon><br>keyboard_voice</div>
+    <div><ng-md-icon icon="laptop" size="48"></ng-md-icon><br>laptop</div>
+    <div><ng-md-icon icon="laptop_chromebook" size="48"></ng-md-icon><br>laptop_chromebook</div>
+    <div><ng-md-icon icon="laptop_mac" size="48"></ng-md-icon><br>laptop_mac</div>
+    <div><ng-md-icon icon="laptop_windows" size="48"></ng-md-icon><br>laptop_windows</div>
+    <div><ng-md-icon icon="memory" size="48"></ng-md-icon><br>memory</div>
+    <div><ng-md-icon icon="mouse" size="48"></ng-md-icon><br>mouse</div>
+    <div><ng-md-icon icon="phone_android" size="48"></ng-md-icon><br>phone_android</div>
+    <div><ng-md-icon icon="phone_iphone" size="48"></ng-md-icon><br>phone_iphone</div>
+    <div><ng-md-icon icon="phonelink" size="48"></ng-md-icon><br>phonelink</div>
+    <div><ng-md-icon icon="phonelink_off" size="48"></ng-md-icon><br>phonelink_off</div>
+    <div><ng-md-icon icon="power_input" size="48"></ng-md-icon><br>power_input</div>
+    <div><ng-md-icon icon="router" size="48"></ng-md-icon><br>router</div>
+    <div><ng-md-icon icon="scanner" size="48"></ng-md-icon><br>scanner</div>
+    <div><ng-md-icon icon="security" size="48"></ng-md-icon><br>security</div>
+    <div><ng-md-icon icon="sim_card" size="48"></ng-md-icon><br>sim_card</div>
+    <div><ng-md-icon icon="smartphone" size="48"></ng-md-icon><br>smartphone</div>
+    <div><ng-md-icon icon="speaker" size="48"></ng-md-icon><br>speaker</div>
+    <div><ng-md-icon icon="speaker_group" size="48"></ng-md-icon><br>speaker_group</div>
+    <div><ng-md-icon icon="tablet" size="48"></ng-md-icon><br>tablet</div>
+    <div><ng-md-icon icon="tablet_android" size="48"></ng-md-icon><br>tablet_android</div>
+    <div><ng-md-icon icon="tablet_mac" size="48"></ng-md-icon><br>tablet_mac</div>
+    <div><ng-md-icon icon="toys" size="48"></ng-md-icon><br>toys</div>
+    <div><ng-md-icon icon="tv" size="48"></ng-md-icon><br>tv</div>
+    <div><ng-md-icon icon="vidiogame_asset" size="48"></ng-md-icon><br>vidiogame_asset</div>
+    <div><ng-md-icon icon="watch" size="48"></ng-md-icon><br>watch</div>
+
+    <h2>Image</h2>
+    <div><ng-md-icon icon="add_a_photo" size="48"></ng-md-icon><br>add_a_photo</div>
+    <div><ng-md-icon icon="add_to_photos" size="48"></ng-md-icon><br>add_to_photos</div>
+    <div><ng-md-icon icon="adjust" size="48"></ng-md-icon><br>adjust</div>
+    <div><ng-md-icon icon="assistant_photo" size="48"></ng-md-icon><br>assistant_photo</div>
+    <div><ng-md-icon icon="audiotrack" size="48"></ng-md-icon><br>audiotrack</div>
+    <div><ng-md-icon icon="blur_circular" size="48"></ng-md-icon><br>blur_circular</div>
+    <div><ng-md-icon icon="blur_linear" size="48"></ng-md-icon><br>blur_linear</div>
+    <div><ng-md-icon icon="blur_off" size="48"></ng-md-icon><br>blur_off</div>
+    <div><ng-md-icon icon="blur_on" size="48"></ng-md-icon><br>blur_on</div>
+    <div><ng-md-icon icon="brightness_1" size="48"></ng-md-icon><br>brightness_1</div>
+    <div><ng-md-icon icon="brightness_2" size="48"></ng-md-icon><br>brightness_2</div>
+    <div><ng-md-icon icon="brightness_3" size="48"></ng-md-icon><br>brightness_3</div>
+    <div><ng-md-icon icon="brightness_4" size="48"></ng-md-icon><br>brightness_4</div>
+    <div><ng-md-icon icon="brightness_5" size="48"></ng-md-icon><br>brightness_5</div>
+    <div><ng-md-icon icon="brightness_6" size="48"></ng-md-icon><br>brightness_6</div>
+    <div><ng-md-icon icon="brightness_7" size="48"></ng-md-icon><br>brightness_7</div>
+    <div><ng-md-icon icon="broken_image" size="48"></ng-md-icon><br>broken_image</div>
+    <div><ng-md-icon icon="brush" size="48"></ng-md-icon><br>brush</div>
+    <div><ng-md-icon icon="burst_mode" size="48"></ng-md-icon><br>burst_mode</div>
+    <div><ng-md-icon icon="camera" size="48"></ng-md-icon><br>camera</div>
+    <div><ng-md-icon icon="camera_alt" size="48"></ng-md-icon><br>camera_alt</div>
+    <div><ng-md-icon icon="camera_front" size="48"></ng-md-icon><br>camera_front</div>
+    <div><ng-md-icon icon="camera_rear" size="48"></ng-md-icon><br>camera_rear</div>
+    <div><ng-md-icon icon="camera_roll" size="48"></ng-md-icon><br>camera_roll</div>
+    <div><ng-md-icon icon="center_focus_strong" size="48"></ng-md-icon><br>center_focus_strong</div>
+    <div><ng-md-icon icon="center_focus_weak" size="48"></ng-md-icon><br>center_focus_weak</div>
+    <div><ng-md-icon icon="collections" size="48"></ng-md-icon><br>collections</div>
+    <div><ng-md-icon icon="collections_bookmark" size="48"></ng-md-icon><br>collections_bookmark</div>
+    <div><ng-md-icon icon="color_lens" size="48"></ng-md-icon><br>color_lens</div>
+    <div><ng-md-icon icon="colorize" size="48"></ng-md-icon><br>colorize</div>
+    <div><ng-md-icon icon="compare" size="48"></ng-md-icon><br>compare</div>
+    <div><ng-md-icon icon="control_point" size="48"></ng-md-icon><br>control_point</div>
+    <div><ng-md-icon icon="control_point_duplicate" size="48"></ng-md-icon><br>control_point_duplicate</div>
+    <div><ng-md-icon icon="crop" size="48"></ng-md-icon><br>crop</div>
+    <div><ng-md-icon icon="crop_16_9" size="48"></ng-md-icon><br>crop_16_9</div>
+    <div><ng-md-icon icon="crop_3_2" size="48"></ng-md-icon><br>crop_3_2</div>
+    <div><ng-md-icon icon="crop_5_4" size="48"></ng-md-icon><br>crop_5_4</div>
+    <div><ng-md-icon icon="crop_7_5" size="48"></ng-md-icon><br>crop_7_5</div>
+    <div><ng-md-icon icon="crop_din" size="48"></ng-md-icon><br>crop_din</div>
+    <div><ng-md-icon icon="crop_free" size="48"></ng-md-icon><br>crop_free</div>
+    <div><ng-md-icon icon="crop_landscape" size="48"></ng-md-icon><br>crop_landscape</div>
+    <div><ng-md-icon icon="crop_original" size="48"></ng-md-icon><br>crop_original</div>
+    <div><ng-md-icon icon="crop_portrait" size="48"></ng-md-icon><br>crop_portrait</div>
+    <div><ng-md-icon icon="crop_rotate" size="48"></ng-md-icon><br>crop_rotate</div>
+    <div><ng-md-icon icon="crop_square" size="48"></ng-md-icon><br>crop_square</div>
+    <div><ng-md-icon icon="dehaze" size="48"></ng-md-icon><br>dehaze</div>
+    <div><ng-md-icon icon="details" size="48"></ng-md-icon><br>details</div>
+    <div><ng-md-icon icon="edit" size="48"></ng-md-icon><br>edit</div>
+    <div><ng-md-icon icon="exposure" size="48"></ng-md-icon><br>exposure</div>
+    <div><ng-md-icon icon="exposure_neg_1" size="48"></ng-md-icon><br>exposure_neg_1</div>
+    <div><ng-md-icon icon="exposure_neg_2" size="48"></ng-md-icon><br>exposure_neg_2</div>
+    <div><ng-md-icon icon="exposure_plus_1" size="48"></ng-md-icon><br>exposure_plus_1</div>
+    <div><ng-md-icon icon="exposure_plus_2" size="48"></ng-md-icon><br>exposure_plus_2</div>
+    <div><ng-md-icon icon="exposure_zero" size="48"></ng-md-icon><br>exposure_zero</div>
+    <div><ng-md-icon icon="filter" size="48"></ng-md-icon><br>filter</div>
+    <div><ng-md-icon icon="filter_1" size="48"></ng-md-icon><br>filter_1</div>
+    <div><ng-md-icon icon="filter_2" size="48"></ng-md-icon><br>filter_2</div>
+    <div><ng-md-icon icon="filter_3" size="48"></ng-md-icon><br>filter_3</div>
+    <div><ng-md-icon icon="filter_4" size="48"></ng-md-icon><br>filter_4</div>
+    <div><ng-md-icon icon="filter_5" size="48"></ng-md-icon><br>filter_5</div>
+    <div><ng-md-icon icon="filter_6" size="48"></ng-md-icon><br>filter_6</div>
+    <div><ng-md-icon icon="filter_7" size="48"></ng-md-icon><br>filter_7</div>
+    <div><ng-md-icon icon="filter_8" size="48"></ng-md-icon><br>filter_8</div>
+    <div><ng-md-icon icon="filter_9" size="48"></ng-md-icon><br>filter_9</div>
+    <div><ng-md-icon icon="filter_9_plus" size="48"></ng-md-icon><br>filter_9_plus</div>
+    <div><ng-md-icon icon="filter_b_and_w" size="48"></ng-md-icon><br>filter_b_and_w</div>
+    <div><ng-md-icon icon="filter_center_focus" size="48"></ng-md-icon><br>filter_center_focus</div>
+    <div><ng-md-icon icon="filter_drama" size="48"></ng-md-icon><br>filter_drama</div>
+    <div><ng-md-icon icon="filter_frames" size="48"></ng-md-icon><br>filter_frames</div>
+    <div><ng-md-icon icon="filter_hdr" size="48"></ng-md-icon><br>filter_hdr</div>
+    <div><ng-md-icon icon="filter_none" size="48"></ng-md-icon><br>filter_none</div>
+    <div><ng-md-icon icon="filter_tilt_shift" size="48"></ng-md-icon><br>filter_tilt_shift</div>
+    <div><ng-md-icon icon="filter_vintage" size="48"></ng-md-icon><br>filter_vintage</div>
+    <div><ng-md-icon icon="flare" size="48"></ng-md-icon><br>flare</div>
+    <div><ng-md-icon icon="flash_auto" size="48"></ng-md-icon><br>flash_auto</div>
+    <div><ng-md-icon icon="flash_off" size="48"></ng-md-icon><br>flash_off</div>
+    <div><ng-md-icon icon="flash_on" size="48"></ng-md-icon><br>flash_on</div>
+    <div><ng-md-icon icon="flip" size="48"></ng-md-icon><br>flip</div>
+    <div><ng-md-icon icon="gradient" size="48"></ng-md-icon><br>gradient</div>
+    <div><ng-md-icon icon="grain" size="48"></ng-md-icon><br>grain</div>
+    <div><ng-md-icon icon="grid_off" size="48"></ng-md-icon><br>grid_off</div>
+    <div><ng-md-icon icon="grid_on" size="48"></ng-md-icon><br>grid_on</div>
+    <div><ng-md-icon icon="hdr_off" size="48"></ng-md-icon><br>hdr_off</div>
+    <div><ng-md-icon icon="hdr_on" size="48"></ng-md-icon><br>hdr_on</div>
+    <div><ng-md-icon icon="hdr_strong" size="48"></ng-md-icon><br>hdr_strong</div>
+    <div><ng-md-icon icon="hdr_weak" size="48"></ng-md-icon><br>hdr_weak</div>
+    <div><ng-md-icon icon="healing" size="48"></ng-md-icon><br>healing</div>
+    <div><ng-md-icon icon="image" size="48"></ng-md-icon><br>image</div>
+    <div><ng-md-icon icon="image_aspect_ratio" size="48"></ng-md-icon><br>image_aspect_ratio</div>
+    <div><ng-md-icon icon="iso" size="48"></ng-md-icon><br>iso</div>
+    <div><ng-md-icon icon="landscape" size="48"></ng-md-icon><br>landscape</div>
+    <div><ng-md-icon icon="leak_add" size="48"></ng-md-icon><br>leak_add</div>
+    <div><ng-md-icon icon="leak_remove" size="48"></ng-md-icon><br>leak_remove</div>
+    <div><ng-md-icon icon="lens" size="48"></ng-md-icon><br>lens</div>
+    <div><ng-md-icon icon="linked_camera" size="48"></ng-md-icon><br>linked_camera</div>
+    <div><ng-md-icon icon="looks" size="48"></ng-md-icon><br>looks</div>
+    <div><ng-md-icon icon="looks_3" size="48"></ng-md-icon><br>looks_3</div>
+    <div><ng-md-icon icon="looks_4" size="48"></ng-md-icon><br>looks_4</div>
+    <div><ng-md-icon icon="looks_5" size="48"></ng-md-icon><br>looks_5</div>
+    <div><ng-md-icon icon="looks_6" size="48"></ng-md-icon><br>looks_6</div>
+    <div><ng-md-icon icon="looks_one" size="48"></ng-md-icon><br>looks_one</div>
+    <div><ng-md-icon icon="looks_two" size="48"></ng-md-icon><br>looks_two</div>
+    <div><ng-md-icon icon="loupe" size="48"></ng-md-icon><br>loupe</div>
+    <div><ng-md-icon icon="monochrome_photos" size="48"></ng-md-icon><br>monochrome_photos</div>
+    <div><ng-md-icon icon="movie_creation" size="48"></ng-md-icon><br>movie_creation</div>
+    <div><ng-md-icon icon="movie_filter" size="48"></ng-md-icon><br>movie_filter</div>
+    <div><ng-md-icon icon="music_note" size="48"></ng-md-icon><br>music_note</div>
+    <div><ng-md-icon icon="nature" size="48"></ng-md-icon><br>nature</div>
+    <div><ng-md-icon icon="nature_people" size="48"></ng-md-icon><br>nature_people</div>
+    <div><ng-md-icon icon="navigate_before" size="48"></ng-md-icon><br>navigate_before</div>
+    <div><ng-md-icon icon="navigate_next" size="48"></ng-md-icon><br>navigate_next</div>
+    <div><ng-md-icon icon="palette" size="48"></ng-md-icon><br>palette</div>
+    <div><ng-md-icon icon="panorama" size="48"></ng-md-icon><br>panorama</div>
+    <div><ng-md-icon icon="panorama_fisheye" size="48"></ng-md-icon><br>panorama_fisheye</div>
+    <div><ng-md-icon icon="panorama_horizontal" size="48"></ng-md-icon><br>panorama_horizontal</div>
+    <div><ng-md-icon icon="panorama_vertical" size="48"></ng-md-icon><br>panorama_vertical</div>
+    <div><ng-md-icon icon="panorama_wide_angle" size="48"></ng-md-icon><br>panorama_wide_angle</div>
+    <div><ng-md-icon icon="photo" size="48"></ng-md-icon><br>photo</div>
+    <div><ng-md-icon icon="photo_album" size="48"></ng-md-icon><br>photo_album</div>
+    <div><ng-md-icon icon="photo_camera" size="48"></ng-md-icon><br>photo_camera</div>
+    <div><ng-md-icon icon="photo_filter" size="48"></ng-md-icon><br>photo_filter</div>
+    <div><ng-md-icon icon="photo_library" size="48"></ng-md-icon><br>photo_library</div>
+    <div><ng-md-icon icon="photo_size_select_actual" size="48"></ng-md-icon><br>photo_size_select_actual</div>
+    <div><ng-md-icon icon="photo_size_select_large" size="48"></ng-md-icon><br>photo_size_select_large</div>
+    <div><ng-md-icon icon="photo_size_select_small" size="48"></ng-md-icon><br>photo_size_select_small</div>
+    <div><ng-md-icon icon="picture_as_pdf" size="48"></ng-md-icon><br>picture_as_pdf</div>
+    <div><ng-md-icon icon="portrait" size="48"></ng-md-icon><br>portrait</div>
+    <div><ng-md-icon icon="remove_red_eye" size="48"></ng-md-icon><br>remove_red_eye</div>
+    <div><ng-md-icon icon="rotate_90_degrees_ccw" size="48"></ng-md-icon><br>rotate_90_degrees_ccw</div>
+    <div><ng-md-icon icon="rotate_left" size="48"></ng-md-icon><br>rotate_left</div>
+    <div><ng-md-icon icon="rotate_right" size="48"></ng-md-icon><br>rotate_right</div>
+    <div><ng-md-icon icon="slideshow" size="48"></ng-md-icon><br>slideshow</div>
+    <div><ng-md-icon icon="straighten" size="48"></ng-md-icon><br>straighten</div>
+    <div><ng-md-icon icon="style" size="48"></ng-md-icon><br>style</div>
+    <div><ng-md-icon icon="switch_camera" size="48"></ng-md-icon><br>switch_camera</div>
+    <div><ng-md-icon icon="switch_video" size="48"></ng-md-icon><br>switch_video</div>
+    <div><ng-md-icon icon="tag_faces" size="48"></ng-md-icon><br>tag_faces</div>
+    <div><ng-md-icon icon="texture" size="48"></ng-md-icon><br>texture</div>
+    <div><ng-md-icon icon="timelapse" size="48"></ng-md-icon><br>timelapse</div>
+    <div><ng-md-icon icon="timer" size="48"></ng-md-icon><br>timer</div>
+    <div><ng-md-icon icon="timer_10" size="48"></ng-md-icon><br>timer_10</div>
+    <div><ng-md-icon icon="timer_3" size="48"></ng-md-icon><br>timer_3</div>
+    <div><ng-md-icon icon="timer_off" size="48"></ng-md-icon><br>timer_off</div>
+    <div><ng-md-icon icon="tonality" size="48"></ng-md-icon><br>tonality</div>
+    <div><ng-md-icon icon="transform" size="48"></ng-md-icon><br>transform</div>
+    <div><ng-md-icon icon="tune" size="48"></ng-md-icon><br>tune</div>
+    <div><ng-md-icon icon="view_comfy" size="48"></ng-md-icon><br>view_comfy</div>
+    <div><ng-md-icon icon="view_compact" size="48"></ng-md-icon><br>view_compact</div>
+    <div><ng-md-icon icon="vignette" size="48"></ng-md-icon><br>vignette</div>
+    <div><ng-md-icon icon="wb_auto" size="48"></ng-md-icon><br>wb_auto</div>
+    <div><ng-md-icon icon="wb_cloudy" size="48"></ng-md-icon><br>wb_cloudy</div>
+    <div><ng-md-icon icon="wb_incandescent" size="48"></ng-md-icon><br>wb_incandescent</div>
+    <div><ng-md-icon icon="wb_irradescent" size="48"></ng-md-icon><br>wb_irradescent</div>
+    <div><ng-md-icon icon="wb_sunny" size="48"></ng-md-icon><br>wb_sunny</div>
+
+    <h2>Maps</h2>
+    <div><ng-md-icon icon="add_location" size="48"></ng-md-icon><br>add_location</div>
+    <div><ng-md-icon icon="beenhere" size="48"></ng-md-icon><br>beenhere</div>
+    <div><ng-md-icon icon="directions" size="48"></ng-md-icon><br>directions</div>
+    <div><ng-md-icon icon="directions_bike" size="48"></ng-md-icon><br>directions_bike</div>
+    <div><ng-md-icon icon="directions_bus" size="48"></ng-md-icon><br>directions_bus</div>
+    <div><ng-md-icon icon="directions_car" size="48"></ng-md-icon><br>directions_car</div>
+    <div><ng-md-icon icon="directions_ferry" size="48"></ng-md-icon><br>directions_ferry</div>
+    <div><ng-md-icon icon="directions_subway" size="48"></ng-md-icon><br>directions_subway</div>
+    <div><ng-md-icon icon="directions_train" size="48"></ng-md-icon><br>directions_train</div>
+    <div><ng-md-icon icon="directions_transit" size="48"></ng-md-icon><br>directions_transit</div>
+    <div><ng-md-icon icon="directions_walk" size="48"></ng-md-icon><br>directions_walk</div>
+    <div><ng-md-icon icon="edit_location" size="48"></ng-md-icon><br>edit_location</div>
+    <div><ng-md-icon icon="ev_station" size="48"></ng-md-icon><br>ev_station</div>
+    <div><ng-md-icon icon="flight" size="48"></ng-md-icon><br>flight</div>
+    <div><ng-md-icon icon="hotel" size="48"></ng-md-icon><br>hotel</div>
+    <div><ng-md-icon icon="layers" size="48"></ng-md-icon><br>layers</div>
+    <div><ng-md-icon icon="layers_clear" size="48"></ng-md-icon><br>layers_clear</div>
+    <div><ng-md-icon icon="local_activity" size="48"></ng-md-icon><br>local_activity</div>
+    <div><ng-md-icon icon="local_airport" size="48"></ng-md-icon><br>local_airport</div>
+    <div><ng-md-icon icon="local_atm" size="48"></ng-md-icon><br>local_atm</div>
+    <div><ng-md-icon icon="local_bar" size="48"></ng-md-icon><br>local_bar</div>
+    <div><ng-md-icon icon="local_cafe" size="48"></ng-md-icon><br>local_cafe</div>
+    <div><ng-md-icon icon="local_car_wash" size="48"></ng-md-icon><br>local_car_wash</div>
+    <div><ng-md-icon icon="local_convenience_store" size="48"></ng-md-icon><br>local_convenience_store</div>
+    <div><ng-md-icon icon="local_dining" size="48"></ng-md-icon><br>local_dining</div>
+    <div><ng-md-icon icon="local_drink" size="48"></ng-md-icon><br>local_drink</div>
+    <div><ng-md-icon icon="local_florist" size="48"></ng-md-icon><br>local_florist</div>
+    <div><ng-md-icon icon="local_gas_station" size="48"></ng-md-icon><br>local_gas_station</div>
+    <div><ng-md-icon icon="local_grocery_store" size="48"></ng-md-icon><br>local_grocery_store</div>
+    <div><ng-md-icon icon="local_hospital" size="48"></ng-md-icon><br>local_hospital</div>
+    <div><ng-md-icon icon="local_hotel" size="48"></ng-md-icon><br>local_hotel</div>
+    <div><ng-md-icon icon="local_laundry_service" size="48"></ng-md-icon><br>local_laundry_service</div>
+    <div><ng-md-icon icon="local_library" size="48"></ng-md-icon><br>local_library</div>
+    <div><ng-md-icon icon="local_mall" size="48"></ng-md-icon><br>local_mall</div>
+    <div><ng-md-icon icon="local_movies" size="48"></ng-md-icon><br>local_movies</div>
+    <div><ng-md-icon icon="local_offer" size="48"></ng-md-icon><br>local_offer</div>
+    <div><ng-md-icon icon="local_parking" size="48"></ng-md-icon><br>local_parking</div>
+    <div><ng-md-icon icon="local_pharmacy" size="48"></ng-md-icon><br>local_pharmacy</div>
+    <div><ng-md-icon icon="local_phone" size="48"></ng-md-icon><br>local_phone</div>
+    <div><ng-md-icon icon="local_pizza" size="48"></ng-md-icon><br>local_pizza</div>
+    <div><ng-md-icon icon="local_play" size="48"></ng-md-icon><br>local_play</div>
+    <div><ng-md-icon icon="local_post_office" size="48"></ng-md-icon><br>local_post_office</div>
+    <div><ng-md-icon icon="local_print_shop" size="48"></ng-md-icon><br>local_print_shop</div>
+    <div><ng-md-icon icon="local_restaurant" size="48"></ng-md-icon><br>local_restaurant</div>
+    <div><ng-md-icon icon="local_see" size="48"></ng-md-icon><br>local_see</div>
+    <div><ng-md-icon icon="local_shipping" size="48"></ng-md-icon><br>local_shipping</div>
+    <div><ng-md-icon icon="local_taxi" size="48"></ng-md-icon><br>local_taxi</div>
+    <div><ng-md-icon icon="map" size="48"></ng-md-icon><br>map</div>
+    <div><ng-md-icon icon="my_location" size="48"></ng-md-icon><br>my_location</div>
+    <div><ng-md-icon icon="navigation" size="48"></ng-md-icon><br>navigation</div>
+    <div><ng-md-icon icon="near_me" size="48"></ng-md-icon><br>near_me</div>
+    <div><ng-md-icon icon="person_pin_circle" size="48"></ng-md-icon><br>person_pin_circle</div>
+    <div><ng-md-icon icon="person_pin" size="48"></ng-md-icon><br>person_pin</div>
+    <div><ng-md-icon icon="pin_drop" size="48"></ng-md-icon><br>pin_drop</div>
+    <div><ng-md-icon icon="place" size="48"></ng-md-icon><br>place</div>
+    <div><ng-md-icon icon="rate_review" size="48"></ng-md-icon><br>rate_review</div>
+    <div><ng-md-icon icon="restaurant" size="48"></ng-md-icon><br>restaurant</div>
+    <div><ng-md-icon icon="restaurant_menu" size="48"></ng-md-icon><br>restaurant_menu</div>
+    <div><ng-md-icon icon="satellite" size="48"></ng-md-icon><br>satellite</div>
+    <div><ng-md-icon icon="store_mall_directory" size="48"></ng-md-icon><br>store_mall_directory</div>
+    <div><ng-md-icon icon="streetview" size="48"></ng-md-icon><br>streetview</div>
+    <div><ng-md-icon icon="subway" size="48"></ng-md-icon><br>subway</div>
+    <div><ng-md-icon icon="terrain" size="48"></ng-md-icon><br>terrain</div>
+    <div><ng-md-icon icon="traffic" size="48"></ng-md-icon><br>traffic</div>
+    <div><ng-md-icon icon="train" size="48"></ng-md-icon><br>train</div>
+    <div><ng-md-icon icon="tram" size="48"></ng-md-icon><br>tram</div>
+    <div><ng-md-icon icon="transfer_within_a_station" size="48"></ng-md-icon><br>transfer_within_a_station</div>
+    <div><ng-md-icon icon="zoom_out_map" size="48"></ng-md-icon><br>zoom_out_map</div>
+
+    <h2>Navigation</h2>
+    <div><ng-md-icon icon="apps" size="48"></ng-md-icon><br>apps</div>
+    <div><ng-md-icon icon="arrow_back" size="48"></ng-md-icon><br>arrow_back</div>
+    <div><ng-md-icon icon="arrow_downward" size="48"></ng-md-icon><br>arrow_downward</div>
+    <div><ng-md-icon icon="arrow_drop_down" size="48"></ng-md-icon><br>arrow_drop_down</div>
+    <div><ng-md-icon icon="arrow_drop_down_circle" size="48"></ng-md-icon><br>arrow_drop_down_circle</div>
+    <div><ng-md-icon icon="arrow_drop_up" size="48"></ng-md-icon><br>arrow_drop_up</div>
+    <div><ng-md-icon icon="arrow_forward" size="48"></ng-md-icon><br>arrow_forward</div>
+    <div><ng-md-icon icon="arrow_upwards" size="48"></ng-md-icon><br>arrow_upwards</div>
+    <div><ng-md-icon icon="cancel" size="48"></ng-md-icon><br>cancel</div>
+    <div><ng-md-icon icon="check" size="48"></ng-md-icon><br>check</div>
+    <div><ng-md-icon icon="chevron_left" size="48"></ng-md-icon><br>chevron_left</div>
+    <div><ng-md-icon icon="chevron_right" size="48"></ng-md-icon><br>chevron_right</div>
+    <div><ng-md-icon icon="close" size="48"></ng-md-icon><br>close</div>
+    <div><ng-md-icon icon="expand_less" size="48"></ng-md-icon><br>expand_less</div>
+    <div><ng-md-icon icon="expand_more" size="48"></ng-md-icon><br>expand_more</div>
+    <div><ng-md-icon icon="first_page" size="48"></ng-md-icon><br>first_page</div>
+    <div><ng-md-icon icon="fullscreen" size="48"></ng-md-icon><br>fullscreen</div>
+    <div><ng-md-icon icon="fullscreen_exit" size="48"></ng-md-icon><br>fullscreen_exit</div>
+    <div><ng-md-icon icon="last_page" size="48"></ng-md-icon><br>last_page</div>
+    <div><ng-md-icon icon="menu" size="48"></ng-md-icon><br>menu</div>
+    <div><ng-md-icon icon="more_horiz" size="48"></ng-md-icon><br>more_horiz</div>
+    <div><ng-md-icon icon="more_vert" size="48"></ng-md-icon><br>more_vert</div>
+    <div><ng-md-icon icon="refresh" size="48"></ng-md-icon><br>refresh</div>
+    <div><ng-md-icon icon="subdirectory_arrow_left" size="48"></ng-md-icon><br>subdirectory_arrow_left</div>
+    <div><ng-md-icon icon="subdirectory_arrow_right" size="48"></ng-md-icon><br>subdirectory_arrow_right</div>
+    <div><ng-md-icon icon="adb" size="48"></ng-md-icon><br>adb</div>
+    <div><ng-md-icon icon="airline_seat_flat" size="48"></ng-md-icon><br>airline_seat_flat</div>
+    <div><ng-md-icon icon="airline_seat_angled" size="48"></ng-md-icon><br>airline_seat_angled</div>
+    <div><ng-md-icon icon="airline_seat_individual_suite" size="48"></ng-md-icon><br>airline_seat_individual_suite</div>
+    <div><ng-md-icon icon="airline_seat_legroom_extra" size="48"></ng-md-icon><br>airline_seat_legroom_extra</div>
+    <div><ng-md-icon icon="airline_seat_legroom_normal" size="48"></ng-md-icon><br>airline_seat_legroom_normal</div>
+    <div><ng-md-icon icon="airline_seat_legroom_reduced" size="48"></ng-md-icon><br>airline_seat_legroom_reduced</div>
+    <div><ng-md-icon icon="airline_seat_recline_extra" size="48"></ng-md-icon><br>airline_seat_recline_extra</div>
+    <div><ng-md-icon icon="airline_seat_recline_normal" size="48"></ng-md-icon><br>airline_seat_recline_normal</div>
+    <div><ng-md-icon icon="bluetooth_audio" size="48"></ng-md-icon><br>bluetooth_audio</div>
+    <div><ng-md-icon icon="confirmation_number" size="48"></ng-md-icon><br>confirmation_number</div>
+    <div><ng-md-icon icon="disc_full" size="48"></ng-md-icon><br>disc_full</div>
+    <div><ng-md-icon icon="do_not_disturb" size="48"></ng-md-icon><br>do_not_disturb</div>
+    <div><ng-md-icon icon="do_not_disturb_alt" size="48"></ng-md-icon><br>do_not_disturb_alt</div>
+    <div><ng-md-icon icon="do_not_disturb_off" size="48"></ng-md-icon><br>do_not_disturb_off</div>
+    <div><ng-md-icon icon="do_not_disturb_on" size="48"></ng-md-icon><br>do_not_disturb_on</div>
+    <div><ng-md-icon icon="drive_eta" size="48"></ng-md-icon><br>drive_eta</div>
+    <div><ng-md-icon icon="enhanced_encryption" size="48"></ng-md-icon><br>enhanced_encryption</div>
+    <div><ng-md-icon icon="event_available" size="48"></ng-md-icon><br>event_available</div>
+    <div><ng-md-icon icon="event_busy" size="48"></ng-md-icon><br>event_busy</div>
+    <div><ng-md-icon icon="event_note" size="48"></ng-md-icon><br>event_note</div>
+    <div><ng-md-icon icon="folder_special" size="48"></ng-md-icon><br>folder_special</div>
+    <div><ng-md-icon icon="live_tv" size="48"></ng-md-icon><br>live_tv</div>
+    <div><ng-md-icon icon="mms" size="48"></ng-md-icon><br>mms</div>
+    <div><ng-md-icon icon="more" size="48"></ng-md-icon><br>more</div>
+    <div><ng-md-icon icon="network_check" size="48"></ng-md-icon><br>network_check</div>
+    <div><ng-md-icon icon="network_locked" size="48"></ng-md-icon><br>network_locked</div>
+    <div><ng-md-icon icon="no_encryption" size="48"></ng-md-icon><br>no_encryption</div>
+    <div><ng-md-icon icon="ondemand_video" size="48"></ng-md-icon><br>ondemand_video</div>
+    <div><ng-md-icon icon="personal_video" size="48"></ng-md-icon><br>personal_video</div>
+    <div><ng-md-icon icon="phone_bluetooth_speaker" size="48"></ng-md-icon><br>phone_bluetooth_speaker</div>
+    <div><ng-md-icon icon="phone_forwarded" size="48"></ng-md-icon><br>phone_forwarded</div>
+    <div><ng-md-icon icon="phone_in_talk" size="48"></ng-md-icon><br>phone_in_talk</div>
+    <div><ng-md-icon icon="phone_locked" size="48"></ng-md-icon><br>phone_locked</div>
+    <div><ng-md-icon icon="phone_missed" size="48"></ng-md-icon><br>phone_missed</div>
+    <div><ng-md-icon icon="phone_paused" size="48"></ng-md-icon><br>phone_paused</div>
+    <div><ng-md-icon icon="power" size="48"></ng-md-icon><br>power</div>
+    <div><ng-md-icon icon="priority_high" size="48"></ng-md-icon><br>priority_high</div>
+    <div><ng-md-icon icon="sd_card" size="48"></ng-md-icon><br>sd_card</div>
+    <div><ng-md-icon icon="sim_card_alert" size="48"></ng-md-icon><br>sim_card_alert</div>
+    <div><ng-md-icon icon="sms" size="48"></ng-md-icon><br>sms</div>
+    <div><ng-md-icon icon="sms_failed" size="48"></ng-md-icon><br>sms_failed</div>
+    <div><ng-md-icon icon="sync" size="48"></ng-md-icon><br>sync</div>
+    <div><ng-md-icon icon="sync_disabled" size="48"></ng-md-icon><br>sync_disabled</div>
+    <div><ng-md-icon icon="sync_problem" size="48"></ng-md-icon><br>sync_problem</div>
+    <div><ng-md-icon icon="system_update" size="48"></ng-md-icon><br>system_update</div>
+    <div><ng-md-icon icon="tap_and_play" size="48"></ng-md-icon><br>tap_and_play</div>
+    <div><ng-md-icon icon="time_to_leave" size="48"></ng-md-icon><br>time_to_leave</div>
+    <div><ng-md-icon icon="vibration" size="48"></ng-md-icon><br>vibration</div>
+    <div><ng-md-icon icon="voice_chat" size="48"></ng-md-icon><br>voice_chat</div>
+    <div><ng-md-icon icon="vpn_lock" size="48"></ng-md-icon><br>vpn_lock</div>
+    <div><ng-md-icon icon="wc" size="48"></ng-md-icon><br>wc</div>
+    <div><ng-md-icon icon="wifi" size="48"></ng-md-icon><br>wifi</div>
+
+    <h2>Places</h2>
+    <div><ng-md-icon icon="ac_unit" size="48"></ng-md-icon><br>ac_unit</div>
+    <div><ng-md-icon icon="airport_shuttle" size="48"></ng-md-icon><br>airport_shuttle</div>
+    <div><ng-md-icon icon="all_inclusive" size="48"></ng-md-icon><br>all_inclusive</div>
+    <div><ng-md-icon icon="beach_access" size="48"></ng-md-icon><br>beach_access</div>
+    <div><ng-md-icon icon="business_center" size="48"></ng-md-icon><br>business_center</div>
+    <div><ng-md-icon icon="casino" size="48"></ng-md-icon><br>casino</div>
+    <div><ng-md-icon icon="child_care" size="48"></ng-md-icon><br>child_care</div>
+    <div><ng-md-icon icon="child_friedly" size="48"></ng-md-icon><br>child_friedly</div>
+    <div><ng-md-icon icon="fitness_center" size="48"></ng-md-icon><br>fitness_center</div>
+    <div><ng-md-icon icon="free_breakfast" size="48"></ng-md-icon><br>free_breakfast</div>
+    <div><ng-md-icon icon="golf_course" size="48"></ng-md-icon><br>golf_course</div>
+    <div><ng-md-icon icon="hot_tub" size="48"></ng-md-icon><br>hot_tub</div>
+    <div><ng-md-icon icon="kitchen" size="48"></ng-md-icon><br>kitchen</div>
+    <div><ng-md-icon icon="pool" size="48"></ng-md-icon><br>pool</div>
+    <div><ng-md-icon icon="room_service" size="48"></ng-md-icon><br>room_service</div>
+    <div><ng-md-icon icon="rv_hookup" size="48"></ng-md-icon><br>rv_hookup</div>
+    <div><ng-md-icon icon="smoke_free" size="48"></ng-md-icon><br>smoke_free</div>
+    <div><ng-md-icon icon="smoke_rooms" size="48"></ng-md-icon><br>smoke_rooms</div>
+    <div><ng-md-icon icon="spa" size="48"></ng-md-icon><br>spa</div>
+
+    <h2>Social</h2>
+    <div><ng-md-icon icon="cake" size="48"></ng-md-icon><br>cake</div>
+    <div><ng-md-icon icon="domain" size="48"></ng-md-icon><br>domain</div>
+    <div><ng-md-icon icon="group" size="48"></ng-md-icon><br>group</div>
+    <div><ng-md-icon icon="group_add" size="48"></ng-md-icon><br>group_add</div>
+    <div><ng-md-icon icon="location_city" size="48"></ng-md-icon><br>location_city</div>
+    <div><ng-md-icon icon="mood" size="48"></ng-md-icon><br>mood</div>
+    <div><ng-md-icon icon="mood_bad" size="48"></ng-md-icon><br>mood_bad</div>
+    <div><ng-md-icon icon="notifications" size="48"></ng-md-icon><br>notifications</div>
+    <div><ng-md-icon icon="notifications_none" size="48"></ng-md-icon><br>notifications_none</div>
+    <div><ng-md-icon icon="notifications_off" size="48"></ng-md-icon><br>notifications_off</div>
+    <div><ng-md-icon icon="notifications_active" size="48"></ng-md-icon><br>notifications_active</div>
+    <div><ng-md-icon icon="notifications_paused" size="48"></ng-md-icon><br>notifications_paused</div>
+    <div><ng-md-icon icon="pages" size="48"></ng-md-icon><br>pages</div>
+    <div><ng-md-icon icon="party_mode" size="48"></ng-md-icon><br>party_mode</div>
+    <div><ng-md-icon icon="people" size="48"></ng-md-icon><br>people</div>
+    <div><ng-md-icon icon="people_outline" size="48"></ng-md-icon><br>people_outline</div>
+    <div><ng-md-icon icon="person" size="48"></ng-md-icon><br>person</div>
+    <div><ng-md-icon icon="person_add" size="48"></ng-md-icon><br>person_add</div>
+    <div><ng-md-icon icon="person_outline" size="48"></ng-md-icon><br>person_outline</div>
+    <div><ng-md-icon icon="plus_one" size="48"></ng-md-icon><br>plus_one</div>
+    <div><ng-md-icon icon="poll" size="48"></ng-md-icon><br>poll</div>
+    <div><ng-md-icon icon="public" size="48"></ng-md-icon><br>public</div>
+    <div><ng-md-icon icon="school" size="48"></ng-md-icon><br>school</div>
+    <div><ng-md-icon icon="sentiment_dissatisfied" size="48"></ng-md-icon><br>sentiment_dissatisfied</div>
+    <div><ng-md-icon icon="sentiment_neutral" size="48"></ng-md-icon><br>sentiment_neutral</div>
+    <div><ng-md-icon icon="sentiment_satisfied" size="48"></ng-md-icon><br>sentiment_satisfied</div>
+    <div><ng-md-icon icon="sentiment_very_dissatisfied" size="48"></ng-md-icon><br>sentiment_very_dissatisfied</div>
+    <div><ng-md-icon icon="sentiment_very_satisfied" size="48"></ng-md-icon><br>sentiment_very_satisfied</div>
+    <div><ng-md-icon icon="share" size="48"></ng-md-icon><br>share</div>
+    <div><ng-md-icon icon="whatshot" size="48"></ng-md-icon><br>whatshot</div>
+
+    <h2>Toggle</h2>
+    <div><ng-md-icon icon="check_box" size="48"></ng-md-icon><br>check_box</div>
+    <div><ng-md-icon icon="check_box_outline_blank" size="48"></ng-md-icon><br>check_box_outline_blank</div>
+    <div><ng-md-icon icon="indeterminate_check_box" size="48"></ng-md-icon><br>indeterminate_check_box</div>
+    <div><ng-md-icon icon="radio_button_unchecked" size="48"></ng-md-icon><br>radio_button_unchecked</div>
+    <div><ng-md-icon icon="radio_button_checked" size="48"></ng-md-icon><br>radio_button_checked</div>
+    <div><ng-md-icon icon="star" size="48"></ng-md-icon><br>star</div>
+    <div><ng-md-icon icon="star_half" size="48"></ng-md-icon><br>star_half</div>
+    <div><ng-md-icon icon="star_border" size="48"></ng-md-icon><br>star_border</div>
+
+</body>
+
+</html>

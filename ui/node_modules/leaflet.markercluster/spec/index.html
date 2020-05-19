@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Spec Runner</title>
+	<link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css">
+	<link rel="stylesheet" type="text/css" href="../node_modules/leaflet/dist/leaflet.css">
+	<link rel="stylesheet" type="text/css" href="../dist/MarkerCluster.css">
+	<link rel="stylesheet" type="text/css" href="../dist/MarkerCluster.Default.css">
+</head>
+<body>
+	<div id="mocha"></div>
+	<script src="expect.js"></script>
+	<script type="text/javascript" src="../node_modules/mocha/mocha.js"></script>
+	<script type="text/javascript" src="../node_modules/happen/happen.js"></script>
+	<script type="text/javascript" src="sinon.js"></script>
+	<script type="text/javascript" src="../node_modules/leaflet/dist/leaflet-src.js"></script>
+
+	<!-- source files -->
+	<script type="text/javascript" src="../dist/leaflet.markercluster-src.js"></script>
+
+	<script>
+		mocha.setup('bdd');
+		mocha.ignoreLeaks();
+	</script>
+
+	<!-- spec files -->
+
+	<script type="text/javascript" src="suites/SpecHelper.js"></script>
+
+	<script type="text/javascript" src="suites/LeafletSpec.js"></script>
+
+	<script type="text/javascript" src="suites/DistanceGridSpec.js"></script>
+	<script type="text/javascript" src="suites/QuickHullSpec.js"></script>
+
+	<script type="text/javascript" src="suites/AddLayer.MultipleSpec.js"></script>
+	<script type="text/javascript" src="suites/AddLayer.SingleSpec.js"></script>
+	<script type="text/javascript" src="suites/AddLayersSpec.js"></script>
+	<script type="text/javascript" src="suites/animateOptionSpec.js"></script>
+	<script type="text/javascript" src="suites/singleMarkerModeSpec.js"></script>
+
+	<script type="text/javascript" src="suites/ChildChangingIconSupportSpec.js"></script>
+	<script type="text/javascript" src="suites/markerMoveSupportSpec.js"></script>
+
+	<script type="text/javascript" src="suites/CircleMarkerSupportSpec.js"></script>
+	<script type="text/javascript" src="suites/CircleSupportSpec.js"></script>
+	
+	<script type="text/javascript" src="suites/onAddSpec.js"></script>
+	<script type="text/javascript" src="suites/onRemoveSpec.js"></script>
+	<script type="text/javascript" src="suites/clearLayersSpec.js"></script>
+	<script type="text/javascript" src="suites/eachLayerSpec.js"></script>
+	<script type="text/javascript" src="suites/eventsSpec.js"></script>
+	<script type="text/javascript" src="suites/getBoundsSpec.js"></script>
+	<script type="text/javascript" src="suites/getLayersSpec.js"></script>
+	<script type="text/javascript" src="suites/getVisibleParentSpec.js"></script>
+
+	<script type="text/javascript" src="suites/NonPointSpec.js"></script>
+
+	<script type="text/javascript" src="suites/RemoveLayerSpec.js"></script>
+	<script type="text/javascript" src="suites/removeLayersSpec.js"></script>
+	<script type="text/javascript" src="suites/spiderfySpec.js"></script>
+	<script type="text/javascript" src="suites/unspiderfySpec.js"></script>
+	<script type="text/javascript" src="suites/zoomAnimationSpec.js"></script>
+
+	<script type="text/javascript" src="suites/RememberOpacity.js"></script>
+	<script type="text/javascript" src="suites/supportNegativeZoomSpec.js"></script>
+
+	<script type="text/javascript" src="suites/RefreshSpec.js"></script>
+	<script type="text/javascript" src="suites/removeOutsideVisibleBoundsSpec.js"></script>
+	<script type="text/javascript" src="suites/nonIntegerZoomSpec.js"></script>
+
+	<script>
+		(window.mochaPhantomJS || window.mocha).run();
+	</script>
+</body>
+</html>

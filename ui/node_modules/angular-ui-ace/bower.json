@@ -1,0 +1,25 @@
+{
+  "name": "angular-ui-ace",
+  "version": "0.2.3",
+  "description": "This directive allows you to add ACE editor elements.",
+  "author": "https://github.com/angular-ui/ui-ace/graphs/contributors",
+  "license": "MIT",
+  "homepage": "http://angular-ui.github.com",
+  "main": "./src/ui-ace.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test*",
+    "demo*",
+    "gruntFile.js",
+    "package.json"
+  ],
+  "dependencies": {
+    "angular": "~1.x",
+    "ace-builds": "^1"
+  },
+  "devDependencies": {
+    "angular-mocks": "~1.x"
+  }
+}

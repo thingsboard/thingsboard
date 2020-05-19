@@ -1,0 +1,8 @@
+{
+  "plugins": [ "esformatter-curly" ],
+  "indent": {
+    "value": "    ",
+    "SwitchCase": 1,
+    "SwitchStatement": 0
+  }
+}

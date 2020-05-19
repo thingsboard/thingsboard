@@ -1,0 +1,88 @@
+<div class="demo-container">
+    <h2>Standard Items</h2>
+    <input type="button" ng-click="gridsterOpts.draggable.enabled = !gridsterOpts.draggable.enabled" value="{{gridsterOpts.draggable.enabled ? 'Disable' : 'Enable' }} Draggability" />
+    <input type="button" ng-click="gridsterOpts.resizable.enabled = !gridsterOpts.resizable.enabled" value="{{gridsterOpts.resizable.enabled ? 'Disable' : 'Enable' }} Resizability" />
+	<input type="button" ng-click="gridsterOpts.floating = !gridsterOpts.floating" value="{{gridsterOpts.floating ? 'Disable' : 'Enable' }} Floating" />
+	<input type="button" ng-click="gridsterOpts.pushing = !gridsterOpts.pushing" value="{{gridsterOpts.pushing ? 'Disable' : 'Enable' }} Pushing" />
+	<input type="button" ng-click="gridsterOpts.swapping = !gridsterOpts.swapping" value="{{gridsterOpts.swapping ? 'Disable' : 'Enable' }} Swapping" />
+
+	Margins:
+	<input type="text" ng-model="gridsterOpts.margins[0]" size="3" />
+	x
+	<input type="text" ng-model="gridsterOpts.margins[1]" size="3" />
+
+    <p>
+        Each item provides its own dimensions and position using the standard fields: { row: row, col: col, sizeX: sizeX, sizeY: sizeY }.
+    </p>
+    <div gridster="gridsterOpts">
+        <ul>
+            <li gridster-item="item" ng-repeat="item in standardItems">
+                <input type="text" integer ng-model="item.row" size="1" />,
+                <input type="text" integer ng-model="item.col" size="1" />
+                <br />
+                <input type="text" integer ng-model="item.sizeX" size="1" />x
+                <input type="text" integer ng-model="item.sizeY" size="1" />
+            </li>
+        </ul>
+    </div>
+
+    <h2>Custom Items</h2>
+    <p>
+        Each item provides its own dimensions but with custom fields defined using customItemMap: { position: [row, col], size: { x: sizeX, y: sizeY }}
+    </p>
+    <div gridster="gridsterOpts">
+        <ul>
+            <li gridster-item="customItemMap" ng-repeat="item in customItems">
+                <input type="text" integer ng-model="item.position[0]" size="1" />,
+                <input type="text" integer ng-model="item.position[1]" size="1" />
+                <br />
+                <input type="text" integer ng-model="item.size.x" size="1" />x
+                <input type="text" integer ng-model="item.size.y" size="1" />
+            </li>
+        </ul>
+    </div>
+
+    <h2>Custom Items2</h2>
+    <p>
+        Each item provides its own dimensions but with custom fields indicated using html attributes: row, col, sizex, sizey. Size can also be in the form of data-size-x or data-sizex.
+    </p>
+    <div gridster="gridsterOpts">
+        <ul>
+            <li gridster-item row="item.position[0]" col="item.position[1]" size-x="item.size.x" size-y="item.size.y" ng-repeat="item in customItems">
+                <input type="text" integer ng-model="item.position[0]" size="1" />,
+                <input type="text" integer ng-model="item.position[1]" size="1" />
+                <br />
+                <input type="text" integer ng-model="item.size.x" size="1" />x
+                <input type="text" integer ng-model="item.size.y" size="1" />
+            </li>
+        </ul>
+    </div>
+
+    <h2>Empty Items</h2>
+    <p>
+        Each item stores the standard options as an object within itself: { grid: {row: row, col: col, sizeX: sizeX, sizeY: sizeY }}
+    </p>
+    <div gridster="gridsterOpts">
+        <ul>
+            <li gridster-item="item.grid" ng-repeat="item in emptyItems">
+                <input type="text" integer ng-model="item.grid.row" size="1" />,
+                <input type="text" integer ng-model="item.grid.col" size="1" />
+                <br />
+                <input type="text" integer ng-model="item.grid.sizeX" size="1" />x
+                <input type="text" integer ng-model="item.grid.sizeY" size="1" />
+            </li>
+        </ul>
+    </div>
+
+    <h2>No Configuration or Binding</h2>
+    <p>
+        No data binding or configuration provided.
+    </p>
+    <div gridster>
+        <ul>
+			<li gridster-item></li>
+			<li gridster-item></li>
+			<li gridster-item></li>
+        </ul>
+    </div>
+</div>

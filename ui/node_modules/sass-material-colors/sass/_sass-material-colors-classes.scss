@@ -1,0 +1,12 @@
+@import 'sass-material-colors-map';
+
+@each $color-name, $color-variants in $material-colors {
+  @each $color-variant, $hex-value in $color-variants {
+      .color-#{$color-name}-#{$color-variant} {
+        color: #{$hex-value}
+      }
+      .bg-color-#{$color-name}-#{$color-variant} {
+        background-color: #{$hex-value}
+      }
+  }
+}

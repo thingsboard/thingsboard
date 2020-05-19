@@ -1,0 +1,53 @@
+<h2>Group with Multiple</h2>
+
+
+<p>
+  <b>Expansion Panel Groups</b> with the <b>mulitple</b> attribute allow for more than 1 panel to be expanded at the same time
+</p>
+
+<div style="padding-top: 12px; padding-bottom: 36px;">
+  <md-divider></md-divider>
+</div>
+
+
+
+<md-expansion-panel-group md-component-id="expansionPanelGroup" multiple>
+</md-expansion-panel-group>
+
+<div style="padding-top: 64px; padding-bottom: 64px;">
+  <md-divider></md-divider>
+</div>
+
+<div>
+  <form name="theForm">
+    <div layout="row" layout-wrap>
+      <md-input-container>
+        <label>Title</label>
+        <input name="title" ng-model="vm.title" required />
+        <div ng-messages="theForm.title.$error">
+          <div ng-message="required">required</div>
+        </div>
+      </md-input-container>
+
+      <md-input-container>
+        <label>Summary</label>
+        <input name="summary" ng-model="vm.summary" required />
+        <div ng-messages="theForm.summary.$error">
+          <div ng-message="required">required</div>
+        </div>
+      </md-input-container>
+    </div>
+
+    <div layout="row">
+      <md-input-container flex>
+        <label>Content</label>
+        <textarea name="content" ng-model="vm.content" required></textarea>
+        <div ng-messages="theForm.content.$error">
+          <div ng-message="required">required</div>
+        </div>
+      </md-input-container>
+    </div>
+
+    <md-button class="md-primary" ng-disabled="theForm.$invalid" ng-click="vm.addTemplated()">Add Panel</md-button>
+  </form>
+</div>

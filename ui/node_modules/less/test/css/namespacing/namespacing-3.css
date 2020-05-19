@@ -1,0 +1,23 @@
+@media (min-width: 320px) {
+  .toolbar {
+    width: 400px;
+    height: 200px;
+    background: red;
+    color: inherit;
+  }
+}
+.cell {
+  margin: 0 5px !important;
+}
+.class1 {
+  color: #33acfe !important;
+  margin: 20px !important;
+  padding: 20px !important;
+  width: 0 !important;
+}
+.class2 {
+  color: #efca44;
+  margin: 10px;
+  padding: 40px 10px;
+  width: 0 !important;
+}

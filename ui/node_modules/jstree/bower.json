@@ -1,0 +1,33 @@
+{
+	"name": "jstree",
+	"license": "MIT",
+	"version": "3.3.9",
+	"main" : [
+		"./dist/jstree.js",
+		"./dist/themes/default/style.css"
+	],
+	"ignore": [
+		"**/.*",
+		"docs",
+		"demo",
+		"libs",
+		"node_modules",
+		"test",
+		"libs",
+		"jstree.jquery.json",
+		"gruntfile.js",
+		"package.json",
+		"bower.json",
+		"component.json",
+		"LICENCE-MIT",
+		"README.md"
+	],
+	"dependencies": {
+		"jquery": ">=1.9.1"
+	},
+	"keywords": [
+		"ui",
+		"tree",
+		"jstree"
+	]
+}

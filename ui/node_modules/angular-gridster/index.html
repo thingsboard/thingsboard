@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>Angular Gridster</title>
+	<meta name="description" content="" />
+	<meta name="viewport" content="width=device-width" />
+
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.3/css/bootstrap.css" rel="stylesheet">
+	<link rel="stylesheet" href="dist/angular-gridster.min.css" />
+	<link rel="stylesheet" href="demo/common/style.css" />
+
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.js"></script>
+	<script src="https://code.angularjs.org/1.2.15/angular-route.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min.js"></script>
+
+	<script src="src/angular-gridster.js"></script>
+
+	<script type="text/javascript">
+		(function() {
+			angular.module('app', ['gridster', 'ui.bootstrap', 'ngRoute'])
+				.config(['$routeProvider',
+					function($routeProvider) {
+						$routeProvider
+							.when('/main', {
+								templateUrl: 'demo/main/view.html',
+								controller: 'MainCtrl'
+							})
+							.when('/dashboard', {
+								templateUrl: 'demo/dashboard/view.html',
+								controller: 'DashboardCtrl'
+							})
+							.otherwise({
+								redirectTo: '/main'
+							});
+					}
+				])
+				.controller('RootCtrl', function($scope) {
+					$scope.$on('$locationChangeStart', function(e, next, current) {
+						$scope.page = next.split('/').splice(-1);
+						$scope.styleUrl = 'demo/' + $scope.page + '/style.css'
+					});
+				});
+		})();
+	</script>
+
+	<script src="demo/main/script.js"></script>
+	<script src="demo/dashboard/script.js"></script>
+</head>
+
+<body ng-app="app">
+	<div ng-controller="RootCtrl">
+		<link rel="stylesheet" ng-href="{{ styleUrl }}" />
+
+		<div class="navbar navbar-inverse">
+			<div class="navbar-inner">
+				<a class="navbar-brand" href="#">Angular Gridster</a>
+			</div>
+			<ul class="nav navbar-nav navbar-right">
+				<li ng-class="{active: page == 'main'}"><a href="#/main">Main Demo</a>
+				</li>
+				<li ng-class="{active: page == 'dashboard'}"><a href="#/dashboard">Dashboard Demo</a>
+				</li>
+				<li><a>|</a>
+				</li>
+				<li>
+					<a href="coverage" target="_blank" class="code-coverage">Code Coverage</a>
+				</li>
+			</ul>
+		</div>
+
+		<div class="container" ng-view></div>
+
+	</div>
+</body>
+
+</html>

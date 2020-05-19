@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Basic Test Suite</title>
+  <!-- Load local QUnit. -->
+  <link rel="stylesheet" href="libs/qunit.css" media="screen">
+  <script src="libs/qunit.js"></script>
+</head>
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture">this had better work.</div>
+  <!-- Load local lib and tests. -->
+  <script src="test.js"></script>
+</body>
+</html>

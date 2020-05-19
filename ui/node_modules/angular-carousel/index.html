@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html ng-app="DemoApp">
+    <head>
+        <meta charset="UTF-8">
+        <title>angular-carousel demo</title>
+        <meta name="viewport" content="width=620, user-scalable=no">
+        <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
+        <link href='./dist/angular-carousel.css' rel='stylesheet' type='text/css'>
+        <link href='./demo/demo.css' rel='stylesheet' type='text/css'>
+    </head>
+    <body ng-controller="DemoCtrl">
+        <a href="https://github.com/revolunet/angular-carousel"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
+
+        <h1>AngularJS Touch Carousel</h1>
+        <div class='intro'>
+            Transform your ng-repeat or DOM nodes in a mobile-friendly carousel just by adding a 'rn-carousel' attribute to your HTML; AngularJS directives FTW :)<br><br>
+            Carousels are data-bound to your ngRepeat collections and can be DOM buffered (good for performance)
+            <br><br>
+            Swipe these demos with your mouse or finger
+        </div>
+
+        <div>
+            <div>
+                <h3>Buffered ngRepeat demo</h3>
+                <div class="details">A simple buffered ng-repeat with a custom template.
+                    <br>
+                    Swipe 50 slides with only 5 slides in the DOM. use builtin controls
+                </div>
+                <div class="carousel-demo">
+                    index : <input type="number" class="tiny" ng-model="carouselIndex">
+                    <ul rn-carousel rn-carousel-controls rn-carousel-index="carouselIndex" rn-carousel-buffered class="carousel1">
+                        <li ng-repeat="slide in slides track by slide.id" ng-class="'id-' + slide.id">
+                            <div ng-style="{'background-image': 'url(' + slide.img + ')'}"  class="bgimage">
+                                #{{ slide.id }}
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <h3>buffered ngRepeat with auto-slide(pause on hover) and builtin indicators </h3>
+                <div class="details">
+                </div>
+                <div class="carousel-demo">
+                    index: <input type="number" class="tiny" ng-model="carouselIndex2">
+                    <ul rn-carousel rn-carousel-index="carouselIndex2" rn-carousel-auto-slide rn-carousel-pause-on-hover rn-carousel-buffered class="carousel2">
+                        <li ng-repeat="slide in slides2 track by slide.id" ng-class="'id-' + slide.id">
+                            <div ng-style="{'background-image': 'url(' + slide.img + ')'}"  class="bgimage">
+                              #{{ slide.id }}
+                            </div>
+                        </li>
+                    </ul>
+                    <div rn-carousel-indicators ng-if="slides2.length > 1" slides="slides2" rn-carousel-index="carouselIndex2"></div>
+                </div>
+            </div>
+            <br>
+            <div>
+                <h3>buffered ngRepeat and custom indicators </h3>
+                <div class="details">
+                </div>
+                <div class="carousel-demo">
+                    <ul rn-carousel rn-carousel-index="carouselIndex22" rn-carousel-auto-slide rn-carousel-buffered class="carousel2">
+                        <li ng-repeat="slide in slides2 track by slide.id" ng-class="'id-' + slide.id">
+                            <div ng-style="{'background-image': 'url(' + slide.img + ')'}"  class="bgimage">
+                              #{{ slide.id }}
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="rn-carousel-indicator custom-indicator">
+                        <span ng-repeat="slide in slides2" ng-class="{active: $index==$parent.carouselIndex22}" ng-click="$parent.carouselIndex22 = $index">★</span>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <div >
+                <h3>buffered ngRepeat with custom transition</h3>
+                <div class="details">Use the 'hexagon' transition. index is shared with the carousel below.
+                </div>
+                <div class="carousel-demo">
+                    <ul rn-carousel rn-carousel-index="carouselIndex3" rn-carousel-transition="hexagon" rn-carousel-buffered class="carousel3">
+                        <li ng-repeat="slide in slides3 track by slide.id">
+                            <div ng-style="{'background-image': 'url(' + slide.img + ')'}"  class="bgimage">
+                              #{{ slide.id }}
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <br>
+            <div>
+                <h3>Custom templates without ng-repeat and auto-slide</h3>
+                <div class="details">
+                </div>
+                <div class="carousel-demo">
+                    <ul rn-carousel rn-carousel-index="3" rn-carousel-auto-slide="3" class="carousel5">
+                        <li>Slide 1</li>
+                        <li>Slide 2</li>
+                        <li>Slide 3</li>
+                        <li>Slide 4</li>
+                        <li>Slide 5</li>
+                        <li>Slide 6</li>
+                        <li>Slide 7</li>
+                        <li>Slide 8</li>
+                        <li>Slide 9</li>
+                    </ul>
+                </div>
+            </div>
+            <br>
+            <div>
+                <h3>Lockable carousel</h3>
+                <div class="details">
+                    use rn-carousel-locked binding to dynamically lock/unlock the carousel
+                </div>
+                <div class="carousel-demo">
+                    <label><input type="checkbox" ng-model="isLocked"/>Lock the carousel</label>
+                    <ul rn-carousel class="carousel5" rn-carousel-locked="isLocked">
+                        <li ng-repeat="slide in slides3 track by slide.id">
+                            <div ng-style="{'background-image': 'url(' + slide.img + ')'}"  class="bgimage">
+                              #{{ slide.id }}
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <br>
+            <div>
+                <h3>Add/Remove items in the collection</h3>
+                <div class="details">
+                    The carousel is bound to your ngRepeat collection.<br>
+                    If you add items at the start of the collection, then by default, the slide position will change.<br>
+                    If you want to preserve position even when adding items at the head of the collection, you need to add the `rn-carousel-deep-watch` attribute. This has a performance impact so use carefully.<br>
+                    Works great with buffering too so you can have almost infinite slides while keeping only 5 items in the DOM<br>
+                </div>
+                <div class="carousel-demo" >
+                    <button ng-click="addSlide('head')">Add at beginning</button>
+                    <button ng-click="addSlide('tail')">Add at end</button>
+                    <ul rn-carousel rn-carousel-index="carouselIndex6" rn-carousel-deep-watch rn-carousel-buffered class="carousel5">
+                        <li ng-repeat="slide in slides6 track by slide.id">
+                            <div ng-style="{'background-image': 'url(' + slide.img + ')'}"  class="bgimage">
+                              #{{ slide.id }}
+                            </div>
+                        </li>
+                    </ul>
+                    <div rn-carousel-indicators ng-if="slides6.length > 1" slides="slides6" rn-carousel-index="carouselIndex6"></div>
+                </div>
+            </div>
+            <br>
+            <div>
+                <h3>End to End Swiping</h3>
+                <div class="details">
+                    The carousel is bound to your ngRepeat collection.<br>
+                    Total images: {{ totalimg }} <br>
+                    Images in one set: {{ setOfImagesToShow }} <br>
+                    Total sets of images: {{ totalimg / setOfImagesToShow | number:0}}<br>
+                    <br>
+                </div>
+                <div class="carousel-demo" >
+                    
+                    <ul rn-carousel rn-carousel-index="carouselIndex7" rn-carousel-buffered rn-carousel-on-infinite-scroll-right="loadNextImages()" rn-carousel-on-infinite-scroll-left="loadPreviousImages()" class="carousel5">
+                        <li ng-repeat="slide in slides7 track by slide.id">
+                            <div ng-style="{'background-image': 'url(' + slide.img + ')'}"  class="bgimage">
+                              #{{ slide.id }}
+                            </div>
+                        </li>
+                    </ul>
+                    <div rn-carousel-indicators ng-if="slides7.length > 1" slides="slides7" rn-carousel-index="carouselIndex7"></div>
+                </div>
+            </div>
+
+        </div>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+    </body>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular-touch.min.js"></script>
+
+    <script src="./dist/angular-carousel.min.js"></script>
+    <!--<script src="./src/angular-carousel.js"></script>
+    <script src="./src/directives/rn-carousel.js"></script>
+    <script src="./src/directives/rn-carousel-indicators.js"></script>
+    <script src="./src/directives/sliceFilter.js"></script>
+    <script src="./src/directives/shifty.js"></script>
+     -->
+    <script>
+        angular.module('DemoApp', [
+            'angular-carousel'
+        ])
+
+        .controller('DemoCtrl', function($scope) {
+
+            $scope.colors = ["#fc0003", "#f70008", "#f2000d", "#ed0012", "#e80017", "#e3001c", "#de0021", "#d90026", "#d4002b", "#cf0030", "#c90036", "#c4003b", "#bf0040", "#ba0045", "#b5004a", "#b0004f", "#ab0054", "#a60059", "#a1005e", "#9c0063", "#960069", "#91006e", "#8c0073", "#870078", "#82007d", "#7d0082", "#780087", "#73008c", "#6e0091", "#690096", "#63009c", "#5e00a1", "#5900a6", "#5400ab", "#4f00b0", "#4a00b5", "#4500ba", "#4000bf", "#3b00c4", "#3600c9", "#3000cf", "#2b00d4", "#2600d9", "#2100de", "#1c00e3", "#1700e8", "#1200ed", "#0d00f2", "#0800f7", "#0300fc"];
+
+            function getSlide(target, style) {
+                var i = target.length;
+                return {
+                    id: (i + 1),
+                    label: 'slide #' + (i + 1),
+                    img: 'http://lorempixel.com/450/300/' + style + '/' + ((i + 1) % 10) ,
+                    color: $scope.colors[ (i*10) % $scope.colors.length],
+                    odd: (i % 2 === 0)
+                };
+            }
+
+            function addSlide(target, style) {
+                target.push(getSlide(target, style));
+            };
+
+            $scope.carouselIndex = 3;
+            $scope.carouselIndex2 = 0;
+            $scope.carouselIndex2 = 1;
+            $scope.carouselIndex3 = 5;
+            $scope.carouselIndex4 = 5;
+
+            function addSlides(target, style, qty) {
+                for (var i=0; i < qty; i++) {
+                    addSlide(target, style);
+                }
+            }
+
+            // 1st ngRepeat demo
+            $scope.slides = [];
+            addSlides($scope.slides, 'sports', 50);
+
+            // 2nd ngRepeat demo
+            $scope.slides2 = [];
+            addSlides($scope.slides2, 'sports', 10);
+
+            // 3rd ngRepeat demo
+            $scope.slides3 = [];
+            addSlides($scope.slides3, 'people', 50);
+
+            // 4th ngRepeat demo
+            $scope.slides4 = [];
+            addSlides($scope.slides4, 'city', 50);
+
+
+            // 5th ngRepeat demo
+            $scope.slides6 = [];
+            $scope.carouselIndex6 = 0;
+            addSlides($scope.slides6, 'sports', 10);
+            $scope.addSlide = function(at) {
+                if(at==='head') {
+                    $scope.slides6.unshift(getSlide($scope.slides6, 'people'));
+                } else {
+                    $scope.slides6.push(getSlide($scope.slides6, 'people'));
+                }
+            }
+            
+            // End to End swiping
+            // load 130 images in main javascript container
+            var slideImages = [];
+            addSlides(slideImages, 'sports', 10);
+            addSlides(slideImages, 'people', 10);
+            addSlides(slideImages, 'city', 10);
+            addSlides(slideImages, 'abstract', 10);
+            addSlides(slideImages, 'nature', 10);
+            addSlides(slideImages, 'food', 10);
+            addSlides(slideImages, 'transport', 10);
+            addSlides(slideImages, 'animals', 10);
+            addSlides(slideImages, 'business', 10);
+            addSlides(slideImages, 'nightlife', 10);
+            addSlides(slideImages, 'cats', 10);
+            addSlides(slideImages, 'fashion', 10);
+            addSlides(slideImages, 'technics', 10);
+            $scope.totalimg = slideImages.length;
+            $scope.galleryNumber = 1;
+            console.log($scope.galleryNumber);
+            
+            function getImage(target) {
+                var i = target.length
+                    , p = (($scope.galleryNumber-1)*$scope.setOfImagesToShow)+i;
+                console.log("i=" + i + "--" + p);
+                
+                return slideImages[p];
+            }
+            function addImages(target, qty) {
+                                
+                for (var i=0; i < qty; i++) {
+                    addImage(target);
+                }
+            }
+            
+            function addImage(target) {
+                target.push(getImage(target));
+            }
+            
+            $scope.slides7 = [];
+            $scope.carouselIndex7 = 0;
+            $scope.setOfImagesToShow = 3;
+            addImages($scope.slides7, $scope.setOfImagesToShow);
+            $scope.loadNextImages = function() {
+                console.log("loading Next images");
+                if (slideImages[slideImages.length-1].id !== $scope.slides7[$scope.slides7.length-1].id) {
+                    // Go to next set of images if exist
+                    $scope.slides7 = [];
+                    $scope.carouselIndex7 = 0;
+                    ++$scope.galleryNumber;
+                    addImages($scope.slides7, $scope.setOfImagesToShow);
+                } else {
+                    // Go to first set of images if not exist
+                    $scope.galleryNumber = 1;
+                    $scope.slides7 = [];
+                    $scope.carouselIndex7 = 0;
+                    addImages($scope.slides7, $scope.setOfImagesToShow);
+                }
+            }
+            $scope.loadPreviousImages = function() {
+                if (slideImages[0].id !== $scope.slides7[0].id) {
+                    // Go to previous set of images if exist
+                    $scope.slides7 = [];
+                    $scope.carouselIndex7 = 0;
+                    --$scope.galleryNumber;
+                    addImages($scope.slides7, $scope.setOfImagesToShow);
+                } else {
+                    // Go to last set of images if not exist
+                    console.log("slideimageslength: " + slideImages.length + ", " + slideImages.length-1 / $scope.setOfImagesToShow);
+                    // console.log("slideimageslength: " + slideImages.length );
+                    $scope.galleryNumber = slideImages.length / $scope.setOfImagesToShow;
+                    $scope.slides7 = [];
+                    $scope.carouselIndex7 = 0;
+                    addImages($scope.slides7, $scope.setOfImagesToShow);
+                    console.log("no images left");
+                }
+                
+            }
+
+        })
+
+
+    </script>
+</html>

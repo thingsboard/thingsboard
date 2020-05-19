@@ -1,0 +1,35 @@
+.test-rule1 {
+  transform: rotate(90deg), skew(30deg), scale(2, 4);
+}
+.test-rule2 {
+  transform: rotate(90deg), skew(30deg);
+  transform: scaleX(45deg);
+}
+.test-rule3 {
+  transform: scaleX(45deg);
+  background: url(data://img1.png);
+}
+.test-rule4 {
+  transform: rotate(90deg), skew(30deg), scale(2, 4) !important;
+}
+.test-rule5 {
+  transform: rotate(90deg), skew(30deg), scale(2, 4) !important;
+}
+.test-rule6 {
+  transform: scale(2, 4);
+}
+.test-rule7 {
+  transform: scale(2, 4), scale(2, 4), scale(2, 4) !important;
+}
+.test-rule-interleaved {
+  transform: t1, t2, t3;
+  background: b1, b2, b3;
+}
+.test-rule-spaced {
+  transform: t1 t2 t3;
+  background: b1 b2, b3;
+}
+.test-rule-interleaved-with-spaced {
+  transform: t1s, t2 t3s, t4 t5s t6s;
+  background: b1 b2s, b3, b4;
+}

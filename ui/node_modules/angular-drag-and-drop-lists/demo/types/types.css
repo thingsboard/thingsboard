@@ -1,0 +1,102 @@
+/**
+ * For the correct positioning of the placeholder element, the dnd-list and
+ * it's children must have position: relative
+ */
+.typesDemo ul[dnd-list],
+.typesDemo ul[dnd-list] > li {
+  position: relative;
+}
+
+/**
+ * The dnd-list should always have a min-height,
+ * otherwise you can't drop to it once it's empty
+ */
+.typesDemo ul[dnd-list] {
+  min-height: 42px;
+  padding-left: 0px;
+}
+
+/**
+ * The dndDraggingSource class will be applied to
+ * the source element of a drag operation. It makes
+ * sense to hide it to give the user the feeling
+ * that he's actually moving it.
+ */
+.typesDemo ul[dnd-list] .dndDraggingSource {
+  display: none;
+}
+
+/**
+ * An element with .dndPlaceholder class will be
+ * added to the dnd-list while the user is dragging
+ * over it.
+ */
+.typesDemo ul[dnd-list] .dndPlaceholder {
+  display: block;
+  background-color: #ddd;
+  padding: 10px 15px;
+  min-height: 42px;
+}
+
+/**
+ * The dnd-lists's child elements currently MUST have
+ * position: relative. Otherwise we can not determine
+ * whether the mouse pointer is in the upper or lower
+ * half of the element we are dragging over. In other
+ * browsers we can use event.offsetY for this.
+ */
+.typesDemo ul[dnd-list] li {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+  display: block;
+  margin-bottom: -1px;
+
+  /* Disable text selection if item is not draggable */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.typesDemo ul[dnd-list] li dnd-nodrag {
+  display: block;
+  padding: 10px 15px;
+}
+
+/**
+ * Gender-specifc background
+ */
+.typesDemo ul[dnd-list] li.background-man {
+  background-color: #CAE0FC;
+}
+
+.typesDemo ul[dnd-list] li.background-woman {
+  background-color: #FFE2F5;
+}
+
+.typesDemo ul[dnd-list] input.background-man {
+  background-color: #D8E9FF;
+  color: #2F4D99;
+}
+
+.typesDemo ul[dnd-list] input.background-woman {
+  background-color: #FFF0FA;
+  color: #D84FA7;
+}
+
+/**
+ * Handle positioning
+ */
+.typesDemo .handle {
+  cursor: move;
+  position: absolute;
+  top: 14px;
+}
+
+.typesDemo .name {
+  margin-left: 20px;
+}

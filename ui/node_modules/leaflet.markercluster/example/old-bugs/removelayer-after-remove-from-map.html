@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet debug page</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ==" crossorigin="" />
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js" integrity="sha512-WXoSHqw/t26DszhdMhOXOkI7qCiv5QWXhH9R7CgvgZMHz1ImlkVQ3uNsiQKu5wwbbxtPzFXd1hK4tzno2VqhpA==" crossorigin=""></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../screen.css" />
+
+	<link rel="stylesheet" href="../../dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="../../dist/MarkerCluster.Default.css" />
+	<script src="../../src/DistanceGrid.js"></script>
+	<script src="../../src/MarkerCluster.js"></script>
+	<script src="../../src/MarkerClusterGroup.js"></script>
+	<script src="../../src/MarkerCluster.QuickHull.js"></script>
+	<script src="../../src/MarkerCluster.Spiderfier.js"></script>
+</head>
+<body>
+
+	<div id="map"></div>
+	<a href="#" onclick="swapLayers()">1 - Swap layers</a><br>
+	<a href="#" onclick="removeMarker()">2 - Remove all markers</a><br>
+	<a href="#" onclick="swapLayers()">3 - Swap layers again =&gt; Marker is still there<a/></br>
+	
+	<span>Bug <a href="https://github.com/danzel/Leaflet.markercluster/issues/160">#160</a>. Click 1,2,3. There should be nothing on the map.</span><br/>
+	<script type="text/javascript">
+	
+		var map = new L.Map('map');
+
+		var tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+		});
+		map.addLayer(tiles);
+
+		var objectBounds = [[44.98131207805678, 6.0726203025917], [44.981459751363204, 6.073026722623153]];
+		map.fitBounds(new L.LatLngBounds(objectBounds));
+
+		var markers1 = new L.MarkerClusterGroup();
+		var markers2 = new L.MarkerClusterGroup();
+
+		map.addLayer(markers1);
+
+		var aMarker = new L.Marker(new L.LatLng(44.9813, 6.072620));
+		var anotherMarker = new L.Marker(new L.LatLng(44.9814, 6.072621));
+
+		markers1.addLayer(aMarker);
+		markers2.addLayer(anotherMarker);
+
+		swapLayers = function(){
+			if (map.hasLayer(markers1)){
+				map.removeLayer(markers1);
+				map.addLayer(markers2);
+			}else{
+				map.removeLayer(markers2);
+				map.addLayer(markers1);
+			}
+		};
+
+		removeMarker = function(){
+			markers1.removeLayer(aMarker);
+			markers2.removeLayer(anotherMarker);
+		};
+
+
+	</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "angular-translate-handler-log",
+  "description": "A plugin for Angular Translate",
+  "version": "2.18.1",
+  "main": "./angular-translate-handler-log.js",
+  "ignore": [],
+  "author": "Pascal Precht",
+  "license": "MIT",
+  "dependencies": {
+    "angular-translate": "~2.18.1"
+  }
+}

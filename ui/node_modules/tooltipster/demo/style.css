@@ -1,0 +1,74 @@
+/* Main */
+
+body {
+	background-color: #dcdcdc;
+	font-size: 16px;
+	line-height: 22px;
+}
+
+.circle {
+	background: red;
+	border-radius: 50px;
+	display: inline-block;
+	height: 50px;
+	margin-right: 10px;
+	vertical-align: middle;
+	width: 50px;
+}
+
+.container, #container {
+	width: 978px;
+	margin: 10px auto;
+	padding: 60px;
+	box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+	background: #fff;
+	text-align: left;
+	display: block;
+	overflow: hidden;
+}
+
+.item {
+	width: 200px;
+	float: left;
+	padding: 10px;
+	margin: 10px;
+	background: #000;
+	color: #fff;
+}
+
+#circle {
+	display: block;
+	margin: auto;
+	position: relative;
+}
+
+#genderChart1 {
+	height: 300px;
+	width: 300px;
+	margin: 0 auto;
+}
+
+#inline_container p {
+	margin: auto;
+	width: 300px;
+}
+
+#scrollable {
+	height: 300px;
+	overflow: scroll;
+}
+
+#scrollable2 {
+	border: 1px solid gray;
+	height: 250px;
+	overflow: scroll;
+}
+
+#square {
+	background: red;
+	height: 50px;
+	position: fixed;
+	right: 30px;
+	top: 30px;
+	width: 50px;
+}

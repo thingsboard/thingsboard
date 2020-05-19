@@ -1,0 +1,23 @@
+{
+  "extends": "airbnb",
+  "env": {
+    "browser": true
+  },
+  "plugins": ["compat"],
+  "rules": {
+    "compat/compat": 2,
+    "max-len": ['warn', 100, 2, {
+      ignoreUrls: true,
+      ignoreComments: false,
+      ignoreRegExpLiterals: true,
+      ignoreStrings: true,
+      ignoreTemplateLiterals: true,
+    }],
+    "semi": ["error", "never"],
+    "indent": ["error", 4],
+    "no-case-declarations": [0],
+    "quote-props": ["error", "consistent"],
+    "space-before-function-paren": ["error", { "anonymous": "never", "named": "always" }],
+    "arrow-parens": [2, "as-needed", { "requireForBlockBody": false }],
+  }
+}

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for ./src/ocLazyLoad.polyfill.ie8.js</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../prettify.css">
+    <link rel="stylesheet" href="../base.css">
+    <style type='text/css'>
+        div.coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class="header low">
+    <h1>Code coverage report for <span class="entity">./src/ocLazyLoad.polyfill.ie8.js</span></h1>
+    <h2>
+        Statements: <span class="metric">5% <small>(1 / 20)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Branches: <span class="metric">5.56% <small>(1 / 18)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Functions: <span class="metric">0% <small>(0 / 1)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Lines: <span class="metric">5% <small>(1 / 20)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Ignored: <span class="metric"><span class="ignore-none">none</span></span> &nbsp;&nbsp;&nbsp;&nbsp;
+    </h2>
+    <div class="path"><a href="../index.html">All files</a> &#187; <a href="index.html">./src/</a> &#187; ocLazyLoad.polyfill.ie8.js</div>
+</div>
+<div class="body">
+<pre><table class="coverage">
+<tr><td class="line-count">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Array.indexOf polyfill for IE8
+'use strict';
+&nbsp;
+<span class="missing-if-branch" title="if path not taken" >I</span>if (!Array.prototype.indexOf) {
+<span class="cstat-no" title="statement not covered" >        Array.prototype.indexOf = <span class="fstat-no" title="function not covered" >function (searchElement, fromIndex) {</span></span>
+<span class="cstat-no" title="statement not covered" >                var k;</span>
+&nbsp;
+                // 1. Let O be the result of calling ToObject passing
+                //    the this value as the argument.
+<span class="cstat-no" title="statement not covered" >                if (this == null) {</span>
+<span class="cstat-no" title="statement not covered" >                        throw new TypeError('"this" is null or not defined');</span>
+                }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >                var O = Object(this);</span>
+&nbsp;
+                // 2. Let lenValue be the result of calling the Get
+                //    internal method of O with the argument "length".
+                // 3. Let len be ToUint32(lenValue).
+<span class="cstat-no" title="statement not covered" >                var len = O.length &gt;&gt;&gt; 0;</span>
+&nbsp;
+                // 4. If len is 0, return -1.
+<span class="cstat-no" title="statement not covered" >                if (len === 0) {</span>
+<span class="cstat-no" title="statement not covered" >                        return -1;</span>
+                }
+&nbsp;
+                // 5. If argument fromIndex was passed let n be
+                //    ToInteger(fromIndex); else let n be 0.
+<span class="cstat-no" title="statement not covered" >                var n = +fromIndex || 0;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >                if (Math.abs(n) === Infinity) {</span>
+<span class="cstat-no" title="statement not covered" >                        n = 0;</span>
+                }
+&nbsp;
+                // 6. If n &gt;= len, return -1.
+<span class="cstat-no" title="statement not covered" >                if (n &gt;= len) {</span>
+<span class="cstat-no" title="statement not covered" >                        return -1;</span>
+                }
+&nbsp;
+                // 7. If n &gt;= 0, then Let k be n.
+                // 8. Else, n&lt;0, Let k be len - abs(n).
+                //    If k is less than 0, then let k be 0.
+<span class="cstat-no" title="statement not covered" >                k = Math.max(n &gt;= 0 ? n : len - Math.abs(n), 0);</span>
+&nbsp;
+                // 9. Repeat, while k &lt; len
+<span class="cstat-no" title="statement not covered" >                while (k &lt; len) {</span>
+                        // a. Let Pk be ToString(k).
+                        //   This is implicit for LHS operands of the in operator
+                        // b. Let kPresent be the result of calling the
+                        //    HasProperty internal method of O with argument Pk.
+                        //   This step can be combined with c
+                        // c. If kPresent is true, then
+                        //    i.  Let elementK be the result of calling the Get
+                        //        internal method of O with the argument ToString(k).
+                        //   ii.  Let same be the result of applying the
+                        //        Strict Equality Comparison Algorithm to
+                        //        searchElement and elementK.
+                        //  iii.  If same is true, return k.
+<span class="cstat-no" title="statement not covered" >                        if (k in O &amp;&amp; O[k] === searchElement) {</span>
+<span class="cstat-no" title="statement not covered" >                                return k;</span>
+                        }
+<span class="cstat-no" title="statement not covered" >                        k++;</span>
+                }
+<span class="cstat-no" title="statement not covered" >                return -1;</span>
+        };
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkM6L3d3dy9vY0xhenlMb2FkL3NyYy9vY0xhenlMb2FkLnBvbHlmaWxsLmllOC5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUFDQSxJQUFHLENBQUMsS0FBSyxDQUFDLFNBQVMsQ0FBQyxPQUFPLEVBQUU7QUFDekIsYUFBSyxDQUFDLFNBQVMsQ0FBQyxPQUFPLEdBQUcsVUFBUyxhQUFhLEVBQUUsU0FBUyxFQUFFO0FBQ3pELG9CQUFJLENBQUMsQ0FBQzs7OztBQUlOLG9CQUFHLElBQUksSUFBSSxJQUFJLEVBQUU7QUFDYiw4QkFBTSxJQUFJLFNBQVMsQ0FBQywrQkFBK0IsQ0FBQyxDQUFDO2lCQUN4RDs7QUFFRCxvQkFBSSxDQUFDLEdBQUcsTUFBTSxDQUFDLElBQUksQ0FBQyxDQUFDOzs7OztBQUtyQixvQkFBSSxHQUFHLEdBQUcsQ0FBQyxDQUFDLE1BQU0sS0FBSyxDQUFDLENBQUM7OztBQUd6QixvQkFBRyxHQUFHLEtBQUssQ0FBQyxFQUFFO0FBQ1YsK0JBQU8sQ0FBQyxDQUFDLENBQUM7aUJBQ2I7Ozs7QUFJRCxvQkFBSSxDQUFDLEdBQUcsQ0FBQyxTQUFTLElBQUksQ0FBQyxDQUFDOztBQUV4QixvQkFBRyxJQUFJLENBQUMsR0FBRyxDQUFDLENBQUMsQ0FBQyxLQUFLLFFBQVEsRUFBRTtBQUN6Qix5QkFBQyxHQUFHLENBQUMsQ0FBQztpQkFDVDs7O0FBR0Qsb0JBQUcsQ0FBQyxJQUFJLEdBQUcsRUFBRTtBQUNULCtCQUFPLENBQUMsQ0FBQyxDQUFDO2lCQUNiOzs7OztBQUtELGlCQUFDLEdBQUcsSUFBSSxDQUFDLEdBQUcsQ0FBQyxDQUFDLElBQUksQ0FBQyxHQUFHLENBQUMsR0FBRyxHQUFHLEdBQUcsSUFBSSxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUMsRUFBRSxDQUFDLENBQUMsQ0FBQzs7O0FBR2hELHVCQUFNLENBQUMsR0FBRyxHQUFHLEVBQUU7Ozs7Ozs7Ozs7Ozs7QUFhWCw0QkFBRyxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQyxDQUFDLENBQUMsS0FBSyxhQUFhLEVBQUU7QUFDakMsdUNBQU8sQ0FBQyxDQUFDO3lCQUNaO0FBQ0QseUJBQUMsRUFBRSxDQUFDO2lCQUNQO0FBQ0QsdUJBQU8sQ0FBQyxDQUFDLENBQUM7U0FDYixDQUFDO0NBQ0wiLCJmaWxlIjoiQzovd3d3L29jTGF6eUxvYWQvc3JjL29jTGF6eUxvYWQucG9seWZpbGwuaWU4LmpzIiwic291cmNlc0NvbnRlbnQiOlsiLy8gQXJyYXkuaW5kZXhPZiBwb2x5ZmlsbCBmb3IgSUU4XHJcbmlmKCFBcnJheS5wcm90b3R5cGUuaW5kZXhPZikge1xyXG4gICAgQXJyYXkucHJvdG90eXBlLmluZGV4T2YgPSBmdW5jdGlvbihzZWFyY2hFbGVtZW50LCBmcm9tSW5kZXgpIHtcclxuICAgICAgICB2YXIgaztcclxuXHJcbiAgICAgICAgLy8gMS4gTGV0IE8gYmUgdGhlIHJlc3VsdCBvZiBjYWxsaW5nIFRvT2JqZWN0IHBhc3NpbmdcclxuICAgICAgICAvLyAgICB0aGUgdGhpcyB2YWx1ZSBhcyB0aGUgYXJndW1lbnQuXHJcbiAgICAgICAgaWYodGhpcyA9PSBudWxsKSB7XHJcbiAgICAgICAgICAgIHRocm93IG5ldyBUeXBlRXJyb3IoJ1widGhpc1wiIGlzIG51bGwgb3Igbm90IGRlZmluZWQnKTtcclxuICAgICAgICB9XHJcblxyXG4gICAgICAgIHZhciBPID0gT2JqZWN0KHRoaXMpO1xyXG5cclxuICAgICAgICAvLyAyLiBMZXQgbGVuVmFsdWUgYmUgdGhlIHJlc3VsdCBvZiBjYWxsaW5nIHRoZSBHZXRcclxuICAgICAgICAvLyAgICBpbnRlcm5hbCBtZXRob2Qgb2YgTyB3aXRoIHRoZSBhcmd1bWVudCBcImxlbmd0aFwiLlxyXG4gICAgICAgIC8vIDMuIExldCBsZW4gYmUgVG9VaW50MzIobGVuVmFsdWUpLlxyXG4gICAgICAgIHZhciBsZW4gPSBPLmxlbmd0aCA+Pj4gMDtcclxuXHJcbiAgICAgICAgLy8gNC4gSWYgbGVuIGlzIDAsIHJldHVybiAtMS5cclxuICAgICAgICBpZihsZW4gPT09IDApIHtcclxuICAgICAgICAgICAgcmV0dXJuIC0xO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgLy8gNS4gSWYgYXJndW1lbnQgZnJvbUluZGV4IHdhcyBwYXNzZWQgbGV0IG4gYmVcclxuICAgICAgICAvLyAgICBUb0ludGVnZXIoZnJvbUluZGV4KTsgZWxzZSBsZXQgbiBiZSAwLlxyXG4gICAgICAgIHZhciBuID0gK2Zyb21JbmRleCB8fCAwO1xyXG5cclxuICAgICAgICBpZihNYXRoLmFicyhuKSA9PT0gSW5maW5pdHkpIHtcclxuICAgICAgICAgICAgbiA9IDA7XHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICAvLyA2LiBJZiBuID49IGxlbiwgcmV0dXJuIC0xLlxyXG4gICAgICAgIGlmKG4gPj0gbGVuKSB7XHJcbiAgICAgICAgICAgIHJldHVybiAtMTtcclxuICAgICAgICB9XHJcblxyXG4gICAgICAgIC8vIDcuIElmIG4gPj0gMCwgdGhlbiBMZXQgayBiZSBuLlxyXG4gICAgICAgIC8vIDguIEVsc2UsIG48MCwgTGV0IGsgYmUgbGVuIC0gYWJzKG4pLlxyXG4gICAgICAgIC8vICAgIElmIGsgaXMgbGVzcyB0aGFuIDAsIHRoZW4gbGV0IGsgYmUgMC5cclxuICAgICAgICBrID0gTWF0aC5tYXgobiA+PSAwID8gbiA6IGxlbiAtIE1hdGguYWJzKG4pLCAwKTtcclxuXHJcbiAgICAgICAgLy8gOS4gUmVwZWF0LCB3aGlsZSBrIDwgbGVuXHJcbiAgICAgICAgd2hpbGUoayA8IGxlbikge1xyXG4gICAgICAgICAgICAvLyBhLiBMZXQgUGsgYmUgVG9TdHJpbmcoaykuXHJcbiAgICAgICAgICAgIC8vICAgVGhpcyBpcyBpbXBsaWNpdCBmb3IgTEhTIG9wZXJhbmRzIG9mIHRoZSBpbiBvcGVyYXRvclxyXG4gICAgICAgICAgICAvLyBiLiBMZXQga1ByZXNlbnQgYmUgdGhlIHJlc3VsdCBvZiBjYWxsaW5nIHRoZVxyXG4gICAgICAgICAgICAvLyAgICBIYXNQcm9wZXJ0eSBpbnRlcm5hbCBtZXRob2Qgb2YgTyB3aXRoIGFyZ3VtZW50IFBrLlxyXG4gICAgICAgICAgICAvLyAgIFRoaXMgc3RlcCBjYW4gYmUgY29tYmluZWQgd2l0aCBjXHJcbiAgICAgICAgICAgIC8vIGMuIElmIGtQcmVzZW50IGlzIHRydWUsIHRoZW5cclxuICAgICAgICAgICAgLy8gICAgaS4gIExldCBlbGVtZW50SyBiZSB0aGUgcmVzdWx0IG9mIGNhbGxpbmcgdGhlIEdldFxyXG4gICAgICAgICAgICAvLyAgICAgICAgaW50ZXJuYWwgbWV0aG9kIG9mIE8gd2l0aCB0aGUgYXJndW1lbnQgVG9TdHJpbmcoaykuXHJcbiAgICAgICAgICAgIC8vICAgaWkuICBMZXQgc2FtZSBiZSB0aGUgcmVzdWx0IG9mIGFwcGx5aW5nIHRoZVxyXG4gICAgICAgICAgICAvLyAgICAgICAgU3RyaWN0IEVxdWFsaXR5IENvbXBhcmlzb24gQWxnb3JpdGhtIHRvXHJcbiAgICAgICAgICAgIC8vICAgICAgICBzZWFyY2hFbGVtZW50IGFuZCBlbGVtZW50Sy5cclxuICAgICAgICAgICAgLy8gIGlpaS4gIElmIHNhbWUgaXMgdHJ1ZSwgcmV0dXJuIGsuXHJcbiAgICAgICAgICAgIGlmKGsgaW4gTyAmJiBPW2tdID09PSBzZWFyY2hFbGVtZW50KSB7XHJcbiAgICAgICAgICAgICAgICByZXR1cm4gaztcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBrKys7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiAtMTtcclxuICAgIH07XHJcbn1cclxuIl19</pre></td></tr>
+</table></pre>
+
+</div>
+<div class="footer">
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Feb 03 2017 10:04:58 GMT+0100 (Paris, Madrid)</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

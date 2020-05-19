@@ -1,0 +1,16 @@
+/*!
+ * AngularJS Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v1.1.19
+ */
+md-divider.md-THEME_NAME-theme {
+  border-top-color: '{{foreground-4}}'; }
+
+.layout-row > md-divider.md-THEME_NAME-theme,
+.layout-xs-row > md-divider.md-THEME_NAME-theme, .layout-gt-xs-row > md-divider.md-THEME_NAME-theme,
+.layout-sm-row > md-divider.md-THEME_NAME-theme, .layout-gt-sm-row > md-divider.md-THEME_NAME-theme,
+.layout-md-row > md-divider.md-THEME_NAME-theme, .layout-gt-md-row > md-divider.md-THEME_NAME-theme,
+.layout-lg-row > md-divider.md-THEME_NAME-theme, .layout-gt-lg-row > md-divider.md-THEME_NAME-theme,
+.layout-xl-row > md-divider.md-THEME_NAME-theme {
+  border-right-color: '{{foreground-4}}'; }

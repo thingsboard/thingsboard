@@ -1,0 +1,3 @@
+RuntimeError: error evaluating function `darken`: Argument cannot be evaluated to a color in {path}color-func-invalid-color-2.less on line 2, column 14:
+1 // https://github.com/less/less.js/issues/3338
+2 @base-color: darken(var(--baseColor, red), 50%);
