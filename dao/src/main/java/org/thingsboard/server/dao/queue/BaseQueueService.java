@@ -109,7 +109,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
                         if (queue.getId() == null) {
                             List<Queue> existingQueues = findQueues(tenantId);
-                            if (existingQueues.size() >= queueTenant.getNumberOfQueues()) {
+                            if (existingQueues.size() >= queueTenant.getMaxNumberOfQueues()) {
                                 throw new DataValidationException("The limit for creating new queue has been exceeded!");
                             }
                         }

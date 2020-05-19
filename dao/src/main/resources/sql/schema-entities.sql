@@ -187,7 +187,7 @@ CREATE TABLE IF NOT EXISTS tenant (
     zip varchar(255),
     isolated_tb_core boolean,
     isolated_tb_rule_engine boolean,
-    number_ofQueues int ,
+    max_number_of_queues int ,
     max_number_of_partitions_per_queue int
 );
 
@@ -259,7 +259,7 @@ CREATE TABLE IF NOT EXISTS queue(
     id varchar(31) NOT NULL CONSTRAINT queue_pkey PRIMARY KEY,
     tenant_id varchar(31),
     name varchar(255),
-    topic varchar(255) UNIQUE,
+    topic varchar(255),
     poll_interval int,
     partitions int,
     pack_processing_timeout bigint,

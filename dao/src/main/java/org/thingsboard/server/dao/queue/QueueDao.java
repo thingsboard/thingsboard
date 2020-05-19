@@ -17,9 +17,6 @@ package org.thingsboard.server.dao.queue;
 
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.sql.QueueEntity;
-
-import java.util.List;
 
 public interface QueueDao extends Dao<Queue> {
     Queue findQueueByTopic(String topic);

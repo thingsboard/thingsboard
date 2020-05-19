@@ -119,7 +119,7 @@ public class ModelConstants {
     public static final String TENANT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
     public static final String TENANT_ISOLATED_TB_CORE = "isolated_tb_core";
     public static final String TENANT_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
-    public static final String TENANT_NUMBER_OF_QUEUES = "number_of_queues";
+    public static final String TENANT_MAX_NUMBER_OF_QUEUES = "max_number_of_queues";
     public static final String TENANT_MAX_NUMBER_OF_PARTITIONS_PER_QUEUE = "max_number_of_partitions_per_queue";
 
     public static final String TENANT_BY_REGION_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "tenant_by_region_and_search_text";

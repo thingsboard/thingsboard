@@ -52,7 +52,7 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
     @Column(name = ModelConstants.QUEUE_NAME_PROPERTY)
     private String name;
 
-    @Column(name = ModelConstants.QUEUE_TOPIC_PROPERTY, unique = true)
+    @Column(name = ModelConstants.QUEUE_TOPIC_PROPERTY)
     private String topic;
 
     @Column(name = ModelConstants.QUEUE_POLL_INTERVAL_PROPERTY)

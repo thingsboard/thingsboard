@@ -78,8 +78,8 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
     @Column(name = ModelConstants.TENANT_ISOLATED_TB_RULE_ENGINE)
     private boolean isolatedTbRuleEngine;
 
-    @Column(name = ModelConstants.TENANT_NUMBER_OF_QUEUES)
-    private int numberOfQueues;
+    @Column(name = ModelConstants.TENANT_MAX_NUMBER_OF_QUEUES)
+    private int maxNumberOfQueues;
 
     @Column(name = ModelConstants.TENANT_MAX_NUMBER_OF_PARTITIONS_PER_QUEUE)
     private int maxNumberOfPartitionsPerQueue;
@@ -142,7 +142,7 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         tenant.setAdditionalInfo(additionalInfo);
         tenant.setIsolatedTbCore(isolatedTbCore);
         tenant.setIsolatedTbRuleEngine(isolatedTbRuleEngine);
-        tenant.setNumberOfQueues(numberOfQueues);
+        tenant.setMaxNumberOfQueues(maxNumberOfQueues);
         tenant.setMaxNumberOfPartitionsPerQueue(maxNumberOfPartitionsPerQueue);
         return tenant;
     }

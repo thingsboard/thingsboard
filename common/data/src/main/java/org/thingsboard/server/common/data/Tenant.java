@@ -31,7 +31,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     private String region;
     private boolean isolatedTbCore;
     private boolean isolatedTbRuleEngine;
-    private int numberOfQueues;
+    private int maxNumberOfQueues;
     private int maxNumberOfPartitionsPerQueue;
 
     public Tenant() {
@@ -92,12 +92,12 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         this.isolatedTbRuleEngine = isolatedTbRuleEngine;
     }
 
-    public int getNumberOfQueues() {
-        return numberOfQueues;
+    public int getMaxNumberOfQueues() {
+        return maxNumberOfQueues;
     }
 
-    public void setNumberOfQueues(int numberOfQueues) {
-        this.numberOfQueues = numberOfQueues;
+    public void setMaxNumberOfQueues(int maxNumberOfQueues) {
+        this.maxNumberOfQueues = maxNumberOfQueues;
     }
 
     public int getMaxNumberOfPartitionsPerQueue() {
@@ -124,8 +124,8 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         builder.append(isolatedTbCore);
         builder.append(", isolatedTbRuleEngine=");
         builder.append(isolatedTbRuleEngine);
-        builder.append(", numberOfQueues=");
-        builder.append(numberOfQueues);
+        builder.append(", maxNumberOfQueues=");
+        builder.append(maxNumberOfQueues);
         builder.append(", maxNumberOfPartitionsPerQueue=");
         builder.append(maxNumberOfPartitionsPerQueue);
         builder.append(", additionalInfo=");

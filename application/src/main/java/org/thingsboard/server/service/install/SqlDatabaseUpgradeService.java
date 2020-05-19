@@ -83,11 +83,14 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     @Autowired
     private InstallScripts installScripts;
 
-    @Autowired
+    @Autowired(required = false)
     private TbQueueRuleEngineSettings ruleEngineSettings;
 
     @Autowired
     private QueueService queueService;
+
+    @Autowired
+    private SystemDataLoaderService systemDataLoaderService;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -260,7 +263,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 "id varchar(31) NOT NULL CONSTRAINT queue_pkey PRIMARY KEY," +
                                 "tenant_id varchar(31)," +
                                 "name varchar(255)," +
-                                "topic varchar(255) UNIQUE," +
+                                "topic varchar(255)," +
                                 "poll_interval int," +
                                 "partitions int," +
                                 "pack_processing_timeout bigint," +
@@ -271,7 +274,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     }
 
 //                    try {
-                        if (!CollectionUtils.isEmpty(ruleEngineSettings.getQueues())) {
+                        if (ruleEngineSettings != null && !CollectionUtils.isEmpty(ruleEngineSettings.getQueues())) {
                             ruleEngineSettings.getQueues().forEach(queueSettings -> {
                                 Queue queue = new Queue();
                                 queue.setTenantId(TenantId.SYS_TENANT_ID);
@@ -295,13 +298,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 queueService.createOrUpdateQueue(queue);
                             });
                         } else {
-                            createDefaultQueues();
+                            systemDataLoaderService.createQueues();
                         }
 //                    } catch (Exception e) {
 //                    }
 
                     try {
-                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN number_ofQueues int DEFAULT (1), ADD COLUMN max_number_of_partitions_per_queue int DEFAULT (10)");
+                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN max_number_of_queues int DEFAULT (1), ADD COLUMN max_number_of_partitions_per_queue int DEFAULT (10)");
                     } catch (Exception e) {
                     }
                     log.info("Schema updated.");
@@ -318,62 +321,5 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         Thread.sleep(5000);
     }
 
-    private void createDefaultQueues() {
-        Queue mainQueue = new Queue();
-        mainQueue.setTenantId(TenantId.SYS_TENANT_ID);
-        mainQueue.setName("Main");
-        mainQueue.setTopic("tb_rule_engine.main");
-        mainQueue.setPollInterval(25);
-        mainQueue.setPartitions(10);
-        mainQueue.setPackProcessingTimeout(60000);
-        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
-        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
-        mainQueueSubmitStrategy.setBatchSize(1000);
-        mainQueue.setSubmitStrategy(mainQueueSubmitStrategy);
-        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
-        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
-        mainQueueProcessingStrategy.setRetries(3);
-        mainQueueProcessingStrategy.setFailurePercentage(0);
-        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
-        mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
-        queueService.createOrUpdateQueue(mainQueue);
 
-        Queue highPriorityQueue = new Queue();
-        highPriorityQueue.setTenantId(TenantId.SYS_TENANT_ID);
-        highPriorityQueue.setName("HighPriority");
-        highPriorityQueue.setTopic("tb_rule_engine.hp");
-        highPriorityQueue.setPollInterval(25);
-        highPriorityQueue.setPartitions(10);
-        highPriorityQueue.setPackProcessingTimeout(60000);
-        SubmitStrategy highPriorityQueueSubmitStrategy = new SubmitStrategy();
-        highPriorityQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
-        highPriorityQueueSubmitStrategy.setBatchSize(100);
-        highPriorityQueue.setSubmitStrategy(highPriorityQueueSubmitStrategy);
-        ProcessingStrategy highPriorityQueueProcessingStrategy = new ProcessingStrategy();
-        highPriorityQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
-        highPriorityQueueProcessingStrategy.setRetries(0);
-        highPriorityQueueProcessingStrategy.setFailurePercentage(0);
-        highPriorityQueueProcessingStrategy.setPauseBetweenRetries(5);
-        highPriorityQueue.setProcessingStrategy(highPriorityQueueProcessingStrategy);
-        queueService.createOrUpdateQueue(highPriorityQueue);
-
-        Queue sequentialByOriginatorQueue = new Queue();
-        sequentialByOriginatorQueue.setTenantId(TenantId.SYS_TENANT_ID);
-        sequentialByOriginatorQueue.setName("SequentialByOriginator");
-        sequentialByOriginatorQueue.setTopic("tb_rule_engine.sq");
-        sequentialByOriginatorQueue.setPollInterval(25);
-        sequentialByOriginatorQueue.setPartitions(10);
-        sequentialByOriginatorQueue.setPackProcessingTimeout(60000);
-        SubmitStrategy sequentialByOriginatorQueueSubmitStrategy = new SubmitStrategy();
-        sequentialByOriginatorQueueSubmitStrategy.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
-        sequentialByOriginatorQueueSubmitStrategy.setBatchSize(100);
-        sequentialByOriginatorQueue.setSubmitStrategy(sequentialByOriginatorQueueSubmitStrategy);
-        ProcessingStrategy sequentialByOriginatorQueueProcessingStrategy = new ProcessingStrategy();
-        sequentialByOriginatorQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
-        sequentialByOriginatorQueueProcessingStrategy.setRetries(3);
-        sequentialByOriginatorQueueProcessingStrategy.setFailurePercentage(0);
-        sequentialByOriginatorQueueProcessingStrategy.setPauseBetweenRetries(5);
-        sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
-        queueService.createOrUpdateQueue(sequentialByOriginatorQueue);
-    }
 }
