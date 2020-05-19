@@ -30,6 +30,8 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   @Input() minTime: number;
   @Input() maxTime: number;
   @Input() step = 1000;
+  @Input() anchors = [];
+  @Input() useAnchors = false;
 
   @Output() timeUpdated: EventEmitter<number> = new EventEmitter();
 
@@ -95,17 +97,35 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   }
 
   moveNext() {
-    if (this.index <= this.maxTimeIndex) {
-      this.index++;
+    if (this.index < this.maxTimeIndex) {
+      if (this.useAnchors) {
+        const anchorIndex = this.findIndex(this.currentTime, this.anchors) + 1;
+        this.index = Math.floor((this.anchors[anchorIndex] - this.minTime) / this.step);
+      } else {
+        this.index++;
+      }
     }
     this.pause();
   }
 
   movePrev() {
     if (this.index > this.minTimeIndex) {
-      this.index--;
+      if (this.useAnchors) {
+        const anchorIndex = this.findIndex(this.currentTime, this.anchors) - 1;
+        this.index = Math.floor((this.anchors[anchorIndex] - this.minTime) / this.step);
+      } else {
+        this.index--;
+      }
     }
     this.pause();
+  }
+
+  findIndex(value: number, array: number[]): number {
+    let i = 0;
+    while (array[i] < value) {
+      i++;
+    }
+    return i;
   }
 
   moveStart() {
