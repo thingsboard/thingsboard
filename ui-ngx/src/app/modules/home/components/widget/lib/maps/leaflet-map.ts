@@ -20,12 +20,12 @@ import 'leaflet-providers';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 
 import {
-  FormattedData,
-  MapSettings,
-  MarkerSettings,
-  PolygonSettings,
-  PolylineSettings,
-  UnitedMapSettings
+    FormattedData,
+    MapSettings,
+    MarkerSettings,
+    PolygonSettings,
+    PolylineSettings,
+    UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -346,15 +346,19 @@ export default abstract class LeafletMap {
     // Polyline
 
     updatePolylines(polyData: FormattedData[][], data?: FormattedData) {
-        polyData.forEach((dataSource) => {
-            if (dataSource.length) {
-                data = data || dataSource[0];
-                if (this.polylines.get(data.$datasource.entityName)) {
+        polyData.forEach((dataSource: FormattedData[]) => {
+            data = data || dataSource[0];
+            if (dataSource.length && data.entityName === dataSource[0].entityName) {
+                if (this.polylines.get(data.entityName)) {
                     this.updatePolyline(data, dataSource, this.options);
                 }
                 else {
                     this.createPolyline(data, dataSource, this.options);
                 }
+            }
+            else {
+                if (data)
+                    this.removePolyline(dataSource[0]?.entityName)
             }
         })
     }
@@ -362,10 +366,10 @@ export default abstract class LeafletMap {
     createPolyline(data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings) {
         this.ready$.subscribe(() => {
             const poly = new Polyline(this.map,
-              dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
+                dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
             const bounds = poly.leafletPoly.getBounds();
             this.fitBounds(bounds);
-            this.polylines.set(data.$datasource.entityName, poly);
+            this.polylines.set(data.entityName, poly);
         });
     }
 
@@ -373,13 +377,21 @@ export default abstract class LeafletMap {
         this.ready$.subscribe(() => {
             const poly = this.polylines.get(data.entityName);
             const oldBounds = poly.leafletPoly.getBounds();
-            poly.updatePolyline(settings, data.map(el => this.convertPosition(el)).filter(el => !!el), dataSources);
+            poly.updatePolyline(dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
             const newBounds = poly.leafletPoly.getBounds();
             if (oldBounds.toBBoxString() !== newBounds.toBBoxString()) {
                 this.fitBounds(newBounds);
             }
         });
-    }Я
+    }
+
+    removePolyline(name: string) {
+        const poly = this.polylines.get(name);
+        if (poly) {
+            this.map.removeLayer(poly.leafletPoly);
+            this.polylines.delete(name);
+        }
+    }
 
     // Polygon
 

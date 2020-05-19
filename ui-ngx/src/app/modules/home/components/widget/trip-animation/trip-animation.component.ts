@@ -69,6 +69,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   maxTimeFormat: string;
   anchors: number[] = [];
   useAnchors: boolean;
+  currentTime: number;
 
   static getSettingsSchema(): JsonSettingsSchema {
     const schema = initSchema();
@@ -118,6 +119,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   timeUpdated(time: number) {
+    this.currentTime = time;
     const currentPosition = this.interpolatedTimeData
       .map(dataSource => dataSource[time])
       .filter(ds => ds)
@@ -142,7 +144,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
         }
       }
     }
-    this.activeTrip = currentPosition[0];
     this.calcLabel();
     this.calcTooltip();
     if (this.mapWidget) {
@@ -153,7 +154,10 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       if (this.settings.showPoints) {
         this.mapWidget.map.updatePoints(_.values(_.union(this.interpolatedTimeData)[0]), this.calcTooltip);
       }
-      this.mapWidget.map.updateMarkers(currentPosition, this.calcTooltip);
+      this.mapWidget.map.updateMarkers(currentPosition, (trip) => {
+        this.activeTrip = trip;
+        this.timeUpdated(this.currentTime)
+      });
     }
   }
 
@@ -193,6 +197,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
         SecurityContext.HTML, tooltipText);
       this.cd.detectChanges();
     }
+    this.activeTrip = point;
     return tooltipText;
   }
 
