@@ -117,6 +117,11 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
     this.valueChangeSubscription = this.kvListFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
+    if (this.disabled) {
+      this.kvListFormGroup.disable({emitEvent: false});
+    } else {
+      this.kvListFormGroup.enable({emitEvent: false});
+    }
   }
 
   public removeKeyVal(index: number) {

@@ -14,21 +14,28 @@
 /// limitations under the License.
 ///
 
-import L from 'leaflet';
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
-import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
-import { MapProviders, FormattedData } from '../lib/maps/map-models';
-import { initSchema, addToSchema, addGroupInfo, addCondition } from '@app/core/schema-utils';
-import { tripAnimationSchema, mapPolygonSchema, pathSchema, pointSchema } from '../lib/maps/schemes';
+import { FormattedData, MapProviders } from '../lib/maps/map-models';
+import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
+import { mapPolygonSchema, pathSchema, pointSchema, tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { findAngle, getRatio, parseArray, parseWithTranslation, safeExecute } from '../lib/maps/maps-utils';
+import {
+  findAngle,
+  getRatio,
+  interpolateOnLineSegment,
+  parseArray,
+  parseFunction,
+  parseWithTranslation,
+  safeExecute
+} from '../lib/maps/maps-utils';
 import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
+import { isUndefined } from '@core/utils';
 
 
 @Component({
@@ -46,20 +53,22 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   @ViewChild('map') mapContainer;
 
   mapWidget: MapWidgetController;
-  historicalData;
+  historicalData: FormattedData[][];
+  normalizationStep: number;
+  interpolatedTimeData = [];
   intervals = [];
-  normalizationStep = 1000;
-  interpolatedData = [];
   widgetConfig: WidgetConfig;
   settings;
   mainTooltip = '';
   visibleTooltip = false;
-  activeTrip;
+  activeTrip: FormattedData;
   label;
-  minTime;
-  maxTime;
-  anchors = [];
-  useAnchors = false;
+  minTime: number;
+  minTimeFormat: string;
+  maxTime: number;
+  maxTimeFormat: string;
+  anchors: number[] = [];
+  useAnchors: boolean;
 
   static getSettingsSchema(): JsonSettingsSchema {
     const schema = initSchema();
@@ -86,7 +95,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       rotationAngle: 0
     }
     this.settings = { ...settings, ...this.ctx.settings };
-    this.useAnchors = this.settings.usePointAsAnchor && this.settings.showPoints;
+    this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
+    this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
     this.settings.fitMapBounds = true;
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
@@ -95,7 +105,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       if (this.historicalData.length) {
         this.activeTrip = this.historicalData[0][0];
         this.calculateIntervals();
-        this.timeUpdated(this.intervals[0]);
+        this.timeUpdated(this.minTime);
       }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
@@ -108,30 +118,40 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   timeUpdated(time: number) {
-    this.minTime = moment(this.intervals[this.intervals.length - 1]).format('YYYY-MM-DD HH:mm:ss');
-    this.maxTime = moment(this.intervals[0]).format('YYYY-MM-DD HH:mm:ss');
-    const currentPosition = this.interpolatedData
+    const currentPosition = this.interpolatedTimeData
       .map(dataSource => dataSource[time])
       .filter(ds => ds)
       .map(ds => {
-        ds.minTime = this.minTime;
-        ds.maxTime = this.maxTime;
+        ds.minTime = this.minTimeFormat;
+        ds.maxTime = this.maxTimeFormat;
         return ds;
       });
+    if (isUndefined(currentPosition[0])) {
+      const timePoints = Object.keys(this.interpolatedTimeData[0]).map(item => parseInt(item, 10));
+      for (let i = 1; i < timePoints.length; i++) {
+        if (timePoints[i - 1] < time && timePoints[i] > time) {
+          const beforePosition = this.interpolatedTimeData[0][timePoints[i - 1]];
+          const afterPosition = this.interpolatedTimeData[0][timePoints[i]];
+          const ratio = getRatio(timePoints[i - 1], timePoints[i], time);
+          currentPosition[0] = {
+            ...beforePosition,
+            time,
+            ...interpolateOnLineSegment(beforePosition, afterPosition, this.settings.latKeyName, this.settings.lngKeyName, ratio)
+          }
+          break;
+        }
+      }
+    }
     this.activeTrip = currentPosition[0];
     this.calcLabel();
     this.calcTooltip();
     if (this.mapWidget) {
-      this.mapWidget.map.updatePolylines(this.interpolatedData.map(ds => _.values(ds)));
+      this.mapWidget.map.updatePolylines(this.interpolatedTimeData.map(ds => _.values(ds)), this.activeTrip);
       if (this.settings.showPolygon) {
-        this.mapWidget.map.updatePolygons(this.interpolatedData);
+        this.mapWidget.map.updatePolygons(this.interpolatedTimeData);
       }
       if (this.settings.showPoints) {
-        this.mapWidget.map.updatePoints(this.historicalData[0], this.calcTooltip);
-        this.anchors = this.historicalData[0]
-          .filter(data =>
-            this.settings.usePointAsAnchor ||
-            safeExecute(this.settings.pointAsAnchorFunction, [this.historicalData, data, data.dsIndex])).map(data => data.time);
+        this.mapWidget.map.updatePoints(_.values(_.union(this.interpolatedTimeData)[0]), this.calcTooltip);
       }
       this.mapWidget.map.updateMarkers(currentPosition, this.calcTooltip);
     }
@@ -142,22 +162,31 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
 
   calculateIntervals() {
     this.historicalData.forEach((dataSource, index) => {
-      this.intervals = [];
-      for (let time = dataSource[0]?.time; time < dataSource[dataSource.length - 1]?.time; time += this.normalizationStep) {
-        this.intervals.push(time);
-      }
-      this.intervals.push(dataSource[dataSource.length - 1]?.time);
-      this.interpolatedData[index] = this.interpolateArray(dataSource, this.intervals);
+      this.minTime = dataSource[0]?.time || Infinity;
+      this.minTimeFormat = this.minTime !== Infinity ? moment(this.minTime).format('YYYY-MM-DD HH:mm:ss') : '';
+      this.maxTime = dataSource[dataSource.length - 1]?.time || -Infinity;
+      this.maxTimeFormat = this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '';
+      this.interpolatedTimeData[index] = this.interpolateArray(dataSource);
     });
+    if (this.useAnchors) {
+      const anchorDate = Object.entries(_.union(this.interpolatedTimeData)[0]);
+      this.anchors = anchorDate
+        .filter((data: [string, FormattedData]) => safeExecute(this.settings.pointAsAnchorFunction, [data[1], anchorDate, data[1].dsIndex]))
+        .map(data => parseInt(data[0], 10));
+    }
   }
 
   calcTooltip = (point?: FormattedData, setTooltip = true) => {
     if (!point) {
       point = this.activeTrip;
     }
-    const data = { ...point, maxTime: this.maxTime, minTime: this.minTime }
+    const data = {
+      ...this.activeTrip,
+      maxTime: this.maxTimeFormat,
+      minTime: this.minTimeFormat
+    }
     const tooltipPattern: string = this.settings.useTooltipFunction ?
-      safeExecute(this.settings.tooolTipFunction, [data, this.historicalData, 0]) : this.settings.tooltipPattern;
+      safeExecute(this.settings.tooolTipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
     const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
     if (setTooltip) {
       this.mainTooltip = this.sanitizer.sanitize(
@@ -168,34 +197,34 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   calcLabel() {
-    const data = { ...this.activeTrip, maxTime: this.maxTime, minTime: this.minTime }
+    const data = {
+      ...this.activeTrip,
+      maxTime: this.maxTimeFormat,
+      minTime: this.minTimeFormat
+    }
     const labelText: string = this.settings.useLabelFunction ?
-      safeExecute(this.settings.labelFunction, [data, this.historicalData, 0]) : this.settings.label;
+      safeExecute(this.settings.labelFunction, [data, this.historicalData, data.dsIndex]) : this.settings.label;
     this.label = (parseWithTranslation.parseTemplate(labelText, data, true));
   }
 
-  interpolateArray(originData, interpolatedIntervals) {
+  interpolateArray(originData: FormattedData[]) {
     const result = {};
-    for (let i = 1, j = 0; i < originData.length && j < interpolatedIntervals.length;) {
-      const currentTime = interpolatedIntervals[j];
-      while (originData[i].time < currentTime) i++;
-      const before = originData[i - 1];
-      const after = originData[i];
-      const interpolation = interpolateOnPointSegment(
-        new L.Point(before.latitude, before.longitude),
-        new L.Point(after.latitude, after.longitude),
-        getRatio(before.time, after.time, currentTime));
-      result[currentTime] = ({
-        ...originData[i],
-        rotationAngle: findAngle(before, after) + this.settings.rotationAngle,
-        latitude: interpolation.x,
-        longitude: interpolation.y
-      });
-      j++;
+    const latKeyName = this.settings.latKeyName;
+    const lngKeyName = this.settings.lngKeyName;
+    for (const data of originData) {
+      const currentTime = data.time;
+      const normalizeTime = this.minTime + Math.ceil((currentTime - this.minTime) / this.normalizationStep) * this.normalizationStep;
+      result[normalizeTime] = {
+        ...data,
+        rotationAngle: this.settings.rotationAngle
+      };
+    }
+    const timeStamp = Object.keys(result);
+    for (let i = 0; i < timeStamp.length - 1; i++) {
+      result[timeStamp[i]].rotationAngle += findAngle(result[timeStamp[i]], result[timeStamp[i + 1]], latKeyName, lngKeyName)
     }
     return result;
   }
 }
 
 export let TbTripAnimationWidget = TripAnimationComponent;
-

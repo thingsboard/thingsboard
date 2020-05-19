@@ -224,7 +224,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                         return null;
                     }
                 },
-                s -> (StringUtils.isEmpty(s.getScope()) || scope.equals(s.getScope().name())),
+                s -> (TbAttributeSubscriptionScope.ANY_SCOPE.equals(s.getScope()) || scope.equals(s.getScope().name())),
                 s -> {
                     List<TsKvEntry> subscriptionUpdate = null;
                     for (AttributeKvEntry kv : attributes) {

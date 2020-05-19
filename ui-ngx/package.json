@@ -58,7 +58,6 @@
     "jstree-bootstrap-theme": "^1.0.1",
     "jszip": "^3.4.0",
     "leaflet": "^1.6.0",
-    "leaflet-geometryutil": "^0.9.3",
     "leaflet-polylinedecorator": "^1.6.0",
     "leaflet-providers": "^1.9.1",
     "leaflet.gridlayer.googlemutant": "0.8.0",

@@ -20,7 +20,7 @@ import { Datasource } from '@app/shared/models/widget.models';
 import _ from 'lodash';
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { createLabelFromDatasource, hashCode, padValue } from '@core/utils';
+import { createLabelFromDatasource, hashCode, isNumber, isUndefined, padValue } from '@core/utils';
 
 export function createTooltip(target: L.Layer,
     settings: MarkerSettings | PolylineSettings | PolygonSettings,
@@ -43,8 +43,9 @@ export function createTooltip(target: L.Layer,
         const actions = document.getElementsByClassName('tb-custom-action');
         Array.from(actions).forEach(
             (element: HTMLElement) => {
-                if (element && settings.tooltipAction[element.id]) {
-                    element.addEventListener('click', ($event) => settings.tooltipAction[element.id]($event, datasource));
+                const actionName = element.getAttribute('data-action-name');
+                if (element && settings.tooltipAction[actionName]) {
+                    element.addEventListener('click', ($event) => settings.tooltipAction[actionName]($event, datasource));
                 }
             });
     });
@@ -55,10 +56,26 @@ export function getRatio(firsMoment: number, secondMoment: number, intermediateM
     return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
 }
 
-export function findAngle(startPoint, endPoint) {
-    let angle = -Math.atan2(endPoint.latitude - startPoint.latitude, endPoint.longitude - startPoint.longitude);
-    angle = angle * 180 / Math.PI;
-    return parseInt(angle.toFixed(2), 10);
+export function interpolateOnLineSegment(
+  pointA: FormattedData,
+  oointB: FormattedData,
+  latKeyName: string,
+  lngKeyName: string,
+  ratio: number
+): { [key: string]: number } {
+   return {
+    [latKeyName]: (pointA[latKeyName] + (oointB[latKeyName] - pointA[latKeyName]) * ratio),
+    [lngKeyName]: (pointA[lngKeyName] + (oointB[lngKeyName] - pointA[lngKeyName]) * ratio)
+  };
+}
+
+export function findAngle(startPoint: FormattedData, endPoint: FormattedData, latKeyName: string, lngKeyName: string): number {
+  if(isUndefined(startPoint) || isUndefined(endPoint)){
+    return 0;
+  }
+  let angle = -Math.atan2(endPoint[latKeyName] - startPoint[latKeyName], endPoint[lngKeyName] - startPoint[lngKeyName]);
+  angle = angle * 180 / Math.PI;
+  return parseInt(angle.toFixed(2), 10);
 }
 
 
@@ -111,38 +128,81 @@ export function aspectCache(imageUrl: string): Observable<number> {
 
 export type TranslateFunc = (key: string, defaultTranslation?: string) => string;
 
+const varsRegex = /\${([^}]*)}/g;
+const linkActionRegex = /<link-act name=['"]([^['"]*)['"]>([^<]*)<\/link-act>/g;
+const buttonActionRegex = /<button-act name=['"]([^['"]*)['"]>([^<]*)<\/button-act>/g;
+
+function createLinkElement(actionName: string, actionText: string): string {
+  return `<a href="#" class="tb-custom-action" data-action-name=${actionName}>${actionText}</a>`;
+}
+
+function createButtonElement(actionName: string, actionText: string) {
+  return `<button mat-button class="tb-custom-action" data-action-name=${actionName}>${actionText}</button>`;
+}
+
 function parseTemplate(template: string, data: { $datasource?: Datasource, [key: string]: any },
-                              translateFn?: TranslateFunc) {
+                       translateFn?: TranslateFunc) {
   let res = '';
   try {
-    if (template.match(/<link-act/g)) {
-      template = template.replace(/<link-act/g, '<a href="#"').replace(/link-act>/g, 'a>')
-        .replace(/name=(['"])(.*?)(['"])/g, `class='tb-custom-action' id='$2'`);
-    }
     if (translateFn) {
       template = translateFn(template);
     }
     template = createLabelFromDatasource(data.$datasource, template);
-    const formatted = template.match(/\${([^}]*):\d*}/g);
-    if (formatted)
-      formatted.forEach(value => {
-        const [variable, digits] = value.replace('${', '').replace('}', '').split(':');
-        data[variable] = padValue(data[variable], +digits);
-        if (data[variable] === 'NaN') data[variable] = '';
-        template = template.replace(value, '${' + variable + '}');
-      });
-    const variables = template.match(/\${.*?}/g);
-    if (variables) {
-      variables.forEach(variable => {
-        variable = variable.replace('${', '').replace('}', '');
-        if (!data[variable])
-          data[variable] = '';
-      })
+
+    let match = varsRegex.exec(template);
+    while (match !== null) {
+      const variable = match[0];
+      let label = match[1];
+      let valDec = 2;
+      const splitValues = label.split(':');
+      if (splitValues.length > 1) {
+        label = splitValues[0];
+        valDec = parseFloat(splitValues[1]);
+      }
+
+      if (label.startsWith('#')) {
+        const keyIndexStr = label.substring(1);
+        const n = Math.floor(Number(keyIndexStr));
+        if (String(n) === keyIndexStr && n >= 0) {
+          label = data.$datasource.dataKeys[n].label;
+        }
+      }
+
+      const value = data[label] || '';
+      let textValue: string;
+      if (isNumber(value)) {
+        textValue = padValue(value, valDec);
+      } else {
+        textValue = value;
+      }
+      template = template.split(variable).join(textValue);
+      match = varsRegex.exec(template);
     }
+
+    let actionTags: string;
+    let actionText: string;
+    let actionName: string;
+    let action: string;
+
+    match = linkActionRegex.exec(template);
+    while (match !== null) {
+      [actionTags, actionName, actionText] = match;
+      action = createLinkElement(actionName, actionText);
+      template = template.split(actionTags).join(action);
+      match = linkActionRegex.exec(template);
+    }
+
+    match = buttonActionRegex.exec(template);
+    while (match !== null) {
+      [actionTags, actionName, actionText] = match;
+      action = createButtonElement(actionName, actionText);
+      template = template.split(actionTags).join(action);
+      match = buttonActionRegex.exec(template);
+    }
+
     const compiled = _.template(template);
     res = compiled(data);
-  }
-  catch (ex) {
+  } catch (ex) {
     console.log(ex, template)
   }
   return res;

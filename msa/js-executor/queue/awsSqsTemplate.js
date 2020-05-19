@@ -100,7 +100,7 @@ function AwsSqsProducer() {
         const params = {
             MaxNumberOfMessages: 10,
             QueueUrl: requestQueueURL,
-            WaitTimeSeconds: poolInterval / 1000
+            WaitTimeSeconds: pollInterval / 1000
         };
         while (!stopped) {
             let pollStartTs = new Date().getTime();

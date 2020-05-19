@@ -14,18 +14,18 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngExpression, LatLngTuple, LeafletMouseEvent } from 'leaflet';
+import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
 import { createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
 import { FormattedData, PolygonSettings } from './map-models';
 
 export class Polygon {
 
     leafletPoly: L.Polygon;
-    tooltip;
-    data;
-    dataSources;
+    tooltip: L.Popup;
+    data: FormattedData;
+    dataSources: FormattedData[];
 
-    constructor(public map, polyData: FormattedData, dataSources, private settings: PolygonSettings) {
+    constructor(public map, polyData: FormattedData, dataSources: FormattedData[], private settings: PolygonSettings) {
         this.dataSources = dataSources;
         this.data = polyData;
         const polygonColor = this.getPolygonColor(settings);
@@ -61,7 +61,7 @@ export class Polygon {
         this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
     }
 
-    updatePolygon(data:{[coordinates:string]: LatLngTuple[]}, dataSources: FormattedData[], settings: PolygonSettings) {
+    updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.data = data;
         this.dataSources = dataSources;
         this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
