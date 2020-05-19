@@ -18,7 +18,7 @@ const ruleNodeUiforwardPort = 8080;
 
 const PROXY_CONFIG = {
   "/api": {
-    "target": "http://demo.thingsboard.io",
+    "target": "http://localhost:8080",
     "secure": false,
   },
   "/static/rulenode": {
@@ -26,7 +26,7 @@ const PROXY_CONFIG = {
     "secure": false,
   },
   "/api/ws": {
-    "target": "ws://demo.thingsboard.io",
+    "target": "ws://localhost:8080",
     "ws": true,
   },
 };
