@@ -84,7 +84,15 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Override
     public List<Queue> findQueues(TenantId tenantId) {
         log.trace("Executing findQueues, tenantId: [{}]", tenantId);
-        return queueDao.find(tenantId);
+
+        if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
+            Tenant tenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
+            if (tenant.isIsolatedTbRuleEngine()) {
+                return queueDao.find(tenantId);
+            }
+        }
+
+        return queueDao.find(TenantId.SYS_TENANT_ID);
     }
 
     private DataValidator<Queue> queueValidator =
@@ -92,6 +100,25 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, Queue queue) {
+                    if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
+                        Tenant queueTenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
+
+                        if (!queueTenant.isIsolatedTbRuleEngine()) {
+                            throw new DataValidationException("Tenant should be isolated!");
+                        }
+
+                        if (queue.getId() == null) {
+                            List<Queue> existingQueues = findQueues(tenantId);
+                            if (existingQueues.size() >= queueTenant.getNumberOfQueues()) {
+                                throw new DataValidationException("The limit for creating new queue has been exceeded!");
+                            }
+                        }
+
+                        if (queue.getPartitions() > queueTenant.getMaxNumberOfPartitionsPerQueue()) {
+                            throw new DataValidationException(String.format("Queue partitions can't be more then %d", queueTenant.getMaxNumberOfPartitionsPerQueue()));
+                        }
+                    }
+
                     if (StringUtils.isEmpty(queue.getName())) {
                         throw new DataValidationException("Queue name should be non empty!");
                     }
@@ -142,20 +169,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                         Queue existingQueue = queueDao.findQueueByTopic(queue.getTopic());
                         if (existingQueue != null && existingQueue.getTopic().equals(queue.getTopic())) {
                             throw new DataValidationException(String.format("Queue with topic: %s already exists!", queue.getTopic()));
-                        }
-                    }
-
-                    if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
-                        Tenant queueTenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
-                        if (queue.getId() == null) {
-                            List<Queue> existingQueues = findQueues(tenantId);
-                            if (existingQueues.size() >= queueTenant.getNumberOfQueues()) {
-                                throw new DataValidationException("The limit for creating new queue has been exceeded!");
-                            }
-                        }
-
-                        if (queue.getPartitions() > queueTenant.getMaxNumberOfPartitionsPerQueue()) {
-                            throw new DataValidationException(String.format("Queue partitions can't be more then %d", queueTenant.getMaxNumberOfPartitionsPerQueue()));
                         }
                     }
                 }
