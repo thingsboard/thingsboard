@@ -69,7 +69,6 @@ export class MapWidgetController implements MapWidgetInterface {
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
 
-        // this.settings.
         const MapClass = providerSets[this.provider]?.MapClass;
         if (!MapClass) {
             return;

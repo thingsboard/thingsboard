@@ -864,7 +864,6 @@ mat-label {
         min-width: 100%;
         display: flex;
         flex-direction: column;
-        overflow: auto;
       }
       .mat-dialog-content {
         margin: 0;
@@ -914,7 +913,7 @@ mat-label {
       .mat-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
-          height: 100vh;
+          height: 100%;
         }
         .mat-dialog-content {
           max-height: 100%;
