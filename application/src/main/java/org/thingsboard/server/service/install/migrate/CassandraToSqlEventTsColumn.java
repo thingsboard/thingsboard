@@ -24,7 +24,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.EPOCH_DIFF;
 public class CassandraToSqlEventTsColumn extends CassandraToSqlColumn {
 
     CassandraToSqlEventTsColumn() {
-        super("id", "ts", CassandraToSqlColumnType.BIGINT, null);
+        super("id", "ts", CassandraToSqlColumnType.BIGINT, null, false);
     }
 
     @Override
