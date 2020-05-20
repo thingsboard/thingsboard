@@ -416,6 +416,58 @@ mat-label {
   }
 }
 
+.tb-ace-doc-tooltip {
+  code {
+    color: #444;
+    &.title {
+      font-size: 14px;
+    }
+  }
+  div.tb-function-info {
+    font-size: 14px;
+  }
+  div.tb-function-return {
+    font-size: 1rem;
+    letter-spacing: 0.03rem;
+    color: #444;
+    code {
+      font-size: 14px;
+      letter-spacing: normal;
+    }
+  }
+  div.tb-api-title {
+    font-weight: bold;
+    font-size: 16px;
+    color: #6e6e6e;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  table.tb-api-table {
+    width: 100%;
+    border-collapse: collapse;
+    tr {
+      border-bottom: 1px solid #a8a8a8;
+      &:last-child {
+        border-bottom: none;
+      }
+      td {
+        font-size: 14px;
+        line-height: 1.6rem;
+        &:first-child {
+          font-weight: 600;
+          padding-left: 16px;
+          width: 20%;
+        }
+        &.arg-description {
+          font-size: 1rem;
+          letter-spacing: .03rem;
+          color: #444;
+        }
+      }
+    }
+  }
+}
+
 .tb-default, .tb-dark {
 
   /*********************************

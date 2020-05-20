@@ -36,6 +36,7 @@ import * as ace from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { css_beautify, html_beautify } from 'js-beautify';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { CustomPrettyActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
 
 @Component({
   selector: 'tb-custom-action-pretty-resources-tabs',
@@ -69,6 +70,8 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   htmlEditor: ace.Ace.Editor;
   cssEditor: ace.Ace.Editor;
   setValuesPending = false;
+
+  customPrettyActionEditorCompleter = CustomPrettyActionEditorCompleter;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
