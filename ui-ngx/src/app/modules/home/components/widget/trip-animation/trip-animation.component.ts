@@ -56,7 +56,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   historicalData: FormattedData[][];
   normalizationStep: number;
   interpolatedTimeData = [];
-  intervals = [];
   widgetConfig: WidgetConfig;
   settings;
   mainTooltip = '';
@@ -104,9 +103,10 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     if (subscription) subscription.callbacks.onDataUpdated = () => {
       this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
       if (this.historicalData.length) {
-        this.activeTrip = this.historicalData[0][0];
+        if (!this.activeTrip)
+          this.activeTrip = this.historicalData[0][0];
         this.calculateIntervals();
-        this.timeUpdated(this.minTime);
+        this.timeUpdated(this.currentTime ? this.currentTime : this.minTime);
       }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
@@ -122,12 +122,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.currentTime = time;
     const currentPosition = this.interpolatedTimeData
       .map(dataSource => dataSource[time])
-      .filter(ds => ds)
-      .map(ds => {
-        ds.minTime = this.minTimeFormat;
-        ds.maxTime = this.maxTimeFormat;
-        return ds;
-      });
+      .filter(ds => ds);
     if (isUndefined(currentPosition[0])) {
       const timePoints = Object.keys(this.interpolatedTimeData[0]).map(item => parseInt(item, 10));
       for (let i = 1; i < timePoints.length; i++) {
@@ -138,6 +133,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
           currentPosition[0] = {
             ...beforePosition,
             time,
+            minTime: this.minTimeFormat,
+            maxTime: this.maxTimeFormat,
             ...interpolateOnLineSegment(beforePosition, afterPosition, this.settings.latKeyName, this.settings.lngKeyName, ratio)
           }
           break;
