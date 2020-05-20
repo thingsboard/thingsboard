@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 syntax = "proto3";
-package gw;
+package transportapi;
 
 //option java_multiple_files = true;
-option java_package = "org.thingsboard.server.gen.gw";
-option java_outer_classname = "GatewayProtos";
+option java_package = "org.thingsboard.server.gen.transport";
+option java_outer_classname = "TransportApiProtos";
+
+import "queue.proto";
 
 enum KeyValueType {
   //    option allow_alias = true;
@@ -70,11 +72,70 @@ message RpcRequest {
   string params = 2;
 }
 
-message TelemetryMsg {
+message DisconnectMsg {
+  string deviceName = 1;
+}
+
+message ConnectMsg {
   string deviceName = 1;
   string deviceType = 2;
-  repeated TsKvListProto values = 3;
 }
+
+message TelemetryMsg {
+  string deviceName = 1;
+  TsKvListProtoArray values = 3;
+}
+
+message AttributesMsg {
+  string deviceName = 1;
+  KvListProto kv = 2;
+}
+
+message ClaimDeviceMsg {
+  string deviceName = 1;
+  ClaimDevice claimRequest = 2;
+}
+
+message GatewayTelemetryMsg {
+  repeated TelemetryMsg msg = 1;
+}
+
+message GatewayClaimMsg {
+  repeated ClaimDeviceMsg msg = 1;
+}
+
+message GatewayAttributesMsg {
+  repeated AttributesMsg msg = 1;
+}
+
+message GatewayRpcResponseMsg {
+  string deviceName = 1;
+  int32  id = 2;
+  string data = 3;
+}
+
+message GatewayAttributeResponseMsg {
+  string deviceName = 1;
+  transport.GetAttributeResponseMsg responseMsg = 2;
+}
+
+message GatewayAttributeUpdateNotificationMsg {
+  string deviceName = 1;
+  transport.AttributeUpdateNotificationMsg notificationMsg = 2;
+}
+
+message GatewayDeviceRpcRequestMsg {
+  string deviceName = 1;
+  transport.ToDeviceRpcRequestMsg rpcRequestMsg = 2;
+}
+
+message GatewayAttributesRequestMsg {
+  int32  id = 1;
+  string deviceName = 2;
+  bool client = 3;
+  repeated string keys = 4;
+}
+
 /* New added especially for TBGateway */
 enum ByteOrder {
   BIG = 0;

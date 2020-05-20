@@ -22,7 +22,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.gen.gw.GatewayProtos;
+import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class ProtoConverter {
     public static final JsonParser parser = new JsonParser();
 
     public static TransportProtos.PostTelemetryMsg convertToTelemetryProto(byte[] payload) throws InvalidProtocolBufferException, IllegalArgumentException {
-        GatewayProtos.TsKvListProto protoPayload = GatewayProtos.TsKvListProto.parseFrom(payload);
+        TransportApiProtos.TsKvListProto protoPayload = TransportApiProtos.TsKvListProto.parseFrom(payload);
         TransportProtos.PostTelemetryMsg.Builder postTelemetryMsgBuilder = TransportProtos.PostTelemetryMsg.newBuilder();
         TransportProtos.TsKvListProto tsKvListProto = getTransportTsKvListProto(TransportProtos.TsKvListProto.newBuilder(), protoPayload);
         postTelemetryMsgBuilder.addTsKvList(tsKvListProto);
@@ -43,9 +43,9 @@ public class ProtoConverter {
     }
 
     public static TransportProtos.PostTelemetryMsg convertToTelemetryArrayProto(byte[] payload) throws InvalidProtocolBufferException, IllegalArgumentException {
-        GatewayProtos.TsKvListProtoArray tsKvListProtoArray = GatewayProtos.TsKvListProtoArray.parseFrom(payload);
+        TransportApiProtos.TsKvListProtoArray tsKvListProtoArray = TransportApiProtos.TsKvListProtoArray.parseFrom(payload);
         TransportProtos.PostTelemetryMsg.Builder postTelemetryMsgBuilder = TransportProtos.PostTelemetryMsg.newBuilder();
-        List<GatewayProtos.TsKvListProto> tsKvListProtoList = tsKvListProtoArray.getTsKvList();
+        List<TransportApiProtos.TsKvListProto> tsKvListProtoList = tsKvListProtoArray.getTsKvList();
         if (!CollectionUtils.isEmpty(tsKvListProtoList)) {
             List<TransportProtos.TsKvListProto> transportTsKvListProtoArray = new ArrayList<>();
             tsKvListProtoList.forEach(tsKvListProto -> {
@@ -61,8 +61,8 @@ public class ProtoConverter {
     }
 
     public static TransportProtos.PostAttributeMsg convertToAttributesProto(byte[] bytes) throws IllegalArgumentException, InvalidProtocolBufferException {
-        GatewayProtos.KvListProto proto = GatewayProtos.KvListProto.parseFrom(bytes);
-        List<GatewayProtos.KeyValueProto> kvList = proto.getKvList();
+        TransportApiProtos.KvListProto proto = TransportApiProtos.KvListProto.parseFrom(bytes);
+        List<TransportApiProtos.KeyValueProto> kvList = proto.getKvList();
         if (!CollectionUtils.isEmpty(kvList)) {
             List<TransportProtos.KeyValueProto> keyValueProtos = getKeyValueProtos(kvList);
             TransportProtos.PostAttributeMsg.Builder result = TransportProtos.PostAttributeMsg.newBuilder();
@@ -74,14 +74,14 @@ public class ProtoConverter {
     }
 
     public static TransportProtos.ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, byte[] bytes) throws InvalidProtocolBufferException {
-        GatewayProtos.ClaimDevice proto = GatewayProtos.ClaimDevice.parseFrom(bytes);
+        TransportApiProtos.ClaimDevice proto = TransportApiProtos.ClaimDevice.parseFrom(bytes);
         String secretKey = proto.getSecretKey() != null ? proto.getSecretKey() : DataConstants.DEFAULT_SECRET_KEY;
         long durationMs = proto.getDurationMs();
         return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
     }
 
     public static TransportProtos.GetAttributeRequestMsg convertToGetAttributeRequestMessage(byte[] bytes, int requestId) throws InvalidProtocolBufferException, RuntimeException {
-        GatewayProtos.AttributesRequest proto = GatewayProtos.AttributesRequest.parseFrom(bytes);
+        TransportApiProtos.AttributesRequest proto = TransportApiProtos.AttributesRequest.parseFrom(bytes);
         TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
         result.setRequestId(requestId);
         String clientKeys = proto.getClientKeys();
@@ -97,6 +97,13 @@ public class ProtoConverter {
         return result.build();
     }
 
+    public static TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(byte[] bytes, int requestId) throws InvalidProtocolBufferException {
+        TransportApiProtos.RpcRequest proto = TransportApiProtos.RpcRequest.parseFrom(bytes);
+        String method = proto.getMethod();
+        String params = proto.getParams();
+        return TransportProtos.ToServerRpcRequestMsg.newBuilder().setRequestId(requestId).setMethodName(method).setParams(params).build();
+    }
+
     private static TransportProtos.ClaimDeviceMsg buildClaimDeviceMsg(DeviceId deviceId, String secretKey, long durationMs) {
         TransportProtos.ClaimDeviceMsg.Builder result = TransportProtos.ClaimDeviceMsg.newBuilder();
         return result
@@ -107,13 +114,13 @@ public class ProtoConverter {
                 .build();
     }
 
-    private static TransportProtos.TsKvListProto getTransportTsKvListProto(TransportProtos.TsKvListProto.Builder tsKvListBuilder, GatewayProtos.TsKvListProto protoPayload) {
+    private static TransportProtos.TsKvListProto getTransportTsKvListProto(TransportProtos.TsKvListProto.Builder tsKvListBuilder, TransportApiProtos.TsKvListProto protoPayload) {
         long ts = protoPayload.getTs();
         if (ts == 0) {
             ts = System.currentTimeMillis();
         }
         tsKvListBuilder.setTs(ts);
-        List<GatewayProtos.KeyValueProto> kvList = protoPayload.getKvList();
+        List<TransportApiProtos.KeyValueProto> kvList = protoPayload.getKvList();
         if (!CollectionUtils.isEmpty(kvList)) {
             List<TransportProtos.KeyValueProto> keyValueListProtos = getKeyValueProtos(kvList);
             tsKvListBuilder.addAllKv(keyValueListProtos);
@@ -123,14 +130,14 @@ public class ProtoConverter {
         }
     }
 
-    private static List<TransportProtos.KeyValueProto> getKeyValueProtos(List<GatewayProtos.KeyValueProto> kvList) {
+    private static List<TransportProtos.KeyValueProto> getKeyValueProtos(List<TransportApiProtos.KeyValueProto> kvList) {
         List<TransportProtos.KeyValueProto> keyValueListProtos = new ArrayList<>();
         kvList.forEach(keyValueProto -> {
             String key = keyValueProto.getKey();
             if (StringUtils.isEmpty(key)) {
                 throw new IllegalArgumentException("Invalid key value: " + key + "!");
             }
-            GatewayProtos.KeyValueType type = keyValueProto.getType();
+            TransportApiProtos.KeyValueType type = keyValueProto.getType();
             switch (type) {
                 case BOOLEAN_V:
                     keyValueListProtos.add(TransportProtos.KeyValueProto.newBuilder()
@@ -181,12 +188,5 @@ public class ProtoConverter {
             }
         });
         return keyValueListProtos;
-    }
-
-    public static TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(byte[] bytes, int requestId) throws InvalidProtocolBufferException {
-        GatewayProtos.RpcRequest proto = GatewayProtos.RpcRequest.parseFrom(bytes);
-        String method = proto.getMethod();
-        String params = proto.getParams();
-        return TransportProtos.ToServerRpcRequestMsg.newBuilder().setRequestId(requestId).setMethodName(method).setParams(params).build();
     }
 }
