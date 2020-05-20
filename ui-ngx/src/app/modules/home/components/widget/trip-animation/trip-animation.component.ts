@@ -56,6 +56,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   historicalData: FormattedData[][];
   normalizationStep: number;
   interpolatedTimeData = [];
+  intervals = [];
   widgetConfig: WidgetConfig;
   settings;
   mainTooltip = '';
@@ -68,6 +69,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   maxTimeFormat: string;
   anchors: number[] = [];
   useAnchors: boolean;
+  currentTime: number;
 
   static getSettingsSchema(): JsonSettingsSchema {
     const schema = initSchema();
@@ -99,15 +101,15 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.settings.fitMapBounds = true;
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
-    if (subscription) {
-      subscription.callbacks.onDataUpdated = () => {
-        this.historicalData = parseArray(this.ctx.data);
+    if (subscription) subscription.callbacks.onDataUpdated = () => {
+      this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
+      if (this.historicalData.length) {
         this.activeTrip = this.historicalData[0][0];
         this.calculateIntervals();
         this.timeUpdated(this.minTime);
-        this.mapWidget.map.map?.invalidateSize();
-        this.cd.detectChanges();
       }
+      this.mapWidget.map.map?.invalidateSize();
+      this.cd.detectChanges();
     }
   }
 
@@ -117,8 +119,16 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   timeUpdated(time: number) {
-    const currentPosition = this.interpolatedTimeData.map(dataSource => dataSource[time]);
-    if(isUndefined(currentPosition[0])){
+    this.currentTime = time;
+    const currentPosition = this.interpolatedTimeData
+      .map(dataSource => dataSource[time])
+      .filter(ds => ds)
+      .map(ds => {
+        ds.minTime = this.minTimeFormat;
+        ds.maxTime = this.maxTimeFormat;
+        return ds;
+      });
+    if (isUndefined(currentPosition[0])) {
       const timePoints = Object.keys(this.interpolatedTimeData[0]).map(item => parseInt(item, 10));
       for (let i = 1; i < timePoints.length; i++) {
         if (timePoints[i - 1] < time && timePoints[i] > time) {
@@ -134,7 +144,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
         }
       }
     }
-    this.activeTrip = currentPosition[0];
     this.calcLabel();
     this.calcTooltip();
     if (this.mapWidget) {
@@ -145,7 +154,10 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       if (this.settings.showPoints) {
         this.mapWidget.map.updatePoints(_.values(_.union(this.interpolatedTimeData)[0]), this.calcTooltip);
       }
-      this.mapWidget.map.updateMarkers(currentPosition);
+      this.mapWidget.map.updateMarkers(currentPosition, (trip) => {
+        this.activeTrip = trip;
+        this.timeUpdated(this.currentTime)
+      });
     }
   }
 
@@ -185,6 +197,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
         SecurityContext.HTML, tooltipText);
       this.cd.detectChanges();
     }
+    this.activeTrip = point;
     return tooltipText;
   }
 
@@ -212,7 +225,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       };
     }
     const timeStamp = Object.keys(result);
-    for(let i = 0; i < timeStamp.length - 1; i++){
+    for (let i = 0; i < timeStamp.length - 1; i++) {
       result[timeStamp[i]].rotationAngle += findAngle(result[timeStamp[i]], result[timeStamp[i + 1]], latKeyName, lngKeyName)
     }
     return result;

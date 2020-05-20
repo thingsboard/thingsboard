@@ -258,7 +258,7 @@ export function parseArray(input: any[]): any[] {
           time: el[0],
           deviceType: null
         };
-        entityArray.filter(e => e.data.length).forEach(entity => {
+        entityArray.filter(e => e.data.length && e.data[i]).forEach(entity => {
           obj[entity?.dataKey?.label] = entity?.data[i][1];
           obj[entity?.dataKey?.label + '|ts'] = entity?.data[0][0];
           if (entity?.dataKey?.label === 'type') {

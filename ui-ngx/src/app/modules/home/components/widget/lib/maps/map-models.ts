@@ -26,6 +26,7 @@ import {
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
+export type GetTooltip= (point: FormattedData, setTooltip?: boolean) => string;
 
 export type MapSettings = {
     draggableMarker: boolean;
