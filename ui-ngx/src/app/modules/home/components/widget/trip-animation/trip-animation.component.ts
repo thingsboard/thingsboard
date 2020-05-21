@@ -97,7 +97,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
     this.settings.tooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);
     this.settings.labelFunction = parseFunction(this.settings.labelFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.fitMapBounds = true;
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = () => {
@@ -180,16 +179,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     if (!point) {
       point = this.activeTrip;
     }
-    const data = this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
       safeExecute(this.settings.tooltipFunction, [point, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
-    const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
+    const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, point, true);
     if (setTooltip) {
       this.mainTooltip = this.sanitizer.sanitize(
         SecurityContext.HTML, tooltipText);
       this.cd.detectChanges();
     }
-    this.activeTrip = point;
     return tooltipText;
   }
 
