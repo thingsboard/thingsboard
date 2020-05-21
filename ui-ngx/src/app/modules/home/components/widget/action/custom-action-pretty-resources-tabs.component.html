@@ -94,7 +94,8 @@
       [(ngModel)]="action.customFunction"
       (ngModelChange)="notifyActionUpdated()"
       [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
-      [validationArgs]="[]">
+      [validationArgs]="[]"
+      [editorCompleter]="customPrettyActionEditorCompleter">
     </tb-js-func>
   </mat-tab>
 </mat-tab-group>

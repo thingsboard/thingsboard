@@ -26,11 +26,19 @@ import { DatePipe } from '@angular/common';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
+import { EntityViewService } from '@core/http/entity-view.service';
+import { CustomerService } from '@core/http/customer.service';
+import { DashboardService } from '@core/http/dashboard.service';
+import { UserService } from '@core/http/user.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
    ['deviceService', DeviceService],
    ['assetService', AssetService],
+   ['entityViewService', EntityViewService],
+   ['customerService', CustomerService],
+   ['dashboardService', DashboardService],
+   ['userService', UserService],
    ['attributeService', AttributeService],
    ['entityRelationService', EntityRelationService],
    ['entityService', EntityService],
