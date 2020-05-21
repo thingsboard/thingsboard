@@ -92,10 +92,12 @@ public class EntityViewController extends BaseController {
         try {
             entityView.setTenantId(getCurrentUser().getTenantId());
 
-            Operation operation = entityView.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation,
-                    entityView.getId(), entityView);
+            if (entityView.getId() == null) {
+                accessControlService
+                        .checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.CREATE, entityView.getId(), entityView);
+            } else {
+                checkEntityViewId(entityView.getId(), Operation.WRITE);
+            }
 
             EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
             List<ListenableFuture<List<Void>>> futures = new ArrayList<>();

@@ -72,10 +72,13 @@ public class TenantController extends BaseController {
         try {
             boolean newTenant = tenant.getId() == null;
 
-            Operation operation = newTenant ? Operation.CREATE : Operation.WRITE;
+            if (newTenant) {
+                accessControlService
+                        .checkPermission(getCurrentUser(), Resource.TENANT, Operation.CREATE, tenant.getId(), tenant);
+            } else {
+                checkTenantId(tenant.getId(), Operation.WRITE);
+            }
 
-            accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation,
-                    tenant.getId(), tenant);
             tenant = checkNotNull(tenantService.saveTenant(tenant));
             if (newTenant) {
                 installScripts.createDefaultRuleChains(tenant.getId());

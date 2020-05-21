@@ -67,10 +67,12 @@ public class WidgetsBundleController extends BaseController {
                 widgetsBundle.setTenantId(getCurrentUser().getTenantId());
             }
 
-            Operation operation = widgetsBundle.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, operation,
-                    widgetsBundle.getId(), widgetsBundle);
+            if (widgetsBundle.getId() == null) {
+                accessControlService
+                        .checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.CREATE, widgetsBundle.getId(), widgetsBundle);
+            } else {
+                checkWidgetsBundleId(widgetsBundle.getId(), Operation.WRITE);
+            }
 
             return checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
         } catch (Exception e) {
@@ -93,7 +95,7 @@ public class WidgetsBundleController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundles", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/widgetsBundles", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<WidgetsBundle> getWidgetsBundles(
             @RequestParam int limit,

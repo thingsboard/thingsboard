@@ -66,10 +66,12 @@ public class WidgetTypeController extends BaseController {
                 widgetType.setTenantId(getCurrentUser().getTenantId());
             }
 
-            Operation operation = widgetType.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, operation,
-                    widgetType.getId(), widgetType);
+            if (widgetType.getId() == null) {
+                accessControlService
+                        .checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, Operation.CREATE, widgetType.getId(), widgetType);
+            } else {
+                checkWidgetTypeId(widgetType.getId(), Operation.WRITE);
+            }
 
             return checkNotNull(widgetTypeService.saveWidgetType(widgetType));
         } catch (Exception e) {
@@ -92,7 +94,7 @@ public class WidgetTypeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypes", params = { "isSystem", "bundleAlias"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetType> getBundleWidgetTypes(
             @RequestParam boolean isSystem,
@@ -111,7 +113,7 @@ public class WidgetTypeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetType", params = { "isSystem", "bundleAlias", "alias" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/widgetType", params = {"isSystem", "bundleAlias", "alias"}, method = RequestMethod.GET)
     @ResponseBody
     public WidgetType getWidgetType(
             @RequestParam boolean isSystem,
