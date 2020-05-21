@@ -2,6 +2,7 @@
 
 set -e
 
+mkdir -m 0755 -p ${pkg.logFolder}
 chown -R ${pkg.user}: ${pkg.logFolder}
 chown -R ${pkg.user}: ${pkg.installFolder}
 systemctl --no-reload enable ${pkg.name}.service >/dev/null 2>&1 || :

@@ -358,7 +358,7 @@
                                 </resource>
                             </resources>
                             <filters>
-                                <filter>src/main/filters/unix.properties</filter>
+                                <filter>${main.dir}/packaging/filters/unix.properties</filter>
                             </filters>
                         </configuration>
                     </execution>
@@ -387,7 +387,7 @@
                                 </resource>
                             </resources>
                             <filters>
-                                <filter>src/main/filters/windows.properties</filter>
+                                <filter>${main.dir}/packaging/filters/windows.properties</filter>
                             </filters>
                         </configuration>
                     </execution>
@@ -401,12 +401,12 @@
                             <outputDirectory>${project.build.directory}/control</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>src/main/scripts/control</directory>
+                                    <directory>${main.dir}/packaging/scripts/control</directory>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
                             <filters>
-                                <filter>src/main/filters/unix.properties</filter>
+                                <filter>${main.dir}/packaging/filters/unix.properties</filter>
                             </filters>
                         </configuration>
                     </execution>
@@ -420,7 +420,7 @@
                             <outputDirectory>${project.build.directory}/bin/install</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>src/main/scripts/install</directory>
+                                    <directory>${main.dir}/packaging/scripts/install</directory>
                                     <includes>
                                         <include>**/*.sh</include>
                                         <include>**/*.xml</include>
@@ -429,7 +429,7 @@
                                 </resource>
                             </resources>
                             <filters>
-                                <filter>src/main/filters/unix.properties</filter>
+                                <filter>${main.dir}/packaging/filters/unix.properties</filter>
                             </filters>
                         </configuration>
                     </execution>
@@ -443,12 +443,12 @@
                             <outputDirectory>${pkg.win.dist}</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>src/main/scripts/windows</directory>
+                                    <directory>${main.dir}/packaging/scripts/windows</directory>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
                             <filters>
-                                <filter>src/main/filters/windows.properties</filter>
+                                <filter>${main.dir}/packaging/filters/windows.properties</filter>
                             </filters>
                         </configuration>
                     </execution>
@@ -462,7 +462,7 @@
                             <outputDirectory>${pkg.win.dist}/install</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>src/main/scripts/install</directory>
+                                    <directory>${main.dir}/packaging/scripts/install</directory>
                                     <includes>
                                         <include>logback.xml</include>
                                     </includes>
@@ -470,7 +470,7 @@
                                 </resource>
                             </resources>
                             <filters>
-                                <filter>src/main/filters/windows.properties</filter>
+                                <filter>${main.dir}/packaging/filters/windows.properties</filter>
                             </filters>
                         </configuration>
                     </execution>
@@ -567,19 +567,26 @@
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
                 <configuration>
+                    <gradleProjectDirectory>${main.dir}/packaging</gradleProjectDirectory>
                     <tasks>
                         <task>build</task>
                         <task>buildDeb</task>
                         <task>buildRpm</task>
+                        <task>renameDeb</task>
+                        <task>renameRpm</task>
                     </tasks>
                     <args>
-                        <arg>-PprojectBuildDir=${project.build.directory}</arg>
+                        <arg>-PpackagingDir=${main.dir}/packaging</arg>
+                        <arg>-PprojectBuildDir=${basedir}/target</arg>
                         <arg>-PprojectVersion=${project.version}</arg>
                         <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}
                         </arg>
                         <arg>-PpkgName=${pkg.name}</arg>
+                        <arg>-PpkgUser=${pkg.user}</arg>
                         <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                         <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
+                        <arg>--warning-mode</arg>
+                        <arg>all</arg>
                     </args>
                 </configuration>
                 <executions>
@@ -597,7 +604,7 @@
                 <configuration>
                     <finalName>${pkg.name}</finalName>
                     <descriptors>
-                        <descriptor>src/main/assembly/windows.xml</descriptor>
+                        <descriptor>../packaging/assembly/windows.xml</descriptor>
                     </descriptors>
                 </configuration>
                 <executions>
