@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
+import org.thingsboard.server.service.queue.upgrade.TbQueueYmlRuleEngineSettings;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -84,7 +84,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private InstallScripts installScripts;
 
     @Autowired(required = false)
-    private TbQueueRuleEngineSettings ruleEngineSettings;
+    private TbQueueYmlRuleEngineSettings ruleEngineSettings;
 
     @Autowired
     private QueueService queueService;
@@ -263,7 +263,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 "id varchar(31) NOT NULL CONSTRAINT queue_pkey PRIMARY KEY," +
                                 "tenant_id varchar(31)," +
                                 "name varchar(255)," +
-                                "topic varchar(255)," +
+                                "topic varchar(255) UNIQUE," +
                                 "poll_interval int," +
                                 "partitions int," +
                                 "pack_processing_timeout bigint," +
@@ -274,7 +274,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     }
 
 //                    try {
-                        if (ruleEngineSettings != null && !CollectionUtils.isEmpty(ruleEngineSettings.getQueues())) {
+                        if (!CollectionUtils.isEmpty(ruleEngineSettings.getQueues())) {
                             ruleEngineSettings.getQueues().forEach(queueSettings -> {
                                 Queue queue = new Queue();
                                 queue.setTenantId(TenantId.SYS_TENANT_ID);
@@ -304,7 +304,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 //                    }
 
                     try {
-                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN max_number_of_queues int DEFAULT (1), ADD COLUMN max_number_of_partitions_per_queue int DEFAULT (10)");
+                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN number_ofQueues int DEFAULT (1), ADD COLUMN max_number_of_partitions_per_queue int DEFAULT (10)");
                     } catch (Exception e) {
                     }
                     log.info("Schema updated.");
@@ -320,6 +320,5 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
         Thread.sleep(5000);
     }
-
 
 }

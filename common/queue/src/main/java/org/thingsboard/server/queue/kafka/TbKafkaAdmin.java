@@ -78,6 +78,11 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     }
 
     @Override
+    public void deleteTopic(String topic) {
+
+    }
+
+    @Override
     public void destroy() {
         if (client != null) {
             client.close();

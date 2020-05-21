@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.settings;
+package org.thingsboard.server.queue.discovery;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.transport.TransportProtos;
+
+import java.util.List;
 
 @Data
-@Deprecated
-public class TbRuleEngineQueueConfiguration {
-
-    private String name;
-    private String topic;
-    private int pollInterval;
-    private int partitions;
-    private long packProcessingTimeout;
-    private TbRuleEngineQueueSubmitStrategyConfiguration submitStrategy;
-    private TbRuleEngineQueueAckStrategyConfiguration processingStrategy;
-
+public class QueueRoutingInfo {
+    private final TenantId tenantId;
+    private final List<TransportProtos.QueueInfo> ruleEngineQueues;
 }

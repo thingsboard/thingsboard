@@ -60,18 +60,34 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     private Queue createQueue(Queue queue) {
-        TenantId tenantId = TenantId.SYS_TENANT_ID.equals(queue.getTenantId()) ? null : queue.getTenantId();
-        if (queue.getPartitions() > 0) {
+//        if (queue.getPartitions() > 0) {
             for (int i = 0; i < queue.getPartitions(); i++) {
-                tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), tenantId, i, false).getFullTopicName());
+                tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
             }
-        } else {
-            tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), tenantId, 0, false).getFullTopicName());
-        }
+//        } else {
+//            tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), 0, false).getFullTopicName());
+//        }
         return queueDao.save(queue.getTenantId(), queue);
     }
 
     private Queue updateQueue(Queue queue) {
+        Queue oldQueue = queueDao.findById(queue.getTenantId(), queue.getUuidId());
+
+        int oldPartitions = oldQueue.getPartitions();
+        int currentPartitions = queue.getPartitions();
+
+        if (currentPartitions != oldPartitions) {
+            if (currentPartitions > oldPartitions) {
+                for (int i = oldPartitions; i < currentPartitions; i++) {
+                    tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+                }
+            } else {
+                for (int i = currentPartitions; i < oldPartitions; i++) {
+                    tbQueueAdmin.deleteTopic(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+                }
+            }
+        }
+
         return queueDao.save(queue.getTenantId(), queue);
     }
 
@@ -88,15 +104,45 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
             Tenant tenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
             if (tenant.isIsolatedTbRuleEngine()) {
-                return queueDao.find(tenantId);
+                return queueDao.findAllByTenantId(tenantId);
             }
         }
 
-        return queueDao.find(TenantId.SYS_TENANT_ID);
+        return queueDao.findAllByTenantId(TenantId.SYS_TENANT_ID);
+    }
+
+    @Override
+    public List<Queue> findAllQueues() {
+        log.trace("Executing findAllQueues");
+
+        return queueDao.findAll();
+    }
+
+    @Override
+    public Queue findQueueById(TenantId tenantId, QueueId queueId) {
+        log.trace("Executing findQueueById, queueId: [{}]", queueId);
+        return queueDao.findById(tenantId, queueId.getId());
     }
 
     private DataValidator<Queue> queueValidator =
             new DataValidator<Queue>() {
+
+                @Override
+                protected void validateCreate(TenantId tenantId, Queue queue) {
+                    if (queueDao.findQueueByTenantIdAndTopic(tenantId, queue.getTopic()) != null) {
+                        throw new DataValidationException(String.format("Queue with topic: %s already exists!", queue.getTopic()));
+                    }
+                    if (queueDao.findQueueByTenantIdAndName(tenantId, queue.getName()) != null) {
+                        throw new DataValidationException(String.format("Queue with name: %s already exists!", queue.getName()));
+                    }
+                }
+
+                @Override
+                protected void validateUpdate(TenantId tenantId, Queue queue) {
+                    if (queueDao.findById(tenantId, queue.getUuidId()) == null) {
+                        throw new DataValidationException(String.format("Queue with id: %s does not exists!", queue.getId()));
+                    }
+                }
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, Queue queue) {
@@ -128,8 +174,8 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     if (queue.getPollInterval() < 1) {
                         throw new DataValidationException("Queue poll interval should be more then 0!");
                     }
-                    if (queue.getPartitions() < 0) {
-                        throw new DataValidationException("Queue partitions can't be less then 0!");
+                    if (queue.getPartitions() < 1) {
+                        throw new DataValidationException("Queue partitions should be more then 0!");
                     }
                     if (queue.getPackProcessingTimeout() < 1) {
                         throw new DataValidationException("Queue pack processing timeout should be more then 0!");
@@ -163,13 +209,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     }
                     if (processingStrategy.getPauseBetweenRetries() < 0) {
                         throw new DataValidationException("Queue processing strategy pause between retries can't be less then 0!");
-                    }
-
-                    if (queue.getId() == null) {
-                        Queue existingQueue = queueDao.findQueueByTopic(queue.getTopic());
-                        if (existingQueue != null && existingQueue.getTopic().equals(queue.getTopic())) {
-                            throw new DataValidationException(String.format("Queue with topic: %s already exists!", queue.getTopic()));
-                        }
                     }
                 }
             };

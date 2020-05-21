@@ -28,8 +28,12 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.queue.discovery.HashPartitionService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +44,10 @@ import java.util.List;
 public class QueueController extends BaseController {
 
     @Autowired
-    private QueueService queueService;
+    private TbServiceInfoProvider serviceInfoProvider;
+
+    @Autowired
+    private PartitionService partitionService;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
@@ -68,12 +75,21 @@ public class QueueController extends BaseController {
         checkParameter("serviceType", serviceType);
         checkNotNull(queue);
         try {
+            queue.setTenantId(getCurrentUser().getTenantId());
+            Operation operation = queue.getId() == null ? Operation.CREATE : Operation.WRITE;
+
+            if (operation == Operation.WRITE) {
+                checkQueueId(queue.getId(), operation);
+            }
+
+            accessControlService.checkPermission(getCurrentUser(), Resource.QUEUE, operation, queue.getId(), queue);
             ServiceType type = ServiceType.valueOf(serviceType);
             switch (type) {
                 case TB_RULE_ENGINE:
                     queue.setTenantId(getTenantId());
                     Queue savedQueue = queueService.createOrUpdateQueue(queue);
                     checkNotNull(savedQueue);
+                    partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), Collections.emptyList());
                     return savedQueue;
                 default:
                     return null;
@@ -93,6 +109,7 @@ public class QueueController extends BaseController {
         try {
             ServiceType type = ServiceType.valueOf(serviceType);
             QueueId queueId = new QueueId(toUUID(queueIdStr));
+            checkQueueId(queueId, Operation.DELETE);
             switch (type) {
                 case TB_RULE_ENGINE:
                     return queueService.deleteQueue(getTenantId(), queueId);

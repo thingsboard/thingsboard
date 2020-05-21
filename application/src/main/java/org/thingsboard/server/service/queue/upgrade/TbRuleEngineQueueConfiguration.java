@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.settings;
+package org.thingsboard.server.service.queue.upgrade;
 
 import lombok.Data;
 
 @Data
-@Deprecated
-public class TbRuleEngineQueueAckStrategyConfiguration {
+public class TbRuleEngineQueueConfiguration {
 
-    private String type;
-    private int retries;
-    private double failurePercentage;
-    private long pauseBetweenRetries;
+    private String name;
+    private String topic;
+    private int pollInterval;
+    private int partitions;
+    private long packProcessingTimeout;
+    private TbRuleEngineQueueSubmitStrategyConfiguration submitStrategy;
+    private TbRuleEngineQueueAckStrategyConfiguration processingStrategy;
 
 }

@@ -22,15 +22,18 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoResponseMsg;
+import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
+import org.thingsboard.server.queue.discovery.RoutingInfoService;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
 
 @Slf4j
 @Service
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
-public class TransportTenantRoutingInfoService implements TenantRoutingInfoService {
+public class TransportTenantRoutingInfoService implements RoutingInfoService {
 
     private TransportService transportService;
 
@@ -41,12 +44,22 @@ public class TransportTenantRoutingInfoService implements TenantRoutingInfoServi
     }
 
     @Override
-    public TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
+    public TenantRoutingInfo getTenantRoutingInfo(TenantId tenantId) {
         GetTenantRoutingInfoRequestMsg msg = GetTenantRoutingInfoRequestMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .build();
         GetTenantRoutingInfoResponseMsg routingInfo = transportService.getRoutingInfo(msg);
         return new TenantRoutingInfo(tenantId, routingInfo.getIsolatedTbCore(), routingInfo.getIsolatedTbRuleEngine());
+    }
+
+    @Override
+    public QueueRoutingInfo getQueueRoutingInfo(TenantId tenantId) {
+        GetQueueRoutingInfoRequestMsg msg = GetQueueRoutingInfoRequestMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .build();
+        GetQueueRoutingInfoResponseMsg routingInfo = transportService.getRoutingInfo(msg);
+        return new QueueRoutingInfo(tenantId, routingInfo.getRuleEngineQueuesList());
     }
 }

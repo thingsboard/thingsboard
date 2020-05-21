@@ -21,18 +21,19 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
+import org.thingsboard.server.queue.discovery.RoutingInfoService;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class HashPartitionServiceTest {
 
     public static final int ITERATIONS = 1000000;
@@ -55,9 +56,8 @@ public class HashPartitionServiceTest {
     private HashPartitionService clusterRoutingService;
 
     private TbServiceInfoProvider discoveryService;
-    private TenantRoutingInfoService routingInfoService;
+    private RoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
-    private TbQueueRuleEngineSettings ruleEngineSettings;
 
     private String hashFunctionName = "sha256";
 
@@ -66,14 +66,14 @@ public class HashPartitionServiceTest {
     public void setup() throws Exception {
         discoveryService = mock(TbServiceInfoProvider.class);
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
-        routingInfoService = mock(TenantRoutingInfoService.class);
-        ruleEngineSettings = mock(TbQueueRuleEngineSettings.class);
+        routingInfoService = mock(RoutingInfoService.class);
         clusterRoutingService = new HashPartitionService(discoveryService,
                 routingInfoService,
-                applicationEventPublisher,
-                ruleEngineSettings
+                applicationEventPublisher
         );
-        when(ruleEngineSettings.getQueues()).thenReturn(Collections.emptyList());
+        QueueRoutingInfo queueInfo = mock(QueueRoutingInfo.class);
+        when(routingInfoService.getQueueRoutingInfo(TenantId.SYS_TENANT_ID)).thenReturn(queueInfo);
+        when(queueInfo.getRuleEngineQueues()).thenReturn(Collections.emptyList());
         ReflectionTestUtils.setField(clusterRoutingService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(clusterRoutingService, "corePartitions", 10);
         ReflectionTestUtils.setField(clusterRoutingService, "hashFunctionName", hashFunctionName);
@@ -83,7 +83,7 @@ public class HashPartitionServiceTest {
                 .setTenantIdLSB(TenantId.NULL_UUID.getLeastSignificantBits())
                 .addAllServiceTypes(Collections.singletonList(ServiceType.TB_CORE.name()))
                 .build();
-//        when(discoveryService.getServiceInfo()).thenReturn(currentServer);
+        when(discoveryService.getServiceInfo()).thenReturn(currentServer);
         List<TransportProtos.ServiceInfo> otherServers = new ArrayList<>();
         for (int i = 1; i < SERVER_COUNT; i++) {
             otherServers.add(TransportProtos.ServiceInfo.newBuilder()

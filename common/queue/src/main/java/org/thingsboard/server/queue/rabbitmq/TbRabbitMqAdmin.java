@@ -60,6 +60,11 @@ public class TbRabbitMqAdmin implements TbQueueAdmin {
     }
 
     @Override
+    public void deleteTopic(String topic) {
+
+    }
+
+    @Override
     public void destroy() {
         if (channel != null) {
             try {

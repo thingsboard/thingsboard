@@ -83,6 +83,11 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
         }
     }
 
+    @Override
+    public void deleteTopic(String topic) {
+
+    }
+
     private void setQueueConfigs(QueueDescription queueDescription) {
         queueConfigs.forEach((confKey, confValue) -> {
             switch (confKey) {

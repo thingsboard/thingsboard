@@ -95,6 +95,11 @@ public class RuleEngineTbQueueAdminFactory {
             }
 
             @Override
+            public void deleteTopic(String topic) {
+
+            }
+
+            @Override
             public void destroy() {
 
             }

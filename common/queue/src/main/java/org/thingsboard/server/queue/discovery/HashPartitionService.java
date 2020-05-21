@@ -15,28 +15,23 @@
  */
 package org.thingsboard.server.queue.discovery;
 
-import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
+import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 
 import javax.annotation.PostConstruct;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,7 +40,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -61,8 +55,7 @@ public class HashPartitionService implements PartitionService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
-    private final TenantRoutingInfoService tenantRoutingInfoService;
-    private final TbQueueRuleEngineSettings tbQueueRuleEngineSettings;
+    private final RoutingInfoService routingInfoService;
     private final ConcurrentMap<ServiceQueue, String> partitionTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<ServiceQueue, Integer> partitionSizes = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, TenantRoutingInfo> tenantRoutingInfoMap = new ConcurrentHashMap<>();
@@ -77,13 +70,11 @@ public class HashPartitionService implements PartitionService {
     private HashFunction hashFunction;
 
     public HashPartitionService(TbServiceInfoProvider serviceInfoProvider,
-                                TenantRoutingInfoService tenantRoutingInfoService,
-                                ApplicationEventPublisher applicationEventPublisher,
-                                TbQueueRuleEngineSettings tbQueueRuleEngineSettings) {
+                                RoutingInfoService routingInfoService,
+                                ApplicationEventPublisher applicationEventPublisher) {
         this.serviceInfoProvider = serviceInfoProvider;
-        this.tenantRoutingInfoService = tenantRoutingInfoService;
+        this.routingInfoService = routingInfoService;
         this.applicationEventPublisher = applicationEventPublisher;
-        this.tbQueueRuleEngineSettings = tbQueueRuleEngineSettings;
     }
 
     @PostConstruct
@@ -91,10 +82,6 @@ public class HashPartitionService implements PartitionService {
         this.hashFunction = forName(hashFunctionName);
         partitionSizes.put(new ServiceQueue(ServiceType.TB_CORE), corePartitions);
         partitionTopics.put(new ServiceQueue(ServiceType.TB_CORE), coreTopic);
-        tbQueueRuleEngineSettings.getQueues().forEach(queueConfiguration -> {
-            partitionTopics.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getTopic());
-            partitionSizes.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getPartitions());
-        });
     }
 
     @Override
@@ -138,6 +125,17 @@ public class HashPartitionService implements PartitionService {
         ConcurrentMap<ServiceQueueKey, List<Integer>> oldPartitions = myPartitions;
         TenantId myIsolatedOrSystemTenantId = getSystemOrIsolatedTenantId(currentService);
         myPartitions = new ConcurrentHashMap<>();
+
+        partitionSizes.clear();
+        partitionTopics.clear();
+
+        init();
+
+        routingInfoService.getQueueRoutingInfo(myIsolatedOrSystemTenantId).getRuleEngineQueues().forEach(queueConfiguration -> {
+        partitionTopics.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getTopic());
+        partitionSizes.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getPartitions());
+        });
+
         partitionSizes.forEach((serviceQueue, size) -> {
             ServiceQueueKey myServiceQueueKey = new ServiceQueueKey(serviceQueue, myIsolatedOrSystemTenantId);
             for (int i = 0; i < size; i++) {
@@ -264,7 +262,7 @@ public class HashPartitionService implements PartitionService {
             synchronized (tenantRoutingInfoMap) {
                 routingInfo = tenantRoutingInfoMap.get(tenantId);
                 if (routingInfo == null) {
-                    routingInfo = tenantRoutingInfoService.getRoutingInfo(tenantId);
+                    routingInfo = routingInfoService.getTenantRoutingInfo(tenantId);
                     tenantRoutingInfoMap.put(tenantId, routingInfo);
                 }
             }

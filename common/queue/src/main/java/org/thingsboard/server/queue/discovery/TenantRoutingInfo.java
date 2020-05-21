@@ -17,6 +17,10 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.gen.transport.TransportProtos;
+
+import java.util.List;
 
 @Data
 public class TenantRoutingInfo {

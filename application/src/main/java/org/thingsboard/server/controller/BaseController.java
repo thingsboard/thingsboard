@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -67,6 +68,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -87,6 +89,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -197,10 +200,12 @@ public abstract class BaseController {
     @Autowired
     protected TbQueueProducerProvider producerProvider;
 
+    @Autowired
+    protected QueueService queueService;
+
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
     private boolean logControllerErrorStackTrace;
-
 
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
@@ -372,6 +377,8 @@ public abstract class BaseController {
                 case ENTITY_VIEW:
                     checkEntityViewId(new EntityViewId(entityId.getId()), operation);
                     return;
+                case QUEUE:
+                    checkQueueId(new QueueId(entityId.getId()), operation);
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
             }
@@ -519,6 +526,18 @@ public abstract class BaseController {
             checkNotNull(dashboardInfo);
             accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, operation, dashboardId, dashboardInfo);
             return dashboardInfo;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    protected Queue checkQueueId(QueueId queueId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(queueId, "Incorrect queueId " + queueId);
+            Queue queue = queueService.findQueueById(getCurrentUser().getTenantId(), queueId);
+            checkNotNull(queue);
+            accessControlService.checkPermission(getCurrentUser(), Resource.QUEUE, operation, queueId, queue);
+            return queue;
         } catch (Exception e) {
             throw handleException(e, false);
         }

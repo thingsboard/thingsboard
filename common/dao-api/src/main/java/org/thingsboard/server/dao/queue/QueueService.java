@@ -28,4 +28,8 @@ public interface QueueService {
     Boolean deleteQueue(TenantId tenantId, QueueId queueId);
 
     List<Queue> findQueues(TenantId tenantId);
+
+    List<Queue> findAllQueues();
+
+    Queue findQueueById(TenantId tenantId, QueueId queueId);
 }

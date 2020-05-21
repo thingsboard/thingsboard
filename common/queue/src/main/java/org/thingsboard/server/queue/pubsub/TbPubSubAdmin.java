@@ -190,6 +190,11 @@ public class TbPubSubAdmin implements TbQueueAdmin {
     }
 
     @Override
+    public void deleteTopic(String topic) {
+
+    }
+
+    @Override
     public void destroy() {
         if (topicAdminClient != null) {
             topicAdminClient.close();

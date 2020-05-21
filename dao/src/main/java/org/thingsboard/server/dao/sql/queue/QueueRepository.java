@@ -18,6 +18,12 @@ package org.thingsboard.server.dao.sql.queue;
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.model.sql.QueueEntity;
 
+import java.util.List;
+
 public interface QueueRepository extends CrudRepository<QueueEntity, String> {
-    QueueEntity findByTopic(String topic);
+    QueueEntity findByTenantIdAndTopic(String tenantId, String topic);
+
+    QueueEntity findByTenantIdAndName(String tenantId, String name);
+
+    List<QueueEntity> findAllByTenantId(String tenantId);
 }

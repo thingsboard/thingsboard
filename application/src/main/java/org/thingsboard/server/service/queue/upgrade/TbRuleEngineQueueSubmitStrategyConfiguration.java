@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.settings;
+package org.thingsboard.server.service.queue.upgrade;
 
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import lombok.Data;
 
-@Component
-public class TbQueueRuleEngineSettings {
+@Data
+public class TbRuleEngineQueueSubmitStrategyConfiguration {
 
-    @Getter
-    @Value("${queue.rule-engine.topic}")
-    private String topic;
+    private String type;
+    private int batchSize;
+
 }

@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.service.queue.upgrade;
 
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.Data;
 
-public interface TenantRoutingInfoService {
+@Data
+public class TbRuleEngineQueueAckStrategyConfiguration {
 
-    TenantRoutingInfo getRoutingInfo(TenantId tenantId);
+    private String type;
+    private int retries;
+    private double failurePercentage;
+    private long pauseBetweenRetries;
+
 }

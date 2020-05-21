@@ -15,9 +15,18 @@
  */
 package org.thingsboard.server.dao.queue;
 
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.dao.Dao;
 
+import java.util.List;
+
 public interface QueueDao extends Dao<Queue> {
-    Queue findQueueByTopic(String topic);
+    Queue findQueueByTenantIdAndTopic(TenantId tenantId, String topic);
+
+    Queue findQueueByTenantIdAndName(TenantId tenantId, String name);
+
+    List<Queue> findAll();
+
+    List<Queue> findAllByTenantId(TenantId tenantId);
 }

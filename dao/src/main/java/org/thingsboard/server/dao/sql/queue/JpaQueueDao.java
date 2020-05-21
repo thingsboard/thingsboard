@@ -15,16 +15,22 @@
  */
 package org.thingsboard.server.dao.sql.queue;
 
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.QueueEntity;
 import org.thingsboard.server.dao.queue.QueueDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
+
+import java.util.List;
+
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 @Slf4j
 @Component
@@ -45,7 +51,24 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
     }
 
     @Override
-    public Queue findQueueByTopic(String topic) {
-        return DaoUtil.getData(queueRepository.findByTopic(topic));
+    public Queue findQueueByTenantIdAndTopic(TenantId tenantId, String topic) {
+        return DaoUtil.getData(queueRepository.findByTenantIdAndTopic(fromTimeUUID(tenantId.getId()), topic));
+    }
+
+    @Override
+    public Queue findQueueByTenantIdAndName(TenantId tenantId, String name) {
+        return DaoUtil.getData(queueRepository.findByTenantIdAndName(fromTimeUUID(tenantId.getId()), name));
+    }
+
+    @Override
+    public List<Queue> findAllByTenantId(TenantId tenantId) {
+        List<QueueEntity> entities = queueRepository.findAllByTenantId(fromTimeUUID(tenantId.getId()));
+        return DaoUtil.convertDataList(entities);
+    }
+
+    @Override
+    public List<Queue> findAll() {
+        List<QueueEntity> entities = Lists.newArrayList(queueRepository.findAll());
+        return DaoUtil.convertDataList(entities);
     }
 }

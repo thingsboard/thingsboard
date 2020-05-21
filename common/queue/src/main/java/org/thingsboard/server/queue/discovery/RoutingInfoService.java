@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.settings;
+package org.thingsboard.server.queue.discovery;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
-@Deprecated
-public class TbRuleEngineQueueSubmitStrategyConfiguration {
+public interface RoutingInfoService {
 
-    private String type;
-    private int batchSize;
+    TenantRoutingInfo getTenantRoutingInfo(TenantId tenantId);
 
+    QueueRoutingInfo getQueueRoutingInfo(TenantId tenantId);
 }
