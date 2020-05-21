@@ -692,7 +692,7 @@ queue:
         topic: "${TB_QUEUE_RE_MAIN_TOPIC:tb_rule_engine.main}"
         poll-interval: "${TB_QUEUE_RE_MAIN_POLL_INTERVAL_MS:25}"
         partitions: "${TB_QUEUE_RE_MAIN_PARTITIONS:10}"
-        pack-processing-timeout: "${TB_QUEUE_RE_MAIN_PACK_PROCESSING_TIMEOUT_MS:60000}"
+        pack-processing-timeout: "${TB_QUEUE_RE_MAIN_PACK_PROCESSING_TIMEOUT_MS:5000}"
         submit-strategy:
           type: "${TB_QUEUE_RE_MAIN_SUBMIT_STRATEGY_TYPE:BURST}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
           # For BATCH only
