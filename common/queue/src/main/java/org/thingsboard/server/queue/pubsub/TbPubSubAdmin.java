@@ -191,7 +191,33 @@ public class TbPubSubAdmin implements TbQueueAdmin {
 
     @Override
     public void deleteTopic(String topic) {
+        TopicName topicName = TopicName.newBuilder()
+                .setTopic(topic)
+                .setProject(pubSubSettings.getProjectId())
+                .build();
 
+        ProjectSubscriptionName subscriptionName =
+                ProjectSubscriptionName.of(pubSubSettings.getProjectId(), topic);
+
+        if (topicSet.contains(topicName.toString())) {
+            topicAdminClient.deleteTopic(topicName);
+        } else {
+            if (topicAdminClient.getTopic(topicName) != null) {
+                topicAdminClient.deleteTopic(topicName);
+            } else {
+                log.warn("PubSub topic [{}] does not exist.", topic);
+            }
+        }
+
+        if (subscriptionSet.contains(subscriptionName.toString())) {
+            subscriptionAdminClient.deleteSubscription(subscriptionName);
+        } else {
+            if (subscriptionAdminClient.getSubscription(subscriptionName) != null) {
+                subscriptionAdminClient.deleteSubscription(subscriptionName);
+            } else {
+                log.warn("PubSub subscription [{}] does not exist.", topic);
+            }
+        }
     }
 
     @Override

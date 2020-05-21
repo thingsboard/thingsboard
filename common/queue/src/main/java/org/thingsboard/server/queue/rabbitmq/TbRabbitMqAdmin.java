@@ -61,7 +61,11 @@ public class TbRabbitMqAdmin implements TbQueueAdmin {
 
     @Override
     public void deleteTopic(String topic) {
-
+        try {
+            channel.queueDelete(topic);
+        } catch (IOException e) {
+            log.error("Failed to delete RabbitMq queue [{}].", topic);
+        }
     }
 
     @Override

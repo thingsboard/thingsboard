@@ -79,7 +79,19 @@ public class TbKafkaAdmin implements TbQueueAdmin {
 
     @Override
     public void deleteTopic(String topic) {
-
+        if (topics.contains(topic)) {
+            client.deleteTopics(Collections.singletonList(topic));
+        } else {
+            try {
+                if (client.listTopics().names().get().contains(topic)) {
+                    client.deleteTopics(Collections.singletonList(topic));
+                } else {
+                    log.warn("Kafka topic [{}] does not exist.", topic);
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("Failed to delete kafka topic [{}].", topic, e);
+            }
+        }
     }
 
     @Override

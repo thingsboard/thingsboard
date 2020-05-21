@@ -85,7 +85,27 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
 
     @Override
     public void deleteTopic(String topic) {
+        if (queues.contains(topic)) {
+            doDelete(topic);
+        } else {
+            try {
+                if (client.getQueue(topic) != null) {
+                    doDelete(topic);
+                } else {
+                    log.warn("Azure Service Bus Queue [{}] is not exist.", topic);
+                }
+            } catch (ServiceBusException | InterruptedException e) {
+                log.error("Failed to delete Azure Service Bus queue [{}]", topic, e);
+            }
+        }
+    }
 
+    private void doDelete(String topic) {
+        try {
+            client.deleteTopic(topic);
+        } catch (ServiceBusException | InterruptedException e) {
+            log.error("Failed to delete Azure Service Bus queue [{}]", topic, e);
+        }
     }
 
     private void setQueueConfigs(QueueDescription queueDescription) {
