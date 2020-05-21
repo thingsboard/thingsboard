@@ -133,8 +133,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
           currentPosition[0] = {
             ...beforePosition,
             time,
-            minTime: this.minTimeFormat,
-            maxTime: this.maxTimeFormat,
             ...interpolateOnLineSegment(beforePosition, afterPosition, this.settings.latKeyName, this.settings.lngKeyName, ratio)
           }
           break;
@@ -164,10 +162,10 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   calculateIntervals() {
     this.historicalData.forEach((dataSource, index) => {
       this.minTime = dataSource[0]?.time || Infinity;
-      this.minTimeFormat = this.minTime !== Infinity ? moment(this.minTime).format('YYYY-MM-DD HH:mm:ss') : '';
+      const minTimeFormat = this.minTime !== Infinity ? moment(this.minTime).format('YYYY-MM-DD HH:mm:ss') : '';
       this.maxTime = dataSource[dataSource.length - 1]?.time || -Infinity;
-      this.maxTimeFormat = this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '';
-      this.interpolatedTimeData[index] = this.interpolateArray(dataSource);
+      const maxTimeFormat = this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '';
+      this.interpolatedTimeData[index] = this.interpolateArray(dataSource, minTimeFormat, maxTimeFormat);
     });
     if (this.useAnchors) {
       const anchorDate = Object.entries(_.union(this.interpolatedTimeData)[0]);
@@ -181,11 +179,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     if (!point) {
       point = this.activeTrip;
     }
-    const data = {
-      ...this.activeTrip,
-      maxTime: this.maxTimeFormat,
-      minTime: this.minTimeFormat
-    }
+    const data = this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
       safeExecute(this.settings.tooolTipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
     const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
@@ -199,17 +193,13 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   }
 
   calcLabel() {
-    const data = {
-      ...this.activeTrip,
-      maxTime: this.maxTimeFormat,
-      minTime: this.minTimeFormat
-    }
+    const data = this.activeTrip;
     const labelText: string = this.settings.useLabelFunction ?
       safeExecute(this.settings.labelFunction, [data, this.historicalData, data.dsIndex]) : this.settings.label;
     this.label = (parseWithTranslation.parseTemplate(labelText, data, true));
   }
 
-  interpolateArray(originData: FormattedData[]) {
+  interpolateArray(originData: FormattedData[], minTimeFormat?: string, maxTimeFormat?: string) {
     const result = {};
     const latKeyName = this.settings.latKeyName;
     const lngKeyName = this.settings.lngKeyName;
@@ -218,6 +208,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       const normalizeTime = this.minTime + Math.ceil((currentTime - this.minTime) / this.normalizationStep) * this.normalizationStep;
       result[normalizeTime] = {
         ...data,
+        minTime: minTimeFormat,
+        maxTime: maxTimeFormat,
         rotationAngle: this.settings.rotationAngle
       };
     }
