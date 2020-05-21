@@ -56,19 +56,21 @@ ospackage {
         into "bin"
     }
 
-    // Copy the install files
-    from("${buildDir}/bin/install/install.sh") {
-        fileMode 0775
-        into "bin/install"
-    }
+    if("${pkgCopyInstallScripts}".equalsIgnoreCase("true")) {
+        // Copy the install files
+        from("${buildDir}/bin/install/install.sh") {
+            fileMode 0775
+            into "bin/install"
+        }
 
-    from("${buildDir}/bin/install/upgrade.sh") {
-        fileMode 0775
-        into "bin/install"
-    }
+        from("${buildDir}/bin/install/upgrade.sh") {
+            fileMode 0775
+            into "bin/install"
+        }
 
-    from("${buildDir}/bin/install/logback.xml") {
-        into "bin/install"
+        from("${buildDir}/bin/install/logback.xml") {
+            into "bin/install"
+        }
     }
 
     // Copy the config files

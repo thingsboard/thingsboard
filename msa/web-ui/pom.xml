@@ -257,10 +257,13 @@
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
                 <configuration>
+                    <gradleProjectDirectory>${basedir}</gradleProjectDirectory>
                     <tasks>
                         <task>build</task>
                         <task>buildDeb</task>
                         <task>buildRpm</task>
+                        <task>renameDeb</task>
+                        <task>renameRpm</task>
                     </tasks>
                     <args>
                         <arg>-PprojectBuildDir=${project.build.directory}</arg>

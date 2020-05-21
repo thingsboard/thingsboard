@@ -17,7 +17,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
     ext {
-        osPackageVersion = "3.8.0"
+        osPackageVersion = "8.3.0"
     }
     repositories {
         jcenter()
@@ -72,8 +72,8 @@ buildRpm {
 
     arch = X86_64
 
-    version = projectVersion.replace('-', '')
-    archiveName = "${pkgName}.rpm"
+    archiveVersion = projectVersion.replace('-', '')
+    archiveFileName = "${pkgName}.rpm"
 
     preInstall file("${buildDir}/control/rpm/preinst")
     postInstall file("${buildDir}/control/rpm/postinst")
@@ -90,7 +90,6 @@ buildRpm {
         into "/usr/lib/systemd/system"
     }
 
-    directory(pkgLogFolder, 0755)
     link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
 }
 
@@ -99,7 +98,7 @@ buildDeb {
 
     arch = "amd64"
 
-    archiveName = "${pkgName}.deb"
+    archiveFileName = "${pkgName}.deb"
 
     configurationFile("${pkgInstallFolder}/conf/${pkgName}.conf")
     configurationFile("${pkgInstallFolder}/conf/custom-environment-variables.yml")
@@ -114,7 +113,27 @@ buildDeb {
     user pkgUser
     permissionGroup pkgUser
 
-    directory(pkgLogFolder, 0755)
     link("/etc/init.d/${pkgName}", "${pkgInstallFolder}/init/${pkgName}")
     link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
 }
+
+task renameDeb(type: Copy) {
+    from("${buildDir}/") {
+        include '*.deb'
+        destinationDir file("${buildDir}/")
+        rename { String filename ->
+            "${pkgName}.deb"
+        }
+    }
+}
+
+task renameRpm(type: Copy) {
+    from("${buildDir}/") {
+        include '*.rpm'
+        destinationDir file("${buildDir}/")
+        rename { String filename ->
+            "${pkgName}.rpm"
+        }
+    }
+}
+
