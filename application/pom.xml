@@ -34,14 +34,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/..</main.dir>
+        <pkg.type>java</pkg.type>
         <pkg.disabled>false</pkg.disabled>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.name>thingsboard</pkg.name>
-        <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
-        <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
+        <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
         <pkg.implementationTitle>ThingsBoard</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.server.ThingsboardServerApplication</pkg.mainClass>
     </properties>

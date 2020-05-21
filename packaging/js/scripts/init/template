@@ -3,7 +3,7 @@
 
 
 ### BEGIN INIT INFO
-# Provides:          tb-js-executor
+# Provides:          ${pkg.name}
 # Required-Start:    $remote_fs $syslog $network
 # Required-Stop:     $remote_fs $syslog $network
 # Default-Start:     2 3 4 5

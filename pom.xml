@@ -34,6 +34,8 @@
         <pkg.package.phase>none</pkg.package.phase>
         <pkg.user>thingsboard</pkg.user>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
+        <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
+        <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <spring-boot.version>2.2.6.RELEASE</spring-boot.version>
         <spring-oauth2.version>2.1.2.RELEASE</spring-oauth2.version>
         <spring.version>5.2.6.RELEASE</spring.version>
@@ -184,7 +186,45 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/filters/unix.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-linux-conf</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${pkg.linux.dist}/conf</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>config</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-linux-init</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${pkg.linux.dist}/init</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/init</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -207,13 +247,13 @@
                                             <resource>
                                                 <directory>src/main/conf</directory>
                                                 <excludes>
-                                                    <exclude>thingsboard.conf</exclude>
+                                                    <exclude>${pkg.name}.conf</exclude>
                                                 </excludes>
                                                 <filtering>true</filtering>
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -227,12 +267,12 @@
                                         <outputDirectory>${project.build.directory}/control</outputDirectory>
                                         <resources>
                                             <resource>
-                                                <directory>${main.dir}/packaging/scripts/control</directory>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/control</directory>
                                                 <filtering>true</filtering>
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/filters/unix.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -246,7 +286,7 @@
                                         <outputDirectory>${project.build.directory}/bin/install</outputDirectory>
                                         <resources>
                                             <resource>
-                                                <directory>${main.dir}/packaging/scripts/install</directory>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/install</directory>
                                                 <includes>
                                                     <include>**/*.sh</include>
                                                     <include>**/*.xml</include>
@@ -255,7 +295,7 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/filters/unix.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -269,12 +309,12 @@
                                         <outputDirectory>${pkg.win.dist}</outputDirectory>
                                         <resources>
                                             <resource>
-                                                <directory>${main.dir}/packaging/scripts/windows</directory>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/windows</directory>
                                                 <filtering>true</filtering>
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -288,7 +328,7 @@
                                         <outputDirectory>${pkg.win.dist}/install</outputDirectory>
                                         <resources>
                                             <resource>
-                                                <directory>${main.dir}/packaging/scripts/install</directory>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/install</directory>
                                                 <includes>
                                                     <include>logback.xml</include>
                                                 </includes>
@@ -296,7 +336,7 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -319,6 +359,22 @@
                                                     <include>**/*.sql</include>
                                                 </includes>
                                                 <filtering>false</filtering>
+                                            </resource>
+                                        </resources>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-docker-config</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>docker</directory>
+                                                <filtering>true</filtering>
                                             </resource>
                                         </resources>
                                     </configuration>
@@ -394,7 +450,7 @@
                             <groupId>org.thingsboard</groupId>
                             <artifactId>gradle-maven-plugin</artifactId>
                             <configuration>
-                                <gradleProjectDirectory>${main.dir}/packaging</gradleProjectDirectory>
+                                <gradleProjectDirectory>${main.dir}/packaging/${pkg.type}</gradleProjectDirectory>
                                 <tasks>
                                     <task>build</task>
                                     <task>buildDeb</task>
@@ -433,7 +489,7 @@
                             <configuration>
                                 <finalName>${pkg.name}</finalName>
                                 <descriptors>
-                                    <descriptor>${main.dir}/packaging/assembly/windows.xml</descriptor>
+                                    <descriptor>${main.dir}/packaging/${pkg.type}/assembly/windows.xml</descriptor>
                                 </descriptors>
                             </configuration>
                             <executions>
@@ -659,8 +715,12 @@
                             <exclude>src/vendor/**</exclude>
                             <exclude>src/font/**</exclude>
                             <exclude>src/sh/**</exclude>
-                            <exclude>packaging/scripts/control/**</exclude>
-                            <exclude>packaging/scripts/windows/**</exclude>
+                            <exclude>packaging/*/scripts/control/**</exclude>
+                            <exclude>packaging/*/scripts/windows/**</exclude>
+                            <exclude>packaging/*/scripts/init/**</exclude>
+                            <exclude>**/*.log</exclude>
+                            <exclude>**/*.current</exclude>
+                            <exclude>.instance_id</exclude>
                             <exclude>src/main/scripts/control/**</exclude>
                             <exclude>src/main/scripts/windows/**</exclude>
                             <exclude>src/main/resources/public/static/rulenode/**</exclude>

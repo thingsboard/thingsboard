@@ -47,26 +47,29 @@ ospackage {
     permissionGroup pkgUser
 
     // Copy the executable file
-    from("target/package/linux/bin/${pkgName}") {
+    from("${buildDir}/package/linux/bin/${pkgName}") {
         fileMode 0500
         into "bin"
     }
 
     // Copy the init file
-    from("target/package/linux/init/${pkgName}") {
+    from("${buildDir}/package/linux/init/template") {
         fileMode 0500
         into "init"
+        rename { String filename ->
+            "${pkgName}"
+        }
     }
 
     // Copy the config files
-    from("target/package/linux/conf") {
+    from("${buildDir}/package/linux/conf") {
         fileType CONFIG | NOREPLACE
         fileMode 0754
         into "conf"
     }
 
     // Copy web files
-    from("target/web") {
+    from("${buildDir}/web") {
         into "web"
     }
 
