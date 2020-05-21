@@ -19,7 +19,7 @@ import tinycolor from 'tinycolor2';
 
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
-import { FormattedData, MapProviders } from '../lib/maps/map-models';
+import { FormattedData, MapProviders, TripAnimationSettings } from '../lib/maps/map-models';
 import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
 import { mapPolygonSchema, pathSchema, pointSchema, tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -57,7 +57,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   normalizationStep: number;
   interpolatedTimeData = [];
   widgetConfig: WidgetConfig;
-  settings;
+  settings: TripAnimationSettings;
   mainTooltip = '';
   visibleTooltip = false;
   activeTrip: FormattedData;
@@ -178,7 +178,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   calcTooltip = (point?: FormattedData) => {
     const data = point ? point : this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
-      safeExecute(this.settings.tooolTipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
+      safeExecute(this.settings.tooltipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
     const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
     this.mainTooltip = this.sanitizer.sanitize(
       SecurityContext.HTML, tooltipText);
