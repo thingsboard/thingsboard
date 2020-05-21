@@ -673,6 +673,8 @@ queue:
     # JS Eval max pending requests
     max_pending_requests: "${REMOTE_JS_MAX_PENDING_REQUESTS:10000}"
     # JS Eval max request timeout
+    max_eval_requests_timeout: "${REMOTE_JS_MAX_EVAL_REQUEST_TIMEOUT:60000}"
+    # JS max request timeout
     max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:10000}"
     # JS response poll interval
     response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"

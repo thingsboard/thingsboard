@@ -17,6 +17,6 @@ package org.thingsboard.server.service.subscription;
 
 public enum TbAttributeSubscriptionScope {
 
-    CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE
+    ANY_SCOPE, CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE
 
 }
