@@ -103,7 +103,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
       if (this.historicalData.length) {
         this.calculateIntervals();
-        this.timeUpdated(this.currentTime ? this.currentTime : this.minTime);
+        this.timeUpdated(this.currentTime && this.currentTime > this.minTime ? this.currentTime : this.minTime);
       }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
