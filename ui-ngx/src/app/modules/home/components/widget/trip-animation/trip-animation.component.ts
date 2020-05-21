@@ -140,7 +140,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       }
     }
     this.calcLabel();
-    this.calcTooltip();
+    this.calcTooltip(currentPosition.find(position => position.entityName === this.activeTrip.entityName));
     if (this.mapWidget) {
       this.mapWidget.map.updatePolylines(this.interpolatedTimeData.map(ds => _.values(ds)), this.activeTrip);
       if (this.settings.showPolygon) {
@@ -175,19 +175,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     }
   }
 
-  calcTooltip = (point?: FormattedData, setTooltip = true) => {
-    if (!point) {
-      point = this.activeTrip;
-    }
-    const data = this.activeTrip;
+  calcTooltip = (point?: FormattedData) => {
+    const data = point ? point : this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
       safeExecute(this.settings.tooolTipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
     const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
-    if (setTooltip) {
-      this.mainTooltip = this.sanitizer.sanitize(
-        SecurityContext.HTML, tooltipText);
-      this.cd.detectChanges();
-    }
+    this.mainTooltip = this.sanitizer.sanitize(
+      SecurityContext.HTML, tooltipText);
+    this.cd.detectChanges();
     this.activeTrip = point;
     return tooltipText;
   }
