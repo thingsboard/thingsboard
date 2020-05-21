@@ -63,9 +63,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   activeTrip: FormattedData;
   label;
   minTime: number;
-  minTimeFormat: string;
   maxTime: number;
-  maxTimeFormat: string;
   anchors: number[] = [];
   useAnchors: boolean;
   currentTime: number;
@@ -97,14 +95,13 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.settings = { ...settings, ...this.ctx.settings };
     this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
     this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.fitMapBounds = true;
+    this.settings.tooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);
+    this.settings.labelFunction = parseFunction(this.settings.labelFunction, ['data', 'dsData', 'dsIndex']);
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = () => {
       this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
       if (this.historicalData.length) {
-        if (!this.activeTrip)
-          this.activeTrip = this.historicalData[0][0];
         this.calculateIntervals();
         this.timeUpdated(this.currentTime ? this.currentTime : this.minTime);
       }
@@ -167,6 +164,9 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       const maxTimeFormat = this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '';
       this.interpolatedTimeData[index] = this.interpolateArray(dataSource, minTimeFormat, maxTimeFormat);
     });
+    if(!this.activeTrip){
+      this.activeTrip = this.interpolatedTimeData.map(dataSource => dataSource[this.minTime]).filter(ds => ds)[0];
+    }
     if (this.useAnchors) {
       const anchorDate = Object.entries(_.union(this.interpolatedTimeData)[0]);
       this.anchors = anchorDate
