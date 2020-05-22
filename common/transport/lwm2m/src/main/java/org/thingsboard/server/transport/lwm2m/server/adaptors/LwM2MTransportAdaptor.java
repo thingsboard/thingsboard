@@ -15,15 +15,13 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.adaptors;
 
-import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import com.google.gson.JsonElement;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 public interface LwM2MTransportAdaptor {
 
-    TransportProtos.PostTelemetryMsg convertToPostTelemetry(String payload) throws AdaptorException;
+    TransportProtos.PostTelemetryMsg convertToPostTelemetry(JsonElement jsonElement) throws AdaptorException;
 
-    TransportProtos.PostAttributeMsg convertToPostAttributes(String payload) throws AdaptorException;
+    TransportProtos.PostAttributeMsg convertToPostAttributes(JsonElement jsonElement) throws AdaptorException;
 }
