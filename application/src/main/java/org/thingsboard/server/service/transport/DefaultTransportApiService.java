@@ -139,7 +139,10 @@ public class DefaultTransportApiService implements TransportApiService {
                     deviceStateService.onDeviceAdded(device);
 
                     TbMsgMetaData metaData = new TbMsgMetaData();
-                    metaData.putValue("customerId", device.getCustomerId().toString());
+                    if (customerId != null && !customerId.isNullUid()) {
+                        metaData.putValue("customerId", customerId.toString());
+                    }
+                    metaData.putValue("gatewayId", gatewayId.toString());
 
                     DeviceId deviceId = device.getId();
                     ObjectNode entityNode = mapper.valueToTree(device);
