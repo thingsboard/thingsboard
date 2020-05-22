@@ -222,6 +222,7 @@ export default abstract class LeafletMap {
                     this.bounds = this.bounds.extend(this.options.defaultCenterPosition);
                 }
                 this.map.fitBounds(this.bounds, { padding: padding || [50, 50], animate: false });
+                this.map.invalidateSize();
             }
         }
     }
