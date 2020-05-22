@@ -389,6 +389,9 @@ export default abstract class LeafletMap {
         const poly = this.polylines.get(name);
         if (poly) {
             this.map.removeLayer(poly.leafletPoly);
+            if (poly.polylineDecorator) {
+                this.map.removeLayer(poly.polylineDecorator);
+            }
             this.polylines.delete(name);
         }
     }
