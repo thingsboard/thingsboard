@@ -48,7 +48,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class HashPartitionServiceTest {
 
     public static final int ITERATIONS = 1000000;
@@ -60,7 +60,6 @@ public class HashPartitionServiceTest {
     private ApplicationEventPublisher applicationEventPublisher;
 
     private String hashFunctionName = "sha256";
-
 
     @Before
     public void setup() throws Exception {
@@ -83,7 +82,7 @@ public class HashPartitionServiceTest {
                 .setTenantIdLSB(TenantId.NULL_UUID.getLeastSignificantBits())
                 .addAllServiceTypes(Collections.singletonList(ServiceType.TB_CORE.name()))
                 .build();
-        when(discoveryService.getServiceInfo()).thenReturn(currentServer);
+//        when(discoveryService.getServiceInfo()).thenReturn(currentServer);
         List<TransportProtos.ServiceInfo> otherServers = new ArrayList<>();
         for (int i = 1; i < SERVER_COUNT; i++) {
             otherServers.add(TransportProtos.ServiceInfo.newBuilder()
