@@ -19,7 +19,7 @@ import tinycolor from 'tinycolor2';
 
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
-import { FormattedData, MapProviders } from '../lib/maps/map-models';
+import { FormattedData, MapProviders, TripAnimationSettings } from '../lib/maps/map-models';
 import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
 import { mapPolygonSchema, pathSchema, pointSchema, tripAnimationSchema } from '../lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -56,17 +56,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   historicalData: FormattedData[][];
   normalizationStep: number;
   interpolatedTimeData = [];
-  intervals = [];
   widgetConfig: WidgetConfig;
-  settings;
+  settings: TripAnimationSettings;
   mainTooltip = '';
   visibleTooltip = false;
   activeTrip: FormattedData;
   label;
   minTime: number;
-  minTimeFormat: string;
   maxTime: number;
-  maxTimeFormat: string;
   anchors: number[] = [];
   useAnchors: boolean;
   currentTime: number;
@@ -98,15 +95,15 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.settings = { ...settings, ...this.ctx.settings };
     this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
     this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.fitMapBounds = true;
+    this.settings.tooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);
+    this.settings.labelFunction = parseFunction(this.settings.labelFunction, ['data', 'dsData', 'dsIndex']);
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = () => {
       this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
       if (this.historicalData.length) {
-        this.activeTrip = this.historicalData[0][0];
         this.calculateIntervals();
-        this.timeUpdated(this.minTime);
+        this.timeUpdated(this.currentTime && this.currentTime > this.minTime ? this.currentTime : this.minTime);
       }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
@@ -122,12 +119,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.currentTime = time;
     const currentPosition = this.interpolatedTimeData
       .map(dataSource => dataSource[time])
-      .filter(ds => ds)
-      .map(ds => {
-        ds.minTime = this.minTimeFormat;
-        ds.maxTime = this.maxTimeFormat;
-        return ds;
-      });
+      .filter(ds => ds);
     if (isUndefined(currentPosition[0])) {
       const timePoints = Object.keys(this.interpolatedTimeData[0]).map(item => parseInt(item, 10));
       for (let i = 1; i < timePoints.length; i++) {
@@ -145,7 +137,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       }
     }
     this.calcLabel();
-    this.calcTooltip();
+    this.calcTooltip(currentPosition.find(position => position.entityName === this.activeTrip.entityName));
     if (this.mapWidget) {
       this.mapWidget.map.updatePolylines(this.interpolatedTimeData.map(ds => _.values(ds)), this.activeTrip);
       if (this.settings.showPolygon) {
@@ -167,11 +159,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   calculateIntervals() {
     this.historicalData.forEach((dataSource, index) => {
       this.minTime = dataSource[0]?.time || Infinity;
-      this.minTimeFormat = this.minTime !== Infinity ? moment(this.minTime).format('YYYY-MM-DD HH:mm:ss') : '';
+      const minTimeFormat = this.minTime !== Infinity ? moment(this.minTime).format('YYYY-MM-DD HH:mm:ss') : '';
       this.maxTime = dataSource[dataSource.length - 1]?.time || -Infinity;
-      this.maxTimeFormat = this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '';
-      this.interpolatedTimeData[index] = this.interpolateArray(dataSource);
+      const maxTimeFormat = this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '';
+      this.interpolatedTimeData[index] = this.interpolateArray(dataSource, minTimeFormat, maxTimeFormat);
     });
+    if(!this.activeTrip){
+      this.activeTrip = this.interpolatedTimeData.map(dataSource => dataSource[this.minTime]).filter(ds => ds)[0];
+    }
     if (this.useAnchors) {
       const anchorDate = Object.entries(_.union(this.interpolatedTimeData)[0]);
       this.anchors = anchorDate
@@ -180,39 +175,26 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     }
   }
 
-  calcTooltip = (point?: FormattedData, setTooltip = true) => {
-    if (!point) {
-      point = this.activeTrip;
-    }
-    const data = {
-      ...this.activeTrip,
-      maxTime: this.maxTimeFormat,
-      minTime: this.minTimeFormat
-    }
+  calcTooltip = (point?: FormattedData) => {
+    const data = point ? point : this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
-      safeExecute(this.settings.tooolTipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
+      safeExecute(this.settings.tooltipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
     const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
-    if (setTooltip) {
-      this.mainTooltip = this.sanitizer.sanitize(
-        SecurityContext.HTML, tooltipText);
-      this.cd.detectChanges();
-    }
+    this.mainTooltip = this.sanitizer.sanitize(
+      SecurityContext.HTML, tooltipText);
+    this.cd.detectChanges();
     this.activeTrip = point;
     return tooltipText;
   }
 
   calcLabel() {
-    const data = {
-      ...this.activeTrip,
-      maxTime: this.maxTimeFormat,
-      minTime: this.minTimeFormat
-    }
+    const data = this.activeTrip;
     const labelText: string = this.settings.useLabelFunction ?
       safeExecute(this.settings.labelFunction, [data, this.historicalData, data.dsIndex]) : this.settings.label;
     this.label = (parseWithTranslation.parseTemplate(labelText, data, true));
   }
 
-  interpolateArray(originData: FormattedData[]) {
+  interpolateArray(originData: FormattedData[], minTimeFormat?: string, maxTimeFormat?: string) {
     const result = {};
     const latKeyName = this.settings.latKeyName;
     const lngKeyName = this.settings.lngKeyName;
@@ -221,6 +203,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       const normalizeTime = this.minTime + Math.ceil((currentTime - this.minTime) / this.normalizationStep) * this.normalizationStep;
       result[normalizeTime] = {
         ...data,
+        minTime: minTimeFormat,
+        maxTime: maxTimeFormat,
         rotationAngle: this.settings.rotationAngle
       };
     }
