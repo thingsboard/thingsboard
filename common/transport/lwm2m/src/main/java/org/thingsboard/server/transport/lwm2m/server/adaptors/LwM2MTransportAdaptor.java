@@ -13,7 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m;
+package org.thingsboard.server.transport.lwm2m.server.adaptors;
 
-public class server {
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.gen.transport.TransportProtos;
+
+public interface LwM2MTransportAdaptor {
+
+    TransportProtos.PostTelemetryMsg convertToPostTelemetry(String payload) throws AdaptorException;
+
+    TransportProtos.PostAttributeMsg convertToPostAttributes(String payload) throws AdaptorException;
 }

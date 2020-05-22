@@ -1,7 +1,41 @@
-package org.thingsboard.server.transport.lwm2m.utils;
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.transport.lwm2m.server.adaptors;
 
-public class Util {
-    public final static String[] modelPaths = { "10241.xml", "10242.xml", "10243.xml", "10244.xml",
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import io.netty.buffer.ByteBuf;
+import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+
+import java.util.UUID;
+
+public interface LwM2MProvider {
+    /** The supported version of the specification */
+    static final String VERSION = "1.01";
+
+    /** The default CoAP port for unsecured CoAP communication */
+    static final int DEFAULT_COAP_PORT = 5685;
+
+    /** The default CoAP port for secure CoAP communication */
+    static final int DEFAULT_COAP_SECURE_PORT = 5686;
+
+    // /!\ This field use to ClientDeviceTest.modelPaths /!\
+    // /!\ This field use to server.modelPaths /!\
+    final static String[] modelPaths = { "10241.xml", "10242.xml", "10243.xml", "10244.xml",
             "10245.xml", "10246.xml", "10247.xml", "10248.xml", "10249.xml", "10250.xml", "10251.xml",
             "10252.xml", "10253.xml", "10254.xml", "10255.xml", "10256.xml", "10257.xml", "10258.xml",
             "10259.xml", "10260-2_0.xml", "10262.xml", "10263.xml", "10264.xml", "10265.xml",
@@ -42,5 +76,16 @@ public class Util {
             "LWM2M_WLAN_connectivity4-v1_0.xml", "LwM2M_BinaryAppDataContainer-v1_0_1.xml",
             "LwM2M_EventLog-V1_0.xml" };
 
+    public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
+    public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
+    public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
+
+    static JsonElement validateJsonPayload(String payload) throws AdaptorException {
+        try {
+            return new JsonParser().parse(payload);
+        } catch (JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
+    }
 
 }

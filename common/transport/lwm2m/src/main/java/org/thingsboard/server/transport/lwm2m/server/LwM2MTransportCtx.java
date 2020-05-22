@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m;
+package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,30 +24,30 @@ import org.thingsboard.server.common.transport.TransportContext;
 
 @Slf4j
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-@Component
-public class LwM2MTransportContext extends TransportContext {
+@Component("LwM2MTransportCtx")
+public class LwM2MTransportCtx extends TransportContext {
     @Getter
-    @Value("${transport.lwm2m.bind_address}")
+    @Value("${transport.lwm2m.bind_address:localhost}")
     private String host;
 
     @Getter
-    @Value("${transport.lwm2m.bind_port}")
+    @Value("${transport.lwm2m.bind_port:5685}")
     private Integer port;
 
     @Getter
-    @Value("${transport.lwm2m.secure.bind_address}")
+    @Value("${transport.lwm2m.secure.bind_address:localhost}")
     private String secureHost;
 
     @Getter
-    @Value("${transport.lwm2m.secure.bind_port}")
+    @Value("${transport.lwm2m.secure.bind_port:5686}")
     private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.timeout}")
+    @Value("${transport.lwm2m.timeout:5000}")
     private Long timeout;
 
     @Getter
-    @Value("${transport.lwm2m.tenantId}")
+    @Value("${transport.lwm2m.tenantId:12345678}")
     private String tenantId;
 
 

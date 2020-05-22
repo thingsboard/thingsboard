@@ -423,11 +423,11 @@
                 <artifactId>http</artifactId>
                 <version>${project.version}</version>
             </dependency>
-<!--            <dependency>-->
-<!--                <groupId>org.thingsboard.common.transport</groupId>-->
-<!--                <artifactId>coap</artifactId>-->
-<!--                <version>${project.version}</version>-->
-<!--            </dependency>-->
+            <dependency>
+                <groupId>org.thingsboard.common.transport</groupId>
+                <artifactId>coap</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.thingsboard.common.transport</groupId>
                 <artifactId>lwm2m</artifactId>

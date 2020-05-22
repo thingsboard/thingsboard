@@ -28,6 +28,7 @@ import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.elements.exception.ConnectorException;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,8 +85,8 @@ public class DeviceEmulator {
                 }
             }
 
-            private void sendRequest(CoapClient client, JsonNode request) throws JsonProcessingException {
-                CoapResponse telemetryResponse = client.setTimeout(60000).post(mapper.writeValueAsString(request),
+            private void sendRequest(CoapClient client, JsonNode request) throws IOException, ConnectorException {
+                CoapResponse telemetryResponse = client.setTimeout((long) 60000).post(mapper.writeValueAsString(request),
                         MediaTypeRegistry.APPLICATION_JSON);
                 log.info("Response: {}, {}", telemetryResponse.getCode(), telemetryResponse.getResponseText());
             }
