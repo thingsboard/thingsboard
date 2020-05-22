@@ -34,7 +34,8 @@ import {
     DatasourceType,
     JsonSettingsSchema,
     WidgetActionDescriptor,
-    widgetType
+    widgetType,
+    DatasourceData
 } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
@@ -83,7 +84,7 @@ export class MapWidgetController implements MapWidgetInterface {
     map: LeafletMap;
     provider: MapProviders;
     schema: JsonSettingsSchema;
-    data;
+    data: DatasourceData[];
     settings: UnitedMapSettings;
 
     public static dataKeySettingsSchema(): object {

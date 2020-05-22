@@ -409,7 +409,10 @@ export const commonMapSettingsSchema =
             condition: 'model.provider !== "image-map"'
         },
         'draggableMarker',
-        'disableScrollZooming',
+        {
+            key: 'disableScrollZooming',
+            condition: 'model.provider !== "image-map"'
+        },
         {
             key: 'latKeyName',
             condition: 'model.provider !== "image-map"'

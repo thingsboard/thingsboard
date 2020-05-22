@@ -159,10 +159,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   calculateIntervals() {
     this.historicalData.forEach((dataSource, index) => {
       this.minTime = dataSource[0]?.time || Infinity;
-      const minTimeFormat = this.minTime !== Infinity ? moment(this.minTime).format('YYYY-MM-DD HH:mm:ss') : '';
       this.maxTime = dataSource[dataSource.length - 1]?.time || -Infinity;
-      const maxTimeFormat = this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '';
-      this.interpolatedTimeData[index] = this.interpolateArray(dataSource, minTimeFormat, maxTimeFormat);
+      this.interpolatedTimeData[index] = this.interpolateArray(dataSource);
     });
     if(!this.activeTrip){
       this.activeTrip = this.interpolatedTimeData.map(dataSource => dataSource[this.minTime]).filter(ds => ds)[0];
@@ -194,7 +192,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.label = (parseWithTranslation.parseTemplate(labelText, data, true));
   }
 
-  interpolateArray(originData: FormattedData[], minTimeFormat?: string, maxTimeFormat?: string) {
+  interpolateArray(originData: FormattedData[]) {
     const result = {};
     const latKeyName = this.settings.latKeyName;
     const lngKeyName = this.settings.lngKeyName;
@@ -203,8 +201,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       const normalizeTime = this.minTime + Math.ceil((currentTime - this.minTime) / this.normalizationStep) * this.normalizationStep;
       result[normalizeTime] = {
         ...data,
-        minTime: minTimeFormat,
-        maxTime: maxTimeFormat,
+        minTime: this.minTime !== Infinity ? moment(this.minTime).format('YYYY-MM-DD HH:mm:ss') : '',
+        maxTime: this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '',
         rotationAngle: this.settings.rotationAngle
       };
     }

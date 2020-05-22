@@ -22,8 +22,8 @@ import { isDefined } from '@core/utils';
 
 export class Marker {
     leafletMarker: L.Marker;
-    tooltipOffset: [number, number];
-    markerOffset: [number, number];
+    tooltipOffset: L.LatLngTuple;
+    markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
     location: L.LatLngExpression;
     data: FormattedData;
