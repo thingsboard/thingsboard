@@ -15,14 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.observation.Observation;
-import org.eclipse.leshan.core.request.DiscoverRequest;
-import org.eclipse.leshan.core.response.DiscoverResponse;
-import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.observation.ObservationListener;
@@ -33,14 +27,6 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.LwM2MRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.LwM2MResponseMsg;
-import org.thingsboard.server.transport.lwm2m.server.json.LwM2mNodeDeserializer;
-import org.thingsboard.server.transport.lwm2m.server.json.LwM2mNodeSerializer;
-import org.thingsboard.server.transport.lwm2m.server.json.RegistrationSerializer;
-import org.thingsboard.server.transport.lwm2m.server.json.ResponseSerializer;
 
 import javax.annotation.PostConstruct;
 import java.util.Collection;

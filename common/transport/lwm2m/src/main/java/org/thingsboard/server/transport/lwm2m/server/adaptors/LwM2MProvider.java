@@ -15,17 +15,9 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.adaptors;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import io.netty.buffer.ByteBuf;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
-
-import java.util.UUID;
+import com.google.gson.JsonPrimitive;
 
 public interface LwM2MProvider {
-    /** The supported version of the specification */
-    static final String VERSION = "1.01";
 
     /** The default CoAP port for unsecured CoAP communication */
     static final int DEFAULT_COAP_PORT = 5685;
@@ -80,12 +72,15 @@ public interface LwM2MProvider {
     public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
 
-    static JsonElement validateJsonPayload(String payload) throws AdaptorException {
-        try {
-            return new JsonParser().parse(payload);
-        } catch (JsonSyntaxException ex) {
-            throw new AdaptorException(ex);
-        }
-    }
+    public static final String GET_TYPE_OPER_READ = "read";
+    public static final String GET_TYPE_OPER_DISCOVER = "discover";
+
+//    static JsonElement validateJsonPayload(String payload) throws AdaptorException {
+//        try {
+//            return new JsonParser().parse(payload);
+//        } catch (JsonSyntaxException ex) {
+//            throw new AdaptorException(ex);
+//        }
+//    }
 
 }

@@ -40,7 +40,7 @@ import java.util.List;
 public class LwM2MTransportServerConfiguration {
 
     @Autowired
-    private LwM2MTransportCtx ctx;
+    private LwM2MTransportCtx context;
 
     private final static String[] modelPaths = LwM2MProvider.modelPaths;
 
@@ -48,8 +48,8 @@ public class LwM2MTransportServerConfiguration {
     public LeshanServer getLeshanServer() {
         log.info("Starting LwM2M transport... PostConstruct");
         LeshanServerBuilder builder = new LeshanServerBuilder();
-        builder.setLocalAddress(ctx.getHost(), ctx.getPort());
-        builder.setLocalSecureAddress(ctx.getSecureHost(), ctx.getSecurePort());
+        builder.setLocalAddress(context.getHost(), context.getPort());
+        builder.setLocalSecureAddress(context.getSecureHost(), context.getSecurePort());
         builder.setEncoder(new DefaultLwM2mNodeEncoder());
         LwM2mNodeDecoder decoder = new DefaultLwM2mNodeDecoder();
         builder.setDecoder(decoder);

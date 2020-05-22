@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.adaptors;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
@@ -29,18 +30,18 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 public class JsonLwM2MAdaptor implements LwM2MTransportAdaptor  {
 
     @Override
-    public TransportProtos.PostTelemetryMsg convertToPostTelemetry(String payload) throws AdaptorException {
+    public TransportProtos.PostTelemetryMsg convertToPostTelemetry(JsonElement jsonElement) throws AdaptorException {
         try {
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(payload));
+            return JsonConverter.convertToTelemetryProto(jsonElement);
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
         }
     }
 
     @Override
-    public TransportProtos.PostAttributeMsg convertToPostAttributes(String payload) throws AdaptorException {
+    public TransportProtos.PostAttributeMsg convertToPostAttributes(JsonElement jsonElement) throws AdaptorException {
         try {
-            return JsonConverter.convertToAttributesProto(new JsonParser().parse(payload));
+            return JsonConverter.convertToAttributesProto(jsonElement);
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
         }
