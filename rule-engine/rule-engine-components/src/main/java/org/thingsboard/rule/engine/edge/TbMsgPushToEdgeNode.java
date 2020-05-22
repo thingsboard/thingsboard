@@ -55,6 +55,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (EDGE_MSG_SOURCE.equalsIgnoreCase(msg.getMetaData().getValue(MSG_SOURCE_KEY))) {
+            ctx.tellSuccess(msg);
             return;
         }
         if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
