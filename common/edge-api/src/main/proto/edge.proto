@@ -182,7 +182,7 @@ message EntityViewUpdateMsg {
   string type = 3;
   string relatedName = 4;
   string relatedType = 5;
-  EntityType relatedEntityType = 6;
+  EdgeEntityType relatedEntityType = 6;
   string groupName = 7;
 }
 
@@ -238,7 +238,7 @@ message RuleChainMetadataRequestMsg {
   int64 ruleChainIdLSB = 2;
 }
 
-enum EntityType {
+enum EdgeEntityType {
     DEVICE = 0;
     ASSET = 1;
 }
