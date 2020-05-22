@@ -92,12 +92,7 @@ public class DeviceController extends BaseController {
         try {
             device.setTenantId(getCurrentUser().getTenantId());
 
-            if (device.getId() == null) {
-                accessControlService
-                        .checkPermission(getCurrentUser(), Resource.DEVICE, Operation.CREATE, device.getId(), device);
-            } else {
-                checkDeviceId(device.getId(), Operation.WRITE);
-            }
+            checkEntity(device.getId(), device);
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 

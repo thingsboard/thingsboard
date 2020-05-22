@@ -100,12 +100,7 @@ public class CustomerController extends BaseController {
         try {
             customer.setTenantId(getCurrentUser().getTenantId());
 
-            if (customer.getId() == null) {
-                accessControlService
-                        .checkPermission(getCurrentUser(), Resource.CUSTOMER, Operation.CREATE, customer.getId(), customer);
-            } else {
-                checkCustomerId(customer.getId(), Operation.WRITE);
-            }
+            checkEntity(customer.getId(), customer);
 
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
 

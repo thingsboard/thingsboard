@@ -85,12 +85,7 @@ public class AlarmController extends BaseController {
         try {
             alarm.setTenantId(getCurrentUser().getTenantId());
 
-            if (alarm.getId() == null) {
-                accessControlService
-                        .checkPermission(getCurrentUser(), Resource.ALARM, Operation.CREATE, alarm.getId(), alarm);
-            } else {
-                checkAlarmId(alarm.getId(), Operation.WRITE);
-            }
+           checkEntity(alarm.getId(), alarm);
 
             Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm));
             logEntityAction(savedAlarm.getId(), savedAlarm,

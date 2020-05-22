@@ -76,12 +76,7 @@ public class AssetController extends BaseController {
         try {
             asset.setTenantId(getCurrentUser().getTenantId());
 
-            if (asset.getId() == null) {
-                accessControlService
-                        .checkPermission(getCurrentUser(), Resource.ASSET, Operation.CREATE, asset.getId(), asset);
-            } else {
-                checkAssetId(asset.getId(), Operation.WRITE);
-            }
+           checkEntity(asset.getId(), asset);
 
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
 

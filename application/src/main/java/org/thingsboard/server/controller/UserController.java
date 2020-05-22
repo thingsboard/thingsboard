@@ -138,12 +138,7 @@ public class UserController extends BaseController {
                 user.setTenantId(getCurrentUser().getTenantId());
             }
 
-            if (user.getId() == null) {
-                accessControlService
-                        .checkPermission(getCurrentUser(), Resource.USER, Operation.CREATE, user.getId(), user);
-            } else {
-                checkUserId(user.getId(), Operation.WRITE);
-            }
+            checkEntity(user.getId(), user);
 
             boolean sendEmail = user.getId() == null && sendActivationMail;
             User savedUser = checkNotNull(userService.saveUser(user));

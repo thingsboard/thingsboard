@@ -66,12 +66,7 @@ public class WidgetTypeController extends BaseController {
                 widgetType.setTenantId(getCurrentUser().getTenantId());
             }
 
-            if (widgetType.getId() == null) {
-                accessControlService
-                        .checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, Operation.CREATE, widgetType.getId(), widgetType);
-            } else {
-                checkWidgetTypeId(widgetType.getId(), Operation.WRITE);
-            }
+            checkEntity(widgetType.getId(), widgetType);
 
             return checkNotNull(widgetTypeService.saveWidgetType(widgetType));
         } catch (Exception e) {
