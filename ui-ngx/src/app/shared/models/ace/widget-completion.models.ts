@@ -365,6 +365,21 @@ export const widgetContextCompletions: TbEditorCompletions = {
           meta: 'property',
           type: 'object'
         },
+        datasources: {
+          description: 'Array of resolved widget datasources.',
+          meta: 'property',
+          type: 'Array&lt;<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/widget.models.ts#L250">Datasource</a>&gt;'
+        },
+        data: {
+          description: 'Array of latest datasources data.',
+          meta: 'property',
+          type: 'Array&lt;<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/widget.models.ts#L275">DatasourceData</a>&gt;'
+        },
+        timeWindow: {
+          description: 'Current widget timewindow (applicable for timeseries widgets).',
+          meta: 'property',
+          type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/time/time.models.ts#L104">WidgetTimewindow</a>'
+        },
         units: {
           description: 'Optional property defining units text of values displayed by widget. Useful for simple widgets like cards or gauges.',
           meta: 'property',
@@ -376,9 +391,22 @@ export const widgetContextCompletions: TbEditorCompletions = {
           type: 'number'
         },
         hideTitlePanel: {
-          description: 'Manages visibility of widget title panel. Useful for widget with custom title panels or different states.',
+          description: 'Manages visibility of widget title panel. Useful for widget with custom title panels or different states. <b>updateWidgetParams()</b> function must be called after this property change.',
           meta: 'property',
           type: 'boolean'
+        },
+        widgetTitle: {
+          description: 'If set, will override configured widget title text. <b>updateWidgetParams()</b> function must be called after this property change.',
+          meta: 'property',
+          type: 'string'
+        },
+        detectChanges: {
+          description: 'Trigger change detection for current widget. Must be invoked when widget HTML template bindings should be updated due to widget data changes.',
+          meta: 'function'
+        },
+        updateWidgetParams: {
+          description: 'Updates widget with runtime set properties such as <b>widgetTitle</b>, <b>hideTitlePanel</b>, etc. Must be invoked in order these properties changes take effect.',
+          meta: 'function'
         },
         defaultSubscription: {
           description: 'Default widget subscription object contains all subscription information,<br>including current data, according to the widget type.',
