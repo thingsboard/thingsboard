@@ -37,18 +37,17 @@
         <button mat-icon-button class="mat-icon-button" aria-label="End" (click)="moveEnd()">
             <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">fast_forward</mat-icon>
         </button>
-        <button mat-icon-button class="mat-icon-button" aria-label="Play">
-            <mat-icon (click)="play()" *ngIf="!playing" class="material-icons"
-                [ngStyle]="{'color': settings.buttonColor}">
+        <button mat-icon-button class="mat-icon-button" *ngIf="!playing" (click)="play()" aria-label="Play">
+            <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">
                 play_circle_outline
             </mat-icon>
-            <mat-icon (click)="pause()" *ngIf="playing" class="material-icons"
-                [ngStyle]="{'color': settings.buttonColor}">
+        </button>
+        <button mat-icon-button class="mat-icon-button" *ngIf="playing" (click)="pause()" aria-label="Stop">
+            <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">
                 pause_circle_outline
             </mat-icon>
         </button>
-        <mat-select [(ngModel)]="speed" (selectionChange)="reeneble()" class="speed-select"
-            aria-label="Speed selector">
+        <mat-select [(ngModel)]="speed" (selectionChange)="reeneble()" class="speed-select" aria-label="Speed selector">
             <mat-option [value]="speedValue" *ngFor="let speedValue of speeds">{{speedValue}} </mat-option>
         </mat-select>
     </div>
