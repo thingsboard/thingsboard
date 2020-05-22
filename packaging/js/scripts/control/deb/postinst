@@ -1,0 +1,7 @@
+#!/bin/sh
+
+mkdir -m 0755 -p ${pkg.logFolder}
+chown -R ${pkg.user}: ${pkg.logFolder}
+chown -R ${pkg.user}: ${pkg.installFolder}
+update-rc.d ${pkg.name} defaults
+
