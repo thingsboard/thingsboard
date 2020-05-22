@@ -20,12 +20,12 @@ import 'leaflet-providers';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 
 import {
-    FormattedData,
-    MapSettings,
-    MarkerSettings,
-    PolygonSettings,
-    PolylineSettings,
-    UnitedMapSettings
+  FormattedData,
+  MapSettings,
+  MarkerSettings,
+  PolygonSettings,
+  PolylineSettings,
+  UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -222,6 +222,7 @@ export default abstract class LeafletMap {
                     this.bounds = this.bounds.extend(this.options.defaultCenterPosition);
                 }
                 this.map.fitBounds(this.bounds, { padding: padding || [50, 50], animate: false });
+                this.map.invalidateSize();
             }
         }
     }
