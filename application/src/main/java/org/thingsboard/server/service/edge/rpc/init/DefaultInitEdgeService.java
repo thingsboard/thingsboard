@@ -230,7 +230,7 @@ public class DefaultInitEdgeService implements InitEdgeService {
                     for (RuleChain ruleChain : pageData.getData()) {
                         RuleChainUpdateMsg ruleChainUpdateMsg =
                                 ruleChainUpdateMsgConstructor.constructRuleChainUpdatedMsg(
-                                        edge,
+                                        edge.getRootRuleChainId(),
                                         UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE,
                                         ruleChain);
                         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
