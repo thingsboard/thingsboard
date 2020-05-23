@@ -349,6 +349,10 @@ public final class EdgeGrpcSession implements Closeable {
                 Alarm alarm = objectMapper.readValue(entry.getData(), Alarm.class);
                 onAlarmUpdated(msgType, alarm);
                 break;
+            case USER:
+                User user = objectMapper.readValue(entry.getData(), User.class);
+                onUserUpdated(msgType, user);
+                break;
         }
     }
 
@@ -405,7 +409,7 @@ public final class EdgeGrpcSession implements Closeable {
 
     private void onRuleChainUpdated(UpdateMsgType msgType, RuleChain ruleChain) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setRuleChainUpdateMsg(ctx.getRuleChainUpdateMsgConstructor().constructRuleChainUpdatedMsg(edge, msgType, ruleChain))
+                .setRuleChainUpdateMsg(ctx.getRuleChainUpdateMsgConstructor().constructRuleChainUpdatedMsg(edge.getRootRuleChainId(), msgType, ruleChain))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
@@ -437,6 +441,15 @@ public final class EdgeGrpcSession implements Closeable {
     private void onAlarmUpdated(UpdateMsgType msgType, Alarm alarm) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
                 .setAlarmUpdateMsg(ctx.getAlarmUpdateMsgConstructor().constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm))
+                .build();
+        outputStream.onNext(ResponseMsg.newBuilder()
+                .setEntityUpdateMsg(entityUpdateMsg)
+                .build());
+    }
+
+    private void onUserUpdated(UpdateMsgType msgType, User user) {
+        EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                .setUserUpdateMsg(ctx.getUserUpdateMsgConstructor().constructUserUpdatedMsg(msgType, user))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)

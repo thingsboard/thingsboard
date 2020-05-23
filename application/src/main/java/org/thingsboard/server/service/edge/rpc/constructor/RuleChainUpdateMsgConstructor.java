@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
@@ -42,13 +43,13 @@ public class RuleChainUpdateMsgConstructor {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public RuleChainUpdateMsg constructRuleChainUpdatedMsg(Edge edge, UpdateMsgType msgType, RuleChain ruleChain) {
+    public RuleChainUpdateMsg constructRuleChainUpdatedMsg(RuleChainId edgeRootRuleChainId, UpdateMsgType msgType, RuleChain ruleChain) {
         RuleChainUpdateMsg.Builder builder = RuleChainUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(ruleChain.getId().getId().getMostSignificantBits())
                 .setIdLSB(ruleChain.getId().getId().getLeastSignificantBits())
                 .setName(ruleChain.getName())
-                .setRoot(ruleChain.getId().equals(edge.getRootRuleChainId()))
+                .setRoot(ruleChain.getId().equals(edgeRootRuleChainId))
                 .setDebugMode(ruleChain.isDebugMode())
                 .setConfiguration(JacksonUtil.toString(ruleChain.getConfiguration()));
         if (ruleChain.getFirstRuleNodeId() != null) {
