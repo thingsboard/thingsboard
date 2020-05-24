@@ -19,6 +19,7 @@ import io.netty.channel.EventLoop;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.ScheduledFuture;
+import io.netty.handler.codec.mqtt.MqttMessageType;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -44,7 +45,8 @@ final class RetransmissionHandler<T extends MqttMessage> {
     private void startTimer(EventLoop eventLoop){
         this.timer = eventLoop.schedule(() -> {
             this.timeout += 5;
-            MqttFixedHeader fixedHeader = new MqttFixedHeader(this.originalMessage.fixedHeader().messageType(), true, this.originalMessage.fixedHeader().qosLevel(), this.originalMessage.fixedHeader().isRetain(), this.originalMessage.fixedHeader().remainingLength());
+            boolean isDup = this.originalMessage.fixedHeader().messageType() == MqttMessageType.PUBLISH ? true : this.originalMessage.fixedHeader().isDup();
+            MqttFixedHeader fixedHeader = new MqttFixedHeader(this.originalMessage.fixedHeader().messageType(), isDup, this.originalMessage.fixedHeader().qosLevel(), this.originalMessage.fixedHeader().isRetain(), this.originalMessage.fixedHeader().remainingLength());
             handler.accept(fixedHeader, originalMessage);
             startTimer(eventLoop);
         }, timeout, TimeUnit.SECONDS);
