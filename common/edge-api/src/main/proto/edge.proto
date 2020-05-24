@@ -227,6 +227,7 @@ message UserUpdateMsg {
   string additionalInfo = 6;
   bool enabled = 7;
   string password = 8;
+  string groupName = 9;
 }
 
 message RuleChainMetadataRequestMsg {
