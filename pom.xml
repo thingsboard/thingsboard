@@ -94,7 +94,6 @@
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
         <snakeyaml.version>1.25</snakeyaml.version>
-        <struts.version>1.3.10</struts.version>
         <amazonaws.sqs.version>1.11.747</amazonaws.sqs.version>
         <pubsub.client.version>1.105.0</pubsub.client.version>
         <azure-servicebus.version>3.2.0</azure-servicebus.version>
@@ -954,22 +953,6 @@
                 <artifactId>commons-collections</artifactId>
                 <version>${commons-collections.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.apache.struts</groupId>
-                <artifactId>struts-core</artifactId>
-                <version>${struts.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.struts</groupId>
-                <artifactId>struts-taglib</artifactId>
-                <version>${struts.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.struts</groupId>
-                <artifactId>struts-tiles</artifactId>
-                <version>${struts.version}</version>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
 
