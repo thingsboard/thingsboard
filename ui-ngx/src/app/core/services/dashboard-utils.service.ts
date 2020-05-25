@@ -275,7 +275,7 @@ export class DashboardUtilsService {
       layout.gridSettings.margin = layout.gridSettings.margins[0];
       delete layout.gridSettings.margins;
     }
-    layout.gridSettings.margin = layout.gridSettings.margin || 10;
+    layout.gridSettings.margin = isDefined(layout.gridSettings.margin) ? layout.gridSettings.margin : 10;
   }
 
   public setLayouts(dashboard: Dashboard, targetState: string, newLayouts: DashboardStateLayouts) {
