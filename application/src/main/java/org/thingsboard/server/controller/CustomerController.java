@@ -100,7 +100,7 @@ public class CustomerController extends BaseController {
         try {
             customer.setTenantId(getCurrentUser().getTenantId());
 
-            checkEntity(customer.getId(), customer);
+            checkEntity(customer.getId(), customer, Resource.CUSTOMER);
 
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
 

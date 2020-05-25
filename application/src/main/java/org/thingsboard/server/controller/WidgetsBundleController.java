@@ -61,15 +61,13 @@ public class WidgetsBundleController extends BaseController {
     @ResponseBody
     public WidgetsBundle saveWidgetsBundle(@RequestBody WidgetsBundle widgetsBundle) throws ThingsboardException {
         try {
-            checkEntity(widgetsBundle.getId(), widgetsBundle);
-
-            if (widgetsBundle.getId() == null) {
-                accessControlService
-                        .checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.CREATE, widgetsBundle.getId(), widgetsBundle);
+            if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
+                widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
             } else {
-                checkWidgetsBundleId(widgetsBundle.getId(), Operation.WRITE);
+                widgetsBundle.setTenantId(getCurrentUser().getTenantId());
             }
 
+            checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
             return checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
         } catch (Exception e) {
             throw handleException(e);

@@ -126,7 +126,7 @@ public class RuleChainController extends BaseController {
             boolean created = ruleChain.getId() == null;
             ruleChain.setTenantId(getCurrentUser().getTenantId());
 
-            checkEntity(ruleChain.getId(), ruleChain);
+            checkEntity(ruleChain.getId(), ruleChain, Resource.RULE_CHAIN);
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 

@@ -72,7 +72,7 @@ public class TenantController extends BaseController {
         try {
             boolean newTenant = tenant.getId() == null;
 
-            checkEntity(tenant.getId(), tenant);
+            checkEntity(tenant.getId(), tenant, Resource.TENANT);
 
             tenant = checkNotNull(tenantService.saveTenant(tenant));
             if (newTenant) {

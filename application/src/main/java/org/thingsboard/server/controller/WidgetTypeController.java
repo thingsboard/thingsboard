@@ -66,7 +66,7 @@ public class WidgetTypeController extends BaseController {
                 widgetType.setTenantId(getCurrentUser().getTenantId());
             }
 
-            checkEntity(widgetType.getId(), widgetType);
+            checkEntity(widgetType.getId(), widgetType, Resource.WIDGET_TYPE);
 
             return checkNotNull(widgetTypeService.saveWidgetType(widgetType));
         } catch (Exception e) {

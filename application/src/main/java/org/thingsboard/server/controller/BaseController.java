@@ -330,10 +330,10 @@ public abstract class BaseController {
         }
     }
 
-    protected <I extends EntityId, T extends HasTenantId> void checkEntity(I entityId, T entity) throws ThingsboardException {
+    protected <I extends EntityId, T extends HasTenantId> void checkEntity(I entityId, T entity, Resource resource) throws ThingsboardException {
         if (entityId == null) {
             accessControlService
-                    .checkPermission(getCurrentUser(), Resource.ALARM, Operation.CREATE, null, entity);
+                    .checkPermission(getCurrentUser(), resource, Operation.CREATE, null, entity);
         } else {
             checkEntityId(entityId, Operation.WRITE);
         }

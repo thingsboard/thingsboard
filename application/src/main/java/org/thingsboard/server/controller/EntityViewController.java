@@ -92,7 +92,7 @@ public class EntityViewController extends BaseController {
         try {
             entityView.setTenantId(getCurrentUser().getTenantId());
 
-            checkEntity(entityView.getId(), entityView);
+            checkEntity(entityView.getId(), entityView, Resource.ENTITY_VIEW);
 
             EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
             List<ListenableFuture<List<Void>>> futures = new ArrayList<>();
