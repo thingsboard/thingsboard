@@ -84,7 +84,7 @@
                     [ngStyle]="cellStyle(alarm, column)">
           </mat-cell>
         </ng-container>
-        <ng-container matColumnDef="actions" stickyEnd>
+        <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
           <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
                                                                 maxWidth: (actionCellDescriptors.length * 40) + 'px',
                                                                 width: (actionCellDescriptors.length * 40) + 'px' }">
