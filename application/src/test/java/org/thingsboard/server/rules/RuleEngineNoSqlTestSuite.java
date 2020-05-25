@@ -29,7 +29,7 @@ import java.util.Arrays;
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
         "org.thingsboard.server.rules.flow.nosql.*Test",
-        "org.thingsboard.server.rules.lifecycle.nosql.*Test"
+//        "org.thingsboard.server.rules.lifecycle.nosql.*Test"
 })
 public class RuleEngineNoSqlTestSuite {
 
