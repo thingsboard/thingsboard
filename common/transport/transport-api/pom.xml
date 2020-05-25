@@ -53,10 +53,6 @@
             <artifactId>util</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>queue</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
         </dependency>

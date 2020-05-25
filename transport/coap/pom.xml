@@ -33,10 +33,15 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
+        <pkg.type>java</pkg.type>
+        <pkg.disabled>false</pkg.disabled>
+        <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
+        <pkg.package.phase>package</pkg.package.phase>
         <pkg.name>tb-coap-transport</pkg.name>
-        <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
-        <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <pkg.copyInstallScripts>false</pkg.copyInstallScripts>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
+        <pkg.implementationTitle>ThingsBoard CoAP Transport Service</pkg.implementationTitle>
+        <pkg.mainClass>org.thingsboard.server.coap.ThingsboardCoapTransportApplication</pkg.mainClass>
     </properties>
 
     <dependencies>
@@ -87,244 +92,30 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-conf</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/resources</directory>
-                                    <excludes>
-                                        <exclude>logback.xml</exclude>
-                                    </excludes>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-service-conf</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/conf</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/unix.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-win-conf</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${pkg.win.dist}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/resources</directory>
-                                    <excludes>
-                                        <exclude>logback.xml</exclude>
-                                    </excludes>
-                                    <filtering>false</filtering>
-                                </resource>
-                                <resource>
-                                    <directory>src/main/conf</directory>
-                                    <excludes>
-                                        <exclude>tb-coap-transport.conf</exclude>
-                                    </excludes>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/windows.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-control</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/control</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/scripts/control</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/unix.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-windows-control</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${pkg.win.dist}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/scripts/windows</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/windows.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-winsw-service</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>com.sun.winsw</groupId>
-                                    <artifactId>winsw</artifactId>
-                                    <classifier>bin</classifier>
-                                    <type>exe</type>
-                                    <destFileName>service.exe</destFileName>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${pkg.win.dist}</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>**/logback.xml</exclude>
-                    </excludes>
-                    <archive>
-                        <manifestEntries>
-                            <Implementation-Title>ThingsBoard CoAP Transport Service</Implementation-Title>
-                            <Implementation-Version>${project.version}</Implementation-Version>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>org.thingsboard.server.coap.ThingsboardCoapTransportApplication</mainClass>
-                    <classifier>boot</classifier>
-                    <layout>ZIP</layout>
-                    <executable>true</executable>
-                    <excludeDevtools>true</excludeDevtools>
-                    <embeddedLaunchScriptProperties>
-                        <confFolder>${pkg.installFolder}/conf</confFolder>
-                        <logFolder>${pkg.unixLogFolder}</logFolder>
-                        <logFilename>${pkg.name}.out</logFilename>
-                        <initInfoProvides>${pkg.name}</initInfoProvides>
-                    </embeddedLaunchScriptProperties>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
-                <configuration>
-                    <tasks>
-                        <task>build</task>
-                        <task>buildDeb</task>
-                        <task>buildRpm</task>
-                    </tasks>
-                    <args>
-                        <arg>-PprojectBuildDir=${project.build.directory}</arg>
-                        <arg>-PprojectVersion=${project.version}</arg>
-                        <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</arg>
-                        <arg>-PpkgName=${pkg.name}</arg>
-                        <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
-                        <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
-                    </args>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>invoke</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <finalName>${pkg.name}</finalName>
-                    <descriptors>
-                        <descriptor>src/main/assembly/windows.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
-                <configuration>
-                    <file>${project.build.directory}/${pkg.name}.deb</file>
-                    <artifactId>${project.artifactId}</artifactId>
-                    <groupId>${project.groupId}</groupId>
-                    <version>${project.version}</version>
-                    <classifier>deb</classifier>
-                    <packaging>deb</packaging>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>install-deb</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
