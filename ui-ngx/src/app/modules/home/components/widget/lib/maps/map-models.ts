@@ -48,6 +48,7 @@ export type MapSettings = {
     mapImageUrl?: string;
     provider?: MapProviders;
     credentials?: any; // declare credentials format
+    gmApiKey?: string;
     defaultCenterPosition?: LatLngTuple;
     markerClusteringSetting?;
     useDefaultCenterPosition?: boolean;
