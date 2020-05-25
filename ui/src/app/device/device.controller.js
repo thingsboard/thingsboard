@@ -20,7 +20,6 @@ import deviceCard from './device-card.tpl.html';
 import assignToCustomerTemplate from './assign-to-customer.tpl.html';
 import addDevicesToCustomerTemplate from './add-devices-to-customer.tpl.html';
 import deviceCredentialsTemplate from './device-credentials.tpl.html';
-import assignToEdgeTemplate from './assign-to-edge.tpl.html';
 import addDevicesToEdgeTemplate from './add-devices-to-edge.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -220,21 +219,6 @@ export function DeviceController($rootScope, userService, deviceService, custome
                 }
             });
 
-
-            deviceActionsList.push(
-                {
-                    onAction: function ($event, item) {
-                        assignToEdge($event, [ item.id.id ]);
-                    },
-                    name: function() { return $translate.instant('action.assign') },
-                    details: function() { return $translate.instant('device.assign-to-edge') },
-                    icon: "wifi_tethering",
-                    isEnabled: function(device) {
-                        return device && (!device.edgeId || device.edgeId.id === types.id.nullUid);
-                    }
-                }
-            );
-
             deviceActionsList.push(
                 {
                     onAction: function ($event, item) {
@@ -283,20 +267,6 @@ export function DeviceController($rootScope, userService, deviceService, custome
                     icon: "assignment_ind"
                 }
             );
-
-            deviceGroupActionsList.push(
-                {
-                    onAction: function ($event, items) {
-                        assignDevicesToEdge($event, items);
-                    },
-                    name: function() { return $translate.instant('device.assign-devices') },
-                    details: function(selectedCount) {
-                        return $translate.instant('device.assign-devices-text', {count: selectedCount}, "messageformat");
-                    },
-                    icon: "wifi_tethering"
-                }
-            );
-
 
             deviceGroupActionsList.push(
                 {
@@ -428,7 +398,7 @@ export function DeviceController($rootScope, userService, deviceService, custome
                     },
                     name: function() { return $translate.instant('device.unassign-devices') },
                     details: function(selectedCount) {
-                        return $translate.instant('device.unassign-devices-action-title', {count: selectedCount}, "messageformat");
+                        return $translate.instant('device.unassign-devices-from-edge-action-title', {count: selectedCount}, "messageformat");
                     },
                     icon: "assignment_return"
                 }
@@ -672,41 +642,6 @@ export function DeviceController($rootScope, userService, deviceService, custome
         });
     }
 
-    function assignToEdge($event, deviceIds) {
-        if ($event) {
-            $event.stopPropagation();
-        }
-        var pageSize = 10;
-        edgeService.getEdges({limit: pageSize, textSearch: ''}).then(
-            function success(_edges) {
-                var edges = {
-                    pageSize: pageSize,
-                    data: _edges.data,
-                    nextPageLink: _edges.nextPageLink,
-                    selection: null,
-                    hasNext: _edges.hasNext,
-                    pending: false
-                };
-                if (edges.hasNext) {
-                    edges.nextPageLink.limit = pageSize;
-                }
-                $mdDialog.show({
-                    controller: 'AssignDeviceToEdgeController',
-                    controllerAs: 'vm',
-                    templateUrl: assignToEdgeTemplate,
-                    locals: {deviceIds: deviceIds, edges: edges},
-                    parent: angular.element($document[0].body),
-                    fullscreen: true,
-                    targetEvent: $event
-                }).then(function () {
-                    vm.grid.refreshList();
-                }, function () {
-                });
-            },
-            function fail() {
-            });
-    }
-
     function addDevicesToEdge($event) {
         if ($event) {
             $event.stopPropagation();
@@ -741,14 +676,6 @@ export function DeviceController($rootScope, userService, deviceService, custome
             },
             function fail() {
             });
-    }
-
-    function assignDevicesToEdge($event, items) {
-        var deviceIds = [];
-        for (var id in items.selections) {
-            deviceIds.push(id);
-        }
-        assignToEdge($event, deviceIds);
     }
 
     function unassignFromEdge($event, device) {

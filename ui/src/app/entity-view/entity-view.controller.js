@@ -19,7 +19,6 @@ import addEntityViewTemplate from './add-entity-view.tpl.html';
 import entityViewCard from './entity-view-card.tpl.html';
 import assignToCustomerTemplate from './assign-to-customer.tpl.html';
 import addEntityViewsToCustomerTemplate from './add-entity-views-to-customer.tpl.html';
-import assignToEdgeTemplate from './assign-to-edge.tpl.html';
 import addEntityViewsToEdgeTemplate from './add-entity-views-to-edge.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -195,32 +194,6 @@ export function EntityViewController($rootScope, userService, entityViewService,
                 }
             });
 
-            entityViewActionsList.push({
-                    onAction: function ($event, item) {
-                        assignToEdge($event, [ item.id.id ]);
-                    },
-                    name: function() { return $translate.instant('action.assign') },
-                    details: function() { return $translate.instant('entity-view.assign-to-edge') },
-                    icon: "wifi_tethering",
-                    isEnabled: function(entityView) {
-                        return entityView && (!entityView.edgeId || entityView.edgeId.id === types.id.nullUid);
-                    }
-                }
-            );
-
-            entityViewActionsList.push({
-                    onAction: function ($event, item) {
-                        unassignFromEdge($event, item, false);
-                    },
-                    name: function() { return $translate.instant('action.unassign') },
-                    details: function() { return $translate.instant('entity-view.unassign-from-edge') },
-                    icon: "portable_wifi_off",
-                    isEnabled: function(entityView) {
-                        return entityView && entityView.edgeId && entityView.edgeId.id !== types.id.nullUid;
-                    }
-                }
-            );
-
             entityViewActionsList.push(
                 {
                     onAction: function ($event, item) {
@@ -242,19 +215,6 @@ export function EntityViewController($rootScope, userService, entityViewService,
                         return $translate.instant('entity-view.assign-entity-views-text', {count: selectedCount}, "messageformat");
                     },
                     icon: "assignment_ind"
-                }
-            );
-
-            entityViewGroupActionsList.push(
-                {
-                    onAction: function ($event, items) {
-                        assignEntityViewsToEdge($event, items);
-                    },
-                    name: function() { return $translate.instant('entity-view.assign-assets') },
-                    details: function(selectedCount) {
-                        return $translate.instant('entity-view.assign-entity-views-text', {count: selectedCount}, "messageformat");
-                    },
-                    icon: "wifi_tethering"
                 }
             );
 
@@ -333,17 +293,6 @@ export function EntityViewController($rootScope, userService, entityViewService,
             refreshEntityViewsParamsFunction = function () {
                 return {"edgeId": edgeId, "topIndex": vm.topIndex};
             };
-
-            entityViewActionsList.push(
-                {
-                    onAction: function ($event, item) {
-                        unassignFromEdge($event, item, false);
-                    },
-                    name: function() { return $translate.instant('action.unassign') },
-                    details: function() { return $translate.instant('entity-view.unassign-from-edge') },
-                    icon: "assignment_return"
-                }
-            );
 
             entityViewGroupActionsList.push(
                 {
@@ -580,41 +529,6 @@ export function EntityViewController($rootScope, userService, entityViewService,
         });
     }
 
-    function assignToEdge($event, entityViewIds) {
-        if ($event) {
-            $event.stopPropagation();
-        }
-        var pageSize = 10;
-        edgeService.getEdges({limit: pageSize, textSearch: ''}).then(
-            function success(_edges) {
-                var edges = {
-                    pageSize: pageSize,
-                    data: _edges.data,
-                    nextPageLink: _edges.nextPageLink,
-                    selection: null,
-                    hasNext: _edges.hasNext,
-                    pending: false
-                };
-                if (edges.hasNext) {
-                    edges.nextPageLink.limit = pageSize;
-                }
-                $mdDialog.show({
-                    controller: 'AssignEntityViewToEdgeController',
-                    controllerAs: 'vm',
-                    templateUrl: assignToEdgeTemplate,
-                    locals: {entityViewIds: entityViewIds, edges: edges},
-                    parent: angular.element($document[0].body),
-                    fullscreen: true,
-                    targetEvent: $event
-                }).then(function () {
-                    vm.grid.refreshList();
-                }, function () {
-                });
-            },
-            function fail() {
-            });
-    }
-
     function addEntityViewsToEdge($event) {
         if ($event) {
             $event.stopPropagation();
@@ -649,35 +563,6 @@ export function EntityViewController($rootScope, userService, entityViewService,
             },
             function fail() {
             });
-    }
-
-    function assignEntityViewsToEdge($event, items) {
-        var entityViewIds = [];
-        for (var id in items.selections) {
-            entityViewIds.push(id);
-        }
-        assignToEdge($event, entityViewIds);
-    }
-
-    function unassignFromEdge($event, entityView) {
-        if ($event) {
-            $event.stopPropagation();
-        }
-        var title = $translate.instant('entity-view.unassign-entity-view-from-edge-title', {entityViewName: entityView.name});
-        var content = $translate.instant('entity-view.unassign-entity-view-from-edge-text');
-        var label = $translate.instant('entity-view.unassign-entity-view');
-        var confirm = $mdDialog.confirm()
-            .targetEvent($event)
-            .title(title)
-            .htmlContent(content)
-            .ariaLabel(label)
-            .cancel($translate.instant('action.no'))
-            .ok($translate.instant('action.yes'));
-        $mdDialog.show(confirm).then(function () {
-            entityViewService.unassignEntityViewFromEdge(entityView.id.id).then(function success() {
-                vm.grid.refreshList();
-            });
-        });
     }
 
     function unassignEntityViewsFromEdge($event, items) {

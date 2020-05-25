@@ -32,8 +32,7 @@
 								  on-manage-assigned-customers="vm.manageAssignedCustomers(event, vm.grid.detailsConfig.currentItem)"
 								  on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, vm.customerId)"
 								  on-export-dashboard="vm.exportDashboard(event, vm.grid.detailsConfig.currentItem)"
-								  on-delete-dashboard="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"
-								  on-manage-assigned-edges="vm.manageAssignedEdges(event, vm.grid.detailsConfig.currentItem)"></tb-dashboard-details>
+								  on-delete-dashboard="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-dashboard-details>
 		</md-tab>
 		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.grid.isTenantAdmin()" md-on-select="vm.grid.triggerResize()" label="{{ 'audit-log.audit-logs' | translate }}">
 			<tb-audit-log-table flex entity-type="vm.types.entityType.dashboard"

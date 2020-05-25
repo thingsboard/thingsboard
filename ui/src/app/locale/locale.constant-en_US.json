@@ -292,7 +292,8 @@
         "assign-to-edge": "Assign to edge",
         "assign-to-edge-text": "Please select the edge to assign the asset(s)",
         "unassign-asset-from-edge-title": "Are you sure you want to unassign the asset '{{assetName}}'?",
-        "unassign-asset-from-edge-text": "After the confirmation the asset will be unassigned and won't be accessible by the edge."
+        "unassign-asset-from-edge-text": "After the confirmation the asset will be unassigned and won't be accessible by the edge.",
+        "unassign-assets-from-edge-action-title": "Unassign { count, plural, 1 {1 asset} other {# assets} } from edge"
     },
     "attribute": {
         "attributes": "Attributes",
@@ -746,7 +747,8 @@
         "assign-to-edge": "Assign to edge",
         "assign-to-edge-text": "Please select the edge to assign the device(s)",
         "unassign-device-from-edge-title": "Are you sure you want to unassign the device '{{deviceName}}'?",
-        "unassign-device-from-edge-text": "After the confirmation the device will be unassigned and won't be accessible by the edge."
+        "unassign-device-from-edge-text": "After the confirmation the device will be unassigned and won't be accessible by the edge.",
+        "unassign-devices-from-edge-action-title": "Unassign { count, plural, 1 {1 device} other {# devices} } from edge"
     },
     "dialog": {
         "close": "Close dialog"
@@ -1051,7 +1053,8 @@
         "assign-to-edge": "Assign to edge",
         "assign-to-edge-text": "Please select the edge to assign the entity view(s)",
         "unassign-entity-view-from-edge-title": "Are you sure you want to unassign the entity view '{{entityViewName}}'?",
-        "unassign-entity-view-from-edge-text": "After the confirmation the entity view will be unassigned and won't be accessible by the edge."
+        "unassign-entity-view-from-edge-text": "After the confirmation the entity view will be unassigned and won't be accessible by the edge.",
+        "unassign-entity-views-from-edge-action-title": "Unassign { count, plural, 1 {1 entity view} other {# entity views} } from edge"
     },
     "event": {
         "event-type": "Event type",
