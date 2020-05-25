@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS tb_schema_settings
     CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
 );
 
-INSERT INTO tb_schema_settings (schema_version) VALUES (2005000) ON CONFLICT (schema_version) DO UPDATE SET schema_version = 2005000;
+INSERT INTO tb_schema_settings (schema_version) VALUES (2005001) ON CONFLICT (schema_version) DO UPDATE SET schema_version = 2005001;
 
 CREATE OR REPLACE PROCEDURE drop_partitions_by_max_ttl(IN partition_type varchar, IN system_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS

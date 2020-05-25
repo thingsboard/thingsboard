@@ -99,8 +99,6 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                             executeQuery(conn, CALL_CREATE_PARTITION_TS_KV_TABLE);
                             if (!partitionType.equals("INDEFINITE")) {
                                 executeQuery(conn, "call create_partitions('" + partitionType + "')");
-                            } else {
-                                executeQuery(conn, "CREATE TABLE IF NOT EXISTS ts_kv_indefinite PARTITION OF ts_kv DEFAULT;");
                             }
                             executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                             executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
@@ -192,6 +190,12 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
 
                         log.info("schema timeseries updated!");
                     }
+                }
+                break;
+            case "2.5.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    executeQuery(conn, "CREATE TABLE IF NOT EXISTS ts_kv_indefinite PARTITION OF ts_kv DEFAULT;");
+                    executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005001");
                 }
                 break;
             default:
