@@ -28,6 +28,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -139,6 +140,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     deviceStateService.onDeviceAdded(device);
 
                     TbMsgMetaData metaData = new TbMsgMetaData();
+                    CustomerId customerId = gateway.getCustomerId();
                     if (customerId != null && !customerId.isNullUid()) {
                         metaData.putValue("customerId", customerId.toString());
                     }
