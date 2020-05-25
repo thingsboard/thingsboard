@@ -174,7 +174,6 @@ buildDeb {
         }
     }
 
-    link("/etc/init.d/${pkgName}", "${pkgInstallFolder}/bin/${pkgName}.jar")
     link("${pkgInstallFolder}/bin/${pkgName}.yml", "${pkgInstallFolder}/conf/${pkgName}.yml")
     link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
 }
