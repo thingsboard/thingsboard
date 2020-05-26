@@ -76,7 +76,7 @@ export class MapWidgetController implements MapWidgetInterface {
             return;
         }
         parseWithTranslation.setTranslate(this.translate);
-        this.map = new MapClass($element, this.settings);
+        this.map = new MapClass($element, this.settings, this.ctx.$injector);
         this.map.setImageAlias(this.subscribeForImageAttribute());
         this.map.saveMarkerLocation = this.setMarkerLocation;
     }
