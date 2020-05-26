@@ -175,8 +175,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: TB_SERVICE_TYPE
-          value: "monolith"
+        - name: TB_QUEUE_TYPE
+          value: "kafka"
         - name: MQTT_BIND_ADDRESS
           value: "0.0.0.0"
         - name: MQTT_BIND_PORT
@@ -248,8 +248,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: TB_SERVICE_TYPE
-          value: "monolith"
+        - name: TB_QUEUE_TYPE
+          value: "kafka"
         - name: HTTP_BIND_ADDRESS
           value: "0.0.0.0"
         - name: HTTP_BIND_PORT
@@ -321,8 +321,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: TB_SERVICE_TYPE
-          value: "monolith"
+        - name: TB_QUEUE_TYPE
+          value: "kafka"
         - name: COAP_BIND_ADDRESS
           value: "0.0.0.0"
         - name: COAP_BIND_PORT
