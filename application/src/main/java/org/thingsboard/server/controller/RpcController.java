@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -65,7 +66,6 @@ import java.util.UUID;
 @Slf4j
 public class RpcController extends BaseController {
 
-    public static final int DEFAULT_TIMEOUT = 10000;
     protected final ObjectMapper jsonMapper = new ObjectMapper();
 
     @Autowired
@@ -73,6 +73,12 @@ public class RpcController extends BaseController {
 
     @Autowired
     private AccessValidator accessValidator;
+
+    @Value("${server.rest.server_side_rpc.min_timeout:5000}")
+    private long minTimeout;
+
+    @Value("${server.rest.server_side_rpc.default_timeout:10000}")
+    private long defaultTimeout;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/oneway/{deviceId}", method = RequestMethod.POST)
@@ -100,7 +106,8 @@ public class RpcController extends BaseController {
             SecurityUser currentUser = getCurrentUser();
             TenantId tenantId = currentUser.getTenantId();
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            long timeout = System.currentTimeMillis() + (cmd.getTimeout() != null ? cmd.getTimeout() : DEFAULT_TIMEOUT);
+            long timeout = cmd.getTimeout() != null ? cmd.getTimeout() : defaultTimeout;
+            long expTime = System.currentTimeMillis() + Math.max(minTimeout, timeout);
             ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
             accessValidator.validate(currentUser, Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
                 @Override
@@ -109,7 +116,7 @@ public class RpcController extends BaseController {
                             tenantId,
                             deviceId,
                             oneWay,
-                            timeout,
+                            expTime,
                             body
                     );
                     deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse));

@@ -54,6 +54,13 @@ server:
       customer:
         enabled: "${TB_SERVER_REST_LIMITS_CUSTOMER_ENABLED:false}"
         configuration: "${TB_SERVER_REST_LIMITS_CUSTOMER_CONFIGURATION:50:1,1000:60}"
+    server_side_rpc:
+      # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
+      # Since 2.5 migration to queues, the RPC delay depends on the size of the pending messages in the queue,
+      # so default UI parameter of 500ms may not be sufficient for loaded environments.
+      min_timeout:  "${MIN_SERVER_SIDE_RPC_TIMEOUT:5000}"
+      # Default value of the server side RPC timeout.
+      default_timeout:  "${DEFAULT_SERVER_SIDE_RPC_TIMEOUT:10000}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:
