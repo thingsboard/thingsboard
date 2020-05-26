@@ -90,6 +90,8 @@ spec:
               fieldPath: metadata.name
         - name: TB_SERVICE_TYPE
           value: "monolith"
+        - name: TB_QUEUE_TYPE
+          value: "kafka"
         - name: ZOOKEEPER_ENABLED
           value: "true"
         - name: ZOOKEEPER_URL
