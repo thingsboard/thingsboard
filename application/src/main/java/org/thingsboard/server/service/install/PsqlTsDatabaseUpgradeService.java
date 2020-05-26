@@ -103,8 +103,8 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                             executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                             executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
 
-                            Path pathToTempTsKvFile;
-                            Path pathToTempTsKvLatestFile;
+                            Path pathToTempTsKvFile = null;
+                            Path pathToTempTsKvLatestFile = null;
                             if (SystemUtils.IS_OS_WINDOWS) {
                                 log.info("Lookup for environment variable: {} ...", THINGSBOARD_WINDOWS_UPGRADE_DIR);
                                 Path pathToDir;
@@ -125,12 +125,11 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                                     try {
                                         copyTimeseries(conn, pathToTempTsKvFile, pathToTempTsKvLatestFile);
                                     } catch (Exception e) {
-                                        log.info("Upgrade script failed using the copy to/from files strategy!" +
-                                                " Trying to perfrom the upgrade using Inserts strategy ...");
                                         insertTimeseries(conn);
                                     }
                                 } catch (IOException | SecurityException e) {
-                                    throw new RuntimeException("Failed to create time-series upgrade files due to: " + e);
+                                    log.warn("Failed to create time-series upgrade files due to: {}", e.getMessage());
+                                    insertTimeseries(conn);
                                 }
                             } else {
                                 try {
@@ -148,13 +147,11 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                                             throw new RuntimeException("Failed to grant write permissions for the: " + tempDirPath + "folder!");
                                         }
                                     } catch (Exception e) {
-                                        log.info(e.getMessage());
-                                        log.info("Upgrade script failed using the copy to/from files strategy!" +
-                                                " Trying to perfrom the upgrade using Inserts strategy ...");
                                         insertTimeseries(conn);
                                     }
                                 } catch (IOException | SecurityException e) {
-                                    throw new RuntimeException("Failed to create time-series upgrade files due to: " + e);
+                                    log.warn("Failed to create time-series upgrade files due to: {}", e.getMessage());
+                                    insertTimeseries(conn);
                                 }
                             }
 
@@ -204,11 +201,13 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
     }
 
     private void removeUpgradeFiles(Path pathToTempTsKvFile, Path pathToTempTsKvLatestFile) {
-        if (pathToTempTsKvFile.toFile().exists() && pathToTempTsKvLatestFile.toFile().exists()) {
+        if (pathToTempTsKvFile != null && pathToTempTsKvFile.toFile().exists()) {
             boolean deleteTsKvFile = pathToTempTsKvFile.toFile().delete();
             if (deleteTsKvFile) {
                 log.info("Successfully deleted the temp file for ts_kv table upgrade!");
             }
+        }
+        if (pathToTempTsKvLatestFile != null && pathToTempTsKvLatestFile.toFile().exists()) {
             boolean deleteTsKvLatestFile = pathToTempTsKvLatestFile.toFile().delete();
             if (deleteTsKvLatestFile) {
                 log.info("Successfully deleted the temp file for ts_kv_latest table upgrade!");
@@ -223,6 +222,8 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
     }
 
     private void insertTimeseries(Connection conn) {
+        log.warn("Upgrade script failed using the copy to/from files strategy!" +
+                " Trying to perfrom the upgrade using Inserts strategy ...");
         executeQuery(conn, CALL_INSERT_INTO_TS_KV_CURSOR);
         executeQuery(conn, CALL_CREATE_NEW_TS_KV_LATEST_TABLE);
         executeQuery(conn, CALL_INSERT_INTO_TS_KV_LATEST_CURSOR);

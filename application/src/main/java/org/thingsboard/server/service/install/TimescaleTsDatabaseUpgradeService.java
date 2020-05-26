@@ -99,7 +99,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                             executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                             executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
 
-                            Path pathToTempTsKvFile;
+                            Path pathToTempTsKvFile = null;
                             if (SystemUtils.IS_OS_WINDOWS) {
                                 Path pathToDir;
                                 log.info("Lookup for environment variable: {} ...", THINGSBOARD_WINDOWS_UPGRADE_DIR);
@@ -118,12 +118,11 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                                     try {
                                         executeQuery(conn, "call insert_into_ts_kv('" + pathToTempTsKvFile + "')");
                                     } catch (Exception e) {
-                                        log.info("Upgrade script failed using the copy to/from files strategy!" +
-                                                " Trying to perfrom the upgrade using Inserts strategy ...");
-                                        executeQuery(conn, CALL_INSERT_INTO_TS_KV_CURSOR);
+                                        insertTimeseries(conn);
                                     }
                                 } catch (IOException | SecurityException e) {
-                                    throw new RuntimeException("Failed to create time-series upgrade files due to: " + e);
+                                    log.warn("Failed to create time-series upgrade files due to: {}", e.getMessage());
+                                    insertTimeseries(conn);
                                 }
                             } else {
                                 try {
@@ -140,13 +139,11 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                                             throw new RuntimeException("Failed to grant write permissions for the: " + tempDirPath + "folder!");
                                         }
                                     } catch (Exception e) {
-                                        log.info(e.getMessage());
-                                        log.info("Upgrade script failed using the copy to/from files strategy!" +
-                                                " Trying to perfrom the upgrade using Inserts strategy ...");
-                                        executeQuery(conn, CALL_INSERT_INTO_TS_KV_CURSOR);
+                                        insertTimeseries(conn);
                                     }
                                 } catch (IOException | SecurityException e) {
-                                    throw new RuntimeException("Failed to create time-series upgrade files due to: " + e);
+                                    log.warn("Failed to create time-series upgrade files due to: {}", e.getMessage());
+                                    insertTimeseries(conn);
                                 }
                             }
                             removeUpgradeFile(pathToTempTsKvFile);
@@ -185,8 +182,14 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
         }
     }
 
+    private void insertTimeseries(Connection conn) {
+        log.warn("Upgrade script failed using the copy to/from files strategy!" +
+                " Trying to perfrom the upgrade using Inserts strategy ...");
+        executeQuery(conn, CALL_INSERT_INTO_TS_KV_CURSOR);
+    }
+
     private void removeUpgradeFile(Path pathToTempTsKvFile) {
-        if (pathToTempTsKvFile.toFile().exists()) {
+        if (pathToTempTsKvFile != null && pathToTempTsKvFile.toFile().exists()) {
             boolean deleteTsKvFile = pathToTempTsKvFile.toFile().delete();
             if (deleteTsKvFile) {
                 log.info("Successfully deleted the temp file for ts_kv table upgrade!");
