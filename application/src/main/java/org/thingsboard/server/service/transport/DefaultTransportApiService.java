@@ -131,7 +131,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 return TransportApiResponseMsg.newBuilder()
                         .setGetOrCreateDeviceResponseMsg(GetOrCreateDeviceFromGatewayResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).build()).build();
             } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by gateway id and name", gatewayId, requestMsg.getDeviceName(), e);
+                log.warn("[{}][{}] Failed to lookup device by gateway id and name", gatewayId, requestMsg.getDeviceName(), e);
                 throw new RuntimeException(e);
             } finally {
                 deviceCreationLock.unlock();

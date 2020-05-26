@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.mqtt.telemetry.sql;
+package org.thingsboard.server.mqtt.telemetry.timeseries.sql;
 
-import org.thingsboard.server.dao.service.DaoNoSqlTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.mqtt.telemetry.AbstractMqttTelemetryIntegrationTest;
+import org.thingsboard.server.mqtt.telemetry.timeseries.AbstractMqttTimseriesIntegrationTest;
 
 /**
  * Created by Valerii Sosliuk on 8/22/2017.
  */
 @DaoSqlTest
-public class MqttTelemetrySqlIntegrationTest extends AbstractMqttTelemetryIntegrationTest {
+public class MqttTimseriesSqlIntegrationTest extends AbstractMqttTimseriesIntegrationTest {
 }

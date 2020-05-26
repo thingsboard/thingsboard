@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
-import org.thingsboard.server.mqtt.telemetry.AbstractMqttTelemetryIntegrationTest;
 import org.thingsboard.server.service.security.AccessValidator;
 
 import java.util.Arrays;

@@ -15,149 +15,125 @@
  */
 package org.thingsboard.server.mqtt.telemetry;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.*;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
-import org.thingsboard.server.dao.service.DaoNoSqlTest;
+import org.thingsboard.server.gen.transport.TransportApiProtos;
 
-import java.net.URI;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * @author Valerii Sosliuk
- */
 @Slf4j
 public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractControllerTest {
 
-    private static final String MQTT_URL = "tcp://localhost:1883";
+    protected static final String PAYLOAD_VALUES_STR_V_1 = "{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
+            " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
 
-    private Device savedDevice;
-    private String accessToken;
+    protected static final String PAYLOAD_VALUES_STR_V_2 = "{\"key6\":\"value1\", \"key7\":true, \"key8\": 3.0, \"key9\": 4, \"key10\":" +
+            " {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
 
-    @Before
-    public void beforeTest() throws Exception {
+    protected static final String MQTT_URL = "tcp://localhost:1883";
+
+    protected Device savedDevice;
+    protected String accessToken;
+
+    protected Device savedGateway;
+    protected String gatewayAccessToken;
+
+    protected void processBeforeTest(String deviceName, String gatewayName) throws Exception {
         loginTenantAdmin();
 
         Device device = new Device();
-        device.setName("Test device");
+        device.setName(deviceName);
         device.setType("default");
         savedDevice = doPost("/api/device", device, Device.class);
 
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
 
+        Device gateway = new Device();
+        gateway.setName(gatewayName);
+        gateway.setType("default");
+        ObjectNode additionalInfo = mapper.createObjectNode();
+        additionalInfo.put("gateway", true);
+        gateway.setAdditionalInfo(additionalInfo);
+        savedGateway = doPost("/api/device", gateway, Device.class);
+
+        DeviceCredentials gatewayCredentials =
+                doGet("/api/device/" + savedGateway.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+
         assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
         accessToken = deviceCredentials.getCredentialsId();
         assertNotNull(accessToken);
+
+        assertEquals(savedGateway.getId(), gatewayCredentials.getDeviceId());
+        gatewayAccessToken = gatewayCredentials.getCredentialsId();
+        assertNotNull(gatewayAccessToken);
     }
 
-    @Test
-    public void testPushMqttRpcData() throws Exception {
+    protected MqttAsyncClient getMqttAsyncClient(String token) throws MqttException {
         String clientId = MqttAsyncClient.generateClientId();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
 
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(accessToken);
+        options.setUserName(token);
         client.connect(options);
-        Thread.sleep(3000);
+        return client;
+    }
+
+    protected void publishMqttMsg(MqttAsyncClient client, byte[] payload, String topic) throws MqttException {
         MqttMessage message = new MqttMessage();
-        message.setPayload("{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4}".getBytes());
-        client.publish("v1/devices/me/telemetry", message);
-
-        String deviceId = savedDevice.getId().getId().toString();
-
-        Thread.sleep(2000);
-        List<String> actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", List.class);
-        Set<String> actualKeySet = new HashSet<>(actualKeys);
-
-        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4");
-        Set<String> expectedKeySet = new HashSet<>(expectedKeys);
-
-        assertEquals(expectedKeySet, actualKeySet);
-
-        String getTelemetryValuesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys=" + String.join(",", actualKeySet);
-        Map<String, List<Map<String, String>>> values = doGetAsync(getTelemetryValuesUrl, Map.class);
-
-        assertEquals("value1", values.get("key1").get(0).get("value"));
-        assertEquals("true", values.get("key2").get(0).get("value"));
-        assertEquals("3.0", values.get("key3").get(0).get("value"));
-        assertEquals("4", values.get("key4").get(0).get("value"));
+        message.setPayload(payload);
+        client.publish(topic, message);
     }
 
-
-//    @Test - Unstable
-    public void testMqttQoSLevel() throws Exception {
-        String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(accessToken);
-        CountDownLatch latch = new CountDownLatch(1);
-        TestMqttCallback callback = new TestMqttCallback(client, latch);
-        client.setCallback(callback);
-        client.connect(options).waitForCompletion(5000);
-        client.subscribe("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE.value());
-        String payload = "{\"key\":\"uniqueValue\"}";
-//        TODO 3.1: we need to acknowledge subscription only after it is processed by device actor and not when the message is pushed to queue.
-//        MqttClient -> SUB REQUEST -> Transport -> Kafka -> Device Actor (subscribed)
-//        MqttClient <- SUB_ACK <- Transport
-        Thread.sleep(5000);
-        doPostAsync("/api/plugins/telemetry/" + savedDevice.getId() + "/SHARED_SCOPE", payload, String.class, status().isOk());
-        latch.await(10, TimeUnit.SECONDS);
-        assertEquals(payload, callback.getPayload());
-        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
+    protected List<TransportApiProtos.KeyValueProto> getKvProtos(List<String> expectedKeys) {
+        List<TransportApiProtos.KeyValueProto> keyValueProtos = new ArrayList<>();
+        TransportApiProtos.KeyValueProto strKeyValueProto = getKeyValueProto(expectedKeys.get(0), TransportApiProtos.KeyValueType.STRING_V, "value1");
+        TransportApiProtos.KeyValueProto boolKeyValueProto = getKeyValueProto(expectedKeys.get(1), TransportApiProtos.KeyValueType.BOOLEAN_V, "true");
+        TransportApiProtos.KeyValueProto dblKeyValueProto = getKeyValueProto(expectedKeys.get(2), TransportApiProtos.KeyValueType.DOUBLE_V, "3.0");
+        TransportApiProtos.KeyValueProto longKeyValueProto = getKeyValueProto(expectedKeys.get(3), TransportApiProtos.KeyValueType.LONG_V, "4");
+        TransportApiProtos.KeyValueProto jsonKeyValueProto = getKeyValueProto(expectedKeys.get(4), TransportApiProtos.KeyValueType.JSON_V,
+                "{\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}");
+        keyValueProtos.add(strKeyValueProto);
+        keyValueProtos.add(boolKeyValueProto);
+        keyValueProtos.add(dblKeyValueProto);
+        keyValueProtos.add(longKeyValueProto);
+        keyValueProtos.add(jsonKeyValueProto);
+        return keyValueProtos;
     }
 
-    private static class TestMqttCallback implements MqttCallback {
-
-        private final MqttAsyncClient client;
-        private final CountDownLatch latch;
-        private volatile Integer qoS;
-        private volatile String payload;
-
-        String getPayload() {
-            return payload;
+    protected TransportApiProtos.KeyValueProto getKeyValueProto(String key, TransportApiProtos.KeyValueType type, String strValue) {
+        TransportApiProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportApiProtos.KeyValueProto.newBuilder();
+        keyValueProtoBuilder.setKey(key);
+        keyValueProtoBuilder.setType(type);
+        switch (type) {
+            case BOOLEAN_V:
+                keyValueProtoBuilder.setBoolV(Boolean.parseBoolean(strValue));
+                break;
+            case LONG_V:
+                keyValueProtoBuilder.setLongV(Long.parseLong(strValue));
+                break;
+            case DOUBLE_V:
+                keyValueProtoBuilder.setDoubleV(Double.parseDouble(strValue));
+                break;
+            case STRING_V:
+                keyValueProtoBuilder.setStringV(strValue);
+                break;
+            case JSON_V:
+                keyValueProtoBuilder.setJsonV(strValue);
+                break;
         }
-
-        TestMqttCallback(MqttAsyncClient client, CountDownLatch latch) {
-            this.client = client;
-            this.latch = latch;
-        }
-
-        int getQoS() {
-            return qoS;
-        }
-
-        @Override
-        public void connectionLost(Throwable throwable) {
-            log.error("Client connection lost", throwable);
-        }
-
-        @Override
-        public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
-            payload = new String(mqttMessage.getPayload());
-            qoS = mqttMessage.getQos();
-            latch.countDown();
-        }
-
-        @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
-        }
+        return keyValueProtoBuilder.build();
     }
-
 
 }

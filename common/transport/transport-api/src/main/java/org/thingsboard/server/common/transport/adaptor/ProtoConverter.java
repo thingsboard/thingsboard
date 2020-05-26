@@ -157,7 +157,7 @@ public class ProtoConverter {
                     keyValueListProtos.add(TransportProtos.KeyValueProto.newBuilder()
                             .setKey(key)
                             .setType(TransportProtos.KeyValueType.DOUBLE_V)
-                            .setDoubleV(keyValueProto.getLongV())
+                            .setDoubleV(keyValueProto.getDoubleV())
                             .build());
                     break;
                 case STRING_V:

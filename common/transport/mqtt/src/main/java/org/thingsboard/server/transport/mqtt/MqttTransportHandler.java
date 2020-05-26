@@ -294,9 +294,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 if (topicName.equals(MqttTopics.DEVICE_TELEMETRY_TOPIC_V2_PROTO)) {
                     TransportProtos.PostTelemetryMsg postTelemetryMsg = protoMqttAdaptor.convertToPostTelemetry(deviceSessionCtx, mqttMsg);
                     transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
-                } else if (topicName.equals(MqttTopics.DEVICE_TELEMETRY_ARRAY_TOPIC_V2_PROTO)) {
-                    TransportProtos.PostTelemetryMsg postTelemetryMsg = protoMqttAdaptor.convertToPostTelemetryArray(mqttMsg);
-                    transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
                 } else if (topicName.equals(MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO)) {
                     TransportProtos.PostAttributeMsg postAttributeMsg = protoMqttAdaptor.convertToPostAttributes(deviceSessionCtx, mqttMsg);
                     transportService.process(sessionInfo, postAttributeMsg, getPubAckCallback(ctx, msgId, postAttributeMsg));
