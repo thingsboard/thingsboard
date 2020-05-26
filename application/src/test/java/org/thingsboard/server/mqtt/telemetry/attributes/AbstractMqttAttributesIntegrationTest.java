@@ -27,6 +27,7 @@ import org.thingsboard.server.transport.mqtt.MqttTopics;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -113,7 +114,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet);
         List<Map<String, Object>> values = doGetAsync(getAttributesValuesUrl, List.class);
         assertAttributesValues(values, expectedKeySet);
-        String deleteAttributesUrl ="/api/plugins/telemetry/DEVICE/" + deviceId + "/CLIENT_SCOPE?keys=" + String.join(",", actualKeySet);
+        String deleteAttributesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/CLIENT_SCOPE?keys=" + String.join(",", actualKeySet);
         doDelete(deleteAttributesUrl);
     }
 
@@ -186,8 +187,16 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
                 case "key14":
                     assertEquals(4, value);
                     break;
-//                case "key5":
-//                    assertEquals(4, value);
+                case "key5":
+                case "key10":
+                case "key15":
+                    assertNotNull(value);
+                    assertEquals(3, ((LinkedHashMap) value).size());
+                    assertEquals(42, ((LinkedHashMap) value).get("someNumber"));
+                    assertEquals(Arrays.asList(1, 2, 3), ((LinkedHashMap) value).get("someArray"));
+                    LinkedHashMap<String, String> someNestedObject = (LinkedHashMap) ((LinkedHashMap) value).get("someNestedObject");
+                    assertEquals("value", someNestedObject.get("key"));
+                    break;
             }
         }
     }

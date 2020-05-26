@@ -43,7 +43,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public abstract class AbstractMqttTimseriesIntegrationTest extends AbstractMqttTelemetryIntegrationTest {
+public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqttTelemetryIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
