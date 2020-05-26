@@ -35,7 +35,7 @@ spec:
         image: thingsboard/tb-js-executor:latest
         env:
         - name: REMOTE_JS_EVAL_REQUEST_TOPIC
-          value: "js.eval.requests"
+          value: "js_eval.requests"
         - name: TB_KAFKA_SERVERS
           value: "tb-kafka:9092"
         - name: LOGGER_LEVEL
