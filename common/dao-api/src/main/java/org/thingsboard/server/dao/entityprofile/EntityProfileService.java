@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.entityprofile;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE,
-    ENTITY_PROFILE
+import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.id.EntityProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
+
+import java.util.List;
+
+public interface EntityProfileService {
+
+    List<EntityProfile> findAll(TenantId tenantId);
+
+    EntityProfile findById(TenantId tenantId, EntityProfileId id);
+
+    EntityProfile save(TenantId tenantId, EntityProfile entityProfile);
+
+    void delete(TenantId tenantId, EntityProfileId id);
 }
