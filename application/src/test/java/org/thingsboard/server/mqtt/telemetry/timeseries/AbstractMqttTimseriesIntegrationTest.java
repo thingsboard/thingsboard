@@ -187,9 +187,9 @@ public abstract class AbstractMqttTimseriesIntegrationTest extends AbstractMqttT
         Map<String, List<Map<String, String>>> values = doGetAsync(getTelemetryValuesUrl, Map.class);
 
         if (withTs) {
-            assertTsValues(values, actualKeys, 10000, 0);
+            assertTs(values, expectedKeys, 10000, 0);
         }
-        assertValues(values, actualKeys, 0);
+        assertValues(values, 0);
     }
 
     private void processGatewayTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
@@ -222,8 +222,8 @@ public abstract class AbstractMqttTimseriesIntegrationTest extends AbstractMqttT
         Map<String, List<Map<String, String>>> firstDeviceValues = doGetAsync(getTelemetryValuesUrlFirstDevice, Map.class);
         Map<String, List<Map<String, String>>> secondDeviceValues = doGetAsync(getTelemetryValuesUrlSecondDevice, Map.class);
 
-        assertGatewayDeviceData(firstDeviceValues, firstDeviceActualKeys);
-        assertGatewayDeviceData(secondDeviceValues, secondDeviceActualKeys);
+        assertGatewayDeviceData(firstDeviceValues, expectedKeys);
+        assertGatewayDeviceData(secondDeviceValues, expectedKeys);
 
 
     }
@@ -238,36 +238,68 @@ public abstract class AbstractMqttTimseriesIntegrationTest extends AbstractMqttT
         return "{\"" + deviceA + "\": " + payload + ",  \"" + deviceB + "\": " + payload + "}";
     }
 
-    private void assertGatewayDeviceData(Map<String, List<Map<String, String>>> deviceValues, List<String> deviceActualKeys) {
+    private void assertGatewayDeviceData(Map<String, List<Map<String, String>>> deviceValues, List<String> expectedKeys) {
 
-        assertEquals(2, deviceValues.get(deviceActualKeys.get(0)).size());
-        assertEquals(2, deviceValues.get(deviceActualKeys.get(1)).size());
-        assertEquals(2, deviceValues.get(deviceActualKeys.get(2)).size());
-        assertEquals(2, deviceValues.get(deviceActualKeys.get(3)).size());
-        assertEquals(2, deviceValues.get(deviceActualKeys.get(4)).size());
+        assertEquals(2, deviceValues.get(expectedKeys.get(0)).size());
+        assertEquals(2, deviceValues.get(expectedKeys.get(1)).size());
+        assertEquals(2, deviceValues.get(expectedKeys.get(2)).size());
+        assertEquals(2, deviceValues.get(expectedKeys.get(3)).size());
+        assertEquals(2, deviceValues.get(expectedKeys.get(4)).size());
 
-        assertTsValues(deviceValues, deviceActualKeys, 20000, 0);
-        assertTsValues(deviceValues, deviceActualKeys, 10000, 1);
+        assertTs(deviceValues, expectedKeys, 20000, 0);
+        assertTs(deviceValues, expectedKeys, 10000, 1);
 
-        assertValues(deviceValues, deviceActualKeys, 0);
-        assertValues(deviceValues, deviceActualKeys, 1);
+        assertValues(deviceValues, 0);
+        assertValues(deviceValues, 1);
 
     }
 
-    private void assertValues(Map<String, List<Map<String, String>>> deviceValues, List<String> deviceActualKeys, int arrayIndex) {
-        assertEquals("value1", deviceValues.get(deviceActualKeys.get(0)).get(arrayIndex).get("value"));
-        assertEquals("true", deviceValues.get(deviceActualKeys.get(1)).get(arrayIndex).get("value"));
-        assertEquals("3.0", deviceValues.get(deviceActualKeys.get(2)).get(arrayIndex).get("value"));
-        assertEquals("4", deviceValues.get(deviceActualKeys.get(3)).get(arrayIndex).get("value"));
-        assertEquals("{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", deviceValues.get(deviceActualKeys.get(4)).get(arrayIndex).get("value"));
+    private void assertValues(Map<String, List<Map<String, String>>> deviceValues, int arrayIndex) {
+        for (Map.Entry<String, List<Map<String, String>>> entry : deviceValues.entrySet()) {
+            String key = entry.getKey();
+            List<Map<String, String>> tsKv = entry.getValue();
+            String value = tsKv.get(arrayIndex).get("value");
+            switch (key) {
+                case "key1":
+                case "key6":
+                case "key11":
+                case "key16":
+                    assertEquals("value1", value);
+                    break;
+                case "key2":
+                case "key7":
+                case "key12":
+                case "key17":
+                    assertEquals("true", value);
+                    break;
+                case "key3":
+                case "key8":
+                case "key13":
+                case "key18":
+                    assertEquals("3.0", value);
+                    break;
+                case "key4":
+                case "key9":
+                case "key14":
+                case "key19":
+                    assertEquals("4", value);
+                    break;
+                case "key5":
+                case "key10":
+                case "key15":
+                case "key20":
+                    assertEquals("{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", value);
+                    break;
+            }
+        }
     }
 
-    private void assertTsValues(Map<String, List<Map<String, String>>> deviceValues, List<String> deviceActualKeys, int ts, int arrayIndex) {
-        assertEquals(ts, deviceValues.get(deviceActualKeys.get(0)).get(arrayIndex).get("ts"));
-        assertEquals(ts, deviceValues.get(deviceActualKeys.get(1)).get(arrayIndex).get("ts"));
-        assertEquals(ts, deviceValues.get(deviceActualKeys.get(2)).get(arrayIndex).get("ts"));
-        assertEquals(ts, deviceValues.get(deviceActualKeys.get(3)).get(arrayIndex).get("ts"));
-        assertEquals(ts, deviceValues.get(deviceActualKeys.get(4)).get(arrayIndex).get("ts"));
+    private void assertTs(Map<String, List<Map<String, String>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {
+        assertEquals(ts, deviceValues.get(expectedKeys.get(0)).get(arrayIndex).get("ts"));
+        assertEquals(ts, deviceValues.get(expectedKeys.get(1)).get(arrayIndex).get("ts"));
+        assertEquals(ts, deviceValues.get(expectedKeys.get(2)).get(arrayIndex).get("ts"));
+        assertEquals(ts, deviceValues.get(expectedKeys.get(3)).get(arrayIndex).get("ts"));
+        assertEquals(ts, deviceValues.get(expectedKeys.get(4)).get(arrayIndex).get("ts"));
     }
 
 
