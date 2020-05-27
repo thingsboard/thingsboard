@@ -1559,6 +1559,7 @@
     "widget-action": {
         "header-button": "Botón del encabezado del widget",
         "open-dashboard-state": "Navegar a nuevo estado del panel",
+        "previous-dashboard-state": "Volver al anterior estado del panel",
         "update-dashboard-state": "Actualizar estado vigente del panel",
         "open-dashboard": "Navegar a otro panel",
         "custom": "Acción personalizada",

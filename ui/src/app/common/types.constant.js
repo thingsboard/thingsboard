@@ -963,6 +963,10 @@ export default angular.module('thingsboard.types', [])
                     name: 'widget-action.open-dashboard-state',
                     value: 'openDashboardState'
                 },
+                previousDashboardState: {
+                    name: 'widget-action.previous-dashboard-state',
+                    value: 'previousDashboardState'
+                },
                 updateDashboardState: {
                     name: 'widget-action.update-dashboard-state',
                     value: 'updateDashboardState'

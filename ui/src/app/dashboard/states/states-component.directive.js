@@ -34,6 +34,12 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                 }
             }
 
+            stateController.previousState = function(params) {
+                if (scope.statesController) {
+                    scope.statesController.previousState(params);
+                }
+            }
+
             stateController.updateState = function(id, params, openRightLayout) {
                 if (scope.statesController) {
                     scope.statesController.updateState(id, params, openRightLayout);

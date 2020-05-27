@@ -1683,6 +1683,7 @@
     "widget-action": {
         "header-button": "Widget header button",
         "open-dashboard-state": "Navigate to new dashboard state",
+        "previous-dashboard-state": "Back to previous dashboard state",
         "update-dashboard-state": "Update current dashboard state",
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",

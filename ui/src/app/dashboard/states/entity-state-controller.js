@@ -26,6 +26,7 @@ export default function EntityStateController($scope, $timeout, $location, $stat
     vm.skipStateChange = false;
 
     vm.openState = openState;
+    vm.previousState = previousState;
     vm.updateState = updateState;
     vm.resetState = resetState;
     vm.getStateObject = getStateObject;
@@ -53,6 +54,22 @@ export default function EntityStateController($scope, $timeout, $location, $stat
                     vm.stateObject.push(newState);
                     vm.selectedStateIndex = vm.stateObject.length-1;
                     gotoState(vm.stateObject[vm.stateObject.length-1].id, true, openRightLayout);
+                    vm.skipStateChange = true;
+                }
+            );
+        }
+    }
+
+    function previousState(params) {
+        if (vm.states) {
+            resolveEntity(params).then(
+                function success(entityName) {
+                    params.entityName = entityName;
+                    //remove current state
+                    vm.stateObject.pop();
+                    vm.previousStateIndex = vm.stateObject.length-1;
+                    vm.stateObject[vm.previousStateIndex].params = params;
+                    gotoState(vm.stateObject[vm.previousStateIndex].id, true);
                     vm.skipStateChange = true;
                 }
             );

@@ -1500,16 +1500,17 @@
         "export": "Esporta widget"
     },
     "widget-action": {
-        "header-button": "Widget header button",
-        "open-dashboard-state": "Navigate to new dashboard state",
-        "update-dashboard-state": "Update current dashboard state",
-        "open-dashboard": "Navigate to other dashboard",
-        "custom": "Custom action",
-        "target-dashboard-state": "Target dashboard state",
-        "target-dashboard-state-required": "Target dashboard state is required",
-        "set-entity-from-widget": "Set entity from widget",
-        "target-dashboard": "Target dashboard",
-        "open-right-layout": "Open right dashboard layout (mobile view)"
+        "header-button": "Pulsante header widget",
+        "open-dashboard-state": "Vai ad un nuovo stato della dashboard",
+        "previous-dashboard-state": "Torna allo stato precedente della dashboard",
+        "update-dashboard-state": "Aggiorna lo stato corrente della dashboard",
+        "open-dashboard": "Vai a una nuova dashboard",
+        "custom": "Azione personalizzata",
+        "target-dashboard-state": "Stato della dashboard di destinazione",
+        "target-dashboard-state-required": "Lo stato della dashboard di destinazione è obbligatorio",
+        "set-entity-from-widget": "Assegna l'entità dal widget",
+        "target-dashboard": "Dashboard di destinazione",
+        "open-right-layout": "Apri layout destro di dashboard (mobile view)"
     },
     "widgets-bundle": {
         "current": "Bundle corrente",
