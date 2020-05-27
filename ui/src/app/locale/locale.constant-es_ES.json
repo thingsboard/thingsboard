@@ -209,6 +209,14 @@
         "state-entity": "Entidad del panel de estados",
         "all-entities": "Todas las entidades",
         "any-relation": "alguna"
+    },    
+    "array-table": {
+        "search": "Buscar entidades",
+        "title": "Tabella di array",
+        "entity-name": "Nombre de la entidad",
+        "entity-type": "Tipo de la entidad",
+        "no-data-found": "No se encontraron datos",
+        "no-data-show": "No hay datos para mostrar"
     },
     "asset": {
         "asset": "Activo",

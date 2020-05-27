@@ -209,6 +209,14 @@
         "state-entity": "Entité d'état du tableau de bord",
         "state-entity-parameter-name": "Nom du paramétre d'entité d'état",
         "unlimited-level": "niveau illimité"
+    },    
+    "array-table": {
+        "search": "Recherche d'entités",
+        "title": "Tableau de array",
+        "entity-name": "Nom de l'entité",
+        "entity-type": "Type d'entité",
+        "no-data-found": "Aucune donnée trouvée",
+        "no-data-show": "Aucune donnée à afficher"
     },
     "asset": {
         "add": "Ajouter un actif",

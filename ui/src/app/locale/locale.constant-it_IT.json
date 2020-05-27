@@ -208,6 +208,14 @@
         "state-entity": "Entità di stato della dashboard",
         "all-entities": "Tutte le entità",
         "any-relation": "qualsiasi"
+    },    
+    "array-table": {
+        "search": "Ricerca entità",
+        "title": "Tabella di array",
+        "entity-name": "Nome entità",
+        "entity-type": "Tipo entità",
+        "no-data-found": "Nessun dato trovato",
+        "no-data-show": "Nessun dato da mostrare"
     },
     "asset": {
         "asset": "Asset",

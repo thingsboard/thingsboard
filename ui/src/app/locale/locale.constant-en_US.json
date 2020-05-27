@@ -225,6 +225,14 @@
         "state-entity": "Dashboard state entity",
         "all-entities": "All entities",
         "any-relation": "any"
+    },    
+    "array-table": {
+        "search": "Search entities",
+        "title": "Array Table",
+        "entity-name": "Entity Name",
+        "entity-type": "Entity Type",
+        "no-data-found": "No data found",
+        "no-data-show": "No data to display"
     },
     "asset": {
         "asset": "Asset",
