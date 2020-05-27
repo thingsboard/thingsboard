@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright © 2016-2020 The Thingsboard Authors
 #
@@ -15,16 +14,14 @@
 # limitations under the License.
 #
 
-set -e
-
-source .env
-
-kubectl apply -f common/tb-namespace.yml
-kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
-kubectl apply -f common/tb-node-configmap.yml
-kubectl apply -f common/tb-mqtt-transport-configmap.yml
-kubectl apply -f common/tb-http-transport-configmap.yml
-kubectl apply -f common/tb-coap-transport-configmap.yml
-kubectl apply -f common/thingsboard.yml
-kubectl apply -f $DEPLOYMENT_TYPE/tb-node-cache-configmap.yml
-kubectl apply -f common/tb-node.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tb-node-cache-config
+  namespace: thingsboard
+  labels:
+    name: tb-node-cache-config
+data:
+  CACHE_TYPE: redis
+  REDIS_CONNECTION_TYPE: cluster
+  REDIS_NODES: tb-redis:6379

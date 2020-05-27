@@ -17,6 +17,9 @@
 
 set -e
 
-kubectl apply -f tb-namespace.yml
+source .env
+
+kubectl apply -f common/tb-namespace.yml
 kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
-kubectl apply -f thirdparty.yml
+
+kubectl apply -f $DEPLOYMENT_TYPE/thirdparty.yml

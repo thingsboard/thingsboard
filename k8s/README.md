@@ -20,13 +20,20 @@ $ minikube addons enable ingress
 
 ## Installation
 
-Before performing initial installation you can configure the type of database to be used with ThingsBoard.
+Before performing initial installation you can configure the type of database to be used with ThingsBoard and the type of deployment.
 In order to set database type change the value of `DATABASE` variable in `.env` file to one of the following:
 
 - `postgres` - use PostgreSQL database;
 - `cassandra` - use Cassandra database;
 
 **NOTE**: According to the database type corresponding kubernetes resources will be deployed (see `postgres.yml`, `cassandra.yml` for details).
+
+In order to set deployment type change the value of `DEPLOYMENT_TYPE` variable in `.env` file to one of the following:
+
+- `basic` - start up with single instance of Zookeeper, Kafka and Redis;
+- `cassandra` - start up with Zookeeper, Kafka and Redis in cluster modes;
+
+**NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see content of the directories `./basic` and `./high-availability` for details).
 
 Execute the following command to run installation:
 
@@ -52,7 +59,7 @@ Get list of the running tb-redis pods and verify that all of them are in running
 $ kubectl get pods -l app=tb-redis
 `
 
-Execute the following command to create redis cluster:
+If you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` execute the following command to create redis cluster:
 
 `
 $ kubectl exec -it tb-redis-0 -- redis-cli --cluster create --cluster-replicas 1 $(kubectl get pods -l app=tb-redis -o jsonpath='{range.items[*]}{.status.podIP}:6379 ')
