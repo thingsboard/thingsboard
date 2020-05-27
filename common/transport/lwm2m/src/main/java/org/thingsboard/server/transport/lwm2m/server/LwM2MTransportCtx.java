@@ -43,11 +43,15 @@ public class LwM2MTransportCtx extends TransportContext {
     private Integer securePort;
 
     @Getter
+    @Value("${transport.lwm2m.secure.redis_url:}")
+    private String redisUrl;
+
+    @Getter
     @Value("${transport.lwm2m.timeout:5000}")
     private Long timeout;
 
     @Getter
-    @Value("${transport.lwm2m.tenantId:12345678}")
+    @Value("${transport.lwm2m.tenant_id:12345678}")
     private String tenantId;
 
 

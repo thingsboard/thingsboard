@@ -251,8 +251,12 @@ public class LwM2MTransportService {
     @SneakyThrows
     public ReadResult doGetAttributsTelemetry(String clientEndpoint) {
         ReadResult readResult = new ReadResult();
-
-        getObjectsModel(clientEndpoint).forEach(om -> {
+        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
+        registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
+            log.info("Attributes: Key : [{}] Value : [{}]", entry.getKey() , entry.getValue());
+            readResult.getPostAttribute().addProperty(entry.getKey(), entry.getValue());
+        });
+        lwServer.getModelProvider().getObjectModel(registration).getObjectModels().forEach(om -> {
             String idObj = String.valueOf(om.id);
             LwM2mResponse cResponse = lwM2MTransportRequest.doGet(clientEndpoint, "/" + idObj, GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
             if (cResponse != null) {
@@ -287,9 +291,9 @@ public class LwM2MTransportService {
     }
 
     // Get Model for this registration
-    public Collection<ObjectModel> getObjectsModel(String clientEndpoint) {
-        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
-        return lwServer.getModelProvider().getObjectModel(registration).getObjectModels();
-    }
+//    public Collection<ObjectModel> getObjectsModel(String clientEndpoint) {
+//        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
+//        return lwServer.getModelProvider().getObjectModel(registration).getObjectModels();
+//    }
 
 }

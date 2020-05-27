@@ -688,6 +688,8 @@
         "access-token-invalid": "Access token length must be from 1 to 20 characters.",
         "rsa-key": "RSA public key",
         "rsa-key-required": "RSA public key is required.",
+        "lwm2m-key": "LwM2M credentials value",
+        "lwm2m-key-required": "LwM2M credentials value is required.",
         "secret": "Secret",
         "secret-required": "Secret is required.",
         "device-type": "Device type",
@@ -716,7 +718,9 @@
         "device-public": "Device is public",
         "select-device": "Select device",
         "import": "Import device",
-        "device-file": "Device file"
+        "device-file": "Device file",
+        "rsa-key": "RSA public key",
+        "rsa-key-required": "RSA public key is required."
     },
     "dialog": {
         "close": "Close dialog"
