@@ -20,7 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.QueueEntity;
@@ -62,7 +65,7 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
 
     @Override
     public List<Queue> findAllByTenantId(TenantId tenantId) {
-        List<QueueEntity> entities = queueRepository.findAllByTenantId(fromTimeUUID(tenantId.getId()));
+        List<QueueEntity> entities = queueRepository.findByTenantId(fromTimeUUID(tenantId.getId()));
         return DaoUtil.convertDataList(entities);
     }
 
@@ -70,5 +73,11 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
     public List<Queue> findAll() {
         List<QueueEntity> entities = Lists.newArrayList(queueRepository.findAll());
         return DaoUtil.convertDataList(entities);
+    }
+
+    @Override
+    public PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(queueRepository
+                .findByTenantId(UUIDConverter.fromTimeUUID(tenantId.getId()), DaoUtil.toPageable(pageLink)));
     }
 }

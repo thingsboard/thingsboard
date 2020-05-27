@@ -109,6 +109,8 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         this.additionalInfo = tenant.getAdditionalInfo();
         this.isolatedTbCore = tenant.isIsolatedTbCore();
         this.isolatedTbRuleEngine = tenant.isIsolatedTbRuleEngine();
+        this.maxNumberOfQueues = tenant.getMaxNumberOfQueues();
+        this.maxNumberOfPartitionsPerQueue = tenant.getMaxNumberOfPartitionsPerQueue();
     }
 
     @Override

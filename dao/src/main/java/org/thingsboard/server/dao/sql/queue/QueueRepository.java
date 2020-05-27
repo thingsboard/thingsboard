@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.queue;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.model.sql.QueueEntity;
 
@@ -25,5 +27,7 @@ public interface QueueRepository extends CrudRepository<QueueEntity, String> {
 
     QueueEntity findByTenantIdAndName(String tenantId, String name);
 
-    List<QueueEntity> findAllByTenantId(String tenantId);
+    List<QueueEntity> findByTenantId(String tenantId);
+
+    Page<QueueEntity> findByTenantId(String tenantId, Pageable pageable);
 }

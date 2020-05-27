@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -33,14 +32,13 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
-
-import java.util.List;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -78,6 +76,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     @Autowired
     private RuleChainService ruleChainService;
 
+    @Autowired
+    private QueueService queueService;
+
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
@@ -112,6 +113,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         deviceService.deleteDevicesByTenantId(tenantId);
         userService.deleteTenantAdmins(tenantId);
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
+        queueService.deleteQueuesByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
         deleteEntityRelations(tenantId, tenantId);
     }
@@ -139,6 +141,14 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                     if (!StringUtils.isEmpty(tenant.getEmail())) {
                         validateEmail(tenant.getEmail());
                     }
+                    if (tenant.isIsolatedTbRuleEngine()) {
+                        if (tenant.getMaxNumberOfQueues() < 1) {
+                            throw new DataValidationException("Property maxNumberOfQueues can't be less then 1!");
+                        }
+                        if (tenant.getMaxNumberOfPartitionsPerQueue() < 1) {
+                            throw new DataValidationException("Property maxNumberOfPartitionsPerQueue can't be less then 1!");
+                        }
+                    }
                 }
 
                 @Override
@@ -150,6 +160,13 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                         throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
                     } else if (old.isIsolatedTbCore() != tenant.isIsolatedTbCore()) {
                         throw new DataValidationException("Can't update isolatedTbCore property!");
+                    } else if (tenant.isIsolatedTbRuleEngine()) {
+                        if (old.getMaxNumberOfQueues() != tenant.getMaxNumberOfQueues()) {
+                            throw new DataValidationException("Can't update maxNumberOfQueues property!");
+                        }
+                        if (old.getMaxNumberOfPartitionsPerQueue() != tenant.getMaxNumberOfPartitionsPerQueue()) {
+                            throw new DataValidationException("Can't update maxNumberOfPartitionsPerQueue property!");
+                        }
                     }
                 }
             };

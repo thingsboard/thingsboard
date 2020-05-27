@@ -79,6 +79,9 @@ public class TenantController extends BaseController {
             tenant = checkNotNull(tenantService.saveTenant(tenant));
             if (newTenant) {
                 installScripts.createDefaultRuleChains(tenant.getId());
+                if (tenant.isIsolatedTbRuleEngine()) {
+                    queueService.createDefaultMainQueue(tenant);
+                }
             }
             return tenant;
         } catch (Exception e) {

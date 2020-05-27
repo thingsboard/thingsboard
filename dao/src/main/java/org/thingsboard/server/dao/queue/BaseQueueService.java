@@ -22,7 +22,10 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
@@ -30,6 +33,8 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
@@ -90,6 +95,10 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Override
     public Boolean deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
+        Queue queue = findQueueById(tenantId, queueId);
+        for (int i = 0; i < queue.getPartitions(); i++) {
+            tbQueueAdmin.deleteTopic(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+        }
         return queueDao.removeById(tenantId, queueId.getId());
     }
 
@@ -119,9 +128,38 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         return queueDao.findById(tenantId, queueId.getId());
     }
 
+    @Override
     public Queue findQueueByTenantIdAndName(TenantId tenantId, String queueName) {
         log.trace("Executing findQueueByTenantIdAndName, tenantId: [{}] queueName: [{}]", tenantId, queueName);
         return queueDao.findQueueByTenantIdAndName(tenantId, queueName);
+    }
+
+    @Override
+    public void deleteQueuesByTenantId(TenantId tenantId) {
+        Validator.validateId(tenantId, "Incorrect tenant id for delete rule chains request.");
+        tenantQueuesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public Queue createDefaultMainQueue(Tenant tenant) {
+        Queue mainQueue = new Queue();
+        mainQueue.setTenantId(tenant.getTenantId());
+        mainQueue.setName("Main");
+        mainQueue.setTopic("tb_rule_engine.main");
+        mainQueue.setPollInterval(25);
+        mainQueue.setPartitions(tenant.getMaxNumberOfPartitionsPerQueue());
+        mainQueue.setPackProcessingTimeout(60000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueue.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
+        return createOrUpdateQueue(mainQueue);
     }
 
     private DataValidator<Queue> queueValidator =
@@ -213,6 +251,19 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                 }
             };
 
+    private PaginatedRemover<TenantId, Queue> tenantQueuesRemover =
+            new PaginatedRemover<TenantId, Queue>() {
+
+                @Override
+                protected PageData<Queue> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return queueDao.findQueuesByTenantId(id, pageLink);
+                }
+
+                @Override
+                protected void removeEntity(TenantId tenantId, Queue entity) {
+                    deleteQueue(tenantId, entity.getId());
+                }
+            };
 }
 
 
