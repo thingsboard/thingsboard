@@ -105,12 +105,7 @@ public class DashboardController extends BaseController {
         try {
             dashboard.setTenantId(getCurrentUser().getTenantId());
 
-            if (dashboard.getId() == null) {
-                accessControlService
-                        .checkPermission(getCurrentUser(), Resource.DASHBOARD, Operation.CREATE, dashboard.getId(), dashboard);
-            } else {
-                checkDashboardId(dashboard.getId(), Operation.WRITE);
-            }
+            checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
 
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
 
