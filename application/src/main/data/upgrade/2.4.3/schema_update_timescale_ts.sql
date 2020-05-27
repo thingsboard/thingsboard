@@ -162,3 +162,47 @@ BEGIN
     CLOSE insert_cursor;
 END;
 $$;
+
+-- call insert_into_ts_kv_cursor();
+
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_cursor() LANGUAGE plpgsql AS $$
+
+DECLARE
+    insert_size CONSTANT integer := 10000;
+    insert_counter       integer DEFAULT 0;
+    insert_record        RECORD;
+    insert_cursor CURSOR FOR SELECT to_uuid(entity_id)                                                            AS entity_id,
+                                    new_ts_kv_records.key                                                         AS key,
+                                    new_ts_kv_records.ts                                                          AS ts,
+                                    new_ts_kv_records.bool_v                                                      AS bool_v,
+                                    new_ts_kv_records.str_v                                                       AS str_v,
+                                    new_ts_kv_records.long_v                                                      AS long_v,
+                                    new_ts_kv_records.dbl_v                                                       AS dbl_v
+                             FROM (SELECT entity_id                   AS entity_id,
+                                          key_id                      AS key,
+                                          ts,
+                                          bool_v,
+                                          str_v,
+                                          long_v,
+                                          dbl_v
+                                   FROM tenant_ts_kv_old
+                                            INNER JOIN ts_kv_dictionary ON (tenant_ts_kv_old.key = ts_kv_dictionary.key)) AS new_ts_kv_records;
+BEGIN
+    OPEN insert_cursor;
+    LOOP
+        insert_counter := insert_counter + 1;
+        FETCH insert_cursor INTO insert_record;
+        IF NOT FOUND THEN
+            RAISE NOTICE '% records have been inserted into the new ts_kv table!',insert_counter - 1;
+            EXIT;
+        END IF;
+        INSERT INTO ts_kv(entity_id, key, ts, bool_v, str_v, long_v, dbl_v)
+        VALUES (insert_record.entity_id, insert_record.key, insert_record.ts, insert_record.bool_v, insert_record.str_v,
+                insert_record.long_v, insert_record.dbl_v);
+        IF MOD(insert_counter, insert_size) = 0 THEN
+            RAISE NOTICE '% records have been inserted into the new ts_kv table!',insert_counter;
+        END IF;
+    END LOOP;
+    CLOSE insert_cursor;
+END;
+$$;

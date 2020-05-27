@@ -37,8 +37,6 @@ public class PsqlTsDatabaseSchemaService extends SqlAbstractDatabaseSchemaServic
     @Override
     public void createDatabaseSchema() throws Exception {
         super.createDatabaseSchema();
-        if (partitionType.equals("INDEFINITE")) {
-            executeQuery("CREATE TABLE ts_kv_indefinite PARTITION OF ts_kv DEFAULT;");
-        }
+        executeQuery("CREATE TABLE IF NOT EXISTS ts_kv_indefinite PARTITION OF ts_kv DEFAULT;");
     }
 }
