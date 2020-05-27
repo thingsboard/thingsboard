@@ -16,8 +16,9 @@
 import './dashboard-settings.scss';
 
 /*@ngInject*/
-export default function DashboardSettingsController($scope, $mdDialog, statesControllerService, settings, gridSettings, stateSettings, entityAliasesList) {
-
+export default function DashboardSettingsController($scope, $mdDialog, $q, $filter, statesControllerService, settings,
+    gridSettings, stateSettings, entityAliasesList) {
+        
     var vm = this;
 
     vm.cancel = cancel;
