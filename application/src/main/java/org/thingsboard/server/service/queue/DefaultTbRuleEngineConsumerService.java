@@ -30,6 +30,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
+import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -84,7 +85,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
     private final TbRuleEngineProcessingStrategyFactory processingStrategyFactory;
     private final TbRuleEngineQueueFactory tbRuleEngineQueueFactory;
-    private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final RuleEngineStatisticsService statisticsService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
     private final QueueService queueService;
@@ -96,14 +96,12 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     public DefaultTbRuleEngineConsumerService(TbRuleEngineProcessingStrategyFactory processingStrategyFactory,
                                               TbRuleEngineSubmitStrategyFactory submitStrategyFactory,
-                                              TbQueueRuleEngineSettings ruleEngineSettings,
                                               TbRuleEngineQueueFactory tbRuleEngineQueueFactory, RuleEngineStatisticsService statisticsService,
                                               ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
                                               QueueService queueService) {
         super(actorContext, encodingService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
-        this.ruleEngineSettings = ruleEngineSettings;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
         this.submitStrategyFactory = submitStrategyFactory;
         this.processingStrategyFactory = processingStrategyFactory;
@@ -114,7 +112,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @PostConstruct
     public void init() {
         super.init("tb-rule-engine-consumer", "tb-rule-engine-notifications-consumer");
-        for (Queue queue : queueService.findAllQueues()) {
+        TenantId tenantId = actorContext.getServiceInfoProvider().getIsolatedTenant().orElse(TenantId.SYS_TENANT_ID);
+        for (Queue queue : queueService.findQueues(tenantId)) {
             consumerConfigurations.putIfAbsent(queue.getName(), queue);
             consumers.computeIfAbsent(queue.getName(), queueName -> tbRuleEngineQueueFactory.createToRuleEngineMsgConsumer(queue));
             consumerStats.put(queue.getName(), new TbRuleEngineConsumerStats(queue.getName()));

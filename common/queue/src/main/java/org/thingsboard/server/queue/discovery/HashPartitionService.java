@@ -132,8 +132,8 @@ public class HashPartitionService implements PartitionService {
         init();
 
         routingInfoService.getQueueRoutingInfo(myIsolatedOrSystemTenantId).getRuleEngineQueues().forEach(queueConfiguration -> {
-        partitionTopics.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getTopic());
-        partitionSizes.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getPartitions());
+            partitionTopics.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getTopic());
+            partitionSizes.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getPartitions());
         });
 
         partitionSizes.forEach((serviceQueue, size) -> {

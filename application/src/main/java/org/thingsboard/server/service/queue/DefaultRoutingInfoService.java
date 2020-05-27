@@ -24,8 +24,8 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
-import org.thingsboard.server.queue.discovery.RoutingInfoService;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
+import org.thingsboard.server.queue.discovery.RoutingInfoService;
 
 import java.util.List;
 import java.util.stream.Collectors;

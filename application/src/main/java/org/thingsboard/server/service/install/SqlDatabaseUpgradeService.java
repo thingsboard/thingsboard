@@ -273,7 +273,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     } catch (Exception e) {
                     }
 
-//                    try {
+                    try {
                         if (!CollectionUtils.isEmpty(ruleEngineSettings.getQueues())) {
                             ruleEngineSettings.getQueues().forEach(queueSettings -> {
                                 Queue queue = new Queue();
@@ -300,11 +300,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         } else {
                             systemDataLoaderService.createQueues();
                         }
-//                    } catch (Exception e) {
-//                    }
+                    } catch (Exception e) {
+                    }
 
                     try {
-                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN number_ofQueues int DEFAULT (1), ADD COLUMN max_number_of_partitions_per_queue int DEFAULT (10)");
+                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN number_of_queues int DEFAULT (1), ADD COLUMN max_number_of_partitions_per_queue int DEFAULT (10)");
                     } catch (Exception e) {
                     }
                     log.info("Schema updated.");

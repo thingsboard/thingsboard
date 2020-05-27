@@ -32,4 +32,6 @@ public interface QueueService {
     List<Queue> findAllQueues();
 
     Queue findQueueById(TenantId tenantId, QueueId queueId);
+
+    Queue findQueueByTenantIdAndName(TenantId tenantId, String name);
 }

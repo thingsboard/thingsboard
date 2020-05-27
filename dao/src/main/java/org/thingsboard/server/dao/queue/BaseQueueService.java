@@ -60,13 +60,9 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     private Queue createQueue(Queue queue) {
-//        if (queue.getPartitions() > 0) {
-            for (int i = 0; i < queue.getPartitions(); i++) {
-                tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
-            }
-//        } else {
-//            tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), 0, false).getFullTopicName());
-//        }
+        for (int i = 0; i < queue.getPartitions(); i++) {
+            tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+        }
         return queueDao.save(queue.getTenantId(), queue);
     }
 
@@ -100,7 +96,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Override
     public List<Queue> findQueues(TenantId tenantId) {
         log.trace("Executing findQueues, tenantId: [{}]", tenantId);
-
         if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
             Tenant tenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
             if (tenant.isIsolatedTbRuleEngine()) {
@@ -122,6 +117,11 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public Queue findQueueById(TenantId tenantId, QueueId queueId) {
         log.trace("Executing findQueueById, queueId: [{}]", queueId);
         return queueDao.findById(tenantId, queueId.getId());
+    }
+
+    public Queue findQueueByTenantIdAndName(TenantId tenantId, String queueName) {
+        log.trace("Executing findQueueByTenantIdAndName, tenantId: [{}] queueName: [{}]", tenantId, queueName);
+        return queueDao.findQueueByTenantIdAndName(tenantId, queueName);
     }
 
     private DataValidator<Queue> queueValidator =
@@ -212,6 +212,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     }
                 }
             };
+
 }
 
 

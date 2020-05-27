@@ -33,7 +33,7 @@ import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
 @Slf4j
 @Service
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
-public class TransportTenantRoutingInfoService implements RoutingInfoService {
+public class TransportRoutingInfoService implements RoutingInfoService {
 
     private TransportService transportService;
 

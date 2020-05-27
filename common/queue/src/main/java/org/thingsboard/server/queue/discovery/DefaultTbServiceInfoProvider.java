@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Component
@@ -56,8 +58,10 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     private RoutingInfoService routingInfoService;
 
     private List<ServiceType> serviceTypes;
-    private ServiceInfo serviceInfo;
+    private volatile ServiceInfo serviceInfo;
     private TenantId isolatedTenant;
+
+    private final Lock serviceInfoLock = new ReentrantLock();
 
     @PostConstruct
     public void init() {
@@ -74,31 +78,23 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         } else {
             serviceTypes = Collections.singletonList(ServiceType.of(serviceType));
         }
-        ServiceInfo.Builder builder = ServiceInfo.newBuilder()
-                .setServiceId(serviceId)
-                .addAllServiceTypes(serviceTypes.stream().map(ServiceType::name).collect(Collectors.toList()));
-        UUID tenantId;
         if (!StringUtils.isEmpty(tenantIdStr)) {
-            tenantId = UUID.fromString(tenantIdStr);
-            isolatedTenant = new TenantId(tenantId);
-        } else {
-            tenantId = TenantId.NULL_UUID;
+            isolatedTenant = new TenantId(UUID.fromString(tenantIdStr));
         }
-        builder.setTenantIdMSB(tenantId.getMostSignificantBits());
-        builder.setTenantIdLSB(tenantId.getLeastSignificantBits());
-
-        QueueRoutingInfo queueRoutingInfo = routingInfoService.getQueueRoutingInfo(new TenantId(tenantId));
-
-        if (serviceTypes.contains(ServiceType.TB_RULE_ENGINE) && queueRoutingInfo != null) {
-            for (TransportProtos.QueueInfo queue : queueRoutingInfo.getRuleEngineQueues()) {
-                builder.addRuleEngineQueues(queue);
-            }
-        }
-        serviceInfo = builder.build();
     }
 
     @Override
     public ServiceInfo getServiceInfo() {
+        if (serviceInfo == null) {
+            try {
+                serviceInfoLock.lock();
+                if (serviceInfo == null) {
+                    serviceInfo = buildServiceInfo();
+                }
+            } finally {
+                serviceInfoLock.unlock();
+            }
+        }
         return serviceInfo;
     }
 
@@ -112,4 +108,23 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         return Optional.ofNullable(isolatedTenant);
     }
 
+    private ServiceInfo buildServiceInfo() {
+        ServiceInfo.Builder builder = ServiceInfo.newBuilder()
+                .setServiceId(serviceId)
+                .addAllServiceTypes(serviceTypes.stream().map(ServiceType::name).collect(Collectors.toList()));
+
+        TenantId tenantId = isolatedTenant == null ? TenantId.SYS_TENANT_ID : isolatedTenant;
+
+        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+
+        QueueRoutingInfo queueRoutingInfo = routingInfoService.getQueueRoutingInfo(tenantId);
+
+        if (serviceTypes.contains(ServiceType.TB_RULE_ENGINE) && queueRoutingInfo != null) {
+            for (TransportProtos.QueueInfo queue : queueRoutingInfo.getRuleEngineQueues()) {
+                builder.addRuleEngineQueues(queue);
+            }
+        }
+        return builder.build();
+    }
 }
