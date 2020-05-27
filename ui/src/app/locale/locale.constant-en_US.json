@@ -208,6 +208,8 @@
         "filter-type-device-search-query-description": "Devices with types {{deviceTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
         "filter-type-entity-view-search-query": "Entity view search query",
         "filter-type-entity-view-search-query-description": "Entity views with types {{entityViewTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
+        "filter-type-entities-custom-search-function": "Entities custom search function",
+        "filter-type-entities-custom-search-function-description": "Entities custom search function",
         "entity-filter": "Entity filter",
         "resolve-multiple": "Resolve as multiple entities",
         "filter-type": "Filter type",

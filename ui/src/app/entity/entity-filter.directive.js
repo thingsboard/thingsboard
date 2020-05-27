@@ -97,6 +97,21 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                         filter.entityViewTypes = [];
                     }
                     break;
+                case types.aliasFilterType.entitiesCustomSearchFunction.value:
+                    filter.rootStateEntity = false;
+                    filter.stateEntityParamName = null;
+                    filter.defaultStateEntity = null;
+                    filter.entitiesCustomSearchFunction = '/*\n\n// Function should return a promise. When it is resolved,'
+                        + ' an array containing a\n// list of entities is returned.\n\n// The following example code '
+                        + 'returns two ASSETs specified in entitiesList array.\n\nvar $injector = angular.element('
+                        + 'document.body).injector();\nvar $q = $injector.get("$q");\nvar entityService = $injector.get'
+                        + '("entityService");\nvar deferred = $q.defer();\n\nvar entitiesList = ["d037e950-f410-11e9'
+                        + '-b866-87183a2233fa","977d7100-f412-11e9-b866-87183a2233fa"];\n\nentityService.getEntities'
+                        + '("ASSET", entitiesList, {ignoreLoading: true}).then(\n\tfunction success(entities) {\n\t\t'
+                        + 'if (entities && entities.length) {\n\t\t\tdeferred.resolve(entities);\n\t\t} else {\n\t\t\t'
+                        + 'deferred.reject();\n\t\t}\n\t},\n\tfunction fail() {\n\t\tdeferred.reject();\n\t}\n);\n\n'
+                        + 'return deferred.promise;\n\n*/';
+                    break;
             }
             scope.filter = filter;
         }

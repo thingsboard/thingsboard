@@ -192,6 +192,8 @@
         "filter-type-device-search-query-description": "Dispositivi di tipo {{deviceTypes}} che hanno una relazione {{relationType}} {{direction}} {{rootEntity}}",
         "filter-type-entity-view-search-query": "Query ricerca Vista entità",
         "filter-type-entity-view-search-query-description": "Viste entità di tipo {{entityViewTypes}} che hanno una relazione {{relationType}} {{direction}} {{rootEntity}}",
+        "filter-type-entities-custom-search-function": "Funzione personalizzata di ricerca entità",
+        "filter-type-entities-custom-search-function-description": "Funzione personalizzata di ricerca entità",
         "entity-filter": "Filtro entità",
         "resolve-multiple": "Risolvi come entità multiple",
         "filter-type": "Tipo di filtro",

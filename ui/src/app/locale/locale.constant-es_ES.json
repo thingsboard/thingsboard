@@ -193,6 +193,8 @@
         "filter-type-device-search-query-description": "Dispositivos con tipos {{deviceTypes}} que tienen {{relationType}} relación {{direction}} {{rootEntity}}",
         "filter-type-entity-view-search-query": "Consultar vista de entidad",
         "filter-type-entity-view-search-query-description": "Las vista de entidad de tipo {{entityViewTypes}} que tienen {{relationType}} relación {{direction}} {{rootEntity}}",
+        "filter-type-entities-custom-search-function": "Función de búsqueda personalizada de entidades",
+        "filter-type-entities-custom-search-function-description": "Función de búsqueda personalizada de entidades",
         "entity-filter": "Filtro de entidad",
         "resolve-multiple": "Resolver como entidades múltiples",
         "filter-type": "Tipo de filtro",

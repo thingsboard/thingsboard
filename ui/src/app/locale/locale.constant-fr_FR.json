@@ -199,6 +199,8 @@
         "filter-type-single-entity": "Entité unique",
         "filter-type-state-entity": "Entité de l'état du tableau de bord",
         "filter-type-state-entity-description": "Entité extraite des paramétres d'état du tableau de bord",
+        "filter-type-entities-custom-search-function": "Fonction de recherche personnalisée d'entités",
+        "filter-type-entities-custom-search-function-description": "Fonction de recherche personnalisée d'entités",
         "max-relation-level": "Niveau de relation maximum",
         "name": "Nom de l'alias",
         "name-required": "Le nom d'alias est requis",

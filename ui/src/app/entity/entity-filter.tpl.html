@@ -426,4 +426,40 @@
                 ng-model="filter.entityViewTypes">
         </tb-entity-subtype-list>
     </section>
+    <section layout="column" ng-if="filter.type == types.aliasFilterType.entitiesCustomSearchFunction.value" id="customEntitiesSearchFunction">
+        <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
+        <section class="tb-root-state-entity-switch" layout="row" layout-align="start center" style="padding-left: 0px;">
+            <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                        aria-label="{{ 'alias.root-state-entity' | translate }}">
+            </md-switch>
+            <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+        </section>
+        <div flex layout="row" ng-if="filter.rootStateEntity">
+            <md-input-container class="md-block" style="margin-top: 32px;">
+                <label translate>alias.state-entity-parameter-name</label>
+                <input name="stateEntityParamName"
+                        placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                        ng-model="filter.stateEntityParamName"
+                        aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+            </md-input-container>
+            <div flex layout="column">
+                <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
+                <tb-entity-select flex
+                                    the-form="theForm"
+                                    tb-required="false"
+                                    use-alias-entity-types="true"
+                                    ng-model="filter.defaultStateEntity">
+                </tb-entity-select>
+            </div>
+        </div>
+        <tb-entity-type-select
+            ng-model="filter.entityType"
+            the-form="theForm"
+            allowed-entity-types="allowedEntityTypes">
+        </tb-entity-type-select>
+        <tb-js-func ng-model="filter.entitiesCustomSearchFunction"
+                    function-args="{{ ['filter'] }}"
+                    validation-args="{{ [] }}">
+        </tb-js-func>
+    </section>
 </div>
