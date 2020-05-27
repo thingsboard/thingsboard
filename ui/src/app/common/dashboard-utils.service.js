@@ -180,11 +180,24 @@ function DashboardUtils(types, utils, timeService) {
         };
     }
 
+    function createDefaultStateSettings() {
+        return {
+            showDashboardsSelect: false,
+            showDashboardsTimewindow: true,
+            showEntitiesSelect: false,
+            entityAliasesIcon: 'devices_other',
+            entityAliasesLabel: '',
+            entityAliasesList: [],
+            minEntitiesToShowSelect: 1
+        }
+    }
+
     function createDefaultState(name, root) {
         return {
             name: name,
             root: root,
-            layouts: createDefaultLayouts()
+            layouts: createDefaultLayouts(),
+            settings: createDefaultStateSettings()
         }
     }
 
@@ -281,9 +294,6 @@ function DashboardUtils(types, utils, timeService) {
             dashboard.configuration.settings = {};
             dashboard.configuration.settings.stateControllerId = 'entity';
             dashboard.configuration.settings.showTitle = false;
-            dashboard.configuration.settings.showDashboardsSelect = true;
-            dashboard.configuration.settings.showEntitiesSelect = true;
-            dashboard.configuration.settings.showDashboardTimewindow = true;
             dashboard.configuration.settings.showDashboardExport = true;
             dashboard.configuration.settings.toolbarAlwaysOpen = true;
         } else {
@@ -304,14 +314,6 @@ function DashboardUtils(types, utils, timeService) {
             if (angular.isDefined(gridSettings.showDevicesSelect)) {
                 dashboard.configuration.settings.showEntitiesSelect = gridSettings.showDevicesSelect;
                 delete gridSettings.showDevicesSelect;
-            }
-            if (angular.isDefined(gridSettings.showEntitiesSelect)) {
-                dashboard.configuration.settings.showEntitiesSelect = gridSettings.showEntitiesSelect;
-                delete gridSettings.showEntitiesSelect;
-            }
-            if (angular.isDefined(gridSettings.showDashboardTimewindow)) {
-                dashboard.configuration.settings.showDashboardTimewindow = gridSettings.showDashboardTimewindow;
-                delete gridSettings.showDashboardTimewindow;
             }
             if (angular.isDefined(gridSettings.showDashboardExport)) {
                 dashboard.configuration.settings.showDashboardExport = gridSettings.showDashboardExport;
@@ -378,6 +380,9 @@ function DashboardUtils(types, utils, timeService) {
                     result[l].widgetLayouts = layout.widgets;
                     result[l].gridSettings = layout.gridSettings;
                 }
+            }
+            if (angular.isUndefined(state.settings)) {
+                state.settings = createDefaultStateSettings();
             }
             return result;
         } else {

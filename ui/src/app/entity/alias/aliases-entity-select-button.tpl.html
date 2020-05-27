@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<section class="tb-aliases-entity-select" layout='row' layout-align="start center">
+<section class="tb-aliases-entity-select" layout='row' layout-align="start center" ng-if="displayEntitySelect">
     <md-button class="md-icon-button" aria-label="{{ 'entity.select-entities' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
             {{ 'entity.select-entities' | translate }}
         </md-tooltip>
-        <md-icon aria-label="{{ 'entity.select-entities' | translate }}" class="material-icons">devices_other</md-icon>
+        <md-icon aria-label="{{ 'entity.select-entities' | translate }}" class="material-icons">{{entityAliasesIcon}}</md-icon>
     </md-button>
     <span hide-xs hide-sm hide-md ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">

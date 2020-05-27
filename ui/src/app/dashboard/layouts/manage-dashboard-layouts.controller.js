@@ -48,7 +48,9 @@ export default function ManageDashboardLayoutsController($scope, $mdDialog, $doc
             templateUrl: dashboardSettingsTemplate,
             locals: {
                 settings: null,
-                gridSettings: gridSettings
+                gridSettings: gridSettings,
+                stateSettings: null,
+                entityAliasesList: []
             },
             parent: angular.element($document[0].body),
             multiple: true,

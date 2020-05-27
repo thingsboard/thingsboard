@@ -564,7 +564,11 @@
         "show-details": "Mostrar detalles",
         "hide-details": "Ocultar detalles",
         "select-state": "Seleccionar estado objetivo",
-        "state-controller": "Estado del controlador"
+        "state-controller": "Estado del controlador",
+        "dashboard-settings": "Configuración general del panel",
+        "dashboard-state-settings": "Configuración de estado actual",
+        "select-entity-aliases-label": "Etiqueta de selección de entidades",
+        "min-entities-to-show-selection": "Número mínimo de entidades resueltas para mostrar la selección"
     },
     "datakey": {
         "settings": "Configuración",

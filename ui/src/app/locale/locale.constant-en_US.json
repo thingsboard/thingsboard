@@ -580,7 +580,11 @@
         "show-details": "Show details",
         "hide-details": "Hide details",
         "select-state": "Select target state",
-        "state-controller": "State controller"
+        "state-controller": "State controller",
+        "dashboard-settings": "Dashboard common settings",
+        "dashboard-state-settings": "Current state settings",
+        "select-entity-aliases-label": "Entities selection label",
+        "min-entities-to-show-selection": "Minimum number of resolved entities to show selection"
     },
     "datakey": {
         "settings": "Settings",

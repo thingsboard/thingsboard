@@ -16,7 +16,7 @@
 import './dashboard-settings.scss';
 
 /*@ngInject*/
-export default function DashboardSettingsController($scope, $mdDialog, statesControllerService, settings, gridSettings) {
+export default function DashboardSettingsController($scope, $mdDialog, statesControllerService, settings, gridSettings, stateSettings, entityAliasesList) {
 
     var vm = this;
 
@@ -24,12 +24,18 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
     vm.save = save;
     vm.imageAdded = imageAdded;
     vm.clearImage = clearImage;
+    vm.querySearch = querySearch;
 
     vm.stateControllerIdChanged = stateControllerIdChanged;
 
     vm.settings = settings;
     vm.gridSettings = gridSettings;
+    vm.stateSettings = stateSettings;
+    vm.entityAliasesList = entityAliasesList;
     vm.stateControllers = statesControllerService.getStateControllers();
+
+    vm.selectedItem = null;
+    vm.searchText = '';
 
     if (vm.settings) {
         if (angular.isUndefined(vm.settings.stateControllerId)) {
@@ -42,18 +48,6 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
 
         if (angular.isUndefined(vm.settings.titleColor)) {
             vm.settings.titleColor = 'rgba(0,0,0,0.870588)';
-        }
-
-        if (angular.isUndefined(vm.settings.showDashboardsSelect)) {
-            vm.settings.showDashboardsSelect = true;
-        }
-
-        if (angular.isUndefined(vm.settings.showEntitiesSelect)) {
-            vm.settings.showEntitiesSelect = true;
-        }
-
-        if (angular.isUndefined(vm.settings.showDashboardTimewindow)) {
-            vm.settings.showDashboardTimewindow = true;
         }
 
         if (angular.isUndefined(vm.settings.showDashboardExport)) {
@@ -76,6 +70,43 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
         vm.hMargin = vm.gridSettings.margins[0];
         vm.vMargin = vm.gridSettings.margins[1];
         vm.gridSettings.backgroundSizeMode = vm.gridSettings.backgroundSizeMode || '100%';
+    }
+
+    if (vm.stateSettings) {
+        if (angular.isUndefined(vm.stateSettings.showDashboardsSelect)) {
+            vm.stateSettings.showDashboardsSelect = false;
+        }
+
+        if (angular.isUndefined(vm.stateSettings.showEntitiesSelect)) {
+            vm.stateSettings.showEntitiesSelect = true;
+        }
+
+        if (angular.isUndefined(vm.stateSettings.showDashboardTimewindow)) {
+            vm.stateSettings.showDashboardTimewindow = false;
+        }
+
+        if (angular.isUndefined(vm.stateSettings.entityAliasesIcon)) {
+            vm.stateSettings.entityAliasesIcon = 'devices_other';
+        }
+
+        if (angular.isUndefined(vm.stateSettings.entityAliasesLabel)) {
+            vm.stateSettings.entityAliasesLabel = '';
+        }
+
+        if (angular.isUndefined(vm.stateSettings.entityAliasesList)) {
+            vm.stateSettings.entityAliasesList = [];
+        }
+
+        if (angular.isUndefined(vm.stateSettings.minEntitiesToShowSelect)) {
+            vm.stateSettings.minEntitiesToShowSelect = 1;
+        }
+    }
+
+    function querySearch(searchText) {
+      var deferred = $q.defer();
+      var entityAliasesList = $filter('filter')(vm.entityAliasesList, {alias: searchText});
+      deferred.resolve(entityAliasesList);
+      return deferred.promise;
     }
 
     function cancel() {
@@ -114,7 +145,8 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
         $mdDialog.hide(
             {
                 settings: vm.settings,
-                gridSettings: vm.gridSettings
+                gridSettings: vm.gridSettings,
+                stateSettings: vm.stateSettings
             }
         );
     }

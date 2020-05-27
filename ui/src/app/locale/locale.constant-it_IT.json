@@ -561,7 +561,11 @@
         "show-details": "Mostra dettagli",
         "hide-details": "Nascondi dettagli",
         "select-state": "Seleziona stato target",
-        "state-controller": "Stato controller"
+        "state-controller": "Stato controller",
+        "dashboard-settings": "Impostazioni generali di dashboard",
+        "dashboard-state-settings": "Impostazioni dello stato corrente",
+        "select-entity-aliases-label": "Etichetta selezione entità",
+        "min-entities-to-show-selection": "Numero minimo di entità risolte per visualizzare la selezione"
     },
     "datakey": {
         "settings": "Impostazioni",

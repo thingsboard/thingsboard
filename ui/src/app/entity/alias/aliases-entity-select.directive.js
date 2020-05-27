@@ -26,7 +26,7 @@ import aliasesEntitySelectPanelTemplate from './aliases-entity-select-panel.tpl.
 
 /* eslint-disable angular/angularelement */
 /*@ngInject*/
-export default function AliasesEntitySelectDirective($compile, $templateCache, $mdMedia, types, $mdPanel, $document, $translate) {
+export default function AliasesEntitySelectDirective($compile, $templateCache, $mdMedia, types, $mdPanel, $document, $translate, $filter) {
 
     var linker = function (scope, element, attrs) {
 
@@ -81,6 +81,9 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
                 fullscreen: false,
                 locals: {
                     'aliasController': scope.aliasController,
+                    'entityAliasesIcon': scope.entityAliasesIcon,
+                    'entityAliasesLabel': scope.entityAliasesLabel,
+                    'entityAliasesList': scope.entityAliasesList,
                     'onEntityAliasesUpdate': function () {
                         scope.updateView();
                     }
@@ -101,6 +104,10 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
             scope.updateView();
         });
 
+        scope.$watch('entityAliasesList', function() {
+            scope.updateView();
+        });
+
         scope.updateView = function () {
             updateDisplayValue();
         }
@@ -108,6 +115,7 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
         function updateDisplayValue() {
             var displayValue;
             var singleValue = true;
+            var resolvedEntitiesLength = 0;
             var currentAliasId;
             var entityAliases = scope.aliasController.getEntityAliases();
             for (var aliasId in entityAliases) {
@@ -115,22 +123,28 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
                 if (!entityAlias.filter.resolveMultiple) {
                     var resolvedAlias = scope.aliasController.getInstantAliasInfo(aliasId);
                     if (resolvedAlias && resolvedAlias.currentEntity) {
-                        if (!currentAliasId) {
-                            currentAliasId = aliasId;
-                        } else {
-                            singleValue = false;
-                            break;
+                        var entityAliasesMatch = $filter('filter')(scope.entityAliasesList, {alias: resolvedAlias.alias});
+                        if (entityAliasesMatch && entityAliasesMatch.length) {
+                            if (!currentAliasId) {
+                                currentAliasId = aliasId;
+                            } else {
+                                singleValue = false;
+                                break;
+                            }
                         }
                     }
                 }
             }
             if (singleValue && currentAliasId) {
                 var aliasInfo = scope.aliasController.getInstantAliasInfo(currentAliasId);
+                resolvedEntitiesLength = aliasInfo.resolvedEntities.length;
                 displayValue = aliasInfo.currentEntity.name;
             } else {
                 displayValue = $translate.instant('entity.entities');
             }
-            scope.displayValue = displayValue;
+            scope.displayValue = (scope.entityAliasesLabel ? scope.entityAliasesLabel + ': ' : '') + displayValue;
+            scope.displayEntitySelect = !currentAliasId || (singleValue &&
+                                        resolvedEntitiesLength < scope.minEntitiesToShowSelect) ? false : true;
         }
 
         $compile(element.contents())(scope);
@@ -139,7 +153,11 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
     return {
         restrict: "E",
         scope: {
-            aliasController:'='
+            aliasController:'=',
+            entityAliasesIcon:'=',
+            entityAliasesLabel:'=',
+            entityAliasesList:'=',
+            minEntitiesToShowSelect: '='
         },
         link: linker
     };

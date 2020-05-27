@@ -53,6 +53,10 @@
                                    is-toolbar is-edit="vm.isEdit"
                                    direction="left"
                                    tooltip-direction="bottom" aggregation="true"
+                                   entity-aliases-icon="vm.getEntityAliasesIcon()"
+                                   entity-aliases-label="vm.getEntityAliasesLabel()"
+                                   entity-aliases-list="vm.getEntityAliasesList()"
+                                   min-entities-to-show-select="vm.getMinEntitiesToShowSelect()"
                                    ng-model="vm.dashboardCtx.dashboardTimewindow">
                     </tb-timewindow>
                     <tb-aliases-entity-select ng-show="!vm.isEdit && vm.displayEntitiesSelect()"

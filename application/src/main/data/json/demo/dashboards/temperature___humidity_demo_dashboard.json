@@ -253,11 +253,13 @@
     "settings": {
       "stateControllerId": "default",
       "showTitle": true,
-      "showDashboardsSelect": true,
-      "showEntitiesSelect": true,
-      "showDashboardTimewindow": true,
       "showDashboardExport": true,
       "toolbarAlwaysOpen": false
+    },
+    "stateSettings": {
+      "showDashboardsSelect": true,
+      "showEntitiesSelect": true,
+      "showDashboardTimewindow": true
     }
   },
   "name": "Temperature & Humidity Demo Dashboard"

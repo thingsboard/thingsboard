@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $filter, types, aliasController, onEntityAliasesUpdate) {
+export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $filter, types, aliasController, entityAliasesList, onEntityAliasesUpdate) {
 
     var vm = this;
     vm._mdPanelRef = mdPanelRef;
@@ -22,6 +22,7 @@ export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $
     vm.onEntityAliasesUpdate = onEntityAliasesUpdate;
     vm.entityAliases = {};
     vm.entityAliasesInfo = {};
+    vm.entityAliasesList = entityAliasesList || [];
 
     vm.currentAliasEntityChanged = currentAliasEntityChanged;
 
@@ -29,9 +30,12 @@ export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $
     for (var aliasId in allEntityAliases) {
         var aliasInfo = vm.aliasController.getInstantAliasInfo(aliasId);
         if (aliasInfo && !aliasInfo.resolveMultiple && aliasInfo.currentEntity
-            && aliasInfo.resolvedEntities.length > 1) {
-            vm.entityAliasesInfo[aliasId] = angular.copy(aliasInfo);
-            vm.entityAliasesInfo[aliasId].selectedId = aliasInfo.currentEntity.id;
+            && aliasInfo.resolvedEntities.length && vm.entityAliasesList.length) {
+            var entityAliases = $filter('filter')(vm.entityAliasesList, {alias: aliasInfo.alias});
+            if (entityAliases && entityAliases.length) {
+                vm.entityAliasesInfo[aliasId] = angular.copy(aliasInfo);
+                vm.entityAliasesInfo[aliasId].selectedId = aliasInfo.currentEntity.id;
+            }
         }
     }
 

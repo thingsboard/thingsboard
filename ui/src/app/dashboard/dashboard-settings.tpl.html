@@ -31,7 +31,7 @@
         <md-dialog-content>
             <div class="md-dialog-content">
                 <fieldset ng-disabled="$root.loading">
-                    <div ng-show="vm.settings">
+                    <div ng-if="vm.settings">
                        <md-input-container class="md-block">
                             <label translate>dashboard.state-controller</label>
                             <md-select aria-label="{{ 'dashboard.state-controller' | translate }}"
@@ -41,6 +41,7 @@
                                 </md-option>
                             </md-select>
                         </md-input-container>
+                        <small translate>dashboard.dashboard-settings</small>
                         <div layout="row" layout-align="start center">
                             <md-checkbox flex aria-label="{{ 'dashboard.toolbar-always-open' | translate }}"
                                          ng-model="vm.settings.toolbarAlwaysOpen">{{ 'dashboard.toolbar-always-open' | translate }}
@@ -62,21 +63,77 @@
                             ></div>
                         </div>
                         <div layout="row" layout-align="start center">
-                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboards-selection' | translate }}"
-                                         ng-model="vm.settings.showDashboardsSelect">{{ 'dashboard.display-dashboards-selection' | translate }}
-                            </md-checkbox>
-                            <md-checkbox flex aria-label="{{ 'dashboard.display-entities-selection' | translate }}"
-                                         ng-model="vm.settings.showEntitiesSelect">{{ 'dashboard.display-entities-selection' | translate }}
-                            </md-checkbox>
-                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-timewindow' | translate }}"
-                                         ng-model="vm.settings.showDashboardTimewindow">{{ 'dashboard.display-dashboard-timewindow' | translate }}
-                            </md-checkbox>
-                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-export' | translate }}"
-                                         ng-model="vm.settings.showDashboardExport">{{ 'dashboard.display-dashboard-export' | translate }}
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboards-selection' | translate }}"	                            <md-checkbox flex aria-label="{{ 'dashboard.display-title' | translate }}"
+                                         ng-model="vm.settings.showDashboardsSelect">{{ 'dashboard.display-dashboards-selection' | translate }}	                                         ng-model="vm.settings.showTitle">{{ 'dashboard.display-title' | translate }}
+                            </md-checkbox>	                            </md-checkbox>
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-entities-selection' | translate }}"	                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-export' | translate }}"
+                                         ng-model="vm.settings.showEntitiesSelect">{{ 'dashboard.display-entities-selection' | translate }}	                                         ng-model="vm.settings.showDashboardExport">{{ 'dashboard.display-dashboard-export' | translate }}
                             </md-checkbox>
                         </div>
                     </div>
-                    <div ng-show="vm.gridSettings">
+                    <div ng-if="vm.stateSettings">
+                        <small translate>dashboard.dashboard-state-settings</small>
+                        <div layout="row" layout-align="start center" style="margin-top: 10px;">
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboards-selection' | translate }}"
+                                         ng-model="vm.stateSettings.showDashboardsSelect">{{ 'dashboard.display-dashboards-selection' | translate }}
+                            </md-checkbox>	                            </md-checkbox>
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-timewindow' | translate }}"	                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-timewindow' | translate }}"
+                                         ng-model="vm.settings.showDashboardTimewindow">{{ 'dashboard.display-dashboard-timewindow' | translate }}	                                         ng-model="vm.stateSettings.showDashboardTimewindow">{{ 'dashboard.display-dashboard-timewindow' | translate }}
+                            </md-checkbox>	                            </md-checkbox>
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-export' | translate }}"	                            <md-checkbox flex aria-label="{{ 'dashboard.display-entities-selection' | translate }}"
+                                         ng-model="vm.settings.showDashboardExport">{{ 'dashboard.display-dashboard-export' | translate }}	                                         ng-model="vm.stateSettings.showEntitiesSelect">{{ 'dashboard.display-entities-selection' | translate }}
+                            </md-checkbox>	                            </md-checkbox>
+                        </div>	                        </div>
+                        <div layout="row" layout-align="start center">
+                            <md-input-container flex class="md-block" style="margin-top: 35px;">
+                                <label translate>dashboard.min-entities-to-show-selection</label>
+                                <input type="number" name="minEntities" ng-disabled="!vm.stateSettings.showEntitiesSelect"
+                                       ng-model="vm.stateSettings.minEntitiesToShowSelect" min="1"/>
+                            </md-input-container>
+                            <md-input-container flex class="md-block" style="margin-top: 35px;">
+                                <label translate>dashboard.select-entity-aliases-label</label>
+                                <input name="entityAliasesLabel" ng-model="vm.stateSettings.entityAliasesLabel">
+                            </md-input-container>
+                            <tb-material-icon-select ng-disabled="!vm.stateSettings.showEntitiesSelect" ng-model="vm.stateSettings.entityAliasesIcon">
+                            </tb-material-icon-select>
+                        </div>
+                        <div layout="row" layout-align="start center" style="margin-top: -20px;">
+                            <div layout="column" flex>
+                                <md-chips flex
+                                          name="entityAliases"
+                                          ng-required="vm.stateSettings.showEntitiesSelect"
+                                          ng-disabled="!vm.stateSettings.showEntitiesSelect"
+                                          ng-model="vm.stateSettings.entityAliasesList"
+                                          md-autocomplete-snap
+                                          md-require-match="false">
+                                    <md-autocomplete md-no-cache="true"
+                                                     md-selected-item="vm.selectedItem"
+                                                     md-search-text="vm.searchText"
+                                                     md-items="item in vm.querySearch(vm.searchText)"
+                                                     md-item-text="item.alias"
+                                                     md-min-length="0"
+                                                     md-menu-class="tb-datakey-autocomplete"
+                                                     placeholder="{{ 'alias.add' | translate }}">
+                                        <md-item-template>
+                                            <span md-highlight-text="vm.searchText" md-highlight-flags="^i">{{item.alias}}</span>
+                                        </md-item-template>
+                                        <md-not-found>
+                                            <div class="tb-no-entries">
+                                                <span translate>alias.no-aliases-found</span>
+                                            </div>
+                                        </md-not-found>
+                                    </md-autocomplete>
+                                    <md-chip-template>
+                                        <strong>{{$chip.alias}}</strong>
+                                    </md-chip-template>
+                                </md-chips>
+                                <div class="tb-error-messages" ng-messages="theForm.entityAliases.$error" role="alert">
+                                    <div translate ng-message="required" class="tb-error-message" translate>alias.alias-required</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div ng-if="vm.gridSettings">
                         <div flex
                              ng-required="false"
                              md-color-picker
