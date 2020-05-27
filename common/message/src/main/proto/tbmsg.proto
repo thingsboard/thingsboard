@@ -44,4 +44,5 @@ message TbMsgProto {
     int32 dataType = 13;
     string data = 14;
 
+    int64 ts = 15;
 }
