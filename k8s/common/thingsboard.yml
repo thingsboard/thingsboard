@@ -20,7 +20,7 @@ metadata:
   name: tb-js-executor
   namespace: thingsboard
 spec:
-  replicas: 2
+  replicas: 20
   selector:
     matchLabels:
       app: tb-js-executor
