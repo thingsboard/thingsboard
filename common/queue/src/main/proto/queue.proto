@@ -144,12 +144,10 @@ message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
 }
 
-
 message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   string credentialsBody = 2;
 }
-
 
 message GetOrCreateDeviceFromGatewayRequestMsg {
   int64 gatewayIdMSB = 1;

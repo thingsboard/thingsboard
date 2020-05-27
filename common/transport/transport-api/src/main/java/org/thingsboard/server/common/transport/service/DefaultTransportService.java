@@ -231,6 +231,14 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
+    public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg msg, TransportServiceCallback<TransportProtos.ValidateDeviceLwM2MCredentialsResponseMsg> callback) {
+        log.trace("Processing msg: {}", msg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(msg).build());
+        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
+                response -> callback.onSuccess(response.getValue().getValidateDeviceLwM2MCredentialsResponseMsg()), callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
     public void process(TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg msg, TransportServiceCallback<TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg> callback) {
         log.trace("Processing msg: {}", msg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceRequestMsg(msg).build());
