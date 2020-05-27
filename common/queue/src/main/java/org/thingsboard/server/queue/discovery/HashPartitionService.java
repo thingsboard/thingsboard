@@ -80,8 +80,7 @@ public class HashPartitionService implements PartitionService {
     @PostConstruct
     public void init() {
         this.hashFunction = forName(hashFunctionName);
-        partitionSizes.put(new ServiceQueue(ServiceType.TB_CORE), corePartitions);
-        partitionTopics.put(new ServiceQueue(ServiceType.TB_CORE), coreTopic);
+        resetPartitions(getSystemOrIsolatedTenantId(serviceInfoProvider.getServiceInfo()));
     }
 
     @Override
@@ -126,15 +125,7 @@ public class HashPartitionService implements PartitionService {
         TenantId myIsolatedOrSystemTenantId = getSystemOrIsolatedTenantId(currentService);
         myPartitions = new ConcurrentHashMap<>();
 
-        partitionSizes.clear();
-        partitionTopics.clear();
-
-        init();
-
-        routingInfoService.getQueueRoutingInfo(myIsolatedOrSystemTenantId).getRuleEngineQueues().forEach(queueConfiguration -> {
-            partitionTopics.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getTopic());
-            partitionSizes.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getPartitions());
-        });
+        resetPartitions(myIsolatedOrSystemTenantId);
 
         partitionSizes.forEach((serviceQueue, size) -> {
             ServiceQueueKey myServiceQueueKey = new ServiceQueueKey(serviceQueue, myIsolatedOrSystemTenantId);
@@ -204,6 +195,18 @@ public class HashPartitionService implements PartitionService {
             default:
                 return buildNotificationsTopicPartitionInfo(serviceType, serviceId);
         }
+    }
+
+    private void resetPartitions(TenantId tenantId) {
+        partitionSizes.clear();
+        partitionTopics.clear();
+        partitionSizes.put(new ServiceQueue(ServiceType.TB_CORE), corePartitions);
+        partitionTopics.put(new ServiceQueue(ServiceType.TB_CORE), coreTopic);
+
+        routingInfoService.getQueueRoutingInfo(tenantId).getRuleEngineQueues().forEach(queueConfiguration -> {
+            partitionTopics.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getTopic());
+            partitionSizes.put(new ServiceQueue(ServiceType.TB_RULE_ENGINE, queueConfiguration.getName()), queueConfiguration.getPartitions());
+        });
     }
 
     private Map<ServiceQueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
