@@ -111,7 +111,6 @@ CREATE TABLE IF NOT EXISTS dashboard (
     id varchar(31) NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
     configuration varchar(10000000),
     assigned_customers varchar(1000000),
-    assigned_edges varchar(10000000),
     search_text varchar(255),
     tenant_id varchar(31),
     title varchar(255)
@@ -228,8 +227,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     root boolean,
     debug_mode boolean,
     search_text varchar(255),
-    tenant_id varchar(31),
-    assigned_edges varchar(10000000)
+    tenant_id varchar(31)
 );
 
 CREATE TABLE IF NOT EXISTS rule_node (

@@ -48,7 +48,6 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     private boolean root;
     private boolean debugMode;
     private transient JsonNode configuration;
-    private Set<ShortEdgeInfo> assignedEdges;
 
     @JsonIgnore
     private byte[] configurationBytes;
@@ -68,7 +67,6 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         this.type = ruleChain.getType();
         this.firstRuleNodeId = ruleChain.getFirstRuleNodeId();
         this.root = ruleChain.isRoot();
-        this.assignedEdges = ruleChain.getAssignedEdges();
         this.setConfiguration(ruleChain.getConfiguration());
     }
 
@@ -88,30 +86,5 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
 
     public void setConfiguration(JsonNode data) {
         setJson(data, json -> this.configuration = json, bytes -> this.configurationBytes = bytes);
-    }
-
-
-
-    public boolean isAssignedToEdge(EdgeId edgeId) {
-        return EdgeUtils.isAssignedToEdge(this.assignedEdges, edgeId);
-    }
-
-    public ShortEdgeInfo getAssignedEdgeInfo(EdgeId edgeId) {
-        return EdgeUtils.getAssignedEdgeInfo(this.assignedEdges, edgeId);
-    }
-
-    public boolean addAssignedEdge(Edge edge) {
-        if (this.assignedEdges == null) {
-            this.assignedEdges = new HashSet<>();
-        }
-        return EdgeUtils.addAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
-    }
-
-    public boolean updateAssignedEdge(Edge edge) {
-        return EdgeUtils.updateAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
-    }
-
-    public boolean removeAssignedEdge(Edge edge) {
-        return EdgeUtils.removeAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
     }
 }

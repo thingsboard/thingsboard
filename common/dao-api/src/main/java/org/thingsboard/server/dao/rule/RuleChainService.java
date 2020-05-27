@@ -73,11 +73,16 @@ public interface RuleChainService {
 
     void unassignEdgeRuleChains(TenantId tenantId, EdgeId edgeId);
 
-    void updateEdgeRuleChains(TenantId tenantId, EdgeId edgeId);
-
     ListenableFuture<TimePageData<RuleChain>> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 
     RuleChain getDefaultRootEdgeRuleChain(TenantId tenantId);
 
     boolean setDefaultRootEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
+
+    boolean addDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
+
+    boolean removeDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
+
+    ListenableFuture<List<RuleChain>> findDefaultEdgeRuleChainsByTenantId(TenantId tenantId);
+
 }

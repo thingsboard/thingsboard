@@ -20,6 +20,8 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -124,4 +126,13 @@ public interface EdgeDao extends Dao<Edge> {
      */
     Optional<Edge> findByRoutingKey(UUID tenantId, String routingKey);
 
+    /**
+     * Find edges by tenantId, ruleChainId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param ruleChainId the ruleChainId
+     * @param pageLink the page link
+     * @return the list of rule chain objects
+     */
+    ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(UUID tenantId, UUID ruleChainId, TimePageLink pageLink);
 }

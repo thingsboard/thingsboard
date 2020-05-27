@@ -115,7 +115,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
 
         if (vm.ruleChainsScope === 'tenant') {
             fetchRuleChainsFunction = function (pageLink) {
-                return fetchRuleChains(pageLink, 'SYSTEM');
+                return fetchRuleChains(pageLink, types.systemRuleChainType);
             };
             deleteRuleChainFunction = function (ruleChainId) {
                 return deleteRuleChain(ruleChainId);
@@ -176,7 +176,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
 
         } else if (vm.ruleChainsScope === 'edges') {
             fetchRuleChainsFunction = function (pageLink) {
-                return fetchRuleChains(pageLink, 'EDGE');
+                return fetchRuleChains(pageLink, types.edgeRuleChainType);
             };
             deleteRuleChainFunction = function (ruleChainId) {
                 return deleteRuleChain(ruleChainId);
@@ -316,7 +316,28 @@ export default function RuleChainsController(ruleChainService, userService, edge
     }
 
     function fetchRuleChains(pageLink, type) {
-        return ruleChainService.getRuleChains(pageLink, null, type);
+        if (type === types.systemRuleChainType) {
+            return ruleChainService.getRuleChains(pageLink, null, type);
+        } else {
+            var deferred = $q.defer();
+            ruleChainService.getRuleChains(pageLink, null, type).then(
+                // TODO: deaflynx
+                // function success(response) {
+                //     ruleChainService.getDefaultEdgeRuleChains().then(
+                //         function success(defaultEdgeRuleChains) {
+                //             // response.data merge with defaultEdgeRuleChains
+                //             deferred.resolve(data);
+                //         },
+                //         function fail() {
+                //             deferred.reject();
+                //         }
+                //     );
+                // },
+            function fail() {
+                deferred.reject();
+            });
+            return deferred.promise;
+        }
     }
 
     function saveRuleChain(ruleChain) {

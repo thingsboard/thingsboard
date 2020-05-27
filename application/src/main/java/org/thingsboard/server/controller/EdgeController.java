@@ -96,7 +96,7 @@ public class EdgeController extends BaseController {
 
             if (created) {
                 ruleChainService.assignRuleChainToEdge(tenantId, defaultRootEdgeRuleChain.getId(), result.getId());
-                edgeService.setRootRuleChain(tenantId, result, defaultRootEdgeRuleChain.getId());
+                edgeService.setEdgeRootRuleChain(tenantId, result, defaultRootEdgeRuleChain.getId());
             }
 
             logEntityAction(result.getId(), result, null, created ? ActionType.ADDED : ActionType.UPDATED, null);
@@ -281,7 +281,7 @@ public class EdgeController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, Operation.WRITE,
                     edge.getId(), edge);
 
-            Edge updatedEdge = edgeService.setRootRuleChain(getTenantId(), edge, ruleChainId);
+            Edge updatedEdge = edgeService.setEdgeRootRuleChain(getTenantId(), edge, ruleChainId);
 
             logEntityAction(updatedEdge.getId(), updatedEdge, null, ActionType.UPDATED, null);
 

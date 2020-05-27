@@ -62,6 +62,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -531,10 +532,20 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             case DataConstants.ENTITY_CREATED:
             case DataConstants.ENTITY_UPDATED:
                 RuleChain ruleChain = mapper.readValue(tbMsg.getData(), RuleChain.class);
-                if (ruleChain.getAssignedEdges() != null && !ruleChain.getAssignedEdges().isEmpty()) {
-                    for (ShortEdgeInfo assignedEdge : ruleChain.getAssignedEdges()) {
-                        pushEventToEdge(tenantId, assignedEdge.getEdgeId(), EdgeQueueEntityType.RULE_CHAIN, tbMsg, callback);
-                    }
+                if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                    ListenableFuture<TimePageData<Edge>> future = findEdgesByTenantIdAndRuleChainId(tenantId, ruleChain.getId(), new TimePageLink(Integer.MAX_VALUE));
+                    Futures.transform(future, edges -> {
+                        if (edges != null && edges.getData() != null && !edges.getData().isEmpty()) {
+                            try {
+                                for (Edge edge : edges.getData()) {
+                                    pushEventToEdge(tenantId, edge.getId(), EdgeQueueEntityType.RULE_CHAIN, tbMsg, callback);
+                                }
+                            } catch (IOException e) {
+                                log.error("Can't push event to edge", e);
+                            }
+                        }
+                        return null;
+                    }, MoreExecutors.directExecutor());
                 }
                 break;
             default:
@@ -628,10 +639,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     @Override
-    public Edge setRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws IOException {
+    public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws IOException {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = saveEdge(edge);
-        ruleChainService.updateEdgeRuleChains(tenantId, savedEdge.getId());
         RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
         saveEventToEdgeQueue(tenantId, edge.getId(), EdgeQueueEntityType.RULE_CHAIN, DataConstants.ENTITY_UPDATED, mapper.writeValueAsString(ruleChain), new FutureCallback<Void>() {
             @Override
@@ -645,6 +655,23 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             }
         });
         return savedEdge;
+    }
+
+    @Override
+    public ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndRuleChainId(TenantId tenantId, RuleChainId ruleChainId, TimePageLink pageLink) {
+        log.trace("Executing findEdgesByTenantIdAndRuleChainId, tenantId [{}], ruleChainId [{}], pageLink [{}]", tenantId, ruleChainId, pageLink);
+        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(ruleChainId, "Incorrect ruleChainId " + ruleChainId);
+        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        ListenableFuture<List<Edge>> edges = edgeDao.findEdgesByTenantIdAndRuleChainId(tenantId.getId(), ruleChainId.getId(), pageLink);
+
+        return Futures.transform(edges, new Function<List<Edge>, TimePageData<Edge>>() {
+            @Nullable
+            @Override
+            public TimePageData<Edge> apply(@Nullable List<Edge> edges) {
+                return new TimePageData<>(edges, pageLink);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private DataValidator<Edge> edgeValidator =

@@ -25,7 +25,9 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -101,6 +103,19 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
                 ruleChainFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
             }
             return Futures.successfulAsList(ruleChainFutures);
+        }, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public ListenableFuture<List<RuleChain>> findDefaultEdgeRuleChainsByTenantId(UUID tenantId) {
+        log.debug("Try to find default edge rule chains by tenantId [{}]", tenantId);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByToAndType(new TenantId(tenantId), new TenantId(tenantId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<RuleChain>> ruleChainsFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                ruleChainsFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(ruleChainsFutures);
         }, MoreExecutors.directExecutor());
     }
 }

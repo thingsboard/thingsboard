@@ -15,16 +15,29 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.model.nosql.EdgeEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,6 +48,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY
 @Slf4j
 @NoSqlDao
 public class CassandraEdgeDao extends CassandraAbstractSearchTextDao<EdgeEntity, Edge> implements EdgeDao {
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<EdgeEntity> getColumnFamilyClass() {
@@ -90,5 +106,18 @@ public class CassandraEdgeDao extends CassandraAbstractSearchTextDao<EdgeEntity,
     @Override
     public Optional<Edge> findByRoutingKey(UUID tenantId, String routingKey) {
         return Optional.empty();
+    }
+
+    @Override
+    public ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(UUID tenantId, UUID ruleChainId, TimePageLink pageLink) {
+        log.debug("Try to find edges by tenantId [{}], ruleChainId [{}] and pageLink [{}]", tenantId, ruleChainId, pageLink);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByToAndType(new TenantId(tenantId), new RuleChainId(ruleChainId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<Edge>> edgeFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(edgeFutures);
+        }, MoreExecutors.directExecutor());
     }
 }

@@ -19,6 +19,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,7 @@ import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.TimePaginatedRemover;
@@ -62,12 +64,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateString;
+
 /**
  * Created by igor on 3/12/18.
  */
 @Service
 @Slf4j
 public class BaseRuleChainService extends AbstractEntityService implements RuleChainService {
+
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Autowired
     private RuleChainDao ruleChainDao;
@@ -376,11 +383,18 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             if (ruleChain.isRoot()) {
                 throw new DataValidationException("Deletion of Root Tenant Rule Chain is prohibited!");
             }
-            if (ruleChain.getAssignedEdges() != null && !ruleChain.getAssignedEdges().isEmpty()) {
-                for (ShortEdgeInfo assignedEdge : ruleChain.getAssignedEdges()) {
-                    if (assignedEdge.getRootRuleChainId() != null && assignedEdge.getRootRuleChainId().equals(ruleChainId)) {
-                        throw new DataValidationException("Can't delete rule chain that is root for edge [" + assignedEdge.getTitle() + "]. Please assign another root rule chain first to the edge!");
+            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                try {
+                    TimePageData<Edge> edges = edgeService.findEdgesByTenantIdAndRuleChainId(tenantId, ruleChainId, new TimePageLink(Integer.MAX_VALUE)).get();
+                    if (edges != null && edges.getData() != null && !edges.getData().isEmpty()) {
+                        for (Edge edge : edges.getData()) {
+                            if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
+                                throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
+                            }
+                        }
                     }
+                } catch (InterruptedException | ExecutionException e) {
+                    log.error("Can't get edges by tenant id [{}] and rule chain id [{}]", tenantId.getId(), ruleChainId.getId(), e);
                 }
             }
         }
@@ -403,14 +417,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!edge.getTenantId().getId().equals(ruleChain.getTenantId().getId())) {
             throw new DataValidationException("Can't assign ruleChain to edge from different tenant!");
         }
-        if (ruleChain.addAssignedEdge(edge)) {
-            try {
-                createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-            } catch (ExecutionException | InterruptedException e) {
-                log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
-                throw new RuntimeException(e);
-            }
-            ruleChain = saveRuleChain(ruleChain);
+        try {
+            createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (ExecutionException | InterruptedException e) {
+            log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
+            throw new RuntimeException(e);
         }
         return ruleChain;
     }
@@ -425,17 +436,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!remove && edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
             throw new DataValidationException("Can't unassign root rule chain from edge [" + edge.getName() + "]. Please assign another root rule chain first!");
         }
-        if (ruleChain.removeAssignedEdge(edge)) {
-            try {
-                deleteRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-            } catch (ExecutionException | InterruptedException e) {
-                log.warn("[{}] Failed to delete rule chain relation. Edge Id: [{}]", ruleChainId, edgeId);
-                throw new RuntimeException(e);
-            }
-            return saveRuleChain(ruleChain);
-        } else {
-            return ruleChain;
+        try {
+            deleteRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (ExecutionException | InterruptedException e) {
+            log.warn("[{}] Failed to delete rule chain relation. Edge Id: [{}]", ruleChainId, edgeId);
+            throw new RuntimeException(e);
         }
+        return ruleChain;
     }
 
     @Override
@@ -450,22 +457,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public void updateEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
-        log.trace("Executing updateEdgeRuleChains, edgeId [{}]", edgeId);
-        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
-        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
-        if (edge == null) {
-            throw new DataValidationException("Can't update ruleChains for non-existent edge!");
-        }
-        new EdgeRuleChainsUpdater(edge).removeEntities(tenantId, edge);
-    }
-
-
-    @Override
     public ListenableFuture<TimePageData<RuleChain>> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         log.trace("Executing findRuleChainsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        Validator.validateId(edgeId, "Incorrect customerId " + edgeId);
+        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
         ListenableFuture<List<RuleChain>> ruleChains = ruleChainDao.findRuleChainsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
 
@@ -499,12 +494,44 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 ruleChainDao.save(tenantId, ruleChain);
                 return true;
             } catch (ExecutionException | InterruptedException e) {
-                log.warn("[{}] Failed to set default root edge rule chain, ruleChainId: [{}]", ruleChainId);
+                log.warn("Failed to set default root edge rule chain, ruleChainId: [{}]", ruleChainId, e);
                 throw new RuntimeException(e);
             }
         }
         return false;
     }
+
+    @Override
+    public boolean addDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
+        try {
+            createRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            return true;
+        } catch (ExecutionException | InterruptedException e) {
+            log.warn("Failed to add default edge rule chain, ruleChainId: [{}]", ruleChainId, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean removeDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
+        try {
+            deleteRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
+            return true;
+        } catch (ExecutionException | InterruptedException e) {
+            log.warn("Failed to remove default edge rule chain, ruleChainId: [{}]", ruleChainId, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public ListenableFuture<List<RuleChain>> findDefaultEdgeRuleChainsByTenantId(TenantId tenantId) {
+        log.trace("Executing findDefaultEdgeRuleChainsByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return ruleChainDao.findDefaultEdgeRuleChainsByTenantId(tenantId.getId());
+    }
+
 
     private void checkRuleNodesAndDelete(TenantId tenantId, RuleChainId ruleChainId) {
         List<EntityRelation> nodeRelations = getRuleChainToNodeRelations(tenantId, ruleChainId);
@@ -536,15 +563,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private void deleteRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
         log.debug("Deleting relation: {}", relation);
         relationService.deleteRelation(tenantId, relation);
-    }
-
-    private RuleChain updateAssignedEdge(TenantId tenantId, RuleChainId ruleChainId, Edge edge) {
-        RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
-        if (ruleChain.updateAssignedEdge(edge)) {
-            return saveRuleChain(ruleChain);
-        } else {
-            return ruleChain;
-        }
     }
 
     private DataValidator<RuleChain> ruleChainValidator =
@@ -615,30 +633,5 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         protected void removeEntity(TenantId tenantId, RuleChain entity) {
             unassignRuleChainFromEdge(edge.getTenantId(), new RuleChainId(entity.getUuidId()), this.edge.getId(), true);
         }
-    }
-
-    private class EdgeRuleChainsUpdater extends TimePaginatedRemover<Edge, RuleChain> {
-
-        private Edge edge;
-
-        EdgeRuleChainsUpdater(Edge edge) {
-            this.edge = edge;
-        }
-
-        @Override
-        protected List<RuleChain> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
-            try {
-                return ruleChainDao.findRuleChainsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink).get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to get ruleChains by tenantId [{}] and edgeId [{}].", edge.getTenantId().getId(), edge.getId().getId());
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        protected void removeEntity(TenantId tenantId, RuleChain entity) {
-            updateAssignedEdge(edge.getTenantId(), new RuleChainId(entity.getUuidId()), this.edge);
-        }
-
     }
 }

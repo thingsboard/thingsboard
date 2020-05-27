@@ -324,14 +324,6 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                     Thread.sleep(2500);
                 } catch (InvalidQueryException e) {}
                 try {
-                    cluster.getSession().execute("alter table dashboard add assigned_edges text");
-                    Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
-                try {
-                    cluster.getSession().execute("alter table rule_chain add assigned_edges text");
-                    Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
-                try {
                     cluster.getSession().execute("alter table rule_chain add type text");
                     Thread.sleep(2500);
                 } catch (InvalidQueryException e) {}
