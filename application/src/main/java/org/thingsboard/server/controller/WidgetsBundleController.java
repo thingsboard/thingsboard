@@ -67,11 +67,7 @@ public class WidgetsBundleController extends BaseController {
                 widgetsBundle.setTenantId(getCurrentUser().getTenantId());
             }
 
-            Operation operation = widgetsBundle.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, operation,
-                    widgetsBundle.getId(), widgetsBundle);
-
+            checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
             return checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
         } catch (Exception e) {
             throw handleException(e);

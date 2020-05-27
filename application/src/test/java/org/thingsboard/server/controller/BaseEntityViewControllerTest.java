@@ -25,7 +25,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -126,6 +125,15 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         assertEquals(foundEntityView.getName(), savedView.getName());
         assertEquals(foundEntityView.getKeys(), telemetry);
+    }
+
+
+    @Test
+    public void testUpdateEntityViewFromDifferentTenant() throws Exception {
+        EntityView savedView = getNewSavedEntityView("Test entity view");
+        loginDifferentTenant();
+        doPost("/api/entityView", savedView, EntityView.class, status().isForbidden());
+        deleteDifferentTenant();
     }
 
     @Test

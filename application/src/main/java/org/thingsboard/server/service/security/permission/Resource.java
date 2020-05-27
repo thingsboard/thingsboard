@@ -46,4 +46,13 @@ public enum Resource {
     public Optional<EntityType> getEntityType() {
         return Optional.ofNullable(entityType);
     }
+
+    public static Resource of(EntityType entityType) {
+        for (Resource resource : Resource.values()) {
+            if (resource.getEntityType().get() == entityType) {
+                return resource;
+            }
+        }
+        throw new IllegalArgumentException("Unknown EntityType: " + entityType.name());
+    }
 }
