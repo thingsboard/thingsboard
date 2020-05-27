@@ -80,13 +80,22 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         assertNotNull(gatewayAccessToken);
     }
 
-    protected MqttAsyncClient getMqttAsyncClient(String token) throws MqttException {
+    protected MqttAsyncClient getMqttAsyncClient(String token) throws MqttException, InterruptedException {
         String clientId = MqttAsyncClient.generateClientId();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
 
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(token);
         client.connect(options);
+
+        int maxAttempts = 300;
+        while (!client.isConnected()) {
+            Thread.sleep(10);
+            maxAttempts--;
+            if (maxAttempts == 0) {
+                break;
+            }
+        }
         return client;
     }
 

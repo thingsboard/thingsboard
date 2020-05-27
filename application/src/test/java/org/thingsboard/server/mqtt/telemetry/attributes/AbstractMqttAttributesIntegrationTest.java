@@ -98,13 +98,26 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
     private void processAttributesTest(String topic, List<String> expectedKeys, byte[] payload) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
-        Thread.sleep(3000);
+
         publishMqttMsg(client, payload, topic);
 
         DeviceId deviceId = savedDevice.getId();
 
-        Thread.sleep(2000);
-        List<String> actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", List.class);
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 3000;
+
+        List<String> keys;
+        List<String> actualKeys = null;
+        while (start <= end) {
+            keys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", List.class);
+            if (keys.size() == expectedKeys.size()) {
+                actualKeys = keys;
+                break;
+            }
+            start += 100;
+        }
+        assertNotNull(actualKeys);
+
         Set<String> actualKeySet = new HashSet<>(actualKeys);
 
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
@@ -120,7 +133,6 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
     private void processGatewayAttributesTest(String topic, List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        Thread.sleep(3000);
 
         publishMqttMsg(client, payload, topic);
 

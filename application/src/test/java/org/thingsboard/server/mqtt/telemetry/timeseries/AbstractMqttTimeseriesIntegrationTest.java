@@ -125,7 +125,6 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     public void testGatewayConnectJsonV1() throws Exception {
         String payload = "{\"device\":\"Device A\"}";
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        Thread.sleep(3000);
         publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC_V1_JSON);
 
         Thread.sleep(2000);
@@ -139,7 +138,6 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     public void testGatewayConnectJsonV2() throws Exception {
         String payload = "{\"device\":\"Device B\"}";
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        Thread.sleep(3000);
         publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC_V2_JSON);
 
         Thread.sleep(2000);
@@ -153,7 +151,6 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     public void testGatewayConnectProto() throws Exception {
         TransportApiProtos.ConnectMsg connectMsgProto = getConnectProto("Device C");
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        Thread.sleep(3000);
         publishMqttMsg(client, connectMsgProto.toByteArray(), MqttTopics.GATEWAY_CONNECT_TOPIC_V2_PROTO);
 
         Thread.sleep(2000);
@@ -165,15 +162,26 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     private void processTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
-        Thread.sleep(3000);
         publishMqttMsg(client, payload, topic);
 
         String deviceId = savedDevice.getId().getId().toString();
 
-        Thread.sleep(2000);
-        List<String> actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", List.class);
-        Set<String> actualKeySet = new HashSet<>(actualKeys);
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 3000;
 
+        List<String> keys;
+        List<String> actualKeys = null;
+        while (start <= end) {
+            keys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", List.class);
+            if (keys.size() == expectedKeys.size()) {
+                actualKeys = keys;
+                break;
+            }
+            start += 100;
+        }
+        assertNotNull(actualKeys);
+
+        Set<String> actualKeySet = new HashSet<>(actualKeys);
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
 
         assertEquals(expectedKeySet, actualKeySet);
@@ -194,7 +202,6 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     private void processGatewayTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        Thread.sleep(3000);
 
         publishMqttMsg(client, payload, topic);
 

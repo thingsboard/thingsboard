@@ -53,15 +53,6 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
-    public TransportProtos.PostTelemetryMsg convertToPostTelemetryArray(MqttPublishMessage inbound) throws AdaptorException {
-        byte[] bytes = toBytes(inbound);
-        try {
-            return ProtoConverter.convertToTelemetryArrayProto(bytes);
-        } catch (InvalidProtocolBufferException | IllegalArgumentException e) {
-            throw new AdaptorException(e);
-        }
-    }
-
     @Override
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         byte[] bytes = toBytes(inbound);
