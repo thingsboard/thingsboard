@@ -15,10 +15,17 @@
  */
 package org.thingsboard.server.dao.sql.entityprofile;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.EntityProfileEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 @SqlDao
-public interface EntityProfileRepository extends CrudRepository<EntityProfileEntity, String> {
+public interface EntityProfileRepository extends PagingAndSortingRepository<EntityProfileEntity, String> {
+
+    Page<EntityProfileEntity> findByTenantId(String tenantId, Pageable pageable);
+
+    Page<EntityProfileEntity> findByTenantIdAndEntityType(String tenantId, EntityType type, Pageable pageable);
 }

@@ -18,11 +18,18 @@ package org.thingsboard.server.dao.sql.entityprofile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entityprofile.EntityProfileDao;
 import org.thingsboard.server.dao.model.sql.EntityProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
+
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 @Component
 @SqlDao
@@ -38,5 +45,22 @@ public class JpaEntityProfileDao extends JpaAbstractDao<EntityProfileEntity, Ent
     @Override
     protected CrudRepository<EntityProfileEntity, String> getCrudRepository() {
         return repository;
+    }
+
+    @Override
+    public PageData<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                repository.findByTenantId(
+                        fromTimeUUID(tenantId.getId()),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<EntityProfile> findEntityProfilesByTenantIdAndType(TenantId tenantId, EntityType entityType, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                repository.findByTenantIdAndEntityType(
+                        fromTimeUUID(tenantId.getId()),
+                        entityType,
+                        DaoUtil.toPageable(pageLink)));
     }
 }

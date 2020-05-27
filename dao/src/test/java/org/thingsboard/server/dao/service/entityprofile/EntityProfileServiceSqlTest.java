@@ -18,13 +18,19 @@ package org.thingsboard.server.dao.service.entityprofile;
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entityprofile.EntityProfileService;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -37,17 +43,52 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
     private EntityProfileService profileService;
 
     @Test
-    public void testFindAll() {
+    public void testFindEntityProfilesByTenantId() {
         EntityProfile saved = saveRandomEntityProfile();
-        profileService.findAll(AbstractServiceTest.SYSTEM_TENANT_ID).stream()
+        profileService.findEntityProfilesByTenantId(saved.getTenantId()).stream()
                 .filter(saved::equals)
                 .findAny().orElseThrow(AssertionError::new);
     }
 
     @Test
+    public void testFindEntityProfilesByTenantIdWithPageLink() {
+        List<EntityProfile> all = profileService.findEntityProfilesByTenantId(TenantId.SYS_TENANT_ID);
+        PageLink pageLink = new PageLink(all.size());
+        PageData<EntityProfile> page = profileService.findEntityProfilesByTenantId(TenantId.SYS_TENANT_ID, pageLink);
+        assertEquals(new HashSet<>(all), new HashSet<>(page.getData()));
+    }
+
+    @Test
+    public void testFindEntityProfilesByTenantIdAndType() {
+        EntityProfile saved = saveRandomEntityProfile(randomAlphanumeric(10), EntityType.ASSET);
+        PageLink pageLink = new PageLink(1);
+        List<EntityProfile> data = profileService.findEntityProfilesByTenantIdAndType(saved.getTenantId(),
+                saved.getEntityType(), pageLink).getData();
+        assertEquals(pageLink.getPageSize(), data.size());
+        assertEquals(saved, data.get(0));
+    }
+
+    @Test
+    public void testFindTenantProfiles() {
+        EntityProfile saved = saveRandomEntityProfile(randomAlphanumeric(10), EntityType.TENANT);
+        PageLink pageLink = new PageLink(1);
+        List<EntityProfile> data = profileService.findTenantProfiles(pageLink).getData();
+        assertEquals(pageLink.getPageSize(), data.size());
+        assertEquals(saved, data.get(0));
+    }
+
+    @Test
     public void testFindById() {
         EntityProfile saved = saveRandomEntityProfile();
-        assertEquals(saved, profileService.findById(AbstractServiceTest.SYSTEM_TENANT_ID, saved.getId()));
+        assertEquals(saved, profileService.findById(TenantId.SYS_TENANT_ID, saved.getId()));
+    }
+
+    @Test(expected = DataIntegrityViolationException.class)
+    public void testSaveWithSameNameTenantAndType() {
+        String sameName = randomAlphanumeric(10);
+        EntityType sameEntityType = EntityType.DEVICE;
+        saveRandomEntityProfile(sameName, sameEntityType);
+        saveRandomEntityProfile(sameName, sameEntityType);
     }
 
     @Test
@@ -60,22 +101,26 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
     @Test
     public void testDelete() {
         EntityProfile saved = saveRandomEntityProfile();
-        assertNotNull(profileService.findById(AbstractServiceTest.SYSTEM_TENANT_ID, saved.getId()));
-        profileService.delete(AbstractServiceTest.SYSTEM_TENANT_ID, saved.getId());
-        assertNull(profileService.findById(AbstractServiceTest.SYSTEM_TENANT_ID, saved.getId()));
+        assertNotNull(profileService.findById(TenantId.SYS_TENANT_ID, saved.getId()));
+        profileService.delete(TenantId.SYS_TENANT_ID, saved.getId());
+        assertNull(profileService.findById(TenantId.SYS_TENANT_ID, saved.getId()));
     }
 
     private EntityProfile saveRandomEntityProfile() {
+        return saveRandomEntityProfile(randomAlphanumeric(10), EntityType.DEVICE);
+    }
+
+    private EntityProfile saveRandomEntityProfile(String name, EntityType entityType) {
         Map<String, Object> profile = new HashMap<>();
         profile.put(randomAlphabetic(5), randomAlphanumeric(10));
 
         EntityProfile entityProfile = EntityProfile.builder()
-                .name(randomAlphanumeric(10))
-                .tenantId(AbstractServiceTest.SYSTEM_TENANT_ID)
-                .entityType(EntityType.DEVICE)
+                .name(name)
+                .tenantId(TenantId.SYS_TENANT_ID)
+                .entityType(entityType)
                 .profile(mapper.valueToTree(profile))
                 .build();
 
-        return profileService.save(AbstractServiceTest.SYSTEM_TENANT_ID, entityProfile);
+        return profileService.save(TenantId.SYS_TENANT_ID, entityProfile);
     }
 }

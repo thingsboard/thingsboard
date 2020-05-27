@@ -15,15 +15,26 @@
  */
 package org.thingsboard.server.dao.entityprofile;
 
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
 import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.List;
 
 public interface EntityProfileService {
 
-    List<EntityProfile> findAll(TenantId tenantId);
+    List<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId);
+
+    PageData<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId, PageLink pageLink);
+
+    PageData<EntityProfile> findEntityProfilesByTenantIdAndType(TenantId tenantId, EntityType entityType, PageLink pageLink);
+
+    default PageData<EntityProfile> findTenantProfiles(PageLink pageLink) {
+        return findEntityProfilesByTenantIdAndType(TenantId.SYS_TENANT_ID, EntityType.TENANT, pageLink);
+    }
 
     EntityProfile findById(TenantId tenantId, EntityProfileId id);
 

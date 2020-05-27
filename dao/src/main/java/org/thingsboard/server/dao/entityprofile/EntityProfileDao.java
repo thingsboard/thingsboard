@@ -15,12 +15,19 @@
  */
 package org.thingsboard.server.dao.entityprofile;
 
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
 import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 public interface EntityProfileDao extends Dao<EntityProfile> {
+
+    PageData<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId, PageLink pageLink);
+
+    PageData<EntityProfile> findEntityProfilesByTenantIdAndType(TenantId tenantId, EntityType entityType, PageLink pageLink);
 
     default EntityProfile findById(TenantId tenantId, EntityProfileId deviceId) {
         return findById(tenantId, deviceId.getId());
