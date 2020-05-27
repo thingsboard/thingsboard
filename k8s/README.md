@@ -97,10 +97,16 @@ Or use `kubectl get services` to see the state of all the services.
 Or use `kubectl get deployments` to see the state of all the deployments.
 See [kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/) command reference for details.
 
-Execute the following command to delete all deployed microservices:
+Execute the following command to delete all ThingsBoard microservices:
 
 `
 $ ./k8s-delete-resources.sh
+`
+
+Execute the following command to delete all thirdparty microservices:
+
+`
+$ ./k8s-delete-thirdparty.sh
 `
 
 Execute the following command to delete all resources (including database):
