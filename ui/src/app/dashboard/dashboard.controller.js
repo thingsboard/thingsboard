@@ -272,6 +272,25 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         vm.dashboardCtx.stateController.cleanupPreservedStates();
     });
 
+    $scope.$on('entityAliasesChanged', function (event, aliasIds) {
+        var params = vm.dashboardCtx.stateController.getStateParams();
+
+        for (var a in aliasIds) {
+            var aliasId = aliasIds[a];
+            var selectedAlias = vm.dashboardCtx.aliasController.getInstantAliasInfo(aliasId);
+
+            if (selectedAlias && selectedAlias.currentEntity) {
+                var entityId = {
+                    entityType : selectedAlias.currentEntity.entityType,
+                    id: selectedAlias.currentEntity.id
+                };
+                vm.dashboardCtx.stateController.updateEntityParams(params, selectedAlias.alias, entityId, selectedAlias.currentEntity.name);
+            }
+        }
+
+        vm.dashboardCtx.stateController.updateState(null, params, null);
+    });
+    
     loadDashboard();
 
     function loadWidgetLibrary() {

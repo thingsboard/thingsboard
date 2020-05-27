@@ -53,6 +53,10 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                 }
             }
 
+            stateController.updateEntityParams = function(params, targetEntityParamName, targetEntityId, entityName, entityLabel) {
+                statesControllerService.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+            }
+
             stateController.cleanupPreservedStates = function() {
                 statesControllerService.cleanupPreservedStates();
             }

@@ -467,33 +467,13 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         }
     }
 
-    function updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel) {
-        if (targetEntityId) {
-            var targetEntityParams;
-            if (targetEntityParamName && targetEntityParamName.length) {
-                targetEntityParams = params[targetEntityParamName];
-                if (!targetEntityParams) {
-                    targetEntityParams = {};
-                    params[targetEntityParamName] = targetEntityParams;
-					params.targetEntityParamName = targetEntityParamName;
-                }
-            } else {
-                targetEntityParams = params;
-            }
-            targetEntityParams.entityId = targetEntityId;
-            if (entityName) {
-                targetEntityParams.entityName = entityName;
-            }
-            if (entityLabel) {
-                targetEntityParams.entityLabel = entityLabel;
-            }
-        }
-    }
-
     function handleWidgetAction($event, descriptor, entityId, entityName, additionalParams, entityLabel) {
         var type = descriptor.type;
         var targetEntityParamName = descriptor.stateEntityParamName;
-        var targetEntityId;
+        var targetEntityId,
+            aliasId,
+            aliasInfo,
+            newEntity = [];
         if (descriptor.setEntityId) {
             targetEntityId = entityId;
         }
@@ -505,7 +485,15 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 if (!params) {
                     params = {};
                 }
-                updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+                aliasId = widgetContext.aliasController.getEntityAliasId(targetEntityParamName);
+                if (aliasId) {
+                    aliasInfo = widgetContext.aliasController.getInstantAliasInfo(aliasId);
+                    newEntity = aliasInfo ? $filter('filter')(aliasInfo.resolvedEntities, {id: targetEntityId.id}) : [];
+                    if (newEntity.length) {
+                        aliasInfo.currentEntity = newEntity[0];
+                    }
+                }
+                widgetContext.stateController.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
                 if (type == types.widgetActionTypes.openDashboardState.value) {
                     widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
                 } else {
@@ -517,7 +505,15 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 targetDashboardStateId = descriptor.targetDashboardStateId;
                 var stateObject = {};
                 stateObject.params = {};
-                updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+                aliasId = widgetContext.aliasController.getEntityAliasId(targetEntityParamName);
+                if (aliasId) {
+                    aliasInfo = widgetContext.aliasController.getInstantAliasInfo(aliasId);
+                    newEntity = aliasInfo ? $filter('filter')(aliasInfo.resolvedEntities, {id: targetEntityId.id}) : [];
+                    if (newEntity.length) {
+                        aliasInfo.currentEntity = newEntity[0];
+                    }
+                }
+                widgetContext.stateController.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
                 if (targetDashboardStateId) {
                     stateObject.id = targetDashboardStateId;
                 }
