@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +74,7 @@ public class TbMsgGeneratorNode implements TbNode {
     }
 
     @Override
-    public void onClusterEventMsg(TbContext ctx, ClusterEventMsg msg) {
+    public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
         updateGeneratorState(ctx);
     }
 
@@ -97,7 +97,7 @@ public class TbMsgGeneratorNode implements TbNode {
             withCallback(generate(ctx),
                     m -> {
                         if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
-                            ctx.tellNext(m, SUCCESS);
+                            ctx.enqueueForTellNext(m, SUCCESS);
                             scheduleTickMsg(ctx);
                             currentMsgCount++;
                         }

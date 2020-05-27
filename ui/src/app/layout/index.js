@@ -30,6 +30,9 @@ import thingsboardSideMenu from '../components/side-menu.directive';
 import thingsboardNavTree from '../components/nav-tree.directive';
 import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
 import thingsboardKvMap from '../components/kv-map.directive';
+import thingsboardGatewayConfig from '../components/gateway/gateway-config.directive';
+import thingsboardGatewayConfigSelect from '../components/gateway/gateway-config-select.directive';
+import thingsboardGatewayForm from '../components/gateway/gateway-form.directive';
 import thingsboardJsonObjectEdit from '../components/json-object-edit.directive';
 import thingsboardJsonContent from '../components/json-content.directive';
 
@@ -52,6 +55,7 @@ import thingsboardEntityView from '../entity-view';
 import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
 import thingsboardRuleChain from '../rulechain';
+import thingsboardQueue from '../components/queue';
 
 import thingsboardJsonForm from '../jsonform';
 
@@ -83,6 +87,7 @@ export default angular.module('thingsboard.home', [
     thingsboardWidgetLibrary,
     thingsboardDashboard,
     thingsboardRuleChain,
+    thingsboardQueue,
     thingsboardJsonForm,
     thingsboardApiDevice,
     thingsboardApiLogin,
@@ -93,6 +98,9 @@ export default angular.module('thingsboard.home', [
     thingsboardNavTree,
     thingsboardDashboardAutocomplete,
     thingsboardKvMap,
+    thingsboardGatewayConfig,
+    thingsboardGatewayConfigSelect,
+    thingsboardGatewayForm,
     thingsboardJsonObjectEdit,
     thingsboardJsonContent
 ])

@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.transport.service;
 
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.kafka.TbKafkaEncoder;
+import org.thingsboard.server.queue.kafka.TbKafkaEncoder;
 
 /**
  * Created by ashvayka on 05.10.18.

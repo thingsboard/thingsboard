@@ -83,6 +83,7 @@
 		"timeout-required": "タイムアウトが必要です。",
 		"timeout-invalid": "それは有効なタイムアウトのようには見えません。",
 		"enable-tls": "TLSを有効にする",
+		"tls-version": "TLSバージョン",
 		"send-test-mail": "テストメールを送信する"
 	},
 	"alarm": {
@@ -1023,7 +1024,9 @@
 		"new-password": "新しいパスワード",
 		"new-password-again": "新しいパスワードを再入力",
 		"password-link-sent-message": "パスワードリセットリンクが正常に送信されました！",
-		"email": "Eメール"
+		"email": "Eメール",
+		"login-with": "{{name}}でログイン",
+		"or": "または"
 	},
 	"position": {
 		"top": "上",
@@ -1508,21 +1511,6 @@
 		}
 	},
 	"language": {
-		"language": "言語",
-		"locales": {
-			"de_DE": "ドイツ語",
-            "fr_FR": "フランス語",
-			"en_US": "英語",
-			"ko_KR": "韓国語",
-			"it_IT": "イタリアの",
-			"zh_CN": "中国語",
-			"ru_RU": "ロシア",
-			"es_ES": "スペイン語",
-			"ja_JA": "日本語",
-			"tr_TR": "トルコ語",
-            "fa_IR": "ペルシャ語",
-            "uk_UA": "ウクライナ語",
-			"cs_CZ": "チェコ語で"            
-		}
+		"language": "言語"
 	}
 }

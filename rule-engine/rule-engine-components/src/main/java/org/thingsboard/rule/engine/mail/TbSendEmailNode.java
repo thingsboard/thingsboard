@@ -20,8 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -30,7 +34,6 @@ import java.io.IOException;
 import java.util.Properties;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -75,7 +78,7 @@ public class TbSendEmailNode implements TbNode {
                         sendEmail(ctx, email);
                         return null;
                     }),
-                    ok -> ctx.tellNext(msg, SUCCESS),
+                    ok -> ctx.tellSuccess(msg),
                     fail -> ctx.tellFailure(msg, fail));
         } catch (Exception ex) {
             ctx.tellFailure(msg, ex);
@@ -137,10 +140,23 @@ public class TbSendEmailNode implements TbNode {
         String protocol = this.config.getSmtpProtocol();
         javaMailProperties.put("mail.transport.protocol", protocol);
         javaMailProperties.put(MAIL_PROP + protocol + ".host", this.config.getSmtpHost());
-        javaMailProperties.put(MAIL_PROP + protocol + ".port", this.config.getSmtpPort()+"");
-        javaMailProperties.put(MAIL_PROP + protocol + ".timeout", this.config.getTimeout()+"");
+        javaMailProperties.put(MAIL_PROP + protocol + ".port", this.config.getSmtpPort() + "");
+        javaMailProperties.put(MAIL_PROP + protocol + ".timeout", this.config.getTimeout() + "");
         javaMailProperties.put(MAIL_PROP + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(this.config.getUsername())));
         javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", Boolean.valueOf(this.config.isEnableTls()).toString());
+        if (this.config.isEnableTls() && StringUtils.isNoneEmpty(this.config.getTlsVersion())) {
+            javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", this.config.getTlsVersion());
+        }
+        if (this.config.isEnableProxy()) {
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", config.getProxyHost());
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", config.getProxyPort());
+            if (StringUtils.isNoneEmpty(config.getProxyUser())) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", config.getProxyUser());
+            }
+            if (StringUtils.isNoneEmpty(config.getProxyPassword())) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", config.getProxyPassword());
+            }
+        }
         return javaMailProperties;
     }
 }

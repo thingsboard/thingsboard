@@ -37,6 +37,8 @@ public interface KvEntry extends Serializable {
 
     Optional<Double> getDoubleValue();
 
+    Optional<String> getJsonValue();
+
     String getValueAsString();
 
     Object getValue();

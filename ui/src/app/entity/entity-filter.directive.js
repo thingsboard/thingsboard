@@ -83,6 +83,7 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                     filter.rootEntity = null;
                     filter.direction = types.entitySearchDirection.from;
                     filter.maxLevel = 1;
+                    filter.fetchLastLevelOnly = false;
                     if (filter.type === types.aliasFilterType.relationsQuery.value) {
                         filter.filters = [];
                     } else if (filter.type === types.aliasFilterType.assetSearchQuery.value) {

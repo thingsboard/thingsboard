@@ -17,10 +17,11 @@ package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 
 public class EntitiesAlarmOriginatorIdAsyncLoader {
@@ -39,6 +40,6 @@ public class EntitiesAlarmOriginatorIdAsyncLoader {
         return Futures.transformAsync(future, in -> {
             return in != null ? Futures.immediateFuture(in.getOriginator())
                     : Futures.immediateFuture(null);
-        });
+        }, MoreExecutors.directExecutor());
     }
 }

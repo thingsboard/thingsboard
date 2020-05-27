@@ -15,12 +15,7 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.PreDestroy;
-import java.util.concurrent.Executors;
 
 public abstract class JpaAbstractDaoListeningExecutorService {
 

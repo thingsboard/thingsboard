@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.config.WebSocketConfiguration;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.telemetry.SessionEvent;
@@ -52,6 +53,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
+@TbCoreComponent
 @Slf4j
 public class TbWebSocketHandler extends TextWebSocketHandler implements TelemetryWebSocketMsgEndpoint {
 
@@ -63,7 +65,6 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
     @Value("${server.ws.send_timeout:5000}")
     private long sendTimeout;
-
     @Value("${server.ws.limits.max_sessions_per_tenant:0}")
     private int maxSessionsPerTenant;
     @Value("${server.ws.limits.max_sessions_per_customer:0}")
@@ -91,10 +92,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         try {
             SessionMetaData sessionMd = internalSessionMap.get(session.getId());
             if (sessionMd != null) {
-                log.info("[{}][{}] Processing {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message.getPayload());
+                log.trace("[{}][{}] Processing {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message.getPayload());
                 webSocketService.handleWebSocketMsg(sessionMd.sessionRef, message.getPayload());
             } else {
-                log.warn("[{}] Failed to find session", session.getId());
+                log.trace("[{}] Failed to find session", session.getId());
                 session.close(CloseStatus.SERVER_ERROR.withReason("Session not found!"));
             }
         } catch (IOException e) {
@@ -138,7 +139,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         if (sessionMd != null) {
             processInWebSocketService(sessionMd.sessionRef, SessionEvent.onError(tError));
         } else {
-            log.warn("[{}] Failed to find session", session.getId());
+            log.trace("[{}] Failed to find session", session.getId());
         }
         log.trace("[{}] Session transport error", session.getId(), tError);
     }

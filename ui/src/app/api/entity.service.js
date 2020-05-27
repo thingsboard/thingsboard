@@ -435,6 +435,10 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             if (user.authority === 'CUSTOMER_USER') {
                 entityId.id = user.customerId;
             }
+        } else if (entityType === types.aliasEntityType.current_tenant){
+            let user = userService.getCurrentUser();
+            entityId.entityType = types.entityType.tenant;
+            entityId.id = user.tenantId;
         }
         return entityId;
     }
@@ -593,7 +597,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                         parameters: {
                             rootId: relationQueryRootEntityId.id,
                             rootType: relationQueryRootEntityId.entityType,
-                            direction: filter.direction
+                            direction: filter.direction,
+                            fetchLastLevelOnly: filter.fetchLastLevelOnly
                         },
                         filters: filter.filters
                     };
@@ -643,7 +648,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                         parameters: {
                             rootId: searchQueryRootEntityId.id,
                             rootType: searchQueryRootEntityId.entityType,
-                            direction: filter.direction
+                            direction: filter.direction,
+                            fetchLastLevelOnly: filter.fetchLastLevelOnly
                         },
                         relationType: filter.relationType
                     };
@@ -804,6 +810,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 entityTypes.dashboard = types.entityType.dashboard;
                 if (useAliasEntityTypes) {
                     entityTypes.current_customer = types.aliasEntityType.current_customer;
+                    entityTypes.current_tenant = types.aliasEntityType.current_tenant;
                 }
                 break;
             case 'CUSTOMER_USER':
@@ -1075,10 +1082,10 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
     }
 
-    function getRelatedEntities(rootEntityId, entityType, entitySubTypes, maxLevel, keys, typeTranslatePrefix, relationType, direction) {
+    function getRelatedEntities(rootEntityId, entityType, entitySubTypes, maxLevel, keys, typeTranslatePrefix, relationType, direction, fetchLastLevelOnly) {
         var deferred = $q.defer();
 
-        var entitySearchQuery = constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType, direction);
+        var entitySearchQuery = constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType, direction,fetchLastLevelOnly);
         if (!entitySearchQuery) {
             deferred.reject();
         } else {
@@ -1177,8 +1184,19 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         let newEntity = {
             name: entityParameters.name,
             type: entityParameters.type,
-            label: entityParameters.label
+            label: entityParameters.label,
+            additionalInfo: {
+                description: entityParameters.description
+            }
         };
+
+        if (entityType === types.entityType.device && entityParameters.gateway !== null) {
+            newEntity.additionalInfo = {
+                ...newEntity.additionalInfo,
+                gateway: entityParameters.gateway
+            };
+        }
+
         let saveEntityPromise = getEntitySavePromise(entityType, newEntity, config);
 
         saveEntityPromise.then(function success(response) {
@@ -1488,13 +1506,14 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             );
     }
 
-    function constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType, direction) {
+    function constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType, direction, fetchLastLevelOnly) {
 
         var searchQuery = {
             parameters: {
                 rootId: rootEntityId.id,
                 rootType: rootEntityId.entityType,
-                direction: direction
+                direction: direction,
+                fetchLastLevelOnly: !!fetchLastLevelOnly
             },
             relationType: relationType
         };

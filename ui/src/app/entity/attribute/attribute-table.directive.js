@@ -39,7 +39,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
 
         element.html(template);
 
-        var getAttributeScopeByValue = function(attributeScopeValue) {
+        var getAttributeScopeByValue = function (attributeScopeValue) {
             if (scope.types.latestTelemetry.value === attributeScopeValue) {
                 return scope.types.latestTelemetry;
             }
@@ -48,7 +48,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     return scope.attributeScopes[attrScope];
                 }
             }
-        }
+        };
 
         scope.types = types;
 
@@ -87,14 +87,14 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             search: null
         };
 
-        scope.$watch("entityId", function(newVal) {
+        scope.$watch("entityId", function (newVal) {
             if (newVal) {
                 scope.resetFilter();
                 scope.getEntityAttributes(false, true);
             }
         });
 
-        scope.$watch("attributeScope", function(newVal, prevVal) {
+        scope.$watch("attributeScope", function (newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {
                 scope.mode = 'default';
                 scope.query.search = null;
@@ -103,30 +103,30 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             }
         });
 
-        scope.resetFilter = function() {
+        scope.resetFilter = function () {
             scope.mode = 'default';
             scope.query.search = null;
             scope.selectedAttributes = [];
             scope.attributeScope = getAttributeScopeByValue(attrs.defaultAttributeScope);
-        }
+        };
 
-        scope.enterFilterMode = function(event) {
+        scope.enterFilterMode = function (event) {
             let $button = angular.element(event.currentTarget);
             let $toolbarsContainer = $button.closest('.toolbarsContainer');
 
             scope.query.search = '';
 
-            $timeout(()=>{
+            $timeout(() => {
                 $toolbarsContainer.find('.searchInput').focus();
             })
-        }
+        };
 
-        scope.exitFilterMode = function() {
+        scope.exitFilterMode = function () {
             scope.query.search = null;
             scope.getEntityAttributes();
-        }
+        };
 
-        scope.$watch("query.search", function(newVal, prevVal) {
+        scope.$watch("query.search", function (newVal, prevVal) {
             if (!angular.equals(newVal, prevVal) && scope.query.search != null) {
                 scope.getEntityAttributes();
             }
@@ -142,15 +142,15 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             }
         }
 
-        scope.onReorder = function() {
+        scope.onReorder = function () {
             scope.getEntityAttributes(false, false);
-        }
+        };
 
-        scope.onPaginate = function() {
+        scope.onPaginate = function () {
             scope.getEntityAttributes(false, false);
-        }
+        };
 
-        scope.getEntityAttributes = function(forceUpdate, reset) {
+        scope.getEntityAttributes = function (forceUpdate, reset) {
             if (scope.attributesDeferred) {
                 scope.attributesDeferred.resolve();
             }
@@ -163,7 +163,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 }
                 scope.checkSubscription();
                 scope.attributesDeferred = attributeService.getEntityAttributes(scope.entityType, scope.entityId, scope.attributeScope.value,
-                    scope.query, function(attributes, update, apply) {
+                    scope.query, function (attributes, update, apply) {
                         success(attributes, update || forceUpdate, apply);
                     }
                 );
@@ -176,9 +176,9 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 });
                 deferred.resolve();
             }
-        }
+        };
 
-        scope.checkSubscription = function() {
+        scope.checkSubscription = function () {
             var newSubscriptionId = null;
             if (scope.entityId && scope.entityType && scope.attributeScope.clientSide && scope.mode != 'widget') {
                 newSubscriptionId = attributeService.subscribeForEntityAttributes(scope.entityType, scope.entityId, scope.attributeScope.value);
@@ -187,36 +187,38 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 attributeService.unsubscribeForEntityAttributes(scope.subscriptionId);
             }
             scope.subscriptionId = newSubscriptionId;
-        }
+        };
 
-        scope.$on('$destroy', function() {
+        scope.$on('$destroy', function () {
             if (scope.subscriptionId) {
                 attributeService.unsubscribeForEntityAttributes(scope.subscriptionId);
             }
         });
 
-        scope.editAttribute = function($event, attribute) {
+        scope.editAttribute = function ($event, attribute) {
             if (!scope.attributeScope.clientSide) {
                 $event.stopPropagation();
                 $mdEditDialog.show({
                     controller: EditAttributeValueController,
                     templateUrl: editAttributeValueTemplate,
-                    locals: {attributeValue: attribute.value,
-                             save: function (model) {
-                                var updatedAttribute = angular.copy(attribute);
-                                updatedAttribute.value = model.value;
-                                attributeService.saveEntityAttributes(scope.entityType, scope.entityId, scope.attributeScope.value, [updatedAttribute]).then(
-                                    function success() {
-                                        scope.getEntityAttributes();
-                                    }
-                                );
-                            }},
+                    locals: {
+                        attributeValue: attribute.value,
+                        save: function (model) {
+                            var updatedAttribute = angular.copy(attribute);
+                            updatedAttribute.value = model.value;
+                            attributeService.saveEntityAttributes(scope.entityType, scope.entityId, scope.attributeScope.value, [updatedAttribute]).then(
+                                function success() {
+                                    scope.getEntityAttributes();
+                                }
+                            );
+                        }
+                    },
                     targetEvent: $event
                 });
             }
-        }
+        };
 
-        scope.addAttribute = function($event) {
+        scope.addAttribute = function ($event) {
             if (!scope.attributeScope.clientSide) {
                 $event.stopPropagation();
                 $mdDialog.show({
@@ -224,16 +226,20 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     controllerAs: 'vm',
                     templateUrl: addAttributeDialogTemplate,
                     parent: angular.element($document[0].body),
-                    locals: {entityType: scope.entityType, entityId: scope.entityId, attributeScope: scope.attributeScope.value},
+                    locals: {
+                        entityType: scope.entityType,
+                        entityId: scope.entityId,
+                        attributeScope: scope.attributeScope.value
+                    },
                     fullscreen: true,
                     targetEvent: $event
                 }).then(function () {
                     scope.getEntityAttributes();
                 });
             }
-        }
+        };
 
-        scope.deleteAttributes = function($event) {
+        scope.deleteAttributes = function ($event) {
             if (!scope.attributeScope.clientSide) {
                 $event.stopPropagation();
                 var confirm = $mdDialog.confirm()
@@ -244,33 +250,33 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     .cancel($translate.instant('action.no'))
                     .ok($translate.instant('action.yes'));
                 $mdDialog.show(confirm).then(function () {
-                        attributeService.deleteEntityAttributes(scope.entityType, scope.entityId, scope.attributeScope.value, scope.selectedAttributes).then(
-                            function success() {
-                                scope.selectedAttributes = [];
-                                scope.getEntityAttributes();
-                            }
-                        )
+                    attributeService.deleteEntityAttributes(scope.entityType, scope.entityId, scope.attributeScope.value, scope.selectedAttributes).then(
+                        function success() {
+                            scope.selectedAttributes = [];
+                            scope.getEntityAttributes();
+                        }
+                    )
                 });
             }
-        }
+        };
 
-        scope.nextWidget = function() {
+        scope.nextWidget = function () {
             $mdUtil.nextTick(function () {
                 if (scope.widgetsCarousel.index < scope.widgetsList.length - 1) {
                     scope.widgetsCarousel.index++;
                 }
             });
-        }
+        };
 
-        scope.prevWidget = function() {
+        scope.prevWidget = function () {
             $mdUtil.nextTick(function () {
                 if (scope.widgetsCarousel.index > 0) {
                     scope.widgetsCarousel.index--;
                 }
             });
-        }
+        };
 
-        scope.enterWidgetMode = function() {
+        scope.enterWidgetMode = function () {
 
             if (scope.widgetsIndexWatch) {
                 scope.widgetsIndexWatch();
@@ -303,7 +309,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             entitiAliases[entityAlias.id] = entityAlias;
 
             var stateController = {
-                getStateParams: function() {
+                getStateParams: function () {
                     return {};
                 }
             };
@@ -317,9 +323,9 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 type: types.datasourceType.entity,
                 entityAliasId: entityAlias.id,
                 dataKeys: []
-            }
+            };
             var i = 0;
-            for (var attr =0; attr < scope.selectedAttributes.length;attr++) {
+            for (var attr = 0; attr < scope.selectedAttributes.length; attr++) {
                 var attribute = scope.selectedAttributes[attr];
                 var dataKey = {
                     name: attribute.key,
@@ -328,12 +334,12 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     color: utils.getMaterialColor(i),
                     settings: {},
                     _hash: Math.random()
-                }
+                };
                 datasource.dataKeys.push(dataKey);
                 i++;
             }
 
-            scope.widgetsIndexWatch = scope.$watch('widgetsCarousel.index', function(newVal, prevVal) {
+            scope.widgetsIndexWatch = scope.$watch('widgetsCarousel.index', function (newVal, prevVal) {
                 if (scope.mode === 'widget' && (newVal != prevVal)) {
                     var index = scope.widgetsCarousel.index;
                     for (var i = 0; i < scope.widgetsList.length; i++) {
@@ -345,7 +351,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 }
             });
 
-            scope.widgetsBundleWatch = scope.$watch('widgetsBundle', function(newVal, prevVal) {
+            scope.widgetsBundleWatch = scope.$watch('widgetsBundle', function (newVal, prevVal) {
                 if (scope.mode === 'widget' && (scope.firstBundle === true || newVal != prevVal)) {
                     scope.widgetsList = [];
                     scope.widgetsListCache = [];
@@ -358,7 +364,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                         widgetService.getBundleWidgetTypes(scope.widgetsBundle.alias, isSystem).then(
                             function success(widgetTypes) {
 
-                                widgetTypes = $filter('orderBy')(widgetTypes, ['-descriptor.type','-createdTime']);
+                                widgetTypes = $filter('orderBy')(widgetTypes, ['-descriptor.type', '-createdTime']);
 
                                 for (var i = 0; i < widgetTypes.length; i++) {
                                     var widgetType = widgetTypes[i];
@@ -398,9 +404,9 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     }
                 }
             });
-        }
+        };
 
-        scope.exitWidgetMode = function() {
+        scope.exitWidgetMode = function () {
             if (scope.widgetsBundleWatch) {
                 scope.widgetsBundleWatch();
                 scope.widgetsBundleWatch = null;
@@ -412,9 +418,9 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.selectedWidgetsBundleAlias = null;
             scope.mode = 'default';
             scope.getEntityAttributes(true);
-        }
+        };
 
-        scope.addWidgetToDashboard = function($event) {
+        scope.addWidgetToDashboard = function ($event) {
             if (scope.mode === 'widget' && scope.widgetsListCache.length > 0) {
                 var widget = scope.widgetsListCache[scope.widgetsCarousel.index][0];
                 $event.stopPropagation();
@@ -423,21 +429,26 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     controllerAs: 'vm',
                     templateUrl: addWidgetToDashboardDialogTemplate,
                     parent: angular.element($document[0].body),
-                    locals: {entityId: scope.entityId, entityType: scope.entityType, entityName: scope.entityName, widget: angular.copy(widget)},
+                    locals: {
+                        entityId: scope.entityId,
+                        entityType: scope.entityType,
+                        entityName: scope.entityName,
+                        widget: angular.copy(widget)
+                    },
                     fullscreen: true,
                     targetEvent: $event
                 }).then(function () {
 
                 });
             }
-        }
+        };
 
-        scope.loading = function() {
+        scope.loading = function () {
             return $rootScope.loading;
-        }
+        };
 
         $compile(element.contents())(scope);
-    }
+    };
 
     return {
         restrict: "E",

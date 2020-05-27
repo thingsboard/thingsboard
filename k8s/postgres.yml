@@ -28,7 +28,7 @@ spec:
     requests:
       storage: 5Gi
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
@@ -36,6 +36,9 @@ metadata:
   labels:
     app: postgres
 spec:
+  selector:
+    matchLabels:
+      app: postgres
   template:
     metadata:
       labels:
@@ -48,13 +51,15 @@ spec:
       containers:
       - name: postgres
         imagePullPolicy: Always
-        image: postgres:9.6
+        image: postgres:10
         ports:
         - containerPort: 5432
           name: postgres
         env:
         - name: POSTGRES_DB
           value: "thingsboard"
+        - name: POSTGRES_PASSWORD
+          value: "postgres"
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
         volumeMounts:

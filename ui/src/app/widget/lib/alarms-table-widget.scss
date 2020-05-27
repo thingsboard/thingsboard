@@ -43,43 +43,15 @@
   &.tb-data-table {
     table.md-table,
     table.md-table.md-row-select {
-      th.md-column {
-        &.tb-action-cell {
-          .md-button {
-            /* stylelint-disable-next-line selector-max-class */
-            &.md-icon-button {
-              width: 36px;
-              height: 36px;
-              padding: 6px;
-              margin: 0;
-              /* stylelint-disable-next-line selector-max-class */
-              md-icon {
-                width: 24px;
-                height: 24px;
-                font-size: 24px !important;
-                line-height: 24px !important;
-              }
-            }
-          }
-        }
-      }
-
       tbody {
-        tr {
-          td {
-            &.tb-action-cell {
-              width: 36px;
-              min-width: 36px;
-              max-width: 36px;
+        .tb-action-cell {
+          width: 36px;
+          min-width: 36px;
+          max-width: 36px;
 
-              .md-button[disabled] {
-                &.md-icon-button {
-                  /* stylelint-disable-next-line selector-max-class */
-                  md-icon {
-                    color: rgba(0, 0, 0, .38);
-                  }
-                }
-              }
+          .md-button[disabled] {
+            md-icon {
+              color: rgba(0, 0, 0, .38);
             }
           }
         }

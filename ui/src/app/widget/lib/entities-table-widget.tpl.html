@@ -41,7 +41,7 @@
             <table md-table>
                 <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
-                    <th ng-if="column.display" md-column md-order-by="'{{ column.label }}'" ng-repeat="column in vm.columns"><span>{{ column.title }}</span></th>
+                    <th ng-if="column.display" md-column md-order-by='"{{column.label}}"' ng-repeat="column in vm.columns"><span>{{ column.title }}</span></th>
                     <th md-column class="tb-action-cell" layout="row" layout-align="end center"></th>
                 </tr>
                 </thead>

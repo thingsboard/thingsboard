@@ -22,13 +22,14 @@ import entitySelectTemplate from './entity-select.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntitySelect($compile, $templateCache, entityService) {
+export default function EntitySelect($compile, $templateCache, entityService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entitySelectTemplate);
         element.html(template);
 
         scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;
+        scope.entityTypeCurrentTenant = types.aliasEntityType.current_tenant;
 
         var entityTypes = entityService.prepareAllowedEntityTypesList(scope.allowedEntityTypes, scope.useAliasEntityTypes);
 
@@ -48,7 +49,8 @@ export default function EntitySelect($compile, $templateCache, entityService) {
         scope.updateView = function () {
             if (!scope.disabled) {
                 var value = ngModelCtrl.$viewValue;
-                if (scope.model && scope.model.entityType && scope.model.entityId) {
+                if (scope.model && scope.model.entityType &&
+                    (scope.model.entityId || scope.model.entityType === scope.entityTypeCurrentTenant)) {
                     if (!value) {
                         value = {};
                     }

@@ -21,8 +21,12 @@ COPY start-tb-coap-transport.sh ${pkg.name}.deb /tmp/
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb-coap-transport.sh /usr/bin
 
-RUN dpkg -i /tmp/${pkg.name}.deb
+RUN yes | dpkg -i /tmp/${pkg.name}.deb
 
-RUN update-rc.d ${pkg.name} disable
+RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
+
+RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
+
+USER ${pkg.user}
 
 CMD ["start-tb-coap-transport.sh"]

@@ -33,7 +33,8 @@ export default class TbFlot {
         this.ctx = ctx;
         this.chartType = chartType || 'line';
         var settings = ctx.settings;
-        var utils = this.ctx.$scope.$injector.get('utils');
+        this.utils = this.ctx.$scope.$injector.get('utils');
+        this.types = this.ctx.$scope.$injector.get('types');
 
         ctx.tooltip = $('#flot-series-tooltip');
         if (ctx.tooltip.length === 0) {
@@ -242,7 +243,8 @@ export default class TbFlot {
             grid: {
                 hoverable: true,
                 mouseActiveRadius: 10,
-                autoHighlight: ctx.tooltipIndividual === true
+                autoHighlight: ctx.tooltipIndividual === true,
+                markings: []
             },
             selection : { mode : ctx.isMobile ? null : 'x' },
             legend : {
@@ -264,7 +266,7 @@ export default class TbFlot {
             };
             if (settings.xaxis) {
                 this.xaxis.font.color = settings.xaxis.color || this.xaxis.font.color;
-                this.xaxis.label = utils.customTranslation(settings.xaxis.title, settings.xaxis.title) || null;
+                this.xaxis.label = this.utils.customTranslation(settings.xaxis.title, settings.xaxis.title) || null;
                 this.xaxis.labelFont.color = this.xaxis.font.color;
                 this.xaxis.labelFont.size = this.xaxis.font.size+2;
                 this.xaxis.labelFont.weight = "bold";
@@ -301,7 +303,7 @@ export default class TbFlot {
                 this.yaxis.font.color = settings.yaxis.color || this.yaxis.font.color;
                 this.yaxis.min = angular.isDefined(settings.yaxis.min) ? settings.yaxis.min : null;
                 this.yaxis.max = angular.isDefined(settings.yaxis.max) ? settings.yaxis.max : null;
-                this.yaxis.label = utils.customTranslation(settings.yaxis.title, settings.yaxis.title) || null;
+                this.yaxis.label = this.utils.customTranslation(settings.yaxis.title, settings.yaxis.title) || null;
                 this.yaxis.labelFont.color = this.yaxis.font.color;
                 this.yaxis.labelFont.size = this.yaxis.font.size+2;
                 this.yaxis.labelFont.weight = "bold";
@@ -364,7 +366,7 @@ export default class TbFlot {
                             return '';
                         };
                     }
-                    xaxis.label = utils.customTranslation(settings.xaxisSecond.title, settings.xaxisSecond.title) || null;
+                    xaxis.label = this.utils.customTranslation(settings.xaxisSecond.title, settings.xaxisSecond.title) || null;
                     xaxis.position = settings.xaxisSecond.axisPosition;
                 }
                 xaxis.tickLength = 0;
@@ -390,6 +392,10 @@ export default class TbFlot {
                 }
             }
 
+            if (this.chartType === 'line' && isFinite(settings.thresholdsLineWidth)) {
+                options.grid.markingsLineWidth = settings.thresholdsLineWidth;
+            }
+
             if (this.chartType === 'bar') {
                 options.series.lines = {
                         show: false,
@@ -399,7 +405,8 @@ export default class TbFlot {
                 options.series.bars ={
                         show: true,
                         lineWidth: 0,
-                        fill: 0.9
+                        fill: 0.9,
+                        align: settings.barAlignment || "left"
                 }
                 ctx.defaultBarWidth = settings.defaultBarWidth || 600;
             }
@@ -470,6 +477,7 @@ export default class TbFlot {
         var colors = [];
         this.yaxes = [];
         var yaxesMap = {};
+        let predefinedThresholds = [], thresholdsDatasources = [];
 
         var tooltipValueFormatFunction = null;
         if (this.ctx.settings.tooltipValueFormatter && this.ctx.settings.tooltipValueFormatter.length) {
@@ -484,6 +492,7 @@ export default class TbFlot {
             var series = this.subscription.data[i];
             colors.push(series.dataKey.color);
             var keySettings = series.dataKey.settings;
+
             series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
             if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
                 try {
@@ -569,8 +578,57 @@ export default class TbFlot {
                 series.yaxis = series.yaxisIndex+1;
                 yaxis.keysInfo[i] = {hidden: false};
                 yaxis.show = true;
+
+                if (keySettings.thresholds && keySettings.thresholds.length) {
+                    for (let j = 0; j < keySettings.thresholds.length; j++) {
+                        let threshold = keySettings.thresholds[j];
+                        if (threshold.thresholdValueSource === 'predefinedValue' && isFinite(threshold.thresholdValue)) {
+                            let colorIndex = this.subscription.data.length + predefinedThresholds.length;
+                            this.generateThreshold(predefinedThresholds, series.yaxis, threshold.lineWidth, threshold.color, colorIndex, threshold.thresholdValue);
+                        } else if (threshold.thresholdEntityAlias && threshold.thresholdAttribute) {
+                            let entityAliasId = this.ctx.aliasController.getEntityAliasId(threshold.thresholdEntityAlias);
+                            if (!entityAliasId) {
+                                continue;
+                            }
+
+                            let datasource = thresholdsDatasources.filter((datasource) => {
+                                return datasource.entityAliasId === entityAliasId;
+                            })[0];
+
+                            let dataKey = {
+                                type: this.types.dataKeyType.attribute,
+                                name: threshold.thresholdAttribute,
+                                label: threshold.thresholdAttribute,
+                                settings: {
+                                    yaxis: series.yaxis,
+                                    lineWidth: threshold.lineWidth,
+                                    color: threshold.color
+                                },
+                                _hash: Math.random()
+                            };
+
+                            if (datasource) {
+                                datasource.dataKeys.push(dataKey);
+                            } else {
+                                datasource = {
+                                    type: this.types.datasourceType.entity,
+                                    name: threshold.thresholdEntityAlias,
+                                    aliasName: threshold.thresholdEntityAlias,
+                                    entityAliasId: entityAliasId,
+                                    dataKeys: [ dataKey ]
+                                };
+                                thresholdsDatasources.push(datasource);
+                            }
+                        }
+                    }
+                }
             }
         }
+
+        this.subscribeForThresholdsAttributes(thresholdsDatasources);
+
+        this.options.grid.markings = predefinedThresholds;
+        this.predefinedThresholds = predefinedThresholds;
 
         this.options.colors = colors;
         this.options.yaxes = angular.copy(this.yaxes);
@@ -654,6 +712,74 @@ export default class TbFlot {
             }
         }
         return yaxis;
+    }
+
+    subscribeForThresholdsAttributes(datasources) {
+        let tbFlot = this;
+        let thresholdsSourcesSubscriptionOptions = {
+            datasources: datasources,
+            useDashboardTimewindow: false,
+            type: this.types.widgetType.latest.value,
+            callbacks: {
+                onDataUpdated: (subscription) => {tbFlot.thresholdsSourcesDataUpdated(subscription.data)}
+            }
+        };
+        this.ctx.subscriptionApi.createSubscription(thresholdsSourcesSubscriptionOptions, true).then(
+            (subscription) => {
+                tbFlot.thresholdsSourcesSubscription = subscription;
+            }
+        );
+    }
+
+    thresholdsSourcesDataUpdated(data) {
+        let allThresholds = angular.copy(this.predefinedThresholds);
+        for (let i = 0; i < data.length; i++) {
+            let keyData = data[i];
+            if (keyData && keyData.data && keyData.data[0]) {
+                let attrValue = keyData.data[0][1];
+                if (isFinite(attrValue)) {
+                    let settings = keyData.dataKey.settings;
+                    let colorIndex = this.subscription.data.length + allThresholds.length;
+                    this.generateThreshold(allThresholds, settings.yaxis, settings.lineWidth, settings.color, colorIndex, attrValue);
+                }
+            }
+        }
+
+        this.options.grid.markings = allThresholds;
+        this.redrawPlot();
+    }
+
+    generateThreshold(existingThresholds, yaxis, lineWidth, color, defaultColorIndex, thresholdValue) {
+        let marking = {};
+        let markingYAxis;
+
+        if (yaxis !== 1) {
+            markingYAxis = 'y' + yaxis + 'axis';
+        } else {
+            markingYAxis = 'yaxis';
+        }
+
+        if (isFinite(lineWidth)) {
+            marking.lineWidth = lineWidth;
+        }
+
+        if (angular.isDefined(color)) {
+            marking.color = color;
+        } else {
+            marking.color = this.utils.getMaterialColor(defaultColorIndex);
+        }
+
+        marking[markingYAxis] = {
+            from: thresholdValue,
+            to: thresholdValue
+        };
+
+        let similarMarkings = existingThresholds.filter((existingMarking) => {
+            return angular.equals(existingMarking[markingYAxis], marking[markingYAxis]);
+        });
+        if (!similarMarkings.length) {
+            existingThresholds.push(marking);
+        }
     }
 
     update() {
@@ -975,6 +1101,17 @@ export default class TbFlot {
                 "type": "number",
                 "default": 600
             };
+            properties["barAlignment"] = {
+                "title": "Bar alignment",
+                "type": "string",
+                "default": "left"
+            };
+        }
+        if (chartType === 'graph' || chartType === 'bar') {
+            properties["thresholdsLineWidth"] = {
+                "title": "Default line width for all thresholds",
+                "type": "number"
+            };
         }
         properties["shadowSize"] = {
             "title": "Shadow size",
@@ -1125,6 +1262,28 @@ export default class TbFlot {
         }
         if (chartType === 'bar') {
             schema["form"].push("defaultBarWidth");
+            schema["form"].push({
+                "key": "barAlignment",
+                "type": "rc-select",
+                "multiple": false,
+                "items": [
+                    {
+                        "value": "left",
+                        "label": "Left"
+                    },
+                    {
+                        "value": "right",
+                        "label": "Right"
+                    },
+                    {
+                        "value": "center",
+                        "label": "Center"
+                    }
+                ]
+            });
+        }
+        if (chartType === 'graph' || chartType === 'bar') {
+            schema["form"].push("thresholdsLineWidth");
         }
         schema["form"].push("shadowSize");
         schema["form"].push({
@@ -1431,7 +1590,73 @@ export default class TbFlot {
         };
 
         var properties = schema["schema"]["properties"];
+
         if (chartType === 'graph' || chartType === 'bar') {
+            properties["thresholds"] = {
+                "title": "Thresholds",
+                "type": "array",
+                "items": {
+                    "title": "Threshold",
+                    "type": "object",
+                    "properties": {
+                        "thresholdValueSource": {
+                            "title": "Threshold value source",
+                            "type": "string",
+                            "default": "predefinedValue"
+                        },
+                        "thresholdEntityAlias": {
+                            "title": "Thresholds source entity alias",
+                            "type": "string"
+                        },
+                        "thresholdAttribute": {
+                            "title": "Threshold source entity attribute",
+                            "type": "string"
+                        },
+                        "thresholdValue": {
+                            "title": "Threshold value (if predefined value is selected)",
+                            "type": "number"
+                        },
+                        "lineWidth": {
+                            "title": "Line width",
+                            "type": "number"
+                        },
+                        "color": {
+                            "title": "Color",
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": []
+            };
+            schema["form"].push({
+                "key": "thresholds",
+                "items": [
+                    {
+                        "key": "thresholds[].thresholdValueSource",
+                        "type": "rc-select",
+                        "multiple": false,
+                        "items": [
+                            {
+                                "value": "predefinedValue",
+                                "label": "Predefined value (Default)"
+                            },
+                            {
+                                "value": "entityAttribute",
+                                "label": "Value taken from entity attribute"
+                            }
+                        ]
+                    },
+                    "thresholds[].thresholdValue",
+                    "thresholds[].thresholdEntityAlias",
+                    "thresholds[].thresholdAttribute",
+                    {
+                        "key": "thresholds[].color",
+                        "type": "color"
+                    },
+                    "thresholds[].lineWidth"
+                ]
+            });
+
             properties["comparisonSettings"] = {
                 "title": "Comparison Settings",
                 "type": "object",

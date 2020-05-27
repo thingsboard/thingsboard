@@ -196,9 +196,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         if (vm.settings.defaultSortOrder && vm.settings.defaultSortOrder.length) {
             vm.defaultSortOrder = vm.settings.defaultSortOrder;
             if (vm.settings.defaultSortOrder.charAt(0) === "-") {
-                vm.defaultSortOrder = "-'" + vm.settings.defaultSortOrder.substring(1) + "'";
+                vm.defaultSortOrder = '-"' + utils.customTranslation(vm.settings.defaultSortOrder.substring(1), vm.settings.defaultSortOrder.substring(1)) + '"';
             } else {
-                vm.defaultSortOrder = "'" + vm.settings.defaultSortOrder + "'";
+                vm.defaultSortOrder = '"' + utils.customTranslation(vm.settings.defaultSortOrder, vm.settings.defaultSortOrder) + '"';
             }
         }
 

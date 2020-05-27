@@ -9,6 +9,15 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 If you do not already have a cluster, you can create one by using [Minikube](https://kubernetes.io/docs/setup/minikube), 
 or you can choose any other available [Kubernetes cluster deployment solutions](https://kubernetes.io/docs/setup/pick-right-solution/).
 
+### Enable ingress addon
+
+By default ingress addon is disable in the Minikube, and available only in cluster providers.
+To enable ingress, please execute next command:
+
+`
+$ minikube addons enable ingress
+` 
+
 ## Installation
 
 Before performing initial installation you can configure the type of database to be used with ThingsBoard.
@@ -30,6 +39,26 @@ Where:
 - `--loadDemo` - optional argument. Whether to load additional demo data.
 
 ## Running
+
+Execute the following command to deploy thirdparty resources:
+
+`
+$ ./k8s-deploy-thirdparty.sh
+`
+
+Get list of the running tb-redis pods and verify that all of them are in running state:
+
+`
+$ kubectl get pods -l app=tb-redis
+`
+
+Execute the following command to create redis cluster:
+
+`
+$ kubectl exec -it tb-redis-0 -- redis-cli --cluster create --cluster-replicas 1 $(kubectl get pods -l app=tb-redis -o jsonpath='{range.items[*]}{.status.podIP}:6379 ')
+`
+
+Type **'yes'** when prompted.
 
 Execute the following command to deploy resources:
 

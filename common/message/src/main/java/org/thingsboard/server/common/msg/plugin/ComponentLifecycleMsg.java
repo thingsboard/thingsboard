@@ -33,7 +33,7 @@ import java.util.Optional;
  * @author Andrew Shvayka
  */
 @ToString
-public class ComponentLifecycleMsg implements TbActorMsg, TenantAwareMsg, ToAllNodesMsg {
+public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
     @Getter
     private final TenantId tenantId;
     @Getter

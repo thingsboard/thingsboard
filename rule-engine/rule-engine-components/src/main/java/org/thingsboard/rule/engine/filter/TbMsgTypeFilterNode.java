@@ -44,7 +44,7 @@ public class TbMsgTypeFilterNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         ctx.tellNext(msg, config.getMessageTypes().contains(msg.getType()) ? "True" : "False");
     }
 
