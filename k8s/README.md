@@ -31,7 +31,7 @@ In order to set database type change the value of `DATABASE` variable in `.env` 
 In order to set deployment type change the value of `DEPLOYMENT_TYPE` variable in `.env` file to one of the following:
 
 - `basic` - start up with single instance of Zookeeper, Kafka and Redis;
-- `cassandra` - start up with Zookeeper, Kafka and Redis in cluster modes;
+- `high-availability` - start up with Zookeeper, Kafka and Redis in cluster modes;
 
 **NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see content of the directories `./basic` and `./high-availability` for details).
 
