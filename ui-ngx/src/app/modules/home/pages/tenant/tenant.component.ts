@@ -68,10 +68,8 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
     this.entityForm.patchValue({title: entity.title});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
-    if (this.entityForm.get('isolatedTbRuleEngine').value) {
-      this.entityForm.patchValue({maxNumberOfQueues: entity.maxNumberOfQueues});
-      this.entityForm.patchValue({maxNumberOfPartitionsPerQueue: entity.maxNumberOfPartitionsPerQueue});
-    }
+    this.entityForm.patchValue({maxNumberOfQueues: entity.maxNumberOfQueues});
+    this.entityForm.patchValue({maxNumberOfPartitionsPerQueue: entity.maxNumberOfPartitionsPerQueue});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
   }
 
@@ -82,13 +80,8 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
         if (!this.isAdd) {
           this.entityForm.get('isolatedTbCore').disable({emitEvent: false});
           this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
-          if (this.entityForm.get('isolatedTbRuleEngine').value) {
-            this.entityForm.get('maxNumberOfQueues').disable({emitEvent: false});
-            this.entityForm.get('maxNumberOfPartitionsPerQueue').disable({emitEvent: false});
-          } else {
-            this.entityForm.get('maxNumberOfQueues').disable({emitEvent: true});
-            this.entityForm.get('maxNumberOfPartitionsPerQueue').disable({emitEvent: true});
-          }
+          this.entityForm.get('maxNumberOfQueues').disable({emitEvent: false});
+          this.entityForm.get('maxNumberOfPartitionsPerQueue').disable({emitEvent: false});
         }
       } else {
         this.entityForm.disable({emitEvent: false});
