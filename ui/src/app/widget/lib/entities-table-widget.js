@@ -110,6 +110,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
     vm.cellStyle = cellStyle;
     vm.cellContent = cellContent;
+    vm.headerStyle = headerStyle;
 
     vm.editColumnsToDisplay = editColumnsToDisplay;
 
@@ -406,6 +407,31 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         }
     }
 
+    function headerStyle(key) {
+        var style = {};
+        if (key) {
+            var styleInfo = vm.stylesInfo[key.label];
+            if (styleInfo.useHeaderStyleFunction && styleInfo.headerStyleFunction) {
+                try {
+                    style = styleInfo.headerStyleFunction();
+                } catch (e) {
+                    style = {};
+                }
+            } else {
+                style = defaultStyle(key);
+            }
+        }
+        if (!style.width) {
+            var columnWidth = vm.columnWidth[key.label];
+            if(columnWidth !== "0px") {
+                style.width = columnWidth;
+            } else {
+                style.width = "auto";
+            }
+        }
+        return style;
+    }
+
     function defaultStyle(/*key, value*/) {
         return {};
     }
@@ -490,7 +516,8 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                 useCellContentFunction: false
             };
             vm.stylesInfo['entityName'] = {
-                useCellStyleFunction: false
+                useCellStyleFunction: false,
+                useHeaderStyleFunction: false
             };
             vm.columnWidth['entityName'] = '0px';
         }
@@ -508,7 +535,8 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                 useCellContentFunction: false
             };
             vm.stylesInfo['entityLabel'] = {
-                useCellStyleFunction: false
+                useCellStyleFunction: false,
+                useHeaderStyleFunction: false
             };
             vm.columnWidth['entityLabel'] = '0px';
         }
@@ -526,7 +554,8 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                 useCellContentFunction: false
             };
             vm.stylesInfo['entityType'] = {
-                useCellStyleFunction: false
+                useCellStyleFunction: false,
+                useHeaderStyleFunction: false
             };
             vm.columnWidth['entityType'] = '0px';
         }
@@ -544,6 +573,8 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
             var cellStyleFunction = null;
             var useCellStyleFunction = false;
+            var headerStyleFunction = null;
+            var useHeaderStyleFunction = false;
 
             if (keySettings.useCellStyleFunction === true) {
                 if (angular.isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
@@ -557,9 +588,23 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                 }
             }
 
+            if (keySettings.useHeaderStyleFunction === true) {
+                if (angular.isDefined(keySettings.headerStyleFunction) && keySettings.headerStyleFunction.length > 0) {
+                    try {
+                        headerStyleFunction = new Function(keySettings.headerStyleFunction);
+                        useHeaderStyleFunction = true;
+                    } catch (e) {
+                        headerStyleFunction = null;
+                        useHeaderStyleFunction = false;
+                    }
+                }
+            }
+
             vm.stylesInfo[dataKey.label] = {
                 useCellStyleFunction: useCellStyleFunction,
-                cellStyleFunction: cellStyleFunction
+                cellStyleFunction: cellStyleFunction,
+                useHeaderStyleFunction: useHeaderStyleFunction,
+                headerStyleFunction: headerStyleFunctio
             };
 
             var cellContentFunction = null;

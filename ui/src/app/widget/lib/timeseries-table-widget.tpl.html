@@ -54,6 +54,7 @@
                                     <th md-column
                                         md-order-by="{{ h.index }}"
                                         ng-repeat="h in source.ts.header"
+                                        ng-style="vm.headerStyle(h)"
                                     >
                                         <span>{{ h.dataKey.label }}</span>
                                     </th>

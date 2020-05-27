@@ -128,6 +128,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
     vm.cellStyle = cellStyle;
     vm.cellContent = cellContent;
+    vm.headerStyle = headerStyle;
 
     vm.editAlarmStatusFilter = editAlarmStatusFilter;
     vm.editColumnsToDisplay = editColumnsToDisplay;
@@ -620,6 +621,27 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         }
     }
 
+    function headerStyle(key) {
+        var style = {};
+        if (key) {
+            var styleInfo = vm.stylesInfo[key.label];
+            if (styleInfo.useHeaderStyleFunction && styleInfo.headerStyleFunction) {
+                try {
+                    style = styleInfo.headerStyleFunction();
+                } catch (e) {
+                    style = {};
+                }
+            } else {
+                style = defaultStyle(key);
+            }
+        }
+        if (!style.width) {
+            var columnWidth = vm.columnWidth[key.label];
+            style.width = columnWidth;
+        }
+        return style;
+    }
+
     function defaultContent(key, value) {
         if (angular.isDefined(value)) {
             var alarmField = types.alarmFields[key.name];
@@ -742,6 +764,8 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
             var cellStyleFunction = null;
             var useCellStyleFunction = false;
+            var headerStyleFunction = null;
+            var useHeaderStyleFunction = false;
 
             if (keySettings.useCellStyleFunction === true) {
                 if (angular.isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
@@ -775,9 +799,23 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
                 }
             }
 
+            if (keySettings.useHeaderStyleFunction === true) {
+                if (angular.isDefined(keySettings.headerStyleFunction) && keySettings.headerStyleFunction.length > 0) {
+                    try {
+                        headerStyleFunction = new Function(keySettings.headerStyleFunction);
+                        useHeaderStyleFunction = true;
+                    } catch (e) {
+                        headerStyleFunction = null;
+                        useHeaderStyleFunction = false;
+                    }
+                }
+            }
+
             vm.contentsInfo[dataKey.label] = {
                 useCellContentFunction: useCellContentFunction,
-                cellContentFunction: cellContentFunction
+                cellContentFunction: cellContentFunction,
+                useHeaderStyleFunction: useHeaderStyleFunction,
+                headerStyleFunction: headerStyleFunction
             };
 
             var columnWidth = angular.isDefined(keySettings.columnWidth) ? keySettings.columnWidth : '0px';

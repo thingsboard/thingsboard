@@ -62,7 +62,7 @@
             <table md-table md-row-select="vm.enableSelection" multiple="" ng-model="vm.selectedAlarms">
                 <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
-                    <th ng-if="key.display" md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys"><span>{{ key.title }}</span></th>
+                    <th ng-if="key.display" md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys" ng-style="vm.headerStyle(key)"><span>{{ key.title }}</span></th>
                     <th md-column class="tb-action-cell" layout="row" layout-align="end center"></th>
                 </tr>
                 </thead>
