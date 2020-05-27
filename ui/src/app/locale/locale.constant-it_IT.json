@@ -1230,7 +1230,8 @@
         "any-relation": "Qualsiasi relazione",
         "relation-filters": "Filtri relazioni",
         "additional-info": "Informazioni aggiuntive (JSON)",
-        "invalid-additional-info": "Impossibile analizzare le informazioni aggiuntive in JSON."
+        "invalid-additional-info": "Impossibile analizzare le informazioni aggiuntive in JSON.",
+        "default-entity": "Entità predefinita"
     },
     "rulechain": {
         "rulechain": "Rule chain",

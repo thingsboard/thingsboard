@@ -1285,7 +1285,8 @@
         "any-relation": "Alguna relación",
         "relation-filters": "Filtros de relación",
         "additional-info": "Información adicional (JSON)",
-        "invalid-additional-info": "No se puede analizar información adicional json."
+        "invalid-additional-info": "No se puede analizar información adicional json.",
+        "default-entity": "Entidad predeterminada"
     },
     "rulechain": {
         "rulechain": "Cadena de reglas",

@@ -91,6 +91,15 @@
                 ng-model="filter.assetType"
                 entity-type="types.entityType.asset">
         </tb-entity-subtype-autocomplete>
+        <div flex layout="column" ng-if="!filter.resolveMultiple">
+            <label class="tb-small">{{ 'alias.default-entity' | translate }}</label>
+            <tb-entity-select flex
+                              the-form="theForm"
+                              tb-required="false"
+                              allowed-entity-types="[types.entityType.asset]"
+                              ng-model="filter.defaultEntity">
+            </tb-entity-select>
+        </div>
         <md-input-container class="md-block">
             <label translate>asset.name-starts-with</label>
             <input name="assetNameFilter"
@@ -105,6 +114,15 @@
                 ng-model="filter.deviceType"
                 entity-type="types.entityType.device">
         </tb-entity-subtype-autocomplete>
+        <div flex layout="column" ng-if="!filter.resolveMultiple">
+            <label class="tb-small">{{ 'alias.default-entity' | translate }}</label>
+            <tb-entity-select flex
+                              the-form="theForm"
+                              tb-required="false"
+                              allowed-entity-types="[types.entityType.device]"
+                              ng-model="filter.defaultEntity">
+            </tb-entity-select>
+        </div>
         <md-input-container class="md-block">
             <label translate>device.name-starts-with</label>
             <input name="deviceNameFilter"
@@ -119,6 +137,15 @@
                 ng-model="filter.entityViewType"
                 entity-type="types.entityType.entityView">
         </tb-entity-subtype-autocomplete>
+        <div flex layout="column" ng-if="!filter.resolveMultiple">
+            <label class="tb-small">{{ 'alias.default-entity' | translate }}</label>
+            <tb-entity-select flex
+                              the-form="theForm"
+                              tb-required="false"
+                              allowed-entity-types="[types.entityType.entityView]"
+                              ng-model="filter.defaultEntity">
+            </tb-entity-select>
+        </div>
         <md-input-container class="md-block">
             <label translate>entity-view.name-starts-with</label>
             <input name="entityViewNameFilter"

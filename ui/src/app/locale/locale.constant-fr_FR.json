@@ -1264,7 +1264,8 @@
         "to-entity-name": "vers le nom de l'entité",
         "to-entity-type": "Vers le type d'entité",
         "to-relations": "Relations entrantes",
-        "type": "Type"
+        "type": "Type",
+        "default-entity": "Entité par défaut"
     },
     "rulechain": {
         "add": "Ajouter une chaîne de règles",

@@ -1397,7 +1397,8 @@
         "any-relation": "Any relation",
         "relation-filters": "Relation filters",
         "additional-info": "Additional info (JSON)",
-        "invalid-additional-info": "Unable to parse additional info json."
+        "invalid-additional-info": "Unable to parse additional info json.",
+        "default-entity": "Default entity"
     },
     "rulechain": {
         "rulechain": "Rule chain",

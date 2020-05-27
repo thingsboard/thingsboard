@@ -413,7 +413,15 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 aliasInfo.resolvedEntities = result.entities;
                 aliasInfo.currentEntity = null;
                 if (aliasInfo.resolvedEntities.length) {
-                    aliasInfo.currentEntity = aliasInfo.resolvedEntities[0];
+                    var defaultEntity = [];
+                    if (!filter.resolveMultiple) {
+                        if (stateParams && stateParams.targetEntityParamName === entityAlias.alias) {
+                            defaultEntity = $filter('filter')(aliasInfo.resolvedEntities, {id: stateParams[entityAlias.alias].entityId.id});
+                        } else if (filter.defaultEntity) {
+                            defaultEntity = $filter('filter')(aliasInfo.resolvedEntities, {id: filter.defaultEntity.id});
+                        }
+                    }
+                    aliasInfo.currentEntity = defaultEntity.length ? defaultEntity[0] : aliasInfo.resolvedEntities[0];
                 }
                 deferred.resolve(aliasInfo);
             },
