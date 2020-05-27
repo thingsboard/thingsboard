@@ -604,7 +604,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                 useCellStyleFunction: useCellStyleFunction,
                 cellStyleFunction: cellStyleFunction,
                 useHeaderStyleFunction: useHeaderStyleFunction,
-                headerStyleFunction: headerStyleFunctio
+                headerStyleFunction: headerStyleFunction
             };
 
             var cellContentFunction = null;
