@@ -57,7 +57,7 @@ export default class TbFlot {
 
         var tbFlot = this;
 
-        function seriesInfoDiv(label, color, value, units, trackDecimals, active, percent, valueFormatFunction) {
+        function seriesInfoDiv(label, color, value, units, trackDecimals, active, percent, valueFormatFunction, timestamp, index) {
             var divElement = $('<div></div>');
             divElement.css({
                 display: "flex",
@@ -87,7 +87,7 @@ export default class TbFlot {
             divElement.append(labelSpan);
             var valueContent;
             if (valueFormatFunction) {
-                valueContent = valueFormatFunction(value);
+                valueContent = valueFormatFunction(value, tbFlot.ctx, index, timestamp);
             } else {
                 valueContent = tbFlot.ctx.utils.formatValue(value, trackDecimals, units);
             }
@@ -113,7 +113,8 @@ export default class TbFlot {
             var units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : tbFlot.ctx.trackUnits;
             var decimals = angular.isDefined(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : tbFlot.ctx.trackDecimals;
             var divElement = seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
-                seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.tooltipValueFormatFunction);
+                seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.tooltipValueFormatFunction,
+                seriesHoverInfo.time, seriesHoverInfo.hoverIndex);
             return divElement.prop('outerHTML');
         }
 
@@ -122,7 +123,8 @@ export default class TbFlot {
                 var units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : tbFlot.ctx.trackUnits;
                 var decimals = angular.isDefined(item.series.dataKey.decimals) ? item.series.dataKey.decimals : tbFlot.ctx.trackDecimals;
                 var divElement = seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
-                    item.datapoint[1][0][1], units, decimals, true, item.series.percent, item.series.dataKey.tooltipValueFormatFunction);
+                    item.datapoint[1][0][1], units, decimals, true, item.series.percent, item.series.dataKey.tooltipValueFormatFunction,
+                    null, null);
                 return divElement.prop('outerHTML');
             };
         } else {
@@ -482,7 +484,7 @@ export default class TbFlot {
         var tooltipValueFormatFunction = null;
         if (this.ctx.settings.tooltipValueFormatter && this.ctx.settings.tooltipValueFormatter.length) {
             try {
-                tooltipValueFormatFunction = new Function('value', this.ctx.settings.tooltipValueFormatter);
+                tooltipValueFormatFunction = new Function('value, ctx, index, time', this.ctx.settings.tooltipValueFormatter);
             } catch (e) {
                 tooltipValueFormatFunction = null;
             }
@@ -496,7 +498,7 @@ export default class TbFlot {
             series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
             if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
                 try {
-                    series.dataKey.tooltipValueFormatFunction = new Function('value', keySettings.tooltipValueFormatter);
+                    series.dataKey.tooltipValueFormatFunction = new Function('value, ctx, index, time', keySettings.tooltipValueFormatter);
                 } catch (e) {
                     series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
                 }
@@ -1139,7 +1141,7 @@ export default class TbFlot {
             "default": false
         };
         properties["tooltipValueFormatter"] = {
-            "title": "Tooltip value format function, f(value)",
+            "title": "Tooltip value format function, f(value, ctx, index, time)",
             "type": "string",
             "default": ""
         };
@@ -1465,7 +1467,7 @@ export default class TbFlot {
                         "default": 3
                     },
                     "tooltipValueFormatter": {
-                        "title": "Tooltip value format function, f(value)",
+                        "title": "Tooltip value format function, f(value, ctx, index, time)",
                         "type": "string",
                         "default": ""
                     },
