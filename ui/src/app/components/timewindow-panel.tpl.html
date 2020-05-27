@@ -19,60 +19,80 @@
 	<fieldset ng-disabled="$root.loading">
 		<md-content style="height: 100%" flex layout="column">
 			<section layout="column">
-				<md-tabs ng-class="{'tb-headless': vm.historyOnly}" md-dynamic-height md-selected="vm.timewindow.selectedTab" md-border-bottom>
+				<md-tabs ng-class="{'tb-headless': vm.historyOnly}" md-dynamic-height md-selected="vm.timewindow.selectedTab" md-border-bottom
+						 ng-hide="!vm.isEdit && (vm.timewindow.hideInterval || vm.timewindow.useDashboardInterval)">
 					<md-tab label="{{ 'timewindow.realtime' | translate }}">
 						<md-content class="md-padding" layout="column">
-							<tb-timeinterval hide-flag="vm.timewindow.hideInterval" predefined-name="'timewindow.last'"
-								is-edit="vm.isEdit" ng-required="vm.timewindow.selectedTab === 0"
+							<tb-timeinterval hide-flag="vm.timewindow.hideInterval" from-dashboard-flag="vm.timewindow.useDashboardInterval"
+								is-toolbar="vm.isToolbar" predefined-name="'timewindow.last'" is-edit="vm.isEdit" ng-required="vm.timewindow.selectedTab === 0"
 								ng-model="vm.timewindow.realtime.timewindowMs" style="padding-top: 8px;"></tb-timeinterval>
 						</md-content>
 					</md-tab>
 					<md-tab label="{{ 'timewindow.history' | translate }}">
-						<section layout="row">
-							<section layout="column" class="md-padding" style="padding-top: 8px;">
-								<label ng-if="vm.isEdit" class="tb-small advanced-label" translate>timewindow.hide</label>
-								<md-checkbox ng-if="vm.isEdit" aria-label="{{ 'timewindow.hide' | translate }}"
-											 ng-model="vm.timewindow.hideInterval">
-								</md-checkbox>
+							<section layout="row">
+								<section layout="column" class="md-padding" layout-align="none center" ng-show="vm.isEdit"
+										 style="padding-right: 10px; padding-top: 8px;">
+									<label class="tb-small advanced-label" translate>timewindow.hide</label>
+									<md-checkbox aria-label="{{ 'timewindow.hide' | translate }}"
+												 ng-model="vm.timewindow.hideInterval" >
+									</md-checkbox>
+								</section>
+								<section layout="column" layout-align="none center" ng-show="vm.isEdit && !vm.isToolbar"
+										 style="padding-right: 10px; padding-top: 8px;">
+									<label class="tb-small advanced-label" translate>timewindow.from-dashboard</label>
+									<md-checkbox aria-label="{{ 'timewindow.from-dashboard' | translate }}"
+												 ng-model="vm.timewindow.useDashboardInterval">
+									</md-checkbox>
+								</section>
+								<section layout="column" flex>
+									<md-content class="md-padding" layout="column" style="padding-top: 8px;">
+										<md-radio-group ng-disabled="vm.timewindow.hideInterval || vm.timewindow.useDashboardInterval"
+														ng-model="vm.timewindow.history.historyType" class="md-primary">
+											<md-radio-button ng-value=0 aria-label="{{ 'timewindow.last' | translate }}"
+															 class="md-primary md-align-top-left md-radio-interactive">
+												<section layout="column">
+													<tb-timeinterval predefined-name="'timewindow.last'"
+														ng-required="vm.timewindow.selectedTab === 1 && vm.timewindow.history.historyType === 0"
+														ng-show="vm.timewindow.history.historyType === 0"
+														ng-model="vm.timewindow.history.timewindowMs" style="padding-top: 8px;"></tb-timeinterval>
+												</section>
+											</md-radio-button>
+											<md-radio-button ng-value=1 aria-label="{{ 'timewindow.time-period' | translate }}"
+															 class="md-primary md-align-top-left md-radio-interactive">
+												<section layout="column">
+													<span translate>timewindow.time-period</span>
+													<tb-datetime-period
+															ng-required="vm.timewindow.selectedTab === 1 && vm.timewindow.history.historyType === 1"
+															ng-show="vm.timewindow.history.historyType === 1"
+															ng-model="vm.timewindow.history.fixedTimewindow" style="padding-top: 8px;"></tb-datetime-period>
+												</section>
+											</md-radio-button>
+										</md-radio-group>
+									</md-content>
+								</section>
 							</section>
-							<section layout="column" flex ng-show="vm.isEdit || !vm.timewindow.hideInterval">
-								<md-content class="md-padding" layout="column" style="padding-top: 8px;">
-									<md-radio-group ng-disabled="vm.timewindow.hideInterval" ng-model="vm.timewindow.history.historyType" class="md-primary">
-										<md-radio-button ng-value=0 aria-label="{{ 'timewindow.last' | translate }}" class="md-primary md-align-top-left md-radio-interactive">
-											<section layout="column">
-												<tb-timeinterval predefined-name="'timewindow.last'"
-													ng-required="vm.timewindow.selectedTab === 1 && vm.timewindow.history.historyType === 0"
-													ng-show="vm.timewindow.history.historyType === 0"
-													ng-model="vm.timewindow.history.timewindowMs" style="padding-top: 8px;"></tb-timeinterval>
-											</section>
-										</md-radio-button>
-										<md-radio-button ng-value=1 aria-label="{{ 'timewindow.time-period' | translate }}" class="md-primary md-align-top-left md-radio-interactive">
-											<section layout="column">
-												<span translate>timewindow.time-period</span>
-												<tb-datetime-period
-														ng-required="vm.timewindow.selectedTab === 1 && vm.timewindow.history.historyType === 1"
-														ng-show="vm.timewindow.history.historyType === 1"
-														ng-model="vm.timewindow.history.fixedTimewindow" style="padding-top: 8px;"></tb-datetime-period>
-											</section>
-										</md-radio-button>
-									</md-radio-group>
-								</md-content>
-							</section>
-						</section>
 					</md-tab>
 				</md-tabs>
-				<md-content ng-if="vm.aggregation" class="md-padding" layout="column">
+				<md-content ng-if="vm.aggregation" class="md-padding" layout="column"
+							ng-style="(vm.timewindow.hideInterval || vm.timewindow.useDashboardInterval) ? {'padding-top':'8px'} : {}">
 					<section layout="row">
-						<section layout="column" style="padding-top: 5px;" ng-show="vm.isEdit">
+						<section layout="column" layout-align="none center" ng-show="vm.isEdit" style="padding-right: 10px; padding-top: 5px;">
 							<label class="tb-small advanced-label" translate>timewindow.hide</label>
 							<md-checkbox aria-label="{{ 'timewindow.hide' | translate }}"
-										 ng-model="vm.timewindow.hideAggregation">
+										 ng-model="vm.timewindow.hideAggregation" >
 							</md-checkbox>
 						</section>
-						<section layout="column" flex ng-show="vm.isEdit || !vm.timewindow.hideAggregation">
+						<section layout="column" layout-align="none center" ng-show="vm.isEdit && !vm.isToolbar" style="padding-right: 10px; padding-top: 5px;">
+							<label class="tb-small advanced-label" translate>timewindow.from-dashboard</label>
+							<md-checkbox aria-label="{{ 'timewindow.from-dashboard' | translate }}"
+										 ng-model="vm.timewindow.useDashboardAggregation">
+							</md-checkbox>
+						</section>
+						<section layout="column" flex ng-show="vm.isEdit || (!vm.timewindow.hideAggregation && !vm.timewindow.useDashboardAggregation)">
 							<md-input-container>
 								<label translate>aggregation.function</label>
-								<md-select ng-disabled="vm.timewindow.hideAggregation" ng-model="vm.timewindow.aggregation.type" style="min-width: 150px;">
+								<md-select ng-disabled="vm.timewindow.hideAggregation || vm.timewindow.useDashboardAggregation"
+										   ng-model="vm.timewindow.aggregation.type" style="min-width: 150px;">
 									<md-option ng-repeat="type in vm.aggregationTypes" ng-value="type.value">
 										{{type.name | translate}}
 									</md-option>
@@ -80,35 +100,53 @@
 							</md-input-container>
 						</section>
 					</section>
-					<section layout="row" ng-show="vm.showLimit()">
-						<section layout="column" style="padding-top: 5px;" ng-show="vm.showLimit() && vm.isEdit">
+					<section layout="row" flex ng-show="vm.showLimit()">
+						<section layout="column" layout-align="none center" ng-show="vm.isEdit" style="padding-right: 95px; padding-top: 5px;">
 							<label class="tb-small advanced-label" translate>timewindow.hide</label>
 							<md-checkbox aria-label="{{ 'timewindow.hide' | translate }}"
 										 ng-model="vm.timewindow.hideAggInterval" >
 							</md-checkbox>
 						</section>
-						<section layout="column" flex ng-show="vm.isEdit || !vm.timewindow.hideAggInterval">
-							<md-slider-container>
-								<span translate>aggregation.limit</span>
-								<md-slider flex min="{{vm.minDatapointsLimit()}}" max="{{vm.maxDatapointsLimit()}}" step="1"
-										   ng-disabled="vm.timewindow.hideAggInterval" ng-model="vm.timewindow.aggregation.limit" aria-label="limit" id="limit-slider">
-								</md-slider>
-								<md-input-container style="max-width: 80px;">
-									<input flex type="number" step="1" ng-disabled="vm.timewindow.hideAggInterval"
-										   min="{{vm.minDatapointsLimit()}}" max="{{vm.maxDatapointsLimit()}}"
-										   ng-model="vm.timewindow.aggregation.limit" aria-label="limit" aria-controls="limit-slider">
-								</md-input-container>
-							</md-slider-container>
-						</section>
+						<md-slider-container ng-show="vm.isEdit || !vm.timewindow.hideAggInterval">
+							<span translate>aggregation.limit</span>
+							<md-slider flex min="{{vm.minDatapointsLimit()}}" max="{{vm.maxDatapointsLimit()}}" step="1"
+									   ng-disabled="vm.timewindow.hideAggInterval"
+									   ng-model="vm.timewindow.aggregation.limit" aria-label="limit" id="limit-slider">
+							</md-slider>
+							<md-input-container style="max-width: 80px;">
+								<input flex type="number" step="1" ng-disabled="vm.timewindow.hideAggInterval"
+									   min="{{vm.minDatapointsLimit()}}" max="{{vm.maxDatapointsLimit()}}"
+									   ng-model="vm.timewindow.aggregation.limit" aria-label="limit" aria-controls="limit-slider">
+							</md-input-container>
+						</md-slider-container>
 					</section>
-					<tb-timeinterval ng-if="vm.showRealtimeAggInterval()" min="vm.minRealtimeAggInterval()"
-									 max="vm.maxRealtimeAggInterval()" ng-model="vm.timewindow.realtime.interval" is-edit="vm.isEdit"
-									 hide-flag="vm.timewindow.hideAggInterval" predefined-name="'aggregation.group-interval'">
-					</tb-timeinterval>
-					<tb-timeinterval ng-if="vm.showHistoryAggInterval()" min="vm.minHistoryAggInterval()"
-									 max="vm.maxHistoryAggInterval()" ng-model="vm.timewindow.history.interval" is-edit="vm.isEdit"
-									 hide-flag="vm.timewindow.hideAggInterval" predefined-name="'aggregation.group-interval'">
-					</tb-timeinterval>
+					<section flex ng-show="!vm.showLimit() && (vm.isEdit || !vm.timewindow.hideAggInterval)" >
+						<label class="tb-small advanced-label" ng-if="vm.isEdit" translate>aggregation.group-type</label>
+						<md-radio-group layout="row" flex ng-if="vm.isEdit" ng-model="vm.timewindow.useTimeRatio" class="md-primary"
+										style="margin-top:10px;margin-bottom:10px;">
+							<md-radio-button ng-value="false" class="md-primary">
+								<span translate>aggregation.interval</span>
+							</md-radio-button>
+							<md-radio-button ng-value="true" class="md-primary">
+								<span translate>aggregation.ratio</span>
+							</md-radio-button>
+						</md-radio-group>
+						<tb-timeinterval ng-if="vm.showRealtimeAggInterval() && !vm.timewindow.useTimeRatio" min="vm.minRealtimeAggInterval()"
+										 max="vm.maxRealtimeAggInterval()" ng-model="vm.timewindow.realtime.interval" is-edit="vm.isEdit"
+										 hide-flag="vm.timewindow.hideAggInterval" from-dashboard-flag="vm.timewindow.useDashboardAggInterval"
+										 is-toolbar="vm.isToolbar" predefined-name="'aggregation.group-interval'">
+						</tb-timeinterval>
+						<tb-timeinterval ng-if="vm.showHistoryAggInterval() && !vm.timewindow.useTimeRatio" min="vm.minHistoryAggInterval()"
+										 max="vm.maxHistoryAggInterval()" ng-model="vm.timewindow.history.interval" is-edit="vm.isEdit"
+										 hide-flag="vm.timewindow.hideAggInterval" from-dashboard-flag="vm.timewindow.useDashboardAggInterval"
+										 is-toolbar="vm.isToolbar" predefined-name="'aggregation.group-interval'">
+						</tb-timeinterval>
+						<tb-timeratio ng-if="vm.timewindow.useTimeRatio" min="vm.minTimeRatioLimit()" max="vm.maxTimeRatioLimit()"
+									  ng-model="vm.timewindow.aggregation.ratio" is-edit="vm.isEdit" hide-flag="vm.timewindow.hideAggInterval"
+									  from-dashboard-flag="vm.timewindow.useDashboardAggInterval" is-toolbar="vm.isToolbar"
+									  predefined-name="'aggregation.values'" form="theForm">
+						</tb-timeratio>
+					</section>
 				</md-content>
 			</section>
 			<span flex></span>

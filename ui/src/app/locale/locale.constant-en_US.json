@@ -63,7 +63,11 @@
         "avg": "Average",
         "sum": "Sum",
         "count": "Count",
-        "none": "None"
+        "none": "None",
+        "ratio": "Ratio",
+        "interval": "Interval",
+        "group-type": "Grouping type",
+        "values": "Number of values"
     },
     "admin": {
         "general": "General",
@@ -1561,7 +1565,8 @@
         "date-range": "Date range",
         "last": "Last",
         "time-period": "Time period",
-        "hide": "Hide"
+        "hide": "Hide",
+        "from-dashboard": "From dashboard"
     },
     "user": {
         "user": "User",

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function TimewindowPanelController(mdPanelRef, $scope, timeService, types, timewindow, historyOnly, aggregation, isEdit, onTimewindowUpdate) {
+export default function TimewindowPanelController(mdPanelRef, $scope, timeService, types, timewindow, historyOnly, aggregation, isEdit, isToolbar, onTimewindowUpdate) {
 
     var vm = this;
 
@@ -32,8 +32,11 @@ export default function TimewindowPanelController(mdPanelRef, $scope, timeServic
     vm.minHistoryAggInterval = minHistoryAggInterval;
     vm.maxHistoryAggInterval = maxHistoryAggInterval;
     vm.minDatapointsLimit = minDatapointsLimit;
-    vm.maxDatapointsLimit = maxDatapointsLimit;
+    vm.maxDatapointsLimit = maxDatapointsLimit;    
+    vm.minTimeRatioLimit = minTimeRatioLimit;
+    vm.maxTimeRatioLimit = maxTimeRatioLimit;
     vm.isEdit = isEdit;
+    vm.isToolbar = isToolbar;
 
     if (vm.historyOnly) {
         vm.timewindow.selectedTab = 1;
@@ -95,6 +98,14 @@ export default function TimewindowPanelController(mdPanelRef, $scope, timeServic
 
     function maxDatapointsLimit () {
         return timeService.getMaxDatapointsLimit();
+    }
+
+    function minTimeRatioLimit () {
+        return timeService.getMinTimeRatioLimit();
+    }
+
+    function maxTimeRatioLimit () {
+        return timeService.getMaxTimeRatioLimit();
     }
 
     function currentHistoryTimewindow() {

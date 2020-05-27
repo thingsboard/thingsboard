@@ -16,9 +16,14 @@
 
 -->
 <section layout="row">
-	<section layout="column" layout-align=" none" ng-show="isEdit">
+	<section layout="column" layout-align="none center" ng-show="isEdit" style="padding-right: 10px;">
 		<label class="tb-small advanced-label" translate>timewindow.hide</label>
 		<md-checkbox aria-label="{{ 'timewindow.hide' | translate }}" ng-model="hideFlag">
+		</md-checkbox>
+	</section>
+	<section layout="column" layout-align="none center" ng-show="isEdit && !isToolbar" style="padding-right: 10px;">
+		<label class="tb-small advanced-label" translate>timewindow.from-dashboard</label>
+		<md-checkbox aria-label="{{ 'timewindow.from-dashboard' | translate }}" ng-model="fromDashboardFlag">
 		</md-checkbox>
 	</section>
 	<section layout="column" flex ng-show="advanced && (isEdit || !hideFlag)">
@@ -26,26 +31,26 @@
 		<section layout="row" layout-align="start start" flex>
 			<md-input-container>
 				 <label translate>timeinterval.days</label>
-				 <input type="number" ng-model="days" step="1" aria-label="{{ 'timeinterval.days' | translate }}">
+				 <input ng-disabled="hideFlag || fromDashboardFlag" type="number" ng-model="days" step="1" aria-label="{{ 'timeinterval.days' | translate }}">
 			</md-input-container>
 			<md-input-container>
 				 <label translate>timeinterval.hours</label>
-				 <input ng-disabled="hideFlag" type="number" ng-model="hours" step="1" aria-label="{{ 'timeinterval.hours' | translate }}">
+				 <input ng-disabled="hideFlag || fromDashboardFlag" type="number" ng-model="hours" step="1" aria-label="{{ 'timeinterval.hours' | translate }}">
 			</md-input-container>
 			<md-input-container>
 				 <label translate>timeinterval.minutes</label>
-				 <input type="number" ng-model="mins" step="1" aria-label="{{ 'timeinterval.minutes' | translate }}">
+				 <input ng-disabled="hideFlag || fromDashboardFlag" type="number" ng-model="mins" step="1" aria-label="{{ 'timeinterval.minutes' | translate }}">
 			</md-input-container>
 			<md-input-container>
 				 <label translate>timeinterval.seconds</label>
-				 <input ng-disabled="hideFlag" type="number" ng-model="secs" step="1" aria-label="{{ 'timeinterval.seconds' | translate }}">
+				 <input ng-disabled="hideFlag || fromDashboardFlag" type="number" ng-model="secs" step="1" aria-label="{{ 'timeinterval.seconds' | translate }}">
 			</md-input-container>
 		</section>
 	</section>
 	<section layout="row" flex ng-show="!advanced && (isEdit || !hideFlag)">
 		<md-input-container flex>
 			<label translate>{{ predefinedName }}</label>
-			<md-select ng-disabled="hideFlag" ng-model="intervalMs" style="min-width: 150px;" aria-label="predefined-interval">
+			<md-select ng-disabled="hideFlag || fromDashboardFlag" ng-model="intervalMs" style="min-width: 150px;" aria-label="predefined-interval">
 				<md-option ng-repeat="interval in intervals" ng-value="interval.value">
 					{{interval.name}}
 				</md-option>
@@ -54,7 +59,7 @@
 	</section>
 	<section layout="column" layout-align="center center" ng-show="(isEdit || !hideFlag)">
 		<label class="tb-small advanced-label" translate>timeinterval.advanced</label>
-		<md-switch ng-disabled="hideFlag" class="advanced-switch" ng-model="advanced" aria-label="predefined-switcher">
+		<md-switch ng-disabled="hideFlag || fromDashboardFlag" class="advanced-switch" ng-model="advanced" aria-label="predefined-switcher">
 		</md-switch>
 	</section>
 </section>

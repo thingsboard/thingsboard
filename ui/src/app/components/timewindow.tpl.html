@@ -15,23 +15,29 @@
     limitations under the License.
 
 -->
-<section class="tb-timewindow" layout='row' layout-align="start center">
+<section class="tb-timewindow" layout='row' layout-align="start center"
+         ng-hide="!isEdit && (model.hideInterval || model.useDashboardInterval) &&
+                  (model.hideAggInterval || model.useDashboardAggInterval) &&
+                  (model.hideAggregation || model.useDashboardAggregation)">
     <md-button ng-if="direction === 'left'" ng-disabled="timewindowDisabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
-            {{ 'timewindow.edit' | translate }}
+            {{ ((model.hideInterval || model.useDashboardInterval) && !model.hideAggregation) ? 'timewindow.edit-aggregation' : 'timewindow.edit' | translate }}
         </md-tooltip>
-        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="query_builder"></ng-md-icon>
+        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="{{ ((model.hideInterval || model.useDashboardInterval) && !model.hideAggregation) ? 'functions' : 'query_builder' }}"></ng-md-icon>
     </md-button>
-    <span ng-hide="hideLabel()" ng-click="openEditMode($event)">
+    <span ng-hide="hideLabel() || 
+                  ((model.hideInterval || model.useDashboardInterval) && 
+                   (model.hideAggregation || model.useDashboardAggregation))"
+                  ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
-            {{ 'timewindow.edit' | translate }}
+            {{ ((model.hideInterval || model.useDashboardInterval) && !model.hideAggregation) ? 'timewindow.edit-aggregation' : 'timewindow.edit' | translate }}
         </md-tooltip>
         {{model.displayValue}}
     </span>
     <md-button ng-if="direction === 'right'" ng-disabled="timewindowDisabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
-            {{ 'timewindow.edit' | translate }}
+            {{ ((model.hideInterval || model.useDashboardInterval) && !model.hideAggregation) ? 'timewindow.edit-aggregation' : 'timewindow.edit' | translate }}
         </md-tooltip>
-        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="query_builder"></ng-md-icon>
+        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="{{ ((model.hideInterval || model.useDashboardInterval) && !model.hideAggregation) ? 'functions' : 'query_builder' }}"></ng-md-icon>
     </md-button>
 </section>

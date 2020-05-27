@@ -61,7 +61,11 @@
         "avg": "Media",
         "sum": "Somma",
         "count": "Conteggio",
-        "none": "Nessuna"
+        "none": "Nessuna",
+        "ratio": "Rapporto",
+        "interval": "Intervallo",
+        "group-type": "Tipo di raggruppamento",
+        "values": "Numero di valori"
     },
     "admin": {
         "general": "Generale",
@@ -1383,7 +1387,8 @@
         "date-range": "Intervallo date",
         "last": "Ultimo",
         "time-period": "Intervallo temporale",
-        "hide": "Nascondi"
+        "hide": "Nascondi",
+        "from-dashboard": "Da dashboard"
     },
     "user": {
         "user": "Utente",

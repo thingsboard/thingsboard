@@ -17,6 +17,7 @@ import './timewindow.scss';
 
 import $ from 'jquery';
 import thingsboardTimeinterval from './timeinterval.directive';
+import thingsboardTimeratio from './timeratio.directive';
 import thingsboardDatetimePeriod from './datetime-period.directive';
 
 /* eslint-disable import/no-unresolved, import/default */
@@ -29,7 +30,7 @@ import timewindowPanelTemplate from './timewindow-panel.tpl.html';
 
 import TimewindowPanelController from './timewindow-panel.controller';
 
-export default angular.module('thingsboard.directives.timewindow', [thingsboardTimeinterval, thingsboardDatetimePeriod])
+export default angular.module('thingsboard.directives.timewindow', [thingsboardTimeinterval, thingsboardTimeratio, thingsboardDatetimePeriod])
     .controller('TimewindowPanelController', TimewindowPanelController)
     .directive('tbTimewindow', Timewindow)
     .filter('milliSecondsToTimeString', MillisecondsToTimeString)
@@ -46,6 +47,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
          *    hideInterval: false,
          *    hideAggregation: false,
          *    hideAggInterval: false,
+         *    useDashboardInterval: false,
+         *    useDashboardAggregation: false,
+         *    useDashboardAggInterval: false,
+         *    useTimeRatio: false,
          * 	  realtime: {
          * 	        interval: 0,
          * 			timewindowMs: 0
@@ -60,7 +65,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
          * 	  },
          * 	  aggregation: {
          * 	        type: types.aggregation.avg.value,
-         * 	        limit: 200
+         * 	        limit: 200,
+         *          ratio: 1
          * 	  }
          * }
          */
@@ -142,6 +148,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                     'historyOnly': scope.historyOnly,
                     'aggregation': scope.aggregation,                    
                     'isEdit': scope.isEdit,
+                    'isToolbar': scope.isToolbar,
                     'onTimewindowUpdate': function (timewindow) {
                         scope.model = timewindow;
                         scope.updateView();
@@ -181,11 +188,16 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             }
             value.aggregation = {
                 type: model.aggregation.type,
-                limit: model.aggregation.limit
+                limit: model.aggregation.limit,
+                ratio: model.aggregation.ratio
             };            
             value.hideInterval = model.hideInterval;
             value.hideAggregation = model.hideAggregation;
             value.hideAggInterval = model.hideAggInterval;
+            value.useDashboardInterval = model.useDashboardInterval;
+            value.useDashboardAggregation = model.useDashboardAggregation;
+            value.useDashboardAggInterval = model.useDashboardAggInterval;
+            value.useTimeRatio = model.useTimeRatio;
             ngModelCtrl.$setViewValue(value);
             scope.updateDisplayValue();
         }
@@ -242,10 +254,15 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                         model.aggregation.type = value.aggregation.type;
                     }
                     model.aggregation.limit = value.aggregation.limit || Math.floor(timeService.getMaxDatapointsLimit() / 2);
+                    model.aggregation.ratio = value.aggregation.ratio || timeService.getMinTimeRatioLimit();
                 }
                 model.hideInterval = value.hideInterval;
                 model.hideAggregation = value.hideAggregation;
                 model.hideAggInterval = value.hideAggInterval;
+                model.useDashboardInterval = value.useDashboardInterval;
+                model.useDashboardAggregation = value.useDashboardAggregation;
+                model.useDashboardAggInterval = value.useDashboardAggInterval;
+                model.useTimeRatio = value.useTimeRatio;
             }
             scope.timewindowDisabled = isTimewindowDisabled();
             scope.updateDisplayValue();

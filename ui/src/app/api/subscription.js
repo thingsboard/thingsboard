@@ -89,7 +89,44 @@ export default class Subscription {
 
             if (this.useDashboardTimewindow) {
                 this.timeWindowConfig = angular.copy(options.dashboardTimewindow);
-            } else {
+            } else if (angular.isDefined(options.timeWindowConfig)) {
+                var dashboardAggInterval = null,
+                    newAggRatio = null;
+                if (options.timeWindowConfig.useDashboardAggregation) {
+                    newAggRatio = options.timeWindowConfig.aggregation.ratio;
+                    options.timeWindowConfig.aggregation = angular.copy(options.dashboardTimewindow.aggregation);
+                }
+                if (options.timeWindowConfig.useDashboardInterval) {
+                    dashboardAggInterval = angular.isDefined(options.timeWindowConfig.realtime) ?
+                            options.timeWindowConfig.realtime.interval : options.timeWindowConfig.history.interval;
+                    if (angular.isDefined(options.dashboardTimewindow.realtime)) {
+                        options.timeWindowConfig.realtime = angular.copy(options.dashboardTimewindow.realtime);
+                        delete options.timeWindowConfig.history;
+                    }
+                    else if (angular.isDefined(options.dashboardTimewindow.history)) {
+                        options.timeWindowConfig.history = angular.copy(options.dashboardTimewindow.history);
+                        delete options.timeWindowConfig.realtime;
+                    }
+                }
+                if (options.timeWindowConfig.useDashboardAggInterval) {
+                    options.timeWindowConfig.useTimeRatio = options.dashboardTimewindow.useTimeRatio;
+                    if (options.timeWindowConfig.useTimeRatio) {
+                        newAggRatio = options.dashboardTimewindow.aggregation.ratio;
+                    } else {
+                        dashboardAggInterval = angular.isDefined(options.dashboardTimewindow.realtime) ?
+                                options.dashboardTimewindow.realtime.interval : options.dashboardTimewindow.history.interval;
+                    }
+                }
+                if (newAggRatio) {
+                    options.timeWindowConfig.aggregation.ratio = newAggRatio;
+                }
+                if (dashboardAggInterval) {
+                    if (angular.isDefined(options.timeWindowConfig.realtime)) {
+                        options.timeWindowConfig.realtime.interval = dashboardAggInterval;
+                    } else if (angular.isDefined(options.timeWindowConfig.history)) {
+                        options.timeWindowConfig.history.interval = dashboardAggInterval;
+                    }
+                }
                 this.timeWindowConfig = angular.copy(options.timeWindowConfig);
             }
 
@@ -131,7 +168,44 @@ export default class Subscription {
             this.stateData = options.stateData;
             if (this.useDashboardTimewindow) {
                 this.timeWindowConfig = angular.copy(options.dashboardTimewindow);
-            } else {
+            } else if (angular.isDefined(options.timeWindowConfig)) {
+                dashboardAggInterval = null;
+                newAggRatio = null;
+                if (options.timeWindowConfig.useDashboardAggregation) {
+                    newAggRatio = options.timeWindowConfig.aggregation.ratio;
+                    options.timeWindowConfig.aggregation = angular.copy(options.dashboardTimewindow.aggregation);
+                }
+                if (options.timeWindowConfig.useDashboardInterval) {
+                    dashboardAggInterval = angular.isDefined(options.timeWindowConfig.realtime) ?
+                            options.timeWindowConfig.realtime.interval : options.timeWindowConfig.history.interval;
+                    if (angular.isDefined(options.dashboardTimewindow.realtime)) {
+                        options.timeWindowConfig.realtime = angular.copy(options.dashboardTimewindow.realtime);
+                        delete options.timeWindowConfig.history;
+                    }
+                    else if (angular.isDefined(options.dashboardTimewindow.history)) {
+                        options.timeWindowConfig.history = angular.copy(options.dashboardTimewindow.history);
+                        delete options.timeWindowConfig.realtime;
+                    }
+                }
+                if (options.timeWindowConfig.useDashboardAggInterval) {
+                    options.timeWindowConfig.useTimeRatio = options.dashboardTimewindow.useTimeRatio;
+                    if (options.timeWindowConfig.useTimeRatio) {
+                        newAggRatio = options.dashboardTimewindow.aggregation.ratio;
+                    } else {
+                        dashboardAggInterval = angular.isDefined(options.dashboardTimewindow.realtime) ?
+                                options.dashboardTimewindow.realtime.interval : options.dashboardTimewindow.history.interval;
+                    }
+                }
+                if (newAggRatio) {
+                    options.timeWindowConfig.aggregation.ratio = newAggRatio;
+                }
+                if (dashboardAggInterval) {
+                    if (angular.isDefined(options.timeWindowConfig.realtime)) {
+                        options.timeWindowConfig.realtime.interval = dashboardAggInterval;
+                    } else if (angular.isDefined(options.timeWindowConfig.history)) {
+                        options.timeWindowConfig.history.interval = dashboardAggInterval;
+                    }
+                }
                 this.timeWindowConfig = angular.copy(options.timeWindowConfig);
             }
 
@@ -443,8 +517,53 @@ export default class Subscription {
                     }
                 });
                 this.registrations.push(registration);
+            } else if (this.timeWindowConfig.useDashboardAggregation || this.timeWindowConfig.useDashboardAggInterval ||
+                    this.timeWindowConfig.useDashboardInterval) {
+                registration = this.ctx.$scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
+                    subscription.updateFromDashboardTimewindow(subscription, newDashboardTimewindow);
+                });
+                this.registrations.push(registration);
+                this.startWatchingTimewindow();
             } else {
                 this.startWatchingTimewindow();
+            }
+        }
+    }
+
+    updateFromDashboardTimewindow(subscription, newDashboardTimewindow) {
+        if (newDashboardTimewindow) {
+            var prevTimewindow = angular.isDefined(subscription.timeWindowConfig.realtime) ?
+                    angular.copy(subscription.timeWindowConfig.realtime) : angular.copy(subscription.timeWindowConfig.history);
+            var newTimewindow = angular.isDefined(newDashboardTimewindow.realtime) ?
+                    angular.copy(newDashboardTimewindow.realtime) : angular.copy(newDashboardTimewindow.history);
+            var dashboardAggInterval = prevTimewindow.interval,
+                newAggRatio = subscription.timeWindowConfig.aggregation.ratio;
+            if (subscription.timeWindowConfig.useDashboardAggregation) {
+                subscription.timeWindowConfig.aggregation = angular.copy(newDashboardTimewindow.aggregation);
+            }
+            if (subscription.timeWindowConfig.useDashboardInterval) {
+                if (angular.isDefined(newDashboardTimewindow.realtime)) {
+                    subscription.timeWindowConfig.realtime = angular.copy(newDashboardTimewindow.realtime);
+                    delete subscription.timeWindowConfig.history;
+                }
+                else if (angular.isDefined(newDashboardTimewindow.history)) {
+                    subscription.timeWindowConfig.history = angular.copy(newDashboardTimewindow.history);
+                    delete subscription.timeWindowConfig.realtime;
+                }
+            }
+            if (subscription.timeWindowConfig.useDashboardAggInterval) {
+                subscription.timeWindowConfig.useTimeRatio = newDashboardTimewindow.useTimeRatio;
+                if (subscription.timeWindowConfig.useTimeRatio) {
+                    newAggRatio = newDashboardTimewindow.aggregation.ratio;
+                } else {
+                    dashboardAggInterval = newTimewindow.interval;
+                }
+            }
+            subscription.timeWindowConfig.aggregation.ratio = newAggRatio;
+            if (angular.isDefined(subscription.timeWindowConfig.realtime)) {
+                subscription.timeWindowConfig.realtime.interval = dashboardAggInterval;
+            } else if (angular.isDefined(subscription.timeWindowConfig.history)) {
+                subscription.timeWindowConfig.history.interval = dashboardAggInterval;
             }
         }
     }
@@ -664,6 +783,43 @@ export default class Subscription {
     }
 
     updateTimewindowConfig(newTimewindow) {
+        var dashboardAggInterval = null,
+            newAggRatio = null;
+        if (this.timeWindowConfig.useDashboardAggregation) {
+            newAggRatio = newTimewindow.aggregation.ratio;
+            newTimewindow.aggregation = angular.copy(this.timeWindowConfig.aggregation);
+        }
+        if (this.timeWindowConfig.useDashboardInterval) {
+            dashboardAggInterval = angular.isDefined(newTimewindow.realtime) ?
+                    newTimewindow.realtime.interval : newTimewindow.history.interval;
+            if (angular.isDefined(this.timeWindowConfig.realtime)) {
+                newTimewindow.realtime = angular.copy(this.timeWindowConfig.realtime);
+                delete newTimewindow.history;
+            }
+            else if (angular.isDefined(this.timeWindowConfig.history)) {
+                newTimewindow.history = angular.copy(this.timeWindowConfig.history);
+                delete newTimewindow.realtime;
+            }
+        }
+        if (this.timeWindowConfig.useDashboardAggInterval) {
+            newTimewindow.useTimeRatio = this.timeWindowConfig.useTimeRatio;
+            if (this.timeWindowConfig.useTimeRatio) {
+                newAggRatio = this.timeWindowConfig.aggregation.ratio;
+            } else {
+                dashboardAggInterval = angular.isDefined(this.timeWindowConfig.realtime) ?
+                        this.timeWindowConfig.realtime.interval : this.timeWindowConfig.history.interval;
+            }
+        }
+        if (newAggRatio) {
+            newTimewindow.aggregation.ratio = newAggRatio;
+        }
+        if (dashboardAggInterval) {
+            if (angular.isDefined(newTimewindow.realtime)) {
+                newTimewindow.realtime.interval = dashboardAggInterval;
+            } else if (angular.isDefined(newTimewindow.history)) {
+                newTimewindow.history.interval = dashboardAggInterval;
+            }
+        }
         this.timeWindowConfig = newTimewindow;
     }
 

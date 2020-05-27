@@ -25,9 +25,9 @@ const DAY = 24 * HOUR;
 const MIN_INTERVAL = SECOND;
 const MAX_INTERVAL = 365 * 20 * DAY;
 
-const MIN_LIMIT = 10;
+const MIN_LIMIT = 1;
 //const AVG_LIMIT = 200;
-//const MAX_LIMIT = 500;
+const MAX_LIMIT = 500;
 
 /*@ngInject*/
 function TimeService($translate, $http, $q, types) {
@@ -53,7 +53,14 @@ function TimeService($translate, $http, $q, types) {
         },
         getMinDatapointsLimit: function () {
             return MIN_LIMIT;
+        },
+        getMaxTimeRatioLimit: function () {
+            return MAX_LIMIT;
+        },
+        getMinTimeRatioLimit: function () {
+            return MIN_LIMIT;
         }
+
     }
 
     return service;
@@ -74,7 +81,7 @@ function TimeService($translate, $http, $q, types) {
     }
 
     function minIntervalLimit(timewindow) {
-        var min = timewindow / 500;
+        var min = timewindow / MAX_LIMIT;
         return boundMinInterval(min);
     }
 
@@ -239,6 +246,9 @@ function TimeService($translate, $http, $q, types) {
             hideInterval: false,
             hideAggregation: false,
             hideAggInterval: false,
+            useDashboardInterval: false,
+            useDashboardAggregation: false,
+            useDashboardAggInterval: false,
             realtime: {
                 interval: SECOND,
                 timewindowMs: MINUTE // 1 min by default
@@ -254,7 +264,8 @@ function TimeService($translate, $http, $q, types) {
             },
             aggregation: {
                 type: types.aggregation.avg.value,
-                limit: Math.floor(maxDatapointsLimit / 2)
+                limit: Math.floor(maxDatapointsLimit / 2),
+                ratio: MIN_LIMIT
             }
         }
         return timewindow;
@@ -284,6 +295,10 @@ function TimeService($translate, $http, $q, types) {
             hideInterval: timewindow.hideInterval || false,
             hideAggregation: timewindow.hideAggregation || false,
             hideAggInterval: timewindow.hideAggInterval || false,
+            useDashboardInterval: timewindow.useDashboardInterval || false,
+            useDashboardAggregation: timewindow.useDashboardAggregation || false,
+            useDashboardAggInterval: timewindow.useDashboardAggInterval || false,
+            useTimeRatio: false,
             history: {
                 fixedTimewindow: {
                     startTimeMs: startTimeMs,
@@ -312,6 +327,7 @@ function TimeService($translate, $http, $q, types) {
             }
         };
         var aggTimewindow = 0;
+        var interval = 0;
         if (stateData) {
             subscriptionTimewindow.aggregation = {
                 interval: SECOND,
@@ -333,10 +349,12 @@ function TimeService($translate, $http, $q, types) {
                 limit: timewindow.aggregation.limit || maxDatapointsLimit
             };
         }
-        if (angular.isDefined(timewindow.realtime)) {
+        if (angular.isDefined(timewindow.realtime)) {            
+            interval = timewindow.useTimeRatio ? (timewindow.realtime.timewindowMs / timewindow.aggregation.ratio) :
+                timewindow.realtime.interval;
             subscriptionTimewindow.realtimeWindowMs = timewindow.realtime.timewindowMs;
             subscriptionTimewindow.aggregation.interval =
-                boundIntervalToTimewindow(subscriptionTimewindow.realtimeWindowMs, timewindow.realtime.interval,
+                boundIntervalToTimewindow(subscriptionTimewindow.realtimeWindowMs, interval,
                     subscriptionTimewindow.aggregation.type);
             subscriptionTimewindow.startTs = (new Date).getTime() + stDiff - subscriptionTimewindow.realtimeWindowMs;
             var startDiff = subscriptionTimewindow.startTs % subscriptionTimewindow.aggregation.interval;
@@ -361,9 +379,11 @@ function TimeService($translate, $http, $q, types) {
                 }
                 aggTimewindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
             }
-            subscriptionTimewindow.startTs = subscriptionTimewindow.fixedWindow.startTimeMs;
+            subscriptionTimewindow.startTs = subscriptionTimewindow.fixedWindow.startTimeMs;            
+            interval = timewindow.useTimeRatio ? (aggTimewindow / timewindow.history.interval) :
+                timewindow.history.interval;
             subscriptionTimewindow.aggregation.interval =
-                boundIntervalToTimewindow(aggTimewindow, timewindow.history.interval, subscriptionTimewindow.aggregation.type);
+                boundIntervalToTimewindow(aggTimewindow, interval, subscriptionTimewindow.aggregation.type);
         }
         var aggregation = subscriptionTimewindow.aggregation;
         aggregation.timeWindow = aggTimewindow;
