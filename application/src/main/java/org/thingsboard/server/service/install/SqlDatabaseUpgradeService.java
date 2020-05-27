@@ -263,7 +263,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 "id varchar(31) NOT NULL CONSTRAINT queue_pkey PRIMARY KEY," +
                                 "tenant_id varchar(31)," +
                                 "name varchar(255)," +
-                                "topic varchar(255) UNIQUE," +
+                                "topic varchar(255)," +
                                 "poll_interval int," +
                                 "partitions int," +
                                 "pack_processing_timeout bigint," +
