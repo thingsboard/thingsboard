@@ -53,7 +53,7 @@ Execute the following command to deploy thirdparty resources:
 $ ./k8s-deploy-thirdparty.sh
 `
 
-Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time and don't configured Redis cluster.
+Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time and don't have configured Redis cluster.
 
 Execute the following command to deploy resources:
 
