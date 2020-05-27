@@ -68,6 +68,7 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
 
     vm.onNodesInserted = onNodesInserted;
     vm.onNodeSelected = onNodeSelected;
+    vm.onNodeHovered = onNodeHovered;
     vm.enterFilterMode = enterFilterMode;
     vm.exitFilterMode = exitFilterMode;
     vm.searchCallback = searchCallback;
@@ -122,6 +123,8 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         var nodeDisabledFunction = loadNodeCtxFunction(vm.settings.nodeDisabledFunction, 'nodeCtx', testNodeCtx);
         var nodeOpenedFunction = loadNodeCtxFunction(vm.settings.nodeOpenedFunction, 'nodeCtx', testNodeCtx);
         var nodeHasChildrenFunction = loadNodeCtxFunction(vm.settings.nodeHasChildrenFunction, 'nodeCtx', testNodeCtx);
+        var nodeHoveredFunction = loadNodeCtxFunction(vm.settings.nodeHoveredFunction, 'nodeCtx', testNodeCtx);
+        var nodeDeletedFunction = loadNodeCtxFunction(vm.settings.nodeDeletedFunction, 'nodeCtx', testNodeCtx);
 
         var testNodeCtx2 = angular.copy(testNodeCtx);
         testNodeCtx2.entity.name = 'TEST DEV2';
@@ -135,6 +138,8 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         vm.nodeOpenedFunction = nodeOpenedFunction || defaultNodeOpenedFunction;
         vm.nodeHasChildrenFunction = nodeHasChildrenFunction || (() => true);
         vm.nodesSortFunction = nodesSortFunction || defaultSortFunction;
+        vm.nodeHoveredFunction = nodeHoveredFunction || (() => '');
+        vm.nodeDeletedFunction = nodeDeletedFunction || (() => false);
     }
 
     function loadNodeCtxFunction(functionBody, argNames, ...args) {
@@ -218,6 +223,21 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         }
     }
 
+    function onNodeHovered(node/*, event*/) {
+        var nodeId;
+        if (!node) {
+            nodeId = -1;
+        } else {
+            nodeId = node.id;
+        }
+        if (nodeId !== -1) {
+            var selectedNode = vm.nodesMap[nodeId];
+            if (selectedNode) {
+                angular.element('#' + node.id).prop('title', vm.nodeHoveredFunction(selectedNode.data.nodeCtx));
+            }
+        }
+    }
+
     function updateNodeData(subscriptionData) {
         var affectedNodes = [];
         if (subscriptionData) {
@@ -270,6 +290,9 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         if (!angular.equals(node.children, newHasChildren)) {
             node.children = newHasChildren;
             vm.nodeEditCallbacks.setNodeHasChildren(node.id, node.children);
+        }
+        if (vm.nodeDeletedFunction(node.data.nodeCtx)) {
+            vm.nodeEditCallbacks.deleteNode(node.id);
         }
     }
 
