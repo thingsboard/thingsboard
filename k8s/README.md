@@ -53,19 +53,7 @@ Execute the following command to deploy thirdparty resources:
 $ ./k8s-deploy-thirdparty.sh
 `
 
-Get list of the running tb-redis pods and verify that all of them are in running state:
-
-`
-$ kubectl get pods -l app=tb-redis
-`
-
-If you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` execute the following command to create redis cluster:
-
-`
-$ kubectl exec -it tb-redis-0 -- redis-cli --cluster create --cluster-replicas 1 $(kubectl get pods -l app=tb-redis -o jsonpath='{range.items[*]}{.status.podIP}:6379 ')
-`
-
-Type **'yes'** when prompted.
+Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time and don't configured Redis cluster.
 
 Execute the following command to deploy resources:
 
