@@ -1,0 +1,40 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section layout="row" flex>
+	<section layout="column" layout-align="none center" ng-show="isEdit" style="padding-right: 10px;">
+		<label class="tb-small advanced-label" translate>timewindow.hide</label>
+		<md-checkbox aria-label="{{ 'timewindow.hide' | translate }}" ng-model="hideFlag">
+		</md-checkbox>
+	</section>
+	<section layout="column" layout-align="none center" ng-show="isEdit && !isToolbar" style="padding-right: 10px;">
+		<label class="tb-small advanced-label" translate>timewindow.from-dashboard</label>
+		<md-checkbox aria-label="{{ 'timewindow.from-dashboard' | translate }}" ng-model="fromDashboardFlag">
+		</md-checkbox>
+	</section>
+	<section layout="column" flex ng-show="isEdit || !hideFlag">
+		<md-input-container flex>
+			<label translate>{{ predefinedName }}</label>
+			<input type="number" step="1" ng-disabled="hideFlag || fromDashboardFlag"
+				   ng-min="min" ng-max="max" ng-model="timeRatio" aria-label="predefined-interval" aria-controls="limit-slider">
+			<div ng-messages="form.$error">
+				<div ng-message="min">Value must be greater than {{min}}</div>
+				<div ng-message="max">Value must be lower than {{max}}</div>
+			</div>
+		</md-input-container>
+	</section>
+</section>
