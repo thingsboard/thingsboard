@@ -29,11 +29,11 @@ public interface EntityProfileDao extends Dao<EntityProfile> {
 
     PageData<EntityProfile> findEntityProfilesByTenantIdAndType(TenantId tenantId, EntityType entityType, PageLink pageLink);
 
-    default EntityProfile findById(TenantId tenantId, EntityProfileId deviceId) {
-        return findById(tenantId, deviceId.getId());
+    default EntityProfile findById(TenantId tenantId, EntityProfileId entityProfileId) {
+        return findById(tenantId, entityProfileId.getId());
     }
 
-    default boolean removeById(TenantId tenantId, EntityProfileId deviceId) {
-        return removeById(tenantId, deviceId.getId());
+    default boolean removeById(TenantId tenantId, EntityProfileId entityProfileId) {
+        return removeById(tenantId, entityProfileId.getId());
     }
 }
