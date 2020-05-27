@@ -102,6 +102,12 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
 
     function save(dataToSave) {
         var tasks = [];
+        if (vm.settings.useOnSaveFunction && angular.isDefined(vm.settings.onSaveFunction)) {
+            var onSaveFunction = new Function('ctx', vm.settings.onSaveFunction);
+            if (onSaveFunction(vm.ctx) == 'skip-default') {
+                return;
+            }
+        }
         var config = {
             ignoreLoading: !vm.settings.showActionButtons
         };
