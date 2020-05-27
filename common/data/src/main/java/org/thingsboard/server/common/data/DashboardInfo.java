@@ -32,9 +32,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     private String title;
     private Set<ShortCustomerInfo> assignedCustomers;
 
-    @Getter @Setter
-    private Set<ShortEdgeInfo> assignedEdges;
-
     public DashboardInfo() {
         super();
     }
@@ -121,29 +118,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         } else {
             return false;
         }
-    }
-
-    public boolean isAssignedToEdge(EdgeId edgeId) {
-        return EdgeUtils.isAssignedToEdge(this.assignedEdges, edgeId);
-    }
-
-    public ShortEdgeInfo getAssignedEdgeInfo(EdgeId edgeId) {
-        return EdgeUtils.getAssignedEdgeInfo(this.assignedEdges, edgeId);
-    }
-
-    public boolean addAssignedEdge(Edge edge) {
-        if (this.assignedEdges == null) {
-            this.assignedEdges = new HashSet<>();
-        }
-        return EdgeUtils.addAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
-    }
-
-    public boolean updateAssignedEdge(Edge edge) {
-        return EdgeUtils.updateAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
-    }
-
-    public boolean removeAssignedEdge(Edge edge) {
-        return EdgeUtils.removeAssignedEdge(this.assignedEdges, edge.toShortEdgeInfo());
     }
 
     @Override

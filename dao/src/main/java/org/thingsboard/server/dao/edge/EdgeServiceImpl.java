@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -48,6 +49,7 @@ import org.thingsboard.server.common.data.edge.EdgeQueueEntry;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -191,9 +193,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public Edge saveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
         edgeValidator.validate(edge, Edge::getTenantId);
-        Edge savedEdge = edgeDao.save(edge.getTenantId(), edge);
-        dashboardService.updateEdgeDashboards(savedEdge.getTenantId(), savedEdge.getId());
-        return savedEdge;
+        return edgeDao.save(edge.getTenantId(), edge);
     }
 
     @Override
@@ -568,11 +568,19 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             case DataConstants.ENTITY_CREATED:
             case DataConstants.ENTITY_UPDATED:
                 Dashboard dashboard = mapper.readValue(tbMsg.getData(), Dashboard.class);
-                if (dashboard.getAssignedEdges() != null && !dashboard.getAssignedEdges().isEmpty()) {
-                    for (ShortEdgeInfo assignedEdge : dashboard.getAssignedEdges()) {
-                        pushEventToEdge(tenantId, assignedEdge.getEdgeId(), EdgeQueueEntityType.DASHBOARD, tbMsg, callback);
+                ListenableFuture<TimePageData<Edge>> future = findEdgesByTenantIdAndDashboardId(tenantId, dashboard.getId(), new TimePageLink(Integer.MAX_VALUE));
+                Futures.transform(future, edges -> {
+                    if (edges != null && edges.getData() != null && !edges.getData().isEmpty()) {
+                        try {
+                            for (Edge edge : edges.getData()) {
+                                pushEventToEdge(tenantId, edge.getId(), EdgeQueueEntityType.DASHBOARD, tbMsg, callback);
+                            }
+                        } catch (IOException e) {
+                            log.error("Can't push event to edge", e);
+                        }
                     }
-                }
+                    return null;
+                }, MoreExecutors.directExecutor());
                 break;
         }
     }
@@ -673,6 +681,24 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             }
         }, MoreExecutors.directExecutor());
     }
+
+    @Override
+    public ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndDashboardId(TenantId tenantId, DashboardId dashboardId, TimePageLink pageLink) {
+        log.trace("Executing findEdgesByTenantIdAndDashboardId, tenantId [{}], dashboardId [{}], pageLink [{}]", tenantId, dashboardId, pageLink);
+        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        ListenableFuture<List<Edge>> edges = edgeDao.findEdgesByTenantIdAndDashboardId(tenantId.getId(), dashboardId.getId(), pageLink);
+
+        return Futures.transform(edges, new Function<List<Edge>, TimePageData<Edge>>() {
+            @Nullable
+            @Override
+            public TimePageData<Edge> apply(@Nullable List<Edge> edges) {
+                return new TimePageData<>(edges, pageLink);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
 
     private DataValidator<Edge> edgeValidator =
             new DataValidator<Edge>() {

@@ -28,7 +28,6 @@ import org.hibernate.annotations.TypeDef;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
-import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -53,8 +52,6 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final JavaType assignedCustomersType =
             objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
-    private static final JavaType assignedEdgesType =
-            objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortEdgeInfo.class);
 
     @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
     private String tenantId;
@@ -67,9 +64,6 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
 
     @Column(name = ModelConstants.DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
     private String assignedCustomers;
-
-    @Column(name = ModelConstants.DASHBOARD_ASSIGNED_EDGES_PROPERTY)
-    private String assignedEdges;
 
     @Type(type = "json")
     @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY)
@@ -92,13 +86,6 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
                 this.assignedCustomers = objectMapper.writeValueAsString(dashboard.getAssignedCustomers());
             } catch (JsonProcessingException e) {
                 log.error("Unable to serialize assigned customers to string!", e);
-            }
-        }
-        if (dashboard.getAssignedEdges() != null) {
-            try {
-                this.assignedEdges = objectMapper.writeValueAsString(dashboard.getAssignedEdges());
-            } catch (JsonProcessingException e) {
-                log.error("Unable to serialize assigned edges to string!", e);
             }
         }
         this.configuration = dashboard.getConfiguration();
@@ -127,13 +114,6 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
                 dashboard.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
             } catch (IOException e) {
                 log.warn("Unable to parse assigned customers!", e);
-            }
-        }
-        if (!StringUtils.isEmpty(assignedEdges)) {
-            try {
-                dashboard.setAssignedEdges(objectMapper.readValue(assignedEdges, assignedEdgesType));
-            } catch (IOException e) {
-                log.warn("Unable to parse assigned edges!", e);
             }
         }
         dashboard.setConfiguration(configuration);

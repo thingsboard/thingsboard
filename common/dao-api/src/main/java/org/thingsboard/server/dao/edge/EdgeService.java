@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -82,6 +83,8 @@ public interface EdgeService {
     Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws IOException;
 
     ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndRuleChainId(TenantId tenantId, RuleChainId ruleChainId, TimePageLink pageLink);
+
+    ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndDashboardId(TenantId tenantId, DashboardId dashboardId, TimePageLink pageLink);
 }
 
 
