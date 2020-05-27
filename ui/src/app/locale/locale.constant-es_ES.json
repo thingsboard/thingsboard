@@ -1646,7 +1646,13 @@
         "delete-action-text": "¿Está seguro de que desea eliminar la acción del widget con nombre '{{actionName}}'?",
         "display-icon": "Mostrar icono del título",
         "icon-color": "Color del icono",
-        "icon-size": "Tamaño del icono"
+        "icon-size": "Tamaño del icono",
+        "custom-functions": "Funciones personalizadas",
+        "use-on-init-pre": "Ejecutar una función antes de la onInit()",
+        "use-on-init-post": "Ejecutar una función después de la onInit()",
+        "use-on-data-updated-pre": "Ejecutar una función antes de la onDataUpdated()",
+        "use-on-data-updated-post": "Ejecutar una función después de la onDataUpdated()",
+        "use-alarms-udpated-pre": "Ejecutar una función antes de la alarmsUpdated()"
     },
     "widget-type": {
         "import": "Importar tipo de widget",

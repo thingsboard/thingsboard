@@ -1596,7 +1596,13 @@
         "widget-style": "Style du widget",
         "display-icon": "Afficher l'icône du titre",
         "icon-color": "Couleur de l'icône",
-        "icon-size": "Taille de l'icône"
+        "icon-size": "Taille de l'icône",
+        "custom-functions": "Fonctions personnalisées",
+        "use-on-init-pre": "Exécuter une fonction avant la onInit()",
+        "use-on-init-post": "Exécuter une fonction après la onInit()",
+        "use-on-data-updated-pre": "Exécuter une fonction avant la onDataUpdated()",
+        "use-on-data-updated-post": "Exécuter une fonction après la onDataUpdated()",
+        "use-alarms-udpated-pre": "Exécuter une fonction avant la alarmsUpdated()"
     },
     "widget-type": {
         "create-new-widget-type": "Créer un nouveau type de widget",

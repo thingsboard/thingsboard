@@ -183,6 +183,22 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                             scope.alarmSource.value = null;
                         }
                     }
+                    scope.useOnInitPre = angular.isDefined(config.useOnInitPre) ? config.useOnInitPre : false;
+                    scope.useOnInitPost = angular.isDefined(config.useOnInitPost) ? config.useOnInitPost : false;
+                    scope.useOnDataUpdatedPre = angular.isDefined(config.useOnDataUpdatedPre) ? config.useOnDataUpdatedPre : false;
+                    scope.useOnDataUpdatedPost = angular.isDefined(config.useOnDataUpdatedPost) ? config.useOnDataUpdatedPost : false;
+                    scope.useAlarmsUpdatedPre = angular.isDefined(config.useAlarmsUpdatedPre) ? config.useAlarmsUpdatedPre : false;
+                    scope.onInitPreFunction = angular.isDefined(config.onInitPreFunction) ? config.onInitPreFunction :
+                        '/*\n// If you want to override default onInit(), this function should end with:'
+                        + '\nreturn "skip-default";\n*/';
+                    scope.onInitPostFunction = angular.isDefined(config.onInitPostFunction) ? config.onInitPostFunction : '';
+                    scope.onDataUpdatedPreFunction = angular.isDefined(config.onDataUpdatedPreFunction) ? config.onDataUpdatedPreFunction :
+                        '/*\n// If you want to override default onDataUpdated(), this function should end with:'
+                        + '\nreturn "skip-default";\n*/';
+                    scope.onDataUpdatedPostFunction = angular.isDefined(config.onDataUpdatedPostFunction) ? config.onDataUpdatedPostFunction : '';
+                    scope.alarmsUpdatedPreFunction = angular.isDefined(config.alarmsUpdatedPreFunction) ? config.alarmsUpdatedPreFunction :
+                        '/*\n// If you want to override default alarmsUpdated(), this function should end with:'
+                        + '\nreturn "skip-default";\n*/';
 
                     scope.settings = config.settings;
 
@@ -247,7 +263,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
 
         scope.$watch('title + showTitleIcon + titleIcon + iconColor + iconSize + titleTooltip + showTitle + dropShadow + enableFullscreen + backgroundColor + ' +
             'color + padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
-            'displayTimewindow + alarmSearchStatus + alarmsPollingInterval + alarmsMaxCountLoad + alarmsFetchSize + showLegend', function () {
+            'displayTimewindow + alarmSearchStatus + alarmsPollingInterval + alarmsMaxCountLoad + alarmsFetchSize + showLegend + useOnInitPre + useOnInitPost + useOnDataUpdatedPre + useOnDataUpdatedPost + ' +
+            'onInitPreFunction + onInitPostFunction + onDataUpdatedPreFunction + onDataUpdatedPostFunction + useAlarmsUpdatedPre + alarmsUpdatedPreFunction', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 if (value.config) {
@@ -284,6 +301,16 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.alarmsMaxCountLoad = scope.alarmsMaxCountLoad;
                     config.alarmsFetchSize = scope.alarmsFetchSize;
                     config.showLegend = scope.showLegend;
+                    config.useOnInitPre = scope.useOnInitPre;
+                    config.useOnInitPost = scope.useOnInitPost;
+                    config.useOnDataUpdatedPre = scope.useOnDataUpdatedPre;
+                    config.useOnDataUpdatedPost = scope.useOnDataUpdatedPost;
+                    config.onInitPreFunction = scope.onInitPreFunction;
+                    config.onInitPostFunction = scope.onInitPostFunction;
+                    config.onDataUpdatedPreFunction = scope.onDataUpdatedPreFunction;
+                    config.onDataUpdatedPostFunction = scope.onDataUpdatedPostFunction;
+                    config.useAlarmsUpdatedPre = scope.useAlarmsUpdatedPre;
+                    config.alarmsUpdatedPreFunction = scope.alarmsUpdatedPreFunction;
                 }
                 if (value.layout) {
                     var layout = value.layout;

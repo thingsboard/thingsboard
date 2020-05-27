@@ -1589,7 +1589,13 @@
         "delete-action-text": "Sei sicuro di voler cancellare l'azione del widget '{{actionName}}'?",
         "display-icon": "Mostra icona titolo",
         "icon-color": "Colore dell'icona",
-        "icon-size": "Dimensione dell'icona"
+        "icon-size": "Dimensione dell'icona",
+        "custom-functions": "Funzioni personalizzate",
+        "use-on-init-pre": "Esegui una funzione prima della onInit()",
+        "use-on-init-post": "Esegui una funzione dopo la onInit()",
+        "use-on-data-updated-pre": "Esegui una funzione prima della onDataUpdated()",
+        "use-on-data-updated-post": "Esegui una funzione dopo la onDataUpdated()",
+        "use-alarms-udpated-pre": "Esegui una funzione prima della alarmsUpdated()"
     },
     "widget-type": {
         "import": "Importa un tipo di widget",

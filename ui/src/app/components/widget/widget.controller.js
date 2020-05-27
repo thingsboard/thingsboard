@@ -209,6 +209,37 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         widgetTypeInstance.onDestroy = function() {};
     }
 
+    if (widgetTypeInstance.ctx.widgetConfig.useOnInitPre &&
+            widgetContext.widgetConfig.onInitPreFunction && widgetContext.widgetConfig.onInitPreFunction.length) {
+        widgetTypeInstance.ctx.onInitPre = new Function("ctx", widgetContext.widgetConfig.onInitPreFunction);
+    } else {
+        widgetTypeInstance.ctx.onInitPre = function() {};
+    }
+    if (widgetTypeInstance.ctx.widgetConfig.useOnInitPost &&
+            widgetContext.widgetConfig.onInitPostFunction && widgetContext.widgetConfig.onInitPostFunction.length) {
+        widgetTypeInstance.ctx.onInitPost = new Function("ctx", widgetContext.widgetConfig.onInitPostFunction);
+    } else {
+        widgetTypeInstance.ctx.onInitPost = function() {};
+    }
+    if (widgetTypeInstance.ctx.widgetConfig.useOnDataUpdatedPre &&
+            widgetContext.widgetConfig.onDataUpdatedPreFunction && widgetContext.widgetConfig.onDataUpdatedPreFunction.length) {
+        widgetTypeInstance.ctx.onDataUpdatedPre = new Function("ctx", widgetContext.widgetConfig.onDataUpdatedPreFunction);
+    } else {
+        widgetTypeInstance.ctx.onDataUpdatedPre = function() {};
+    }
+    if (widgetTypeInstance.ctx.widgetConfig.useOnDataUpdatedPost &&
+            widgetContext.widgetConfig.onDataUpdatedPostFunction && widgetContext.widgetConfig.onDataUpdatedPostFunction.length) {
+        widgetTypeInstance.ctx.onDataUpdatedPost = new Function("ctx", widgetContext.widgetConfig.onDataUpdatedPostFunction);
+    } else {
+        widgetTypeInstance.ctx.onDataUpdatedPost = function() {};
+    }
+    if (widgetTypeInstance.ctx.widgetConfig.useAlarmsUpdatedPre &&
+            widgetContext.widgetConfig.alarmsUpdatedPreFunction && widgetContext.widgetConfig.alarmsUpdatedPreFunction.length) {
+        widgetTypeInstance.ctx.alarmsUpdatedPre = new Function("ctx", "alarms", widgetContext.widgetConfig.alarmsUpdatedPreFunction);
+    } else {
+        widgetTypeInstance.ctx.alarmsUpdatedPre = function() {};
+    }
+
     //TODO: widgets visibility
 
     //var bounds = {top: 0, left: 0, bottom: 0, right: 0};
@@ -314,7 +345,10 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         options.callbacks = {
             onDataUpdated: function() {
                 if (displayWidgetInstance()) {
-                    widgetTypeInstance.onDataUpdated();
+                    if (widgetTypeInstance.ctx.onDataUpdatedPre(widgetTypeInstance.ctx) != 'skip-default') {
+                        widgetTypeInstance.onDataUpdated();
+                    }
+                    widgetTypeInstance.ctx.onDataUpdatedPost(widgetTypeInstance.ctx);
                 }
             },
             onDataUpdateError: function(subscription, e) {
@@ -333,6 +367,12 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             timeWindowUpdated: function(subscription, timeWindowConfig) {
                 widget.config.timewindow = timeWindowConfig;
                 $scope.$apply();
+            }
+        }
+
+        if (widget.type === types.widgetType.alarm.value) {
+            options.callbacks.alarmsUpdated = function(alarms) {
+                return widgetTypeInstance.ctx.alarmsUpdatedPre(widgetTypeInstance.ctx, alarms);
             }
         }
     }
@@ -863,7 +903,10 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             widgetContext.inited = true;
             try {
                 if (displayWidgetInstance()) {
-                    widgetTypeInstance.onInit();
+                    if (widgetTypeInstance.ctx.onInitPre(widgetTypeInstance.ctx) != 'skip-default') {
+                        widgetTypeInstance.onInit();
+                    }
+                    widgetTypeInstance.ctx.onInitPost(widgetTypeInstance.ctx);
                 } else {
                     $scope.loadingData = false;
                 }

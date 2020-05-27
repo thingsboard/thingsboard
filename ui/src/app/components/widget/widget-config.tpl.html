@@ -351,6 +351,57 @@
             </ng-form>
         </md-content>
     </md-tab>
+    <md-tab label="{{ 'widget-config.custom-functions' | translate }}">
+        <md-content class="md-padding" layout="column">
+            <md-checkbox aria-label="{{ 'widget-config.use-on-init-pre' | translate }}"
+                         ng-model="useOnInitPre">{{ 'widget-config.use-on-init-pre' | translate }}
+            </md-checkbox>
+            <tb-js-func ng-show="useOnInitPre"
+                        ng-model="onInitPreFunction"
+                        function-name="{{'onInitPre'}}"
+                        function-args="{{ ['ctx'] }}"
+                        validation-args="{{ [] }}">
+            </tb-js-func>
+            <md-checkbox aria-label="{{ 'widget-config.use-on-init-post' | translate }}"
+                         ng-model="useOnInitPost">{{ 'widget-config.use-on-init-post' | translate }}
+            </md-checkbox>
+            <tb-js-func ng-show="useOnInitPost"
+                        ng-model="onInitPostFunction"
+                        function-name="{{'onInitPost'}}"
+                        function-args="{{ ['ctx'] }}"
+                        validation-args="{{ [] }}">
+            </tb-js-func>
+            <md-checkbox aria-label="{{ 'widget-config.use-on-data-updated-pre' | translate }}"
+                         ng-model="useOnDataUpdatedPre">{{ 'widget-config.use-on-data-updated-pre' | translate }}
+            </md-checkbox>
+            <tb-js-func ng-show="useOnDataUpdatedPre"
+                        ng-model="onDataUpdatedPreFunction"
+                        function-name="{{'onDataUpdatedPre'}}"
+                        function-args="{{ ['ctx'] }}"
+                        validation-args="{{ [] }}">
+            </tb-js-func>
+            <md-checkbox aria-label="{{ 'widget-config.use-on-data-updated-post' | translate }}"
+                         ng-model="useOnDataUpdatedPost">{{ 'widget-config.use-on-data-updated-post' | translate }}
+            </md-checkbox>
+            <tb-js-func ng-show="useOnDataUpdatedPost"
+                        ng-model="onDataUpdatedPostFunction"
+                        function-name="{{'onDataUpdatedPost'}}"
+                        function-args="{{ ['ctx'] }}"
+                        validation-args="{{ [] }}">
+            </tb-js-func>
+            <div ng-show="widgetType === types.widgetType.alarm.value">
+                <md-checkbox aria-label="{{ 'widget-config.use-alarms-udpated-pre' | translate }}"
+                             ng-model="useAlarmsUpdatedPre">{{ 'widget-config.use-alarms-udpated-pre' | translate }}
+                </md-checkbox>
+                <tb-js-func ng-show="useAlarmsUpdatedPre"
+                            ng-model="alarmsUpdatedPreFunction"
+                            function-name="{{'alarmsUpdatedPre'}}"
+                            function-args="{{ ['subscription', 'alarms'] }}"
+                            validation-args="{{ [] }}">
+                </tb-js-func>
+            </div>
+        </md-content>
+    </md-tab>
     <md-tab label="{{ 'widget-config.actions' | translate }}">
         <md-content class="md-padding" layout="column">
             <tb-manage-widget-actions

@@ -1771,7 +1771,13 @@
         "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?",
         "display-icon": "Display title icon",
         "icon-color": "Icon color",
-        "icon-size": "Icon size"
+        "icon-size": "Icon size",
+        "custom-functions": "Custom functions",
+        "use-on-init-pre": "Execute a function before onInit() call",
+        "use-on-init-post": "Execute a function after onInit() call",
+        "use-on-data-updated-pre": "Execute a function before onDataUpdated() call",
+        "use-on-data-updated-post": "Execute a function after onDataUpdated() call",
+        "use-alarms-udpated-pre": "Execute a function before alarmsUpdated() call"
     },
     "widget-type": {
         "import": "Import widget type",

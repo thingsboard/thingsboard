@@ -794,14 +794,16 @@ export default class Subscription {
     }
 
     alarmsUpdated(alarms, apply) {
-        this.notifyDataLoaded();
-        var updated = !this.alarms || !angular.equals(this.alarms, alarms);
-        this.alarms = alarms;
-        if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
-            this.updateTimewindow();
-        }
-        if (updated) {
-            this.onDataUpdated(apply);
+        if (this.callbacks.alarmsUpdated(alarms) !== 'skip-default') {
+            this.notifyDataLoaded();
+            var updated = !this.alarms || !angular.equals(this.alarms, alarms);
+            this.alarms = alarms;
+            if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
+                this.updateTimewindow();
+            }
+            if (updated) {
+                this.onDataUpdated(apply);
+            }
         }
     }
 
