@@ -89,6 +89,17 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
     }
 
     @Test
+    public void testUpdateWidgetsBundleFromDifferentTenant() throws Exception {
+        WidgetsBundle widgetsBundle = new WidgetsBundle();
+        widgetsBundle.setTitle("My widgets bundle");
+        WidgetsBundle savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
+
+        loginDifferentTenant();
+        doPost("/api/widgetsBundle", savedWidgetsBundle, WidgetsBundle.class, status().isForbidden());
+        deleteDifferentTenant();
+    }
+
+    @Test
     public void testFindWidgetsBundleById() throws Exception {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
