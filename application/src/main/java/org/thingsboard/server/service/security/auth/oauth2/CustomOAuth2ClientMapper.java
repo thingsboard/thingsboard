@@ -56,8 +56,8 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         try {
             return restTemplate.postForEntity(custom.getUrl(), request, OAuth2User.class).getBody();
         } catch (Exception e) {
-            log.error("Can't connect to custom mapper endpoint", e);
-            throw new RuntimeException("Can't connect to custom mapper endpoint", e);
+            log.error("There was an error during connection to custom mapper endpoint", e);
+            throw new RuntimeException("Unable to login. Please contact your Administrator!");
         }
     }
 }
