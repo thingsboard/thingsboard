@@ -254,7 +254,7 @@ export function parseArray(input: any[]): any[] {
         const obj = {
           entityName: entityArray[0]?.datasource?.entityName,
           $datasource: entityArray[0]?.datasource,
-          dsIndex,
+          dsIndex: i,
           time: el[0],
           deviceType: null
         };
