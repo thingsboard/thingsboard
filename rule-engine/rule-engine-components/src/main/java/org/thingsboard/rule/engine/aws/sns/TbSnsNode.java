@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.concurrent.ExecutionException;
 
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(
@@ -74,11 +74,8 @@ public class TbSnsNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         withCallback(publishMessageAsync(ctx, msg),
-                m -> ctx.tellNext(m, TbRelationTypes.SUCCESS),
-                t -> {
-                    TbMsg next = processException(ctx, msg, t);
-                    ctx.tellFailure(next, t);
-                });
+                ctx::tellSuccess,
+                t -> ctx.tellFailure(processException(ctx, msg, t), t));
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {

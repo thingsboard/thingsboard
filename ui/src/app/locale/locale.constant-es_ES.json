@@ -33,7 +33,7 @@
         "enter-edit-mode": "Entrar en modo edición",
         "decline-changes": "Descartar cambios",
         "close": "Cerrar",
-        "back": "Atras",
+        "back": "Atrás",
         "run": "Ejecutar",
         "sign-in": "¡Registrarse!",
         "edit": "Editar",
@@ -48,7 +48,9 @@
         "paste-reference": "Pegar referencia",
         "import": "Importar",
         "export": "Exportar",
-        "share-via": "Compartir via {{provider}}"
+        "share-via": "Compartir vía {{provider}}",
+        "discard-changes": "Cancelar los cambios",
+        "continue": "Continuar"
     },
     "aggregation": {
         "aggregation": "Agregación",
@@ -83,7 +85,29 @@
         "timeout-required": "Tiempo de espera es requerido.",
         "timeout-invalid": "Eso no parece un tiempo de espera válido.",
         "enable-tls": "Habilitar TLS",
-        "send-test-mail": "Enviar correo de prueba"
+        "tls-version": "Versión TLS",
+        "send-test-mail": "Enviar correo de prueba",
+        "password-policy": "Política de contraseñas",
+        "security-settings": "Configuraciones de seguridad",
+        "minimum-password-length": "Longitud mínima de contraseña",
+        "minimum-password-length-required": "Se requiere una longitud mínima de contraseña",
+        "minimum-password-length-range": "La longitud mínima de la contraseña debe estar en un rango de 5 a 50",
+        "minimum-uppercase-letters": "Número mínimo de letras mayúsculas",
+        "minimum-uppercase-letters-range": "El número mínimo de letras mayúsculas no puede ser negativo",
+        "minimum-lowercase-letters": "Número mínimo de letras minúsculas",
+        "minimum-lowercase-letters-range": "El número mínimo de letras minúsculas no puede ser negativo",
+        "minimum-digits": "Número mínimo de dígitos",
+        "minimum-digits-range": "El número mínimo de dígitos no puede ser negativo",
+        "minimum-special-characters": "Número mínimo de caracteres especiales.",
+        "minimum-special-characters-range": "El número mínimo de caracteres especiales no puede ser negativo.",
+        "password-expiration-period-days": "Periodo de caducidad de contraseña en días",
+        "password-expiration-period-days-range": "El período de caducidad de la contraseña en días no puede ser negativo",
+        "password-reuse-frequency-days": "Frecuencia de reutilización de contraseña en días",
+        "password-reuse-frequency-days-range": "La frecuencia de reutilización de contraseña en días no puede ser negativa",
+        "general-policy": "Política general",
+        "max-failed-login-attempts": "Número máximo de intentos fallidos de inicio de sesión, antes de que la cuenta esté bloqueada",
+        "minimum-max-failed-login-attempts-range": "El número máximo de intentos fallidos de inicio de sesión no puede ser negativo",
+        "user-lockout-notification-email": "En caso de bloqueo de la cuenta del usuario, envíe una notificación por correo electrónico"
     },
     "alarm": {
         "alarm": "Alarma",
@@ -134,7 +158,7 @@
         "aknowledge-alarms-title": "Reconocer { count, plural, 1 {1 alarma} other {# alarmas} }",
         "aknowledge-alarms-text": "¿Está seguro de que desea reconocer { count, plural, 1 {1 alarma} other {# alarmas} }?",
         "aknowledge-alarm-title": "Reconocer alarma",
-        "aknowledge-alarm-text": "¿Está seguro que quirere reconocer la alarma?",
+        "aknowledge-alarm-text": "¿Está seguro que quiere reconocer la alarma?",
         "clear-alarms-title": "Quitar { count, plural, 1 {1 alarma} other {# alarmas} }",
         "clear-alarms-text": "¿Está seguro de que desea quitar { count, plural, 1 {1 alarma} other {# alarmas}?",
         "clear-alarm-title": "Quitar alarma",
@@ -219,7 +243,7 @@
         "type-required": "El tipo es requerido.",
         "details": "Detalles",
         "events": "Eventos",
-        "add-asset-text": "Agregar nuevos activos",
+        "add-asset-text": "Agregar nuevo activo",
         "asset-details": "Detalles del activo",
         "assign-assets": "Asignar activos",
         "assign-assets-text": "Asignar { count, plural, 1 {1 activo} other {# activos} } al cliente",
@@ -246,7 +270,10 @@
         "select-asset": "Seleccionar activo",
         "no-assets-matching": "No se encontraron activos que coincidan con '{{entity}}'.",
         "asset-required": "El activo es requerido",
-        "name-starts-with": "El nombre del activo comienza con"
+        "name-starts-with": "El nombre del activo comienza con",
+        "import": "Importar activos",
+        "asset-file": "Archivo del activo",
+        "label": "Etiqueta"
     },
     "attribute": {
         "attributes": "Atributos",
@@ -303,6 +330,9 @@
         "type-relations-delete": "Toda relación eliminada",
         "type-alarm-ack": "Reconocida",
         "type-alarm-clear": "Borrada",
+        "type-login": "Inicio de sesión",
+        "type-logout": "Cierre de sesión",
+        "type-lockout": "Cierre patronal",
         "status-success": "Correcto",
         "status-failure": "Erróneo",
         "audit-log-details": "Detalle del registro de auditoría",
@@ -427,12 +457,12 @@
         "dashboard-details": "Detalles del panel",
         "add-dashboard-text": "Agregar nuevo panel",
         "assign-dashboards": "Asignar paneles",
-        "assign-new-dashboard": "Aignar nuevo panel",
-        "assign-dashboards-text": "Asignar { count, plural, 1 {1 dashboard} other {# dashboards} } a los clientes",
+        "assign-new-dashboard": "Asignar nuevo panel",
+        "assign-dashboards-text": "Asignar { count, plural, 1 {1 panel} other {# paneles} } a los clientes",
         "unassign-dashboards-action-text": "Anular asignación { count, plural, 1 {1 dashboard} other {# dashboards} } de los clientes",
         "delete-dashboards": "Eliminar paneles",
         "unassign-dashboards": "Anular asignación de paneles",
-        "unassign-dashboards-action-title": "Anular asignación { count, plural, 1 {1 dashboard} other {# dashboards} } del cliente",
+        "unassign-dashboards-action-title": "Anular asignación { count, plural, 1 {1 panel} other {# paneles} } del cliente",
         "delete-dashboard-title": "¿Está seguro de que desea eliminar el panel '{{dashboardTitle}}'?",
         "delete-dashboard-text": "¡Cuidado! Después de la confirmación, el panel y todos los datos relacionados serán irrecuperables.",
         "delete-dashboards-title": "¿Está seguro de que desea eliminar { count, plural, 1 {1 dashboard} other {# dashboards} }?",
@@ -441,7 +471,7 @@
         "unassign-dashboard-title": "¿Está seguro de que desea anular la asignación del panel '{{dashboardTitle}}'?",
         "unassign-dashboard-text": "Después de la confirmación, se anulará la asignación del panel y no será accesible por el cliente.",
         "unassign-dashboard": "Anular asignación del panel",
-        "unassign-dashboards-title": "¿Está seguro de que desea anular asignación { count, plural, 1 {1 dashboard} other {# dashboards} }?",
+        "unassign-dashboards-title": "¿Está seguro de que desea anular asignación { count, plural, 1 {1 panel} other {# paneles} }?",
         "unassign-dashboards-text": "Después de la confirmación, se anulará la asignación de todos los paneles seleccionados y no serán accesibles por el cliente.",
         "public-dashboard-title": "El panel es ahora público",
         "public-dashboard-text": "Su panel <b>{{dashboardTitle}}</b> es ahora público y es accesible a través del siguiente enlace público <a href='{{publicLink}}' target='_blank'></a>:",
@@ -467,7 +497,7 @@
         "settings": "Configuración",
         "columns-count": "Número de columnas",
         "columns-count-required": "Número de columnas es requerido.",
-        "min-columns-count-message": "Sólo está permitido 10 columnas como mínimo.",
+        "min-columns-count-message": "Solo está permitido 10 columnas como mínimo.",
         "max-columns-count-message": "Sólo está permitido 1000 columnas como máximo.",
         "widgets-margins": "Margen entre widgets",
         "horizontal-margin": "Margen horizontal",
@@ -477,7 +507,7 @@
         "vertical-margin": "Margen vertical",
         "vertical-margin-required": "El valor del margen vertical es requerido.",
         "min-vertical-margin-message": "Sólo está permitido el 0 como valor mínimo para el margen vertical.",
-        "max-vertical-margin-message": "Sólo está permitido el 50 como valor máximo para el margen vertical",
+        "max-vertical-margin-message": "Solo está permitido el 50 como valor máximo para el margen vertical",
         "autofill-height": "Llenado automático de altura de diseño",
         "mobile-layout": "Configuración de diseño para móvil",
         "mobile-row-height": "Altura de fila para móvil, píxel",
@@ -519,7 +549,7 @@
         "manage-states": "Gestionar estados del panel",
         "states": "Estados del panel",
         "search-states": "Buscar estados del panel",
-        "selected-states": "{ count, plural, 1 {1 dashboard state} other {# dashboard states} } seleccionados",
+        "selected-states": "{ count, plural, 1 {1 estado del panel } other {# estados del panel } } seleccionados",
         "edit-state": "Editar estado del panel",
         "delete-state": "Eliminar estado del panel",
         "add-state": "Agregar estado del panel",
@@ -552,16 +582,16 @@
         "alarm": "Campos de alarma",
         "timeseries-required": "Series temporales de la entidad son requeridas",
         "timeseries-or-attributes-required": "Series temporales/atributos de la entidad son requeridos.",
-        "maximum-timeseries-or-attributes": "Máximo { count, plural, 1 {1 timeseries/attribute is allowed.} other {# timeseries/attributes are allowed} }",
+        "maximum-timeseries-or-attributes": "Máximo { count, plural, 1 {1 serie temporal/atributo permitido.} other {# series temporales/atributos permitidos} }",
         "alarm-fields-required": "Campos de alarma son requeridos.",
         "function-types": "Tipos de funciones",
         "function-types-required": "Tipos de funciones son requeridos.",
         "maximum-function-types": "Máximo { count, plural, 1 {1 function type is allowed.} other {# function types are allowed} }",
-        "time-description": "timestamp of the current value;",
-        "value-description": "the current value;",
-        "prev-value-description": "result of the previous function call;",
-        "time-prev-description": "timestamp of the previous value;",
-        "prev-orig-value-description": "original previous value;"
+        "time-description": "marca de tiempo del valor actual;",
+        "value-description": "el valor actual;",
+        "prev-value-description": "resultado de la llamada a la función anterior;",
+        "time-prev-description": "marca de tiempo del valor anterior;",
+        "prev-orig-value-description": "valor anterior original;"
     },
     "datasource": {
         "type": "Tipo de fuente de datos",
@@ -570,7 +600,7 @@
     },
     "details": {
         "edit-mode": "Modo de edición",
-        "toggle-edit-mode": "Cambiar mode de edición"
+        "toggle-edit-mode": "Cambiar modo de edición"
     },
     "device": {
         "device": "Dispositivo",
@@ -616,7 +646,7 @@
         "assign-devices-text": "Asignar { count, plural, 1 {1 dispositivo} other {# dispositivos} } al cliente",
         "delete-devices": "Eliminar dispositivos",
         "unassign-from-customer": "Anular asignación del cliente",
-        "unassign-devices": "Anular asignación de dispositivos",
+        "unassign-devices": "Desasignar dispositivos",
         "unassign-devices-action-title": "Anular asignación { count, plural, 1 {1 dispositivo} other {# dispositivos} } del cliente",
         "assign-new-device": "Asignar nuevo dispositivo",
         "make-public-device-title": "¿Está seguro de que desea hacer el dispositivo '{{deviceName}}' público?",
@@ -631,8 +661,8 @@
         "delete-devices-text": "¡Cuidado! Después de la confirmación, todos los dispositivos seleccionados serán eliminados y todos los datos relacionados serán irrecuperables.",
         "unassign-device-title": "¿Está seguro de que desea anular la asignación del dispositivo '{{deviceName}}'?",
         "unassign-device-text": "Después de la confirmación, se anulará asignación del dispositivo y no será accesible por el cliente.",
-        "unassign-device": "Anular asignación del dispositivo",
-        "unassign-devices-title": "¿Está seguro de que desea anular asignación { count, plural, 1 {1 dispositivo} other {# dispositivos} }?",
+        "unassign-device": "Desasignar dispositivo",
+        "unassign-devices-title": "¿Está seguro de que desea desasignar { count, plural, 1 {1 dispositivo } other {# dispositivos} }?",
         "unassign-devices-text": "Después de la confirmación, se anulará asignación de todos los dispositivos seleccionados y no serán accesibles por el cliente.",
         "device-credentials": "Credenciales del dispositivo",
         "credentials-type": "Tipo de credenciales",
@@ -653,6 +683,7 @@
         "device-types": "Tipo de dispositivos",
         "name": "Nombre",
         "name-required": "El nombre es requerido.",
+        "label": "Etiqueta",
         "description": "Descripción",
         "events": "Eventos",
         "details": "Detalles",
@@ -666,10 +697,16 @@
         "is-gateway": "Es puerta de entrada",
         "public": "Público",
         "device-public": "El dispositivo es público",
-        "select-device": "Seleccinar dispositivo"
+        "select-device": "Seleccionar dispositivo",
+        "device-file": "Archivo de dispositivo",
+        "import": "Importar dispositivo"
     },
     "dialog": {
         "close": "Cerrar diálogo"
+    },
+    "direction": {
+        "column": "Columna",
+        "row": "Fila"
     },
     "error": {
         "unable-to-connect": "¡No se puede conectar al servidor! Por favor, revise su conexión a Internet.",
@@ -773,6 +810,22 @@
         "no-data": "No hay datos para mostrar",
         "columns-to-display": "Columnas a mostrar"
     },
+    "entity-field": {
+        "created-time": "Tiempo de creación",
+        "name": "Nombre",
+        "type": "Tipo",
+        "first-name": "Nombre",
+        "last-name": "Apellido",
+        "email": "Correo electrónico",
+        "title": "Título",
+        "country": "País",
+        "state": "Estado",
+        "city": "Ciudad",
+        "address": "Dirección",
+        "address2": "Dirección 2",
+        "zip": "Código postal",
+        "phone": "Teléfono"
+    },
     "entity-view": {
         "entity-view": "Vista de entidad",
         "entity-view-required": "Vista de entidad es requerido.",
@@ -787,7 +840,7 @@
         "no-keys-found": "No se encontraron claves.",
         "create-new-alias": "¡Crear un nuevo!",
         "create-new-key": "¡Crear una nueva!",
-        "duplicate-alias-error": "Alias duplicado'{{alias}}'.<br>El alias de la vista de entidad debe ser único en el dashboard.",
+        "duplicate-alias-error": "Alias duplicado'{{alias}}'.<br>Los alias de Entity View deben ser únicos en el panel.",
         "configure-alias": "Configurar alias '{{alias}}'",
         "no-entity-views-matching": "No se encontraron vistas que coincidan con '{{entity}}'.",
         "alias": "Alias",
@@ -799,7 +852,7 @@
         "use-entity-view-name-filter": "Usar el filtro",
         "entity-view-list-empty": "No hay vistas de entidad seleccionadas.",
         "entity-view-name-filter-required": "Nombre del filtro de vista de entidad es requerido.",
-        "entity-view-name-filter-no-entity-view-matched": "No se econtraron vistas de entidad que comiencen con '{{entityView}}'.",
+        "entity-view-name-filter-no-entity-view-matched": "No se encontraron vistas de entidad que comiencen con '{{entityView}}'.",
         "add": "Añadir vista de entidad",
         "assign-to-customer": "Asignar a cliente",
         "assign-entity-view-to-customer": "Asignar vista de entidad a cliente",
@@ -831,7 +884,7 @@
         "select-entity-view-type": "Seleccione el tipo de vista de entidad",
         "enter-entity-view-type": "Teclee el tipo de vista de entidad",
         "any-entity-view": "Cualquier vista de entidad",
-        "no-entity-view-types-matching": "No se encontraron typos de vista de entidad '{{entitySubtype}}'.",
+        "no-entity-view-types-matching": "No se encontraron tipos de vista de entidad que coincidan con '{{entitySubtype}}'.",
         "entity-view-type-list-empty": "No hay tipos de vista de entidad seleccionados.",
         "entity-view-types": "Tipos de vista de entidad",
         "name": "Nombre",
@@ -845,6 +898,7 @@
         "unable-entity-view-device-alias-text": "El alias del dispositivo '{{entityViewAlias}}' no se puede borrar porque está siendo usado por el widget(s):<br/>{{widgetsList}}",
         "select-entity-view": "Seleccionar vista de entidad",
         "make-public": "Hacer pública la vista de entidad",
+        "make-private": "Hacer que la vista de entidad sea privada",
         "start-date": "Fecha de inicio",
         "start-ts": "Tiempo de inicio",
         "end-date": "Fecha de finalización",
@@ -853,16 +907,20 @@
         "client-attributes": "Atributos de cliente",
         "shared-attributes": "Atributos compartidos",
         "server-attributes": "Atributos de servidor",
-        "timeseries": "Series de tiempo",
+        "timeseries": "Series temporales",
         "client-attributes-placeholder": "Atributos de cliente",
         "shared-attributes-placeholder": "Atributos compartidos",
         "server-attributes-placeholder": "Atributos de servidor",
-        "timeseries-placeholder": "Series de tiempo",
+        "timeseries-placeholder": "Series temporales",
         "target-entity": "Entidad objetivo",
         "attributes-propagation": "Propagación de atributos",
         "attributes-propagation-hint": "La vista de entidad copiará automáticamente los atributos especificados de la entidad de destino cada vez que guarde o actualice esta vista de entidad. Por razones de rendimiento, los atributos de entidad objetivo no se propagan a la vista de entidad en cada cambio de atributo. Puede habilitar la propagación automática configurando el nodo de la regla \"copiar a la vista\" en su cadena de reglas y vincular los mensajes \"Atributos de la publicación\" y \"Atributos actualizados\" al nuevo nodo de la regla.",
-        "timeseries-data": "Datos de series de tiempo",
-        "timeseries-data-hint": "Configure las claves de los datos de las series de tiempo de la entidad de destino que serán accesibles para la vista de la entidad. Los datos de esta serie temporal son de solo lectura."
+        "timeseries-data": "Datos de series temporales",
+        "timeseries-data-hint": "Configure las claves de los datos de las series temporales de la entidad de destino que serán accesibles para la vista de la entidad. Los datos de esta serie temporal son de solo lectura.",
+        "make-public-entity-view-title": "¿Está seguro de que desea que la vista de entidad '{{entityViewName}}' sea pública?",
+        "make-public-entity-view-text": "Después de la confirmación, la vista de la entidad y todos sus datos se harán públicos y accesibles para otros.",
+        "make-private-entity-view-title": "¿Está seguro de que desea que la vista de entidad '{{entityViewName}}' sea privada?",
+        "make-private-entity-view-text": "Después de la confirmación, la vista de la entidad y todos sus datos se harán privados y no serán accesibles para otros."
     },
     "event": {
         "event-type": "Tipo de evento",
@@ -895,7 +953,7 @@
     },
     "extension": {
         "extensions": "Extensiones",
-        "selected-extensions": "{ count, plural, 1 {1 extension} other {# extensiones} } seleccionadas",
+        "selected-extensions": "{ count, plural, 1 {1 extensión} other {# extensiones} } seleccionadas",
         "type": "Tipo",
         "key": "Clave",
         "value": "Valor",
@@ -909,7 +967,7 @@
         "edit": "Editar extensión",
         "delete-extension-title": "¿Está seguro de que desea eliminar la extensión '{{extensionId}}'?",
         "delete-extension-text": "¡Cuidado! Después de la confirmación, la extensión y todos los datos relacionados serán irrecuperables.",
-        "delete-extensions-title": "¿Está seguro de que desea eliminar { count, plural, 1 {1 extension} other {# extensiones} }?",
+        "delete-extensions-title": "¿Está seguro de que desea eliminar { count, plural, 1 {1 extensión} other {# extensiones} }?",
         "delete-extensions-text": "¡Cuidado! Después de la confirmación, se eliminarán todas las extensiones seleccionadas.",
         "converters": "Conversores",
         "converter-id": "ID del conversor",
@@ -917,7 +975,7 @@
         "converter-configurations": "Configuraciones del conversor",
         "token": "Token de seguridad",
         "add-converter": "Agregar conversor",
-        "add-config": "Configuración para agregar conversor",
+        "add-config": "Agregar configuración del conversor",
         "device-name-expression": "Expresión del nombre del dispositivo",
         "device-type-expression": "Expresión del tipo del dispositivo",
         "custom": "Personalizado",
@@ -973,7 +1031,7 @@
         "connect-requests": "Solicitudes de conexión",
         "add-connect-request": "Agregar solicitudes de conexión",
         "disconnect-requests": "Solicitudes de desconexión",
-        "add-disconnect-request": "Agregar solicitudes de desconexión",
+        "add-disconnect-request": "Agregar solicitud de desconexión",
         "attribute-requests": "Solicitudes de atributo",
         "add-attribute-request": "Agregar solicitudes de atributo",
         "attribute-updates": "Actualizaciones de atributo",
@@ -984,7 +1042,7 @@
         "attribute-filter": "Filtro de atributo",
         "method-filter": "Filtro de método",
         "request-topic-expression": "Expresión temática para solicitud",
-        "response-timeout": "Respuesta a tiempo de espera en milisegundos",
+        "response-timeout": "Tiempo de espera de respuesta en milisegundos",
         "topic-expression": "Expresión temática",
         "client-scope": "Alcance del cliente",
         "add-device": "Agregar dispositivo",
@@ -1003,7 +1061,7 @@
         "opc-keystore-password": "Contraseña",
         "opc-keystore-alias": "Alias",
         "opc-keystore-key-password": "Clave de contraseña",
-        "opc-device-node-pattern": "Patrón de nodo de dispostivo",
+        "opc-device-node-pattern": "Patrón de nodo de dispositivo",
         "opc-device-name-pattern": "Patrón de nombre de dispositivo",
         "modbus-server": "Servidores/esclavos",
         "modbus-add-server": "Agregar servidor/esclavo",
@@ -1039,7 +1097,7 @@
             "status": "Estado",
             "sync": "Sincronización",
             "not-sync": "No sincronización",
-            "last-sync-time": "Último tiempo de sincroniación",
+            "last-sync-time": "Ultima hora de sincronización",
             "not-available": "No disponible"
         },
         "export-extensions-configuration": "Exportar configuración de extensiones",
@@ -1061,7 +1119,7 @@
     },
     "grid": {
         "delete-item-title": "¿Está seguro de que desea eliminar este ítem?",
-        "delete-item-text": "¡Cuiado! Después de la confirmación, este ítem y todos los datos relacionados serán irrecuperables.",
+        "delete-item-text": "¡Cuidado! Después de la confirmación, este ítem y todos los datos relacionados serán irrecuperables.",
         "delete-items-title": "¿Está seguro de que desea eliminar { count, plural, 1 {1 ítem} other {# ítems} }?",
         "delete-items-action-title": "Eliminar { count, plural, 1 {1 ítem} other {# ítems} }",
         "delete-items-text": "¡Cuidado! Después de la confirmación se eliminarán todos los ítems seleccionados y todos los datos relacionados serán irrecuperables.",
@@ -1085,7 +1143,40 @@
     },
     "import": {
         "no-file": "Ningún archivo seleccionado",
-        "drop-file": "Colocar un archivo JSON o hacer clic para seleccionar un archivo para cargar."
+        "drop-file": "Suelte un archivo JSON o haga clic para seleccionar un archivo para cargar.",
+        "column-value": "Valor",
+        "column-title": "Título",
+        "column-example": "Datos de ejemplo",
+        "drop-file-csv": "Suelte un archivo CSV o haga clic para seleccionar un archivo para cargar.",
+        "column-key": "Clave de atributo/telemetría",
+        "csv-delimiter": "Delimitador CSV",
+        "csv-first-line-header": "La primera línea contiene nombres de columna.",
+        "csv-update-data": "Actualizar atributos/telemetría",
+        "import-csv-number-columns-error": "Un archivo debe contener al menos dos columnas",
+        "import-csv-invalid-format-error": "Formato de archivo inválido. Línea: '{{line}}'",
+        "column-type": {
+            "access-token": "Token de acceso",
+            "client-attribute": "Atributo de cliente",
+            "column-type": "Tipo de columna",
+            "entity-field": "Campo de entidad",
+            "name": "Nombre",
+            "server-attribute": "Atributo de servidor",
+            "shared-attribute": "Atributo compartido",
+            "timeseries": "Series temporales",
+            "type": "Tipo"
+        },
+        "stepper-text": {
+            "select-file": "Seleccione un archivo",
+            "configuration": "Importar configuración",
+            "column-type": "Seleccionar tipo de columnas",
+            "creat-entities": "Creando nuevas entidades",
+            "done": "Hecho"
+        },
+        "message": {
+            "create-entities": "Se crearon{{count}} nuevas entidades correctamente.",
+            "update-entities": "{{count}} entidades se actualizaron correctamente.",
+            "error-entities": "Se produjo un error al crear {{count}} entidades."
+        }
     },
     "item": {
         "selected": "Seleccionado"
@@ -1105,13 +1196,14 @@
     "layout": {
         "layout": "Diseño",
         "manage": "Gestionar diseños",
-        "settings": "Configuaración de diseño",
+        "settings": "Configuración de diseño",
         "color": "Color",
         "main": "Principal",
         "right": "Derecha",
         "select": "Seleccionar diseño objetivo"
     },
     "legend": {
+        "direction": "Dirección de la leyenda",
         "position": "Posición de la leyenda",
         "show-max": "Mostrar valor máximo",
         "show-min": "Mostrar valor mínimo",
@@ -1130,7 +1222,7 @@
         "create-password": "Crear contraseña",
         "passwords-mismatch-error": "¡Las contraseñas introducidas deben ser iguales!",
         "password-again": "Repita la contraseña de nuevo",
-        "sign-in": "Por favor registrese",
+        "sign-in": "Por favor, inicie sesión",
         "username": "Nombre de usuario (correo electrónico)",
         "remember-me": "Recordarme",
         "forgot-password": "¿Olvidó la contraseña?",
@@ -1138,7 +1230,9 @@
         "new-password": "Nueva contraseña",
         "new-password-again": "Repita la nueva contraseña",
         "password-link-sent-message": "¡El enlace para el restablecer la contraseña fue enviado correctamente!",
-        "email": "Correo electrónico"
+        "email": "Correo electrónico",
+        "login-with": "Iniciar sesión con {{name}}",
+        "or": "o"
     },
     "position": {
         "top": "Superior",
@@ -1148,6 +1242,7 @@
     },
     "profile": {
         "profile": "Perfil",
+        "last-login-time": "Último acceso",
         "change-password": "Cambiar contraseña",
         "current-password": "Contraseña actual"
     },
@@ -1274,7 +1369,7 @@
         "type-external": "Externo",
         "type-external-details": "Interactuar con sistemas externos",
         "type-rule-chain": "Cadena de reglas",
-        "type-rule-chain-details": "Reenvíar los mensajes entrantes a la cadena de reglas especificada",
+        "type-rule-chain-details": "Reenvía los mensajes entrantes a la cadena de reglas especificada",
         "type-input": "Entrada",
         "type-input-details": "Entrada lógica de la Cadena de Reglas, reenvíar los mensajes entrantes al siguiente nodo de regla relacionado.",
         "type-unknown": "Desconocido",
@@ -1291,7 +1386,8 @@
         "metadata-required": "La entradas de matadatos no pueden estar vacías.",
         "output": "Salida",
         "test": "Prueba",
-        "help": "Ayuda"
+        "help": "Ayuda",
+        "reset-debug-mode": "Restablecer el modo de depuración en todos los nodos"
     },
     "tenant": {
         "tenant": "Organización",
@@ -1343,7 +1439,8 @@
         "edit": "Editar ventana de tiempo",
         "date-range": "Rango de fecha",
         "last": "Último(s)",
-        "time-period": "Período de tiempo"
+        "time-period": "Período de tiempo",
+        "hide": "Ocultar"
     },
     "user": {
         "user": "Usuario",
@@ -1386,7 +1483,11 @@
         "activation-link-copied-message": "El enlace de activación de usuario ha sido copiado al portapapeles",
         "details": "Detalles",
         "login-as-tenant-admin": "Iniciar sesión como Administrador de la Organización",
-        "login-as-customer-user": "Iniciar sesión como Usuario cliente"
+        "login-as-customer-user": "Iniciar sesión como Usuario cliente",
+        "disable-account": "Deshabilitar cuenta de usuario",
+        "enable-account": "Habilitar cuenta de usuario",
+        "enable-account-message": "¡La cuenta de usuario se ha habilitado correctamente!",
+        "disable-account-message": "¡La cuenta de usuario se deshabilitó correctamente!"
     },
     "value": {
         "type": "Tipo de valor",
@@ -1436,7 +1537,7 @@
         "title-required": "Título del widget es requerido.",
         "type": "Tipo de widget",
         "resources": "Recursos",
-        "resource-url": "JavaScript/CSS URL",
+        "resource-url": "URL JavaScript/CSS",
         "remove-resource": "Eliminar recurso",
         "add-resource": "Agregar recurso",
         "html": "HTML",
@@ -1445,6 +1546,7 @@
         "settings-schema": "Esquema de configuración",
         "datakey-settings-schema": "Esquema de configuración de clave de datos",
         "javascript": "Javascript",
+        "js": "JS",
         "remove-widget-type-title": "¿Está seguro de que desea eliminar el tipo de widget '{{widgetName}}'?",
         "remove-widget-type-text": "Después de la confirmación, el tipo de widget y todos los datos relacionados serán irrecuperables.",
         "remove-widget-type": "Eliminar tipo de widget",
@@ -1499,7 +1601,8 @@
         "settings": "Configuración",
         "advanced": "Avanzado",
         "title": "Título",
-        "general-settings": "Configuaración general",
+        "title-tooltip": "Tooltip Título",
+        "general-settings": "Configuración general",
         "display-title": "Mostrar título",
         "drop-shadow": "Colocar sombra",
         "enable-fullscreen": "Habilitar pantalla completa",
@@ -1519,7 +1622,7 @@
         "display-timewindow": "Mostrar ventana de tiempo",
         "display-legend": "Mostrar leyenda",
         "datasources": "Orígenes de datos",
-        "maximum-datasources": "Máximo { count, plural, 1 {1 origen de datos permitido.} other {# origenes de datos permitidos} }",
+        "maximum-datasources": "Máximo { count, plural, 1 {1 origen de datos permitido.} other {# orígenes de datos permitidos} }",
         "datasource-type": "Tipo",
         "datasource-parameters": "Parámetros",
         "remove-datasource": "Eliminar origen de datos",
@@ -1541,7 +1644,10 @@
         "edit-action": "Editar acción",
         "delete-action": "Eliminar acción",
         "delete-action-title": "Eliminar acción del widget",
-        "delete-action-text": "¿Está seguro de que desea eliminar la acción del widget con nombre '{{actionName}}'?"
+        "delete-action-text": "¿Está seguro de que desea eliminar la acción del widget con nombre '{{actionName}}'?",
+        "display-icon": "Mostrar icono del título",
+        "icon-color": "Color del icono",
+        "icon-size": "Tamaño del icono"
     },
     "widget-type": {
         "import": "Importar tipo de widget",
@@ -1608,6 +1714,31 @@
                 "Step size": "Numero de pie",
                 "Ok": "De acuerdo"
             }
+        },
+        "input-widgets": {
+            "attribute-not-allowed": "El parámetro de atributo no se puede usar en este widget",
+            "date": "Fecha",
+            "discard-changes": "Descartar los cambios",
+            "entity-attribute-required": "Se requiere atributo de entidad",
+            "entity-timeseries-required": "Se requiere la serie de tiempo de la entidad",
+            "not-allowed-entity": "La entidad seleccionada no puede tener atributos compartidos",
+            "no-attribute-selected": "No se seleccionó ningún atributo",
+            "no-datakey-selected": "No se seleccionó ninguna clave de datos",
+            "no-entity-selected": "Ninguna entidad seleccionada",
+            "no-image": "Sin imágen",
+            "no-support-web-camera": "No hay cámara web compatible",
+            "no-timeseries-selected": "No hay series de tiempo seleccionadas",
+            "switch-attribute-value": "Cambiar el valor del atributo de entidad",
+            "switch-camera": "Cambiar de cámara",
+            "switch-timeseries-value": "Cambiar el valor de la serie de tiempo de la entidad",
+            "take-photo": "Tomar foto",
+            "time": "Tiempo",
+            "timeseries-not-allowed": "El parámetro Timeseries no se puede usar en este widget",
+            "update-failed": "Actualización fallida",
+            "update-successful": "Actualización exitosa",
+            "update-attribute": "Actualizar atributo",
+            "update-timeseries": "Actualizar series de tiempo",
+            "value": "Valor"
         }
     },
     "icon": {
@@ -1624,25 +1755,12 @@
             "marker-click": "Clic en el polígono",
             "tooltip-tag-action": "Acción de etiqueta para globo de ayuda",
             "node-selected": "Clic en el nodo seleccionado",
-            "element-click": "Clic en el elemento HTML"
+            "element-click": "Clic en el elemento HTML",
+            "pie-slice-click": "Clic en la rebanada",
+            "row-double-click": "Doble clic en la fila"
         }
     },
     "language": {
-        "language": "Lenguaje",
-        "locales": {
-            "de_DE": "Alemán",
-            "fr_FR": "Francés",
-            "zh_CN": "Chino",
-            "en_US": "Inglés",
-            "it_IT": "Italiano",
-            "ko_KR": "Coreano",
-            "ru_RU": "Ruso",
-            "es_ES": "Español",
-            "ja_JA": "Japonés",
-            "tr_TR": "Turco",
-            "fa_IR": "Persa",
-            "uk_UA": "Ucraniano",
-            "cs_CZ": "Checo"            
-        }
+        "language": "Lenguaje"
     }
 }

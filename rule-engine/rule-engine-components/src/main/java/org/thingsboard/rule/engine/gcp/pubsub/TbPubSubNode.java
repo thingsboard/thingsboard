@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -37,7 +36,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(
@@ -100,7 +99,7 @@ public class TbPubSubNode implements TbNode {
         ApiFutures.addCallback(messageIdFuture, new ApiFutureCallback<String>() {
                     public void onSuccess(String messageId) {
                         TbMsg next = processPublishResult(ctx, msg, messageId);
-                        ctx.tellNext(next, TbRelationTypes.SUCCESS);
+                        ctx.tellSuccess(next);
                     }
 
                     public void onFailure(Throwable t) {

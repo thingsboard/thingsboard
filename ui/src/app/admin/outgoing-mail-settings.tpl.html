@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -78,8 +78,16 @@
 				              <div translate ng-message="md-maxlength">admin.timeout-invalid</div>
 	       				</div>				
 					</md-input-container>	
-					<md-checkbox ng-disabled="$root.loading" ng-true-value="'true'" ng-false-value="'false'"
+					<md-checkbox ng-disabled="$root.loading"
 								 aria-label="{{ 'admin.enable-tls' | translate }}" ng-model="vm.settings.jsonValue.enableTls">{{ 'admin.enable-tls' | translate }}</md-checkbox>
+					<md-input-container class="md-block" ng-if="vm.settings.jsonValue.enableTls">
+						<label translate>admin.tls-version</label>
+						<md-select ng-disabled="$root.loading" ng-model="vm.settings.jsonValue.tlsVersion">
+							<md-option ng-repeat="tlsVersion in vm.tlsVersions" value="{{tlsVersion}}">
+								{{tlsVersion}}
+							</md-option>
+						</md-select>
+					</md-input-container>
 					<md-input-container class="md-block">
 						<label translate>common.username</label>
 						<input name="username" placeholder="{{ 'common.enter-username' | translate }}" ng-model="vm.settings.jsonValue.username">

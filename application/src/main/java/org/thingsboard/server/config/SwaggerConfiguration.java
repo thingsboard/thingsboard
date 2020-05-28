@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Predicate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thingsboard.server.common.data.security.Authority;
@@ -43,71 +44,94 @@ import static springfox.documentation.builders.PathSelectors.regex;
 @Configuration
 public class SwaggerConfiguration {
 
-      @Bean
-      public Docket thingsboardApi() {
-          TypeResolver typeResolver = new TypeResolver();
-          final ResolvedType jsonNodeType =
-                  typeResolver.resolve(
-                          JsonNode.class);
-          final ResolvedType stringType =
-                  typeResolver.resolve(
-                          String.class);
+    @Value("${swagger.api_path_regex}")
+    private String apiPathRegex;
+    @Value("${swagger.security_path_regex}")
+    private String securityPathRegex;
+    @Value("${swagger.non_security_path_regex}")
+    private String nonSecurityPathRegex;
+    @Value("${swagger.title}")
+    private String title;
+    @Value("${swagger.description}")
+    private String description;
+    @Value("${swagger.contact.name}")
+    private String contactName;
+    @Value("${swagger.contact.url}")
+    private String contactUrl;
+    @Value("${swagger.contact.email}")
+    private String contactEmail;
+    @Value("${swagger.license.title}")
+    private String licenseTitle;
+    @Value("${swagger.license.url}")
+    private String licenseUrl;
+    @Value("${swagger.version}")
+    private String version;
 
-            return new Docket(DocumentationType.SWAGGER_2)
-                    .groupName("thingsboard")
-                    .apiInfo(apiInfo())
-                    .alternateTypeRules(
+    @Bean
+    public Docket thingsboardApi() {
+        TypeResolver typeResolver = new TypeResolver();
+        final ResolvedType jsonNodeType =
+                typeResolver.resolve(
+                        JsonNode.class);
+        final ResolvedType stringType =
+                typeResolver.resolve(
+                        String.class);
+
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("thingsboard")
+                .apiInfo(apiInfo())
+                .alternateTypeRules(
                         new AlternateTypeRule(
                                 jsonNodeType,
                                 stringType))
-                    .select()
-                    .paths(apiPaths())
-                    .build()
-                    .securitySchemes(newArrayList(jwtTokenKey()))
-                    .securityContexts(newArrayList(securityContext()))
-                    .enableUrlTemplating(true);
-      }
+                .select()
+                .paths(apiPaths())
+                .build()
+                .securitySchemes(newArrayList(jwtTokenKey()))
+                .securityContexts(newArrayList(securityContext()))
+                .enableUrlTemplating(true);
+    }
 
-      private ApiKey jwtTokenKey() {
-            return new ApiKey("X-Authorization", "JWT token", "header");
-      }
+    private ApiKey jwtTokenKey() {
+        return new ApiKey("X-Authorization", "JWT token", "header");
+    }
 
-      private SecurityContext securityContext() {
-            return SecurityContext.builder()
-                    .securityReferences(defaultAuth())
-                    .forPaths(securityPaths())
-                    .build();
-      }
-
-      private Predicate<String> apiPaths() {
-           return regex("/api.*");
-      }
-
-      private Predicate<String> securityPaths() {
-           return and(
-                    regex("/api.*"),
-                    not(regex("/api/noauth.*"))
-           );
-      }
-
-      List<SecurityReference> defaultAuth() {
-            AuthorizationScope[] authorizationScopes = new AuthorizationScope[3];
-            authorizationScopes[0] = new AuthorizationScope(Authority.SYS_ADMIN.name(), "System administrator");
-            authorizationScopes[1] = new AuthorizationScope(Authority.TENANT_ADMIN.name(), "Tenant administrator");
-            authorizationScopes[2] = new AuthorizationScope(Authority.CUSTOMER_USER.name(), "Customer");
-            return newArrayList(
-                    new SecurityReference("X-Authorization", authorizationScopes));
-      }
-
-      private ApiInfo apiInfo() {
-            return new ApiInfoBuilder()
-                .title("Thingsboard REST API")
-                .description("For instructions how to authorize requests please visit <a href='http://thingsboard.io/docs/reference/rest-api/'>REST API documentation page</a>.")
-                .contact(new Contact("Thingsboard team", "http://thingsboard.io", "info@thingsboard.io"))
-                .license("Apache License Version 2.0")
-                .licenseUrl("https://github.com/thingsboard/thingsboard/blob/master/LICENSE")
-                .version("2.0")
+    private SecurityContext securityContext() {
+        return SecurityContext.builder()
+                .securityReferences(defaultAuth())
+                .forPaths(securityPaths())
                 .build();
-      }
+    }
+
+    private Predicate<String> apiPaths() {
+        return regex(apiPathRegex);
+    }
+
+    private Predicate<String> securityPaths() {
+        return and(
+                regex(securityPathRegex),
+                not(regex(nonSecurityPathRegex))
+        );
+    }
+
+    List<SecurityReference> defaultAuth() {
+        AuthorizationScope[] authorizationScopes = new AuthorizationScope[3];
+        authorizationScopes[0] = new AuthorizationScope(Authority.SYS_ADMIN.name(), "System administrator");
+        authorizationScopes[1] = new AuthorizationScope(Authority.TENANT_ADMIN.name(), "Tenant administrator");
+        authorizationScopes[2] = new AuthorizationScope(Authority.CUSTOMER_USER.name(), "Customer");
+        return newArrayList(
+                new SecurityReference("X-Authorization", authorizationScopes));
+    }
+
+    private ApiInfo apiInfo() {
+        return new ApiInfoBuilder()
+                .title(title)
+                .description(description)
+                .contact(new Contact(contactName, contactUrl, contactEmail))
+                .license(licenseTitle)
+                .licenseUrl(licenseUrl)
+                .version(version)
+                .build();
+    }
 
 }

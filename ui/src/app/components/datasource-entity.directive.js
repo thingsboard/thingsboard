@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 var alarmDataKeys = [];
                 for (var d in ngModelCtrl.$viewValue.dataKeys) {
                     var dataKey = ngModelCtrl.$viewValue.dataKeys[d];
-                    if ((dataKey.type === types.dataKeyType.timeseries) || (dataKey.type === types.dataKeyType.attribute)) {
+                    if ((dataKey.type === types.dataKeyType.timeseries) || (dataKey.type === types.dataKeyType.attribute) || (dataKey.type === types.dataKeyType.entityField)) {
                         dataKeys.push(dataKey);
                     } else if (dataKey.type === types.dataKeyType.alarm) {
                         alarmDataKeys.push(dataKey);
@@ -165,7 +165,11 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         };
 
         scope.transformAlarmDataKeyChip = function (chip) {
-            return scope.generateDataKey({chip: chip, type: types.dataKeyType.alarm});
+            if (chip.type) {
+                return scope.generateDataKey({chip: chip.name, type: chip.type});
+            } else {
+                return scope.generateDataKey({chip: chip, type: types.dataKeyType.alarm});
+            }
         };
 
         scope.showColorPicker = function (event, dataKey) {
@@ -192,9 +196,9 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 dataKey.color = color;
                 ngModelCtrl.$setDirty();
             });
-        }
+        };
 
-        scope.editDataKey = function (event, dataKey, index) {
+        scope.editDataKey = function (event, dataKey) {
 
             $mdDialog.show({
                 controller: 'DatakeyConfigDialogController',
@@ -214,11 +218,13 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                     var w = angular.element($window);
                     w.triggerHandler('resize');
                 }
-            }).then(function (dataKey) {
-                if ((dataKey.type === types.dataKeyType.timeseries) || (dataKey.type === types.dataKeyType.attribute)) {
-                    scope.dataKeys[index] = dataKey;
-                } else if (dataKey.type === types.dataKeyType.alarm) {
-                    scope.alarmDataKeys[index] = dataKey;
+            }).then(function (newDataKey) {
+                if ((newDataKey.type === types.dataKeyType.timeseries) || (newDataKey.type === types.dataKeyType.attribute) || (newDataKey.type === types.dataKeyType.entityField)) {
+                    let index = scope.dataKeys.indexOf(dataKey);
+                    scope.dataKeys[index] = newDataKey;
+                } else if (newDataKey.type === types.dataKeyType.alarm) {
+                    let index = scope.alarmDataKeys.indexOf(dataKey);
+                    scope.alarmDataKeys[index] = newDataKey;
                 }
                 ngModelCtrl.$setDirty();
             }, function () {
@@ -240,10 +246,16 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                                 items.push({ name: dataKeys[i], type: types.dataKeyType.timeseries });
                             }
                             if (scope.widgetType == types.widgetType.latest.value) {
-                                scope.fetchEntityKeys({entityAliasId: scope.entityAlias.id, query: searchText, type: types.dataKeyType.attribute})
-                                    .then(function (dataKeys) {
+                                var keysType = [types.dataKeyType.attribute, types.dataKeyType.entityField];
+                                var promises = [];
+                                keysType.forEach((type) => {
+                                    promises.push(scope.fetchEntityKeys({entityAliasId: scope.entityAlias.id, query: searchText, type: type}));
+                                });
+                                $q.all(promises).then(function (dataKeys) {
                                         for (var i = 0; i < dataKeys.length; i++) {
-                                            items.push({ name: dataKeys[i], type: types.dataKeyType.attribute });
+                                            for (var j = 0; j < dataKeys[i].length; j++) {
+                                                items.push({name: dataKeys[i][j], type: keysType[i]});
+                                            }
                                         }
                                         deferred.resolve(items);
                                     }, function (e) {

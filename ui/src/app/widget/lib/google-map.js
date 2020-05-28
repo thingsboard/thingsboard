@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ var gmGlobals = {
 }
 
 export default class TbGoogleMap {
-    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, gmApiKey, gmDefaultMapType) {
+    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, gmApiKey, gmDefaultMapType, defaultCenterPosition, markerClusteringSetting) {
 
         var tbMap = this;
         this.utils = utils;
@@ -28,6 +28,8 @@ export default class TbGoogleMap {
         this.minZoomLevel = minZoomLevel;
         this.tooltips = [];
         this.defaultMapType = gmDefaultMapType;
+        this.defaultCenterPosition = defaultCenterPosition;
+        this.isMarketCluster = markerClusteringSetting && markerClusteringSetting.isMarketCluster;
 
         function clearGlobalId() {
             if (gmGlobals.loadingGmId && gmGlobals.loadingGmId === tbMap.mapId) {
@@ -42,15 +44,18 @@ export default class TbGoogleMap {
         }
 
         function initGoogleMap() {
-
             tbMap.map = new google.maps.Map($containerElement[0], { // eslint-disable-line no-undef
                 scrollwheel: !disableScrollZooming,
                 mapTypeId: getGoogleMapTypeId(tbMap.defaultMapType),
-                zoom: tbMap.defaultZoomLevel || 8
+                zoom: tbMap.defaultZoomLevel || 8,
+                center: new google.maps.LatLng(tbMap.defaultCenterPosition[0], tbMap.defaultCenterPosition[1]) // eslint-disable-line no-undef
             });
-
+            if (tbMap.isMarketCluster){
+                tbMap.markersCluster = new MarkerClusterer(tbMap.map, [],  // eslint-disable-line no-undef
+                    angular.merge({imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}, markerClusteringSetting));
+            }
             if (initCallback) {
-                initCallback();
+                setTimeout(initCallback, 0);// eslint-disable-line
             }
 
         }
@@ -87,7 +92,10 @@ export default class TbGoogleMap {
         this.initMapFunctionName = 'initGoogleMap_' + this.mapId;
 
         window[this.initMapFunctionName] = function() { // eslint-disable-line no-undef, angular/window-service
-            lazyLoad.load({ type: 'js', path: 'https://cdn.rawgit.com/googlemaps/v3-utility-library/master/markerwithlabel/src/markerwithlabel.js' }).then( // eslint-disable-line no-undef
+            lazyLoad.load([ // eslint-disable-line no-undef
+                { type: 'js', path: 'https://unpkg.com/@google/markerwithlabel@1.2.3/src/markerwithlabel.js' },
+                { type: 'js', path: 'https://unpkg.com/@google/markerclustererplus@4.0.1/dist/markerclustererplus.min.js' }
+            ]).then(
                 function success() {
                     gmGlobals.gmApiKeys[tbMap.apiKey].loaded = true;
                     initGoogleMap();
@@ -105,6 +113,7 @@ export default class TbGoogleMap {
             );
 
         };
+        /* eslint-enable no-undef */
 
         if (this.apiKey && this.apiKey.length > 0) {
             if (gmGlobals.gmApiKeys[this.apiKey]) {
@@ -141,6 +150,10 @@ export default class TbGoogleMap {
 
     inited() {
         return angular.isDefined(this.map);
+    }
+
+    getContainer() {
+        return this.isMarketCluster ? this.markersCluster : this.map;
     }
 
     /* eslint-disable no-undef */
@@ -221,17 +234,19 @@ export default class TbGoogleMap {
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
-    createMarker(location, dsIndex, settings, onClickListener, markerArgs) {
+    createMarker(location, dsIndex, settings, onClickListener, markerArgs, onDragendListener) {
         var marker;
         if (settings.showLabel) {
             marker = new MarkerWithLabel({
                 position: location,
                 labelContent: '<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
-                labelClass: "tb-labels"
+                labelClass: "tb-labels",
+                draggable: settings.drraggable,
             });
         } else {
             marker = new google.maps.Marker({
                 position: location,
+                draggable: settings.drraggable,
             });
         }
         var gMap = this;
@@ -240,7 +255,11 @@ export default class TbGoogleMap {
             if (settings.showLabel) {
                 marker.set('labelAnchor', new google.maps.Point(100, iconInfo.size[1] + 20));
             }
-            marker.setMap(gMap.map);
+            if(gMap.isMarketCluster) {
+                gMap.getContainer().addMarker(marker);
+            } else {
+                marker.setMap(gMap.getContainer());
+            }
         });
 
         if (settings.displayTooltip) {
@@ -249,6 +268,10 @@ export default class TbGoogleMap {
 
         if (onClickListener) {
             marker.addListener('click', onClickListener);
+        }
+
+        if (onDragendListener) {
+            marker.addListener('dragend', onDragendListener);
         }
 
         return marker;
@@ -325,7 +348,7 @@ export default class TbGoogleMap {
 
 
 	createPolygon(latLangs, settings, location,  onClickListener, markerArgs) {
-		let polygon = new google.maps.Polygon({
+		let polygon = new google.maps.Polygon({ // eslint-disable-line no-undef
 			map: this.map,
 			paths: latLangs,
 			strokeColor: settings.polygonStrokeColor,
@@ -337,7 +360,7 @@ export default class TbGoogleMap {
 
 		//initialize-tooltip
 
-		let popup = new google.maps.InfoWindow({
+		let popup = new google.maps.InfoWindow({ // eslint-disable-line no-undef
 			content: ''
 		});
 		if (!this.tooltips) this.tooltips = [];
@@ -349,7 +372,7 @@ export default class TbGoogleMap {
 		});
 		let map = this;
 		if (onClickListener) {
-			google.maps.event.addListener(polygon, 'click', function (event) {
+			google.maps.event.addListener(polygon, 'click', function (event) { // eslint-disable-line no-undef
 				if (settings.displayTooltip ) {
 					if (settings.autocloseTooltip) {
 						map.tooltips.forEach((tooltip) => {
@@ -357,7 +380,7 @@ export default class TbGoogleMap {
 						});
 					}
 					if (!polygon.anchor) {
-						polygon.anchor = new google.maps.MVCObject();
+						polygon.anchor = new google.maps.MVCObject(); // eslint-disable-line no-undef
 					}
 					polygon.anchor.set("position", event.latLng);
 					popup.open(this.map, polygon.anchor);
@@ -398,8 +421,8 @@ export default class TbGoogleMap {
 
 
     /* eslint-disable no-undef */
-    fitBounds(bounds) {
-        if (this.dontFitMapBounds && this.defaultZoomLevel) {
+    fitBounds(bounds, useDefaultZoom) {
+        if ((this.dontFitMapBounds || useDefaultZoom) && this.defaultZoomLevel) {
             this.map.setZoom(this.defaultZoomLevel);
             this.map.setCenter(bounds.getCenter());
         } else {
@@ -457,6 +480,10 @@ export default class TbGoogleMap {
 
     getTooltips() {
         return this.tooltips;
+    }
+
+    getCenter() {
+        return this.map.getCenter().toJSON();
     }
 
 }

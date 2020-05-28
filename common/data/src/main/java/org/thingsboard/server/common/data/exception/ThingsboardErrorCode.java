@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ public enum ThingsboardErrorCode {
     GENERAL(2),
     AUTHENTICATION(10),
     JWT_TOKEN_EXPIRED(11),
+    CREDENTIALS_EXPIRED(15),
     PERMISSION_DENIED(20),
     INVALID_ARGUMENTS(30),
     BAD_REQUEST_PARAMS(31),

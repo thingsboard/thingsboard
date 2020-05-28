@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -72,7 +71,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
 
     public ComponentDescriptorEntity(ComponentDescriptor component) {
         if (component.getId() != null) {
-            this.setId(component.getId().getId());
+            this.setUuid(component.getId().getId());
         }
         this.actions = component.getActions();
         this.type = component.getType();
@@ -85,7 +84,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
 
     @Override
     public ComponentDescriptor toData() {
-        ComponentDescriptor data = new ComponentDescriptor(new ComponentDescriptorId(this.getId()));
+        ComponentDescriptor data = new ComponentDescriptor(new ComponentDescriptorId(this.getUuid()));
         data.setType(type);
         data.setScope(scope);
         data.setName(this.getName());

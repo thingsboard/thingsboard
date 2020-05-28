@@ -1,19 +1,19 @@
 {
   "name": "thingsboard-web-ui",
   "private": true,
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "ThingsBoard Web UI Microservice",
   "main": "server.js",
   "bin": "server.js",
   "scripts": {
-    "install": "pkg -t node8-linux-x64,node8-win-x64 --out-path ./target . && node install.js",
+    "install": "pkg -t node10-linux-x64,node10-win-x64 --out-path ./target . && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "WEB_FOLDER=./target/web nodemon server.js",
     "start-prod": "NODE_ENV=production nodemon server.js"
   },
   "dependencies": {
     "compression": "^1.7.3",
-    "config": "^1.30.0",
+    "config": "^3.2.2",
     "connect-history-api-fallback": "^1.5.0",
     "express": "^4.16.3",
     "http": "0.0.0",
@@ -22,7 +22,9 @@
     "winston": "^3.0.0",
     "winston-daily-rotate-file": "^3.2.1"
   },
-  "engine": "node >= 5.9.0",
+  "engines": {
+    "node": ">=8.0.0 <11.0.0"
+  },
   "nyc": {
     "exclude": [
       "test",
@@ -34,6 +36,11 @@
   "devDependencies": {
     "fs-extra": "^6.0.1",
     "nodemon": "^1.17.5",
-    "pkg": "^4.3.3"
+    "pkg": "^4.4.0"
+  },
+  "pkg": {
+    "assets": [
+      "node_modules/config/**/*.*"
+    ]
   }
 }

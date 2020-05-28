@@ -1,28 +1,34 @@
 {
   "name": "thingsboard-js-executor",
   "private": true,
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "ThingsBoard JavaScript Executor Microservice",
   "main": "server.js",
   "bin": "server.js",
   "scripts": {
-    "build-proto": "pbjs -t static-module -w commonjs -o ./api/jsinvoke.proto.js ../../application/src/main/proto/jsinvoke.proto",
-    "install": "npm run build-proto && pkg -t node8-linux-x64,node8-win-x64 --out-path ./target . && node install.js",
+    "install": "pkg -t node10-linux-x64,node10-win-x64 --out-path ./target . && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm run build-proto && nodemon server.js",
-    "start-prod": "npm run build-proto && NODE_ENV=production nodemon server.js"
+    "start": "nodemon server.js",
+    "start-prod": "NODE_ENV=production nodemon server.js"
   },
   "dependencies": {
-    "config": "^1.30.0",
+    "config": "^3.2.2",
     "js-yaml": "^3.12.0",
-    "kafka-node": "^3.0.1",
+    "kafkajs": "^1.12.0",
+    "@google-cloud/pubsub": "^1.7.1",
+    "aws-sdk": "^2.663.0",
+    "amqplib": "^0.5.5",
+    "@azure/service-bus": "^1.1.6",
+    "azure-sb": "^0.11.1",
     "long": "^4.0.0",
-    "protobufjs": "^6.8.8",
     "uuid-parse": "^1.0.0",
+    "uuid-random": "^1.3.0",
     "winston": "^3.0.0",
     "winston-daily-rotate-file": "^3.2.1"
   },
-  "engine": "node >= 5.9.0",
+  "engines": {
+    "node": ">=8.0.0 <11.0.0"
+  },
   "nyc": {
     "exclude": [
       "test",
@@ -34,6 +40,11 @@
   "devDependencies": {
     "fs-extra": "^6.0.1",
     "nodemon": "^1.17.5",
-    "pkg": "^4.3.3"
+    "pkg": "^4.4.0"
+  },
+  "pkg": {
+    "assets": [
+      "node_modules/config/**/*.*"
+    ]
   }
 }

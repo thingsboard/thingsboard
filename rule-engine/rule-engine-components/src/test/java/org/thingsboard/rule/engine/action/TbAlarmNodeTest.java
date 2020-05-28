@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -36,20 +41,35 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.alarm.AlarmService;
 
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.*;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.IS_CLEARED_ALARM;
+import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.IS_EXISTING_ALARM;
+import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.IS_NEW_ALARM;
 import static org.thingsboard.server.common.data.alarm.AlarmSeverity.CRITICAL;
 import static org.thingsboard.server.common.data.alarm.AlarmSeverity.WARNING;
-import static org.thingsboard.server.common.data.alarm.AlarmStatus.*;
+import static org.thingsboard.server.common.data.alarm.AlarmStatus.ACTIVE_UNACK;
+import static org.thingsboard.server.common.data.alarm.AlarmStatus.CLEARED_ACK;
+import static org.thingsboard.server.common.data.alarm.AlarmStatus.CLEARED_UNACK;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbAlarmNodeTest {
@@ -59,12 +79,15 @@ public class TbAlarmNodeTest {
     @Mock
     private TbContext ctx;
     @Mock
-    private ListeningExecutor executor;
-    @Mock
     private AlarmService alarmService;
 
     @Mock
     private ScriptEngine detailsJs;
+
+    @Captor
+    private ArgumentCaptor<Runnable> successCaptor;
+    @Captor
+    private ArgumentCaptor<Consumer<Throwable>> failureCaptor;
 
     private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
     private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
@@ -99,15 +122,16 @@ public class TbAlarmNodeTest {
     public void newAlarmCanBeCreated() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
-        when(detailsJs.executeJson(msg)).thenReturn(null);
+        when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
-
         doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Created"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -135,17 +159,15 @@ public class TbAlarmNodeTest {
                 .build();
 
         assertEquals(expectedAlarm, actualAlarm);
-
-        verify(executor, times(1)).executeAsync(any(Callable.class));
     }
 
     @Test
     public void buildDetailsThrowsException() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
-        when(detailsJs.executeJson(msg)).thenThrow(new NotImplementedException("message"));
+        when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFailedFuture(new NotImplementedException("message")));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
@@ -153,9 +175,9 @@ public class TbAlarmNodeTest {
         verifyError(msg, "message", NotImplementedException.class);
 
         verify(ctx).createJsScriptEngine("DETAILS");
-        verify(ctx, times(1)).getJsExecutor();
         verify(ctx).getAlarmService();
         verify(ctx, times(3)).getDbCallbackExecutor();
+        verify(ctx).logJsEvalRequest();
         verify(ctx).getTenantId();
         verify(alarmService).findLatestByOriginatorAndType(tenantId, originator, "SomeType");
 
@@ -166,17 +188,19 @@ public class TbAlarmNodeTest {
     public void ifAlarmClearedCreateNew() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         Alarm clearedAlarm = Alarm.builder().status(CLEARED_ACK).build();
 
-        when(detailsJs.executeJson(msg)).thenReturn(null);
+        when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(clearedAlarm));
 
         doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Created"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -205,20 +229,18 @@ public class TbAlarmNodeTest {
                 .build();
 
         assertEquals(expectedAlarm, actualAlarm);
-
-        verify(executor, times(1)).executeAsync(any(Callable.class));
     }
 
     @Test
     public void alarmCanBeUpdated() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).status(ACTIVE_UNACK).severity(WARNING).endTs(oldEndDate).build();
 
-        when(detailsJs.executeJson(msg)).thenReturn(null);
+        when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(activeAlarm));
 
         doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(activeAlarm);
@@ -254,22 +276,21 @@ public class TbAlarmNodeTest {
                 .build();
 
         assertEquals(expectedAlarm, actualAlarm);
-
-        verify(executor, times(1)).executeAsync(any(Callable.class));
     }
 
     @Test
     public void alarmCanBeCleared() throws ScriptException, IOException {
         initWithClearAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg( "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).status(ACTIVE_UNACK).severity(WARNING).endTs(oldEndDate).build();
 
-//        when(detailsJs.executeJson(msg)).thenReturn(null);
+        when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(activeAlarm));
         when(alarmService.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), org.mockito.Mockito.any(JsonNode.class), anyLong())).thenReturn(Futures.immediateFuture(true));
+        when(alarmService.findAlarmByIdAsync(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()))).thenReturn(Futures.immediateFuture(activeAlarm));
 //        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(activeAlarm);
 
         node.onMsg(ctx, msg);
@@ -317,11 +338,8 @@ public class TbAlarmNodeTest {
             when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
             when(ctx.getTenantId()).thenReturn(tenantId);
-            when(ctx.getJsExecutor()).thenReturn(executor);
             when(ctx.getAlarmService()).thenReturn(alarmService);
             when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
-
-            mockJsExecutor();
 
             node = new TbCreateAlarmNode();
             node.init(ctx, nodeConfiguration);
@@ -341,29 +359,14 @@ public class TbAlarmNodeTest {
             when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
             when(ctx.getTenantId()).thenReturn(tenantId);
-            when(ctx.getJsExecutor()).thenReturn(executor);
             when(ctx.getAlarmService()).thenReturn(alarmService);
             when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
-
-            mockJsExecutor();
 
             node = new TbClearAlarmNode();
             node.init(ctx, nodeConfiguration);
         } catch (TbNodeException ex) {
             throw new IllegalStateException(ex);
         }
-    }
-
-    private void mockJsExecutor() {
-        when(ctx.getJsExecutor()).thenReturn(executor);
-        doAnswer((Answer<ListenableFuture<Boolean>>) invocationOnMock -> {
-            try {
-                Callable task = (Callable) (invocationOnMock.getArguments())[0];
-                return Futures.immediateFuture((Boolean) task.call());
-            } catch (Throwable th) {
-                return Futures.immediateFailedFuture(th);
-            }
-        }).when(executor).executeAsync(any(Callable.class));
     }
 
     private void verifyError(TbMsg msg, String message, Class expectedClass) {

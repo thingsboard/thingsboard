@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.type.AuthorityCodec;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.ComponentScopeCodec;
@@ -62,7 +61,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(type = ComponentType.ACTION,
@@ -106,10 +105,8 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        withCallback(save(msg, ctx), aVoid -> {
-            ctx.tellNext(msg, SUCCESS);
-        }, e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
+    public void onMsg(TbContext ctx, TbMsg msg) {
+        withCallback(save(msg, ctx), aVoid -> ctx.tellSuccess(msg), e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
     }
 
     @Override
@@ -242,7 +239,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         if (statement.getConsistencyLevel() == null) {
             statement.setConsistencyLevel(level);
         }
-        return ctx.getCassandraBufferedRateExecutor().submit(new CassandraStatementTask(ctx.getTenantId(), getSession(), statement));
+        return ctx.submitCassandraTask(new CassandraStatementTask(ctx.getTenantId(), getSession(), statement));
     }
 
     private static String statementToString(Statement statement) {

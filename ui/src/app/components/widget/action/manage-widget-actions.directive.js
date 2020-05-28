@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import './manage-widget-actions.scss';
 import thingsboardMaterialIconSelect from '../../material-icon-select.directive';
 
 import WidgetActionDialogController from './widget-action-dialog.controller';
+import CustomActionPrettyEditor from './custom-action-pretty-editor.directive';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -45,7 +46,7 @@ import widgetActionDialogTemplate from './widget-action-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
-export default angular.module('thingsboard.directives.widgetActions', [thingsboardMaterialIconSelect])
+export default angular.module('thingsboard.directives.widgetActions', [thingsboardMaterialIconSelect, CustomActionPrettyEditor])
     .controller('WidgetActionDialogController', WidgetActionDialogController)
     .directive('tbManageWidgetActions', ManageWidgetActions)
     .name;

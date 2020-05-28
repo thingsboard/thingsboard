@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -47,11 +47,20 @@
 								<div layout="row" layout-align="space-between start">
 									<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitlePanel(widget)">
 										<div ng-if="vm.hasWidgetTitleTemplate(widget)" ng-include="vm.widgetTitleTemplate(widget)"></div>
-										<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead title">{{vm.widgetTitle(widget)}}</span>
-										<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
+										<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead title">
+											<md-icon class="material-icons" ng-if="vm.showWidgetTitleIcon(widget)" ng-style="vm.widgetTitleIconStyle(widget)">
+												{{vm.widgetTitleIcon(widget)}}
+											</md-icon>
+											{{vm.widgetTitle(widget)}}
+											<md-tooltip class="tb-tooltip-multiline" ng-if="vm.widgetTitleTooltip(widget)" md-direction="{{vm.isWidgetExpanded ? 'bottom' : 'top'}}">
+												<span ng-bind-html="vm.widgetTitleTooltip(widget)"></span>
+											</md-tooltip>
+										</span>
+										<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" is-edit="vm.isEdit"
+                                                       ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 									</div>
 									<div class="tb-widget-actions" layout="row" layout-align="start center" ng-show="vm.showWidgetActions(widget)" tb-mousedown="$event.stopPropagation()"
-										ng-class="{'tb-widget-actions-absolute': !vm.showWidgetTitlePanel(widget) && !(vm.hasWidgetTitleTemplate(widget)||vm.showWidgetTitle(widget)||vm.hasAggregation(widget))}">
+										ng-class="{'tb-widget-actions-absolute': !(vm.showWidgetTitlePanel(widget)&&(vm.hasWidgetTitleTemplate(widget)||vm.showWidgetTitle(widget)||vm.hasAggregation(widget)))}">
 										<md-button ng-repeat="action in vm.customWidgetHeaderActions(widget)"
 												   aria-label="{{action.displayName}}"
 												   ng-show="!vm.isEdit"

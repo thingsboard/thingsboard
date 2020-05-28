@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ function KeyValMapController($scope, $mdUtil) {
         vm.kvList.length = 0;
         if (vm.keyValMap) {
             for (var property in vm.keyValMap) {
-                if (vm.keyValMap.hasOwnProperty(property)) {
+                if (Object.prototype.hasOwnProperty.call(vm.keyValMap, property)) {
                     vm.kvList.push(
                         {
                             key: property + '',
@@ -80,7 +80,7 @@ function KeyValMapController($scope, $mdUtil) {
                 return;
             }
             for (var property in vm.keyValMap) {
-                if (vm.keyValMap.hasOwnProperty(property)) {
+                if (Object.prototype.hasOwnProperty.call(vm.keyValMap, property)) {
                     delete vm.keyValMap[property];
                 }
             }

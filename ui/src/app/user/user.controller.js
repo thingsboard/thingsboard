@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
     vm.displayActivationLink = displayActivationLink;
     vm.resendActivation = resendActivation;
     vm.loginAsUser = loginAsUser;
+    vm.setUserCredentialsEnabled = setUserCredentialsEnabled;
 
     initController();
 
@@ -174,6 +175,22 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
                 openActivationLinkDialog(event, activationLink);
             }
         );
+    }
+
+    function setUserCredentialsEnabled(user, userCredentialsEnabled) {
+        userService.setUserCredentialsEnabled(user.id.id, userCredentialsEnabled).then(
+            () => {
+                if (!user.additionalInfo) {
+                    user.additionalInfo = {};
+                }
+                user.additionalInfo.userCredentialsEnabled = userCredentialsEnabled;
+                if (userCredentialsEnabled) {
+                    toast.showSuccess($translate.instant('user.enable-account-message'));
+                } else {
+                    toast.showSuccess($translate.instant('user.disable-account-message'));
+                }
+            }
+        )
     }
 
     function openActivationLinkDialog(event, activationLink) {

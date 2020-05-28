@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ class ThingsboardFieldSet extends React.Component {
 
     render() {
         let forms = this.props.form.items.map(function(form, index){
-            return this.props.builder(form, this.props.model, index, this.props.onChange, this.props.onColorClick, this.props.onToggleFullscreen, this.props.mapper, this.props.builder);
+            return this.props.builder(form, this.props.model, index, this.props.onChange, this.props.onColorClick, this.props.onIconClick, this.props.onToggleFullscreen, this.props.mapper, this.props.builder);
         }.bind(this));
 
         return (

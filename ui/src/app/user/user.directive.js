@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,15 @@ export default function UserDirective($compile, $templateCache, userService) {
             return scope.user && scope.user.authority === 'CUSTOMER_USER';
         };
 
+        scope.isUserCredentialsEnabled = function() {
+            if (scope.user == null || angular.isUndefined(scope.user) ||
+                scope.user.additionalInfo == null || angular.isUndefined(scope.user.additionalInfo) ||
+                scope.user.additionalInfo.userCredentialsEnabled == null || angular.isUndefined(scope.user.additionalInfo.userCredentialsEnabled))  {
+                return true;
+            }
+            return scope.user.additionalInfo.userCredentialsEnabled === true;
+        };
+
         scope.loginAsUserEnabled = userService.isUserTokenAccessEnabled();
 
         $compile(element.contents())(scope);
@@ -49,7 +58,8 @@ export default function UserDirective($compile, $templateCache, userService) {
             onDisplayActivationLink: '&',
             onResendActivation: '&',
             onLoginAsUser: '&',
-            onDeleteUser: '&'
+            onDeleteUser: '&',
+            onSetUserCredentialsEnabled: '&',
         }
     };
 }

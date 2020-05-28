@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
@@ -29,6 +30,7 @@ import javax.annotation.Nullable;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 
 /**
  * Created by ashvayka on 24.10.18.
@@ -43,6 +45,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final ExecutorService callbackExecutor;
     private final ScheduledExecutorService timeoutExecutor;
     private final int concurrencyLimit;
+    private final int printQueriesFreq;
     private final boolean perTenantLimitsEnabled;
     private final String perTenantLimitsConfiguration;
     private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
@@ -56,16 +59,18 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     protected final AtomicInteger totalExpired = new AtomicInteger();
     protected final AtomicInteger totalRejected = new AtomicInteger();
     protected final AtomicInteger totalRateLimited = new AtomicInteger();
+    protected final AtomicInteger printQueriesIdx = new AtomicInteger();
 
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs,
-                                        boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration) {
+                                        boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration, int printQueriesFreq) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
+        this.printQueriesFreq = printQueriesFreq;
         this.queue = new LinkedBlockingDeque<>(queueLimit);
-        this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads);
+        this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-dispatcher"));
         this.callbackExecutor = Executors.newWorkStealingPool(callbackThreads);
-        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
+        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-timeout"));
         this.perTenantLimitsEnabled = perTenantLimitsEnabled;
         this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;
         for (int i = 0; i < dispatcherThreads; i++) {
@@ -130,6 +135,13 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 if (curLvl <= concurrencyLimit) {
                     taskCtx = queue.take();
                     final AsyncTaskContext<T, V> finalTaskCtx = taskCtx;
+                    if (printQueriesFreq > 0) {
+                        if (printQueriesIdx.incrementAndGet() >= printQueriesFreq) {
+                            printQueriesIdx.set(0);
+                            String query = queryToString(finalTaskCtx);
+                            log.info("[{}] Cassandra query: {}", taskCtx.getId(), query);
+                        }
+                    }
                     logTask("Processing", finalTaskCtx);
                     concurrencyLevel.incrementAndGet();
                     long timeout = finalTaskCtx.getCreateTime() + maxWaitTime - System.currentTimeMillis();
@@ -186,17 +198,29 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private void logTask(String action, AsyncTaskContext<T, V> taskCtx) {
         if (log.isTraceEnabled()) {
             if (taskCtx.getTask() instanceof CassandraStatementTask) {
-                CassandraStatementTask cassStmtTask = (CassandraStatementTask) taskCtx.getTask();
-                if (cassStmtTask.getStatement() instanceof BoundStatement) {
-                    BoundStatement stmt = (BoundStatement) cassStmtTask.getStatement();
-                    String query = toStringWithValues(stmt, ProtocolVersion.V5);
-                    log.trace("[{}] {} task: {}, BoundStatement query: {}", taskCtx.getId(), action, taskCtx, query);
-                }
+                String query = queryToString(taskCtx);
+                log.trace("[{}] {} task: {}, BoundStatement query: {}", taskCtx.getId(), action, taskCtx, query);
             } else {
                 log.trace("[{}] {} task: {}", taskCtx.getId(), action, taskCtx);
             }
         } else {
             log.debug("[{}] {} task", taskCtx.getId(), action);
+        }
+    }
+
+    private String queryToString(AsyncTaskContext<T, V> taskCtx) {
+        CassandraStatementTask cassStmtTask = (CassandraStatementTask) taskCtx.getTask();
+        if (cassStmtTask.getStatement() instanceof BoundStatement) {
+            BoundStatement stmt = (BoundStatement) cassStmtTask.getStatement();
+            String query = stmt.preparedStatement().getQueryString();
+            try {
+                query = toStringWithValues(stmt, ProtocolVersion.V5);
+            } catch (Exception e) {
+                log.warn("Can't convert to query with values", e);
+            }
+            return query;
+        } else {
+            return "Not Cassandra Statement Task";
         }
     }
 
@@ -211,7 +235,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             TypeCodec<Object> codec = codecRegistry.codecFor(type);
             if (boundStatement.getBytesUnsafe(index) != null) {
                 Object value = codec.deserialize(boundStatement.getBytesUnsafe(index), protocolVersion);
-                query = query.replaceFirst("\\?", codec.format(value));
+                String replacement = Matcher.quoteReplacement(codec.format(value));
+                query = query.replaceFirst("\\?", replacement);
             }
             index++;
         }

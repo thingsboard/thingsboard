@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,37 +81,37 @@ public class AuditLogServiceImpl implements AuditLogService {
     private AuditLogSink auditLogSink;
 
     @Override
-    public TimePageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink) {
+    public TimePageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndCustomerId [{}], [{}], [{}]", tenantId, customerId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
-        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndCustomerId(tenantId.getId(), customerId, pageLink);
+        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndCustomerId(tenantId.getId(), customerId, actionTypes, pageLink);
         return new TimePageData<>(auditLogs, pageLink);
     }
 
     @Override
-    public TimePageData<AuditLog> findAuditLogsByTenantIdAndUserId(TenantId tenantId, UserId userId, TimePageLink pageLink) {
+    public TimePageData<AuditLog> findAuditLogsByTenantIdAndUserId(TenantId tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndUserId [{}], [{}], [{}]", tenantId, userId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(userId, "Incorrect userId" + userId);
-        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndUserId(tenantId.getId(), userId, pageLink);
+        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndUserId(tenantId.getId(), userId, actionTypes, pageLink);
         return new TimePageData<>(auditLogs, pageLink);
     }
 
     @Override
-    public TimePageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
+    public TimePageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndEntityId [{}], [{}], [{}]", tenantId, entityId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateEntityId(entityId, INCORRECT_TENANT_ID + entityId);
-        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantId.getId(), entityId, pageLink);
+        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantId.getId(), entityId, actionTypes, pageLink);
         return new TimePageData<>(auditLogs, pageLink);
     }
 
     @Override
-    public TimePageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, TimePageLink pageLink) {
+    public TimePageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogs [{}]", pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantId(tenantId.getId(), pageLink);
+        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantId(tenantId.getId(), actionTypes, pageLink);
         return new TimePageData<>(auditLogs, pageLink);
     }
 
@@ -247,6 +247,18 @@ public class AuditLogServiceImpl implements AuditLogService {
             case RELATION_DELETED:
                 EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
                 actionData.set("relation", objectMapper.valueToTree(relation));
+                break;
+            case LOGIN:
+            case LOGOUT:
+            case LOCKOUT:
+                String clientAddress = extractParameter(String.class, 0, additionalInfo);
+                String browser = extractParameter(String.class, 1, additionalInfo);
+                String os = extractParameter(String.class, 2, additionalInfo);
+                String device = extractParameter(String.class, 3, additionalInfo);
+                actionData.put("clientAddress", clientAddress);
+                actionData.put("browser", browser);
+                actionData.put("os", os);
+                actionData.put("device", device);
                 break;
         }
         return actionData;

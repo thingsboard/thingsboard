@@ -26,14 +26,14 @@ SET SQL_DATA_FOLDER=%BASE%\data\sql
 SET jarfile=%BASE%\lib\${pkg.name}.jar
 SET installDir=%BASE%\data
 
-PUSHD %BASE%\conf
+PUSHD "%BASE%\conf"
 
-java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication^
-                    -Dinstall.data_dir=%installDir%^
+java -cp "%jarfile%" -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication^
+                    -Dinstall.data_dir="%installDir%"^
                     -Dspring.jpa.hibernate.ddl-auto=none^
                     -Dinstall.upgrade=true^
                     -Dinstall.upgrade.from_version=%fromVersion%^
-                    -Dlogging.config=%BASE%\install\logback.xml^
+                    -Dlogging.config="%BASE%\install\logback.xml"^
                     org.springframework.boot.loader.PropertiesLauncher
 
 if errorlevel 1 (

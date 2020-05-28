@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,11 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                 if (config) {
                     scope.selectedTab = 0;
                     scope.title = config.title;
+                    scope.showTitleIcon = angular.isDefined(config.showTitleIcon) ? config.showTitleIcon : false;
+                    scope.titleIcon = angular.isDefined(config.titleIcon) ? config.titleIcon : '';
+                    scope.iconColor = angular.isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)';
+                    scope.iconSize = angular.isDefined(config.iconSize) ? config.iconSize : '24px';
+                    scope.titleTooltip = angular.isDefined(config.titleTooltip) ? config.titleTooltip : '';
                     scope.showTitle = config.showTitle;
                     scope.dropShadow = angular.isDefined(config.dropShadow) ? config.dropShadow : true;
                     scope.enableFullscreen = angular.isDefined(config.enableFullscreen) ? config.enableFullscreen : true;
@@ -168,6 +173,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                             config.alarmSearchStatus : types.alarmSearchStatus.any;
                         scope.alarmsPollingInterval = angular.isDefined(config.alarmsPollingInterval) ?
                             config.alarmsPollingInterval : 5;
+                        scope.alarmsMaxCountLoad = angular.isDefined(config.alarmsMaxCountLoad) ?
+                            config.alarmsMaxCountLoad : 0;
+                        scope.alarmsFetchSize = angular.isDefined(config.alarmsFetchSize) ?
+                            config.alarmsFetchSize : 100;
                         if (config.alarmSource) {
                             scope.alarmSource.value = config.alarmSource;
                         } else {
@@ -236,14 +245,19 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             }
         };
 
-        scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
-            'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + displayTimewindow + ' +
-            'alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
+        scope.$watch('title + showTitleIcon + titleIcon + iconColor + iconSize + titleTooltip + showTitle + dropShadow + enableFullscreen + backgroundColor + ' +
+            'color + padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
+            'displayTimewindow + alarmSearchStatus + alarmsPollingInterval + alarmsMaxCountLoad + alarmsFetchSize + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 if (value.config) {
                     var config = value.config;
                     config.title = scope.title;
+                    config.showTitleIcon = scope.showTitleIcon;
+                    config.titleIcon = scope.titleIcon;
+                    config.iconColor = scope.iconColor;
+                    config.iconSize = scope.iconSize;
+                    config.titleTooltip = scope.titleTooltip;
                     config.showTitle = scope.showTitle;
                     config.dropShadow = scope.dropShadow;
                     config.enableFullscreen = scope.enableFullscreen;
@@ -267,6 +281,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.displayTimewindow = scope.displayTimewindow;
                     config.alarmSearchStatus = scope.alarmSearchStatus;
                     config.alarmsPollingInterval = scope.alarmsPollingInterval;
+                    config.alarmsMaxCountLoad = scope.alarmsMaxCountLoad;
+                    config.alarmsFetchSize = scope.alarmsFetchSize;
                     config.showLegend = scope.showLegend;
                 }
                 if (value.layout) {
@@ -407,10 +423,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             }
 
             var label = chip;
-            if (type === types.dataKeyType.alarm) {
-                var alarmField = types.alarmFields[chip];
-                if (alarmField) {
-                    label = $translate.instant(alarmField.name)+'';
+            if (type === types.dataKeyType.alarm || type === types.dataKeyType.entityField) {
+                var keyField = type === types.dataKeyType.alarm ? types.alarmFields[chip] : types.entityField[chip];
+                if (keyField) {
+                    label = $translate.instant(keyField.name)+'';
                 }
             }
             label = scope.genNextLabel(label);

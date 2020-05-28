@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,7 +26,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -36,10 +34,11 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -71,8 +70,6 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -93,7 +90,11 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -112,6 +113,7 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
+@TbCoreComponent
 public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
@@ -162,7 +164,7 @@ public abstract class BaseController {
     protected RuleChainService ruleChainService;
 
     @Autowired
-    protected ActorService actorService;
+    protected TbClusterService tbClusterService;
 
     @Autowired
     protected RelationService relationService;
@@ -184,6 +186,12 @@ public abstract class BaseController {
 
     @Autowired
     protected ClaimDevicesService claimDevicesService;
+
+    @Autowired
+    protected PartitionService partitionService;
+
+    @Autowired
+    protected TbQueueProducerProvider producerProvider;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -513,27 +521,6 @@ public abstract class BaseController {
         return ruleNode;
     }
 
-
-    protected String constructBaseUrl(HttpServletRequest request) {
-        String scheme = request.getScheme();
-        if (request.getHeader("x-forwarded-proto") != null) {
-            scheme = request.getHeader("x-forwarded-proto");
-        }
-        int serverPort = request.getServerPort();
-        if (request.getHeader("x-forwarded-port") != null) {
-            try {
-                serverPort = request.getIntHeader("x-forwarded-port");
-            } catch (NumberFormatException e) {
-            }
-        }
-
-        String baseUrl = String.format("%s://%s:%d",
-                scheme,
-                request.getServerName(),
-                serverPort);
-        return baseUrl;
-    }
-
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
@@ -630,6 +617,8 @@ public abstract class BaseController {
                                     entityNode.put(attr.getKey(), attr.getDoubleValue().get());
                                 } else if (attr.getDataType() == DataType.LONG) {
                                     entityNode.put(attr.getKey(), attr.getLongValue().get());
+                                } else if (attr.getDataType() == DataType.JSON) {
+                                    entityNode.set(attr.getKey(), json.readTree(attr.getJsonValue().get()));
                                 } else {
                                     entityNode.put(attr.getKey(), attr.getValueAsString());
                                 }
@@ -645,10 +634,14 @@ public abstract class BaseController {
                         }
                     }
                 }
-                TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, entityId, metaData, TbMsgDataType.JSON
-                        , json.writeValueAsString(entityNode)
-                        , null, null, 0L);
-                actorService.onMsg(new SendToClusterMsg(entityId, new ServiceToRuleEngineMsg(user.getTenantId(), tbMsg)));
+                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+                TenantId tenantId = user.getTenantId();
+                if (tenantId.isNullUid()) {
+                    if (entity instanceof HasTenantId) {
+                        tenantId = ((HasTenantId) entity).getTenantId();
+                    }
+                }
+                tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }

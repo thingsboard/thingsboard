@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,65 +19,66 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.interceptor.SimpleKey;
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.TypeDescriptor;
-import org.springframework.core.convert.converter.ConditionalGenericConverter;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.ConverterRegistry;
-import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.convert.RedisCustomConversions;
 import org.springframework.format.support.DefaultFormattingConversionService;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
+import redis.clients.jedis.JedisPoolConfig;
 
 @Configuration
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis", matchIfMissing = false)
 @EnableCaching
 @Data
-public class TBRedisCacheConfiguration {
+public abstract class TBRedisCacheConfiguration {
 
-    @Value("${redis.connection.host}")
-    private String host;
+    @Value("${redis.pool_config.maxTotal}")
+    private int maxTotal;
 
-    @Value("${redis.connection.port}")
-    private Integer port;
+    @Value("${redis.pool_config.maxIdle}")
+    private int maxIdle;
 
-    @Value("${redis.connection.db}")
-    private Integer db;
+    @Value("${redis.pool_config.minIdle}")
+    private int minIdle;
 
-    @Value("${redis.connection.password}")
-    private String password;
+    @Value("${redis.pool_config.testOnBorrow}")
+    private boolean testOnBorrow;
+
+    @Value("${redis.pool_config.testOnReturn}")
+    private boolean testOnReturn;
+
+    @Value("${redis.pool_config.testWhileIdle}")
+    private boolean testWhileIdle;
+
+    @Value("${redis.pool_config.minEvictableMs}")
+    private long minEvictableMs;
+
+    @Value("${redis.pool_config.evictionRunsMs}")
+    private long evictionRunsMs;
+
+    @Value("${redis.pool_config.maxWaitMills}")
+    private long maxWaitMills;
+
+    @Value("${redis.pool_config.numberTestsPerEvictionRun}")
+    private int numberTestsPerEvictionRun;
+
+    @Value("${redis.pool_config.blockWhenExhausted}")
+    private boolean blockWhenExhausted;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        JedisConnectionFactory factory = new JedisConnectionFactory();
-        factory.setHostName(host);
-        factory.setPort(port);
-        factory.setDatabase(db);
-        factory.setPassword(password);
-        return factory;
+        return loadFactory();
     }
+
+    protected abstract JedisConnectionFactory loadFactory();
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory cf) {
@@ -93,8 +94,31 @@ public class TBRedisCacheConfiguration {
         return new PreviousDeviceCredentialsIdKeyGenerator();
     }
 
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate() {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory());
+        return template;
+    }
+
     private static void registerDefaultConverters(ConverterRegistry registry) {
         Assert.notNull(registry, "ConverterRegistry must not be null!");
         registry.addConverter(EntityId.class, String.class, EntityId::toString);
+    }
+
+    protected JedisPoolConfig buildPoolConfig() {
+        final JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setMaxTotal(maxTotal);
+        poolConfig.setMaxIdle(maxIdle);
+        poolConfig.setMinIdle(minIdle);
+        poolConfig.setTestOnBorrow(testOnBorrow);
+        poolConfig.setTestOnReturn(testOnReturn);
+        poolConfig.setTestWhileIdle(testWhileIdle);
+        poolConfig.setMinEvictableIdleTimeMillis(minEvictableMs);
+        poolConfig.setTimeBetweenEvictionRunsMillis(evictionRunsMs);
+        poolConfig.setMaxWaitMillis(maxWaitMills);
+        poolConfig.setNumTestsPerEvictionRun(numberTestsPerEvictionRun);
+        poolConfig.setBlockWhenExhausted(blockWhenExhausted);
+        return poolConfig;
     }
 }

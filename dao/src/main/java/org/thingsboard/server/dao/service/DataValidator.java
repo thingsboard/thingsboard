@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,12 +84,6 @@ public abstract class DataValidator<D extends BaseData<?>> {
 
         if (!expectedFields.containsAll(actualFields) || !actualFields.containsAll(expectedFields)) {
             throw new DataValidationException("Provided json structure is different from stored one '" + actualNode + "'!");
-        }
-
-        for (String field : actualFields) {
-            if (!actualNode.get(field).isTextual()) {
-                throw new DataValidationException("Provided json structure can't contain non-text values '" + actualNode + "'!");
-            }
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,8 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
     vm.index = 0;
     vm.dsIndex = 0;
     vm.minTime = 0;
-    vm.maxTime = 0;
+    vm.minTimeIndex = 0;
+    vm.maxTimeIndex = 0;
     vm.isPlaying = false;
     vm.trackingLine = {
         "type": "FeatureCollection",
@@ -200,10 +201,10 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
     vm.moveNext = function () {
         vm.stopPlay();
         if (vm.staticSettings.usePointAsAnchor) {
-            let newIndex = vm.maxTime;
-            for (let index = vm.index+1; index < vm.maxTime; index++) {
+            let newIndex = vm.maxTimeIndex;
+            for (let index = vm.index + 1; index < vm.maxTimeIndex; index++) {
                 if (vm.trips.some(function (trip) {
-                    return trip.timeRange[index].hasAnchor;
+                    return calculateCurrentDate(trip.timeRange, index).hasAnchor;
                 })) {
                     newIndex = index;
                     break;
@@ -216,27 +217,27 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
     vm.movePrev = function () {
         vm.stopPlay();
         if (vm.staticSettings.usePointAsAnchor) {
-            let newIndex = vm.minTime;
-            for (let index = vm.index-1; index > vm.minTime; index--) {
+            let newIndex = vm.minTimeIndex;
+            for (let index = vm.index - 1; index > vm.minTimeIndex; index--) {
                 if (vm.trips.some(function (trip) {
-                        return trip.timeRange[index].hasAnchor;
-                    })) {
+                    return calculateCurrentDate(trip.timeRange, index).hasAnchor;
+                })) {
                     newIndex = index;
                     break;
                 }
             }
             moveToIndex(newIndex);
-        } else  moveInc(-1);
+        } else moveInc(-1);
     };
 
     vm.moveStart = function () {
         vm.stopPlay();
-        moveToIndex(vm.minTime);
+        moveToIndex(vm.minTimeIndex);
     };
 
     vm.moveEnd = function () {
         vm.stopPlay();
-        moveToIndex(vm.maxTime);
+        moveToIndex(vm.maxTimeIndex);
     };
 
     vm.stopPlay = function () {
@@ -252,8 +253,9 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
     }
 
     function moveToIndex(newIndex) {
-        if (newIndex > vm.maxTime || newIndex < vm.minTime) return;
+        if (newIndex > vm.maxTimeIndex || newIndex < vm.minTimeIndex) return;
         vm.index = newIndex;
+        vm.animationTime = vm.minTime + vm.index * vm.staticSettings.normalizationStep;
         recalculateTrips();
     }
 
@@ -261,12 +263,6 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         vm.trips.forEach(function (value) {
             moveMarker(value);
         })
-    }
-
-    function findAngle(lat1, lng1, lat2, lng2) {
-        let angle = Math.atan2(0, 0) - Math.atan2(lat2 - lat1, lng2 - lng1);
-        angle = angle * 180 / Math.PI;
-        return parseInt(angle.toFixed(2));
     }
 
     function initialize() {
@@ -445,7 +441,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         }
     }
 
-    function configureTripSettings(trip, index, apply) {
+    function configureTripSettings(trip, apply) {
         trip.settings = {};
         trip.settings.color = calculateColor(trip);
         trip.settings.polygonColor = calculatePolygonColor(trip);
@@ -478,17 +474,17 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             let labelText = vm.staticSettings.label;
             if (vm.staticSettings.useLabelFunction && angular.isDefined(vm.staticSettings.labelFunction)) {
                 try {
-                    labelText = vm.staticSettings.labelFunction(vm.ctx.data, trip.timeRange[vm.index], trip.dsIndex);
+                    labelText = vm.staticSettings.labelFunction(vm.ctx.data, calculateCurrentDate(trip.timeRange, vm.index), trip.dsIndex);
                 } catch (e) {
                     labelText = null;
                 }
             }
             labelText = vm.utils.createLabelFromDatasource(trip.dataSource, labelText);
             labelReplaceInfo = processPattern(labelText, vm.ctx.datasources, trip.dSIndex);
-            label = fillPattern(labelText, labelReplaceInfo, trip.timeRange[vm.index]);
+            label = fillPattern(labelText, labelReplaceInfo, calculateCurrentDate(trip.timeRange, vm.index));
             if (vm.staticSettings.useLabelFunction && angular.isDefined(vm.staticSettings.labelFunction)) {
                 try {
-                    labelText = vm.staticSettings.labelFunction(vm.ctx.data, trip.timeRange[vm.index], trip.dSIndex);
+                    labelText = vm.staticSettings.labelFunction(vm.ctx.data, calculateCurrentDate(trip.timeRange, vm.index), trip.dSIndex);
                 } catch (e) {
                     labelText = null;
                 }
@@ -504,14 +500,14 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             let tooltipText = vm.staticSettings.tooltipPattern;
             if (vm.staticSettings.useTooltipFunction && angular.isDefined(vm.staticSettings.tooltipFunction)) {
                 try {
-                    tooltipText = vm.staticSettings.tooltipFunction(vm.ctx.data, trip.timeRange[vm.index], trip.dSIndex);
+                    tooltipText = vm.staticSettings.tooltipFunction(vm.ctx.data, calculateCurrentDate(trip.timeRange, vm.index), trip.dSIndex);
                 } catch (e) {
                     tooltipText = null;
                 }
             }
             tooltipText = vm.utils.createLabelFromDatasource(trip.dataSource, tooltipText);
             tooltipReplaceInfo = processPattern(tooltipText, vm.ctx.datasources, trip.dSIndex);
-            tooltip = fillPattern(tooltipText, tooltipReplaceInfo, trip.timeRange[vm.index]);
+            tooltip = fillPattern(tooltipText, tooltipReplaceInfo, calculateCurrentDate(trip.timeRange, vm.index));
             tooltip = fillPatternWithActions(tooltip, 'onTooltipAction', null);
 
         }
@@ -525,14 +521,14 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             let tooltipText = vm.staticSettings.polygonTooltipPattern;
             if (vm.staticSettings.usePolygonTooltipFunction && angular.isDefined(vm.staticSettings.polygonTooltipFunction)) {
                 try {
-                    tooltipText = vm.staticSettings.polygonTooltipFunction(vm.ctx.data, trip.timeRange[vm.index], trip.dSIndex);
+                    tooltipText = vm.staticSettings.polygonTooltipFunction(vm.ctx.data, calculateCurrentDate(trip.timeRange, vm.index), trip.dSIndex);
                 } catch (e) {
                     tooltipText = null;
                 }
             }
             tooltipText = vm.utils.createLabelFromDatasource(trip.dataSource, tooltipText);
             tooltipReplaceInfo = processPattern(tooltipText, vm.ctx.datasources, trip.dSIndex);
-            tooltip = fillPattern(tooltipText, tooltipReplaceInfo, trip.timeRange[vm.index]);
+            tooltip = fillPattern(tooltipText, tooltipReplaceInfo, calculateCurrentDate(trip.timeRange, vm.index));
             tooltip = fillPatternWithActions(tooltip, 'onTooltipAction', null);
 
         }
@@ -546,14 +542,14 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             let tooltipText = vm.staticSettings.tooltipPattern;
             if (vm.staticSettings.useTooltipFunction && angular.isDefined(vm.staticSettings.tooltipFunction)) {
                 try {
-                    tooltipText = vm.staticSettings.tooltipFunction(vm.ctx.data, trip.timeRange[index], trip.dSIndex);
+                    tooltipText = vm.staticSettings.tooltipFunction(vm.ctx.data, calculateCurrentDate(trip.timeRange, index), trip.dSIndex);
                 } catch (e) {
                     tooltipText = null;
                 }
             }
             tooltipText = vm.utils.createLabelFromDatasource(trip.dataSource, tooltipText);
             tooltipReplaceInfo = processPattern(tooltipText, vm.ctx.datasources, trip.dSIndex);
-            tooltip = fillPattern(tooltipText, tooltipReplaceInfo, trip.timeRange[index]);
+            tooltip = fillPattern(tooltipText, tooltipReplaceInfo, calculateCurrentDate(trip.timeRange, index));
             tooltip = fillPatternWithActions(tooltip, 'onTooltipAction', null);
 
         }
@@ -565,7 +561,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         let colorFn;
         if (vm.staticSettings.usePathColorFunction && angular.isDefined(vm.staticSettings.colorFunction)) {
             try {
-                colorFn = vm.staticSettings.colorFunction(vm.ctx.data, trip.timeRange[vm.index], trip.dSIndex);
+                colorFn = vm.staticSettings.colorFunction(vm.ctx.data, calculateCurrentDate(trip.timeRange, vm.index), trip.dSIndex);
             } catch (e) {
                 colorFn = null;
             }
@@ -581,7 +577,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         let colorFn;
         if (vm.staticSettings.usePolygonColorFunction && angular.isDefined(vm.staticSettings.polygonColorFunction)) {
             try {
-                colorFn = vm.staticSettings.polygonColorFunction(vm.ctx.data, trip.timeRange[vm.index], trip.dSIndex);
+                colorFn = vm.staticSettings.polygonColorFunction(vm.ctx.data, calculateCurrentDate(trip.timeRange, vm.index), trip.dSIndex);
             } catch (e) {
                 colorFn = null;
             }
@@ -597,7 +593,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         if (vm.staticSettings.useMarkerImageFunction && angular.isDefined(vm.staticSettings.markerImageFunction)) {
             let rawIcon;
             try {
-                rawIcon = vm.staticSettings.markerImageFunction(vm.ctx.data, vm.staticSettings.markerImages, trip.timeRange[vm.index], trip.dSIndex);
+                rawIcon = vm.staticSettings.markerImageFunction(vm.ctx.data, vm.staticSettings.markerImages, calculateCurrentDate(trip.timeRange, vm.index), trip.dSIndex);
             } catch (e) {
                 rawIcon = null;
             }
@@ -658,8 +654,8 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             });
             vm.initBounds = true;
         }
-        let normalizedTimeRange = createNormalizedTime(vm.data, vm.staticSettings.normalizationStep);
-        createNormalizedTrips(normalizedTimeRange, vm.datasources);
+        createNormalizedTime(vm.data, vm.staticSettings.normalizationStep);
+        createNormalizedTrips(vm.datasources, vm.data, vm.staticSettings.normalizationStep);
         createTripsOnMap(apply);
         if (vm.initBounds && !vm.initTrips) {
             vm.trips.forEach(function (trip) {
@@ -679,7 +675,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
 
     function fillPattern(pattern, replaceInfo, currentNormalizedValue) {
         let text = angular.copy(pattern);
-        let reg = /\$\{([^\}]*)\}/g;
+        let reg = /\$\{([^}]*)\}/g;
         if (replaceInfo) {
             for (let v = 0; v < replaceInfo.variables.length; v++) {
                 let variableInfo = replaceInfo.variables[v];
@@ -701,127 +697,82 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
 
     function createNormalizedTime(data, step) {
         if (!step) step = 1000;
-        let max_time = null;
-        let min_time = null;
-        let normalizedArray = [];
-        if (data && data.length > 0) {
-            vm.data.forEach(function (data) {
-                if (data.data.length > 0) {
-                    data.data.forEach(function (sData) {
-                        if (max_time === null) {
-                            max_time = sData[0];
-                        } else if (max_time < sData[0]) {
-                            max_time = sData[0]
-                        }
-                        if (min_time === null) {
-                            min_time = sData[0];
-                        } else if (min_time > sData[0]) {
-                            min_time = sData[0];
-                        }
-                    })
+        let max_time = -Infinity;
+        let min_time = Infinity;
+        if (data) {
+            for (let i = 0; i < data.length; i++) {
+                for (let j = 0; j < data[i].data.length; j++) {
+                    if (max_time < data[i].data[j][0]) {
+                        max_time = data[i].data[j][0]
+                    }
+                    if (min_time > data[i].data[j][0]) {
+                        min_time = data[i].data[j][0];
+                    }
                 }
-            });
-            for (let i = min_time; i < max_time; i += step) {
-                normalizedArray.push({ts: i, formattedTs: $filter('date')(i, 'medium')});
-
-            }
-            if (normalizedArray[normalizedArray.length - 1] && normalizedArray[normalizedArray.length - 1].ts !== max_time) {
-                normalizedArray.push({ts: max_time, formattedTs: $filter('date')(max_time, 'medium')});
             }
         }
-        vm.maxTime = normalizedArray.length - 1;
-        //vm.minTime = vm.maxTime > 1 ? 1 : 0;
-        if (vm.index < vm.minTime) {
-            vm.index = vm.minTime;
-        } else if (vm.index > vm.maxTime) {
-            vm.index = vm.maxTime;
+        vm.minTime = vm.animationTime = min_time;
+        if(min_time === Infinity){
+            vm.animationTime = null;
+        } else {
+            vm.animationTime = min_time
         }
-        return normalizedArray;
+        vm.maxTimeIndex = Math.ceil((max_time - min_time) / step);
+        if (vm.index < vm.minTimeIndex) {
+            vm.index = vm.minTimeIndex;
+        } else if (vm.index > vm.maxTimeIndex) {
+            vm.index = vm.maxTimeIndex;
+        }
     }
 
-    function createNormalizedTrips(timeRange, dataSources) {
+    function createNormalizedTrips(dataSources, data, step) {
         vm.trips = [];
-        if (timeRange && timeRange.length > 0 && dataSources && dataSources.length > 0 && vm.data && vm.data.length > 0) {
-            dataSources.forEach(function (dS, index) {
+        step = step || 1000;
+        if (dataSources && data) {
+            for (let i = 0; i < dataSources.length; i++) {
                 vm.trips.push({
-                    dataSource: dS,
-                    dSIndex: index,
-                    timeRange: angular.copy(timeRange)
+                    dataSource: dataSources[i],
+                    dSIndex: i,
+                    timeRange: {}
                 })
-            });
+            }
 
-            vm.data.forEach(function (data) {
-                let ds = data.datasource;
+            for (let i = 0; i < data.length; i++) {
+                let ds = data[i].datasource;
                 let tripIndex = vm.trips.findIndex(function (el) {
                     return el.dataSource.entityId === ds.entityId;
                 });
-
                 if (tripIndex > -1) {
-                    createNormalizedValue(data.data, data.dataKey.label, vm.trips[tripIndex].timeRange);
+                    createNormalizedValue(data[i].data, data[i].dataKey.label, vm.trips[tripIndex].timeRange, step);
                 }
-            })
+            }
         }
 
         createNormalizedLatLngs();
     }
 
-    function createNormalizedValue(dataArray, dataKey, timeRangeArray) {
-        timeRangeArray.forEach(function (timeStamp) {
-            let targetTDiff = null;
-            let value = null;
-            for (let i = 0; i < dataArray.length; i++) {
-                let tDiff = dataArray[i][0] - timeStamp.ts;
-                if (targetTDiff === null || (tDiff <= 0 && targetTDiff < tDiff)) {
-                    targetTDiff = tDiff;
-                    value = dataArray[i][1];
-
-                }
-            }
-            if (value !== null) timeStamp[dataKey] = value;
-        });
+    function createNormalizedValue(dataArray, dataKey, timeRange, step) {
+        for (let i = 0; i < dataArray.length; i++) {
+            let normalizeTime = vm.minTime + Math.ceil((dataArray[i][0] - vm.minTime) / step) * step;
+            timeRange[normalizeTime] = timeRange[normalizeTime] || {};
+            timeRange[normalizeTime][dataKey] = dataArray[i][1];
+        }
     }
 
     function createNormalizedLatLngs() {
-        vm.trips.forEach(function (el) {
-            el.latLngs = [];
-            el.timeRange.forEach(function (data) {
-                let lat = data[vm.staticSettings.latKeyName];
-                let lng = data[vm.staticSettings.lngKeyName];
-                if (lat && lng && vm.map) {
-                    data.latLng = vm.map.createLatLng(lat, lng);
-                }
-                el.latLngs.push(data.latLng);
-            });
-            addAngleForTrip(el);
-        })
-    }
-
-    function addAngleForTrip(trip) {
-        if (trip.timeRange && trip.timeRange.length > 0) {
-            trip.timeRange.forEach(function (point, index) {
-                let nextPoint, prevPoint;
-                nextPoint = index === (trip.timeRange.length - 1) ? trip.timeRange[index] : trip.timeRange[index + 1];
-                prevPoint = index === 0 ? trip.timeRange[0] : trip.timeRange[index - 1];
-                let nextLatLng = {
-                    lat: nextPoint[vm.staticSettings.latKeyName],
-                    lng: nextPoint[vm.staticSettings.lngKeyName]
-                };
-                let prevLatLng = {
-                    lat: prevPoint[vm.staticSettings.latKeyName],
-                    lng: prevPoint[vm.staticSettings.lngKeyName]
-                };
-                if (nextLatLng.lat === prevLatLng.lat && nextLatLng.lng === prevLatLng.lng) {
-                    if (angular.isNumber(prevPoint.h)) {
-                        point.h = prevPoint.h;
-                    } else {
-                        point.h = vm.staticSettings.rotationAngle;
+        vm.trips.forEach(function (item) {
+            item.latLngs = [];
+            for (let timestamp in item.timeRange) {
+                if(Object.prototype.hasOwnProperty.call(item.timeRange, timestamp)) {
+                    let lat = item.timeRange[timestamp][vm.staticSettings.latKeyName];
+                    let lng = item.timeRange[timestamp][vm.staticSettings.lngKeyName];
+                    if (lat && lng && vm.map) {
+                        item.timeRange[timestamp].latLng = vm.map.createLatLng(lat, lng);
                     }
-                } else {
-                    point.h = findAngle(prevLatLng.lat, prevLatLng.lng, nextLatLng.lat, nextLatLng.lng);
-                    point.h += vm.staticSettings.rotationAngle;
+                    item.latLngs.push(item.timeRange[timestamp].latLng);
                 }
-            });
-        }
+            }
+        });
     }
 
     function createPointPopup(point, index, trip) {
@@ -834,14 +785,14 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
     function createTripsOnMap(apply) {
         if (vm.trips.length > 0) {
             vm.trips.forEach(function (trip) {
-                configureTripSettings(trip, vm.index, apply);
-                if (trip.timeRange.length > 0 && trip.latLngs.every(el => angular.isDefined(el))) {
+                configureTripSettings(trip, apply);
+                if (Object.keys(trip.timeRange).length > 0 && trip.latLngs.every(el => angular.isDefined(el))) {
                     if (vm.staticSettings.showPoints) {
                         trip.points = [];
-                        trip.timeRange.forEach(function (tRange, index) {
-                            if (tRange && tRange.latLng
-                                && (!vm.staticSettings.usePointAsAnchor || vm.staticSettings.pointAsAnchorFunction(vm.ctx.data, tRange, trip.dSIndex))) {
-                                let point = L.circleMarker(tRange.latLng, {
+                        Object.keys(trip.timeRange).forEach(function (tRange, index) {
+                            if (trip.timeRange[tRange] && trip.timeRange[tRange].latLng
+                                && (!vm.staticSettings.usePointAsAnchor || vm.staticSettings.pointAsAnchorFunction(vm.ctx.data, trip.timeRange[tRange], trip.dSIndex))) {
+                                let point = L.circleMarker(trip.timeRange[tRange].latLng, {
                                     color: trip.settings.pointColor,
                                     radius: trip.settings.pointSize
                                 }).addTo(vm.map.map);
@@ -852,7 +803,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
                                         showHidePointTooltip(calculatePointTooltip(trip, index), index);
                                     });
                                 }
-                                if (vm.staticSettings.usePointAsAnchor) tRange.hasAnchor = true;
+                                if (vm.staticSettings.usePointAsAnchor) trip.timeRange[tRange].hasAnchor = true;
                                 trip.points.push(point);
                             }
                         });
@@ -872,7 +823,8 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
                                             polygon: false,
                                             pathOptions: {
                                                 color: vm.staticSettings.useDecoratorCustomColor ? vm.staticSettings.decoratorCustomColor : trip.settings.color,
-                                                stroke: true}
+                                                stroke: true
+                                            }
                                         })
                                     }
                                 ],
@@ -882,8 +834,8 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
                     }
 
 
-                    if (trip.timeRange && trip.timeRange.length && angular.isUndefined(trip.marker)) {
-                        trip.marker = L.marker(trip.timeRange[vm.index].latLng);
+                    if (trip.timeRange && Object.keys(trip.timeRange).length && angular.isUndefined(trip.marker)) {
+                        trip.marker = L.marker(calculateCurrentDate(trip.timeRange, vm.index).latLng);
                         trip.marker.setZIndexOffset(1000);
                         trip.marker.setIcon(vm.staticSettings.icon);
                         trip.marker.setRotationOrigin('center center');
@@ -895,7 +847,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
                     }
                 }
 
-                if (vm.staticSettings.showPolygon && angular.isDefined(trip.timeRange[vm.index][vm.staticSettings.polKeyName])) {
+                if (vm.staticSettings.showPolygon && angular.isDefined(calculateCurrentDate(trip.timeRange, vm.index)[vm.staticSettings.polKeyName])) {
                     let polygonSettings = {
                         fill: true,
                         fillColor: trip.settings.polygonColor,
@@ -904,12 +856,41 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
                         fillOpacity: trip.settings.polygonOpacity,
                         opacity: trip.settings.polygonStrokeOpacity
                     };
-                    let polygonLatLngsRaw = mapPolygonArray(angular.fromJson(trip.timeRange[vm.index][vm.staticSettings.polKeyName]));
+                    let polygonLatLngsRaw = mapPolygonArray(angular.fromJson(calculateCurrentDate(trip.timeRange, vm.index)[vm.staticSettings.polKeyName]));
                     trip.polygon = L.polygon(polygonLatLngsRaw, polygonSettings).addTo(vm.map.map);
                     trip.polygon.on('click',function(){showHidePolygonTooltip(trip)});
                 }
             });
         }
+    }
+
+    function calculateCurrentDate(tripTimeRange, index) {
+        let time = vm.minTime + index * vm.staticSettings.normalizationStep;
+        if (Object.hasOwnProperty.call(tripTimeRange, time)) {
+            return tripTimeRange[time];
+        } else {
+            let timeInterval = Object.keys(tripTimeRange);
+            for (let i = 1; i < timeInterval.length; i++) {
+                if (timeInterval[i - 1] < time && timeInterval[i] > time) {
+                    let calcPosition = angular.copy(tripTimeRange[timeInterval[i - 1]]);
+                    let startLatLng = tripTimeRange[timeInterval[i - 1]].latLng;
+                    let finishLatLng = tripTimeRange[timeInterval[i]].latLng;
+                    let percentRouteComplete = (time - timeInterval[i - 1]) / (timeInterval[i] - timeInterval[i - 1]);
+                    calcPosition[vm.staticSettings.latKeyName] = startLatLng.lat + (finishLatLng.lat - startLatLng.lat) * percentRouteComplete;
+                    calcPosition[vm.staticSettings.lngKeyName] = startLatLng.lng + (finishLatLng.lng - startLatLng.lng) * percentRouteComplete;
+                    calcPosition.latLng = vm.map.createLatLng(calcPosition[vm.staticSettings.latKeyName], calcPosition[vm.staticSettings.lngKeyName]);
+                    calcPosition.angle = vm.staticSettings.rotationAngle + findAngle(startLatLng, finishLatLng);
+                    return calcPosition;
+                }
+            }
+        }
+        return {};
+    }
+
+    function findAngle(startPoint, endPoint) {
+        let angle = -Math.atan2(endPoint.lat - startPoint.lat, endPoint.lng - startPoint.lng);
+        angle = angle * 180 / Math.PI;
+        return parseInt(angle.toFixed(2));
     }
 
     function mapPolygonArray(rawArray) {
@@ -931,15 +912,16 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
     }
 
     function moveMarker(trip) {
-        if (angular.isDefined(trip.timeRange[vm.index].latLng)) {
+        let postionMarker = calculateCurrentDate(trip.timeRange, vm.index);
+        if (angular.isDefined(postionMarker)) {
             if (angular.isDefined(trip.marker)) {
                 trip.markerAngleIsSet = true;
-                trip.marker.setLatLng(trip.timeRange[vm.index].latLng);
-                trip.marker.setRotationAngle(trip.timeRange[vm.index].h);
+                trip.marker.setLatLng(postionMarker.latLng);
+                trip.marker.setRotationAngle(postionMarker.angle);
                 trip.marker.update();
             } else {
                 if (trip.timeRange && trip.timeRange.length) {
-                    trip.marker = L.marker(trip.timeRange[vm.index].latLng);
+                    trip.marker = L.marker(postionMarker.latLng);
                     trip.marker.setZIndexOffset(1000);
                     trip.marker.setIcon(vm.staticSettings.icon);
                     trip.marker.setRotationOrigin('center center');

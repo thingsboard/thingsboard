@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -26,7 +29,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -207,17 +209,20 @@ public class BaseRelationService implements RelationService {
                 relations -> {
                     List<ListenableFuture<Boolean>> results = deleteRelationGroupsAsync(tenantId, relations, cache, true);
                     return Futures.allAsList(results);
-                });
+                }, MoreExecutors.directExecutor());
 
         ListenableFuture<List<Boolean>> outboundDeletions = Futures.transformAsync(outboundRelations,
                 relations -> {
                     List<ListenableFuture<Boolean>> results = deleteRelationGroupsAsync(tenantId, relations, cache, false);
                     return Futures.allAsList(results);
-                });
+                }, MoreExecutors.directExecutor());
 
         ListenableFuture<List<List<Boolean>>> deletionsFuture = Futures.allAsList(inboundDeletions, outboundDeletions);
 
-        return Futures.transform(Futures.transformAsync(deletionsFuture, (deletions) -> relationDao.deleteOutboundRelationsAsync(tenantId, entityId)), result -> null);
+        return Futures.transform(Futures.transformAsync(deletionsFuture,
+                (deletions) -> relationDao.deleteOutboundRelationsAsync(tenantId, entityId),
+                MoreExecutors.directExecutor()),
+                result -> null, MoreExecutors.directExecutor());
     }
 
     private List<ListenableFuture<Boolean>> deleteRelationGroupsAsync(TenantId tenantId, List<List<EntityRelation>> relations, Cache cache, boolean deleteFromDb) {
@@ -307,9 +312,11 @@ public class BaseRelationService implements RelationService {
                         public void onSuccess(@Nullable List<EntityRelation> result) {
                             cache.putIfAbsent(fromAndTypeGroup, result);
                         }
+
                         @Override
-                        public void onFailure(Throwable t) {}
-             });
+                        public void onFailure(Throwable t) {
+                        }
+                    }, MoreExecutors.directExecutor());
             return relationsFuture;
         }
     }
@@ -329,7 +336,7 @@ public class BaseRelationService implements RelationService {
                                     EntityRelationInfo::setToName))
                     );
                     return Futures.successfulAsList(futures);
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #relationType, #typeGroup, 'FROM'}")
@@ -386,9 +393,11 @@ public class BaseRelationService implements RelationService {
                         public void onSuccess(@Nullable List<EntityRelation> result) {
                             cache.putIfAbsent(toAndTypeGroup, result);
                         }
+
                         @Override
-                        public void onFailure(Throwable t) {}
-                    });
+                        public void onFailure(Throwable t) {
+                        }
+                    }, MoreExecutors.directExecutor());
             return relationsFuture;
         }
     }
@@ -408,7 +417,7 @@ public class BaseRelationService implements RelationService {
                                     EntityRelationInfo::setFromName))
                     );
                     return Futures.successfulAsList(futures);
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<EntityRelationInfo> fetchRelationInfoAsync(TenantId tenantId, EntityRelation relation,
@@ -419,7 +428,7 @@ public class BaseRelationService implements RelationService {
             EntityRelationInfo entityRelationInfo1 = new EntityRelationInfo(relation);
             entityNameSetter.accept(entityRelationInfo1, entityName1);
             return entityRelationInfo1;
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#to, #relationType, #typeGroup, 'TO'}")
@@ -443,6 +452,7 @@ public class BaseRelationService implements RelationService {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByQuery(TenantId tenantId, EntityRelationsQuery query) {
+        //boolean fetchLastLevelOnly = true;
         log.trace("Executing findByQuery [{}]", query);
         RelationsSearchParameters params = query.getParameters();
         final List<EntityTypeFilter> filters = query.getFilters();
@@ -453,7 +463,7 @@ public class BaseRelationService implements RelationService {
         int maxLvl = params.getMaxLevel() > 0 ? params.getMaxLevel() : Integer.MAX_VALUE;
 
         try {
-            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, new ConcurrentHashMap<>());
+            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, params.isFetchLastLevelOnly(), new ConcurrentHashMap<>());
             return Futures.transform(relationSet, input -> {
                 List<EntityRelation> relations = new ArrayList<>();
                 if (filters == null || filters.isEmpty()) {
@@ -466,7 +476,7 @@ public class BaseRelationService implements RelationService {
                     }
                 }
                 return relations;
-            });
+            }, MoreExecutors.directExecutor());
         } catch (Exception e) {
             log.warn("Failed to query relations: [{}]", query, e);
             throw new RuntimeException(e);
@@ -493,7 +503,7 @@ public class BaseRelationService implements RelationService {
                                     }))
                     );
                     return Futures.successfulAsList(futures);
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     protected void validate(EntityRelation relation) {
@@ -570,7 +580,7 @@ public class BaseRelationService implements RelationService {
     }
 
     private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction,
-                                                                           RelationTypeGroup relationTypeGroup, int lvl,
+                                                                           RelationTypeGroup relationTypeGroup, int lvl, boolean fetchLastLevelOnly,
                                                                            final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
         if (lvl == 0) {
             return Futures.immediateFuture(Collections.emptySet());
@@ -596,10 +606,13 @@ public class BaseRelationService implements RelationService {
         }
         List<ListenableFuture<Set<EntityRelation>>> futures = new ArrayList<>();
         for (EntityId entityId : childrenIds) {
-            futures.add(findRelationsRecursively(tenantId, entityId, direction, relationTypeGroup, lvl, uniqueMap));
+            futures.add(findRelationsRecursively(tenantId, entityId, direction, relationTypeGroup, lvl, fetchLastLevelOnly, uniqueMap));
         }
         //TODO: try to remove this blocking operation
         List<Set<EntityRelation>> relations = Futures.successfulAsList(futures).get();
+        if (fetchLastLevelOnly && lvl > 0) {
+            children.clear();
+        }
         relations.forEach(r -> r.forEach(children::add));
         return Futures.immediateFuture(children);
     }

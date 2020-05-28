@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,12 @@ COPY start-tb-http-transport.sh ${pkg.name}.deb /tmp/
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb-http-transport.sh /usr/bin
 
-RUN dpkg -i /tmp/${pkg.name}.deb
+RUN yes | dpkg -i /tmp/${pkg.name}.deb
 
 RUN update-rc.d ${pkg.name} disable
+
+RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
+
+USER ${pkg.user}
 
 CMD ["start-tb-http-transport.sh"]

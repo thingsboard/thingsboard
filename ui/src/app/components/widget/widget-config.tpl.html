@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,32 +34,61 @@
                 <section flex layout="row" layout-align="start center" style="margin-bottom: 16px;">
                     <span ng-class="{'tb-disabled-label': useDashboardTimewindow}" translate style="padding-right: 8px;">widget-config.timewindow</span>
                     <tb-timewindow ng-disabled="useDashboardTimewindow" as-button="true" aggregation="{{ widgetType === types.widgetType.timeseries.value }}"
-                                   flex ng-model="timewindow"></tb-timewindow>
+                                   is-edit="true" flex ng-model="timewindow"></tb-timewindow>
                 </section>
             </div>
-            <div ng-show="widgetType === types.widgetType.alarm.value" layout='column' layout-align="center"
-                 layout-gt-sm='row' layout-align-gt-sm="start center">
-                <md-input-container class="md-block" flex>
-                    <label translate>alarm.alarm-status</label>
-                    <md-select ng-model="alarmSearchStatus" style="padding-bottom: 24px;">
-                        <md-option ng-repeat="searchStatus in types.alarmSearchStatus" ng-value="searchStatus">
-                            {{ ('alarm.search-status.' + searchStatus) | translate }}
-                        </md-option>
-                    </md-select>
-                </md-input-container>
-                <md-input-container flex class="md-block">
-                    <label translate>alarm.polling-interval</label>
-                    <input ng-required="widgetType === types.widgetType.alarm.value"
-                           type="number"
-                           step="1"
-                           min="1"
-                           name="alarmsPollingInterval"
-                           ng-model="alarmsPollingInterval"/>
-                    <div ng-messages="theForm.alarmsPollingInterval.$error" multiple md-auto-hide="false">
-                        <div ng-message="required" translate>alarm.polling-interval-required</div>
-                        <div ng-message="min" translate>alarm.min-polling-interval-message</div>
-                    </div>
-                </md-input-container>
+            <div ng-show="widgetType === types.widgetType.alarm.value" layout='column' layout-align="center">
+                <div layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <md-input-container class="md-block" flex>
+                        <label translate>alarm.alarm-status</label>
+                        <md-select ng-model="alarmSearchStatus" style="padding-bottom: 24px;">
+                            <md-option ng-repeat="searchStatus in types.alarmSearchStatus" ng-value="searchStatus">
+                                {{ ('alarm.search-status.' + searchStatus) | translate }}
+                            </md-option>
+                        </md-select>
+                    </md-input-container>
+                    <md-input-container flex class="md-block">
+                        <label translate>alarm.polling-interval</label>
+                        <input ng-required="widgetType === types.widgetType.alarm.value"
+                               type="number"
+                               step="1"
+                               min="1"
+                               name="alarmsPollingInterval"
+                               ng-model="alarmsPollingInterval"/>
+                        <div ng-messages="theForm.alarmsPollingInterval.$error" multiple md-auto-hide="false">
+                            <div ng-message="required" translate>alarm.polling-interval-required</div>
+                            <div ng-message="min" translate>alarm.min-polling-interval-message</div>
+                        </div>
+                    </md-input-container>
+                </div>
+                <div layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <md-input-container flex class="md-block">
+                        <label translate>alarm.max-count-load</label>
+                        <input ng-required="widgetType === types.widgetType.alarm.value"
+                               type="number"
+                               step="1"
+                               min="0"
+                               name="alarmsMaxCountLoad"
+                               ng-model="alarmsMaxCountLoad"/>
+                        <div ng-messages="theForm.alarmsMaxCountLoad.$error" multiple md-auto-hide="false">
+                            <div ng-message="required" translate>alarm.max-count-load-required</div>
+                            <div ng-message="min" translate>alarm.max-count-load-error-min</div>
+                        </div>
+                    </md-input-container>
+                    <md-input-container flex class="md-block">
+                        <label translate>alarm.fetch-size</label>
+                        <input ng-required="widgetType === types.widgetType.alarm.value"
+                               type="number"
+                               step="1"
+                               min="10"
+                               name="alarmsFetchSize"
+                               ng-model="alarmsFetchSize"/>
+                        <div ng-messages="theForm.alarmsFetchSize.$error" multiple md-auto-hide="false">
+                            <div ng-message="required" translate>alarm.fetch-size-required</div>
+                            <div ng-message="min" translate>alarm.fetch-size-error-min</div>
+                        </div>
+                    </md-input-container>
+                </div>
             </div>
             <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
                          ng-show="widgetType !== types.widgetType.rpc.value
@@ -189,6 +218,36 @@
                         <div ui-ace="styleEditorOptions" ng-model="titleStyle" ng-style="{ minHeight: '100px' }">
                         </div>
                     </div>
+                </div>
+                <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <div layout="row" flex layout-padding>
+                        <md-checkbox aria-label="{{ 'widget-config.display-icon' | translate }}"
+                                     ng-model="showTitleIcon">{{ 'widget-config.display-icon' | translate }}
+                        </md-checkbox>
+                    </div>
+                    <div flex>
+                        <tb-material-icon-select ng-disabled="!showTitleIcon" ng-model="titleIcon">
+                        </tb-material-icon-select>
+                    </div>
+                    <div flex
+                         md-color-picker
+                         ng-model="iconColor"
+                         label="{{ 'widget-config.icon-color' | translate }}"
+                         icon="format_color_fill"
+                         default="rgba(0, 0, 0, 0.87)"
+                         md-color-clear-button="false"
+                         open-on-input="true"
+                         md-color-generic-palette="false"
+                         md-color-history="false"
+                    ></div>
+                    <md-input-container flex>
+                        <label translate>widget-config.icon-size</label>
+                        <input ng-model="iconSize">
+                    </md-input-container>
+                    <md-input-container flex class="md-block">
+                        <label translate>widget-config.title-tooltip</label>
+                        <input name="titleTooltip" ng-model="titleTooltip">
+                    </md-input-container>
                 </div>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <div layout="row" layout-padding>

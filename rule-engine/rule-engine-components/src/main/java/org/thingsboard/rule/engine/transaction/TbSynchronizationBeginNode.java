@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
-import org.thingsboard.server.common.msg.TbMsgTransactionData;
-
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
@@ -37,37 +33,23 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.ACTION,
         name = "synchronization start",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Starts synchronization of message processing based on message originator",
+        nodeDescription = "This Node is now deprecated. Use \"Checkpoint\" instead.",
         nodeDetails = "This node should be used together with \"synchronization end\" node. \n This node will put messages into queue based on message originator id. \n" +
                 "Subsequent messages will not be processed until the previous message processing is completed or timeout event occurs.\n" +
                 "Size of the queue per originator and timeout values are configurable on a system level",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
+@Deprecated
 public class TbSynchronizationBeginNode implements TbNode {
-
-    private EmptyNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        log.trace("Msg enters transaction - [{}][{}]", msg.getId(), msg.getType());
-
-        TbMsgTransactionData transactionData = new TbMsgTransactionData(msg.getId(), msg.getOriginator());
-        TbMsg tbMsg = new TbMsg(msg.getId(), msg.getType(), msg.getOriginator(), msg.getMetaData(), TbMsgDataType.JSON,
-                msg.getData(), transactionData, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition());
-
-        ctx.getRuleChainTransactionService().beginTransaction(tbMsg, startMsg -> {
-                    log.trace("Transaction starting...[{}][{}]", startMsg.getId(), startMsg.getType());
-                    ctx.tellNext(startMsg, SUCCESS);
-                }, endMsg -> log.trace("Transaction ended successfully...[{}][{}]", endMsg.getId(), endMsg.getType()),
-                throwable -> {
-                    log.trace("Transaction failed! [{}][{}]", tbMsg.getId(), tbMsg.getType(), throwable);
-                    ctx.tellFailure(tbMsg, throwable);
-                });
+        log.warn("Synchronization Start/End nodes are deprecated since TB 2.5. Use queue with submit strategy SEQUENTIAL_WITHIN_ORIGINATOR instead.");
+        ctx.tellSuccess(msg);
     }
 
     @Override

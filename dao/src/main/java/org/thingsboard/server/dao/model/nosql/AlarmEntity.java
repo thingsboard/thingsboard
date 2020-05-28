@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,11 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -36,6 +38,8 @@ import org.thingsboard.server.dao.model.type.AlarmStatusCodec;
 import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ACK_TS_PROPERTY;
@@ -46,6 +50,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_END_TS_PROPE
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_RELATION_TYPES;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_SEVERITY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_START_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_STATUS_PROPERTY;
@@ -102,6 +107,9 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
     @Column(name = ALARM_PROPAGATE_PROPERTY)
     private Boolean propagate;
 
+    @Column(name = ALARM_PROPAGATE_RELATION_TYPES)
+    private String propagateRelationTypes;
+
     public AlarmEntity() {
         super();
     }
@@ -125,13 +133,19 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
         this.ackTs = alarm.getAckTs();
         this.clearTs = alarm.getClearTs();
         this.details = alarm.getDetails();
+        this.details = alarm.getDetails();
+        if (!CollectionUtils.isEmpty(alarm.getPropagateRelationTypes())) {
+            this.propagateRelationTypes = String.join(",", alarm.getPropagateRelationTypes());
+        } else {
+            this.propagateRelationTypes = null;
+        }
     }
 
-    public UUID getId() {
+    public UUID getUuid() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 
@@ -231,6 +245,14 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
         this.propagate = propagate;
     }
 
+    public String getPropagateRelationTypes() {
+        return propagateRelationTypes;
+    }
+
+    public void setPropagateRelationTypes(String propagateRelationTypes) {
+        this.propagateRelationTypes = propagateRelationTypes;
+    }
+
     @Override
     public Alarm toData() {
         Alarm alarm = new Alarm(new AlarmId(id));
@@ -248,6 +270,11 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
         alarm.setAckTs(ackTs);
         alarm.setClearTs(clearTs);
         alarm.setDetails(details);
+        if (!StringUtils.isEmpty(propagateRelationTypes)) {
+            alarm.setPropagateRelationTypes(Arrays.asList(propagateRelationTypes.split(",")));
+        } else {
+            alarm.setPropagateRelationTypes(Collections.emptyList());
+        }
         return alarm;
     }
 

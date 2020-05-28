@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -30,8 +31,13 @@ import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
+import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +51,43 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService implements AttributesDao {
 
     @Autowired
+    ScheduledLogExecutorComponent logExecutor;
+
+    @Autowired
     private AttributeKvRepository attributeKvRepository;
+
+    @Autowired
+    private AttributeKvInsertRepository attributeKvInsertRepository;
+
+    @Value("${sql.attributes.batch_size:1000}")
+    private int batchSize;
+
+    @Value("${sql.attributes.batch_max_delay:100}")
+    private long maxDelay;
+
+    @Value("${sql.attributes.stats_print_interval_ms:1000}")
+    private long statsPrintIntervalMs;
+
+    private TbSqlBlockingQueue<AttributeKvEntity> queue;
+
+    @PostConstruct
+    private void init() {
+        TbSqlBlockingQueueParams params = TbSqlBlockingQueueParams.builder()
+                .logName("Attributes")
+                .batchSize(batchSize)
+                .maxDelay(maxDelay)
+                .statsPrintIntervalMs(statsPrintIntervalMs)
+                .build();
+        queue = new TbSqlBlockingQueue<>(params);
+        queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (queue != null) {
+            queue.destroy();
+        }
+    }
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, String attributeKey) {
@@ -86,24 +128,20 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         entity.setDoubleValue(attribute.getDoubleValue().orElse(null));
         entity.setLongValue(attribute.getLongValue().orElse(null));
         entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
-        return service.submit(() -> {
-            attributeKvRepository.save(entity);
-            return null;
-        });
+        entity.setJsonValue(attribute.getJsonValue().orElse(null));
+        return addToQueue(entity);
+    }
+
+    private ListenableFuture<Void> addToQueue(AttributeKvEntity entity) {
+        return queue.add(entity);
     }
 
     @Override
     public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys) {
-        List<AttributeKvEntity> entitiesToDelete = keys
-                .stream()
-                .map(key -> {
-                    AttributeKvEntity entityToDelete = new AttributeKvEntity();
-                    entityToDelete.setId(new AttributeKvCompositeKey(entityId.getEntityType(), fromTimeUUID(entityId.getId()), attributeType, key));
-                    return entityToDelete;
-                }).collect(Collectors.toList());
-
         return service.submit(() -> {
-            attributeKvRepository.deleteAll(entitiesToDelete);
+            keys.forEach(key ->
+                    attributeKvRepository.delete(entityId.getEntityType(), UUIDConverter.fromTimeUUID(entityId.getId()), attributeType, key)
+            );
             return null;
         });
     }

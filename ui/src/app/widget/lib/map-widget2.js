@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import TbImageMap from './image-map';
 import TbTencentMap from './tencent-map';
 
 import {processPattern, arraysEqual, toLabelValueMap, fillPattern, fillPatternWithActions} from './widget-utils';
+import addEntityPanelTemplate from './add-entity-panel.tpl.html';
+import './add-entity-panel.scss';
 
 export default class TbMapWidgetV2 {
 
-	constructor(mapProvider, drawRoutes, ctx, useDynamicLocations, $element) {
+	constructor(mapProvider, drawRoutes, ctx, useDynamicLocations, $element, isEdit) {
 		var tbMap = this;
 		this.ctx = ctx;
 		this.mapProvider = mapProvider;
@@ -33,6 +35,7 @@ export default class TbMapWidgetV2 {
 		}
 		this.utils = ctx.$scope.$injector.get('utils');
 		this.drawRoutes = drawRoutes;
+		this.isEdit = isEdit ? isEdit : false;
 		this.markers = [];
 		this.polygons = [];
 		if (this.drawRoutes) {
@@ -48,9 +51,15 @@ export default class TbMapWidgetV2 {
 		};
 
 		if (settings.defaultZoomLevel) {
-			if (settings.defaultZoomLevel > 0 && settings.defaultZoomLevel < 21) {
+			if (settings.defaultZoomLevel >= 0 && settings.defaultZoomLevel < 21) {
 				this.defaultZoomLevel = Math.floor(settings.defaultZoomLevel);
 			}
+		}
+
+		if (angular.isUndefined(settings.defaultCenterPosition)) {
+            settings.defaultCenterPosition = [0,0];
+		} else if (angular.isString(settings.defaultCenterPosition)) {
+            settings.defaultCenterPosition = settings.defaultCenterPosition.split(',').map(x => +x);
 		}
 
 		this.dontFitMapBounds = settings.fitMapBounds === false;
@@ -62,6 +71,46 @@ export default class TbMapWidgetV2 {
 		this.configureLocationsSettings();
 
 		var minZoomLevel = this.drawRoutes ? 18 : 15;
+
+		let markerClusteringSetting = {
+			isMarketCluster: false
+		};
+
+		if (settings.useClusterMarkers === true){
+			if (mapProvider === 'google-map' || mapProvider === 'tencent-map') {
+				markerClusteringSetting = {
+					isMarketCluster: true,
+					zoomOnClick: settings.zoomOnClick,
+					averageCenter: true
+				};
+				if(angular.isDefined(settings.maxZoom) && settings.maxZoom >= 0 && settings.maxZoom < 19){
+					markerClusteringSetting.maxZoom = Math.floor(settings.maxZoom);
+				}
+				if(angular.isDefined(settings.gridSize) && settings.gridSize > 0){
+					markerClusteringSetting.gridSize = Math.floor(settings.gridSize);
+				}
+				if(angular.isDefined(settings.minimumClusterSize) && settings.minimumClusterSize > 1){
+					markerClusteringSetting.minimumClusterSize = Math.ceil(settings.minimumClusterSize);
+				}
+			} else if(mapProvider === 'openstreet-map' || mapProvider === 'here') {
+				markerClusteringSetting = {
+					isMarketCluster: true,
+					zoomToBoundsOnClick: settings.zoomOnClick,
+					showCoverageOnHover: settings.showCoverageOnHover,
+					removeOutsideVisibleBounds: settings.removeOutsideVisibleBounds,
+					animate: settings.animate,
+					chunkedLoading: settings.chunkedLoading
+				};
+				if(angular.isDefined(settings.maxClusterRadius) && settings.maxClusterRadius > 0){
+					markerClusteringSetting.maxClusterRadius = Math.floor(settings.maxClusterRadius);
+				}
+				if(angular.isDefined(settings.maxZoom) && settings.maxZoom >= 0 && settings.maxZoom < 19){
+					markerClusteringSetting.disableClusteringAtZoom = Math.floor(settings.maxZoom);
+				}
+			}
+		}
+
+
 
 
 		var initCallback = function () {
@@ -78,9 +127,9 @@ export default class TbMapWidgetV2 {
 			tbMap.tooltipActionsMap[descriptor.name] = descriptor;
 		});
 
-		let openStreetMapProvider = {};
+        let openStreetMapProvider = {};
 		if (mapProvider === 'google-map') {
-			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
+			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType, settings.defaultCenterPosition, markerClusteringSetting);
 		} else if (mapProvider === 'openstreet-map') {
 			if (settings.useCustomProvider && settings.customProviderTileUrl) {
 				openStreetMapProvider.name = settings.customProviderTileUrl;
@@ -88,19 +137,20 @@ export default class TbMapWidgetV2 {
 			} else {
 				openStreetMapProvider.name = settings.mapProvider;
 			}
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider);
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, null,settings.defaultCenterPosition, markerClusteringSetting);
 		} else if (mapProvider === 'here') {
 			openStreetMapProvider.name = settings.mapProvider;
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, settings.credentials);
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, settings.credentials, settings.defaultCenterPosition, markerClusteringSetting);
 		} else if (mapProvider === 'image-map') {
 			this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
 				settings.mapImageUrl,
 				settings.disableScrollZooming,
 				settings.posFunction,
 				settings.imageEntityAlias,
-				settings.imageUrlAttribute);
+				settings.imageUrlAttribute,
+                settings.useDefaultCenterPosition ? settings.defaultCenterPosition: null);
 		} else if (mapProvider === 'tencent-map') {
-			this.map = new TbTencentMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType);
+			this.map = new TbTencentMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType, settings.defaultCenterPosition, markerClusteringSetting);
 		}
 
 
@@ -156,7 +206,8 @@ export default class TbMapWidgetV2 {
 
 		this.locationSettings.showLabel = this.ctx.settings.showLabel !== false;
 		this.locationSettings.displayTooltip = this.ctx.settings.showTooltip !== false;
-		this.locationSettings.displayTooltipAction = this.ctx.settings.showTooltipAction && this.ctx.settings.showTooltipAction.length ? this.ctx.settings.showTooltipAction : "click";
+        this.locationSettings.useDefaultCenterPosition = this.ctx.settings.useDefaultCenterPosition === true;
+        this.locationSettings.displayTooltipAction = this.ctx.settings.showTooltipAction && this.ctx.settings.showTooltipAction.length ? this.ctx.settings.showTooltipAction : "click";
 		this.locationSettings.autocloseTooltip = this.ctx.settings.autocloseTooltip !== false;
 		this.locationSettings.showPolygon = this.ctx.settings.showPolygon === true;
 		this.locationSettings.labelColor = this.ctx.widgetConfig.color || '#000000';
@@ -240,8 +291,115 @@ export default class TbMapWidgetV2 {
 			entityId.id = datasource.entityId;
 			entityId.entityType = datasource.entityType;
 			var entityName = datasource.entityName;
-			this.ctx.actionsApi.handleWidgetAction(event, descriptor, entityId, entityName);
+			var entityLabel = datasource.entityLabel;
+			this.ctx.actionsApi.handleWidgetAction(event, descriptor, entityId, entityName, null, entityLabel);
 		}
+	}
+
+	selectEntity($event) {
+		var tbMap = this;
+
+		function setDefaultPosition(entity) {
+			let position = tbMap.map.getCenter();
+			if (tbMap.mapProvider === "image-map") {
+				position = tbMap.map.latLngToPoint(position);
+				position.lat = position.x / tbMap.map.width;
+				position.lng = position.y / tbMap.map.height;
+			}
+
+			tbMap.saveMarkerLocation(
+				entity,
+				locationsWithoutMarker[entitiesWithoutPosition.indexOf(entity)],
+				position
+			);
+		}
+
+		const element = angular.element($event.target);
+		const $mdPanel = this.ctx.$scope.$injector.get('$mdPanel');
+		const $document = this.ctx.$scope.$injector.get('$document');
+		let position = $mdPanel.newPanelPosition()
+			.relativeTo(element)
+			.addPanelPosition($mdPanel.xPosition.ALIGN_END, $mdPanel.yPosition.BELOW);
+
+		let locationsWithoutMarker = this.locations.filter((location) => !location.marker);
+		let entitiesWithoutPosition = [];
+		for (let i = 0; i < locationsWithoutMarker.length; i++) {
+			entitiesWithoutPosition.push(this.subscription.datasources[locationsWithoutMarker[i].dsIndex]);
+		}
+
+		if(entitiesWithoutPosition.length === 1){
+			setDefaultPosition(entitiesWithoutPosition[0]);
+		} else {
+			let config = {
+				attachTo: angular.element($document[0].body),
+				controller: addEntityPanelController,
+				controllerAs: 'vm',
+				templateUrl: addEntityPanelTemplate,
+				panelClass: 'tb-add-entity-panel',
+				position: position,
+				fullscreen: false,
+				locals: {
+					'entities': entitiesWithoutPosition,
+					'onClose': setDefaultPosition
+				},
+				openFrom: $event,
+				clickOutsideToClose: true,
+				escapeToClose: true,
+				focusOnOpen: false
+			};
+			$mdPanel.open(config);
+		}
+	}
+
+	saveMarkerLocation(datasource, location, coordinate) {
+		var tbMap = this;
+
+		const types = tbMap.ctx.$scope.$injector.get('types');
+		const $q = tbMap.ctx.$scope.$injector.get('$q');
+		const attributeService = tbMap.ctx.$scope.$injector.get('attributeService');
+
+		let attributesLocation = [];
+		let timeseriesLocation = [];
+		let promises = [];
+
+		let dataKeys = datasource.dataKeys;
+		for (let i = 0; i < dataKeys.length; i++) {
+			if (dataKeys[i].name === location.settings.latKeyName || dataKeys[i].name === location.settings.lngKeyName) {
+				let newLocation = {
+					key: dataKeys[i].name,
+					value: dataKeys[i].name === location.settings.latKeyName ? coordinate.lat : coordinate.lng
+				};
+				if (dataKeys[i].type === types.dataKeyType.attribute) {
+					attributesLocation.push(newLocation);
+				} else if (dataKeys[i].type === types.dataKeyType.timeseries) {
+					timeseriesLocation.push(newLocation);
+				}
+			}
+		}
+
+		if (attributesLocation.length > 0) {
+			promises.push(attributeService.saveEntityAttributes(
+				datasource.entityType,
+				datasource.entityId,
+				types.attributesScope.server.value,
+				attributesLocation,
+				{
+					ignoreLoading: true
+				}
+			))
+		}
+		if (timeseriesLocation.length > 0) {
+			promises.push(attributeService.saveEntityTimeseries(
+				datasource.entityType,
+				datasource.entityId,
+				"scope",
+				timeseriesLocation,
+				{
+					ignoreLoading: true
+				}
+			))
+		}
+		return $q.all([promises]);
 	}
 
 	update() {
@@ -363,7 +521,10 @@ export default class TbMapWidgetV2 {
 					function (event) {
 						tbMap.callbacks.onLocationClick(location);
 						locationRowClick(event, location);
-					}, [location.dsIndex]);
+					}, [location.dsIndex],
+					function (event) {
+						markerDragend(event, location)
+					});
 				tbMap.markers.push(location.marker);
 				changed = true;
 			} else {
@@ -376,6 +537,22 @@ export default class TbMapWidgetV2 {
 			return changed;
 		}
 
+        function markerDragend($event, location) {
+			if (location.settings.drraggable) {
+				let position = tbMap.map.getMarkerPosition(location.marker);
+				if (tbMap.mapProvider === "image-map") {
+					position.lat = position.x;
+					position.lng = position.y;
+					delete position.x;
+					delete position.y;
+				} else if (tbMap.mapProvider === "google-map") {
+					position = position.toJSON();
+				}
+
+				tbMap.saveMarkerLocation(tbMap.subscription.datasources[location.dsIndex], location, position);
+			}
+		}
+
 		function locationRowClick($event, location) {
 			var descriptors = tbMap.ctx.actionsApi.getActionDescriptors('markerClick');
 			if (descriptors.length) {
@@ -384,7 +561,8 @@ export default class TbMapWidgetV2 {
 				entityId.id = datasource.entityId;
 				entityId.entityType = datasource.entityType;
 				var entityName = datasource.entityName;
-				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+				var entityLabel = datasource.entityLabel;
+				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
 			}
 		}
 		function locationPolygonClick($event, location) {
@@ -395,7 +573,8 @@ export default class TbMapWidgetV2 {
 				entityId.id = datasource.entityId;
 				entityId.entityType = datasource.entityType;
 				var entityName = datasource.entityName;
-				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+				var entityLabel = datasource.entityLabel;
+				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
 			}
 		}
 
@@ -405,58 +584,60 @@ export default class TbMapWidgetV2 {
 				var latData = data[location.latIndex].data;
 				var lngData = data[location.lngIndex].data;
 				var lat, lng, latLng;
-				if (latData.length > 0 && lngData.length > 0) {
-					if (tbMap.drawRoutes) {
-						// Create or update route
-						var latLngs = [];
-						for (var i = 0; i < latData.length; i++) {
-							lat = latData[i][1];
-							lng = lngData[i][1];
-							if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
-								latLng = tbMap.map.createLatLng(lat, lng);
-								if (i == 0 || !latLngs[latLngs.length - 1].equals(latLng)) {
-									latLngs.push(latLng);
-								}
-							}
-						}
-						if (latLngs.length > 0) {
-							var markerLocation = latLngs[latLngs.length - 1];
-							createOrUpdateLocationMarker(location, markerLocation, dataMap);
-						}
-						if (!location.polyline) {
-							location.polyline = tbMap.map.createPolyline(latLngs, location.settings);
-							tbMap.polylines.push(location.polyline);
-							locationChanged = true;
-						} else {
-							var prevPath = tbMap.map.getPolylineLatLngs(location.polyline);
-							if (!prevPath || !arraysEqual(prevPath, latLngs)) {
-								tbMap.map.setPolylineLatLngs(location.polyline, latLngs);
-								locationChanged = true;
-							}
-						}
-					} else {
-						// Create or update marker
-						lat = latData[latData.length - 1][1];
-						lng = lngData[lngData.length - 1][1];
+
+				if (tbMap.drawRoutes) {
+					// Create or update route
+					var latLngs = [];
+					for (var i = 0; i < latData.length; i++) {
+						lat = latData[i][1];
+						lng = lngData[i][1];
 						if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
 							latLng = tbMap.map.createLatLng(lat, lng);
-							if (createOrUpdateLocationMarker(location, latLng, dataMap)) {
-								locationChanged = true;
+							if (i == 0 || !latLngs[latLngs.length - 1].equals(latLng)) {
+								latLngs.push(latLng);
 							}
 						}
 					}
-					if (location.marker) {
-						updateLocationStyle(location, dataMap);
+					if (latLngs.length > 0) {
+						var markerLocation = latLngs[latLngs.length - 1];
+						createOrUpdateLocationMarker(location, markerLocation, dataMap);
+					} else if (location.marker) {
+						tbMap.map.removeMarker(location.marker);
+						delete location.marker;
 					}
-
+					if (!location.polyline) {
+						location.polyline = tbMap.map.createPolyline(latLngs, location.settings);
+						tbMap.polylines.push(location.polyline);
+						locationChanged = true;
+					} else {
+						var prevPath = tbMap.map.getPolylineLatLngs(location.polyline);
+						if (!prevPath || !arraysEqual(prevPath, latLngs)) {
+							tbMap.map.setPolylineLatLngs(location.polyline, latLngs);
+							locationChanged = true;
+						}
+					}
+				} else if (latData.length > 0 && lngData.length > 0) {
+					// Create or update marker
+					lat = latData[latData.length - 1][1];
+					lng = lngData[lngData.length - 1][1];
+					if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
+						latLng = tbMap.map.createLatLng(lat, lng);
+						if (createOrUpdateLocationMarker(location, latLng, dataMap)) {
+							locationChanged = true;
+						}
+					}
 				}
+				if (location.marker) {
+					updateLocationStyle(location, dataMap);
+				}
+
 			}
 			return locationChanged;
 		}
 
 		function createUpdatePolygon(location, dataMap) {
-			if (location.settings.showPolygon && dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName] !== null) {
-				let polygonLatLngsRaw = angular.fromJson(dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName]);
+            if (location.settings.showPolygon && dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName] !== null) {
+                let polygonLatLngsRaw = angular.fromJson(dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName]);
 				let polygonLatLngs = !polygonLatLngsRaw || mapPolygonArray(polygonLatLngsRaw);
 				if (!location.polygon && polygonLatLngs.length > 0) {
 					location.polygon = tbMap.map.createPolygon(polygonLatLngs, location.settings, location, function (event) {
@@ -476,7 +657,7 @@ export default class TbMapWidgetV2 {
 		}
 
 		function loadLocations(data, datasources) {
-			var bounds = tbMap.map.createBounds();
+            var bounds = tbMap.locationSettings.useDefaultCenterPosition ? tbMap.map.createBounds().extend(tbMap.map.map.getCenter()) : tbMap.map.createBounds();
 			tbMap.locations = [];
 			var dataMap = toLabelValueMap(data, datasources);
 			var currentDatasource = null;
@@ -519,14 +700,16 @@ export default class TbMapWidgetV2 {
 						location.settings.tooltipPattern = tbMap.utils.createLabelFromDatasource(currentDatasource, location.settings.tooltipPattern);
 						location.settings.tooltipReplaceInfo = processPattern(location.settings.tooltipPattern, datasources, currentDatasourceIndex);
 					}
+					location.settings.drraggable = tbMap.isEdit;
 					tbMap.locations.push(location);
 					updateLocation(location, data, dataMap);
-
-					if (location.polyline) {
-						tbMap.map.extendBounds(bounds, location.polyline);
-					} else if (location.marker) {
-						tbMap.map.extendBoundsWithMarker(bounds, location.marker);
-					}
+					if (!tbMap.locationSettings.useDefaultCenterPosition) {
+                        if (location.polyline) {
+                            tbMap.map.extendBounds(bounds, location.polyline);
+                        } else if (location.marker) {
+                            tbMap.map.extendBoundsWithMarker(bounds, location.marker);
+                        }
+                    }
 					latIndex = -1;
 					lngIndex = -1;
 				}
@@ -548,11 +731,13 @@ export default class TbMapWidgetV2 {
 					});
 					tbMap.locations.push(location);
 					createUpdatePolygon(location, dataMap);
-					tbMap.map.extendBounds(bounds, location.polygon);
+					if (!tbMap.locationSettings.useDefaultCenterPosition) {
+                        tbMap.map.extendBounds(bounds, location.polygon);
+                    }
 				}
 			});
 
-			tbMap.map.fitBounds(bounds);
+			tbMap.map.fitBounds(bounds, tbMap.isEdit && tbMap.markers.length === 1);
 		}
 
 		function mapPolygonArray (rawArray) {
@@ -576,19 +761,21 @@ export default class TbMapWidgetV2 {
 
 		function updateLocations(data, datasources) {
 			var locationsChanged = false;
-			var bounds = tbMap.map.createBounds();
+			var bounds = tbMap.locationSettings.useDefaultCenterPosition ? tbMap.map.createBounds().extend(tbMap.map.map.getCenter()) : tbMap.map.createBounds();
 			var dataMap = toLabelValueMap(data, datasources);
 			for (var p = 0; p < tbMap.locations.length; p++) {
 				var location = tbMap.locations[p];
 				locationsChanged |= updateLocation(location, data, dataMap);
-				createUpdatePolygon(location, dataMap);
-				if (location.polyline) {
-					tbMap.map.extendBounds(bounds, location.polyline);
-				} else if (location.marker) {
-					tbMap.map.extendBoundsWithMarker(bounds, location.marker);
-				} else if (location.polygon) {
-					tbMap.map.extendBounds(bounds, location.polygon);
-				}
+                createUpdatePolygon(location, dataMap);
+				if (!tbMap.locationSettings.useDefaultCenterPosition) {
+                    if (location.polyline) {
+                        tbMap.map.extendBounds(bounds, location.polyline);
+                    } else if (location.marker) {
+                        tbMap.map.extendBoundsWithMarker(bounds, location.marker);
+                    } else if (location.polygon) {
+                        tbMap.map.extendBounds(bounds, location.polygon);
+                    }
+                }
 			}
 			if (locationsChanged && tbMap.initBounds) {
 				let dataReceived = datasources.every(
@@ -599,7 +786,10 @@ export default class TbMapWidgetV2 {
 					return !(!ds[tbMap.locationSettings.latKeyName] && !ds[tbMap.locationSettings.lngKeyName]);
 				});
 				tbMap.initBounds = !dataValid;
-				tbMap.map.fitBounds(bounds);
+
+				if(!tbMap.isEdit && tbMap.markers.length !== 1 || tbMap.polylines || tbMap.polygons) {
+					tbMap.map.fitBounds(bounds);
+				}
 			}
 		}
 
@@ -626,7 +816,8 @@ export default class TbMapWidgetV2 {
 			if (this.subscription.data) {
 				if (!this.locations) {
 					loadLocations(this.subscription.data, this.subscription.datasources);
-				} else {
+
+                } else {
 					updateLocations(this.subscription.data, this.subscription.datasources);
 				}
 				var tooltips = this.map.getTooltips();
@@ -644,23 +835,29 @@ export default class TbMapWidgetV2 {
 			let map = this.map;
 			if (this.locations && this.locations.length > 0) {
 				map.invalidateSize();
-				var bounds = map.createBounds();
-				if (this.markers && this.markers.length>0) {
-					this.markers.forEach(function (marker) {
-						map.extendBoundsWithMarker(bounds, marker);
-					});
+				var bounds = this.locationSettings.useDefaultCenterPosition ? map.createBounds().extend(map.map.getCenter()) : map.createBounds();
+				if (!this.locationSettings.useDefaultCenterPosition) {
+                    if (this.markers && this.markers.length > 0) {
+                        this.markers.forEach(function (marker) {
+                            map.extendBoundsWithMarker(bounds, marker);
+                        });
+                    }
+                    if (this.polylines && this.polylines.length > 0) {
+                        this.polylines.forEach(function (polyline) {
+                            map.extendBounds(bounds, polyline);
+                        })
+                    }
+                    if (this.polygons && this.polygons.length > 0) {
+                        this.polygons.forEach(function (polygon) {
+                            map.extendBounds(bounds, polygon);
+                        })
+                    }
+                }
+				if((!map.isEdit && map.markers && map.markers.length !== 1) ||
+					(this.polylines && this.polylines.length > 0) ||
+					(this.polygons && this.polygons.length > 0)) {
+					map.fitBounds(bounds);
 				}
-				if (this.polylines && this.polylines.length>0) {
-					this.polylines.forEach(function (polyline) {
-						map.extendBounds(bounds, polyline);
-					})
-				}
-				if (this.polygons && this.polygons.length > 0) {
-					this.polygons.forEach(function (polygon) {
-						map.extendBounds(bounds, polygon);
-					})
-				}
-				map.fitBounds(bounds);
 			}
 		}
 	}
@@ -711,6 +908,24 @@ export default class TbMapWidgetV2 {
 			schema.groupInfoes.push({
 				"formIndex":schema.groupInfoes.length,
 				"GroupTitle":"Route Map Settings"
+			});
+		} else if (mapProvider !== 'image-map'){
+			angular.merge(schema.schema.properties, markerClusteringSettingsSchema.schema.properties);
+			schema.schema.required = schema.schema.required.concat(markerClusteringSettingsSchema.schema.required);
+			schema.form.push(markerClusteringSettingsSchema.form);
+			if (mapProvider === 'google-map' || mapProvider === 'tencent-map') {
+				angular.merge(schema.schema.properties, markerClusteringSettingsSchemaGoogle.schema.properties);
+				schema.schema.required = schema.schema.required.concat(markerClusteringSettingsSchemaGoogle.schema.required);
+				schema.form[schema.form.length -1] = schema.form[schema.form.length -1].concat(markerClusteringSettingsSchemaGoogle.form);
+			}
+			if (mapProvider === 'openstreet-map' || mapProvider === 'here') {
+				angular.merge(schema.schema.properties, markerClusteringSettingsSchemaLeaflet.schema.properties);
+				schema.schema.required = schema.schema.required.concat(markerClusteringSettingsSchemaLeaflet.schema.required);
+				schema.form[schema.form.length -1] = schema.form[schema.form.length -1].concat(markerClusteringSettingsSchemaLeaflet.form);
+			}
+			schema.groupInfoes.push({
+				"formIndex":schema.groupInfoes.length,
+				"GroupTitle":"Markers Clustering Settings"
 			});
 		}
 		return schema;
@@ -959,9 +1174,19 @@ const commonMapSettingsSchema =
 			"type": "object",
 			"properties": {
 				"defaultZoomLevel": {
-					"title": "Default map zoom level (1 - 20)",
+					"title": "Default map zoom level (0 - 20)",
 					"type": "number"
 				},
+                "useDefaultCenterPosition": {
+                    "title": "Use default map center position",
+                    "type": "boolean",
+                    "default": false
+                },
+                "defaultCenterPosition": {
+                    "title": "Default map center position (0,0)",
+                    "type": "string",
+					"default" : "0,0"
+                },
 				"fitMapBounds": {
 					"title": "Fit map bounds to cover all markers",
 					"type": "boolean",
@@ -1116,6 +1341,8 @@ const commonMapSettingsSchema =
 		},
 		"form": [
 			"defaultZoomLevel",
+			"useDefaultCenterPosition",
+			"defaultCenterPosition",
 			"fitMapBounds",
 			"disableScrollZooming",
 			"latKeyName",
@@ -1220,6 +1447,103 @@ const routeMapSettingsSchema =
 		"form": [
 			"strokeWeight",
 			"strokeOpacity"
+		]
+	};
+
+const markerClusteringSettingsSchema =
+	{
+		"schema": {
+			"title": "Markers Clustering Configuration",
+			"type": "object",
+			"properties": {
+				"useClusterMarkers": {
+					"title": "Use map markers clustering",
+					"type": "boolean",
+					"default": false
+				},
+				"zoomOnClick": {
+					"title": "Zoom when clicking on a cluster",
+					"type": "boolean",
+					"default": true
+				},
+				"maxZoom": {
+					"title": "The maximum zoom level when a marker can be part of a cluster (0 - 18)",
+					"type": "number"
+				}
+			},
+			"required": []
+		},
+		"form": [
+			"useClusterMarkers",
+			"zoomOnClick",
+			"maxZoom"
+		]
+	};
+
+const markerClusteringSettingsSchemaGoogle =
+	{
+		"schema": {
+			"title": "Marker Clustering Configuration Google",
+			"type": "object",
+			"properties": {
+				"gridSize": {
+					"title": "Maximum radius that a cluster will cover in pixels",
+					"type": "number",
+					"default": 60
+				},
+				"minimumClusterSize": {
+					"title": "The minimum number of markers in a cluster",
+					"type": "number"
+				}
+			},
+			"required": []
+		},
+		"form": [
+			"gridSize",
+			"minimumClusterSize"
+		]
+	};
+
+const markerClusteringSettingsSchemaLeaflet =
+	{
+		"schema": {
+			"title": "Markers Clustering Configuration Leaflet",
+			"type": "object",
+			"properties": {
+				"showCoverageOnHover": {
+					"title": "Show the bounds of markers when mouse over a cluster",
+					"type": "boolean",
+					"default": true
+				},
+				"animate": {
+					"title": "Show animation on markers when zooming",
+					"type": "boolean",
+					"default": true
+				},
+				"maxClusterRadius": {
+					"title": "Maximum radius that a cluster will cover in pixels",
+					"type": "number",
+					"default": 80
+				},
+				"chunkedLoading": {
+					"title": "Use chunks for adding markers so that the page does not freeze",
+					"type": "boolean",
+					"default": false
+				},
+				"removeOutsideVisibleBounds": {
+					"title": "Use lazy load for adding markers",
+					"type": "boolean",
+					"default": true
+				}
+			},
+			"required": []
+		},
+		"form": [
+			"showCoverageOnHover",
+			"animate",
+			"maxClusterRadius",
+			"chunkedLoading",
+			"removeOutsideVisibleBounds"
 		]
 	};
 
@@ -1443,3 +1767,16 @@ const imageMapSettingsSchema =
 			}
 		]
 	};
+
+/*@ngInject*/
+function addEntityPanelController(mdPanelRef, entities) {
+	var vm = this;
+	vm.entities = entities;
+	vm.selectEntity = selectEntity;
+
+	function selectEntity(entity) {
+		mdPanelRef.close().then(() => {
+			this.onClose(entity);
+		});
+	}
+}

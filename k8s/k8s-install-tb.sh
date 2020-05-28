@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ function installTb() {
     kubectl apply -f tb-node-configmap.yml
     kubectl apply -f database-setup.yml &&
     kubectl wait --for=condition=Ready pod/tb-db-setup --timeout=120s &&
-    kubectl exec tb-db-setup -- sh -c 'export INSTALL_TB=true; export LOAD_DEMO='"$loadDemo"'; start-tb-node.sh; touch /install-finished;'
+    kubectl exec tb-db-setup -- sh -c 'export INSTALL_TB=true; export LOAD_DEMO='"$loadDemo"'; start-tb-node.sh; touch /tmp/install-finished;'
 
     kubectl delete pod tb-db-setup
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-chown -R ${pkg.name}: ${pkg.logFolder}
-chown -R ${pkg.name}: ${pkg.installFolder}
+chown -R ${pkg.user}: ${pkg.logFolder}
+chown -R ${pkg.user}: ${pkg.installFolder}
 
 if [ $1 -eq 1 ] ; then
         # Initial installation

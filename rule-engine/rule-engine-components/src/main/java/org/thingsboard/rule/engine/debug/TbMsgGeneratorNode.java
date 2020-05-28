@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
@@ -54,6 +54,7 @@ public class TbMsgGeneratorNode implements TbNode {
     private ScriptEngine jsEngine;
     private long delay;
     private long lastScheduledTs;
+    private int currentMsgCount;
     private EntityId originatorId;
     private UUID nextTickId;
     private TbMsg prevMsg;
@@ -63,6 +64,7 @@ public class TbMsgGeneratorNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgGeneratorNodeConfiguration.class);
         this.delay = TimeUnit.SECONDS.toMillis(config.getPeriodInSeconds());
+        this.currentMsgCount = 0;
         if (!StringUtils.isEmpty(config.getOriginatorId())) {
             originatorId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
         } else {
@@ -72,7 +74,7 @@ public class TbMsgGeneratorNode implements TbNode {
     }
 
     @Override
-    public void onClusterEventMsg(TbContext ctx, ClusterEventMsg msg) {
+    public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
         updateGeneratorState(ctx);
     }
 
@@ -94,9 +96,10 @@ public class TbMsgGeneratorNode implements TbNode {
         if (initialized && msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
             withCallback(generate(ctx),
                     m -> {
-                        if (initialized) {
-                            ctx.tellNext(m, SUCCESS);
+                        if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
+                            ctx.enqueueForTellNext(m, SUCCESS);
                             scheduleTickMsg(ctx);
+                            currentMsgCount++;
                         }
                     },
                     t -> {
@@ -126,7 +129,9 @@ public class TbMsgGeneratorNode implements TbNode {
                 prevMsg = ctx.newMsg("", originatorId, new TbMsgMetaData(), "{}");
             }
             if (initialized) {
+                ctx.logJsEvalRequest();
                 TbMsg generated = jsEngine.executeGenerate(prevMsg);
+                ctx.logJsEvalResponse();
                 prevMsg = ctx.newMsg(generated.getType(), originatorId, generated.getMetaData(), generated.getData());
             }
             return prevMsg;

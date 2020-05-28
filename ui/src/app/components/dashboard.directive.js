@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,12 +181,16 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.widgetCol = widgetCol;
     vm.widgetStyle = widgetStyle;
     vm.showWidgetTitle = showWidgetTitle;
+    vm.showWidgetTitleIcon = showWidgetTitleIcon;
     vm.hasWidgetTitleTemplate = hasWidgetTitleTemplate;
     vm.widgetTitleTemplate = widgetTitleTemplate;
     vm.showWidgetTitlePanel = showWidgetTitlePanel;
     vm.showWidgetActions = showWidgetActions;
     vm.widgetTitleStyle = widgetTitleStyle;
     vm.widgetTitle = widgetTitle;
+    vm.widgetTitleIcon = widgetTitleIcon;
+    vm.widgetTitleIconStyle = widgetTitleIconStyle;
+    vm.widgetTitleTooltip = widgetTitleTooltip;
     vm.customWidgetHeaderActions = customWidgetHeaderActions;
     vm.widgetActions = widgetActions;
     vm.dropWidgetShadow = dropWidgetShadow;
@@ -349,6 +353,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         ids.sort(function (id1, id2) {
             return id1.localeCompare(id2);
         });
+        sortWidgets();
         if (angular.equals(ids, vm.widgetIds)) {
             return;
         }
@@ -384,7 +389,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
                 delete vm.widgetLayoutInfo[widgetId];
             }
         }
-        sortWidgets();
         $mdUtil.nextTick(function () {
             if (autofillHeight()) {
                 updateMobileOpts();
@@ -880,6 +884,14 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         }
     }
 
+    function showWidgetTitleIcon(widget) {
+        if (angular.isDefined(widget.config.showTitleIcon)) {
+            return widget.config.showTitleIcon;
+        } else {
+            return false;
+        }
+    }
+
     function hasWidgetTitleTemplate(widget) {
         var ctx = widgetContext(widget);
         if (ctx && ctx.widgetTitleTemplate) {
@@ -931,6 +943,35 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             return ctx.widgetTitle;
         } else {
             return widget.config.title;
+        }
+    }
+
+    function widgetTitleIcon(widget) {
+        if (angular.isDefined(widget.config.titleIcon)) {
+            return widget.config.titleIcon;
+        } else {
+            return '';
+        }
+    }
+
+    function widgetTitleIconStyle(widget) {
+        var style = {};
+        if (angular.isDefined(widget.config.iconColor)) {
+            style.color = widget.config.iconColor;
+        }
+        if (angular.isDefined(widget.config.iconSize)) {
+            style.fontSize = widget.config.iconSize;
+        }
+        return style;
+    }
+
+    function widgetTitleTooltip(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitleTooltip
+            && ctx.widgetTitleTooltip.length) {
+            return ctx.widgetTitleTooltip;
+        } else {
+            return widget.config.titleTooltip;
         }
     }
 

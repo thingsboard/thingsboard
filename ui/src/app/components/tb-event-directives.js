@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const SPECIAL_CHARS_REGEXP = /([\:\-\_]+(.))/g;
+const SPECIAL_CHARS_REGEXP = /([:\-_]+(.))/g;
 const MOZ_HACK_REGEXP = /^moz([A-Z])/;
-const PREFIX_REGEXP = /^((?:x|data)[\:\-_])/i;
+const PREFIX_REGEXP = /^((?:x|data)[:\-_])/i;
 
 var tbEventDirectives = {};
 

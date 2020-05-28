@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ function Menu(userService, $state, $rootScope) {
                             name: 'admin.system-settings',
                             type: 'toggle',
                             state: 'home.settings',
-                            height: '80px',
+                            height: '120px',
                             icon: 'settings',
                             pages: [
                                 {
@@ -96,6 +96,12 @@ function Menu(userService, $state, $rootScope) {
                                     type: 'link',
                                     state: 'home.settings.outgoing-mail',
                                     icon: 'mail'
+                                },
+                                {
+                                    name: 'admin.security-settings',
+                                    type: 'link',
+                                    state: 'home.settings.security-settings',
+                                    icon: 'security'
                                 }
                             ]
                         }];
@@ -132,6 +138,11 @@ function Menu(userService, $state, $rootScope) {
                                         name: 'admin.outgoing-mail',
                                         icon: 'mail',
                                         state: 'home.settings.outgoing-mail'
+                                    },
+                                    {
+                                        name: 'admin.security-settings',
+                                        icon: 'security',
+                                        state: 'home.settings.security-settings'
                                     }
                                 ]
                             }];

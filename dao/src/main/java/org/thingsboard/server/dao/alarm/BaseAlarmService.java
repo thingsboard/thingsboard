@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -52,12 +54,14 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -80,7 +84,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @PostConstruct
     public void startExecutor() {
-        readResultsProcessingExecutor = Executors.newCachedThreadPool();
+        readResultsProcessingExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("alarm-service"));
     }
 
     @PreDestroy
@@ -153,8 +157,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private List<EntityId> getParentEntities(Alarm alarm) throws InterruptedException, ExecutionException {
         EntityRelationsQuery query = new EntityRelationsQuery();
-        query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
-        return relationService.findByQuery(alarm.getTenantId(), query).get().stream().map(EntityRelation::getFrom).collect(Collectors.toList());
+        RelationsSearchParameters parameters = new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE, false);
+        query.setParameters(parameters);
+        List<String> propagateRelationTypes = alarm.getPropagateRelationTypes();
+        Stream<EntityRelation> relations = relationService.findByQuery(alarm.getTenantId(), query).get().stream();
+        if (!CollectionUtils.isEmpty(propagateRelationTypes)) {
+            relations = relations.filter(entityRelation -> propagateRelationTypes.contains(entityRelation.getType()));
+        }
+        return relations.map(EntityRelation::getFrom).collect(Collectors.toList());
     }
 
     private ListenableFuture<Alarm> updateAlarm(Alarm update) {
@@ -254,9 +264,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                             entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
                                 alarmInfo.setOriginatorName(originatorName);
                                 return alarmInfo;
-                            }
-                    );
-                });
+                            }, MoreExecutors.directExecutor());
+                }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -273,11 +282,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                                 }
                                 alarmInfo.setOriginatorName(originatorName);
                                 return alarmInfo;
-                            }
+                            }, MoreExecutors.directExecutor()
                     ));
                 }
                 return Futures.successfulAsList(alarmFutures);
-            });
+            }, MoreExecutors.directExecutor());
         }
         return Futures.transform(alarms, new Function<List<AlarmInfo>, TimePageData<AlarmInfo>>() {
             @Nullable
@@ -285,7 +294,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             public TimePageData<AlarmInfo> apply(@Nullable List<AlarmInfo> alarms) {
                 return new TimePageData<>(alarms, query.getPageLink());
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -325,21 +334,21 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private AlarmSeverity detectHighestSeverity(List<AlarmInfo> alarms) {
         if (!alarms.isEmpty()) {
             List<AlarmInfo> sorted = new ArrayList(alarms);
-            sorted.sort((p1, p2) -> p1.getSeverity().compareTo(p2.getSeverity()));
+            sorted.sort(Comparator.comparing(Alarm::getSeverity));
             return sorted.get(0).getSeverity();
         } else {
             return null;
         }
     }
 
-    private void deleteRelation(TenantId tenantId, EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
+    private void deleteRelation(TenantId tenantId, EntityRelation alarmRelation) {
         log.debug("Deleting Alarm relation: {}", alarmRelation);
-        relationService.deleteRelationAsync(tenantId, alarmRelation).get();
+        relationService.deleteRelation(tenantId, alarmRelation);
     }
 
-    private void createRelation(TenantId tenantId, EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
+    private void createRelation(TenantId tenantId, EntityRelation alarmRelation) {
         log.debug("Creating Alarm relation: {}", alarmRelation);
-        relationService.saveRelationAsync(tenantId, alarmRelation).get();
+        relationService.saveRelation(tenantId, alarmRelation);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {
@@ -359,6 +368,17 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         existing.setSeverity(alarm.getSeverity());
         existing.setDetails(alarm.getDetails());
         existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
+        List<String> existingPropagateRelationTypes = existing.getPropagateRelationTypes();
+        List<String> newRelationTypes = alarm.getPropagateRelationTypes();
+        if (!CollectionUtils.isEmpty(newRelationTypes)) {
+            if (!CollectionUtils.isEmpty(existingPropagateRelationTypes)) {
+                existing.setPropagateRelationTypes(Stream.concat(existingPropagateRelationTypes.stream(), newRelationTypes.stream())
+                        .distinct()
+                        .collect(Collectors.toList()));
+            } else {
+                existing.setPropagateRelationTypes(newRelationTypes);
+            }
+        }
         return existing;
     }
 
@@ -376,28 +396,18 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private void createAlarmRelation(TenantId tenantId, EntityId entityId, EntityId alarmId, AlarmStatus status, boolean createAnyRelation) {
-        try {
-            if (createAnyRelation) {
-                createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + AlarmSearchStatus.ANY.name(), RelationTypeGroup.ALARM));
-            }
-            createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.name(), RelationTypeGroup.ALARM));
-            createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getClearSearchStatus().name(), RelationTypeGroup.ALARM));
-            createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getAckSearchStatus().name(), RelationTypeGroup.ALARM));
-        } catch (ExecutionException | InterruptedException e) {
-            log.warn("[{}] Failed to create relation. Status: [{}]", alarmId, status);
-            throw new RuntimeException(e);
+        if (createAnyRelation) {
+            createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + AlarmSearchStatus.ANY.name(), RelationTypeGroup.ALARM));
         }
+        createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.name(), RelationTypeGroup.ALARM));
+        createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getClearSearchStatus().name(), RelationTypeGroup.ALARM));
+        createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getAckSearchStatus().name(), RelationTypeGroup.ALARM));
     }
 
     private void deleteAlarmRelation(TenantId tenantId, EntityId entityId, EntityId alarmId, AlarmStatus status) {
-        try {
-            deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.name(), RelationTypeGroup.ALARM));
-            deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getClearSearchStatus().name(), RelationTypeGroup.ALARM));
-            deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getAckSearchStatus().name(), RelationTypeGroup.ALARM));
-        } catch (ExecutionException | InterruptedException e) {
-            log.warn("[{}] Failed to delete relation. Status: [{}]", alarmId, status);
-            throw new RuntimeException(e);
-        }
+        deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.name(), RelationTypeGroup.ALARM));
+        deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getClearSearchStatus().name(), RelationTypeGroup.ALARM));
+        deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getAckSearchStatus().name(), RelationTypeGroup.ALARM));
     }
 
     private void updateAlarmRelation(TenantId tenantId, EntityId entityId, EntityId alarmId, AlarmStatus oldStatus, AlarmStatus newStatus) {

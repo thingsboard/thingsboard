@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,7 +170,7 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
             var errorCode = rejectionErrorCode(rejection);
             if (rejection.refreshTokenPending || (errorCode && errorCode === getTypes().serverErrorCode.jwtTokenExpired)) {
                 return refreshTokenAndRetry(rejection);
-            } else {
+            } else if (errorCode !== getTypes().serverErrorCode.credentialsExpired) {
                 unhandled = true;
             }
         } else if (rejection.status === 403) {

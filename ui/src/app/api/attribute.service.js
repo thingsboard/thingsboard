@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,7 +277,7 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         }
         var deleteEntityTimeseriesPromise;
         if (deleteTimeseries.length) {
-            deleteEntityTimeseriesPromise = deleteEntityTimeseries(entityType, entityId, deleteTimeseries, config);
+            deleteEntityTimeseriesPromise = deleteEntityTimeseries(entityType, entityId, deleteTimeseries, config, true);
         }
         if (Object.keys(timeseriesData).length) {
             var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/timeseries/' + timeseriesScope;
@@ -331,8 +331,9 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         return deferred.promise;
     }
 
-    function deleteEntityTimeseries(entityType, entityId, timeseries, config) {
+    function deleteEntityTimeseries(entityType, entityId, timeseries, config, deleteAllDataForKeys) {
         config = config || {};
+        deleteAllDataForKeys = deleteAllDataForKeys || false;
         var deferred = $q.defer();
         var keys = '';
         for (var i = 0; i < timeseries.length; i++) {
@@ -341,7 +342,9 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
             }
             keys += timeseries[i].key;
         }
-        var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/timeseries/delete' + '?keys=' + keys;
+        var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/timeseries/delete' +
+            '?keys=' + keys +
+            '&deleteAllDataForKeys=' + deleteAllDataForKeys;
         $http.delete(url, config).then(function success() {
             deferred.resolve();
         }, function fail() {

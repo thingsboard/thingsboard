@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,27 +42,25 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.rpc.RpcRequest;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.service.rpc.DeviceRpcService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.LocalRequestMetaData;
+import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.exception.ToErrorResponseEntity;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by ashvayka on 22.03.18.
  */
 @RestController
+@TbCoreComponent
 @RequestMapping(TbUrlConstants.RPC_URL_PREFIX)
 @Slf4j
 public class RpcController extends BaseController {
@@ -71,24 +69,10 @@ public class RpcController extends BaseController {
     protected final ObjectMapper jsonMapper = new ObjectMapper();
 
     @Autowired
-    private DeviceRpcService deviceRpcService;
+    private TbCoreDeviceRpcService deviceRpcService;
 
     @Autowired
     private AccessValidator accessValidator;
-
-    private ExecutorService executor;
-
-    @PostConstruct
-    public void initExecutor() {
-        executor = Executors.newSingleThreadExecutor();
-    }
-
-    @PreDestroy
-    public void shutdownExecutor() {
-        if (executor != null) {
-            executor.shutdownNow();
-        }
-    }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/oneway/{deviceId}", method = RequestMethod.POST)
@@ -103,7 +87,6 @@ public class RpcController extends BaseController {
     public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequest(@PathVariable("deviceId") String deviceIdStr, @RequestBody String requestBody) throws ThingsboardException {
         return handleDeviceRPCRequest(false, new DeviceId(UUID.fromString(deviceIdStr)), requestBody);
     }
-
 
     private DeferredResult<ResponseEntity> handleDeviceRPCRequest(boolean oneWay, DeviceId deviceId, String requestBody) throws ThingsboardException {
         try {
@@ -129,7 +112,7 @@ public class RpcController extends BaseController {
                             timeout,
                             body
                     );
-                    deviceRpcService.processRestAPIRpcRequestToRuleEngine(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse));
+                    deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse));
                 }
 
                 @Override

@@ -1,0 +1,98 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.tb-custom-action-pretty {
+  box-sizing: border-box;
+  padding: 8px;
+  background-color: #fff;
+
+  .tb-fullscreen-panel {
+    .tb-custom-action-editor-container {
+      height: calc(100% - 40px);
+    }
+
+    #right-panel {
+      padding-top: 8px;
+      padding-left: 3px;
+    }
+
+    tb-js-func .tb-js-func-panel {
+      box-sizing: border-box;
+    }
+
+    md-tabs-content-wrapper,
+    md-tab-content {
+      height: 100%;
+    }
+  }
+
+  .tb-split {
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .tb-content {
+    border: 1px solid #c0c0c0;
+  }
+
+  .gutter {
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: 50%;
+  }
+
+  .gutter.gutter-horizontal {
+    cursor: col-resize;
+    background-image: url("../../../../../node_modules/split.js/grips/vertical.png");
+  }
+
+  .tb-split.tb-split-horizontal,
+  .gutter.gutter-horizontal {
+    float: left;
+    height: 100%;
+  }
+
+  .tb-action-expand-button {
+    position: absolute;
+    right: 14px;
+    z-index: 1;
+
+    &.tb-fullscreen-editor {
+      position: relative;
+      right: 0;
+    }
+
+    .md-button {
+      min-width: auto;
+    }
+  }
+
+  .tb-custom-action-editor {
+    &.tb-fullscreen-editor {
+      height: 100%;
+    }
+  }
+}
+
+.tb-custom-action-editor-container {
+  .html-panel,
+  .css-panel {
+    width: 100%;
+    min-width: 200px;
+    height: 100%;
+    min-height: 200px;
+  }
+}

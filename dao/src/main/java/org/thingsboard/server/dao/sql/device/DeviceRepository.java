@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,12 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
                                                    @Param("searchText") String searchText,
                                                    @Param("idOffset") String idOffset,
                                                    Pageable pageable);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.id > :idOffset ORDER BY d.id")
+    List<DeviceEntity> findByTenantId(@Param("tenantId") String tenantId,
+                                      @Param("idOffset") String idOffset,
+                                      Pageable pageable);
 
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +

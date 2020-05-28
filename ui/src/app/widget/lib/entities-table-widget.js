@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,11 +67,13 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
     vm.displayEntityName = true;
     vm.entityNameColumnTitle = '';
+    vm.displayEntityLabel = false;
+    vm.entityLabelColumnTitle = '';
     vm.displayEntityType = true;
     vm.actionCellDescriptors = [];
     vm.displayPagination = true;
     vm.defaultPageSize = 10;
-    vm.defaultSortOrder = 'entityName';
+    vm.defaultSortOrder = "'entityName'";
 
     vm.query = {
         order: vm.defaultSortOrder,
@@ -87,6 +89,15 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
             vm.enterFilterMode();
         },
         icon: 'search'
+    };
+
+    let columnDisplayAction = {
+        name: 'entity.columns-to-display',
+        show: true,
+        onAction: function($event) {
+            vm.editColumnsToDisplay($event);
+        },
+        icon: 'view_column'
     };
 
     vm.enterFilterMode = enterFilterMode;
@@ -145,7 +156,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
     function initializeConfig() {
 
-        vm.ctx.widgetActions = [ vm.searchAction ];
+        vm.ctx.widgetActions = [ vm.searchAction, columnDisplayAction ];
 
         vm.actionCellDescriptors = vm.ctx.actionsApi.getActionDescriptors('actionCellButton');
 
@@ -159,11 +170,19 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
         vm.searchAction.show = angular.isDefined(vm.settings.enableSearch) ? vm.settings.enableSearch : true;
         vm.displayEntityName = angular.isDefined(vm.settings.displayEntityName) ? vm.settings.displayEntityName : true;
+        vm.displayEntityLabel = angular.isDefined(vm.settings.displayEntityLabel) ? vm.settings.displayEntityLabel : false;
+        columnDisplayAction.show = angular.isDefined(vm.settings.enableSelectColumnDisplay) ? vm.settings.enableSelectColumnDisplay : true;
 
         if (vm.settings.entityNameColumnTitle && vm.settings.entityNameColumnTitle.length) {
             vm.entityNameColumnTitle = utils.customTranslation(vm.settings.entityNameColumnTitle, vm.settings.entityNameColumnTitle);
         } else {
             vm.entityNameColumnTitle = $translate.instant('entity.entity-name');
+        }
+
+        if (vm.settings.entityLabelColumnTitle && vm.settings.entityLabelColumnTitle.length) {
+            vm.entityLabelColumnTitle = utils.customTranslation(vm.settings.entityLabelColumnTitle, vm.settings.entityLabelColumnTitle);
+        } else {
+            vm.entityLabelColumnTitle = $translate.instant('entity.entity-label');
         }
 
         vm.displayEntityType = angular.isDefined(vm.settings.displayEntityType) ? vm.settings.displayEntityType : true;
@@ -176,6 +195,11 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
         if (vm.settings.defaultSortOrder && vm.settings.defaultSortOrder.length) {
             vm.defaultSortOrder = vm.settings.defaultSortOrder;
+            if (vm.settings.defaultSortOrder.charAt(0) === "-") {
+                vm.defaultSortOrder = '-"' + utils.customTranslation(vm.settings.defaultSortOrder.substring(1), vm.settings.defaultSortOrder.substring(1)) + '"';
+            } else {
+                vm.defaultSortOrder = '"' + utils.customTranslation(vm.settings.defaultSortOrder, vm.settings.defaultSortOrder) + '"';
+            }
         }
 
         vm.query.order = vm.defaultSortOrder;
@@ -277,22 +301,23 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         updateEntities();
     }
 
-    function onRowClick($event, entity) {
+    function onRowClick($event, entity, isDouble) {
         if ($event) {
             $event.stopPropagation();
         }
         if (vm.currentEntity != entity) {
             vm.currentEntity = entity;
         }
-        var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
+        var actionSourceId = isDouble ? 'rowDoubleClick' : 'rowClick';
+        var descriptors = vm.ctx.actionsApi.getActionDescriptors(actionSourceId);
         if (descriptors.length) {
-            var entityId;
-            var entityName;
+            var entityId, entityName, entityLabel;
             if (vm.currentEntity) {
                 entityId = vm.currentEntity.id;
                 entityName = vm.currentEntity.entityName;
+                entityLabel = vm.currentEntity.entityLabel;
             }
-            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
         }
     }
 
@@ -300,13 +325,13 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         if ($event) {
             $event.stopPropagation();
         }
-        var entityId;
-        var entityName;
+        var entityId, entityName, entityLabel;
         if (entity) {
             entityId = entity.id;
             entityName = entity.entityName;
+            entityLabel = entity.entityLabel;
         }
-        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName);
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, null, entityLabel);
     }
 
     function isCurrent(entity) {
@@ -390,7 +415,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
     );
 
     function getEntityValue(entity, key) {
-        return getDescendantProp(entity, key.name);
+        return getDescendantProp(entity, key.label);
     }
 
     function updateEntitiesData(data) {
@@ -403,9 +428,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                     var keyData = data[index].data;
                     if (keyData && keyData.length && keyData[0].length > 1) {
                         var value = keyData[0][1];
-                        entity[dataKey.name] = value;
+                        entity[dataKey.label] = value;
                     } else {
-                        entity[dataKey.name] = '';
+                        entity[dataKey.label] = '';
                     }
                 }
             }
@@ -468,6 +493,24 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                 useCellStyleFunction: false
             };
             vm.columnWidth['entityName'] = '0px';
+        }
+
+        if (vm.displayEntityLabel) {
+            vm.columns.push(
+                {
+                    name: 'entityLabel',
+                    label: 'entityLabel',
+                    title: vm.entityLabelColumnTitle,
+                    display: true
+                }
+            );
+            vm.contentsInfo['entityLabel'] = {
+                useCellContentFunction: false
+            };
+            vm.stylesInfo['entityLabel'] = {
+                useCellStyleFunction: false
+            };
+            vm.columnWidth['entityLabel'] = '0px';
         }
 
         if (vm.displayEntityType) {
@@ -557,6 +600,11 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                 id: {}
             };
             entity.entityName = datasource.entityName;
+            if (datasource.entityLabel) {
+                entity.entityLabel = datasource.entityLabel;
+            } else {
+                entity.entityLabel = datasource.entityName;
+            }
             if (datasource.entityId) {
                 entity.id.id = datasource.entityId;
             }
@@ -568,7 +616,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
             }
             for (d = 0; d < vm.dataKeys.length; d++) {
                 dataKey = vm.dataKeys[d];
-                entity[dataKey.name] = '';
+                entity[dataKey.label] = '';
             }
             vm.allEntities.push(entity);
         }

@@ -48,7 +48,9 @@
         "paste-reference": "Вставить ссылку",
         "import": "Импортировать",
         "export": "Экспортировать",
-        "share-via": "Поделиться в {{provider}}"
+        "share-via": "Поделиться в {{provider}}",
+        "continue": "Продолжить",
+        "discard-changes": "Отменить изменения"
     },
     "aggregation": {
         "aggregation": "Агрегация",
@@ -83,7 +85,29 @@
         "timeout-required": "Таймаут обязателен.",
         "timeout-invalid": "Недействительный таймаут.",
         "enable-tls": "Включить TLS",
-        "send-test-mail": "Отправить пробное письмо"
+        "tls-version" : "Версия TLS",
+        "send-test-mail": "Отправить пробное письмо",
+        "security-settings": "Настройки безопасности",
+        "password-policy": "Политика паролей",
+        "minimum-password-length": "Минимальная длина пароля",
+        "minimum-password-length-required": "Требуется минимальная длина пароля",
+        "minimum-password-length-range": "Минимальная длина пароля должна быть в диапазоне от 5 до 50",
+        "minimum-uppercase-letters": "Минимальное количество прописных букв",
+        "minimum-uppercase-letters-range": "Минимальное количество прописных букв не может быть отрицательным",
+        "minimum-lowercase-letters": "Минимальное количество строчных букв",
+        "minimum-lowercase-letters-range": "Минимальное количество строчных букв не может быть отрицательным",
+        "minimum-digits": "Минимальное количество цифр",
+        "minimum-digits-range": "Минимальное количество цифр не может быть отрицательным",
+        "minimum-special-characters": "Минимальное количество специальных символов",
+        "minimum-special-characters-range": "Минимальное количество специальных символов не может быть отрицательным",
+        "password-expiration-period-days": "Срок действия пароля в днях",
+        "password-expiration-period-days-range": "Срок действия пароля в днях не может быть отрицательным",
+        "password-reuse-frequency-days": "Частота повторного использования пароля в днях",
+        "password-reuse-frequency-days-range": "Частота повторного использования пароля в днях не может быть отрицательной",
+        "general-policy": "Общая политика",
+        "max-failed-login-attempts": "Максимальное количество неудачных попыток входа в систему, прежде чем учетная запись заблокирована",
+        "minimum-max-failed-login-attempts-range": "Максимальное количество неудачных попыток входа в систему не может быть отрицательным",
+        "user-lockout-notification-email": "В случае блокировки учетной записи пользователя отправьте уведомление на электронную почту"
     },
     "alarm": {
         "alarm": "Оповещение",
@@ -139,7 +163,13 @@
         "clear-alarms-text": "Вы точно хотите сбросить { count, plural, 1 {1 оповещение} other {# оповещений} }?",
         "clear-alarm-title": "Сбросить оповещение",
         "clear-alarm-text": "Вы точно хотите сбросить оповещение?",
-        "alarm-status-filter": "Фильтр оповещений"
+        "alarm-status-filter": "Фильтр оповещений",
+        "max-count-load": "Максимальное количество оповещений для загрузки (0 - неограниченно)",
+        "max-count-load-required": "Максимальное количество оповещений для загрузки обязателен.",
+        "max-count-load-error-min": "Минимальное значение 0.",
+        "fetch-size": "Размер пакета для загрузки",
+        "fetch-size-required": "Размер пакета для загрузки обязателен.",
+        "fetch-size-error-min": "Минимальное значение 10."
     },
     "alias": {
         "add": "Добавить псевдоним",
@@ -150,8 +180,8 @@
         "filter-type-single-entity": "Отдельный объект",
         "filter-type-entity-list": "Список объектов",
         "filter-type-entity-name": "Название объекта",
-        "filter-type-state-entity": "Объект, полученный из дашборда",
-        "filter-type-state-entity-description": "Объект, полученный из параметров дашборда",
+        "filter-type-state-entity": "Объект из состояния дашборда",
+        "filter-type-state-entity-description": "Объект, полученный из параметров состояния дашборда",
         "filter-type-asset-type": "Тип актива",
         "filter-type-asset-type-description": "Активы типа '{{assetType}}'",
         "filter-type-asset-type-and-name-description": "Активы типа '{{assetType}}' и названием, начинающимся с '{{prefix}}'",
@@ -176,6 +206,7 @@
         "entity-filter-no-entity-matched": "Объекты, соответствующие фильтру, не найдены.",
         "no-entity-filter-specified": "Не указан фильтр объектов",
         "root-state-entity": "Использовать объект, полученный из дашборда, как корневой",
+        "last-level-relation": "Использовать только отношения последнего уровня",
         "root-entity": "Корневой объект",
         "state-entity-parameter-name": "Название объекта состояния",
         "default-state-entity": "Объект состояния по умолчанию",
@@ -246,7 +277,10 @@
         "select-asset": "Выбрать активы",
         "no-assets-matching": "Активы, соответствующие '{{entity}}', не найдены.",
         "asset-required": "Актив обязателен",
-        "name-starts-with": "Название актива, начинающееся с"
+        "name-starts-with": "Название актива, начинающееся с",
+        "import": "Импортировать активы",
+        "asset-file": "Файл с активами",
+        "label": "Метка"
     },
     "attribute": {
         "attributes": "Атрибуты",
@@ -303,6 +337,9 @@
         "type-relations-delete": "Удалены все отношения",
         "type-alarm-ack": "Подтвержден",
         "type-alarm-clear": "Сброшен",
+        "type-login": "Вход",
+        "type-logout": "Выход",
+        "type-lockout": "Заблокирован",
         "status-success": "Успех",
         "status-failure": "Сбой",
         "audit-log-details": "Подробности аудит лога",
@@ -548,6 +585,7 @@
         "configuration": "Конфигурация ключа данных",
         "timeseries": "Телеметрия",
         "attributes": "Атрибуты",
+        "entity-field": "Поле объекта",
         "alarm": "Параметры оповещения",
         "timeseries-required": "Телеметрия объекта обязательна.",
         "timeseries-or-attributes-required": "Телеметрия/атрибуты обязательны.",
@@ -569,6 +607,7 @@
     },
     "details": {
         "edit-mode": "Режим редактирования",
+        "edit-json": "Редактировать JSON",
         "toggle-edit-mode": "Режим редактирования"
     },
     "device": {
@@ -626,7 +665,7 @@
         "delete-device-title": "Вы точно хотите удалить устройство '{{deviceName}}'?",
         "delete-device-text": "Внимание, после подтверждения устройство и все связанные с ним данные будут безвозвратно утеряны.",
         "delete-devices-title": "Вы точно хотите удалить { count, plural, one {1 устройство} few {# устройства} other {# устройств} }?",
-        "delete-devices-action-title": "Удалить { count, plural, one {1 устройство} few {# устройства} other {# устройств} } }",
+        "delete-devices-action-title": "Удалить { count, plural, one {1 устройство} few {# устройства} other {# устройств} }",
         "delete-devices-text": "Внимание, после подтверждения выбранные устройства и все связанные с ними данные будут безвозвратно утеряны..",
         "unassign-device-title": "Вы точно хотите отозвать устройство '{{deviceName}}'?",
         "unassign-device-text": "После подтверждения устройство будет недоступно клиенту.",
@@ -665,7 +704,9 @@
         "is-gateway": "Гейтвей",
         "public": "Общедоступный",
         "device-public": "Устройство общедоступно",
-        "select-device": "Выбрать устройство"
+        "select-device": "Выбрать устройство",
+        "import": "Импортировать устройства",
+        "device-file": "Файл с устройствами"
     },
     "dialog": {
         "close": "Закрыть диалог"
@@ -768,13 +809,32 @@
         "list-of-rulenodes": "{ count, plural, 1 {Одно правило} other {Список из # правил} }",
         "rulenode-name-starts-with": "Правила, чьи названия начинаются с '{{prefix}}'",
         "type-current-customer": "Текущий клиент",
+        "type-current-tenant": "Текущий владелец",
         "search": "Поиск объектов",
         "selected-entities": "Выбран(ы) { count, plural, 1 {1 объект} few {# объекта} other {# объектов} }",
         "entity-name": "Название объекта",
+        "entity-label": "Метка объекта",
         "details": "Подробности об объекте",
         "no-entities-prompt": "Объекты не найдены",
         "no-data": "Нет данных для отображения",
         "columns-to-display": "Отобразить следующие колонки"
+    },
+    "entity-field": {
+        "created-time": "Время создания",
+        "name": "Название",
+        "type": "Тип",
+        "first-name": "Имя",
+        "last-name": "Фамилия",
+        "email": "Электронная почта",
+        "title": "Название",
+        "country": "Страна",
+        "state": "Штат/Область",
+        "city": "Город",
+        "address": "Адрес",
+        "address2": "Адрес 2",
+        "zip": "Индекс",
+        "phone": "Телефон",
+        "label": "Метка"
     },
     "entity-view": {
         "entity-view": "Представление Объекта",
@@ -793,7 +853,7 @@
         "duplicate-alias-error": "Найден дубликат псевдонима '{{alias}}'.<br>В рамках одного дашборда псевдонимы представлений объектов должны быть уникальными.",
         "configure-alias": "Настроить псевдоним '{{alias}}'",
         "no-entity-views-matching": "Объекты, соответствующие '{{entity}}', не найдены.",
-        "alias": "Псевдонимы",
+        "alias": "Псевдоним",
         "alias-required": "Псевдоним представления объекта обязателен.",
         "remove-alias": "Убрать псевдоним представления объекта",
         "add-alias": "Добавить псевдоним представления объекта",
@@ -843,11 +903,12 @@
         "events": "События",
         "details": "Подробности",
         "copyId": "Копировать ИД представление объекта",
-        "assignedToCustomer": "Назначенные клиенту",
+        "assignedToCustomer": "Назначено клиенту",
         "unable-entity-view-device-alias-title": "Не удалось удалить псевдоним представления объекта",
         "unable-entity-view-device-alias-text": "Не удалось удалить псевдоним устройства '{{entityViewAlias}}', т.к. он используется следующими виджетами:<br/>{{widgetsList}}",
         "select-entity-view": "Выбрать представление объекта",
         "make-public": "Открыть общий доступ к представлению объекта",
+        "make-private": "Закрыть общий доступ к представлению объекта",
         "start-date": "Дата начала",
         "start-ts": "Время начала",
         "end-date": "Дата окончания",
@@ -865,7 +926,11 @@
         "attributes-propagation": "Пробросить атрибуты",
         "attributes-propagation-hint": "Представление объекта автоматически копирует указанные атрибуты с Целевого Объекта каждый раз, когда вы сохраняете или обновляете это представление. В целях производительности атрибуты целевого объекта не пробрасываются в представление объекта на каждом их изменении. Вы можете включить автоматический проброс, настроив в вашей цепочке правило \"copy to view\" и соединив его с сообщениями типа \"Post attributes\" и \"Attributes Updated\".",
         "timeseries-data": "Данные телеметрии",
-        "timeseries-data-hint": "Настроить ключи данных телеметрии целевого объекта, которые будут доступны представлению объекта. Эти данные только для чтения."
+        "timeseries-data-hint": "Настроить ключи данных телеметрии целевого объекта, которые будут доступны представлению объекта. Эти данные только для чтения.",
+        "make-public-entity-view-title": "Вы уверенны, что хотите открыть общий доступ к представленю объекта '{{entityViewName}}'?",
+        "make-public-entity-view-text": "После подтверждения представление объекта и все связанные с ним данные станут публичными и доступными для других пользователей.",
+        "make-private-entity-view-title": "Вы уверенны, что хотите закрыть общий доступ к представлению объекта '{{entityViewName}}'?",
+        "make-private-entity-view-text": "После подтверждения представление объекта и все звязанные с ним данные станут приватными и не будут доступны для других пользователей."
     },
     "event": {
         "event-type": "Тип события",
@@ -1012,6 +1077,7 @@
         "modbus-add-server": "Добавить сервер/ведомое устройство",
         "modbus-add-server-prompt": "Пожалуйста, добавить сервер/ведомое устройство",
         "modbus-transport": "Транспорт",
+        "modbus-tcp-reconnect": "Переподключатсься автоматически",
         "modbus-port-name": "Название последовательного порта",
         "modbus-encoding": "Кодирование символов",
         "modbus-parity": "Паритет",
@@ -1086,15 +1152,48 @@
     },
     "import": {
         "no-file": "Файл не выбран",
-        "drop-file": "Перетащите JSON файл или кликните для выбора файла."
+        "drop-file": "Перетащите JSON файл или кликните для выбора файла.",
+        "drop-file-csv": "Перетащите CSV файл или кликните для выбора файла.",
+        "column-value": "Значение",
+        "column-title": "Название",
+        "column-example": "Пример значений данных",
+        "column-key": "Ключ атрибута/телеметрии",
+        "csv-delimiter": "Разделитель в CSV файле",
+        "csv-first-line-header": "Первая строка содержит названия колонок",
+        "csv-update-data": "Обновить атрибут/телеметрию",
+        "import-csv-number-columns-error": "Файл должен содержать как минимум две колонки",
+        "import-csv-invalid-format-error": "Неверный формат данных. Строка: '{{line}}'",
+        "column-type": {
+            "name": "Название",
+            "type": "Тип",
+            "label": "Метка",
+            "column-type": "Тип колонки",
+            "client-attribute": "Клиентский атрибут",
+            "shared-attribute": "Общий атрибут",
+            "server-attribute": "Серверный атрибут",
+            "timeseries": "Телеметрия",
+            "entity-field": "Entity field",
+            "access-token": "Токен"
+        },
+        "stepper-text": {
+            "select-file": "Выберите файл",
+            "configuration": "Конфигурация импорта",
+            "column-type": "Выберите тип колонок",
+            "creat-entities": "Создание новых объектов",
+            "done": "Завершено"
+        },
+        "message": {
+            "create-entities": "{{count}} новый(х) объект(ов) было успешно создано.",
+            "update-entities": "{{count}} объект(ов) успешно обновлено.",
+            "error-entities": "Возникла ошибка при создании {{count}} объекта(ов)."
+        }
     },
     "item": {
         "selected": "Выбранные"
     },
     "js-func": {
         "no-return-error": "Функция должна возвращать значение!",
-        "return-type-mismatch": "Функция должна возвращать значение типа '{{type}}'!",
-        "tidy": "Tidy"
+        "return-type-mismatch": "Функция должна возвращать значение типа '{{type}}'!"
     },
     "key-val": {
         "key": "Ключ",
@@ -1123,7 +1222,13 @@
         "min": "Мин",
         "max": "Макс",
         "avg": "Среднее",
-        "total": "Сумма"
+        "total": "Сумма",
+        "comparison-time-ago": {
+            "days": "(день назад)",
+            "weeks": "(неделю назад)",
+            "months": "(месяц назад)",
+            "years": "(год назад)"
+        }
     },
     "login": {
         "login": "Войти",
@@ -1137,10 +1242,13 @@
         "remember-me": "Запомнить меня",
         "forgot-password": "Забыли пароль?",
         "password-reset": "Пароль сброшен",
+        "expired-password-reset-message": "Срок действия Вашего пароля закончился! Пожалуйста, создайте новый пароль.",
         "new-password": "Новый пароль",
         "new-password-again": "Повторите новый пароль",
         "password-link-sent-message": "Ссылка для сброса пароля была успешно отправлена!",
-        "email": "Эл. адрес"
+        "email": "Эл. адрес",
+        "login-with": "Войти через {{name}}",
+        "or": "или"
     },
     "position": {
         "top": "Верх",
@@ -1150,6 +1258,7 @@
     },
     "profile": {
         "profile": "Профиль",
+        "last-login-time": "Время последнего входа в систему",
         "change-password": "Изменить пароль",
         "current-password": "Текущий пароль"
     },
@@ -1296,6 +1405,12 @@
         "help": "Помощь",
         "reset-debug-mode": "Сбросить режим отладки во всех правилах"
     },
+    "queue": {
+        "select_name": "Выберите имя для Queue",
+        "name": "Имя для Queue",
+        "name_required": "Поле 'Имя для Queue' обязательно к заполнению!"
+
+    },
     "tenant": {
         "tenant": "Владелец",
         "tenants": "Владельцы",
@@ -1346,7 +1461,8 @@
         "edit": "Изменить временное окно",
         "date-range": "Диапазон дат",
         "last": "Последние",
-        "time-period": "Период времени"
+        "time-period": "Период времени",
+        "hide": "Скрыть"
     },
     "user": {
         "user": "Пользователь",
@@ -1389,7 +1505,11 @@
         "activation-link-copied-message": "Ссылка для активации пользователя скопировано в буфер обмена",
         "details": "Подробности",
         "login-as-tenant-admin": "Войти как администратор владельца",
-        "login-as-customer-user": "Войти как пользователь клиента"
+        "login-as-customer-user": "Войти как пользователь клиента",
+        "disable-account": "Отключить учетную запись пользователя",
+        "enable-account": "Включить учетную запись пользователя",
+        "enable-account-message": "Учетная запись пользователя была успешно включена!",
+        "disable-account-message": "Учетная запись пользователя была успешно отключена!"
     },
     "value": {
         "type": "Тип значения",
@@ -1418,12 +1538,12 @@
         "edit": "Редактировать виджет",
         "remove-widget-title": "Вы точно хотите удалить виджет '{{widgetTitle}}'?",
         "remove-widget-text": "Внимание, после подтверждения виджет и все связанные с ним данные будут безвозвратно утеряны.",
-        "timeseries": "Выборка по времени",
-        "search-data": "Search data",
-        "no-data-found": "No data found",
+        "timeseries": "Телеметрия",
+        "search-data": "Поиск данных",
+        "no-data-found": "Данные не найдено",
         "latest-values": "Последние значения",
         "rpc": "Управляющий виджет",
-        "alarm": "Alarm widget",
+        "alarm": "Виджет оповещений",
         "static": "Статический виджет",
         "select-widget-type": "Выберите тип виджета",
         "missing-widget-title-error": "Укажите название виджета!",
@@ -1464,6 +1584,7 @@
         "update-dashboard-state": "Обновить текущее состояние дашборда",
         "open-dashboard": "Перейти к другому дашборду",
         "custom": "Пользовательское действие",
+        "custom-pretty": "Пользовательское действие (с HTML шаблоном)",
         "target-dashboard-state": "Целевое состояние дашборда",
         "target-dashboard-state-required": "Целевое состояние дашборда обязательно",
         "set-entity-from-widget": "Установить объект из виджета",
@@ -1519,6 +1640,7 @@
         "decimals": "Количество цифр после запятой",
         "timewindow": "Временное окно",
         "use-dashboard-timewindow": "Использовать временное окно дашборда",
+        "display-timewindow": "Показывать временное окно",
         "display-legend": "Показать легенду",
         "datasources": "Источники данных",
         "maximum-datasources": "Максимальной количество источников данных равно {{count}}",
@@ -1543,7 +1665,10 @@
         "edit-action": "Редактировать действие",
         "delete-action": "Удалить действие",
         "delete-action-title": "Удалить действие виджета",
-        "delete-action-text": "Вы точно хотите удалить действие виджета '{{actionName}}'?"
+        "delete-action-text": "Вы точно хотите удалить действие виджета '{{actionName}}'?",
+        "display-icon": "Показывать иконку в названии",
+        "icon-color": "Цвет иконки",
+        "icon-size": "Размер иконки"
     },
     "widget-type": {
         "import": "Импортировать тип виджета",
@@ -1610,6 +1735,46 @@
                 "Step size": "Размер шага",
                 "Ok": "Ok"
             }
+        },
+        "input-widgets": {
+            "attribute-not-allowed": "Атрибут не может быть выбран в этом виджете",
+            "date": "Дата",
+            "blocked-location": "Геолокация заблокирована в вашем браузере",
+            "claim-device": "Подтвердить устройство",
+            "claim-failed": "Не удалось подтвердить устройство!",
+            "claim-not-found": "Устройство не найдено!",
+            "claim-successful": "Устройство успешно подтверждено!",
+            "discard-changes": "Отменить изменения",
+            "device-name": "Название устройства",
+            "device-name-required": "Необходимо указать название устройства",
+            "entity-attribute-required": "Значение атрибута обязателено",
+            "entity-coordinate-required": "Необходимо указать широту и долготу",
+            "entity-timeseries-required": "Значение телеметрии обязательно",
+            "get-location": "Получить текущее местоположение",
+            "latitude": "Широта",
+            "longitude": "Долгота",
+            "not-allowed-entity": "Выбраный объект не имеет общих атрибутов",
+            "no-attribute-selected": "Атрибут не выбран",
+            "no-datakey-selected": "Ни один datakey не выбран",
+            "no-entity-selected": "Объект не выбран",
+            "no-coordinate-specified": "Ключ для широты/долготы не указан",
+            "no-support-geolocation": "Ваш браузер не поддерживает геолокацию",
+            "no-image": "Нет изображения",
+            "no-support-web-camera": "Нет поддерживаемой веб-камеры",
+            "no-timeseries-selected": "Параметр телеметрии не выбран",
+            "secret-key": "Секретный ключ",
+            "secret-key-required": "Необходимо указать секретный ключ",
+            "switch-attribute-value": "Изменить значение атрибута",
+            "switch-camera": "Изменить камеру",
+            "switch-timeseries-value": "Изменить значение телеметрии",
+            "take-photo": "Сделать фото",
+            "time": "Время",
+            "timeseries-not-allowed": "Телеметрия не может быть выбрана в этом виджете",
+            "update-failed": "Не удалось обновить",
+            "update-successful": "Успешно обновлено",
+            "update-attribute": "Обновить атрибут",
+            "update-timeseries": "Обновить телеметрию",
+            "value": "Значение"
         }
     },
     "icon": {
@@ -1620,29 +1785,18 @@
     },
     "custom": {
         "widget-action": {
-            "action-cell-button": "Кнопка действия ячейки",
+            "action-cell-button": "Кнопка действия в ячейке таблицы",
             "row-click": "Действий при щелчке на строку",
-            "marker-click": "Действия при щелчке на указателе",
+            "marker-click": "Действия при щелчке на маркер",
             "polygon-click": "Действия при щелчке на полигон",
-            "tooltip-tag-action": "Действие при подсказке"
+            "tooltip-tag-action": "Действие при нажатии на ссылку в подсказке",
+            "node-selected": "Действий при выборе ноды",
+            "element-click": "Действий при щелчке на HTML элементе",
+            "pie-slice-click": "Действий при щелчке на секции круговой диаграммы",
+            "row-double-click": "Действий при двойном щелчке на строку"
         }
     },
     "language": {
-        "language": "Язык",
-        "locales": {
-            "de_DE": "Немецкий",
-            "en_US": "Английский",
-            "zh_CN": "Китайский",
-            "ko_KR": "Корейский",
-            "es_ES": "Испанский",
-            "it_IT": "Итальянский",
-            "ru_RU": "Русский",
-            "tr_TR": "Турецкий",
-            "fr_FR": "Французский",
-            "ja_JA": "Японский",
-            "fa_IR": "Персидский",
-            "uk_UA": "Украинский",
-            "cs_CZ": "Чешский"
-        }
+        "language": "Язык"
     }
 }

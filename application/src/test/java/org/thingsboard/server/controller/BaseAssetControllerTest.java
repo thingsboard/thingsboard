@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,7 +72,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
+        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
     }
 
@@ -111,26 +112,27 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     @Test
     public void testFindAssetTypesByTenantId() throws Exception {
         List<Asset> assets = new ArrayList<>();
-        for (int i=0;i<3;i++) {
+        for (int i = 0; i < 3; i++) {
             Asset asset = new Asset();
-            asset.setName("My asset B"+i);
+            asset.setName("My asset B" + i);
             asset.setType("typeB");
             assets.add(doPost("/api/asset", asset, Asset.class));
         }
-        for (int i=0;i<7;i++) {
+        for (int i = 0; i < 7; i++) {
             Asset asset = new Asset();
-            asset.setName("My asset C"+i);
+            asset.setName("My asset C" + i);
             asset.setType("typeC");
             assets.add(doPost("/api/asset", asset, Asset.class));
         }
-        for (int i=0;i<9;i++) {
+        for (int i = 0; i < 9; i++) {
             Asset asset = new Asset();
-            asset.setName("My asset A"+i);
+            asset.setName("My asset A" + i);
             asset.setType("typeA");
             assets.add(doPost("/api/asset", asset, Asset.class));
         }
         List<EntitySubtype> assetTypes = doGetTyped("/api/asset/types",
-                new TypeReference<List<EntitySubtype>>(){});
+                new TypeReference<List<EntitySubtype>>() {
+                });
 
         Assert.assertNotNull(assetTypes);
         Assert.assertEquals(3, assetTypes.size());
@@ -146,10 +148,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         asset.setType("default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
-        doDelete("/api/asset/"+savedAsset.getId().getId().toString())
+        doDelete("/api/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        doGet("/api/asset/"+savedAsset.getId().getId().toString())
+        doGet("/api/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
 
@@ -244,16 +246,16 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        doDelete("/api/tenant/"+savedTenant2.getId().getId().toString())
+        doDelete("/api/tenant/" + savedTenant2.getId().getId().toString())
                 .andExpect(status().isOk());
     }
 
     @Test
     public void testFindTenantAssets() throws Exception {
         List<Asset> assets = new ArrayList<>();
-        for (int i=0;i<178;i++) {
+        for (int i = 0; i < 178; i++) {
             Asset asset = new Asset();
-            asset.setName("Asset"+i);
+            asset.setName("Asset" + i);
             asset.setType("default");
             assets.add(doPost("/api/asset", asset, Asset.class));
         }
@@ -262,12 +264,15 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         TextPageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink);
             loadedAssets.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
             }
         } while (pageData.hasNext());
+
+        loadedAssets.removeIf(asset -> asset.getType().equals(DefaultRuleEngineStatisticsService.TB_SERVICE_QUEUE));
 
         Collections.sort(assets, idComparator);
         Collections.sort(loadedAssets, idComparator);
@@ -279,10 +284,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     public void testFindTenantAssetsByName() throws Exception {
         String title1 = "Asset title 1";
         List<Asset> assetsTitle1 = new ArrayList<>();
-        for (int i=0;i<143;i++) {
+        for (int i = 0; i < 143; i++) {
             Asset asset = new Asset();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
-            String name = title1+suffix;
+            String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType("default");
@@ -290,10 +295,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         }
         String title2 = "Asset title 2";
         List<Asset> assetsTitle2 = new ArrayList<>();
-        for (int i=0;i<75;i++) {
+        for (int i = 0; i < 75; i++) {
             Asset asset = new Asset();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
-            String name = title2+suffix;
+            String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType("default");
@@ -305,7 +310,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         TextPageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink);
             loadedAssetsTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -321,7 +327,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         pageLink = new TextPageLink(4, title2);
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink);
             loadedAssetsTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -334,24 +341,26 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(assetsTitle2, loadedAssetsTitle2);
 
         for (Asset asset : loadedAssetsTitle1) {
-            doDelete("/api/asset/"+asset.getId().getId().toString())
+            doDelete("/api/asset/" + asset.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
         pageLink = new TextPageLink(4, title1);
         pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                new TypeReference<TextPageData<Asset>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Asset asset : loadedAssetsTitle2) {
-            doDelete("/api/asset/"+asset.getId().getId().toString())
+            doDelete("/api/asset/" + asset.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
         pageLink = new TextPageLink(4, title2);
         pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                new TypeReference<TextPageData<Asset>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -361,10 +370,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         String title1 = "Asset title 1";
         String type1 = "typeA";
         List<Asset> assetsType1 = new ArrayList<>();
-        for (int i=0;i<143;i++) {
+        for (int i = 0; i < 143; i++) {
             Asset asset = new Asset();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
-            String name = title1+suffix;
+            String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType(type1);
@@ -373,10 +382,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         String title2 = "Asset title 2";
         String type2 = "typeB";
         List<Asset> assetsType2 = new ArrayList<>();
-        for (int i=0;i<75;i++) {
+        for (int i = 0; i < 75; i++) {
             Asset asset = new Asset();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
-            String name = title2+suffix;
+            String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType(type2);
@@ -388,7 +397,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         TextPageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?type={type}&",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink, type1);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink, type1);
             loadedAssetsType1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -404,7 +414,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         pageLink = new TextPageLink(4);
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?type={type}&",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink, type2);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink, type2);
             loadedAssetsType2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -417,24 +428,26 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(assetsType2, loadedAssetsType2);
 
         for (Asset asset : loadedAssetsType1) {
-            doDelete("/api/asset/"+asset.getId().getId().toString())
+            doDelete("/api/asset/" + asset.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
         pageLink = new TextPageLink(4);
         pageData = doGetTypedWithPageLink("/api/tenant/assets?type={type}&",
-                new TypeReference<TextPageData<Asset>>(){}, pageLink, type1);
+                new TypeReference<TextPageData<Asset>>() {
+                }, pageLink, type1);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Asset asset : loadedAssetsType2) {
-            doDelete("/api/asset/"+asset.getId().getId().toString())
+            doDelete("/api/asset/" + asset.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
         pageLink = new TextPageLink(4);
         pageData = doGetTypedWithPageLink("/api/tenant/assets?type={type}&",
-                new TypeReference<TextPageData<Asset>>(){}, pageLink, type2);
+                new TypeReference<TextPageData<Asset>>() {
+                }, pageLink, type2);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -447,9 +460,9 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         CustomerId customerId = customer.getId();
 
         List<Asset> assets = new ArrayList<>();
-        for (int i=0;i<128;i++) {
+        for (int i = 0; i < 128; i++) {
             Asset asset = new Asset();
-            asset.setName("Asset"+i);
+            asset.setName("Asset" + i);
             asset.setType("default");
             asset = doPost("/api/asset", asset, Asset.class);
             assets.add(doPost("/api/customer/" + customerId.getId().toString()
@@ -461,7 +474,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         TextPageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink);
             loadedAssets.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -483,10 +497,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         String title1 = "Asset title 1";
         List<Asset> assetsTitle1 = new ArrayList<>();
-        for (int i=0;i<125;i++) {
+        for (int i = 0; i < 125; i++) {
             Asset asset = new Asset();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
-            String name = title1+suffix;
+            String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType("default");
@@ -496,10 +510,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         }
         String title2 = "Asset title 2";
         List<Asset> assetsTitle2 = new ArrayList<>();
-        for (int i=0;i<143;i++) {
+        for (int i = 0; i < 143; i++) {
             Asset asset = new Asset();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
-            String name = title2+suffix;
+            String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType("default");
@@ -513,7 +527,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         TextPageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink);
             loadedAssetsTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -529,7 +544,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         pageLink = new TextPageLink(4, title2);
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink);
             loadedAssetsTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -548,7 +564,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new TextPageLink(4, title1);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                new TypeReference<TextPageData<Asset>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -559,7 +576,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new TextPageLink(4, title2);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                new TypeReference<TextPageData<Asset>>(){}, pageLink);
+                new TypeReference<TextPageData<Asset>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -574,10 +592,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         String title1 = "Asset title 1";
         String type1 = "typeC";
         List<Asset> assetsType1 = new ArrayList<>();
-        for (int i=0;i<125;i++) {
+        for (int i = 0; i < 125; i++) {
             Asset asset = new Asset();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
-            String name = title1+suffix;
+            String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType(type1);
@@ -588,10 +606,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         String title2 = "Asset title 2";
         String type2 = "typeD";
         List<Asset> assetsType2 = new ArrayList<>();
-        for (int i=0;i<143;i++) {
+        for (int i = 0; i < 143; i++) {
             Asset asset = new Asset();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
-            String name = title2+suffix;
+            String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType(type2);
@@ -605,7 +623,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         TextPageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink, type1);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink, type1);
             loadedAssetsType1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -621,7 +640,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         pageLink = new TextPageLink(4);
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                    new TypeReference<TextPageData<Asset>>(){}, pageLink, type2);
+                    new TypeReference<TextPageData<Asset>>() {
+                    }, pageLink, type2);
             loadedAssetsType2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -640,7 +660,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new TextPageLink(4);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                new TypeReference<TextPageData<Asset>>(){}, pageLink, type1);
+                new TypeReference<TextPageData<Asset>>() {
+                }, pageLink, type1);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -651,7 +672,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new TextPageLink(4);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                new TypeReference<TextPageData<Asset>>(){}, pageLink, type2);
+                new TypeReference<TextPageData<Asset>>() {
+                }, pageLink, type2);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }

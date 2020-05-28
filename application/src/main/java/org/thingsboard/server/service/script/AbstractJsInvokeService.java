@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,13 @@ package org.thingsboard.server.service.script;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,8 +33,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class AbstractJsInvokeService implements JsInvokeService {
 
+    protected ScheduledExecutorService timeoutExecutorService;
     protected Map<UUID, String> scriptIdToNameMap = new ConcurrentHashMap<>();
-    protected Map<UUID, AtomicInteger> blackListedFunctions = new ConcurrentHashMap<>();
+    protected Map<UUID, BlackListInfo> blackListedFunctions = new ConcurrentHashMap<>();
+
+    public void init(long maxRequestsTimeout) {
+        if (maxRequestsTimeout > 0) {
+            timeoutExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nashorn-js-timeout"));
+        }
+    }
+
+    public void stop() {
+        if (timeoutExecutorService != null) {
+            timeoutExecutorService.shutdownNow();
+        }
+    }
 
     @Override
     public ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames) {
@@ -78,25 +94,53 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
 
     protected abstract int getMaxErrors();
 
+    protected abstract long getMaxBlacklistDuration();
+
     protected void onScriptExecutionError(UUID scriptId) {
-        blackListedFunctions.computeIfAbsent(scriptId, key -> new AtomicInteger(0)).incrementAndGet();
+        blackListedFunctions.computeIfAbsent(scriptId, key -> new BlackListInfo()).incrementAndGet();
     }
 
     private String generateJsScript(JsScriptType scriptType, String functionName, String scriptBody, String... argNames) {
-        switch (scriptType) {
-            case RULE_NODE_SCRIPT:
-                return RuleNodeScriptFactory.generateRuleNodeScript(functionName, scriptBody, argNames);
-            default:
-                throw new RuntimeException("No script factory implemented for scriptType: " + scriptType);
+        if (scriptType == JsScriptType.RULE_NODE_SCRIPT) {
+            return RuleNodeScriptFactory.generateRuleNodeScript(functionName, scriptBody, argNames);
         }
+        throw new RuntimeException("No script factory implemented for scriptType: " + scriptType);
     }
 
     private boolean isBlackListed(UUID scriptId) {
-        if (blackListedFunctions.containsKey(scriptId)) {
-            AtomicInteger errorCount = blackListedFunctions.get(scriptId);
-            return errorCount.get() >= getMaxErrors();
+        BlackListInfo errorCount = blackListedFunctions.get(scriptId);
+        if (errorCount != null) {
+            if (errorCount.getExpirationTime() <= System.currentTimeMillis()) {
+                blackListedFunctions.remove(scriptId);
+                return false;
+            } else {
+                return errorCount.get() >= getMaxErrors();
+            }
         } else {
             return false;
+        }
+    }
+
+    private class BlackListInfo {
+        private final AtomicInteger counter;
+        private long expirationTime;
+
+        private BlackListInfo() {
+            this.counter = new AtomicInteger(0);
+        }
+
+        public int get() {
+            return counter.get();
+        }
+
+        public int incrementAndGet() {
+            int result = counter.incrementAndGet();
+            expirationTime = System.currentTimeMillis() + getMaxBlacklistDuration();
+            return result;
+        }
+
+        public long getExpirationTime() {
+            return expirationTime;
         }
     }
 }

@@ -83,7 +83,29 @@
     "timeout-required": "Wartezeit ist erforderlich.",
     "timeout-invalid": "Das ist keine gültige Wartezeit.",
     "enable-tls": "TLS aktivieren",
-    "send-test-mail": "Test E-Mail senden"
+    "tls-version" : "TLS-Version",
+    "send-test-mail": "Test E-Mail senden",
+    "security-settings": "Sicherheitseinstellungen",
+    "password-policy": "Kennwortrichtlinie",
+    "minimum-password-length": "Minimale Passwortlänge",
+    "minimum-password-length-required": "Minimale Passwortlänge ist erforderlich",
+    "minimum-password-length-range": "Die Mindestlänge des Passworts sollte zwischen 5 und 50 liegen",
+    "minimum-uppercase-letters": "Mindestanzahl von Großbuchstaben",
+    "minimum-uppercase-letters-range": "Die Mindestanzahl von Großbuchstaben kann nicht negativ sein",
+    "minimum-lowercase-letters": "Mindestanzahl von Kleinbuchstaben",
+    "minimum-lowercase-letters-range": "Die Mindestanzahl von Kleinbuchstaben kann nicht negativ sein",
+    "minimum-digits": "Mindestanzahl von Ziffern",
+    "minimum-digits-range": "Die Mindestanzahl von Ziffern kann nicht negativ sein",
+    "minimum-special-characters": "Mindestanzahl von Sonderzeichen",
+    "minimum-special-characters-range": "Die Mindestanzahl von Sonderzeichen kann nicht negativ sein",
+    "password-expiration-period-days": "Gültigkeitsdauer des Passworts in Tagen",
+    "password-expiration-period-days-range": "Die Gültigkeitsdauer des Passworts in Tagen kann nicht negativ sein",
+    "password-reuse-frequency-days": "Häufigkeit der Kennwortwiederverwendung in Tagen",
+    "password-reuse-frequency-days-range": "Die Häufigkeit der Kennwortwiederverwendung in Tagen kann nicht negativ sein",
+    "general-policy": "Allgemeine Politik",
+    "max-failed-login-attempts": "Maximale Anzahl fehlgeschlagener Anmeldeversuche, bevor das Konto gesperrt wird",
+    "minimum-max-failed-login-attempts-range": "Die maximale Anzahl fehlgeschlagener Anmeldeversuche kann nicht negativ sein",
+    "user-lockout-notification-email": "Wenn das Benutzerkonto gesperrt ist, senden Sie eine Benachrichtigung per E-Mail"
   },
   "alarm": {
     "alarm": "Alarm",
@@ -179,7 +201,7 @@
     "root-entity": "Wurzelentität",
     "state-entity-parameter-name": "Parameter-Name der Statusentität",
     "default-state-entity": "Standard Statusentität",
-    "default-entity-parameter-name": "Standartmäßig",
+    "default-entity-parameter-name": "Standardmäßig",
     "max-relation-level": "Maximale Beziehungstiefe",
     "unlimited-level": "Unbegrenzte Ebenen",
     "state-entity": "Dashboard Status Entität",
@@ -246,7 +268,8 @@
     "select-asset": "Objekt auswählen",
     "no-assets-matching": "Es wurden keine zu '{{entity}}' passenden Objekte gefunden.",
     "asset-required": "Objekt ist erforderlich",
-    "name-starts-with": "Name des Objekts beginnt mit"
+    "name-starts-with": "Name des Objekts beginnt mit",
+    "label": "Bezeichnung"
   },
   "attribute": {
     "attributes": "Eigenschaften",
@@ -303,6 +326,9 @@
     "type-relations-delete": "Alle Beziehungen gelöscht",
     "type-alarm-ack": "Bestätigt",
     "type-alarm-clear": "Gelöscht",
+    "type-login": "Anmeldung",
+    "type-logout": "Ausloggen",
+    "type-lockout": "Aussperrung",
     "status-success": "Erfolg",
     "status-failure": "Fehler",
     "audit-log-details": "Audit-Protokoll Details",
@@ -1124,7 +1150,7 @@
     "total": "Gesamt"
   },
   "login": {
-    "login": "Login",
+    "login": "Anmelden",
     "request-password-reset": "Passwortzurücksetzung anfordern",
     "reset-password": "Passwort zurücksetzen",
     "create-password": "Passwort erstellen",
@@ -1138,7 +1164,9 @@
     "new-password": "Neues Passwort",
     "new-password-again": "Neues Passwort wiederholen",
     "password-link-sent-message": "Der Link zum Zurücksetzen des Passworts wurde erfolgreich versendet!",
-    "email": "E-Mail"
+    "email": "E-Mail",
+    "login-with": "Mit {{name}} anmelden",
+    "or": "oder"
   },
   "position": {
     "top": "Oben",
@@ -1148,6 +1176,7 @@
   },
   "profile": {
     "profile": "Profil",
+    "last-login-time": "Letzte Anmeldung",
     "change-password": "Passwort ändern",
     "current-password": "Aktuelles Passwort"
   },
@@ -1386,7 +1415,11 @@
     "activation-link-copied-message": "Der Link zur Benutzer-Aktivierung wurde in die Zwischenablage kopiert ",
     "details": "Details",
     "login-as-tenant-admin": "Als Mandanten-Administrator anmelden",
-    "login-as-customer-user": "Als Kunden-Benutzer anmelden"
+    "login-as-customer-user": "Als Kunden-Benutzer anmelden",
+    "disable-account": "Benutzerkonto deaktivieren",
+    "enable-account": "Benutzerkonto aktivieren",
+    "enable-account-message": "Benutzerkonto wurde erfolgreich aktiviert!",
+    "disable-account-message": "Benutzerkonto wurde erfolgreich deaktiviert!"
   },
   "value": {
     "type": "Wertetyp",
@@ -1499,6 +1532,7 @@
     "settings": "Einstellungen",
     "advanced": "Erweitert ",
     "title": "Titel",
+    "title-tooltip": "Titel Tooltip",
     "general-settings": "Allgemeine Einstellungen",
     "display-title": "Titel anzeigen",
     "drop-shadow": "Schlagschatten",
@@ -1608,6 +1642,31 @@
         "Step size": "Schrittlänge",
         "Ok": "Ok"
       }
+    },
+    "input-widgets": {
+        "attribute-not-allowed": "Attributparameter können in diesem Widget nicht verwendet werden",
+        "date": "Datum",
+        "discard-changes": "Änderungen verwerfen",
+        "entity-attribute-required": "Entitätsattribut ist erforderlich",
+        "entity-timeseries-required": "Zeitreihen für Entitäten sind erforderlich",
+        "not-allowed-entity": "Die ausgewählte Entität kann keine gemeinsamen Attribute haben",
+        "no-attribute-selected": "Es ist kein Attribut ausgewählt",
+        "no-datakey-selected": "Es ist kein Datenschlüssel ausgewählt",
+        "no-entity-selected": "Keine Entität ausgewählt",
+        "no-image": "Kein Bild",
+        "no-support-web-camera": "Keine unterstützte Webcam",
+        "no-timeseries-selected": "Keine Zeitreihen ausgewählt",
+        "switch-attribute-value": "Entitätsattributwert wechseln",
+        "switch-camera": "Kamera wechseln",
+        "switch-timeseries-value": "Wert für Zeitreihen von Entitäten wechseln",
+        "take-photo": "Foto machen",
+        "time": "Zeit",
+        "timeseries-not-allowed": "Der Timeseries-Parameter kann in diesem Widget nicht verwendet werden",
+        "update-failed": "Aktualisierung fehlgeschlagen",
+        "update-successful": "Aktualisierung erfolgreich",
+        "update-attribute": "Attribut aktualisieren",
+        "update-timeseries": "Zeitreihen aktualisieren",
+        "value": "Wert"
     }
   },
   "icon": {
@@ -1624,25 +1683,12 @@
       "marker-click": "Klick auf Marker",
       "tooltip-tag-action": "Tooltip-Tag-Aktion",
       "node-selected": "Klick auf Node",
-      "element-click": "Klick auf HTML element"
+      "element-click": "Klick auf HTML element",
+      "pie-slice-click": "Klicken auf Slice",
+      "row-double-click": "Doppelklicken auf Zeile"
     }
   },
   "language": {
-    "language": "Sprache",
-    "locales": {
-      "de_DE": "Deutsch",
-      "fr_FR": "Französisch",
-      "zh_CN": "Chinesisch",
-      "en_US": "Englisch",
-      "it_IT": "Italienisch",
-      "ko_KR": "Koreanisch",
-      "ru_RU": "Russisch",
-      "es_ES": "Spanisch",
-      "ja_JA": "Japanisch",
-      "tr_TR": "Türkisch",
-      "fa_IR": "Persisch",
-      "uk_UA": "Ukrainisch",
-      "cs_CZ": "Tschechisch"      
-    }
+    "language": "Sprache"
   }
 }
