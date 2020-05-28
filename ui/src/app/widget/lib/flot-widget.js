@@ -405,7 +405,7 @@ export default class TbFlot {
                 options.series.bars ={
                         show: true,
                         lineWidth: 0,
-                        fill: 0.9,
+                        fill: settings.fillOpacity || 0.9,
                         align: settings.barAlignment || "left"
                 }
                 ctx.defaultBarWidth = settings.defaultBarWidth || 600;
@@ -504,6 +504,15 @@ export default class TbFlot {
             series.lines = {
                 fill: keySettings.fillLines === true
             };
+
+            if (keySettings.fillLines && keySettings.fillOpacity) {
+                if (keySettings.fillOpacity.length == 1) {
+                    keySettings.fillOpacity.push(keySettings.fillOpacity[0]);
+                }
+                series.lines.fillColor = {
+                    colors: keySettings.fillOpacity
+                };
+            }
 
             if (this.ctx.settings.stack && !this.ctx.settings.comparisonEnabled) {
                 series.stack = !keySettings.excludeFromStacking;
@@ -1101,6 +1110,11 @@ export default class TbFlot {
                 "type": "number",
                 "default": 600
             };
+            properties["fillOpacity"] = {
+                "title": "Bar fill opacity",
+                "type": "number",
+                "default": 0.9
+            };
             properties["barAlignment"] = {
                 "title": "Bar alignment",
                 "type": "string",
@@ -1262,6 +1276,7 @@ export default class TbFlot {
         }
         if (chartType === 'bar') {
             schema["form"].push("defaultBarWidth");
+            schema["form"].push("fillOpacity");
             schema["form"].push({
                 "key": "barAlignment",
                 "type": "rc-select",
@@ -1435,6 +1450,21 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "fillOpacity": {
+                        "title": "Transparency gradient, from lower to upper",
+                        "type": "array",
+                        "items": {
+                            "title": "Opacity",
+                            "type": "object",
+                            "properties": {
+                                "opacity": {
+                                    "title": "Opacity",
+                                    "type": "number",
+                                    "default": 0.4
+                                }
+                            }
+                        }
+                    },
                     "showPoints": {
                         "title": "Show points",
                         "type": "boolean",
@@ -1519,6 +1549,7 @@ export default class TbFlot {
                 "excludeFromStacking",
                 "showLines",
                 "fillLines",
+                "fillOpacity",
                 "showPoints",
                 {
                     "key": "showPointShape",
