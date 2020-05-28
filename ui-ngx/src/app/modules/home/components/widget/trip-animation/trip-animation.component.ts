@@ -61,7 +61,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   mainTooltip = '';
   visibleTooltip = false;
   activeTrip: FormattedData;
-  label;
+  label: string;
   minTime: number;
   maxTime: number;
   anchors: number[] = [];
@@ -173,7 +173,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     }
   }
 
-  calcTooltip = (point?: FormattedData) => {
+  calcTooltip = (point?: FormattedData): string => {
     const data = point ? point : this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
       safeExecute(this.settings.tooltipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
