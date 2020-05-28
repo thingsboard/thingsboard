@@ -27,11 +27,12 @@ import {
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type GetTooltip = (point: FormattedData, setTooltip?: boolean) => string;
+export type PosFuncton = (origXPos, origYPos) => { x, y };
 
 export type MapSettings = {
     draggableMarker: boolean;
     initCallback?: () => any;
-    posFunction: (origXPos, origYPos) => { x, y };
+    posFunction: PosFuncton;
     defaultZoomLevel?: number;
     disableScrollZooming?: boolean;
     minZoomLevel?: number;
@@ -177,8 +178,8 @@ export type TripAnimationSettings = {
     rotationAngle: number;
     label: string;
     tooltipPattern: string;
-    useTooltipFunction :boolean;
-    useLabelFunction:boolean;
+    useTooltipFunction: boolean;
+    useLabelFunction: boolean;
     pointAsAnchorFunction: GenericFunction;
     tooltipFunction: GenericFunction;
     labelFunction: GenericFunction;

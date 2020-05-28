@@ -16,7 +16,7 @@
 
 import L, { LatLngLiteral, LatLngBounds, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { UnitedMapSettings } from '../map-models';
+import { UnitedMapSettings, PosFuncton } from '../map-models';
 import { Observable } from 'rxjs';
 import { map, filter, switchMap } from 'rxjs/operators';
 import { aspectCache, calculateNewPointCoordinate, parseFunction } from '@home/components/widget/lib/maps/maps-utils';
@@ -25,16 +25,16 @@ const maxZoom = 4;// ?
 
 export class ImageMap extends LeafletMap {
 
-    imageOverlay;
+    imageOverlay: L.ImageOverlay;
     aspect = 0;
     width = 0;
     height = 0;
-    imageUrl;
-    posFunction;
+    imageUrl: string;
+    posFunction: PosFuncton;
 
     constructor($container: HTMLElement, options: UnitedMapSettings) {
         super($container, options);
-        this.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((origXPos, origYPos) => { x, y });
+        this.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as PosFuncton;
         this.imageUrl = options.mapUrl;
         aspectCache(this.imageUrl).subscribe(aspect => {
             this.aspect = aspect;
@@ -50,11 +50,12 @@ export class ImageMap extends LeafletMap {
             return aspectCache(res);
         })).subscribe(aspect => {
             this.aspect = aspect;
+            console.log("ImageMap -> setImageAlias -> aspect", aspect)
             this.onResize(true);
         });
     }
 
-    updateBounds(updateImage?, lastCenterPos?) {
+    updateBounds(updateImage?: boolean, lastCenterPos?) {
         const w = this.width;
         const h = this.height;
         let southWest = this.pointToLatLng(0, h);
@@ -81,12 +82,12 @@ export class ImageMap extends LeafletMap {
             lastCenterPos.y *= h;
             const center = this.pointToLatLng(lastCenterPos.x, lastCenterPos.y);
             setTimeout(() => {
-              this.map.panTo(center, { animate: false });
+                this.map.panTo(center, { animate: false });
             }, 0);
         }
     }
 
-    onResize(updateImage?) {
+    onResize(updateImage?: boolean) {
         let width = this.$container.clientWidth;
         if (width > 0 && this.aspect) {
             let height = width / this.aspect;
@@ -117,7 +118,7 @@ export class ImageMap extends LeafletMap {
 
     fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) { }
 
-    initMap(updateImage?) {
+    initMap(updateImage?: boolean) {
         if (!this.map && this.aspect > 0) {
             const center = this.pointToLatLng(this.width / 2, this.height / 2);
             this.map = L.map(this.$container, {
@@ -137,8 +138,8 @@ export class ImageMap extends LeafletMap {
         if (isNaN(expression[this.options.xPosKeyName]) || isNaN(expression[this.options.yPosKeyName])) return null;
         Object.assign(expression, this.posFunction(expression[this.options.xPosKeyName], expression[this.options.yPosKeyName]));
         return this.pointToLatLng(
-          expression.x * this.width,
-          expression.y * this.height);
+            expression.x * this.width,
+            expression.y * this.height);
     }
 
     pointToLatLng(x, y): L.LatLng {
