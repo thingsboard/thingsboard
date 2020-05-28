@@ -106,7 +106,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
         subscriptionNames = new LinkedHashSet<>(topicNames);
         subscriptionNames.forEach(admin::createTopicIfNotExists);
         initNewExecutor(subscriptionNames.size() + 1);
-        messagesPerTopic = pubSubSettings.getMaxMessages() / subscriptionNames.size();
+        messagesPerTopic = pubSubSettings.getMaxMessages() / Math.max(subscriptionNames.size(), 1);
     }
 
     @Override

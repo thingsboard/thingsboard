@@ -36,6 +36,7 @@ import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -148,6 +149,14 @@ public class HashPartitionService implements PartitionService {
                 }
             }
         });
+
+        oldPartitions.forEach((serviceQueueKey, partitions) -> {
+            if (!myPartitions.containsKey(serviceQueueKey)) {
+                log.info("[{}] NO MORE PARTITIONS FOR CURRENT KEY", serviceQueueKey);
+                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceQueueKey, Collections.emptySet()));
+            }
+        });
+
         myPartitions.forEach((serviceQueueKey, partitions) -> {
             if (!partitions.equals(oldPartitions.get(serviceQueueKey))) {
                 log.info("[{}] NEW PARTITIONS: {}", serviceQueueKey, partitions);
