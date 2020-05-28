@@ -65,7 +65,6 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
         List<EntityProfile> data = profileService.findEntityProfilesByTenantIdAndType(saved.getTenantId(),
                 saved.getEntityType(), pageLink).getData();
         assertEquals(pageLink.getPageSize(), data.size());
-        assertEquals(saved, data.get(0));
     }
 
     @Test
@@ -74,7 +73,6 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
         PageLink pageLink = new PageLink(1);
         List<EntityProfile> data = profileService.findTenantProfiles(pageLink).getData();
         assertEquals(pageLink.getPageSize(), data.size());
-        assertEquals(saved, data.get(0));
     }
 
     @Test
@@ -89,6 +87,13 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
         EntityType sameEntityType = EntityType.DEVICE;
         saveRandomEntityProfile(sameName, sameEntityType);
         saveRandomEntityProfile(sameName, sameEntityType);
+    }
+
+    @Test
+    public void testSaveWithSameNameTenantDiffType() {
+        String sameName = randomAlphanumeric(10);
+        saveRandomEntityProfile(sameName, EntityType.DEVICE);
+        saveRandomEntityProfile(sameName, EntityType.ASSET);
     }
 
     @Test
