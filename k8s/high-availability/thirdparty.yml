@@ -169,7 +169,7 @@ spec:
             - name: KAFKA_CONTROLLER_SHUTDOWN_ENABLE
               value: "true"
             - name: KAFKA_CREATE_TOPICS
-              value: "js_eval.requests:100:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600,tb_transport.api.requests:30:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600"
+              value: "js_eval.requests:100:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600,tb_transport.api.requests:30:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600,tb_rule_engine:30:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600"
             - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
               value: "false"
             - name: KAFKA_LOG_RETENTION_BYTES
