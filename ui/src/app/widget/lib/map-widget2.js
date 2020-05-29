@@ -281,6 +281,12 @@ export default class TbMapWidgetV2 {
 			this.locationSettings.strokeWeight = this.ctx.settings.strokeWeight || 2;
 			this.locationSettings.strokeOpacity = this.ctx.settings.strokeOpacity || 1.0;
 		}
+
+		//For backward compatibility
+		if (angular.isUndefined(this.ctx.settings.addCreateLocationAction)) {
+			this.ctx.settings.addCreateLocationAction = true;
+		}
+		//For backward compatibility
 	}
 
 	onTooltipAction(event, actionName, dsIndex) {
@@ -1197,6 +1203,11 @@ const commonMapSettingsSchema =
 					"type": "boolean",
 					"default": false
 				},
+				"addCreateLocationAction": {
+					"title": "Add 'Create entity location' action",
+					"type": "boolean",
+					"default": true
+				},
 				"latKeyName": {
 					"title": "Latitude key name",
 					"type": "string",
@@ -1345,6 +1356,7 @@ const commonMapSettingsSchema =
 			"defaultCenterPosition",
 			"fitMapBounds",
 			"disableScrollZooming",
+			"addCreateLocationAction",
 			"latKeyName",
 			"lngKeyName",
 			"showLabel",
