@@ -14,24 +14,15 @@
 # limitations under the License.
 #
 
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fast
-  namespace: thingsboard
-provisioner: k8s.io/minikube-hostpath
-parameters:
-  type: pd-ssd
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cassandra-probe-config
+  name: cassandra-config
   namespace: thingsboard
   labels:
-    name: cassandra-probe-config
+    name: cassandra-config
 data:
-  probe: |
+  ready-probe.sh: |
       if [[ $(nodetool status | grep $POD_IP) == *"UN"* ]]; then
          if [[ $DEBUG ]]; then
             echo "UN";
@@ -43,6 +34,12 @@ data:
          fi
          exit 1;
       fi
+  update-node.sh: |
+    #!/bin/sh
+    if [ "$CASSANDRA_HOST" = "cassandra-0" ]; then
+      export CASSANDRA_PASSWORD_SEEDER="yes";
+    fi
+    /opt/bitnami/scripts/cassandra/entrypoint.sh /opt/bitnami/scripts/cassandra/run.sh
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -63,17 +60,14 @@ spec:
         app: cassandra
     spec:
       volumes:
-      - name: cassandra-probe-config
+      - name: cassandra-config
         configMap:
-          name: cassandra-probe-config
-          items:
-          - key: probe
-            path: ready-probe.sh
-            mode: 0777
+          name: cassandra-config
+          defaultMode: 0777
       terminationGracePeriodSeconds: 1800
       containers:
       - name: cassandra
-        image: cassandra:3.11.3
+        image: bitnami/cassandra:3.11.3
         imagePullPolicy: Always
         ports:
         - containerPort: 7000
@@ -86,6 +80,7 @@ spec:
           name: cql
         - containerPort: 9160
           name: thrift
+        command: ["/conf/update-node.sh"]
         resources:
           limits:
             cpu: "1000m"
@@ -105,6 +100,10 @@ spec:
               - -c
               - nodetool drain
         env:
+          - name: CASSANDRA_HOST
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
           - name: CASSANDRA_SEEDS
             value: "cassandra-0.cassandra.thingsboard.svc.cluster.local"
           - name: MAX_HEAP_SIZE
@@ -125,6 +124,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
+          - name: CASSANDRA_USER
+            value: cassandra
+          - name: CASSANDRA_PASSWORD
+            value: password
         readinessProbe:
           exec:
             command:
@@ -134,19 +137,19 @@ spec:
           initialDelaySeconds: 60
           timeoutSeconds: 5
         volumeMounts:
-        - name: cassandra-probe-config
-          mountPath: /probe
+        - name: cassandra-config
+          mountPath: /conf
         - name: cassandra-data
           mountPath: /var/lib/cassandra
+          readOnly: false
   volumeClaimTemplates:
   - metadata:
       name: cassandra-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: fast
       resources:
         requests:
-          storage: 1Gi
+          storage: 500Mi
 ---
 apiVersion: v1
 kind: Service
