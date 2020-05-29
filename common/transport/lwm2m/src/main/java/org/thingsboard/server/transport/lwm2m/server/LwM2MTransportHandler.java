@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.Collection;
 
-@Component
+@Component("LwM2MTransportHandler")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 @Slf4j
 public class LwM2MTransportHandler {
@@ -65,6 +65,7 @@ public class LwM2MTransportHandler {
         this.lhServer.getRegistrationService().addListener(this.registrationListener);
         this.lhServer.getPresenceService().addListener(this.presenceListener);
         this.lhServer.getObservationService().addListener(this.observationListener);
+
     }
 
     private final RegistrationListener registrationListener = new RegistrationListener() {

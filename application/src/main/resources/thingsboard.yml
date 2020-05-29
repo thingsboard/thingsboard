@@ -565,10 +565,11 @@ transport:
     bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${LWM2M_BIND_PORT:5685}"
     timeout: "${LWM2M_TIMEOUT:10000}"
-    tenantId: "${LWM2M_DEFAULT_TENANT_ID:9bf7b1b0-8de5-11ea-94d1-4f9c993504a9}"
+    tenant_id: "${LWM2M_DEFAULT_TENANT_ID:9bf7b1b0-8de5-11ea-94d1-4f9c993504a9}"
     secure:
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT:5686}"
+      redis_url: ""
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"

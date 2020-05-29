@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.adaptors;
 
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
+import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 
 public interface LwM2MProvider {
 
@@ -27,7 +28,7 @@ public interface LwM2MProvider {
 
     // /!\ This field use to ClientDeviceTest.modelPaths /!\
     // /!\ This field use to server.modelPaths /!\
-    final static String[] modelPaths = { "10241.xml", "10242.xml", "10243.xml", "10244.xml",
+    final static String[] modelPaths = {"10241.xml", "10242.xml", "10243.xml", "10244.xml",
             "10245.xml", "10246.xml", "10247.xml", "10248.xml", "10249.xml", "10250.xml", "10251.xml",
             "10252.xml", "10253.xml", "10254.xml", "10255.xml", "10256.xml", "10257.xml", "10258.xml",
             "10259.xml", "10260-2_0.xml", "10262.xml", "10263.xml", "10264.xml", "10265.xml",
@@ -66,7 +67,7 @@ public interface LwM2MProvider {
             "LWM2M_LOCKWIPE-v1_0_1.xml", "LWM2M_Portfolio-v1_0.xml",
             "LWM2M_Software_Component-v1_0.xml", "LWM2M_Software_Management-v1_0.xml",
             "LWM2M_WLAN_connectivity4-v1_0.xml", "LwM2M_BinaryAppDataContainer-v1_0_1.xml",
-            "LwM2M_EventLog-V1_0.xml" };
+            "LwM2M_EventLog-V1_0.xml"};
 
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
     public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
@@ -74,13 +75,5 @@ public interface LwM2MProvider {
 
     public static final String GET_TYPE_OPER_READ = "read";
     public static final String GET_TYPE_OPER_DISCOVER = "discover";
-
-//    static JsonElement validateJsonPayload(String payload) throws AdaptorException {
-//        try {
-//            return new JsonParser().parse(payload);
-//        } catch (JsonSyntaxException ex) {
-//            throw new AdaptorException(ex);
-//        }
-//    }
 
 }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
@@ -24,7 +23,6 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
 import org.eclipse.leshan.core.node.codec.LwM2mNodeDecoder;
-import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
@@ -33,11 +31,8 @@ import org.eclipse.leshan.server.redis.RedisRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisSecurityStore;
 import org.eclipse.leshan.server.security.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider;
 import org.thingsboard.server.transport.lwm2m.utils.MagicLwM2mValueConverter;
 import redis.clients.jedis.Jedis;
@@ -47,12 +42,6 @@ import redis.clients.jedis.util.Pool;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.*;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 
 @Slf4j
@@ -60,18 +49,12 @@ import java.util.List;
 public class LwM2MTransportServerConfiguration {
 
     @Autowired
-    ResourceLoader resourceLoader;
-
-    @Value("classpath:src/main/resources/models/2048.xml")
-    private Resource resData;
-
-    @Autowired
     private LwM2MTransportCtx context;
 
     private final static String[] modelPaths = LwM2MProvider.modelPaths;
 
     @Bean
-    public LeshanServer getLeshanServer() throws URISyntaxException, FileNotFoundException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
+    public LeshanServer getLeshanServer() throws URISyntaxException, NonUniqueSecurityInfoException {
         log.info("Starting LwM2M transport... PostConstruct");
         LeshanServerBuilder builder = new LeshanServerBuilder();
         builder.setLocalAddress(context.getHost(), context.getPort());
@@ -96,16 +79,6 @@ public class LwM2MTransportServerConfiguration {
 
         // Define model provider
         List<ObjectModel> models = ObjectLoader.loadDefault();
-        String var1 = "/models/2048.xml";
-        String var3 = "/data/security.data";
-        Resource resource=resourceLoader.getResource("file:"+var1);
-        Resource resource1=resData;
-        ClassLoader var2 = this.getClass().getClassLoader();
-        InputStream in =  var2 == null ? ClassLoader.getSystemResourceAsStream(var1) : var2.getResourceAsStream(var1);
-        InputStream in1 = LwM2MTransportServerConfiguration.class.getResourceAsStream(var1);
-        InputStream in2 = LwM2MTransportServerConfiguration.class.getResourceAsStream(var3);
-        InputStream in11 = ObjectLoader.class.getResourceAsStream(var1);
-        InputStream in13 = ObjectLoader.class.getResourceAsStream(var3);
         models.addAll(ObjectLoader.loadDdfResources("/models/", modelPaths));
         String modelsFolderPath = null;
         if (modelsFolderPath != null) {
@@ -126,6 +99,7 @@ public class LwM2MTransportServerConfiguration {
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
 //        boolean supportDeprecatedCiphers = false;
         dtlsConfig.setRecommendedCipherSuitesOnly(true);
+
 
 //        // get RPK info
 //        PublicKey publicKey = null;
@@ -257,28 +231,29 @@ public class LwM2MTransportServerConfiguration {
 
         // Set securityStore & registrationStore
         EditableSecurityStore securityStore;
-        if (jedis == null) {
-            // use file persistence
-            var1 = "data/security.data";
-            resource=resourceLoader.getResource("file:"+var1);
-            resource1=resData;
-             var2 = this.getClass().getClassLoader();
-            securityStore = new InMemorySecurityStore();
-            InputStream is = this.getClass().getClassLoader().getResourceAsStream("data/security.data");
-            try (ObjectInputStream in4 = new ObjectInputStream(is);) {
-                SecurityInfo[] infos = (SecurityInfo[]) in4.readObject();
 
-                if (infos != null) {
-                    for (SecurityInfo info : infos) {
-                        securityStore.add(info);
-                    }
-                    if (infos.length > 0) {
-                        log.debug("{} security infos loaded", infos.length);
-                    }
-                }
-            } catch (NonUniqueSecurityInfoException | IOException | ClassNotFoundException e) {
-                log.error("Could not load security infos from file", e);
-            }
+        if (jedis == null) {
+            //            securityStore = new InMemorySecurityStore();
+            securityStore = new LwM2mInMemorySecurityStore();
+
+
+            // use jsonStr
+//            String  ingfosStr = "{\"endpoint\":\"client1\",\"psk\":{\"identity\":\"client2\",\"key\":\"67f6aad1db5e9bdb9778a35e7f4f24f221c8646ce23cb8cf852fedee029cda9c\"},\"rpk\":null,\"x509\":false}";
+//            SecurityInfo info;
+
+
+//            SecurityStoreListener listener = new SecurityStoreListener() {
+//                @Override
+//                public void securityInfoRemoved(boolean infosAreCompromised, SecurityInfo... infos) {
+//                    log.info ("Security");
+//                }
+//            };
+//            securityStore.setListener(listener);
+
+//                LwM2MCredentials lwM2MCredentials = new LwM2MCredentials();
+//                info =lwM2MCredentials.getSecurityInfo(ingfosStr);
+//                if (info != null) securityStore.add(info);
+
         } else {
             // use Redis Store
             securityStore = new RedisSecurityStore(jedis);

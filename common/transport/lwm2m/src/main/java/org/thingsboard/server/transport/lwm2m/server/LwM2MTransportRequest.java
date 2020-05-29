@@ -55,7 +55,6 @@ public class LwM2MTransportRequest {
 
     @PostConstruct
     public void init() {
-
     }
 
     public Collection<Registration> doGetRegistrations() {

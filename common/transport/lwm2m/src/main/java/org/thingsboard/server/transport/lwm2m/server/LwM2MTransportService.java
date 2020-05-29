@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mResource;
@@ -45,7 +42,6 @@ import org.thingsboard.server.transport.lwm2m.server.adaptors.JsonLwM2MAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResult;
 
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -207,11 +203,8 @@ public class LwM2MTransportService {
 
     public void unReg(Registration registration) {
         String endpointId = registration.getEndpoint();
-        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
-        String lwm2mVersion = registration.getLwM2mVersion();
-        log.info("[{}] [{}] Received endpoint un registration version event", endpointId, lwm2mVersion);
-        //TODO: associate endpointId with device informat
-
+        log.info("[{}] Received endpoint un registration version event", endpointId);
+        sessions.remove(endpointId);
     }
 
     public void onSleepingDev(Registration registration) {

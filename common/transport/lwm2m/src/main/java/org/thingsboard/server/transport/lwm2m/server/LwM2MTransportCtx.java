@@ -26,6 +26,7 @@ import org.thingsboard.server.common.transport.TransportContext;
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 @Component("LwM2MTransportCtx")
 public class LwM2MTransportCtx extends TransportContext {
+
     @Getter
     @Value("${transport.lwm2m.bind_address:localhost}")
     private String host;
