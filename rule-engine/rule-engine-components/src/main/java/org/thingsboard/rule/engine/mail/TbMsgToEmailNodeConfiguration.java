@@ -27,6 +27,7 @@ public class TbMsgToEmailNodeConfiguration implements NodeConfiguration {
     private String bccTemplate;
     private String subjectTemplate;
     private String bodyTemplate;
+    private boolean htmlContent;
 
     @Override
     public TbMsgToEmailNodeConfiguration defaultConfiguration() {
@@ -35,6 +36,7 @@ public class TbMsgToEmailNodeConfiguration implements NodeConfiguration {
         configuration.toTemplate = "${userEmail}";
         configuration.subjectTemplate = "Device ${deviceType} temperature high";
         configuration.bodyTemplate = "Device ${deviceName} has high temperature ${temp}";
+        configuration.htmlContent = false;
         return configuration;
     }
 }

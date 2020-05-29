@@ -88,7 +88,7 @@ public class TbSendEmailNode implements TbNode {
     private void sendEmail(TbContext ctx, EmailPojo email) throws Exception {
         if (this.config.isUseSystemSmtpSettings()) {
             ctx.getMailService().send(email.getFrom(), email.getTo(), email.getCc(),
-                    email.getBcc(), email.getSubject(), email.getBody());
+                    email.getBcc(), email.getSubject(), email.getBody(), email.isHtmlContent());
         } else {
             MimeMessage mailMsg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
@@ -101,7 +101,7 @@ public class TbSendEmailNode implements TbNode {
                 helper.setBcc(email.getBcc().split("\\s*,\\s*"));
             }
             helper.setSubject(email.getSubject());
-            helper.setText(email.getBody());
+            helper.setText(email.getBody(), email.isHtmlContent());
             mailSender.send(helper.getMimeMessage());
         }
     }

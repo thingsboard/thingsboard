@@ -28,5 +28,6 @@ class EmailPojo {
     private final String bcc;
     private final String subject;
     private final String body;
+    private final boolean htmlContent;
 
 }
