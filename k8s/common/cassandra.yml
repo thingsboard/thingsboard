@@ -14,6 +14,15 @@
 # limitations under the License.
 #
 
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+  namespace: thingsboard
+provisioner: k8s.io/minikube-hostpath
+parameters:
+  type: pd-ssd
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -34,12 +43,6 @@ data:
          fi
          exit 1;
       fi
-  update-node.sh: |
-    #!/bin/sh
-    if [ "$CASSANDRA_HOST" = "cassandra-0" ]; then
-      export CASSANDRA_PASSWORD_SEEDER="yes";
-    fi
-    /opt/bitnami/scripts/cassandra/entrypoint.sh /opt/bitnami/scripts/cassandra/run.sh
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -80,7 +83,6 @@ spec:
           name: cql
         - containerPort: 9160
           name: thrift
-        command: ["/conf/update-node.sh"]
         resources:
           limits:
             cpu: "1000m"
@@ -100,10 +102,6 @@ spec:
               - -c
               - nodetool drain
         env:
-          - name: CASSANDRA_HOST
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
           - name: CASSANDRA_SEEDS
             value: "cassandra-0.cassandra.thingsboard.svc.cluster.local"
           - name: MAX_HEAP_SIZE
@@ -124,16 +122,12 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
-          - name: CASSANDRA_USER
-            value: cassandra
-          - name: CASSANDRA_PASSWORD
-            value: password
         readinessProbe:
           exec:
             command:
             - /bin/bash
             - -c
-            - /probe/ready-probe.sh
+            - /conf/ready-probe.sh
           initialDelaySeconds: 60
           timeoutSeconds: 5
         volumeMounts:
@@ -147,9 +141,10 @@ spec:
       name: cassandra-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      storageClassName: fast
       resources:
         requests:
-          storage: 500Mi
+          storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
