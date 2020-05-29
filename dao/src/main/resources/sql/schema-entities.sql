@@ -253,6 +253,16 @@ CREATE TABLE IF NOT EXISTS entity_view (
     additional_info varchar
 );
 
+CREATE TABLE IF NOT EXISTS entity_profile(
+    id              varchar(31) NOT NULL CONSTRAINT entity_profile_pkey PRIMARY KEY,
+    name            varchar(255),
+    tenant_id       varchar(31),
+    entity_type     varchar(255),
+    profile         varchar,
+    additional_info varchar,
+    CONSTRAINT name_tenant_id_type_unq_key UNIQUE (name, tenant_id, entity_type)
+);
+
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS
 $$

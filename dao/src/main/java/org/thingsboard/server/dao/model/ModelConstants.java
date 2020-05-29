@@ -355,6 +355,13 @@ public class ModelConstants {
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";
 
     /**
+     * Cassandra entity profile constants.
+     */
+    public static final String ENTITY_PROFILE_TABLE_FAMILY_NAME = "entity_profile";
+    public static final String ENTITY_PROFILE_NAME_PROPERTY = "name";
+    public static final String ENTITY_PROFILE_PROFILE_PROPERTY = "profile";
+
+    /**
      * Cassandra attributes and timeseries constants.
      */
     public static final String ATTRIBUTES_KV_CF = "attributes_kv_cf";
