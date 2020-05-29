@@ -95,22 +95,6 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                 style = defaultStyle();
             }
         }
-        if (vm.settings.rowMargin) {
-            if (angular.isUndefined(style.marginTop) && sourceIndex != 0) {
-                style.marginTop = (vm.settings.rowMargin / 2) + 'px';
-            }
-            if (angular.isUndefined(style.marginBottom)) {
-                style.marginBottom = (vm.settings.rowMargin / 2) + 'px';
-            }
-        }
-        if (vm.settings.columnMargin) {
-            if (angular.isUndefined(style.marginLeft) && !firstKey) {
-                style.marginLeft = (vm.settings.columnMargin / 2) + 'px';
-            }
-            if (angular.isUndefined(style.marginRight) && !lastKey) {
-                style.marginRight = (vm.settings.columnMargin / 2) + 'px';
-            }
-        }
         return style;
     }
 
@@ -280,13 +264,11 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
 
         vm.isVerticalAlignment = !(vm.settings.fieldsAlignment === 'row');
 
-        if (!vm.isVerticalAlignment && vm.settings.fieldsInRow) {
-            vm.inputWidthSettings = 100 / vm.settings.fieldsInRow + '%';
-        }
         updateWidgetDisplaying();
     }
 
     function updateDatasources() {
+        vm.inputWidthSettings = [];
         if (vm.datasources && vm.datasources.length) {
             vm.entityDetected = true;
             for (var i = 0; i < vm.datasources.length; i++) {
@@ -295,6 +277,12 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                     datasource: datasource,
                     keys: []
                 };
+                if (vm.settings.fieldsInRow) {
+                    var sourceFields = (datasource.type === types.datasourceType.entity &&
+                        datasource.dataKeys.length < vm.settings.fieldsInRow) ?
+                        datasource.dataKeys.length : vm.settings.fieldsInRow;
+                    vm.inputWidthSettings.push(100 / sourceFields + '%');
+                }
                 if (datasource.type === types.datasourceType.entity) {
                     for (var j = 0; j < datasource.dataKeys.length; j++) {
                         if ((datasource.entityType !== types.entityType.device) && (datasource.dataKeys[j].settings.dataKeyType == 'shared')) {

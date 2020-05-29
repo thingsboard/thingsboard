@@ -22,8 +22,8 @@
             </legend>
             <div layout="row" layout-wrap
                  ng-class="{'vertical-alignment': vm.isVerticalAlignment || vm.changeAlignment}">
-                <div ng-repeat="key in source.keys" ng-if="!key.settings.dataKeyHidden" ng-init="keyIndex=$index"
-                     ng-style="{'width': (vm.isVerticalAlignment || vm.changeAlignment) ? '100%' : vm.inputWidthSettings}">
+                <div ng-repeat="key in source.keys" ng-if="!key.settings.dataKeyHidden"
+                     ng-style="{'width': (vm.isVerticalAlignment || vm.changeAlignment) ? '100%' : vm.inputWidthSettings[sourceIndex]}">
                     <md-tooltip class="tb-tooltip-multiline" ng-if="key.settings.tooltipMessage && key.settings.tooltipMessage.length" md-direction="left">
                         <span ng-bind-html="key.settings.tooltipMessage"></span>
                     </md-tooltip>
