@@ -80,7 +80,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
         return {};
     }
 
-    function cellStyle(key, sourceIndex, firstKey, lastKey) {
+    function cellStyle(key) {
         var style = {};
         if (key) {
             var styleInfo = vm.keyStyle[key.label];

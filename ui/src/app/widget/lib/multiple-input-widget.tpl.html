@@ -28,7 +28,7 @@
                         <span ng-bind-html="key.settings.tooltipMessage"></span>
                     </md-tooltip>
                     <div class="input-field" ng-if="(key.settings.dataKeyValueType === 'string')">
-                        <md-input-container class="md-block" ng-style="vm.cellStyle(key, sourceIndex, $first, $last)">
+                        <md-input-container class="md-block" ng-style="vm.cellStyle(key)">
                             <label ng-style="vm.textColor(key)">{{key.label}}</label>
                             <md-icon class="material-icons" ng-if="key.settings.icon">
                                 {{key.settings.icon}}
