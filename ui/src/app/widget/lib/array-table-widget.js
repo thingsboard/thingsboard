@@ -342,7 +342,7 @@ function ArrayTableWidgetController($element, $scope, $filter, $mdMedia, $mdPane
     }
 
     function updateRows() {
-        var result = $filter('orderBy')(vm.allRows, "\"" + vm.query.order + "\"");
+        var result = $filter('orderBy')(vm.allRows, vm.query.order);
         if (vm.query.search != null) {
             result = $filter('filter')(result, {$: vm.query.search});
         }
