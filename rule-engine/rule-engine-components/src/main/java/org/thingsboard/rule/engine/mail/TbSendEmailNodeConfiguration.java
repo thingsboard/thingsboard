@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,12 @@ public class TbSendEmailNodeConfiguration implements NodeConfiguration {
     private String smtpProtocol;
     private int timeout;
     private boolean enableTls;
+    private String tlsVersion;
+    private boolean enableProxy;
+    private String proxyHost;
+    private String proxyPort;
+    private String proxyUser;
+    private String proxyPassword;
 
     @Override
     public TbSendEmailNodeConfiguration defaultConfiguration() {
@@ -39,6 +45,8 @@ public class TbSendEmailNodeConfiguration implements NodeConfiguration {
         configuration.setSmtpPort(25);
         configuration.setTimeout(10000);
         configuration.setEnableTls(false);
+        configuration.setTlsVersion("TLSv1.2");
+        configuration.setEnableProxy(false);
         return configuration;
     }
 }

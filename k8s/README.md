@@ -9,15 +9,31 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 If you do not already have a cluster, you can create one by using [Minikube](https://kubernetes.io/docs/setup/minikube), 
 or you can choose any other available [Kubernetes cluster deployment solutions](https://kubernetes.io/docs/setup/pick-right-solution/).
 
+### Enable ingress addon
+
+By default ingress addon is disable in the Minikube, and available only in cluster providers.
+To enable ingress, please execute next command:
+
+`
+$ minikube addons enable ingress
+` 
+
 ## Installation
 
-Before performing initial installation you can configure the type of database to be used with ThingsBoard.
+Before performing initial installation you can configure the type of database to be used with ThingsBoard and the type of deployment.
 In order to set database type change the value of `DATABASE` variable in `.env` file to one of the following:
 
 - `postgres` - use PostgreSQL database;
 - `cassandra` - use Cassandra database;
 
 **NOTE**: According to the database type corresponding kubernetes resources will be deployed (see `postgres.yml`, `cassandra.yml` for details).
+
+In order to set deployment type change the value of `DEPLOYMENT_TYPE` variable in `.env` file to one of the following:
+
+- `basic` - start up with single instance of Zookeeper, Kafka and Redis;
+- `high-availability` - start up with Zookeeper, Kafka and Redis in cluster modes;
+
+**NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see content of the directories `./basic` and `./high-availability` for details).
 
 Execute the following command to run installation:
 
@@ -30,6 +46,14 @@ Where:
 - `--loadDemo` - optional argument. Whether to load additional demo data.
 
 ## Running
+
+Execute the following command to deploy thirdparty resources:
+
+`
+$ ./k8s-deploy-thirdparty.sh
+`
+
+Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time and don't have configured Redis cluster.
 
 Execute the following command to deploy resources:
 
@@ -73,10 +97,16 @@ Or use `kubectl get services` to see the state of all the services.
 Or use `kubectl get deployments` to see the state of all the deployments.
 See [kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/) command reference for details.
 
-Execute the following command to delete all deployed microservices:
+Execute the following command to delete all ThingsBoard microservices:
 
 `
 $ ./k8s-delete-resources.sh
+`
+
+Execute the following command to delete all thirdparty microservices:
+
+`
+$ ./k8s-delete-thirdparty.sh
 `
 
 Execute the following command to delete all resources (including database):

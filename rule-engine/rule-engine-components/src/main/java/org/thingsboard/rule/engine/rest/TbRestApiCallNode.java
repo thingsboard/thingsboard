@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,15 @@
  */
 package org.thingsboard.rule.engine.rest;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.ssl.SslContextBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.Netty4ClientHttpRequestFactory;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.web.client.AsyncRestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
-
-import javax.net.ssl.SSLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RuleNode(
@@ -56,107 +43,29 @@ import java.util.concurrent.TimeUnit;
 )
 public class TbRestApiCallNode implements TbNode {
 
-    private static final String STATUS = "status";
-    private static final String STATUS_CODE = "statusCode";
-    private static final String STATUS_REASON = "statusReason";
-    private static final String ERROR = "error";
-    private static final String ERROR_BODY = "error_body";
-
-    private TbRestApiCallNodeConfiguration config;
-
-    private EventLoopGroup eventLoopGroup;
-    private AsyncRestTemplate httpClient;
+    private boolean useRedisQueueForMsgPersistence;
+    private TbHttpClient httpClient;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        try {
-            this.config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
-            if (this.config.isUseSimpleClientHttpFactory()) {
-                httpClient = new AsyncRestTemplate();
-            } else {
-                this.eventLoopGroup = new NioEventLoopGroup();
-                Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
-                nettyFactory.setSslContext(SslContextBuilder.forClient().build());
-                httpClient = new AsyncRestTemplate(nettyFactory);
-            }
-        } catch (SSLException e) {
-            throw new TbNodeException(e);
+        TbRestApiCallNodeConfiguration config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
+        httpClient = new TbHttpClient(config);
+        useRedisQueueForMsgPersistence = config.isUseRedisQueueForMsgPersistence();
+        if (useRedisQueueForMsgPersistence) {
+            log.warn("[{}][{}] Usage of Redis Template is deprecated starting 2.5 and will have no affect", ctx.getTenantId(), ctx.getSelfId());
         }
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
-        HttpHeaders headers = prepareHeaders(msg.getMetaData());
-        HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
-        HttpEntity<String> entity = new HttpEntity<>(msg.getData(), headers);
-
-        ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
-                endpointUrl, method, entity, String.class);
-
-        future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
-            @Override
-            public void onFailure(Throwable throwable) {
-                TbMsg next = processException(ctx, msg, throwable);
-                ctx.tellFailure(next, throwable);
-            }
-
-            @Override
-            public void onSuccess(ResponseEntity<String> responseEntity) {
-                if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                    TbMsg next = processResponse(ctx, msg, responseEntity);
-                    ctx.tellNext(next, TbRelationTypes.SUCCESS);
-                } else {
-                    TbMsg next = processFailureResponse(ctx, msg, responseEntity);
-                    ctx.tellNext(next, TbRelationTypes.FAILURE);
-                }
-            }
-        });
+    public void onMsg(TbContext ctx, TbMsg msg) {
+        httpClient.processMessage(ctx, msg);
     }
 
     @Override
     public void destroy() {
-        if (this.eventLoopGroup != null) {
-            this.eventLoopGroup.shutdownGracefully(0, 5, TimeUnit.SECONDS);
+        if (this.httpClient != null) {
+            this.httpClient.destroy();
         }
-    }
-
-    private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
-        TbMsgMetaData metaData = origMsg.getMetaData();
-        metaData.putValue(STATUS, response.getStatusCode().name());
-        metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
-        metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
-        response.getHeaders().toSingleValueMap().forEach(metaData::putValue);
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, response.getBody());
-    }
-
-    private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
-        TbMsgMetaData metaData = origMsg.getMetaData();
-        metaData.putValue(STATUS, response.getStatusCode().name());
-        metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
-        metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
-        metaData.putValue(ERROR_BODY, response.getBody());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
-    }
-
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
-        TbMsgMetaData metaData = origMsg.getMetaData();
-        metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        if (e instanceof HttpClientErrorException) {
-            HttpClientErrorException httpClientErrorException = (HttpClientErrorException)e;
-            metaData.putValue(STATUS, httpClientErrorException.getStatusText());
-            metaData.putValue(STATUS_CODE, httpClientErrorException.getRawStatusCode()+"");
-            metaData.putValue(ERROR_BODY, httpClientErrorException.getResponseBodyAsString());
-        }
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
-    }
-
-    private HttpHeaders prepareHeaders(TbMsgMetaData metaData) {
-        HttpHeaders headers = new HttpHeaders();
-        config.getHeaders().forEach((k,v) -> {
-            headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData));
-        });
-        return headers;
     }
 
 }

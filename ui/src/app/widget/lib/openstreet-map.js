@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import * as L from 'leaflet';
 import 'leaflet-providers';
+import 'leaflet.markercluster/dist/leaflet.markercluster'
 
 export default class TbOpenStreetMap {
 
-	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, mapProvider, credentials, defaultCenterPosition) {
+	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, mapProvider, credentials, defaultCenterPosition, markerClusteringSetting) {
 
 		this.utils = utils;
 		this.defaultZoomLevel = defaultZoomLevel;
 		this.dontFitMapBounds = dontFitMapBounds;
 		this.minZoomLevel = minZoomLevel;
 		this.tooltips = [];
+		this.isMarketCluster = markerClusteringSetting && markerClusteringSetting.isMarketCluster;
 
 		if (!mapProvider) {
 			mapProvider = {
@@ -48,6 +52,11 @@ export default class TbOpenStreetMap {
 		var tileLayer = mapProvider.isCustom ? L.tileLayer(mapProvider.name) : L.tileLayer.provider(mapProvider.name, credentials);
 		tileLayer.addTo(this.map);
 
+		if (this.isMarketCluster) {
+			this.markersCluster = L.markerClusterGroup(markerClusteringSetting);
+			this.map.addLayer(this.markersCluster);
+		}
+
 		if (initCallback) {
 			setTimeout(initCallback, 0); //eslint-disable-line
 		}
@@ -56,6 +65,10 @@ export default class TbOpenStreetMap {
 
 	inited() {
 		return angular.isDefined(this.map);
+	}
+
+	getContainer() {
+		return this.isMarketCluster ? this.markersCluster : this.map;
 	}
 
 	updateMarkerLabel(marker, settings) {
@@ -137,8 +150,10 @@ export default class TbOpenStreetMap {
 		onMarkerIconReady(iconInfo);
 	}
 
-	createMarker(location, dsIndex, settings, onClickListener, markerArgs) {
-		var marker = L.marker(location, {});
+	createMarker(location, dsIndex, settings, onClickListener, markerArgs, onDragendListener) {
+		var marker = L.marker(location, {
+			draggable: settings.drraggable
+		});
 		var opMap = this;
 		this.createMarkerIcon(marker, settings, (iconInfo) => {
 			marker.setIcon(iconInfo.icon);
@@ -147,7 +162,7 @@ export default class TbOpenStreetMap {
 				marker.bindTooltip('<div style="color: ' + settings.labelColor + ';"><b>' + settings.labelText + '</b></div>',
 					{className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset});
 			}
-			marker.addTo(opMap.map);
+			marker.addTo(opMap.getContainer());
 		});
 
 		if (settings.displayTooltip) {
@@ -158,11 +173,15 @@ export default class TbOpenStreetMap {
 			marker.on('click', onClickListener);
 		}
 
+		if (onDragendListener) {
+			marker.on('dragend', onDragendListener);
+		}
+
 		return marker;
 	}
 
 	removeMarker(marker) {
-		this.map.removeLayer(marker);
+		this.getContainer().removeLayer(marker);
 	}
 
 	createTooltip(marker, dsIndex, settings, markerArgs) {
@@ -254,9 +273,9 @@ export default class TbOpenStreetMap {
 		polygon.redraw();
 	}
 
-	fitBounds(bounds) {
+	fitBounds(bounds, useDefaultZoom) {
 		if (bounds.isValid()) {
-			if (this.dontFitMapBounds && this.defaultZoomLevel) {
+			if ((this.dontFitMapBounds || useDefaultZoom) && this.defaultZoomLevel) {
 				this.map.setZoom(this.defaultZoomLevel, {animate: false});
 				this.map.panTo(bounds.getCenter(), {animate: false});
 			} else {
@@ -311,6 +330,10 @@ export default class TbOpenStreetMap {
 
 	getTooltips() {
 		return this.tooltips;
+	}
+
+	getCenter() {
+		return this.map.getCenter();
 	}
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.utils;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
+import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.Charset;
 
 
@@ -45,5 +46,37 @@ public class MiscUtils {
             default:
                 throw new IllegalArgumentException("Can't find hash function with name " + name);
         }
+    }
+
+    public static String constructBaseUrl(HttpServletRequest request) {
+        String scheme = request.getScheme();
+
+        String forwardedProto = request.getHeader("x-forwarded-proto");
+        if (forwardedProto != null) {
+            scheme = forwardedProto;
+        }
+
+        int serverPort = request.getServerPort();
+        if (request.getHeader("x-forwarded-port") != null) {
+            try {
+                serverPort = request.getIntHeader("x-forwarded-port");
+            } catch (NumberFormatException e) {
+            }
+        } else if (forwardedProto != null) {
+            switch (forwardedProto) {
+                case "http":
+                    serverPort = 80;
+                    break;
+                case "https":
+                    serverPort = 443;
+                    break;
+            }
+        }
+
+        String baseUrl = String.format("%s://%s:%d",
+                scheme,
+                request.getServerName(),
+                serverPort);
+        return baseUrl;
     }
 }

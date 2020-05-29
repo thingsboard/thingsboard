@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,28 @@
 
 const vm = require('vm');
 
-function JsExecutor() {
+function JsExecutor(useSandbox) {
+    this.useSandbox = useSandbox;
 }
 
 JsExecutor.prototype.compileScript = function(code) {
-    return new Promise(function(resolve, reject) {
+    if (this.useSandbox) {
+        return createScript(code);
+    } else {
+        return createFunction(code);
+    }
+}
+
+JsExecutor.prototype.executeScript = function(script, args, timeout) {
+    if (this.useSandbox) {
+        return invokeScript(script, args, timeout);
+    } else {
+        return invokeFunction(script, args);
+    }
+}
+
+function createScript(code) {
+    return new Promise((resolve, reject) => {
         try {
             code = "("+code+")(...args)";
             var script = new vm.Script(code);
@@ -32,12 +49,37 @@ JsExecutor.prototype.compileScript = function(code) {
     });
 }
 
-JsExecutor.prototype.executeScript = function(script, args, timeout) {
-    return new Promise(function(resolve, reject) {
+function invokeScript(script, args, timeout) {
+    return new Promise((resolve, reject) => {
         try {
             var sandbox = Object.create(null);
             sandbox.args = args;
             var result = script.runInNewContext(sandbox, {timeout: timeout});
+            resolve(result);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+
+function createFunction(code) {
+    return new Promise((resolve, reject) => {
+        try {
+            code = "return ("+code+")(...args)";
+            const parsingContext = vm.createContext({});
+            const func = vm.compileFunction(code, ['args'], {parsingContext: parsingContext});
+            resolve(func);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+function invokeFunction(func, args) {
+    return new Promise((resolve, reject) => {
+        try {
+            var result = func(args);
             resolve(result);
         } catch (err) {
             reject(err);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ import Flow from '@flowjs/ng-flow/dist/ng-flow-standalone.min';
 import UrlHandler from './url.handler';
 
 /*@ngInject*/
-export default function AppRun($rootScope, $window, $injector, $location, $log, $state, $mdDialog, $filter, loginService, userService, $translate) {
+export default function AppRun($rootScope, $window, $injector, $location, $log, $state, $mdDialog, $filter, $q, loginService, userService, $translate) {
 
     $window.Flow = Flow;
     var frame = null;
@@ -41,11 +41,13 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
     }
 
     initWatchers();
-    
+
+    var skipStateChange = false;
+
     function initWatchers() {
         $rootScope.unauthenticatedHandle = $rootScope.$on('unauthenticated', function (event, doLogout) {
             if (doLogout) {
-                $state.go('login');
+                gotoPublicModule('login');
             } else {
                 UrlHandler($injector, $location);
             }
@@ -60,6 +62,11 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
         });
 
         $rootScope.stateChangeStartHandle = $rootScope.$on('$stateChangeStart', function (evt, to, params) {
+
+            if (skipStateChange) {
+                skipStateChange = false;
+                return;
+            }
 
             function waitForUserLoaded() {
                 if ($rootScope.userLoadedHandle) {
@@ -128,7 +135,10 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
                         redirectParams.toName = to.name;
                         redirectParams.params = params;
                         userService.setRedirectParams(redirectParams);
-                        $state.go('login', params);
+                        gotoPublicModule('login', params);
+                    } else {
+                        evt.preventDefault();
+                        gotoPublicModule(to.name, params);
                     }
                 }
             } else {
@@ -158,18 +168,33 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
         userService.gotoDefaultPlace(params);
     }
 
+    function gotoPublicModule(name, params) {
+        let tasks = [];
+        if (name === "login") {
+            tasks.push(loginService.loadOAuth2Clients());
+        }
+        $q.all(tasks).then(
+            () => {
+                skipStateChange = true;
+                $state.go(name, params);
+            },
+            () => {
+                skipStateChange = true;
+                $state.go(name, params);
+            }
+        );
+    }
+
     function showForbiddenDialog() {
         if (forbiddenDialog === null) {
             $translate(['access.access-forbidden',
                 'access.access-forbidden-text',
-                'access.access-forbidden',
                 'action.cancel',
                 'action.sign-in']).then(function (translations) {
                 if (forbiddenDialog === null) {
                     forbiddenDialog = $mdDialog.confirm()
                         .title(translations['access.access-forbidden'])
                         .htmlContent(translations['access.access-forbidden-text'])
-                        .ariaLabel(translations['access.access-forbidden'])
                         .cancel(translations['action.cancel'])
                         .ok(translations['action.sign-in']);
                     $mdDialog.show(forbiddenDialog).then(function () {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -63,28 +63,7 @@
                 <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
                     <th ng-if="key.display" md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys"><span>{{ key.title }}</span></th>
-                    <th md-column class="tb-action-cell" layout="row" layout-align="end center">
-                        <md-button class="md-icon-button"
-                                   aria-label="{{'alarm.alarm-status-filter' | translate}}"
-                                   ng-click="vm.editAlarmStatusFilter($event)">
-                            <md-icon aria-label="{{'alarm.alarm-status-filter' | translate}}"
-                                     class="material-icons">filter_list
-                            </md-icon>
-                            <md-tooltip md-direction="top">
-                                {{'alarm.alarm-status-filter' | translate}}
-                            </md-tooltip>
-                        </md-button>
-                        <md-button class="md-icon-button"
-                                   aria-label="{{'entity.columns-to-display' | translate}}"
-                                   ng-click="vm.editColumnsToDisplay($event)">
-                            <md-icon aria-label="{{'entity.columns-to-display' | translate}}"
-                                     class="material-icons">view_column
-                            </md-icon>
-                            <md-tooltip md-direction="top">
-                                {{'entity.columns-to-display' | translate}}
-                            </md-tooltip>
-                        </md-button>
-                    </th>
+                    <th md-column class="tb-action-cell" layout="row" layout-align="end center"></th>
                 </tr>
                 </thead>
                 <tbody md-body>

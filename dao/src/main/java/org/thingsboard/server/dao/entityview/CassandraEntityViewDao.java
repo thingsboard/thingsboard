@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.datastax.driver.mapping.Result;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -97,7 +98,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
         log.debug("Try to find entity views by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<EntityViewEntity> entityViewEntities =
                 findPageWithTextSearch(new TenantId(tenantId), ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_CF,
-                Collections.singletonList(eq(TENANT_ID_PROPERTY, tenantId)), pageLink);
+                        Collections.singletonList(eq(TENANT_ID_PROPERTY, tenantId)), pageLink);
         log.trace("Found entity views [{}] by tenantId [{}] and pageLink [{}]",
                 entityViewEntities, tenantId, pageLink);
         return DaoUtil.convertDataList(entityViewEntities);
@@ -181,6 +182,6 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
                     return Collections.emptyList();
                 }
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 }

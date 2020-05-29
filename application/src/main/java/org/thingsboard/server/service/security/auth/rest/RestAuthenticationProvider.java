@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.Customer;
@@ -46,6 +45,7 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 import ua_parser.Client;
 
 import java.util.UUID;
+
 
 @Component
 @Slf4j
@@ -100,18 +100,21 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
                 throw new UsernameNotFoundException("User credentials not found");
             }
 
-            systemSecurityService.validateUserCredentials(user.getTenantId(), userCredentials, password);
+            try {
+                systemSecurityService.validateUserCredentials(user.getTenantId(), userCredentials, username, password);
+            } catch (LockedException e) {
+                logLoginAction(user, authentication, ActionType.LOCKOUT, null);
+                throw e;
+            }
 
             if (user.getAuthority() == null)
                 throw new InsufficientAuthenticationException("User has no authority assigned");
 
             SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
-
-            logLoginAction(user, authentication, null);
-
+            logLoginAction(user, authentication, ActionType.LOGIN, null);
             return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
         } catch (Exception e) {
-            logLoginAction(user, authentication, e);
+            logLoginAction(user, authentication, ActionType.LOGIN, e);
             throw e;
         }
     }
@@ -148,7 +151,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         return (UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication));
     }
 
-    private void logLoginAction(User user, Authentication authentication, Exception e) {
+    private void logLoginAction(User user, Authentication authentication, ActionType actionType, Exception e) {
         String clientAddress = "Unknown";
         String browser = "Unknown";
         String os = "Unknown";
@@ -194,6 +197,6 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
-                user.getName(), user.getId(), null, ActionType.LOGIN, e, clientAddress, browser, os, device);
+                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device);
     }
 }

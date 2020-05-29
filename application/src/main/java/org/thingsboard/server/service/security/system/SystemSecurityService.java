@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.service.security.model.SecuritySettings;
+import org.thingsboard.server.common.data.security.model.SecuritySettings;
 
 public interface SystemSecurityService {
 
@@ -27,8 +27,8 @@ public interface SystemSecurityService {
 
     SecuritySettings saveSecuritySettings(TenantId tenantId, SecuritySettings securitySettings);
 
-    void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String password) throws AuthenticationException;
+    void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException;
 
-    void validatePassword(TenantId tenantId, String password) throws DataValidationException;
+    void validatePassword(TenantId tenantId, String password, UserCredentials userCredentials) throws DataValidationException;
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.JsonParseException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +83,7 @@ public class TbGetTelemetryNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
+        limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
         fetchMode = config.getFetchMode();
         orderByFetchAll = config.getOrderBy();
         if (StringUtils.isEmpty(orderByFetchAll)) {
@@ -104,8 +106,7 @@ public class TbGetTelemetryNode implements TbNode {
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
-                    TbMsg newMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
-                    ctx.tellNext(newMsg, SUCCESS);
+                    ctx.tellSuccess(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData()));
                 }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
@@ -136,7 +137,7 @@ public class TbGetTelemetryNode implements TbNode {
 
     private void process(List<TsKvEntry> entries, TbMsg msg) {
         ObjectNode resultNode = mapper.createObjectNode();
-        if (limit == MAX_FETCH_SIZE) {
+        if (FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
             entries.forEach(entry -> processSingle(resultNode, entry));
@@ -156,12 +157,10 @@ public class TbGetTelemetryNode implements TbNode {
     private void processArray(ObjectNode node, TsKvEntry entry) {
         if (node.has(entry.getKey())) {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
-            ObjectNode obj = buildNode(entry);
-            arrayNode.add(obj);
+            arrayNode.add(buildNode(entry));
         } else {
             ArrayNode arrayNode = mapper.createArrayNode();
-            ObjectNode obj = buildNode(entry);
-            arrayNode.add(obj);
+            arrayNode.add(buildNode(entry));
             node.set(entry.getKey(), arrayNode);
         }
     }
@@ -181,6 +180,13 @@ public class TbGetTelemetryNode implements TbNode {
                 break;
             case DOUBLE:
                 obj.put("value", entry.getDoubleValue().get());
+                break;
+            case JSON:
+                try {
+                    obj.set("value", mapper.readTree(entry.getJsonValue().get()));
+                } catch (IOException e) {
+                    throw new JsonParseException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
+                }
                 break;
         }
         return obj;
@@ -252,6 +258,14 @@ public class TbGetTelemetryNode implements TbNode {
 
     private String replaceRegex(String pattern) {
         return pattern.replaceAll("[${}]", "");
+    }
+
+    private int validateLimit(int limit) {
+        if (limit != 0) {
+            return limit;
+        } else {
+            return MAX_FETCH_SIZE;
+        }
     }
 
     @Data

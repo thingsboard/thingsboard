@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,14 +44,21 @@ public abstract class TbAbstractTransformNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(transform(ctx, msg),
-                m -> {
-                    if (m != null) {
-                        ctx.tellNext(m, SUCCESS);
-                    } else {
-                        ctx.tellNext(msg, FAILURE);
-                    }
-                },
-                t -> ctx.tellFailure(msg, t));
+                m -> transformSuccess(ctx, msg, m),
+                t -> transformFailure(ctx, msg, t),
+                ctx.getDbCallbackExecutor());
+    }
+
+    protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
+        ctx.tellFailure(msg, t);
+    }
+
+    protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
+        if (m != null) {
+            ctx.tellSuccess(m);
+        } else {
+            ctx.tellNext(msg, FAILURE);
+        }
     }
 
     protected abstract ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg);

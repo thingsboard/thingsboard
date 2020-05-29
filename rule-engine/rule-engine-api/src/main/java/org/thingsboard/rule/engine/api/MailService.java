@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 
 public interface MailService {
 
@@ -39,4 +37,6 @@ public interface MailService {
     void sendPasswordWasResetEmail(String loginLink, String email) throws ThingsboardException;
 
     void send(String from, String to, String cc, String bcc, String subject, String body) throws MessagingException;
+
+    void sendAccountLockoutEmail( String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException;
 }

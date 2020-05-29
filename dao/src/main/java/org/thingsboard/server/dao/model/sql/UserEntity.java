@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
 
     public UserEntity(User user) {
         if (user.getId() != null) {
-            this.setId(user.getId().getId());
+            this.setUuid(user.getId().getId());
         }
         this.authority = user.getAuthority();
         if (user.getTenantId() != null) {
@@ -108,8 +108,8 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
 
     @Override
     public User toData() {
-        User user = new User(new UserId(getId()));
-        user.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        User user = new User(new UserId(this.getUuid()));
+        user.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         user.setAuthority(authority);
         if (tenantId != null) {
             user.setTenantId(new TenantId(fromString(tenantId)));

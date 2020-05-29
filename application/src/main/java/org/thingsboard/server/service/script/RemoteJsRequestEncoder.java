@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,24 @@
  */
 package org.thingsboard.server.service.script;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.kafka.TbKafkaEncoder;
+import org.thingsboard.server.queue.kafka.TbKafkaEncoder;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by ashvayka on 25.09.18.
  */
-public class RemoteJsRequestEncoder implements TbKafkaEncoder<JsInvokeProtos.RemoteJsRequest> {
+public class RemoteJsRequestEncoder implements TbKafkaEncoder<TbProtoQueueMsg<JsInvokeProtos.RemoteJsRequest>> {
     @Override
-    public byte[] encode(JsInvokeProtos.RemoteJsRequest value) {
-        return value.toByteArray();
+    public byte[] encode(TbProtoQueueMsg<JsInvokeProtos.RemoteJsRequest> value) {
+        try {
+            return JsonFormat.printer().print(value.getValue()).getBytes(StandardCharsets.UTF_8);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

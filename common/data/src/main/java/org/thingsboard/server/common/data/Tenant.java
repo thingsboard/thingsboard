@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @EqualsAndHashCode(callSuper = true)
-public class Tenant extends ContactBased<TenantId> implements HasName, HasTenantId {
+public class Tenant extends ContactBased<TenantId> implements HasTenantId {
 
     private static final long serialVersionUID = 8057243243859922101L;
     
     private String title;
     private String region;
+    private boolean isolatedTbCore;
+    private boolean isolatedTbRuleEngine;
 
     public Tenant() {
         super();
@@ -72,6 +74,22 @@ public class Tenant extends ContactBased<TenantId> implements HasName, HasTenant
         this.region = region;
     }
 
+    public boolean isIsolatedTbCore() {
+        return isolatedTbCore;
+    }
+
+    public void setIsolatedTbCore(boolean isolatedTbCore) {
+        this.isolatedTbCore = isolatedTbCore;
+    }
+
+    public boolean isIsolatedTbRuleEngine() {
+        return isolatedTbRuleEngine;
+    }
+
+    public void setIsolatedTbRuleEngine(boolean isolatedTbRuleEngine) {
+        this.isolatedTbRuleEngine = isolatedTbRuleEngine;
+    }
+
     @Override
     public String getSearchText() {
         return getTitle();
@@ -84,6 +102,10 @@ public class Tenant extends ContactBased<TenantId> implements HasName, HasTenant
         builder.append(title);
         builder.append(", region=");
         builder.append(region);
+        builder.append(", isolatedTbCore=");
+        builder.append(isolatedTbCore);
+        builder.append(", isolatedTbRuleEngine=");
+        builder.append(isolatedTbRuleEngine);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());
         builder.append(", country=");

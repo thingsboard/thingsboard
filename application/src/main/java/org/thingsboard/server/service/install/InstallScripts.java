@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -182,4 +183,30 @@ public class InstallScripts {
     }
 
 
+    public void loadDemoRuleChains(TenantId tenantId) throws Exception {
+        Path ruleChainsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, RULE_CHAINS_DIR);
+        try {
+            JsonNode ruleChainJson = objectMapper.readTree(ruleChainsDir.resolve("thermostat_alarms.json").toFile());
+            RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
+            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
+            ruleChain.setTenantId(tenantId);
+            ruleChain = ruleChainService.saveRuleChain(ruleChain);
+            ruleChainMetaData.setRuleChainId(ruleChain.getId());
+            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
+
+            JsonNode rootChainJson = objectMapper.readTree(ruleChainsDir.resolve("root_rule_chain.json").toFile());
+            RuleChain rootChain = objectMapper.treeToValue(rootChainJson.get("ruleChain"), RuleChain.class);
+            RuleChainMetaData rootChainMetaData = objectMapper.treeToValue(rootChainJson.get("metadata"), RuleChainMetaData.class);
+
+            RuleChainId thermostatsRuleChainId = ruleChain.getId();
+            rootChainMetaData.getRuleChainConnections().forEach(connection -> connection.setTargetRuleChainId(thermostatsRuleChainId));
+            rootChain.setTenantId(tenantId);
+            rootChain = ruleChainService.saveRuleChain(rootChain);
+            rootChainMetaData.setRuleChainId(rootChain.getId());
+            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), rootChainMetaData);
+        } catch (Exception e) {
+            log.error("Unable to load dashboard from json", e);
+            throw new RuntimeException("Unable to load dashboard from json", e);
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
@@ -49,7 +52,20 @@ public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     @Override
     protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
-        return ctx.getJsExecutor().executeAsync(() -> jsEngine.executeUpdate(msg));
+        ctx.logJsEvalRequest();
+        return jsEngine.executeUpdateAsync(msg);
+    }
+
+    @Override
+    protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
+        ctx.logJsEvalResponse();
+        super.transformSuccess(ctx, msg, m);
+    }
+
+    @Override
+    protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
+        ctx.logJsEvalFailure();
+        super.transformFailure(ctx, msg, t);
     }
 
     @Override

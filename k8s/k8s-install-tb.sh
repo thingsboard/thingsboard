@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ function installTb() {
 
     loadDemo=$1
 
-    kubectl apply -f tb-node-configmap.yml
-    kubectl apply -f database-setup.yml &&
+    kubectl apply -f common/tb-node-configmap.yml
+    kubectl apply -f common/database-setup.yml &&
     kubectl wait --for=condition=Ready pod/tb-db-setup --timeout=120s &&
-    kubectl exec tb-db-setup -- sh -c 'export INSTALL_TB=true; export LOAD_DEMO='"$loadDemo"'; start-tb-node.sh; touch /install-finished;'
+    kubectl exec tb-db-setup -- sh -c 'export INSTALL_TB=true; export LOAD_DEMO='"$loadDemo"'; start-tb-node.sh; touch /tmp/install-finished;'
 
     kubectl delete pod tb-db-setup
 
@@ -30,16 +30,16 @@ function installTb() {
 
 function installPostgres() {
 
-    kubectl apply -f postgres.yml
-    kubectl apply -f tb-node-postgres-configmap.yml
+    kubectl apply -f common/postgres.yml
+    kubectl apply -f common/tb-node-postgres-configmap.yml
 
     kubectl rollout status deployment/postgres
 }
 
 function installCassandra() {
 
-    kubectl apply -f cassandra.yml
-    kubectl apply -f tb-node-cassandra-configmap.yml
+    kubectl apply -f common/cassandra.yml
+    kubectl apply -f common/tb-node-cassandra-configmap.yml
 
     kubectl rollout status statefulset/cassandra
 
@@ -75,8 +75,18 @@ fi
 
 source .env
 
-kubectl apply -f tb-namespace.yml
+kubectl apply -f common/tb-namespace.yml
 kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
+
+case $DEPLOYMENT_TYPE in
+        basic)
+        ;;
+        high-availability)
+        ;;
+        *)
+        echo "Unknown DEPLOYMENT_TYPE value specified: '${DEPLOYMENT_TYPE}'. Should be either basic or high-availability." >&2
+        exit 1
+esac
 
 case $DATABASE in
         postgres)
@@ -91,3 +101,4 @@ case $DATABASE in
         echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or cassandra." >&2
         exit 1
 esac
+

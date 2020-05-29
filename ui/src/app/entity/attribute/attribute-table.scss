@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ md-toolbar.md-table-toolbar.alternate {
   .md-cell {
     ng-md-icon {
       float: right;
-      height: 16px;
+      height: 24px;
       fill: $md-edit-icon-fill;
     }
   }
@@ -57,4 +57,12 @@ md-toolbar.md-table-toolbar.alternate {
       padding: 0 7px;
     }
   }
+}
+
+md-edit-dialog.tb-edit-dialog{
+  z-index: 78;
+}
+
+md-backdrop.md-edit-dialog-backdrop{
+  z-index: 77;
 }

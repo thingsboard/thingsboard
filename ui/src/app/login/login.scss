@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ md-card.tb-login-card {
     width: 450px !important;
   }
 
+  .tb-padding {
+    padding: 8px;
+  }
+
   md-card-title {
     img.tb-login-logo {
       height: 50px;
@@ -30,5 +34,37 @@ md-card.tb-login-card {
 
   md-card-content {
     margin-top: -50px;
+  }
+
+  md-input-container .md-errors-spacer {
+    display: none;
+  }
+
+  .oauth-container{
+    .container-divider {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin: 10px 0;
+
+      .line {
+        flex: 1;
+      }
+
+      .text {
+        padding-right: 10px;
+        padding-left: 10px;
+      }
+    }
+
+    .material-icons{
+      width: 20px;
+      min-width: 20px;
+      height: 20px;
+      min-height: 20px;
+      margin: 0 4px;
+    }
   }
 }

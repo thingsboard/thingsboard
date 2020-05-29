@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 package org.thingsboard.server.actors.service;
 
 import akka.actor.Terminated;
-import akka.actor.UntypedActor;
+import akka.actor.UntypedAbstractActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 
-public abstract class ContextAwareActor extends UntypedActor {
+public abstract class ContextAwareActor extends UntypedAbstractActor {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 

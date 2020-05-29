@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,10 +183,11 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                     w.triggerHandler('resize');
                 }
             }).then(function (newDataKey) {
-                let index = scope.funcDataKeys.indexOf(dataKey);
                 if (newDataKey.type === types.dataKeyType.function) {
+                    let index = scope.funcDataKeys.indexOf(dataKey);
                     scope.funcDataKeys[index] = newDataKey;
                 } else if (newDataKey.type === types.dataKeyType.alarm) {
+                    let index = scope.alarmDataKeys.indexOf(dataKey);
                     scope.alarmDataKeys[index] = newDataKey;
                 }
                 ngModelCtrl.$setDirty();

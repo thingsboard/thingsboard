@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,23 +25,25 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.service.security.model.SecuritySettings;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.update.UpdateService;
-import org.thingsboard.server.service.update.model.UpdateMessage;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
 
     @Autowired
     private MailService mailService;
-    
+
     @Autowired
     private AdminSettingsService adminSettingsService;
 
@@ -65,7 +67,7 @@ public class AdminController extends BaseController {
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public AdminSettings saveAdminSettings(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
@@ -111,8 +113,8 @@ public class AdminController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             adminSettings = checkNotNull(adminSettings);
             if (adminSettings.getKey().equals("mail")) {
-               String email = getCurrentUser().getEmail();
-               mailService.sendTestMail(adminSettings.getJsonValue(), email);
+                String email = getCurrentUser().getEmail();
+                mailService.sendTestMail(adminSettings.getJsonValue(), email);
             }
         } catch (Exception e) {
             throw handleException(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,11 @@ import thingsboardEntitiesHierarchyWidget from '../widget/lib/entities-hierarchy
 import thingsboardExtensionsTableWidget from '../widget/lib/extensions-table-widget';
 import thingsboardDateRangeNavigatorWidget from '../widget/lib/date-range-navigator/date-range-navigator';
 import thingsboardMultipleInputWidget from '../widget/lib/multiple-input-widget';
+import thingsboardWebCameraInputWidget from '../widget/lib/web-camera-input-widget';
 
 import thingsboardRpcWidgets from '../widget/lib/rpc';
+
+import thingsboardJsonToString from '../components/tb-json-to-string.directive';
 
 import TbFlot from '../widget/lib/flot-widget';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
@@ -50,7 +53,8 @@ import thingsboardUtils from '../common/utils.service';
 export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight,
     thingsboardTimeseriesTableWidget, thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget,
     thingsboardEntitiesHierarchyWidget, thingsboardExtensionsTableWidget, thingsboardDateRangeNavigatorWidget,
-    thingsboardMultipleInputWidget, thingsboardRpcWidgets, thingsboardTypes, thingsboardUtils, TripAnimationWidget])
+    thingsboardMultipleInputWidget, thingsboardWebCameraInputWidget, thingsboardRpcWidgets, thingsboardTypes,
+    thingsboardUtils, thingsboardJsonToString, TripAnimationWidget])
     .factory('widgetService', WidgetService)
     .name;
 

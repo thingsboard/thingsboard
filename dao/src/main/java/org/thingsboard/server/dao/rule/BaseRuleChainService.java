@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,24 +88,31 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
         if (!ruleChain.isRoot()) {
             RuleChain previousRootRuleChain = getRootTenantRuleChain(ruleChain.getTenantId());
-            if (!previousRootRuleChain.getId().equals(ruleChain.getId())) {
-                try {
+            try {
+                if (previousRootRuleChain == null) {
+                    setRootAndSave(tenantId, ruleChain);
+                    return true;
+                } else if (!previousRootRuleChain.getId().equals(ruleChain.getId())) {
                     deleteRelation(tenantId, new EntityRelation(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
                             EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
                     previousRootRuleChain.setRoot(false);
                     ruleChainDao.save(tenantId, previousRootRuleChain);
-                    createRelation(tenantId, new EntityRelation(ruleChain.getTenantId(), ruleChain.getId(),
-                            EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-                    ruleChain.setRoot(true);
-                    ruleChainDao.save(tenantId, ruleChain);
+                    setRootAndSave(tenantId, ruleChain);
                     return true;
-                } catch (ExecutionException | InterruptedException e) {
-                    log.warn("[{}] Failed to set root rule chain, ruleChainId: [{}]", ruleChainId);
-                    throw new RuntimeException(e);
                 }
+            } catch (ExecutionException | InterruptedException e) {
+                log.warn("[{}] Failed to set root rule chain, ruleChainId: [{}]", ruleChainId);
+                throw new RuntimeException(e);
             }
         }
         return false;
+    }
+
+    private void setRootAndSave(TenantId tenantId, RuleChain ruleChain) throws ExecutionException, InterruptedException {
+        createRelation(tenantId, new EntityRelation(ruleChain.getTenantId(), ruleChain.getId(),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
+        ruleChain.setRoot(true);
+        ruleChainDao.save(tenantId, ruleChain);
     }
 
     @Override

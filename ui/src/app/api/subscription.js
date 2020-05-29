@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,10 @@ export default class Subscription {
                 options.alarmSearchStatus : this.ctx.types.alarmSearchStatus.any;
             this.alarmsPollingInterval = angular.isDefined(options.alarmsPollingInterval) ?
                 options.alarmsPollingInterval : 5000;
+            this.alarmsMaxCountLoad = angular.isDefined(options.alarmsMaxCountLoad) ?
+                options.alarmsMaxCountLoad : 0;
+            this.alarmsFetchSize = angular.isDefined(options.alarmsFetchSize) ?
+                options.alarmsFetchSize : 100;
 
             this.alarmSourceListener = null;
             this.alarms = [];
@@ -132,6 +136,13 @@ export default class Subscription {
             }
 
             this.subscriptionTimewindow = null;
+            this.comparisonEnabled = options.comparisonEnabled;
+            if (this.comparisonEnabled) {
+                this.timeForComparison = options.timeForComparison;
+
+                this.comparisonTimeWindow = {};
+                this.timewindowForComparison = null;
+            }
 
             this.units = options.units || '';
             this.decimals = angular.isDefined(options.decimals) ? options.decimals : 2;
@@ -168,8 +179,7 @@ export default class Subscription {
     }
 
     getFirstEntityInfo() {
-        var entityId;
-        var entityName;
+        var entityId, entityName, entityLabel = null;
         if (this.type === this.ctx.types.widgetType.rpc.value) {
             if (this.targetDeviceId) {
                 entityId = {
@@ -185,6 +195,7 @@ export default class Subscription {
                     id: this.alarmSource.entityId
                 };
                 entityName = this.alarmSource.entityName;
+                entityLabel = this.alarmSource.entityLabel;
             }
         } else {
             for (var i=0;i<this.datasources.length;i++) {
@@ -195,6 +206,7 @@ export default class Subscription {
                         id: datasource.entityId
                     };
                     entityName = datasource.entityName;
+                    entityLabel = datasource.entityLabel;
                     break;
                 }
             }
@@ -202,7 +214,8 @@ export default class Subscription {
         if (entityId) {
             return {
                 entityId: entityId,
-                entityName: entityName
+                entityName: entityName,
+                entityLabel: entityLabel
             };
         } else {
             return null;
@@ -311,18 +324,39 @@ export default class Subscription {
     }
 
     configureData() {
+        var additionalDatasources = [];
         var dataIndex = 0;
+        var additionalKeysNumber = 0;
         for (var i = 0; i < this.datasources.length; i++) {
             var datasource = this.datasources[i];
+            var additionalDataKeys = [];
+            let datasourceAdditionalKeysNumber = 0;
+
             for (var a = 0; a < datasource.dataKeys.length; a++) {
                 var dataKey = datasource.dataKeys[a];
-                dataKey.hidden = false;
+                dataKey.hidden = dataKey.settings.hideDataByDefault ? true : false;
+                dataKey.inLegend = dataKey.settings.removeFromLegend ? false : true;
                 dataKey.pattern = angular.copy(dataKey.label);
+
+                if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+                    datasourceAdditionalKeysNumber++;
+                    additionalKeysNumber++;
+                    let additionalDataKey = this.ctx.utils.createAdditionalDataKey(dataKey,datasource, this.timeForComparison,this.datasources,additionalKeysNumber);
+                    dataKey.settings.comparisonSettings.color = additionalDataKey.color;
+
+                    additionalDataKeys.push(additionalDataKey);
+                }
+
                 var datasourceData = {
                     datasource: datasource,
                     dataKey: dataKey,
                     data: []
                 };
+                if (dataKey.type === this.ctx.types.dataKeyType.entityField) {
+                    if(datasource.entity && datasource.entity[this.ctx.types.entityField[dataKey.name].value]){
+                        datasourceData.data.push([Date.now(), datasource.entity[this.ctx.types.entityField[dataKey.name].value]]);
+                    }
+                }
                 this.data.push(datasourceData);
                 this.hiddenData.push({data: []});
                 if (this.displayLegend) {
@@ -341,7 +375,45 @@ export default class Subscription {
                     this.legendData.data.push(legendKeyData);
                 }
             }
+
+            if (datasourceAdditionalKeysNumber > 0) {
+                let additionalDatasource = angular.copy(datasource);
+                additionalDatasource.dataKeys = additionalDataKeys;
+                additionalDatasource.isAdditional = true;
+                additionalDatasources.push(additionalDatasource);
+            }
         }
+
+        for (var j=0; j < additionalDatasources.length; j++) {
+            let additionalDatasource = additionalDatasources[j];
+            for (var k=0; k < additionalDatasource.dataKeys.length; k++) {
+                let additionalDataKey = additionalDatasource.dataKeys[k];
+                var additionalDatasourceData = {
+                    datasource: additionalDatasource,
+                    dataKey: additionalDataKey,
+                    data: []
+                };
+                this.data.push(additionalDatasourceData);
+                this.hiddenData.push({data: []});
+                if (this.displayLegend) {
+                    var additionalLegendKey = {
+                        dataKey: additionalDataKey,
+                        dataIndex: dataIndex++
+                    };
+                    this.legendData.keys.push(additionalLegendKey);
+                    var additionalLegendKeyData = {
+                        min: null,
+                        max: null,
+                        avg: null,
+                        total: null,
+                        hidden: false
+                    };
+                    this.legendData.data.push(additionalLegendKeyData);
+                }
+            }
+        }
+
+        this.datasources = this.datasources.concat(additionalDatasources);
 
         var subscription = this;
         var registration;
@@ -638,7 +710,7 @@ export default class Subscription {
     updateTimewindow() {
         this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
         if (this.subscriptionTimewindow.realtimeWindowMs) {
-            this.timeWindow.maxTime = (new Date).getTime() + this.timeWindow.stDiff;
+            this.timeWindow.maxTime = (moment()).valueOf() + this.timeWindow.stDiff;//eslint-disable-line
             this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
         } else if (this.subscriptionTimewindow.fixedWindow) {
             this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs;
@@ -657,6 +729,26 @@ export default class Subscription {
         }
         this.updateTimewindow();
         return this.subscriptionTimewindow;
+    }
+
+    updateComparisonTimewindow() {
+        this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
+        if (this.timewindowForComparison.realtimeWindowMs) {
+            this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeForComparison).valueOf(); //eslint-disable-line
+            this.comparisonTimeWindow.minTime = this.comparisonTimeWindow.maxTime - this.timewindowForComparison.realtimeWindowMs;
+        } else if (this.timewindowForComparison.fixedWindow) {
+            this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs;
+            this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs;
+        }
+    }
+
+    updateSubscriptionForComparison() {
+        if (!this.subscriptionTimewindow) {
+            this.subscriptionTimewindow = this.updateRealtimeSubscription();
+        }
+        this.timewindowForComparison = this.ctx.timeService.createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison);
+        this.updateComparisonTimewindow();
+        return this.timewindowForComparison;
     }
 
     dataUpdated(sourceData, datasourceIndex, dataKeyIndex, apply) {
@@ -689,6 +781,9 @@ export default class Subscription {
         if (update) {
             if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
                 this.updateTimewindow();
+                if (this.timewindowForComparison && this.timewindowForComparison.realtimeWindowMs) {
+                    this.updateComparisonTimewindow();
+                }
             }
             currentData.data = sourceData.data;
             if (this.caulculateLegendData) {
@@ -745,6 +840,9 @@ export default class Subscription {
             this.notifyDataLoading();
             if (this.type === this.ctx.types.widgetType.timeseries.value && this.timeWindowConfig) {
                 this.updateRealtimeSubscription();
+                if (this.comparisonEnabled) {
+                    this.updateSubscriptionForComparison();
+                }
                 if (this.subscriptionTimewindow.fixedWindow) {
                     this.onDataUpdated();
                 }
@@ -776,8 +874,25 @@ export default class Subscription {
                     datasourceIndex: index
                 };
 
+                if (this.comparisonEnabled && datasource.isAdditional) {
+                    listener.subscriptionTimewindow = this.timewindowForComparison;
+                    listener.updateRealtimeSubscription = function () {
+                        this.subscriptionTimewindow = subscription.updateSubscriptionForComparison();
+                        return this.subscriptionTimewindow;
+                    };
+                    listener.setRealtimeSubscription = function () {
+                      subscription.updateSubscriptionForComparison();
+                    };
+                }
+
+                var entityFieldKey = false;
+
                 for (var a = 0; a < datasource.dataKeys.length; a++) {
-                    this.data[index + a].data = [];
+                    if (datasource.dataKeys[a].type !== this.ctx.types.dataKeyType.entityField) {
+                        this.data[index + a].data = [];
+                    } else {
+                        entityFieldKey = true;
+                    }
                 }
 
                 index += datasource.dataKeys.length;
@@ -789,7 +904,7 @@ export default class Subscription {
                 }
 
                 var forceUpdate = false;
-                if (datasource.unresolvedStateEntity ||
+                if (datasource.unresolvedStateEntity || entityFieldKey ||
                     !datasource.dataKeys.length ||
                     (datasource.type === this.ctx.types.datasourceType.entity && !datasource.entityId)
                 ) {
@@ -818,6 +933,8 @@ export default class Subscription {
             alarmSource: this.alarmSource,
             alarmSearchStatus: this.alarmSearchStatus,
             alarmsPollingInterval: this.alarmsPollingInterval,
+            alarmsMaxCountLoad: this.alarmsMaxCountLoad,
+            alarmsFetchSize: this.alarmsFetchSize,
             alarmsUpdated: function(alarms, apply) {
                 subscription.alarmsUpdated(alarms, apply);
             }
@@ -908,7 +1025,6 @@ export default class Subscription {
         });
         this.registrations = [];
     }
-
 }
 
 function calculateMin(data) {

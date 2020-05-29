@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,12 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class CustomerController extends BaseController {
 
@@ -98,8 +100,7 @@ public class CustomerController extends BaseController {
         try {
             customer.setTenantId(getCurrentUser().getTenantId());
 
-            Operation operation = customer.getId() == null ? Operation.CREATE : Operation.WRITE;
-            accessControlService.checkPermission(getCurrentUser(), Resource.CUSTOMER, operation, customer.getId(), customer);
+            checkEntity(customer.getId(), customer, Resource.CUSTOMER);
 
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
 

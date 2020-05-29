@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,8 @@ public class ContainerTestSuite {
             testContainer = new DockerComposeContainer(
                     new File("./../../docker/docker-compose.yml"),
                     new File("./../../docker/docker-compose.postgres.yml"),
-                    new File("./../../docker/docker-compose.postgres.volumes.yml"))
+                    new File("./../../docker/docker-compose.postgres.volumes.yml"),
+                    new File("./../../docker/docker-compose.kafka.yml"))
                     .withPull(false)
                     .withLocalCompose(true)
                     .withTailChildContainers(!skipTailChildContainers)

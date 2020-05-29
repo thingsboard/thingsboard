@@ -84,7 +84,29 @@
         "timeout-required": "Timeout obbligatorio.",
         "timeout-invalid": "Timeout non valido.",
         "enable-tls": "Abilita TLS",
-        "send-test-mail": "Invia mail di test"
+        "tls-version" : "Versione TLS",
+        "send-test-mail": "Invia mail di test",
+        "security-settings": "Settaggi di sicurezza",
+        "password-policy": "Politica password",
+        "minimum-password-length": "Lunghezza minima password",
+        "minimum-password-length-required": "È richiesta una lunghezza minima della password",
+        "minimum-password-length-range": "La lunghezza minima della password deve essere compresa tra 5 e 50",
+        "minimum-uppercase-letters": "Numero minimo di lettere maiuscole",
+        "minimum-uppercase-letters-range": "Il numero minimo di lettere maiuscole non può essere negativo",
+        "minimum-lowercase-letters": "Numero minimo di lettere minuscole",
+        "minimum-lowercase-letters-range": "Il numero minimo di lettere minuscole non può essere negativo",
+        "minimum-digits": "Numero minimo di cifre",
+        "minimum-digits-range": "Il numero minimo di cifre non può essere negativo",
+        "minimum-special-characters": "Numero minimo di caratteri speciali",
+        "minimum-special-characters-range": "Il numero minimo di caratteri speciali non può essere negativo",
+        "password-expiration-period-days": "Periodo di scadenza della password in giorni",
+        "password-expiration-period-days-range": "Il periodo di scadenza della password in giorni non può essere negativo",
+        "password-reuse-frequency-days": "Frequenza di riutilizzo della password in giorni",
+        "password-reuse-frequency-days-range": "La frequenza di riutilizzo della password in giorni non può essere negativa",
+        "general-policy": "Politica generale",
+        "max-failed-login-attempts": "Numero massimo di tentativi di accesso non riusciti, prima che l'account sia bloccato",
+        "minimum-max-failed-login-attempts-range": "Il numero massimo di tentativi di accesso non riusciti non può essere negativo",
+        "user-lockout-notification-email": "In caso di blocco dell'account utente, inviare una notifica via e-mail"
     },
     "alarm": {
         "alarm": "Allarme",
@@ -247,7 +269,8 @@
         "select-asset": "Seleziona asset",
         "no-assets-matching": "Nessun asset corrispondente a '{{entity}}' è stato trovato.",
         "asset-required": "Asset obbligatorio",
-        "name-starts-with": "Asset con nome che inizia per"
+        "name-starts-with": "Asset con nome che inizia per",
+        "label": "Etichetta"
     },
     "attribute": {
         "attributes": "Attributi",
@@ -304,6 +327,9 @@
         "type-relations-delete": "Eliminate tutte le relazioni",
         "type-alarm-ack": "Confermato",
         "type-alarm-clear": "Eliminato",
+        "type-login": "Accesso",
+        "type-logout": "Disconnettersi",
+        "type-lockout": "Bloccato",
         "status-success": "Successo",
         "status-failure": "Fallito",
         "audit-log-details": "Dettaglio log audit",
@@ -1134,7 +1160,7 @@
         "total": "totale"
     },
     "login": {
-        "login": "Login",
+        "login": "Accedi",
         "request-password-reset": "Richiesta reset password",
         "reset-password": "Reset Password",
         "create-password": "Crea Password",
@@ -1148,7 +1174,9 @@
         "new-password": "Nuova password",
         "new-password-again": "Ripeti nuova password",
         "password-link-sent-message": "Link reset password inviato con successo!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Accedi con {{name}}",
+        "or": "o"
     },
     "position": {
         "top": "Alto",
@@ -1158,6 +1186,7 @@
     },
     "profile": {
         "profile": "Profilo",
+        "last-login-time": "Ultimo accesso",
         "change-password": "Modifica Password",
         "current-password": "Password attuale"
     },
@@ -1398,7 +1427,11 @@
         "activation-link-copied-message": "Link di attivazione utente copiato negli appunti",
         "details": "Dettagli",
         "login-as-tenant-admin": "Accedi come Amministratore tenant",
-        "login-as-customer-user": "Accedi come Utente cliente"
+        "login-as-customer-user": "Accedi come Utente cliente",
+        "disable-account": "Disabilita account utente",
+        "enable-account": "Abilita account utente",
+        "enable-account-message": "L'account utente è stato abilitato correttamente!",
+        "disable-account-message": "L'account utente è stato disabilitato correttamente!"
     },
     "value": {
         "type": "Tipo valore",
@@ -1624,6 +1657,31 @@
                 "Step size": "Dimensione del passo",
                 "Ok": "Ok"
             }
+        },
+        "input-widgets": {
+            "attribute-not-allowed": "Questo widget non può usare un parametro di tipo attributo",
+            "date": "Data",
+            "discard-changes": "Annulla modifiche",
+            "entity-attribute-required": "E' richiesta un'entità di tipo attributo",
+            "entity-timeseries-required": "E' richiesta un'entità di tipo serie temporale",
+            "not-allowed-entity": "L'entità selezionata non può avere attributi condivisi",
+            "no-attribute-selected": "Nessun attributo selezionato",
+            "no-datakey-selected": "Nessuna datakey selezionata",
+            "no-entity-selected": "Nessuna entità selezionata",
+            "no-image": "Nessuna immagine",
+            "no-support-web-camera": "Web camera non supportata",
+            "no-timeseries-selected": "Nessuna serie temporale selezionata",
+            "switch-attribute-value": "Cambia il valore dell'attributo",
+            "switch-camera": "Cambia camera",
+            "switch-timeseries-value": "Cambia il valore della serie temporale",
+            "take-photo": "Fai una foto",
+            "time": "Tempo",
+            "timeseries-not-allowed": "Questo widget non può usare un parametro di tipo serie temporale",
+            "update-failed": "Aggiornamento fallito",
+            "update-successful": "Aggiornamento eseguito con successo",
+            "update-attribute": "Aggiorna attributo",
+            "update-timeseries": "Aggiorna serie temporale",
+            "value": "Valore"
         }
     },
     "icon": {
@@ -1641,25 +1699,11 @@
             "tooltip-tag-action": "Azione tooltip",
             "node-selected": "Click su nodo selezionato",
             "element-click": "Click su elemento HTML",
-            "pie-slice-click": "Click sulla fetta"
+            "pie-slice-click": "Click sulla fetta",
+            "row-double-click": "Doppio click sulla riga"
         }
     },
     "language": {
-        "language": "Lingua",
-        "locales": {
-            "de_DE": "Tedesco",
-            "fr_FR": "Francese",
-            "zh_CN": "Cinese",
-            "en_US": "Inglese",
-            "it_IT": "Italiano",
-            "ko_KR": "Coreano",
-            "ru_RU": "Russo",
-            "es_ES": "Spagnolo",
-            "ja_JA": "Giapponese",
-            "tr_TR": "Turco",
-            "fa_IR": "Persiana",
-            "uk_UA": "Ucraino",
-            "cs_CZ": "Ceco"            
-        }
+        "language": "Lingua"
     }
 }
