@@ -35,11 +35,7 @@ In order to set deployment type change the value of `DEPLOYMENT_TYPE` variable i
 
 **NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see content of the directories `./basic` and `./high-availability` for details).
 
-Also to run PostgreSQL in `high-availability` deployment mode you'll need to  [install](https://helm.sh/docs/intro/install/) `helm` and add Bitnami helm repository using command:
-
-`
-$ helm repo add bitnami https://charts.bitnami.com/bitnami
-`
+Also, to run PostgreSQL in `high-availability` deployment mode you'll need to  [install](https://helm.sh/docs/intro/install/) `helm`.
 
 Execute the following command to run installation:
 
