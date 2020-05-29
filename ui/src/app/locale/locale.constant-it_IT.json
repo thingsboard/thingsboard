@@ -1445,7 +1445,11 @@
         "boolean-value": "Valore boolean",
         "false": "Falso",
         "true": "Vero",
-        "long": "Long"
+        "long": "Long",
+        "json": "JSON",
+        "json-value": "Valore JSON",
+        "invalid-max-integer": "Il valore deve essere maggiore di {{number}}",
+        "invalid-min-integer": "Il valore deve essere minore di {{number}}"
     },
     "widget": {
         "widget-library": "Libreria Widget",

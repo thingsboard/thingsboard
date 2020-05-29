@@ -48,8 +48,11 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
     vm.isAllParametersValid = true;
 
     vm.sources = [];
+    vm.keyStyle = {};
     vm.datasources = null;
 
+    vm.cellStyle = cellStyle;
+    vm.textColor = textColor;
     vm.discardAll = discardAll;
     vm.inputChanged = inputChanged;
     vm.save = save;
@@ -72,6 +75,55 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
             $scope.$digest();
         }
     });
+
+    function defaultStyle() {
+        return {};
+    }
+
+    function cellStyle(key, sourceIndex, firstKey, lastKey) {
+        var style = {};
+        if (key) {
+            var styleInfo = vm.keyStyle[key.label];
+            var value = key.currentValue;
+            if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
+                try {
+                    style = styleInfo.cellStyleFunction(value);
+                } catch (e) {
+                    style = {};
+                }
+            } else {
+                style = defaultStyle();
+            }
+        }
+        if (vm.settings.rowMargin) {
+            if (angular.isUndefined(style.marginTop) && sourceIndex != 0) {
+                style.marginTop = (vm.settings.rowMargin / 2) + 'px';
+            }
+            if (angular.isUndefined(style.marginBottom)) {
+                style.marginBottom = (vm.settings.rowMargin / 2) + 'px';
+            }
+        }
+        if (vm.settings.columnMargin) {
+            if (angular.isUndefined(style.marginLeft) && !firstKey) {
+                style.marginLeft = (vm.settings.columnMargin / 2) + 'px';
+            }
+            if (angular.isUndefined(style.marginRight) && !lastKey) {
+                style.marginRight = (vm.settings.columnMargin / 2) + 'px';
+            }
+        }
+        return style;
+    }
+
+    function textColor(key) {
+        var style = {};
+        if (key) {
+            var styleInfo = vm.keyStyle[key.label];
+            if (styleInfo.color) {
+                style = { color: styleInfo.color };
+            }
+        }
+        return style;
+    }
 
     $scope.$on('multiple-input-resize', function (event, formId) {
         if (vm.formId == formId) {
@@ -280,6 +332,26 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                         }
                         //For backward compatibility
 
+                        var cellStyleFunction = null;
+                        var useCellStyleFunction = false;
+
+                        if (source.keys[j].settings.useCellStyleFunction === true) {
+                            if (angular.isDefined(source.keys[j].settings.cellStyleFunction) && source.keys[j].settings.cellStyleFunction.length > 0) {
+                                try {
+                                    cellStyleFunction = new Function('value', source.keys[j].settings.cellStyleFunction);
+                                    useCellStyleFunction = true;
+                                } catch (e) {
+                                    cellStyleFunction = null;
+                                    useCellStyleFunction = false;
+                                }
+                            }
+                        }
+
+                        vm.keyStyle[source.keys[j].label] = {
+                            useCellStyleFunction: useCellStyleFunction,
+                            cellStyleFunction: cellStyleFunction,
+                            color: source.keys[j].settings.color
+                        };
                     }
                 } else {
                     vm.entityDetected = false;

@@ -1625,7 +1625,9 @@
         "true": "True",
         "long": "Long",
         "json": "JSON",
-        "json-value": "JSON value"
+        "json-value": "JSON value",
+        "invalid-max-integer": "Value must be greater than {{number}}",
+        "invalid-min-integer": "Value must be lower than {{number}}"
     },
     "widget": {
         "widget-library": "Widgets Library",

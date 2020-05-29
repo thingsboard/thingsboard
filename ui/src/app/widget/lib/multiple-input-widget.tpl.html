@@ -17,16 +17,19 @@
 -->
 <form class="tb-multiple-input" name="multipleInputForm" ng-submit="vm.save()" novalidate autocomplete="off">
     <div style="padding: 0 8px;" ng-if="vm.entityDetected && vm.isAllParametersValid">
-        <fieldset ng-repeat="source in vm.sources" ng-class="{'fields-group': vm.settings.showGroupTitle}">
+        <fieldset ng-repeat="source in vm.sources" ng-class="{'fields-group': vm.settings.showGroupTitle}" ng-init="sourceIndex=$index">
             <legend class="group-title" ng-if="vm.settings.showGroupTitle">{{ vm.getGroupTitle(source.datasource) }}
             </legend>
             <div layout="row" layout-wrap
                  ng-class="{'vertical-alignment': vm.isVerticalAlignment || vm.changeAlignment}">
-                <div ng-repeat="key in source.keys" ng-if="!key.settings.dataKeyHidden"
+                <div ng-repeat="key in source.keys" ng-if="!key.settings.dataKeyHidden" ng-init="keyIndex=$index"
                      ng-style="{'width': (vm.isVerticalAlignment || vm.changeAlignment) ? '100%' : vm.inputWidthSettings}">
+                    <md-tooltip class="tb-tooltip-multiline" ng-if="key.settings.tooltipMessage && key.settings.tooltipMessage.length" md-direction="left">
+                        <span ng-bind-html="key.settings.tooltipMessage"></span>
+                    </md-tooltip>
                     <div class="input-field" ng-if="(key.settings.dataKeyValueType === 'string')">
-                        <md-input-container class="md-block">
-                            <label>{{key.label}}</label>
+                        <md-input-container class="md-block" ng-style="vm.cellStyle(key, sourceIndex, $first, $last)">
+                            <label ng-style="vm.textColor(key)">{{key.label}}</label>
                             <md-icon class="material-icons" ng-if="key.settings.icon">
                                 {{key.settings.icon}}
                             </md-icon>
@@ -37,15 +40,16 @@
                                    ng-required="key.settings.required"
                                    type="text"
                                    md-select-on-focus
-                                   ng-blur="vm.inputChanged(source,key)">
+                                   ng-blur="vm.inputChanged(source,key)"
+                                   ng-style="vm.textColor(key)">
                             <div ng-messages="multipleInputForm[key.name].$error">
                                 <div ng-message="required">{{ key.settings.requiredErrorMessage }}</div>
                             </div>
                         </md-input-container>
                     </div>
                     <div class="input-field" ng-if="(key.settings.dataKeyValueType === 'double')">
-                        <md-input-container class="md-block">
-                            <label>{{key.label}}</label>
+                        <md-input-container class="md-block" ng-style="vm.cellStyle(key, sourceIndex, $first, $last)">
+                            <label ng-style="vm.textColor(key)">{{key.label}}</label>
                             <md-icon class="material-icons" ng-if="key.settings.icon">
                                 {{key.settings.icon}}
                             </md-icon>
@@ -55,17 +59,22 @@
                                    ng-model="key.data.currentValue"
                                    ng-required="key.settings.required"
                                    type="number"
-                                   step="key.settings.step"
+                                   step="{{key.settings.step}}"
                                    md-select-on-focus
-                                   ng-blur="vm.inputChanged(source,key)">
+                                   ng-blur="vm.inputChanged(source,key)"
+                                   ng-style="vm.textColor(key)"
+                                   min="{{key.settings.min}}"
+                                   max="{{key.settings.max}}">
                             <div ng-messages="multipleInputForm[key.name].$error">
                                 <div ng-message="required">{{ key.settings.requiredErrorMessage }}</div>
+                                <div ng-message="min" translate translate-values='{ number: key.settings.min }'>value.invalid-max-integer</div>
+                                <div ng-message="max" translate translate-values='{ number: key.settings.max }'>value.invalid-min-integer</div>
                             </div>
                         </md-input-container>
                     </div>
                     <div class="input-field" ng-if="(key.settings.dataKeyValueType === 'integer')">
-                        <md-input-container class="md-block">
-                            <label>{{key.label}}</label>
+                        <md-input-container class="md-block" ng-style="vm.cellStyle(key, sourceIndex, $first, $last)">
+                            <label ng-style="vm.textColor(key)">{{key.label}}</label>
                             <md-icon class="material-icons" ng-if="key.settings.icon">
                                 {{key.settings.icon}}
                             </md-icon>
@@ -75,13 +84,19 @@
                                    ng-model="key.data.currentValue"
                                    ng-required="key.settings.required"
                                    type="number"
-                                   step="key.settings.step"
+                                   step="{{key.settings.step}}"
                                    md-select-on-focus
                                    ng-pattern="/^-?[0-9]+$/"
-                                   ng-blur="vm.inputChanged(source,key)">
+                                   ng-blur="vm.inputChanged(source,key)"
+                                   ng-style="vm.textColor(key)"
+                                   min="{{key.settings.min}}"
+                                   max="{{key.settings.max}}">
                             <div ng-messages="multipleInputForm[key.name].$error">
                                 <div ng-message="required">{{ key.settings.requiredErrorMessage }}</div>
                                 <div translate ng-message="pattern">value.invalid-integer-value</div>
+                                <div ng-message="min" translate translate-values='{ number: key.settings.min }'>value.invalid-max-integer</div>
+                                <div ng-message="max" translate translate-values='{ number: key.settings.max }'>value.invalid-min-integer</div>
+                                {{ 'action.share-via' | translate:{provider:'Facebook'} }}
                             </div>
                         </md-input-container>
                     </div>
@@ -89,7 +104,9 @@
                         <md-checkbox name="{{key.name}}"
                                      ng-disabled="key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition"
                                      ng-model="key.data.currentValue"
-                                     ng-change="vm.inputChanged(source,key)">
+                                     ng-change="vm.inputChanged(source,key)"
+                                     ng-style="vm.cellStyle(key, sourceIndex, $first, $last)"
+                                     ng-style="vm.textColor(key)">
                             {{key.label}}
                         </md-checkbox>
                     </div>
@@ -99,7 +116,9 @@
                                    ng-model="key.data.currentValue"
                                    ng-change="vm.inputChanged(source,key)"
                                    aria-label="{{key.label}}"
-                                   md-invert>
+                                   ng-style="vm.cellStyle(key, sourceIndex, $first, $last)"
+                                   md-invert
+                                   ng-style="vm.textColor(key)">
                             {{key.label}}
                         </md-switch>
                     </div>
@@ -114,7 +133,8 @@
                                              mdp-disabled="key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition"
                                              ng-model="key.data.currentValue"
                                              ng-change="vm.inputChanged(source,key)"
-                                             mdp-placeholder="{{ 'widgets.input-widgets.date' | translate }}">
+                                             mdp-placeholder="{{ 'widgets.input-widgets.date' | translate }}"
+                                             ng-style="vm.cellStyle(key, sourceIndex, $first, $last)">
                                 <div ng-messages="multipleInputForm[key.name].$error">
                                     <div ng-message="required">{{ key.settings.requiredErrorMessage }}</div>
                                 </div>
@@ -125,12 +145,36 @@
                                              ng-model="key.data.currentValue"
                                              ng-change="vm.inputChanged(source,key)"
                                              mdp-placeholder="{{ 'widgets.input-widgets.time' | translate }}"
-                                             mdp-auto-switch="true">
+                                             mdp-auto-switch="true"
+                                             ng-style="vm.cellStyle(key, sourceIndex, $first, $last)">
                                 <div ng-messages="multipleInputForm[key.name].$error">
                                     <div ng-message="required">{{ key.settings.requiredErrorMessage }}</div>
                                 </div>
                             </mdp-time-picker>
                         </div>
+                    </div>
+                    <div class="input-field" ng-if="(key.settings.dataKeyValueType === 'list')">
+                        <md-input-container class="md-block" ng-style="vm.cellStyle(key, sourceIndex, $first, $last)">
+                            <label ng-style="vm.textColor(key)">{{key.label}}</label>
+                            <md-icon class="material-icons" ng-if="key.settings.icon">
+                                {{key.settings.icon}}
+                            </md-icon>
+                            <md-select ng-disabled="key.settings.isEditable === 'disabled' ||
+                                                    key.settings.disabledOnCondition ||
+                                                    key.settings.isEditable === 'readonly'"
+                                       md-select-on-focus
+                                       ng-model="key.data.currentValue"
+                                       ng-required="key.settings.required"
+                                       ng-change="vm.inputChanged(source,key)">
+                                <md-option ng-repeat="option in key.settings.optionsList" ng-value="option"
+                                           ng-style="vm.textColor(key)">
+                                    {{option}}
+                                </md-option>
+                            </md-select>
+                            <div ng-messages="multipleInputForm[key.name].$error">
+                                <div ng-message="required">{{ key.settings.requiredErrorMessage }}</div>
+                            </div>
+                        </md-input-container>
                     </div>
                 </div>
             </div>
