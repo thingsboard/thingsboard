@@ -94,6 +94,8 @@ export default function RuleChainsController(ruleChainService, userService, edge
 
     vm.isRootRuleChain = isRootRuleChain;
     vm.isNonRootRuleChain = isNonRootRuleChain;
+    vm.isDefaultEdgeRuleChain = isDefaultEdgeRuleChain;
+    var defaultEdgeRuleChainIds = [];
 
     vm.exportRuleChain = exportRuleChain;
     vm.setRootRuleChain = setRootRuleChain;
@@ -234,9 +236,10 @@ export default function RuleChainsController(ruleChainService, userService, edge
                 details: function() { return $translate.instant('rulechain.import') },
                 icon: "file_upload"
             });
+
         } else if (vm.ruleChainsScope === 'edge') {
             fetchRuleChainsFunction = function (pageLink) {
-                return ruleChainService.getEdgeRuleChains(edgeId, pageLink);
+                return fetchEdgeRuleChains(edgeId, pageLink);
             };
             deleteRuleChainFunction = function (ruleChainId) {
                 return ruleChainService.unassignRuleChainFromEdge(edgeId, ruleChainId);
@@ -250,6 +253,26 @@ export default function RuleChainsController(ruleChainService, userService, edge
                 details: function() { return $translate.instant('rulechain.set-root') },
                 icon: "flag",
                 isEnabled: isNonRootRuleChain
+            });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    setDefaultEdgeRuleChain($event, item);
+                },
+                name: function() { return $translate.instant('rulechain.set-default-edge') },
+                details: function() { return $translate.instant('rulechain.set-default-edge') },
+                icon: "bookmark_outline",
+                isEnabled: isNonDefaultEdgeRuleChain
+            });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    removeDefaultEdgeRuleChain($event, item);
+                },
+                name: function() { return $translate.instant('rulechain.remove-default-edge') },
+                details: function() { return $translate.instant('rulechain.remove-default-edge') },
+                icon: "bookmark",
+                isEnabled: isDefaultEdgeRuleChain
             });
 
             ruleChainActionsList.push(
@@ -315,29 +338,51 @@ export default function RuleChainsController(ruleChainService, userService, edge
         vm.grid = grid;
     }
 
-    function fetchRuleChains(pageLink, type) {
-        if (type === types.systemRuleChainType) {
-            return ruleChainService.getRuleChains(pageLink, null, type);
-        } else {
-            var deferred = $q.defer();
-            ruleChainService.getRuleChains(pageLink, null, type).then(
-                // TODO: deaflynx
-                // function success(response) {
-                //     ruleChainService.getDefaultEdgeRuleChains().then(
-                //         function success(defaultEdgeRuleChains) {
-                //             // response.data merge with defaultEdgeRuleChains
-                //             deferred.resolve(data);
-                //         },
-                //         function fail() {
-                //             deferred.reject();
-                //         }
-                //     );
-                // },
-            function fail() {
+    function getDefaultEdges(ruleChains) {
+        var deferred = $q.defer();
+        ruleChainService.getDefaultEdgeRuleChains(null).then(
+            function success(response) {
+                response.map(function (ruleChain) {
+                    defaultEdgeRuleChainIds.push(ruleChain.id.id)
+                });
+
+                const data = ruleChains.data;
+                data.map(function (ruleChain) {
+                    ruleChain.isDefault = defaultEdgeRuleChainIds.some(
+                        id => ruleChain.id.id.includes(id));
+                    return ruleChain;
+                });
+                ruleChains.data = data;
+
+                deferred.resolve(ruleChains);
+            }, function fail() {
                 deferred.reject();
-            });
-            return deferred.promise;
-        }
+            }
+        )
+        return deferred.promise;
+    }
+
+    function fetchRuleChains(pageLink, type) {
+        return ruleChainService.getRuleChains(pageLink, null, type);
+    }
+
+    function fetchEdgeRuleChains(edgeId, pageLink) {
+        var deferred = $q.defer();
+        ruleChainService.getRuleChains(pageLink, null, types.edgeRuleChainType).then(
+            function success(ruleChains) {
+                getDefaultEdges(ruleChains).then(
+                    function success(response) {
+                        deferred.resolve(response);
+                    }, function fail() {
+                        deferred.reject();
+                    }
+                );
+                // deferred.resolve(response);
+            }, function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
     }
 
     function saveRuleChain(ruleChain) {
@@ -389,6 +434,14 @@ export default function RuleChainsController(ruleChainService, userService, edge
         }
     }
 
+    function isDefaultEdgeRuleChain(ruleChain) {
+        return angular.isDefined(ruleChain) && !ruleChain.root && defaultEdgeRuleChainIds.includes(ruleChain.id.id) === true;
+    }
+
+    function isNonDefaultEdgeRuleChain(ruleChain) {
+        return angular.isDefined(ruleChain) && !ruleChain.root && defaultEdgeRuleChainIds.includes(ruleChain.id.id) === false;
+    }
+
     function exportRuleChain($event, ruleChain) {
         $event.stopPropagation();
         importExport.exportRuleChain(ruleChain.id.id);
@@ -418,6 +471,42 @@ export default function RuleChainsController(ruleChainService, userService, edge
                     }
                 );
             }
+        });
+    }
+
+    function setDefaultEdgeRuleChain($event, ruleChain) {
+        $event.stopPropagation();
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('rulechain.set-default-edge-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.set-default-edge-text'))
+            .ariaLabel($translate.instant('rulechain.set-default-edge'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            ruleChainService.addDefaultEdgeRuleChain(ruleChain.id.id).then(
+                    () => {
+                        vm.grid.refreshList();
+                    }
+                );
+        });
+    }
+
+    function removeDefaultEdgeRuleChain($event, ruleChain) {
+        $event.stopPropagation();
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('rulechain.remove-default-edge-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.remove-default-edge-text'))
+            .ariaLabel($translate.instant('rulechain.remove-default-edge'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            ruleChainService.removeDefaultEdgeRuleChain(ruleChain.id.id).then(
+                () => {
+                    vm.grid.refreshList();
+                }
+            );
         });
     }
 

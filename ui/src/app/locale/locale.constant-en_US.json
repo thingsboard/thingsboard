@@ -1554,6 +1554,7 @@
         "assign-rulechains": "Assign rulechains",
         "assign-new-rulechain": "Assign new rulechain",
         "delete-rulechains": "Delete rulechains",
+        "default": "Default",
         "unassign-rulechain": "Unassign rulechain",
         "unassign-rulechains": "Unassign rulechains",
         "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainTitle}}'?",
@@ -1576,7 +1577,13 @@
         "set-default-root-edge": "Make rule chain default root",
         "set-default-root-edge-rulechain-title": "Are you sure you want to make the rule chain '{{ruleChainName}}' default edge root?",
         "set-default-root-edge-rulechain-text": "After the confirmation the rule chain will become default edge root and will handle all incoming transport messages.",
-        "invalid-rulechain-type-error": "Unable to import rule chain: Invalid rule chain type. Expected type is {{expectedRuleChainType}}."
+        "invalid-rulechain-type-error": "Unable to import rule chain: Invalid rule chain type. Expected type is {{expectedRuleChainType}}.",
+        "set-default-edge": "Make edge rule chain default",
+        "set-default-edge-title": "Are you sure you want to make the edge rule chain '{{ruleChainName}}' default?",
+        "set-default-edge-text": "After the confirmation the edge rule chain will be added to default list and handle all incoming transport messages.",
+        "remove-default-edge": "Remove edge rule chain from defaults",
+        "remove-default-edge-title": "Are you sure you want to remove the edge rule chain '{{ruleChainName}}' from default list?",
+        "remove-default-edge-text": "After the confirmation the edge rule chain will stop handling all incoming transport messages."
     },
     "rulenode": {
         "details": "Details",

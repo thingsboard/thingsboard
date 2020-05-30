@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -316,6 +317,28 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         Assert.assertEquals(updatedRuleChainMetaData.getNodes(), loadedRuleNodes);
 
         ruleChainService.deleteRuleChainById(tenantId, savedRuleChainMetaData.getRuleChainId());
+    }
+
+    @Test
+    public void testGetDefaultEdgeRuleChains() throws Exception {
+        RuleChainId ruleChainId = saveRuleChainAndSetDefaultEdge("Default Edge Rule Chain 1");
+        saveRuleChainAndSetDefaultEdge("Default Edge Rule Chain 2");
+        List<RuleChain> result = ruleChainService.findDefaultEdgeRuleChainsByTenantId(tenantId).get();
+        Assert.assertEquals(2, result.size());
+
+        ruleChainService.removeDefaultEdgeRuleChain(tenantId, ruleChainId);
+
+        result = ruleChainService.findDefaultEdgeRuleChainsByTenantId(tenantId).get();
+        Assert.assertEquals(1, result.size());
+    }
+    private RuleChainId saveRuleChainAndSetDefaultEdge(String name) {
+        RuleChain edgeRuleChain = new RuleChain();
+        edgeRuleChain.setTenantId(tenantId);
+        edgeRuleChain.setType(RuleChainType.EDGE);
+        edgeRuleChain.setName(name);
+        RuleChain savedEdgeRuleChain = ruleChainService.saveRuleChain(edgeRuleChain);
+        ruleChainService.addDefaultEdgeRuleChain(tenantId, savedEdgeRuleChain.getId());
+        return savedEdgeRuleChain.getId();
     }
 
     private RuleChainMetaData createRuleChainMetadata() throws Exception {

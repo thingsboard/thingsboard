@@ -15,5 +15,11 @@
     limitations under the License.
 
 -->
-<div class="tb-small tb-rule-chain-assigned-edges" ng-show="vm.parentCtl.ruleChainsScope === 'tenant' && vm.item.assignedEdgesText">{{'rulechain.assigned-to-edges' | translate}}: '{{vm.item.assignedEdgesText}}'</div>
-<div ng-if="(vm.parentCtl.ruleChainsScope === 'tenant' && item && item.root) || (vm.parentCtl.ruleChainsScope === 'edge' &&  vm.parentCtl.isRootRuleChain(item))" translate>rulechain.root</div>
+<div ng-if="(vm.parentCtl.ruleChainsScope === 'tenant' && item && item.root) ||
+            (vm.parentCtl.ruleChainsScope === 'edge' && vm.parentCtl.isRootRuleChain(item)) ||
+            (vm.parentCtl.ruleChainsScope === 'edges' && vm.parentCtl.isRootRuleChain(item))"
+     translate>rulechain.root
+</div>
+<div ng-if="(vm.parentCtl.ruleChainsScope === 'edge' && vm.parentCtl.isDefaultEdgeRuleChain(item))"
+     translate>rulechain.default
+</div>
