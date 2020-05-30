@@ -142,7 +142,29 @@ export default function DashboardRoutes($stateProvider) {
                 pageTitle: 'edge.dashboards'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "dashboard", "label": "{{ vm.edgeDashboardsTitle }}", "translate": "false"}'
+                label: '{"icon": "dashboard", "label": "edge.dashboards"}'
+            }
+        })
+        .state('home.edges.dashboards.dashboard', {
+            url: '/:dashboardId?state',
+            reloadOnSearch: false,
+            module: 'private',
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
+            views: {
+                "content@home": {
+                    templateUrl: dashboardTemplate,
+                    controller: 'DashboardController',
+                    controllerAs: 'vm'
+                }
+            },
+            data: {
+                widgetEditMode: false,
+                searchEnabled: false,
+                pageTitle: 'dashboard.dashboard',
+                dashboardsType: 'edge',
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "dashboard", "label": "{{ vm.dashboard.title }}", "translate": "false"}'
             }
         })
 }

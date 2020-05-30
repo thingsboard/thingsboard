@@ -674,6 +674,11 @@ export function DashboardsController(userService, dashboardService, customerServ
                 customerId: customerId,
                 dashboardId: dashboard.id.id
             });
+        } else if (vm.dashboardsScope === 'edge') {
+            $state.go('home.edges.dashboards.dashboard', {
+                edgeId: edgeId,
+                dashboardId: dashboard.id.id
+            });
         } else {
             $state.go('home.dashboards.dashboard', {dashboardId: dashboard.id.id});
         }
