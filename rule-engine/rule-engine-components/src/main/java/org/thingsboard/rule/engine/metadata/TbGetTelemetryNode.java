@@ -103,9 +103,10 @@ public class TbGetTelemetryNode implements TbNode {
                 if (config.isUseMetadataIntervalPatterns()) {
                     checkMetadataKeyPatterns(msg);
                 }
-                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg));
+                List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg.getMetaData());
+                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg, keys));
                 DonAsynchron.withCallback(list, data -> {
-                    process(data, msg);
+                    process(data, msg, keys);
                     ctx.tellSuccess(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData()));
                 }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
@@ -118,8 +119,8 @@ public class TbGetTelemetryNode implements TbNode {
     public void destroy() {
     }
 
-    private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
-        return tsKeyNames.stream()
+    private List<ReadTsKvQuery> buildQueries(TbMsg msg, List<String> keys) {
+        return keys.stream()
                 .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, getOrderBy()))
                 .collect(Collectors.toList());
     }
@@ -135,7 +136,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private void process(List<TsKvEntry> entries, TbMsg msg) {
+    private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
         ObjectNode resultNode = mapper.createObjectNode();
         if (FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
@@ -143,7 +144,7 @@ public class TbGetTelemetryNode implements TbNode {
             entries.forEach(entry -> processSingle(resultNode, entry));
         }
 
-        for (String key : tsKeyNames) {
+        for (String key : keys) {
             if (resultNode.has(key)) {
                 msg.getMetaData().putValue(key, resultNode.get(key).toString());
             }
