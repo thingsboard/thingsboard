@@ -1324,17 +1324,17 @@
   dependencies:
     jszip "*"
 
+"@types/leaflet-markercluster@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@types/leaflet-markercluster/-/leaflet-markercluster-1.0.3.tgz#64151be453f6490e8751500482deb961064e782c"
+  integrity sha1-ZBUb5FP2SQ6HUVAEgt65YQZOeCw=
+  dependencies:
+    "@types/leaflet" "*"
+
 "@types/leaflet-polylinedecorator@^1.6.0":
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/@types/leaflet-polylinedecorator/-/leaflet-polylinedecorator-1.6.0.tgz#1572131ffedb3154c6e18e682d2fb700e203af19"
   integrity sha512-Z2BXZDjKEqHclwrAmhYdF1RwyFfa/NFxsoF79sitzaj5D/4YWHp/zDRcUZar5cQFKRgK66AYEIF7nKVuMzUGdw==
-  dependencies:
-    "@types/leaflet" "*"
-
-"@types/leaflet.markercluster@^1.4.2":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@types/leaflet.markercluster/-/leaflet.markercluster-1.4.2.tgz#86b8ab7ca2397b48d9ba637757aaf7a6d1cc6f0f"
-  integrity sha512-QQ//hevAxMH2dlRQdRre7V/1G+TbtuDtZnZF/75TNwVIgklrsQVCIcS/cvLsl7UUryfPJ6xmoYHfFzK5iGVgpg==
   dependencies:
     "@types/leaflet" "*"
 
