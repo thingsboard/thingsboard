@@ -196,5 +196,8 @@
       }
     }
   },
-  "defaultProject": "thingsboard"
+  "defaultProject": "thingsboard",
+  "cli": {
+    "packageManager": "yarn"
+  }
 }
