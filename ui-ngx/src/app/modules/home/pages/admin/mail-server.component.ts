@@ -20,7 +20,7 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AdminSettings, MailServerSettings, smtpPortPattern } from '@shared/models/settings.models';
+import { AdminSettings, MailServerSettings, portPattern } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -63,18 +63,35 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
       smtpProtocol: ['smtp'],
       smtpHost: ['localhost', [Validators.required]],
       smtpPort: ['25', [Validators.required,
-        Validators.pattern(smtpPortPattern),
+        Validators.pattern(portPattern),
         Validators.maxLength(5)]],
       timeout: ['10000', [Validators.required,
         Validators.pattern(/^[0-9]{1,6}$/),
         Validators.maxLength(6)]],
       enableTls: ['false'],
       tlsVersion: [],
+      enableProxy: ['false', []],
+      proxyHost: ['', [Validators.required]],
+      proxyPort: ['', [Validators.required, Validators.maxLength(5), Validators.pattern(portPattern)]],
+      proxyUser: [''],
+      proxyPassword: [''],
       username: [''],
       password: ['']
     });
     this.registerDisableOnLoadFormControl(this.mailSettings.get('smtpProtocol'));
     this.registerDisableOnLoadFormControl(this.mailSettings.get('enableTls'));
+  }
+
+  enableProxy(): boolean {
+    let enableProxy: boolean = this.mailSettings.get('enableProxy').value;
+    if (enableProxy) {
+      this.mailSettings.get('proxyHost').enable();
+      this.mailSettings.get('proxyPort').enable();
+    } else {
+      this.mailSettings.get('proxyHost').disable();
+      this.mailSettings.get('proxyPort').disable();
+    }
+    return enableProxy;
   }
 
   sendTestMail(): void {
