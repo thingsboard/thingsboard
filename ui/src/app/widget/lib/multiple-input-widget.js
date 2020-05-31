@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,27 +41,21 @@ function MultipleInputWidget() {
 }
 
 /*@ngInject*/
-function MultipleInputWidgetController($q, $scope, attributeService, toast, types, utils) {
+function MultipleInputWidgetController($q, $scope, $translate, attributeService, toast, types, utils) {
     var vm = this;
 
-    vm.dataKeyDetected = false;
-    vm.hasAnyChange = false;
     vm.entityDetected = false;
-    vm.isValidParameter = true;
-    vm.message = 'No entity selected';
+    vm.isAllParametersValid = true;
 
-    vm.rows = [];
-    vm.rowIndex = 0;
-
+    vm.sources = [];
     vm.datasources = null;
 
-    vm.cellStyle = cellStyle;
-    vm.textColor = textColor;
     vm.discardAll = discardAll;
     vm.inputChanged = inputChanged;
-    vm.postData = postData;
+    vm.save = save;
+    vm.getGroupTitle = getGroupTitle;
 
-    $scope.$watch('vm.ctx', function() {
+    $scope.$watch('vm.ctx', function () {
         if (vm.ctx && vm.ctx.defaultSubscription) {
             vm.settings = vm.ctx.settings;
             vm.widgetConfig = vm.ctx.widgetConfig;
@@ -72,132 +66,133 @@ function MultipleInputWidgetController($q, $scope, attributeService, toast, type
         }
     });
 
-    $scope.$on('multiple-input-data-updated', function(event, formId) {
+    $scope.$on('multiple-input-data-updated', function (event, formId) {
         if (vm.formId == formId) {
-            updateRowData(vm.subscription.data);
+            updateWidgetData(vm.subscription.data);
             $scope.$digest();
         }
     });
 
-    function defaultStyle() {
-        return {};
-    }
-
-    function cellStyle(key, rowIndex, firstKey, lastKey) {
-        var style = {};
-        if (key) {
-            var styleInfo = vm.stylesInfo[key.label];
-            var value = key.currentValue;
-            if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
-                try {
-                    style = styleInfo.cellStyleFunction(value);
-                } catch (e) {
-                    style = {};
-                }
-            } else {
-                style = defaultStyle();
-            }
+    $scope.$on('multiple-input-resize', function (event, formId) {
+        if (vm.formId == formId) {
+            updateWidgetDisplaying();
         }
-        if (vm.settings.rowMargin) {
-            if (angular.isUndefined(style.marginTop) && rowIndex != 0) {
-                style.marginTop = (vm.settings.rowMargin / 2) + 'px';
-            }
-            if (angular.isUndefined(style.marginBottom)) {
-                style.marginBottom = (vm.settings.rowMargin / 2) + 'px';
-            }
-        }
-        if (vm.settings.columnMargin) {
-            if (angular.isUndefined(style.marginLeft) && !firstKey) {
-                style.marginLeft = (vm.settings.columnMargin / 2) + 'px';
-            }
-            if (angular.isUndefined(style.marginRight) && !lastKey) {
-                style.marginRight = (vm.settings.columnMargin / 2) + 'px';
-            }
-        }
-        return style;
-    }
-
-    function textColor(key) {
-        var style = {};
-        if (key) {
-            var styleInfo = vm.stylesInfo[key.label];
-            if (styleInfo.color) {
-                style = { color: styleInfo.color };
-            }
-        }
-        return style;
-    }
+    });
 
     function discardAll() {
-        for (var r = 0; r < vm.rows.length; r++) {
-            var row = vm.rows[r];
-            for (var d = 0; d < row.data.length; d++ ) {
-                row.data[d].currentValue = row.data[d].originalValue;
+        for (var i = 0; i < vm.sources.length; i++) {
+            for (var j = 0; j < vm.sources[i].keys.length; j++) {
+                vm.sources[i].keys[j].data.currentValue = vm.sources[i].keys[j].data.originalValue;
             }
         }
-        vm.hasAnyChange = false;
+        $scope.multipleInputForm.$setPristine();
     }
 
-    function inputChanged() {
-        var newValue = false;
-        for (var r = 0; r < vm.rows.length; r++) {
-            var row = vm.rows[r];
-            for (var d = 0; d < row.data.length; d++ ) {
-                if (!row.data[d].currentValue) {
-                    return;
-                }
-                if (row.data[d].currentValue !== row.data[d].originalValue) {
-                    newValue = true;
-                }
+    function inputChanged(source, key) {
+        if (!vm.settings.showActionButtons) {
+            if (!key.settings.required || (key.settings.required && key.data && angular.isDefined(key.data.currentValue))) {
+                var dataToSave = {
+                    datasource: source.datasource,
+                    keys: [key]
+                };
+                vm.save(dataToSave);
             }
         }
-        vm.hasAnyChange = newValue;
     }
 
-    function postData() {
-        var promises = [];
-        for (var r = 0; r < vm.rows.length; r++) {
-            var row = vm.rows[r];
-            var datasource = row.datasource;
-            var attributes = [];
-            var newValues = false;
-
-            for (var d = 0; d < row.data.length; d++ ) {
-                if (row.data[d].currentValue !== row.data[d].originalValue) {
-                    attributes.push({
-                        key : row.data[d].name,
-                        value : row.data[d].currentValue,
-                    });
-                    newValues = true;
-                }
-            }
-
-            if (newValues) {
-                promises.push(attributeService.saveEntityAttributes(
-                                datasource.entityType,
-                                datasource.entityId,
-                                vm.attributeScope,
-                                attributes));
-            }
+    function save(dataToSave) {
+        var tasks = [];
+        var config = {
+            ignoreLoading: !vm.settings.showActionButtons
+        };
+        var data;
+        if (dataToSave) {
+            data = [dataToSave];
+        } else {
+            data = vm.sources;
         }
-
-        if (promises.length) {
-            $q.all(promises).then(
-                function success() {
-                    for (var d = 0; d < row.data.length; d++ ) {
-                        row.data[d].originalValue = row.data[d].currentValue;
+        for (let i = 0; i < data.length; i++) {
+            var serverAttributes = [], sharedAttributes = [], telemetry = [];
+            for (let j = 0; j < data[i].keys.length; j++) {
+                var key = data[i].keys[j];
+                if ((key.data.currentValue !== key.data.originalValue) || vm.settings.updateAllValues) {
+                    var attribute = {
+                        key: key.name
+                    };
+                    if (key.data.currentValue) {
+                        switch (key.settings.dataKeyValueType) {
+                            case 'dateTime':
+                            case 'date':
+                                attribute.value = key.data.currentValue.getTime();
+                                break;
+                            case 'time':
+                                attribute.value = key.data.currentValue.getTime() - moment().startOf('day').valueOf();//eslint-disable-line
+                                break;
+                            default:
+                                attribute.value = key.data.currentValue;
+                        }
+                    } else {
+                        if (key.data.currentValue === '') {
+                            attribute.value = null;
+                        } else {
+                            attribute.value = key.data.currentValue;
+                        }
                     }
-                    vm.hasAnyChange = false;
+
+                    switch (key.settings.dataKeyType) {
+                        case 'shared':
+                            sharedAttributes.push(attribute);
+                            break;
+                        case 'timeseries':
+                            telemetry.push(attribute);
+                            break;
+                        default:
+                            serverAttributes.push(attribute);
+                    }
+                }
+            }
+            if (serverAttributes.length) {
+                tasks.push(attributeService.saveEntityAttributes(
+                    data[i].datasource.entityType,
+                    data[i].datasource.entityId,
+                    types.attributesScope.server.value,
+                    serverAttributes,
+                    config));
+            }
+            if (sharedAttributes.length) {
+                tasks.push(attributeService.saveEntityAttributes(
+                    data[i].datasource.entityType,
+                    data[i].datasource.entityId,
+                    types.attributesScope.shared.value,
+                    sharedAttributes,
+                    config));
+            }
+            if (telemetry.length) {
+                tasks.push(attributeService.saveEntityTimeseries(
+                    data[i].datasource.entityType,
+                    data[i].datasource.entityId,
+                    types.latestTelemetry.value,
+                    telemetry,
+                    config));
+            }
+        }
+
+        if (tasks.length) {
+            $q.all(tasks).then(
+                function success() {
+                    $scope.multipleInputForm.$setPristine();
                     if (vm.settings.showResultMessage) {
-                        toast.showSuccess('Update successful', 1000, angular.element(vm.ctx.$container), 'bottom left');
+                        toast.showSuccess($translate.instant('widgets.input-widgets.update-successful'), 1000, angular.element(vm.ctx.$container), 'bottom left');
                     }
                 },
                 function fail() {
                     if (vm.settings.showResultMessage) {
-                        toast.showError('Update failed', angular.element(vm.ctx.$container), 'bottom left');
+                        toast.showError($translate.instant('widgets.input-widgets.update-failed'), angular.element(vm.ctx.$container), 'bottom left');
                     }
                 }
             );
+        } else {
+            $scope.multipleInputForm.$setPristine();
         }
     }
 
@@ -211,78 +206,139 @@ function MultipleInputWidgetController($q, $scope, attributeService, toast, type
 
         vm.ctx.widgetTitle = vm.widgetTitle;
 
-        vm.attributeScope = vm.settings.attributesShared ? types.attributesScope.shared.value : types.attributesScope.server.value;
+        vm.settings.groupTitle = vm.settings.groupTitle || "${entityName}";
+
+        //For backward compatibility
+        if (angular.isUndefined(vm.settings.showActionButtons)) {
+            vm.settings.showActionButtons = true;
+        }
+        if (angular.isUndefined(vm.settings.fieldsAlignment)) {
+            vm.settings.fieldsAlignment = 'row';
+        }
+        if (angular.isUndefined(vm.settings.fieldsInRow)) {
+            vm.settings.fieldsInRow = 2;
+        }
+        //For backward compatibility
+
+        vm.isVerticalAlignment = !(vm.settings.fieldsAlignment === 'row');
+
+        if (!vm.isVerticalAlignment && vm.settings.fieldsInRow) {
+            vm.inputWidthSettings = 100 / vm.settings.fieldsInRow + '%';
+        }
+        updateWidgetDisplaying();
     }
 
     function updateDatasources() {
-
-        vm.stylesInfo = {};
-        vm.rows = [];
-        vm.rowIndex = 0;
-
-        if (vm.datasources) {
+        if (vm.datasources && vm.datasources.length) {
             vm.entityDetected = true;
-            for (var ds = 0; ds < vm.datasources.length; ds++) {
-                var row = {};
-                var datasource = vm.datasources[ds];
-                row.datasource = datasource;
-                row.data = [];
-                if (datasource.dataKeys) {
-                    vm.dataKeyDetected = true;
-                    for (var a = 0; a < datasource.dataKeys.length; a++ ) {
-                        var dataKey = datasource.dataKeys[a];
-
-                        if (dataKey.units) {
-                            dataKey.label += ' (' + dataKey.units + ')';
+            for (var i = 0; i < vm.datasources.length; i++) {
+                var datasource = vm.datasources[i];
+                var source = {
+                    datasource: datasource,
+                    keys: []
+                };
+                if (datasource.type === types.datasourceType.entity) {
+                    for (var j = 0; j < datasource.dataKeys.length; j++) {
+                        if ((datasource.entityType !== types.entityType.device) && (datasource.dataKeys[j].settings.dataKeyType == 'shared')) {
+                            vm.isAllParametersValid = false;
                         }
-
-                        var keySettings = dataKey.settings;
-                        if (keySettings.inputTypeNumber) {
-                            keySettings.inputType = 'number';
-                        } else {
-                            keySettings.inputType = 'text';
+                        source.keys.push(datasource.dataKeys[j]);
+                        if (source.keys[j].units) {
+                            source.keys[j].label += ' (' + source.keys[j].units + ')';
                         }
+                        source.keys[j].data = {};
 
-                        var cellStyleFunction = null;
-                        var useCellStyleFunction = false;
-
-                        if (keySettings.useCellStyleFunction === true) {
-                            if (angular.isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
-                                try {
-                                    cellStyleFunction = new Function('value', keySettings.cellStyleFunction);
-                                    useCellStyleFunction = true;
-                                } catch (e) {
-                                    cellStyleFunction = null;
-                                    useCellStyleFunction = false;
-                                }
+                        //For backward compatibility
+                        if (angular.isUndefined(source.keys[j].settings.dataKeyType)) {
+                            if (vm.settings.attributesShared) {
+                                source.keys[j].settings.dataKeyType = 'shared';
+                            } else {
+                                source.keys[j].settings.dataKeyType = 'server';
                             }
                         }
 
-                        vm.stylesInfo[dataKey.label] = {
-                            useCellStyleFunction: useCellStyleFunction,
-                            cellStyleFunction: cellStyleFunction,
-                            color: keySettings.color
-                        };
+                        if (angular.isUndefined(source.keys[j].settings.dataKeyValueType)) {
+                            if (source.keys[j].settings.inputTypeNumber) {
+                                source.keys[j].settings.dataKeyValueType = 'double';
+                            } else {
+                                source.keys[j].settings.dataKeyValueType = 'string';
+                            }
+                        }
 
-                        row.data.push(dataKey);
+                        if (angular.isUndefined(source.keys[j].settings.isEditable)) {
+                            if (source.keys[j].settings.readOnly) {
+                                source.keys[j].settings.isEditable = 'readonly';
+                            } else {
+                                source.keys[j].settings.isEditable = 'editable';
+                            }
+                        }
+                        //For backward compatibility
+
                     }
-                    vm.rows.push(row);
+                } else {
+                    vm.entityDetected = false;
                 }
+                vm.sources.push(source);
             }
         }
     }
 
-    function updateRowData(data) {
+    function updateWidgetData(data) {
         var dataIndex = 0;
-        for (var r = 0; r < vm.rows.length; r++) {
-            var row = vm.rows[r];
-            for (var d = 0; d < row.data.length; d++ ) {
-                var keyData = data[dataIndex++].data;
-                if (keyData && keyData.length && keyData[0].length > 1) {
-                    row.data[d].currentValue = row.data[d].originalValue = keyData[0][1];
+        for (var i = 0; i < vm.sources.length; i++) {
+            var source = vm.sources[i];
+            for (var j = 0; j < source.keys.length; j++) {
+                var keyData = data[dataIndex].data;
+                var key = source.keys[j];
+                if (keyData && keyData.length) {
+                    var value;
+                    switch (key.settings.dataKeyValueType) {
+                        case 'dateTime':
+                        case 'date':
+                            value = moment(keyData[0][1]).toDate(); // eslint-disable-line
+                            break;
+                        case 'time':
+                            value = moment().startOf('day').add(keyData[0][1], 'ms').toDate(); // eslint-disable-line
+                            break;
+                        case 'booleanCheckbox':
+                        case 'booleanSwitch':
+                            value = (keyData[0][1] === 'true');
+                            break;
+                        default:
+                            value = keyData[0][1];
+                    }
+
+                    key.data = {
+                        currentValue: value,
+                        originalValue: value
+                    };
                 }
+
+                if (key.settings.isEditable === 'editable' && key.settings.disabledOnDataKey) {
+                    var conditions = data.filter((item) => {
+                        return item.dataKey.name === key.settings.disabledOnDataKey;
+                    });
+                    if (conditions && conditions.length) {
+                        if (conditions[0].data.length) {
+                            if (conditions[0].data[0][1] === 'false') {
+                                key.settings.disabledOnCondition = true;
+                            } else {
+                                key.settings.disabledOnCondition = !conditions[0].data[0][1];
+                            }
+                        }
+                    }
+                }
+                dataIndex++;
             }
         }
     }
 
+    function updateWidgetDisplaying() {
+        vm.changeAlignment = (vm.ctx.$container[0].offsetWidth < 620);
+        vm.smallWidthContainer = (vm.ctx.$container[0].offsetWidth < 420);
+    }
+
+    function getGroupTitle(datasource) {
+        return utils.createLabelFromDatasource(datasource, vm.settings.groupTitle);
+    }
 }

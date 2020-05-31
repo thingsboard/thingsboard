@@ -56,6 +56,7 @@
         "base-url": "URL de base",
         "base-url-required": "L'URL de base est requise.",
         "enable-tls": "Activer TLS",
+        "tls-version": "Version TLS",
         "general": "Général",
         "general-settings": "Paramètres généraux",
         "mail-from": "Mail de",
@@ -271,7 +272,8 @@
         "unassign-assets-text": "Après la confirmation, tous les actifs sélectionnés ne seront pas attribués et ne seront pas accessibles au client.",
         "unassign-assets-title": "Êtes-vous sûr de vouloir retirer l'attribution de {count, plural, 1 {1 asset} other {# assets}}?",
         "unassign-from-customer": "Retirer du client",
-        "view-assets": "Afficher les actifs"
+        "view-assets": "Afficher les actifs",
+        "label": "Label"
     },
     "attribute": {
         "add": "Ajouter un attribut",
@@ -809,6 +811,22 @@
         "use-entity-name-filter": "Utiliser un filtre",
         "user-name-starts-with": "Utilisateurs dont les noms commencent par '{{prefix}}'"
     },
+    "entity-field": {
+        "address": "Adresse",
+        "address2": "Adresse 2",
+        "city": "Ville",
+        "country": "Pays",
+        "created-time": "Heure de création",
+        "email": "Email",
+        "first-name": "Prénom",
+        "last-name": "Nom de famille",
+        "name": "Nom",
+        "phone": "Téléphone",
+        "state": "Prov",
+        "title": "Titre",
+        "type": "Type",
+        "zip": "Code postal"
+    },
     "entity-view": {
         "add": "Ajouter une vue d'entité",
         "add-alias": "Ajouter un alias de vue d'entité",
@@ -1153,22 +1171,7 @@
         "value": "Valeur"
     },
     "language": {
-        "language": "Language",
-        "locales": {
-            "de_DE": "Allemand",
-            "en_US": "Anglais",
-            "fr_FR": "Français",
-            "es_ES": "Espagnol",
-            "it_IT": "Italien",
-            "ko_KR": "Coréen",
-            "ru_RU": "Russe",
-            "zh_CN": "Chinois",
-            "ja_JA": "Japonaise",
-            "tr_TR": "Turc",
-            "fa_IR": "Persane",
-            "uk_UA": "Ukrainien",
-            "cs_CZ": "Tchèque"
-        }
+        "language": "Language"
     },
     "layout": {
         "color": "Couleur",
@@ -1195,7 +1198,7 @@
         "create-password": "Créer un mot de passe",
         "email": "Email",
         "forgot-password": "Mot de passe oublié?",
-        "login": "Login",
+        "login": "Connexion",
         "new-password": "Nouveau mot de passe",
         "new-password-again": "nouveau mot de passe",
         "password-again": "Mot de passe à nouveau",
@@ -1206,7 +1209,9 @@
         "request-password-reset": "Demander la réinitialisation du mot de passe",
         "reset-password": "Réinitialiser le mot de passe",
         "sign-in": "Veuillez vous connecter",
-        "username": "Nom d'utilisateur (courriel)"
+        "username": "Nom d'utilisateur (courriel)",
+        "login-with": "Se connecter avec {{name}}",
+        "or": "ou"
     },
     "position": {
         "bottom": "Bas",

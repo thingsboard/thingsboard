@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import './settings-card.scss';
 
 /*@ngInject*/
@@ -25,6 +24,8 @@ export default function AdminController(adminService, toast, $scope, $rootScope,
     vm.smtpProtocols = ('smtp smtps').split(' ').map(function (protocol) {
         return protocol;
     });
+
+    vm.tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
 
     $translate('admin.test-mail-sent').then(function (translation) {
         vm.testMailSent = translation;

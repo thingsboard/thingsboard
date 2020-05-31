@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.msg;
 
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+
 /**
  * Created by ashvayka on 15.03.18.
  */
@@ -24,16 +27,11 @@ public enum MsgType {
     /**
      * ADDED/UPDATED/DELETED events for server nodes.
      *
-     * See {@link org.thingsboard.server.common.msg.cluster.ClusterEventMsg}
+     * See {@link PartitionChangeMsg}
      */
-    CLUSTER_EVENT_MSG,
+    PARTITION_CHANGE_MSG,
 
     APP_INIT_MSG,
-
-    /**
-     * All messages, could be send  to cluster
-    */
-    SEND_TO_CLUSTER_MSG,
 
     /**
      * ADDED/UPDATED/DELETED events for main entities.
@@ -43,11 +41,11 @@ public enum MsgType {
     COMPONENT_LIFE_CYCLE_MSG,
 
     /**
-     * Misc messages from the REST API/SERVICE layer to the new rule engine.
+     * Misc messages consumed from the Queue and forwarded to Rule Engine Actor.
      *
-     * See {@link org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg}
+     * See {@link QueueToRuleEngineMsg}
      */
-    SERVICE_TO_RULE_ENGINE_MSG,
+    QUEUE_TO_RULE_ENGINE_MSG,
 
     /**
      * Message that is sent by RuleChainActor to RuleActor with command to process TbMsg.
@@ -91,12 +89,9 @@ public enum MsgType {
 
     DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG,
 
-    DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG,
-
     /**
      * Message that is sent from the Device Actor to Rule Engine. Requires acknowledgement
      */
-    DEVICE_ACTOR_TO_RULE_ENGINE_MSG,
 
     SESSION_TIMEOUT_MSG,
 

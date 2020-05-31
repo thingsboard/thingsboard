@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -63,6 +63,10 @@
                 ng-model="asset.type"
                 entity-type="types.entityType.asset">
         </tb-entity-subtype-autocomplete>
+        <md-input-container class="md-block">
+            <label translate>asset.label</label>
+            <input name="label" ng-model="asset.label">
+        </md-input-container>
         <md-input-container class="md-block">
             <label translate>asset.description</label>
             <textarea ng-model="asset.additionalInfo.description" rows="2"></textarea>

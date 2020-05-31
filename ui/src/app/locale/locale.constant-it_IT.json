@@ -84,6 +84,7 @@
         "timeout-required": "Timeout obbligatorio.",
         "timeout-invalid": "Timeout non valido.",
         "enable-tls": "Abilita TLS",
+        "tls-version" : "Versione TLS",
         "send-test-mail": "Invia mail di test",
         "security-settings": "Settaggi di sicurezza",
         "password-policy": "Politica password",
@@ -268,7 +269,8 @@
         "select-asset": "Seleziona asset",
         "no-assets-matching": "Nessun asset corrispondente a '{{entity}}' è stato trovato.",
         "asset-required": "Asset obbligatorio",
-        "name-starts-with": "Asset con nome che inizia per"
+        "name-starts-with": "Asset con nome che inizia per",
+        "label": "Etichetta"
     },
     "attribute": {
         "attributes": "Attributi",
@@ -1158,7 +1160,7 @@
         "total": "totale"
     },
     "login": {
-        "login": "Login",
+        "login": "Accedi",
         "request-password-reset": "Richiesta reset password",
         "reset-password": "Reset Password",
         "create-password": "Crea Password",
@@ -1172,7 +1174,9 @@
         "new-password": "Nuova password",
         "new-password-again": "Ripeti nuova password",
         "password-link-sent-message": "Link reset password inviato con successo!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Accedi con {{name}}",
+        "or": "o"
     },
     "position": {
         "top": "Alto",
@@ -1700,21 +1704,6 @@
         }
     },
     "language": {
-        "language": "Lingua",
-        "locales": {
-            "de_DE": "Tedesco",
-            "fr_FR": "Francese",
-            "zh_CN": "Cinese",
-            "en_US": "Inglese",
-            "it_IT": "Italiano",
-            "ko_KR": "Coreano",
-            "ru_RU": "Russo",
-            "es_ES": "Spagnolo",
-            "ja_JA": "Giapponese",
-            "tr_TR": "Turco",
-            "fa_IR": "Persiana",
-            "uk_UA": "Ucraino",
-            "cs_CZ": "Ceco"            
-        }
+        "language": "Lingua"
     }
 }

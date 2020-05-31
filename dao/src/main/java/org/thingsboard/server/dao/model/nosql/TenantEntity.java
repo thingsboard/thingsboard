@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
@@ -55,16 +56,16 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
 
     @Column(name = TENANT_TITLE_PROPERTY)
     private String title;
-    
+
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
     @Column(name = TENANT_REGION_PROPERTY)
     private String region;
-    
+
     @Column(name = COUNTRY_PROPERTY)
     private String country;
-    
+
     @Column(name = STATE_PROPERTY)
     private String state;
 
@@ -89,6 +90,12 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     @Column(name = TENANT_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
+    @Column(name = ModelConstants.TENANT_ISOLATED_TB_CORE)
+    private boolean isolatedTbCore;
+
+    @Column(name = ModelConstants.TENANT_ISOLATED_TB_RULE_ENGINE)
+    private boolean isolatedTbRuleEngine;
+
     public TenantEntity() {
         super();
     }
@@ -108,13 +115,15 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         this.phone = tenant.getPhone();
         this.email = tenant.getEmail();
         this.additionalInfo = tenant.getAdditionalInfo();
+        this.isolatedTbCore = tenant.isIsolatedTbCore();
+        this.isolatedTbRuleEngine = tenant.isIsolatedTbRuleEngine();
     }
     
-    public UUID getId() {
+    public UUID getUuid() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 
@@ -206,6 +215,22 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         this.additionalInfo = additionalInfo;
     }
 
+    public boolean isIsolatedTbCore() {
+        return isolatedTbCore;
+    }
+
+    public void setIsolatedTbCore(boolean isolatedTbCore) {
+        this.isolatedTbCore = isolatedTbCore;
+    }
+
+    public boolean isIsolatedTbRuleEngine() {
+        return isolatedTbRuleEngine;
+    }
+
+    public void setIsolatedTbRuleEngine(boolean isolatedTbRuleEngine) {
+        this.isolatedTbRuleEngine = isolatedTbRuleEngine;
+    }
+
     @Override
     public String getSearchTextSource() {
         return getTitle();
@@ -215,7 +240,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     public void setSearchText(String searchText) {
         this.searchText = searchText;
     }
-    
+
     public String getSearchText() {
         return searchText;
     }
@@ -235,6 +260,8 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         tenant.setPhone(phone);
         tenant.setEmail(email);
         tenant.setAdditionalInfo(additionalInfo);
+        tenant.setIsolatedTbCore(isolatedTbCore);
+        tenant.setIsolatedTbRuleEngine(isolatedTbRuleEngine);
         return tenant;
     }
 

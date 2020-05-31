@@ -1,0 +1,229 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-content md-scroll-y layout="column" class="gateway-form">
+    <form name="gatewayConfiguration">
+         <md-expansion-panel-group>
+            <md-expansion-panel md-component-id="{{vm.idForm}}thingsboardPanelId">
+                <md-expansion-panel-collapsed>
+                    <div class="tb-panel-title">{{ 'gateway.thingsboard' | translate | uppercase }}</div>
+                    <span flex></span>
+                    <md-expansion-panel-icon></md-expansion-panel-icon>
+                </md-expansion-panel-collapsed>
+                <md-expansion-panel-expanded>
+                    <md-expansion-panel-header ng-click="vm.collapsePanel(vm.idForm + 'thingsboardPanelId')">
+                        <div class="tb-panel-title">{{ 'gateway.thingsboard' | translate | uppercase }}</div>
+                        <span flex></span>
+                        <md-expansion-panel-icon></md-expansion-panel-icon>
+                    </md-expansion-panel-header>
+                    <md-expansion-panel-content>
+                        <tb-gateway-config-select ng-if="!vm.isStateForm"
+                                                  tb-required="true"
+                                                  ng-model="vm.configurations.gateway"
+                                                  the-form="gatewayConfiguration"
+                                                  gateway-list="vm.gateways"
+                                                  get_access_token="vm.getAccessToken"
+                                                  create-device="vm.createDevice">
+                        </tb-gateway-config-select>
+                        <md-input-container ng-if="vm.isStateForm" class="md-block">
+                            <label>{{'gateway.gateway-name' | translate }}</label>
+                            <input ng-disabled="true" type="text" ng-model="vm.configurations.gateway.name" name="gatewayName"/>
+                        </md-input-container>
+                        <md-input-container class="md-block" style="margin-top: 0;">
+                            <label>{{'gateway.security-type' | translate }}</label>
+                            <md-select ng-disabled="vm.isReadOnlyForm" name="securityType" ng-model="vm.configurations.securityType" required>
+                                <md-option ng-repeat="securityType in vm.securityTypes" ng-value="securityType.value">
+                                    {{securityType.name | translate}}
+                                </md-option>
+                            </md-select>
+                        </md-input-container>
+                        <div layout="row" class="gateway-form-row"
+                             ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+                            <md-input-container class="md-block" flex>
+                                <label>{{ 'gateway.thingsboard-host' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="text" name="host" ng-model="vm.configurations.host" required>
+                                <div ng-messages="gatewayConfiguration.host.$error">
+                                    <div ng-message="required" translate>gateway.thingsboard-host-required</div>
+                                </div>
+                            </md-input-container>
+                            <md-input-container class="md-block" flex>
+                                <label>{{ 'gateway.thingsboard-port' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="number" min="1" max="65535" ng-pattern="/^-?[0-9]+$/" name="port"
+                                       ng-model="vm.configurations.port" required>
+                                <div ng-messages="gatewayConfiguration.port.$error">
+                                    <div ng-message="required" translate>gateway.thingsboard-port-required</div>
+                                    <div ng-message="max" translate>gateway.thingsboard-port-max</div>
+                                    <div ng-message="min" translate>gateway.thingsboard-port-min</div>
+                                    <div ng-message="pattern" translate>gateway.thingsboard-port-pattern</div>
+                                </div>
+                            </md-input-container>
+                        </div>
+                        <div ng-if="vm.configurations.securityType=='tls'">
+                            <md-input-container class="md-block security-type">
+                                <label>{{'gateway.tls-path-ca-certificate' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="text" ng-model="vm.configurations.caCertPath" name="caCertPath"/>
+                            </md-input-container>
+                            <md-input-container class="md-block">
+                                <label>{{'gateway.tls-path-private-key' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="text" ng-model="vm.configurations.privateKeyPath" name="privateKeyPath"/>
+                            </md-input-container>
+                            <md-input-container class="md-block">
+                                <label>{{'gateway.tls-path-client-certificate' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="text" ng-model="vm.configurations.certPath" name="certPath"/>
+                            </md-input-container>
+                        </div>
+                        <md-checkbox ng-show="!vm.isReadOnlyForm" ng-model="vm.configurations.remoteConfiguration"
+                                     name="remoteConfiguration"
+                                     aria-label="{{ 'gateway.remote-remote' | translate }}">
+                            {{ 'gateway.remote' | translate }}
+                        </md-checkbox>
+                        <div layout="row" class="gateway-form-row"
+                             ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+                            <md-input-container class="md-block md-select-container" flex>
+                                <label>{{'gateway.remote-logging-level' | translate }}</label>
+                                <md-select ng-disabled="vm.isReadOnlyForm" name="loggingLevel" ng-model="vm.configurations.remoteLoggingLevel">
+                                    <md-option ng-repeat="logLevel in vm.types.gatewayLogLevel"
+                                               ng-value="logLevel" ng-selected="$index === 5">
+                                        {{logLevel}}
+                                    </md-option>
+                                </md-select>
+                            </md-input-container>
+                            <md-input-container class="md-block" flex>
+                                <label>{{'gateway.path-logs' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="text" ng-model="vm.configurations.remoteLoggingPathToLogs"
+                                       name="remoteLoggingPathToLogs" required>
+                                <div ng-messages="gatewayConfiguration.remoteLoggingPathToLogs.$error">
+                                    <div ng-message="required" translate>gateway.path-logs-required</div>
+                                </div>
+                            </md-input-container>
+                        </div>
+                    </md-expansion-panel-content>
+                </md-expansion-panel-expanded>
+            </md-expansion-panel>
+            <md-expansion-panel md-component-id="{{vm.idForm}}storagePanelId">
+                <md-expansion-panel-collapsed>
+                    <div class="tb-panel-title">{{ 'gateway.storage' | translate | uppercase }}</div>
+                    <span flex></span>
+                    <md-expansion-panel-icon></md-expansion-panel-icon>
+                </md-expansion-panel-collapsed>
+                <md-expansion-panel-expanded>
+                    <md-expansion-panel-header ng-click="vm.collapsePanel(vm.idForm + 'storagePanelId')">
+                        <div class="tb-panel-title">{{ 'gateway.storage' | translate | uppercase }}</div>
+                        <span flex></span>
+                        <md-expansion-panel-icon></md-expansion-panel-icon>
+                    </md-expansion-panel-header>
+                    <md-expansion-panel-content>
+                        <md-input-container class="md-block" flex>
+                            <label>{{'gateway.storage-type' | translate }}</label>
+                            <md-select ng-disabled="vm.isReadOnlyForm" required ng-model="vm.configurations.storageType">
+                                <md-option ng-repeat="storageType in vm.storageTypes" ng-value="storageType.value">
+                                    {{storageType.name | translate}}
+                                </md-option>
+                            </md-select>
+                        </md-input-container>
+                        <div layout="row" class="gateway-form-row"
+                             ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+                            <md-input-container class="md-block" flex>
+                                <label>{{'gateway.storage-pack-size' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="number" min="1" name="readRecordsCount" ng-pattern="/^-?[0-9]+$/"
+                                       ng-model='vm.configurations.readRecordsCount' required/>
+                                <div ng-messages="gatewayConfiguration.readRecordsCount.$error">
+                                    <div ng-message="required" translate>gateway.storage-pack-size-required</div>
+                                    <div ng-message="min" translate>gateway.storage-pack-size-min</div>
+                                    <div ng-message="pattern" translate>gateway.storage-pack-size-pattern</div>
+                                </div>
+                            </md-input-container>
+                            <md-input-container class="md-block" flex>
+                                <label translate>{{ vm.configurations.storageType !== 'fileStorage' ? 'gateway.storage-max-records' : 'gateway.storage-max-file-records' }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="number" min="1" name="maxRecordsCount" ng-pattern="/^-?[0-9]+$/"
+                                       ng-model='vm.configurations.maxRecordsCount' required/>
+                                <div ng-messages="gatewayConfiguration.maxRecordsCount.$error">
+                                    <div ng-message="required" translate>gateway.storage-max-records-required</div>
+                                    <div ng-message="min" translate>gateway.storage-max-records-min</div>
+                                    <div ng-message="pattern" translate>gateway.storage-max-records-pattern</div>
+                                </div>
+                            </md-input-container>
+                        </div>
+                        <div layout="row" class="gateway-form-row"
+                             ng-if="vm.configurations.storageType == 'fileStorage'"
+                             ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+                            <md-input-container class="md-block" flex>
+                                <label>{{'gateway.storage-max-files' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="number" min="1" name="maxFilesCount" ng-pattern="/^-?[0-9]+$/"
+                                       ng-model='vm.configurations.maxFilesCount' required/>
+                                <div ng-messages="gatewayConfiguration.maxFilesCount.$error">
+                                    <div ng-message="required" translate>gateway.storage-max-files-required</div>
+                                    <div ng-message="min" translate>gateway.storage-max-files-min</div>
+                                    <div ng-message="pattern" translate>gateway.storage-max-files-pattern</div>
+                                </div>
+                            </md-input-container>
+                            <md-input-container class="md-block" flex>
+                                <label>{{'gateway.storage-path' | translate }}</label>
+                                <input ng-disabled="vm.isReadOnlyForm" type="text" name="dataFolderPath" ng-model='vm.configurations.dataFolderPath'
+                                       required/>
+                                <div ng-messages="gatewayConfiguration.dataFolderPath.$error">
+                                    <div ng-message="required" translate>gateway.storage-path-required</div>
+                                </div>
+                            </md-input-container>
+                        </div>
+                    </md-expansion-panel-content>
+                </md-expansion-panel-expanded>
+            </md-expansion-panel>
+            <md-expansion-panel md-component-id="{{vm.idForm}}connectorsPanelId">
+                <md-expansion-panel-collapsed>
+                    <div class="tb-panel-title">{{ 'gateway.connectors' | translate | uppercase }}</div>
+                    <span flex></span>
+                    <md-expansion-panel-icon></md-expansion-panel-icon>
+                </md-expansion-panel-collapsed>
+                <md-expansion-panel-expanded>
+                    <md-expansion-panel-header ng-click="vm.collapsePanel(vm.idForm + 'connectorsPanelId')">
+                        <div class="tb-panel-title">{{ 'gateway.connectors' | translate | uppercase }}</div>
+                        <span flex></span>
+                        <md-expansion-panel-icon></md-expansion-panel-icon>
+                    </md-expansion-panel-header>
+                    <md-expansion-panel-content>
+                        <tb-gateway-config
+                                gateway-config="vm.configurations.connectors"
+                                the-form="gatewayConfiguration"
+                                change-alignment="vm.changeAlignment"
+                                is-read-only="vm.isReadOnlyForm">
+                        </tb-gateway-config>
+                    </md-expansion-panel-content>
+                </md-expansion-panel-expanded>
+            </md-expansion-panel>
+        </md-expansion-panel-group>
+        <section ng-show="!vm.isReadOnlyForm" layout="row" layout-align="end center" class="form-action-buttons">
+            <md-button class="md-primary md-raised"
+                       ng-click="vm.exportConfig()"
+                       ng-if="!vm.configurations.remoteConfiguration"
+                       ng-disabled="gatewayConfiguration.$invalid || !gatewayConfiguration.$dirty"
+                       aria-label="{{ 'gateway.download-tip' | translate }}">
+                {{'action.download' | translate }}
+                <md-tooltip>{{'gateway.download-tip' | translate }}</md-tooltip>
+            </md-button>
+            <md-button class="md-primary md-raised"
+                       ng-click="vm.saveAttributeConfig()"
+                       ng-if="vm.configurations.remoteConfiguration"
+                       ng-disabled="gatewayConfiguration.$invalid || !gatewayConfiguration.$dirty"
+                       aria-label="{{ 'gateway.save-tip' | translate }}">
+                {{'action.save' | translate }}
+                <md-tooltip ng-if="vm.configurations.remoteConfiguration">{{'gateway.save-tip' | translate }}
+                </md-tooltip>
+            </md-button>
+        </section>
+    </form>
+</md-content>

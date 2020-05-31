@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
 
     public EntityViewEntity(EntityView entityView) {
         if (entityView.getId() != null) {
-            this.setId(entityView.getId().getId());
+            this.setUuid(entityView.getId().getId());
         }
         if (entityView.getEntityId() != null) {
             this.entityId = toString(entityView.getEntityId().getId());
@@ -136,8 +136,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
 
     @Override
     public EntityView toData() {
-        EntityView entityView = new EntityView(new EntityViewId(getId()));
-        entityView.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        EntityView entityView = new EntityView(new EntityViewId(this.getUuid()));
+        entityView.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
 
         if (entityId != null) {
             entityView.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));

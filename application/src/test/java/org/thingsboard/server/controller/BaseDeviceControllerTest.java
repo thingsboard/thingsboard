@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,17 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId().toString(), Device.class);
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
+    }
+
+    @Test
+    public void testUpdateDeviceFromDifferentTenant() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        loginDifferentTenant();
+        doPost("/api/device", savedDevice, Device.class, status().isForbidden());
+        deleteDifferentTenant();
     }
     
     @Test

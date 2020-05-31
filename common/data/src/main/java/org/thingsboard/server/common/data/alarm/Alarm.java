@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import lombok.Data;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+
+import java.util.List;
 
 /**
  * Created by ashvayka on 11.05.17.
@@ -45,6 +48,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId {
     private long clearTs;
     private transient JsonNode details;
     private boolean propagate;
+    private List<String> propagateRelationTypes;
 
     public Alarm() {
         super();
@@ -68,6 +72,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId {
         this.clearTs = alarm.getClearTs();
         this.details = alarm.getDetails();
         this.propagate = alarm.isPropagate();
+        this.propagateRelationTypes = alarm.getPropagateRelationTypes();
     }
 
     @Override

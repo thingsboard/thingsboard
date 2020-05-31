@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -40,7 +41,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.AuditLogEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTimeDao;
-import org.thingsboard.server.dao.timeseries.TsPartitionDate;
+import org.thingsboard.server.dao.timeseries.NoSqlTsPartitionDate;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
 import javax.annotation.Nullable;
@@ -91,7 +92,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
 
     @Value("${audit-log.by_tenant_partitioning}")
     private String partitioning;
-    private TsPartitionDate tsFormat;
+    private NoSqlTsPartitionDate tsFormat;
 
     @Value("${audit-log.default_query_period}")
     private Integer defaultQueryPeriodInDays;
@@ -109,7 +110,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
     @PostConstruct
     public void init() {
         if (!isInstall()) {
-            Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
+            Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
             if (partition.isPresent()) {
                 tsFormat = partition.get();
             } else {
@@ -117,7 +118,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
                 throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
             }
         }
-        readResultsProcessingExecutor = Executors.newCachedThreadPool();
+        readResultsProcessingExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("audit-log"));
     }
 
     @PreDestroy

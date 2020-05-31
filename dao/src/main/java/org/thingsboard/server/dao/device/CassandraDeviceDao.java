@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.datastax.driver.mapping.Result;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
@@ -178,14 +179,14 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
                 if (result != null) {
                     List<EntitySubtype> entitySubtypes = new ArrayList<>();
                     result.all().forEach((entitySubtypeEntity) ->
-                        entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
+                            entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
                     );
                     return entitySubtypes;
                 } else {
                     return Collections.emptyList();
                 }
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
 }

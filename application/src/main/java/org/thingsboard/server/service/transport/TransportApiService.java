@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.service.transport;
 
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.kafka.TbKafkaHandler;
+import org.thingsboard.server.queue.TbQueueHandler;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 
 /**
  * Created by ashvayka on 05.10.18.
  */
-public interface TransportApiService extends TbKafkaHandler<TransportProtos.TransportApiRequestMsg, TransportProtos.TransportApiResponseMsg> {
+public interface TransportApiService extends TbQueueHandler<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> {
 }

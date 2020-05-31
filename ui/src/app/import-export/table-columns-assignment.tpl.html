@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -39,9 +39,7 @@
             </td>
             <td md-cell>
                 <md-input-container md-no-float
-                                    ng-if="column.type != vm.columnTypes.name.value &&
-                                           column.type != vm.columnTypes.type.value &&
-                                           column.type != vm.columnTypes.accessToken.value">
+                                    ng-if="isColumnTypeDiffers(column.type)">
                     <input required name="columnKeyName"
                            placeholder="{{ 'import.column-value' | translate }}"
                            ng-model="column.key"

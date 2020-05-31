@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             var entityInfo = getActiveEntityInfo();
             var entityId = entityInfo ? entityInfo.entityId : null;
             var entityName = entityInfo ? entityInfo.entityName : null;
-            handleWidgetAction($event, this.descriptor, entityId, entityName);
+            var entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+            handleWidgetAction($event, this.descriptor, entityId, entityName, null, entityLabel);
         }
         widgetContext.customHeaderActions.push(headerAction);
     }
@@ -357,14 +358,20 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             options = {
                 type: widget.type,
-                stateData: vm.typeParameters.stateData
-            }
+                stateData: vm.typeParameters.stateData,
+                comparisonEnabled: widgetContext.settings.comparisonEnabled,
+                timeForComparison: widgetContext.settings.timeForComparison
+            };
             if (widget.type == types.widgetType.alarm.value) {
                 options.alarmSource = angular.copy(widget.config.alarmSource);
                 options.alarmSearchStatus = angular.isDefined(widget.config.alarmSearchStatus) ?
                     widget.config.alarmSearchStatus : types.alarmSearchStatus.any;
                 options.alarmsPollingInterval = angular.isDefined(widget.config.alarmsPollingInterval) ?
                     widget.config.alarmsPollingInterval * 1000 : 5000;
+                options.alarmsMaxCountLoad = angular.isDefined(widget.config.alarmsMaxCountLoad) ?
+                    widget.config.alarmsMaxCountLoad : 0;
+                options.alarmsFetchSize = angular.isDefined(widget.config.alarmsFetchSize) ?
+                    widget.config.alarmsFetchSize : 100;
             } else {
                 options.datasources = angular.copy(widget.config.datasources)
             }
@@ -452,14 +459,15 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                         var entityInfo = getActiveEntityInfo();
                         var entityId = entityInfo ? entityInfo.entityId : null;
                         var entityName = entityInfo ? entityInfo.entityName : null;
-                        handleWidgetAction(event, descriptors[i], entityId, entityName);
+                        var entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+                        handleWidgetAction(event, descriptors[i], entityId, entityName, null, entityLabel);
                     }
                 }
             }
         }
     }
 
-    function updateEntityParams(params, targetEntityParamName, targetEntityId, entityName) {
+    function updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel) {
         if (targetEntityId) {
             var targetEntityParams;
             if (targetEntityParamName && targetEntityParamName.length) {
@@ -476,10 +484,13 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             if (entityName) {
                 targetEntityParams.entityName = entityName;
             }
+            if (entityLabel) {
+                targetEntityParams.entityLabel = entityLabel;
+            }
         }
     }
 
-    function handleWidgetAction($event, descriptor, entityId, entityName, additionalParams) {
+    function handleWidgetAction($event, descriptor, entityId, entityName, additionalParams, entityLabel) {
         var type = descriptor.type;
         var targetEntityParamName = descriptor.stateEntityParamName;
         var targetEntityId;
@@ -494,7 +505,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 if (!params) {
                     params = {};
                 }
-                updateEntityParams(params, targetEntityParamName, targetEntityId, entityName);
+                updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
                 if (type == types.widgetActionTypes.openDashboardState.value) {
                     widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
                 } else {
@@ -506,7 +517,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 targetDashboardStateId = descriptor.targetDashboardStateId;
                 var stateObject = {};
                 stateObject.params = {};
-                updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName);
+                updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
                 if (targetDashboardStateId) {
                     stateObject.id = targetDashboardStateId;
                 }

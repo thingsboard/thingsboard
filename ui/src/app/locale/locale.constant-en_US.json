@@ -50,7 +50,8 @@
         "export": "Export",
         "share-via": "Share via {{provider}}",
         "continue": "Continue",
-        "discard-changes": "Discard Changes"
+        "discard-changes": "Discard Changes",
+        "download": "Download"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -85,6 +86,15 @@
         "timeout-required": "Timeout is required.",
         "timeout-invalid": "That doesn't look like a valid timeout.",
         "enable-tls": "Enable TLS",
+        "tls-version": "TLS version",
+        "enable-proxy": "Enable proxy",
+        "proxy-host": "Proxy host",
+        "proxy-host-required": "Proxy host is required.",
+        "proxy-port": "Proxy port",
+        "proxy-port-required": "You must supply a proxy port.",
+        "proxy-port-invalid": "That doesn't look like a valid proxy port.",
+        "proxy-user": "Proxy user",
+        "proxy-password": "Proxy password",
         "send-test-mail": "Send test mail",
         "security-settings": "Security settings",
         "password-policy": "Password policy",
@@ -162,7 +172,13 @@
         "clear-alarms-text": "Are you sure you want to clear { count, plural, 1 {1 alarm} other {# alarms} }?",
         "clear-alarm-title": "Clear Alarm",
         "clear-alarm-text": "Are you sure you want to clear Alarm?",
-        "alarm-status-filter": "Alarm Status Filter"
+        "alarm-status-filter": "Alarm Status Filter",
+        "max-count-load": "Maximum number of alarms to load (0 - unlimited)",
+        "max-count-load-required": "Maximum number of alarms to load is required.",
+        "max-count-load-error-min": "Minimum value is 0.",
+        "fetch-size": "Fetch size",
+        "fetch-size-required": "Fetch size is required.",
+        "fetch-size-error-min": "Minimum value is 10."
     },
     "alias": {
         "add": "Add alias",
@@ -199,6 +215,7 @@
         "entity-filter-no-entity-matched": "No entities matching specified filter were found.",
         "no-entity-filter-specified": "No entity filter specified",
         "root-state-entity": "Use dashboard state entity as root",
+        "last-level-relation": "Fetch last level relation only",
         "root-entity": "Root entity",
         "state-entity-parameter-name": "State entity parameter name",
         "default-state-entity": "Default state entity",
@@ -271,7 +288,8 @@
         "asset-required": "Asset is required",
         "name-starts-with": "Asset name starts with",
         "import": "Import assets",
-        "asset-file": "Asset file"
+        "asset-file": "Asset file",
+        "label": "Label"
     },
     "attribute": {
         "attributes": "Attributes",
@@ -576,6 +594,7 @@
         "configuration": "Data key configuration",
         "timeseries": "Timeseries",
         "attributes": "Attributes",
+        "entity-field": "Entity field",
         "alarm": "Alarm fields",
         "timeseries-required": "Entity timeseries are required.",
         "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
@@ -597,6 +616,7 @@
     },
     "details": {
         "edit-mode": "Edit mode",
+        "edit-json": "Edit JSON",
         "toggle-edit-mode": "Toggle edit mode"
     },
     "device": {
@@ -799,6 +819,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {One rule node} other {List of # rule nodes} }",
         "rulenode-name-starts-with": "Rule nodes whose names start with '{{prefix}}'",
         "type-current-customer": "Current Customer",
+        "type-current-tenant": "Current Tenant",
         "search": "Search entities",
         "selected-entities": "{ count, plural, 1 {1 entity} other {# entities} } selected",
         "entity-name": "Entity name",
@@ -807,6 +828,23 @@
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
         "columns-to-display": "Columns to Display"
+    },
+    "entity-field": {
+        "created-time": "Created time",
+        "name": "Name",
+        "type": "Type",
+        "first-name": "First name",
+        "last-name": "Last name",
+        "email": "Email",
+        "title": "Title",
+        "country": "Country",
+        "state": "State",
+        "city": "City",
+        "address": "Address",
+        "address2": "Address 2",
+        "zip": "Zip",
+        "phone": "Phone",
+        "label": "Label"
     },
     "entity-view": {
         "entity-view": "Entity View",
@@ -822,7 +860,7 @@
         "no-keys-found": "No keys found.",
         "create-new-alias": "Create a new one!",
         "create-new-key": "Create a new one!",
-        "duplicate-alias-error": "Duplicate alias found '{{alias}}'.<br>Entity View aliases must be unique whithin the dashboard.",
+        "duplicate-alias-error": "Duplicate alias found '{{alias}}'.<br>Entity View aliases must be unique within the dashboard.",
         "configure-alias": "Configure '{{alias}}' alias",
         "no-entity-views-matching": "No entity views matching '{{entity}}' were found.",
         "alias": "Alias",
@@ -845,21 +883,21 @@
         "add-entity-view-text": "Add new entity view",
         "delete": "Delete entity view",
         "assign-entity-views": "Assign entity views",
-        "assign-entity-views-text": "Assign { count, plural, 1 {1 entityView} other {# entityViews} } to customer",
+        "assign-entity-views-text": "Assign { count, plural, 1 {1 entity view} other {# entity views} } to customer",
         "delete-entity-views": "Delete entity views",
         "unassign-from-customer": "Unassign from customer",
         "unassign-entity-views": "Unassign entity views",
-        "unassign-entity-views-action-title": "Unassign { count, plural, 1 {1 entityView} other {# entityViews} } from customer",
+        "unassign-entity-views-action-title": "Unassign { count, plural, 1 {1 entity view} other {# entity views} } from customer",
         "assign-new-entity-view": "Assign new entity view",
         "delete-entity-view-title": "Are you sure you want to delete the entity view '{{entityViewName}}'?",
         "delete-entity-view-text": "Be careful, after the confirmation the entity view and all related data will become unrecoverable.",
-        "delete-entity-views-title": "Are you sure you want to entity view { count, plural, 1 {1 entityView} other {# entityViews} }?",
-        "delete-entity-views-action-title": "Delete { count, plural, 1 {1 entityView} other {# entityViews} }",
+        "delete-entity-views-title": "Are you sure you want to delete { count, plural, 1 {1 entity view} other {# entity views} }?",
+        "delete-entity-views-action-title": "Delete { count, plural, 1 {1 entity view} other {# entity views} }",
         "delete-entity-views-text": "Be careful, after the confirmation all selected entity views will be removed and all related data will become unrecoverable.",
         "unassign-entity-view-title": "Are you sure you want to unassign the entity view '{{entityViewName}}'?",
         "unassign-entity-view-text": "After the confirmation the entity view will be unassigned and won't be accessible by the customer.",
         "unassign-entity-view": "Unassign entity view",
-        "unassign-entity-views-title": "Are you sure you want to unassign { count, plural, 1 {1 entityView} other {# entityViews} }?",
+        "unassign-entity-views-title": "Are you sure you want to unassign { count, plural, 1 {1 entity view} other {# entity views} }?",
         "unassign-entity-views-text": "After the confirmation all selected entity views will be unassigned and won't be accessible by the customer.",
         "entity-view-type": "Entity View type",
         "entity-view-type-required": "Entity View type is required.",
@@ -1099,6 +1137,85 @@
     "function": {
         "function": "Function"
     },
+    "gateway": {
+        "add-entry": "Add configuration",
+        "connector-add": "Add new connector",
+        "connector-enabled": "Enable connector",
+        "connector-name": "Connector name",
+        "connector-name-required": "Connector name is required.",
+        "connector-type": "Connector type",
+        "connector-type-required": "Connector type is required.",
+        "connectors": "Connectors configuration",
+        "create-new-gateway": "Create a new gateway",
+        "create-new-gateway-text": "Are you sure you want create a new gateway with name: '{{gatewayName}}'?",
+        "delete": "Delete configuration",
+        "download-tip": "Download configuration file",
+        "gateway": "Gateway",
+        "gateway-exists": "Device with same name is already exists.",
+        "gateway-name": "Gateway name",
+        "gateway-name-required": "Gateway name is required.",
+        "gateway-saved": "Gateway configuration successfully saved.",
+        "json-parse": "Not valid JSON.",
+        "json-required": "Field cannot be empty.",
+        "no-connectors": "No connectors",
+        "no-data": "No configurations",
+        "no-gateway-found": "No gateway found.",
+        "no-gateway-matching": " '{{item}}' not found.",
+        "path-logs": "Path to log files",
+        "path-logs-required": "Path is required.",
+        "remote": "Remote configuration",
+        "remote-logging-level": "Logging level",
+        "remove-entry": "Remove configuration",
+        "save-tip": "Save configuration file",
+        "security-type": "Security type",
+        "security-types": {
+            "access-token": "Access Token",
+            "tls": "TLS"
+        },
+        "storage": "Storage",
+        "storage-max-file-records": "Maximum records in file",
+        "storage-max-files": "Maximum number of files",
+        "storage-max-files-min": "Minimum number is 1.",
+        "storage-max-files-pattern": "Number is not valid.",
+        "storage-max-files-required": "Number is required.",
+        "storage-max-records": "Maximum records in storage",
+        "storage-max-records-min": "Minimum number of records is 1.",
+        "storage-max-records-pattern": "Number is not valid.",
+        "storage-max-records-required": "Maximum records is required.",
+        "storage-pack-size": "Maximum event pack size",
+        "storage-pack-size-min": "Minimum number is 1.",
+        "storage-pack-size-pattern": "Number is not valid.",
+        "storage-pack-size-required": "Maximum event pack size is required.",
+        "storage-path": "Storage path",
+        "storage-path-required": "Storage path is required.",
+        "storage-type": "Storage type",
+        "storage-types": {
+            "file-storage": "File storage",
+            "memory-storage": "Memory storage"
+        },
+        "thingsboard": "ThingsBoard",
+        "thingsboard-host": "ThingsBoard host",
+        "thingsboard-host-required": "Host is required.",
+        "thingsboard-port": "ThingsBoard port",
+        "thingsboard-port-max": "Maximum port number is 65535.",
+        "thingsboard-port-min": "Minimum port number is 1.",
+        "thingsboard-port-pattern": "Port is not valid.",
+        "thingsboard-port-required": "Port is required.",
+        "tidy": "Tidy",
+        "tidy-tip": "Tidy config JSON",
+        "title-connectors-json": "Connector {{typeName}} configuration",
+        "tls-path-ca-certificate": "Path to CA certificate on gateway",
+        "tls-path-client-certificate": "Path to client certificate on gateway",
+        "tls-path-private-key": "Path to private key on gateway",
+        "toggle-fullscreen": "Toggle fullscreen",
+        "transformer-json-config": "Configuration JSON*",
+        "update-config": "Add/update configuration JSON",
+        "state-title": "Gateway state",
+        "show-config-tip": "Show gateway configuration",
+        "title-show-config": "Show gateway configuration",
+        "read-only": "Read only",
+        "read-write": ""
+    },
     "grid": {
         "delete-item-title": "Are you sure you want to delete this item?",
         "delete-item-text": "Be careful, after the confirmation this item and all related data will become unrecoverable.",
@@ -1139,13 +1256,16 @@
         "column-type": {
             "name": "Name",
             "type": "Type",
+            "label": "Label",
             "column-type": "Column type",
             "client-attribute": "Client attribute",
             "shared-attribute": "Shared attribute",
             "server-attribute": "Server attribute",
             "timeseries": "Timeseries",
             "entity-field": "Entity field",
-            "access-token": "Access token"
+            "access-token": "Access token",
+            "isgateway": "Is Gateway",
+            "description": "Description"
         },
         "stepper-text":{
             "select-file": "Select a file",
@@ -1166,7 +1286,8 @@
     "js-func": {
         "no-return-error": "Function must return value!",
         "return-type-mismatch": "Function must return value of '{{type}}' type!",
-        "tidy": "Tidy"
+        "tidy": "Tidy",
+        "mini": "Mini"
     },
     "key-val": {
         "key": "Key",
@@ -1195,7 +1316,13 @@
         "min": "min",
         "max": "max",
         "avg": "avg",
-        "total": "total"
+        "total": "total",
+        "comparison-time-ago": {
+            "days": "(day ago)",
+            "weeks": "(week ago)",
+            "months": "(month ago)",
+            "years": "(year ago)"
+        }
     },
     "login": {
         "login": "Login",
@@ -1213,7 +1340,10 @@
         "new-password": "New password",
         "new-password-again": "New password again",
         "password-link-sent-message": "Password reset link was successfully sent!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Login with {{name}}",
+        "or": "or",
+        "error": "Login error"
     },
     "position": {
         "top": "Top",
@@ -1370,6 +1500,12 @@
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes"
     },
+    "queue": {
+        "select_name": "Select queue name",
+        "name": "Queue Name",
+        "name_required": "Queue name is required!"
+
+    },
     "tenant": {
         "tenant": "Tenant",
         "tenants": "Tenants",
@@ -1395,7 +1531,11 @@
         "idCopiedMessage": "Tenant Id has been copied to clipboard",
         "select-tenant": "Select tenant",
         "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
-        "tenant-required": "Tenant is required"
+        "tenant-required": "Tenant is required",
+        "isolated-tb-core": "Processing in isolated ThingsBoard Core container",
+        "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
+        "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
+        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
@@ -1483,7 +1623,9 @@
         "boolean-value": "Boolean value",
         "false": "False",
         "true": "True",
-        "long": "Long"
+        "long": "Long",
+        "json": "JSON",
+        "json-value": "JSON value"
     },
     "widget": {
         "widget-library": "Widgets Library",
@@ -1699,17 +1841,32 @@
         },
         "input-widgets": {
             "attribute-not-allowed": "Attribute parameter cannot be used in this widget",
+            "blocked-location": "Geolocation is blocked in your browser",
+            "claim-device": "Claim device",
+            "claim-failed": "Failed to claim the device!",
+            "claim-not-found": "Device not found!",
+            "claim-successful": "Device was successfully claimed!",
             "date": "Date",
+            "device-name": "Device name",
+            "device-name-required": "Device name is required",
             "discard-changes": "Discard changes",
             "entity-attribute-required": "Entity attribute is required",
+            "entity-coordinate-required": "Both fields, latitude and longitude, are required",
             "entity-timeseries-required": "Entity timeseries is required",
+            "get-location": "Get current location",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
             "not-allowed-entity": "Selected entity cannot have shared attributes",
             "no-attribute-selected": "No attribute is selected",
             "no-datakey-selected": "No datakey is selected",
+            "no-coordinate-specified": "Datakey for latitude/longitude doesn't specified",
             "no-entity-selected": "No entity selected",
             "no-image": "No image",
+            "no-support-geolocation": "Your browser doesn't support geolocation",
             "no-support-web-camera": "No supported web camera",
             "no-timeseries-selected": "No timeseries selected",
+            "secret-key": "Secret key",
+            "secret-key-required": "Secret key is required",
             "switch-attribute-value": "Switch entity attribute value",
             "switch-camera": "Switch camera",
             "switch-timeseries-value": "Switch entity timeseries value",
@@ -1746,19 +1903,23 @@
     "language": {
         "language": "Language",
         "locales": {
-            "de_DE": "German",
-            "fr_FR": "French",
-            "zh_CN": "Chinese",
+            "de_DE": "Deutsch",
+            "fr_FR": "Français",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
             "en_US": "English",
-            "it_IT": "Italian",
-            "ko_KR": "Korean",
-            "ru_RU": "Russian",
-            "es_ES": "Spanish",
-            "ja_JA": "Japanese",
-            "tr_TR": "Turkish",
-            "fa_IR": "Persian",
-            "uk_UA": "Ukrainian",
-            "cs_CZ": "Czech"            
+            "it_IT": "Italiano",
+            "ko_KR": "한글",
+            "ru_RU": "Русский",
+            "es_ES": "Español",
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
         }
     }
 }

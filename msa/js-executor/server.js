@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,92 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const config = require('config'),
-      kafka = require('kafka-node'),
-      ConsumerGroup = kafka.ConsumerGroup,
-      Producer = kafka.Producer,
-      JsInvokeMessageProcessor = require('./api/jsInvokeMessageProcessor'),
-      logger = require('./config/logger')('main');
 
-var kafkaClient;
+const config = require('config'), logger = require('./config/logger')._logger('main');
 
-(async() => {
-    try {
-        logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
-
-        const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
-        const kafkaRequestTopic = config.get('kafka.request_topic');
-
-        logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
-        logger.info('Kafka Requests Topic: %s', kafkaRequestTopic);
-
-        kafkaClient = new kafka.KafkaClient({kafkaHost: kafkaBootstrapServers});
-
-        var consumer = new ConsumerGroup(
-            {
-                kafkaHost: kafkaBootstrapServers,
-                groupId: 'js-executor-group',
-                autoCommit: true,
-                encoding: 'buffer'
-            },
-            kafkaRequestTopic
-        );
-
-        consumer.on('error', (err) => {
-            logger.error('Unexpected kafka consumer error: %s', err.message);
-            logger.error(err.stack);
-        });
-
-        consumer.on('offsetOutOfRange', (err) => {
-            logger.error('Offset out of range error: %s', err.message);
-            logger.error(err.stack);
-        });
-
-        consumer.on('rebalancing', () => {
-            logger.info('Rebalancing event received.');
-        })
-
-        consumer.on('rebalanced', () => {
-            logger.info('Rebalanced event received.');
-        });
-
-        var producer = new Producer(kafkaClient);
-        producer.on('error', (err) => {
-            logger.error('Unexpected kafka producer error: %s', err.message);
-            logger.error(err.stack);
-        });
-
-        var messageProcessor = new JsInvokeMessageProcessor(producer);
-
-        producer.on('ready', () => {
-            consumer.on('message', (message) => {
-                messageProcessor.onJsInvokeMessage(message);
-            });
-            logger.info('Started ThingsBoard JavaScript Executor Microservice.');
-        });
-
-    } catch (e) {
-        logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
-        logger.error(e.stack);
-        exit(-1);
-    }
-})();
-
-process.on('exit', function () {
-    exit(0);
-});
-
-function exit(status) {
-    logger.info('Exiting with status: %d ...', status);
-    if (kafkaClient) {
-        logger.info('Stopping Kafka Client...');
-        var _kafkaClient = kafkaClient;
-        kafkaClient = null;
-        _kafkaClient.close(() => {
-            logger.info('Kafka Client stopped.');
-            process.exit(status);
-        });
-    } else {
-        process.exit(status);
-    }
+const serviceType = config.get('queue_type');
+switch (serviceType) {
+    case 'kafka':
+        logger.info('Starting kafka template.');
+        require('./queue/kafkaTemplate');
+        logger.info('kafka template started.');
+        break;
+    case 'pubsub':
+        logger.info('Starting Pub/Sub template.')
+        require('./queue/pubSubTemplate');
+        logger.info('Pub/Sub template started.')
+        break;
+    case 'aws-sqs':
+        logger.info('Starting Aws Sqs template.')
+        require('./queue/awsSqsTemplate');
+        logger.info('Aws Sqs template started.')
+        break;
+    case 'rabbitmq':
+        logger.info('Starting RabbitMq template.')
+        require('./queue/rabbitmqTemplate');
+        logger.info('RabbitMq template started.')
+        break;
+    case 'service-bus':
+        logger.info('Starting Azure Service Bus template.')
+        require('./queue/serviceBusTemplate');
+        logger.info('Azure Service Bus template started.')
+        break;
+    default:
+        logger.error('Unknown service type: ', serviceType);
+        process.exit(-1);
 }
+

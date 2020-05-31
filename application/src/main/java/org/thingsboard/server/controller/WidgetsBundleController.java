@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,14 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class WidgetsBundleController extends BaseController {
 
@@ -66,11 +67,7 @@ public class WidgetsBundleController extends BaseController {
                 widgetsBundle.setTenantId(getCurrentUser().getTenantId());
             }
 
-            Operation operation = widgetsBundle.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, operation,
-                    widgetsBundle.getId(), widgetsBundle);
-
+            checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
             return checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
         } catch (Exception e) {
             throw handleException(e);
@@ -92,7 +89,7 @@ public class WidgetsBundleController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundles", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/widgetsBundles", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<WidgetsBundle> getWidgetsBundles(
             @RequestParam int limit,

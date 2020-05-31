@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
 
     public DashboardEntity(Dashboard dashboard) {
         if (dashboard.getId() != null) {
-            this.setId(dashboard.getId().getId());
+            this.setUuid(dashboard.getId().getId());
         }
         if (dashboard.getTenantId() != null) {
             this.tenantId = toString(dashboard.getTenantId().getId());
@@ -103,8 +103,8 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
 
     @Override
     public Dashboard toData() {
-        Dashboard dashboard = new Dashboard(new DashboardId(this.getId()));
-        dashboard.setCreatedTime(UUIDs.unixTimestamp(this.getId()));
+        Dashboard dashboard = new Dashboard(new DashboardId(this.getUuid()));
+        dashboard.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         if (tenantId != null) {
             dashboard.setTenantId(new TenantId(toUUID(tenantId)));
         }

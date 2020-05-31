@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ public interface DeviceService {
     Device findDeviceByTenantIdAndName(TenantId tenantId, String name);
 
     Device saveDevice(Device device);
+
+    Device saveDeviceWithAccessToken(Device device, String accessToken);
 
     Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId);
 

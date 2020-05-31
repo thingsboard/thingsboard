@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         element.html(template);
 
         scope.openEditMode = function (event) {
-            if (scope.disabled) {
+            if (scope.timewindowDisabled) {
                 return;
             }
             var position;
@@ -212,6 +212,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             }
         }
 
+        function isTimewindowDisabled () {
+            return scope.disabled || (!scope.isEdit && scope.model.hideInterval && scope.model.hideAggregation && scope.model.hideAggInterval);
+        }
+
         ngModelCtrl.$render = function () {
             scope.model = timeService.defaultTimewindow();
             if (ngModelCtrl.$viewValue) {
@@ -243,8 +247,15 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                 model.hideAggregation = value.hideAggregation;
                 model.hideAggInterval = value.hideAggInterval;
             }
+            scope.timewindowDisabled = isTimewindowDisabled();
             scope.updateDisplayValue();
         };
+
+        scope.$watchGroup(['disabled', 'isEdit'], function(newValue, oldValue) {
+            if (!angular.equals(newValue, oldValue)) {
+                scope.timewindowDisabled = isTimewindowDisabled();
+            }
+        });
 
         $compile(element.contents())(scope);
     }

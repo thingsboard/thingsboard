@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2019 The Thingsboard Authors
+-- Copyright © 2016-2020 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     start_ts bigint,
     status varchar(255),
     tenant_id varchar(31),
+    propagate_relation_types varchar,
     type varchar(255)
 );
 
@@ -42,9 +43,11 @@ CREATE TABLE IF NOT EXISTS asset (
     additional_info varchar,
     customer_id varchar(31),
     name varchar(255),
+    label varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
-    type varchar(255)
+    type varchar(255),
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -71,6 +74,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   str_v varchar(10000000),
   long_v bigint,
   dbl_v double precision,
+  json_v json,
   last_update_ts bigint,
   CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
 );
@@ -119,7 +123,8 @@ CREATE TABLE IF NOT EXISTS device (
     name varchar(255),
     label varchar(255),
     search_text varchar(255),
-    tenant_id varchar(31)
+    tenant_id varchar(31),
+    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -127,7 +132,8 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     credentials_id varchar,
     credentials_type varchar(255),
     credentials_value varchar,
-    device_id varchar(31)
+    device_id varchar(31),
+    CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id)
 );
 
 CREATE TABLE IF NOT EXISTS event (
@@ -138,6 +144,7 @@ CREATE TABLE IF NOT EXISTS event (
     event_type varchar(255),
     event_uid varchar(255),
     tenant_id varchar(31),
+    ts bigint NOT NULL,
     CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
@@ -177,7 +184,9 @@ CREATE TABLE IF NOT EXISTS tenant (
     search_text varchar(255),
     state varchar(255),
     title varchar(255),
-    zip varchar(255)
+    zip varchar(255),
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
@@ -243,3 +252,28 @@ CREATE TABLE IF NOT EXISTS entity_view (
     search_text varchar(255),
     additional_info varchar
 );
+
+CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    ttl_ts bigint;
+    debug_ttl_ts bigint;
+    ttl_deleted_count bigint DEFAULT 0;
+    debug_ttl_deleted_count bigint DEFAULT 0;
+BEGIN
+    IF ttl > 0 THEN
+        ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint AND (event_type != %L::varchar AND event_type != %L::varchar) RETURNING *) SELECT count(*) FROM deleted', ttl_ts, 'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into ttl_deleted_count;
+    END IF;
+    IF debug_ttl > 0 THEN
+        debug_ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - debug_ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint AND (event_type = %L::varchar OR event_type = %L::varchar) RETURNING *) SELECT count(*) FROM deleted', debug_ttl_ts, 'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into debug_ttl_deleted_count;
+    END IF;
+    RAISE NOTICE 'Events removed by ttl: %', ttl_deleted_count;
+    RAISE NOTICE 'Debug Events removed by ttl: %', debug_ttl_deleted_count;
+    deleted := ttl_deleted_count + debug_ttl_deleted_count;
+END
+$$;

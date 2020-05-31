@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
                            allowed-entity-types="allowedEntityTypes"
                            ng-model="model.entityType">
     </tb-entity-type-select>
-    <tb-entity-autocomplete flex ng-if="model.entityType"
+    <tb-entity-autocomplete flex ng-if="model.entityType && model.entityType !== entityTypeCurrentTenant"
                             the-form="theForm"
                             ng-disabled="disabled"
                             tb-required="tbRequired"

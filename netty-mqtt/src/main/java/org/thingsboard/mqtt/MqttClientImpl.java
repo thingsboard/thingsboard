@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -407,8 +407,12 @@ final class MqttClientImpl implements MqttClient {
     }
 
     private MqttMessageIdVariableHeader getNewMessageId() {
-        this.nextMessageId.compareAndSet(0xffff, 1);
-        return MqttMessageIdVariableHeader.from(this.nextMessageId.getAndIncrement());
+        int messageId;
+        synchronized (this.nextMessageId) {
+            this.nextMessageId.compareAndSet(0xffff, 1);
+            messageId = this.nextMessageId.getAndIncrement();
+        }
+        return MqttMessageIdVariableHeader.from(messageId);
     }
 
     private Future<Void> createSubscription(String topic, MqttHandler handler, boolean once, MqttQoS qos) {

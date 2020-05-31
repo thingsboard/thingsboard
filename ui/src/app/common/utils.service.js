@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,7 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         isLocalUrl: isLocalUrl,
         validateDatasources: validateDatasources,
         createKey: createKey,
+        createAdditionalDataKey: createAdditionalDataKey,
         createLabelFromDatasource: createLabelFromDatasource,
         insertVariable: insertVariable,
         customTranslation: customTranslation,
@@ -411,8 +412,8 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         return copy;
     }
 
-    function genNextColor(datasources) {
-        var index = 0;
+    function genNextColor(datasources, initialIndex) {
+        var index = initialIndex || 0;
         if (datasources) {
             for (var i = 0; i < datasources.length; i++) {
                 var datasource = datasources[i];
@@ -491,6 +492,23 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         return dataKey;
     }
 
+    function createAdditionalDataKey(dataKey, datasource, timeUnit, datasources, additionalKeysNumber) {
+        let additionalDataKey = angular.copy(dataKey);
+        if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+            additionalDataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
+        } else {
+            additionalDataKey.label = dataKey.label + ' ' + $translate.instant('legend.comparison-time-ago.'+timeUnit);
+        }
+        additionalDataKey.pattern = additionalDataKey.label;
+        if (dataKey.settings.comparisonSettings.color) {
+            additionalDataKey.color = dataKey.settings.comparisonSettings.color;
+        } else {
+            additionalDataKey.color = genNextColor(datasources, additionalKeysNumber);
+        }
+        additionalDataKey._hash = Math.random();
+        return additionalDataKey;
+    }
+
     function createLabelFromDatasource(datasource, pattern) {
         var label = angular.copy(pattern);
         var match = varsRegex.exec(pattern);
@@ -504,7 +522,7 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
             } else if (variableName === 'deviceName') {
                 label = label.split(variable).join(datasource.entityName);
             } else if (variableName === 'entityLabel') {
-                label = label.split(variable).join(datasource.entityLabel);
+                label = label.split(variable).join(datasource.entityLabel || datasource.entityName);
             } else if (variableName === 'aliasName') {
                 label = label.split(variable).join(datasource.aliasName);
             } else if (variableName === 'entityDescription') {

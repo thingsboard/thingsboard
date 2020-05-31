@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -74,7 +74,6 @@
                         <md-icon aria-label="{{ 'dashboard.settings' | translate }}" class="material-icons">settings</md-icon>
                     </md-button>
                     <tb-dashboard-select   ng-show="!vm.isEdit && !vm.widgetEditMode && vm.displayDashboardsSelect()"
-                                           md-theme="tb-dark"
                                            ng-model="vm.currentDashboardId"
                                            dashboards-scope="{{vm.currentDashboardScope}}"
                                            customer-id="vm.currentCustomerId">

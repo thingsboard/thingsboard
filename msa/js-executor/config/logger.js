@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,23 @@ var config = require('config'),
     path = require('path'),
     DailyRotateFile = require('winston-daily-rotate-file');
 
+const { logLevel } = require('kafkajs');
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, label, printf, splat } = format;
+
+const toWinstonLogLevel = level => {
+    switch(level) {
+        case logLevel.ERROR:
+        case logLevel.NOTHING:
+            return 'error'
+        case logLevel.WARN:
+            return 'warn'
+        case logLevel.INFO:
+            return 'info'
+        case logLevel.DEBUG:
+            return 'debug'
+    }
+}
 
 var loggerTransports = [];
 
@@ -56,4 +71,33 @@ function _logger(moduleLabel) {
     });
 }
 
-module.exports = _logger;
+const KafkaJsWinstonLogCreator = logLevel => {
+    const logger = createLogger({
+        level: toWinstonLogLevel(logLevel),
+        format:combine(
+            splat(),
+            label({ label: 'kafkajs' }),
+            timestamp({format: 'YYYY-MM-DD HH:mm:ss,SSS'}),
+            printf(info => {
+                var res = `${info.timestamp} [${info.label}] ${info.level.toUpperCase()}: ${info.message}`;
+                if (info.extra) {
+                    res +=`: ${JSON.stringify(info.extra)}`;
+                }
+                return res;
+              }
+            )
+        ),
+        transports: loggerTransports
+    });
+
+    return ({ namespace, level, label, log }) => {
+        const { message, ...extra } = log;
+        logger.log({
+            level: toWinstonLogLevel(level),
+            message,
+            extra,
+        });
+    }
+}
+
+module.exports = {_logger, KafkaJsWinstonLogCreator};
