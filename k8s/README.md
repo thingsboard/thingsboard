@@ -62,6 +62,8 @@ $ ./k8s-deploy-thirdparty.sh
 
 Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time and don't have configured Redis cluster.
 
+Before deploying ThingsBoard resources you can configure number of pods for each service in `./common/thingsboard.yml` by changing `spec.replicas` fields for different services. 
+It is recommended to have at least 2 `tb-node` and 10 `tb-js-executor`.
 Execute the following command to deploy resources:
 
 `
