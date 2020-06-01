@@ -59,10 +59,7 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
 
     @Test
     public void testSaveEdge() {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = edgeService.saveEdge(edge);
 
         Assert.assertNotNull(savedEdge);
@@ -109,10 +106,7 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
 
     @Test(expected = DataValidationException.class)
     public void testAssignEdgeToNonExistentCustomer() {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
-        edge.setTenantId(tenantId);
+        Edge edge = constructEdge("My edge", "default");
         edge = edgeService.saveEdge(edge);
         try {
             edgeService.assignEdgeToCustomer(tenantId, edge.getId(), new CustomerId(UUIDs.timeBased()));
@@ -123,10 +117,7 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
 
     @Test(expected = DataValidationException.class)
     public void testAssignEdgeToCustomerFromDifferentTenant() {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
-        edge.setTenantId(tenantId);
+        Edge edge = constructEdge("My edge", "default");
         edge = edgeService.saveEdge(edge);
         Tenant tenant = new Tenant();
         tenant.setTitle("Test different tenant");
@@ -145,10 +136,7 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
 
     @Test
     public void testFindEdgeById() {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = edgeService.saveEdge(edge);
         Edge foundEdge = edgeService.findEdgeById(tenantId, savedEdge.getId());
         Assert.assertNotNull(foundEdge);
@@ -161,24 +149,15 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
         List<Edge> edges = new ArrayList<>();
         try {
             for (int i = 0; i < 3; i++) {
-                Edge edge = new Edge();
-                edge.setTenantId(tenantId);
-                edge.setName("My edge B" + i);
-                edge.setType("typeB");
+                Edge edge = constructEdge("My edge B" + i, "typeB");
                 edges.add(edgeService.saveEdge(edge));
             }
             for (int i = 0; i < 7; i++) {
-                Edge edge = new Edge();
-                edge.setTenantId(tenantId);
-                edge.setName("My edge C" + i);
-                edge.setType("typeC");
+                Edge edge = constructEdge("My edge C" + i, "typeC");
                 edges.add(edgeService.saveEdge(edge));
             }
             for (int i = 0; i < 9; i++) {
-                Edge edge = new Edge();
-                edge.setTenantId(tenantId);
-                edge.setName("My edge A" + i);
-                edge.setType("typeA");
+                Edge edge = constructEdge("My edge A" + i, "typeA");
                 edges.add(edgeService.saveEdge(edge));
             }
             List<EntitySubtype> edgeTypes = edgeService.findEdgeTypesByTenantId(tenantId).get();
@@ -196,10 +175,7 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteEdge() {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = edgeService.saveEdge(edge);
         Edge foundEdge = edgeService.findEdgeById(tenantId, savedEdge.getId());
         Assert.assertNotNull(foundEdge);
@@ -218,10 +194,7 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
 
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
-            edge.setName("Edge" + i);
-            edge.setType("default");
+            Edge edge = constructEdge(tenantId, "Edge " + i, "default");
             edges.add(edgeService.saveEdge(edge));
         }
 
@@ -256,25 +229,19 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType("default");
+            Edge edge = constructEdge(name, "default");
             edgesTitle1.add(edgeService.saveEdge(edge));
         }
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
         for (int i = 0; i < 175; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType("default");
+            Edge edge = constructEdge(name, "default");
             edgesTitle2.add(edgeService.saveEdge(edge));
         }
 
@@ -334,26 +301,20 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
         String type1 = "typeA";
         List<Edge> edgesType1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType(type1);
+            Edge edge = constructEdge(name, type1);
             edgesType1.add(edgeService.saveEdge(edge));
         }
         String title2 = "Edge title 2";
         String type2 = "typeB";
         List<Edge> edgesType2 = new ArrayList<>();
         for (int i = 0; i < 175; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType(type2);
+            Edge edge = constructEdge(name, type2);
             edgesType2.add(edgeService.saveEdge(edge));
         }
 
@@ -423,10 +384,7 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
 
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 278; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
-            edge.setName("Edge" + i);
-            edge.setType("default");
+            Edge edge = constructEdge(tenantId, "Edge" + i, "default");
             edge = edgeService.saveEdge(edge);
             edges.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
@@ -469,26 +427,20 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
         for (int i = 0; i < 175; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType("default");
+            Edge edge = constructEdge(name, "default");
             edge = edgeService.saveEdge(edge);
             edgesTitle1.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType("default");
+            Edge edge = constructEdge(name, "default");
             edge = edgeService.saveEdge(edge);
             edgesTitle2.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
@@ -557,13 +509,10 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
         String type1 = "typeC";
         List<Edge> edgesType1 = new ArrayList<>();
         for (int i = 0; i < 175; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType(type1);
+            Edge edge = constructEdge(name, type1);
             edge = edgeService.saveEdge(edge);
             edgesType1.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
@@ -571,13 +520,10 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
         String type2 = "typeD";
         List<Edge> edgesType2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            Edge edge = new Edge();
-            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType(type2);
+            Edge edge = constructEdge(name, type2);
             edge = edgeService.saveEdge(edge);
             edgesType2.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
@@ -631,6 +577,20 @@ public abstract class EdgeServiceImplTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
         customerService.deleteCustomer(tenantId, customerId);
+    }
+
+    private Edge constructEdge(String name, String type) {
+        return constructEdge(tenantId, name, type);
+    }
+
+    private Edge constructEdge(TenantId tenantId, String name, String type) {
+        Edge edge = new Edge();
+        edge.setTenantId(tenantId);
+        edge.setName(name);
+        edge.setType(type);
+        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
+        return edge;
     }
 
 }

@@ -482,12 +482,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public boolean setDefaultRootEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
         RuleChain previousDefaultRootEdgeRuleChain = getDefaultRootEdgeRuleChain(ruleChain.getTenantId());
-        if (!previousDefaultRootEdgeRuleChain.getId().equals(ruleChain.getId())) {
+        if (previousDefaultRootEdgeRuleChain == null || !previousDefaultRootEdgeRuleChain.getId().equals(ruleChain.getId())) {
             try {
-                deleteRelation(tenantId, new EntityRelation(previousDefaultRootEdgeRuleChain.getTenantId(), previousDefaultRootEdgeRuleChain.getId(),
-                        EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-                previousDefaultRootEdgeRuleChain.setRoot(false);
-                ruleChainDao.save(tenantId, previousDefaultRootEdgeRuleChain);
+                if (previousDefaultRootEdgeRuleChain != null) {
+                    deleteRelation(tenantId, new EntityRelation(previousDefaultRootEdgeRuleChain.getTenantId(), previousDefaultRootEdgeRuleChain.getId(),
+                            EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
+                    previousDefaultRootEdgeRuleChain.setRoot(false);
+                    ruleChainDao.save(tenantId, previousDefaultRootEdgeRuleChain);
+                }
                 createRelation(tenantId, new EntityRelation(ruleChain.getTenantId(), ruleChain.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
                 ruleChain.setRoot(true);
@@ -517,7 +519,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public boolean removeDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         try {
             deleteRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
             return true;
         } catch (ExecutionException | InterruptedException e) {
             log.warn("Failed to remove default edge rule chain, ruleChainId: [{}]", ruleChainId, e);
