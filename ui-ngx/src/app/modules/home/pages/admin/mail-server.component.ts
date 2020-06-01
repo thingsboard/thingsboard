@@ -25,6 +25,7 @@ import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
+import { isString } from '@core/utils';
 
 @Component({
   selector: 'tb-mail-server',
@@ -52,6 +53,9 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
     this.adminService.getAdminSettings<MailServerSettings>('mail').subscribe(
       (adminSettings) => {
         this.adminSettings = adminSettings;
+        if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
+          this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
+        }
         this.mailSettings.reset(this.adminSettings.jsonValue);
         this.enableProxyChanged();
       }
@@ -69,7 +73,7 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
       timeout: ['10000', [Validators.required,
         Validators.pattern(/^[0-9]{1,6}$/),
         Validators.maxLength(6)]],
-      enableTls: ['false'],
+      enableTls: [false],
       tlsVersion: [],
       enableProxy: [false, []],
       proxyHost: ['', [Validators.required]],

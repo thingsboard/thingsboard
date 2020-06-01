@@ -76,10 +76,10 @@
               {{ 'admin.timeout-invalid' | translate }}
             </mat-error>
           </mat-form-field>
-          <tb-checkbox formControlName="enableTls" trueValue="true" falseValue="false" style="display: block; padding-bottom: 16px;">
+          <tb-checkbox formControlName="enableTls" style="display: block; padding-bottom: 16px;">
             {{ 'admin.enable-tls' | translate }}
           </tb-checkbox>
-          <mat-form-field class="mat-block" *ngIf="mailSettings.get('enableTls').value === 'true'">
+          <mat-form-field class="mat-block" *ngIf="mailSettings.get('enableTls').value">
             <mat-label translate>admin.tls-version</mat-label>
             <mat-select formControlName="tlsVersion">
               <mat-option *ngFor="let tlsVersion of tlsVersions" [value]="tlsVersion">
