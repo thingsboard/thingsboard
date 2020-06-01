@@ -20,7 +20,7 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AdminSettings, MailServerSettings, portPattern } from '@shared/models/settings.models';
+import { AdminSettings, MailServerSettings, smtpPortPattern } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -53,6 +53,7 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
       (adminSettings) => {
         this.adminSettings = adminSettings;
         this.mailSettings.reset(this.adminSettings.jsonValue);
+        this.enableProxyChanged();
       }
     );
   }
@@ -63,16 +64,16 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
       smtpProtocol: ['smtp'],
       smtpHost: ['localhost', [Validators.required]],
       smtpPort: ['25', [Validators.required,
-        Validators.pattern(portPattern),
+        Validators.pattern(smtpPortPattern),
         Validators.maxLength(5)]],
       timeout: ['10000', [Validators.required,
         Validators.pattern(/^[0-9]{1,6}$/),
         Validators.maxLength(6)]],
       enableTls: ['false'],
       tlsVersion: [],
-      enableProxy: ['false', []],
+      enableProxy: [false, []],
       proxyHost: ['', [Validators.required]],
-      proxyPort: ['', [Validators.required, Validators.maxLength(5), Validators.pattern(portPattern)]],
+      proxyPort: ['', [Validators.required, Validators.min(1), Validators.max(65535)]],
       proxyUser: [''],
       proxyPassword: [''],
       username: [''],
@@ -80,9 +81,13 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
     });
     this.registerDisableOnLoadFormControl(this.mailSettings.get('smtpProtocol'));
     this.registerDisableOnLoadFormControl(this.mailSettings.get('enableTls'));
+    this.registerDisableOnLoadFormControl(this.mailSettings.get('enableProxy'));
+    this.mailSettings.get('enableProxy').valueChanges.subscribe(() => {
+      this.enableProxyChanged();
+    });
   }
 
-  enableProxy(): boolean {
+  enableProxyChanged(): void {
     let enableProxy: boolean = this.mailSettings.get('enableProxy').value;
     if (enableProxy) {
       this.mailSettings.get('proxyHost').enable();
@@ -91,7 +96,6 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
       this.mailSettings.get('proxyHost').disable();
       this.mailSettings.get('proxyPort').disable();
     }
-    return enableProxy;
   }
 
   sendTestMail(): void {
