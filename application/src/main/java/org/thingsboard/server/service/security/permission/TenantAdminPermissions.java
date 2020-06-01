@@ -111,10 +111,8 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityProfileId entityId, EntityProfile entity) {
-            if (!tenantEntityPermissionChecker.hasPermission(user, operation, entityId, entity)) {
-                return false;
-            }
-            return SUPPORTED_TYPES.contains(entity.getEntityType());
+            return tenantEntityPermissionChecker.hasPermission(user, operation, entityId, entity) &&
+                    SUPPORTED_TYPES.contains(entity.getEntityType());
         }
     };
 }

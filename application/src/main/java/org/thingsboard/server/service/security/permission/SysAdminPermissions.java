@@ -73,10 +73,8 @@ public class SysAdminPermissions extends AbstractPermissions {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityProfileId entityId, EntityProfile entity) {
-            if (!systemEntityPermissionChecker.hasPermission(user, operation, entityId, entity)) {
-                return false;
-            }
-            return SUPPORTED_TYPES.contains(entity.getEntityType());
+            return systemEntityPermissionChecker.hasPermission(user, operation, entityId, entity) &&
+                    SUPPORTED_TYPES.contains(entity.getEntityType());
         }
     };
 }
