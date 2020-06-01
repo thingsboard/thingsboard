@@ -26,7 +26,7 @@ In order to set database type change the value of `DATABASE` variable in `.env` 
 - `postgres` - use PostgreSQL database;
 - `cassandra` - use Cassandra database;
 
-**NOTE**: According to the database type corresponding kubernetes resources will be deployed (see `postgres.yml`, `cassandra.yml` for details).
+**NOTE**: According to the database type corresponding kubernetes resources will be deployed (see `postgres.yml` or `postgres-ha.yaml` for postgres with replication, `cassandra.yml` for details).
 
 If you selected `cassandra` as `DATABASE` you can also configure the number of Cassandra nodes (`StatefulSet.spec.replicas` property in `./common/cassandra.yml` config file) and the `CASSANDRA_REPLICATION_FACTOR` in `.env` file. 
 It is recommended to have 3 Cassandra nodes with `CASSANDRA_REPLICATION_FACTOR` equal to 1.
