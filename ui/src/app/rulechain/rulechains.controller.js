@@ -183,6 +183,26 @@ export default function RuleChainsController(ruleChainService, userService, edge
 
             ruleChainActionsList.push({
                 onAction: function ($event, item) {
+                    setDefaultEdgeRuleChain($event, item);
+                },
+                name: function() { return $translate.instant('rulechain.set-default-edge') },
+                details: function() { return $translate.instant('rulechain.set-default-edge') },
+                icon: "bookmark_outline",
+                isEnabled: isNonDefaultEdgeRuleChain
+            });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    removeDefaultEdgeRuleChain($event, item);
+                },
+                name: function() { return $translate.instant('rulechain.remove-default-edge') },
+                details: function() { return $translate.instant('rulechain.remove-default-edge') },
+                icon: "bookmark",
+                isEnabled: isDefaultEdgeRuleChain
+            });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
                     vm.grid.deleteItem($event, item);
                 },
                 name: function() { return $translate.instant('action.delete') },
@@ -236,7 +256,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
 
         } else if (vm.ruleChainsScope === 'edge') {
             fetchRuleChainsFunction = function (pageLink) {
-                return fetchEdgeRuleChains(edgeId, pageLink);
+                return ruleChainService.getEdgeRuleChains(edgeId, pageLink);
             };
             deleteRuleChainFunction = function (ruleChainId) {
                 return ruleChainService.unassignRuleChainFromEdge(edgeId, ruleChainId);
@@ -250,26 +270,6 @@ export default function RuleChainsController(ruleChainService, userService, edge
                 details: function() { return $translate.instant('rulechain.set-root') },
                 icon: "flag",
                 isEnabled: isNonRootRuleChain
-            });
-
-            ruleChainActionsList.push({
-                onAction: function ($event, item) {
-                    setDefaultEdgeRuleChain($event, item);
-                },
-                name: function() { return $translate.instant('rulechain.set-default-edge') },
-                details: function() { return $translate.instant('rulechain.set-default-edge') },
-                icon: "bookmark_outline",
-                isEnabled: isNonDefaultEdgeRuleChain
-            });
-
-            ruleChainActionsList.push({
-                onAction: function ($event, item) {
-                    removeDefaultEdgeRuleChain($event, item);
-                },
-                name: function() { return $translate.instant('rulechain.remove-default-edge') },
-                details: function() { return $translate.instant('rulechain.remove-default-edge') },
-                icon: "bookmark",
-                isEnabled: isDefaultEdgeRuleChain
             });
 
             ruleChainActionsList.push(
@@ -359,25 +359,25 @@ export default function RuleChainsController(ruleChainService, userService, edge
     }
 
     function fetchRuleChains(pageLink, type) {
-        return ruleChainService.getRuleChains(pageLink, null, type);
-    }
-
-    function fetchEdgeRuleChains(edgeId, pageLink) {
-        var deferred = $q.defer();
-        ruleChainService.getEdgeRuleChains(edgeId, pageLink, null).then(
-            function success(ruleChains) {
-                getDefaultEdges(ruleChains).then(
-                    function success(response) {
-                        deferred.resolve(response);
-                    }, function fail() {
-                        deferred.reject();
-                    }
-                );
-            }, function fail() {
-                deferred.reject();
-            }
-        );
-        return deferred.promise;
+        if (vm.ruleChainsScope === 'tenant') {
+            return ruleChainService.getRuleChains(pageLink, null, type);
+        } else if (vm.ruleChainsScope === 'edges') {
+            var deferred = $q.defer();
+            ruleChainService.getRuleChains(pageLink, null, type).then(
+                function success(ruleChains) {
+                    getDefaultEdges(ruleChains).then(
+                        function success(response) {
+                            deferred.resolve(response);
+                        }, function fail() {
+                            deferred.reject();
+                        }
+                    );
+                }, function fail() {
+                    deferred.reject();
+                }
+            );
+            return deferred.promise;
+        }
     }
 
     function saveRuleChain(ruleChain) {
@@ -430,11 +430,11 @@ export default function RuleChainsController(ruleChainService, userService, edge
     }
 
     function isDefaultEdgeRuleChain(ruleChain) {
-        return angular.isDefined(ruleChain) && ruleChain.isDefault;
+        return angular.isDefined(ruleChain) && !ruleChain.root && ruleChain.isDefault;
     }
 
     function isNonDefaultEdgeRuleChain(ruleChain) {
-        return angular.isDefined(ruleChain) && !ruleChain.isDefault;
+        return angular.isDefined(ruleChain) && !ruleChain.root && !ruleChain.isDefault;
     }
 
     function exportRuleChain($event, ruleChain) {
