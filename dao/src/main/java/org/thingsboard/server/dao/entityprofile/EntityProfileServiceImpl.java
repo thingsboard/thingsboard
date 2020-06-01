@@ -26,8 +26,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
-import java.util.List;
-
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
@@ -39,13 +37,6 @@ public class EntityProfileServiceImpl implements EntityProfileService {
     public static final String INCORRECT_ENTITY_PROFILE_ID = "Incorrect entityProfileId ";
 
     private final EntityProfileDao dao;
-
-    @Override
-    public List<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId) {
-        log.trace("Executing findAll, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return dao.find(tenantId);
-    }
 
     @Override
     public PageData<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId, PageLink pageLink) {
@@ -73,10 +64,10 @@ public class EntityProfileServiceImpl implements EntityProfileService {
     }
 
     @Override
-    public EntityProfile save(TenantId tenantId, EntityProfile entityProfile) {
-        log.trace("Executing save, tenantId [{}], entityProfile [{}]", tenantId, entityProfile);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return dao.save(tenantId, entityProfile);
+    public EntityProfile save(EntityProfile entityProfile) {
+        log.trace("Executing save, entityProfile [{}]", entityProfile);
+        validateId(entityProfile.getTenantId(), INCORRECT_TENANT_ID + entityProfile.getTenantId());
+        return dao.save(entityProfile.getTenantId(), entityProfile);
     }
 
     @Override

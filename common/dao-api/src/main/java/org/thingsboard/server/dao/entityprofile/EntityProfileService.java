@@ -22,11 +22,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
-import java.util.List;
-
 public interface EntityProfileService {
-
-    List<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId);
 
     PageData<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId, PageLink pageLink);
 
@@ -38,7 +34,7 @@ public interface EntityProfileService {
 
     EntityProfile findById(TenantId tenantId, EntityProfileId id);
 
-    EntityProfile save(TenantId tenantId, EntityProfile entityProfile);
+    EntityProfile save(EntityProfile entityProfile);
 
     void delete(TenantId tenantId, EntityProfileId id);
 }

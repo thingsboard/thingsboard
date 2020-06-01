@@ -16,16 +16,18 @@
 package org.thingsboard.server.service.security.permission;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.entityprofile.EntityProfile;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.EnumSet;
+import java.util.Set;
 
 @Component(value="sysAdminPermissions")
 public class SysAdminPermissions extends AbstractPermissions {
@@ -39,6 +41,7 @@ public class SysAdminPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, systemEntityPermissionChecker);
         put(Resource.WIDGET_TYPE, systemEntityPermissionChecker);
+        put(Resource.ENTITY_PROFILE, entityProfilePermissionChecker);
     }
 
     private static final PermissionChecker systemEntityPermissionChecker = new PermissionChecker() {
@@ -65,4 +68,15 @@ public class SysAdminPermissions extends AbstractPermissions {
 
     };
 
+    private static final PermissionChecker entityProfilePermissionChecker = new PermissionChecker<EntityProfileId, EntityProfile>() {
+        final Set<EntityType> SUPPORTED_TYPES = EnumSet.of(EntityType.TENANT);
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityProfileId entityId, EntityProfile entity) {
+            if (!systemEntityPermissionChecker.hasPermission(user, operation, entityId, entity)) {
+                return false;
+            }
+            return SUPPORTED_TYPES.contains(entity.getEntityType());
+        }
+    };
 }

@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.entityprofile.EntityProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entityprofile.EntityProfileDao;
 import org.thingsboard.server.dao.entityprofile.EntityProfileService;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -41,18 +42,12 @@ import static org.junit.Assert.*;
 public class EntityProfileServiceSqlTest extends AbstractServiceTest {
     @Autowired
     private EntityProfileService profileService;
-
-    @Test
-    public void testFindEntityProfilesByTenantId() {
-        EntityProfile saved = saveRandomEntityProfile();
-        profileService.findEntityProfilesByTenantId(saved.getTenantId()).stream()
-                .filter(saved::equals)
-                .findAny().orElseThrow(AssertionError::new);
-    }
+    @Autowired
+    private EntityProfileDao entityProfileDao;
 
     @Test
     public void testFindEntityProfilesByTenantIdWithPageLink() {
-        List<EntityProfile> all = profileService.findEntityProfilesByTenantId(TenantId.SYS_TENANT_ID);
+        List<EntityProfile> all = entityProfileDao.find(TenantId.SYS_TENANT_ID);
         PageLink pageLink = new PageLink(all.size());
         PageData<EntityProfile> page = profileService.findEntityProfilesByTenantId(TenantId.SYS_TENANT_ID, pageLink);
         assertEquals(new HashSet<>(all), new HashSet<>(page.getData()));
@@ -69,7 +64,7 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
 
     @Test
     public void testFindTenantProfiles() {
-        EntityProfile saved = saveRandomEntityProfile(randomAlphanumeric(10), EntityType.TENANT);
+        saveRandomEntityProfile(randomAlphanumeric(10), EntityType.TENANT);
         PageLink pageLink = new PageLink(1);
         List<EntityProfile> data = profileService.findTenantProfiles(pageLink).getData();
         assertEquals(pageLink.getPageSize(), data.size());
@@ -126,6 +121,6 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
                 .profile(mapper.valueToTree(profile))
                 .build();
 
-        return profileService.save(TenantId.SYS_TENANT_ID, entityProfile);
+        return profileService.save(entityProfile);
     }
 }
