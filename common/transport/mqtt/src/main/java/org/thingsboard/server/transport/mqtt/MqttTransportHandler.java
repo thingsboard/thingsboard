@@ -294,7 +294,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         break;
                 }
             } catch (Exception e) {
-                log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
+                log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS, e);
                 grantedQoSList.add(FAILURE.value());
             }
         }

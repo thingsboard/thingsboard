@@ -355,18 +355,20 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         };
     }
 
-    function entityRelationInfoToEntityInfo(entityRelationInfo, direction) {
+    function entityRelationInfoToEntityInfoFunc(entityRelationInfo, direction) {
+      return function() {
         var deferred = $q.defer();
         var entityId = direction == types.entitySearchDirection.from ? entityRelationInfo.to : entityRelationInfo.from;
         getEntity(entityId.entityType, entityId.id, {ignoreLoading: true}).then(
-            function success(entity) {
-                deferred.resolve(entityToEntityInfo(entity));
-            },
-            function fail() {
-                deferred.reject();
-            }
+          function success(entity) {
+            deferred.resolve(entityToEntityInfo(entity));
+          },
+          function fail() {
+            deferred.reject();
+          }
         );
         return deferred.promise;
+      }
     }
 
     function entitiesToEntitiesInfo(entities) {
@@ -381,23 +383,56 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
 
     function entityRelationInfosToEntitiesInfo(entityRelations, direction) {
         var deferred = $q.defer();
-        var entitiesInfoTaks = [];
-        if (entityRelations) {
-            for (var d = 0; d < entityRelations.length; d++) {
-                entitiesInfoTaks.push(entityRelationInfoToEntityInfo(entityRelations[d], direction));
+        if (entityRelations && entityRelations.length) {
+          var entityInfoTasks = [];
+          for (var d = 0; d < entityRelations.length; d++) {
+            entityInfoTasks.push(entityRelationInfoToEntityInfoFunc(entityRelations[d], direction));
+          }
+          sendPackedRequests(entityInfoTasks).then(
+            function success(entityInfos) {
+              deferred.resolve(entityInfos);
+            }, function fail () {
+              deferred.reject();
             }
+          );
+        } else {
+          deferred.resolve([]);
         }
-        $q.all(entitiesInfoTaks).then(
-            function success(entitiesInfo) {
-                deferred.resolve(entitiesInfo);
-            },
-            function fail() {
-                deferred.reject();
-            }
-        );
         return deferred.promise;
     }
 
+    function sendPackedRequests(taskFunctions) {
+      var taskFunctionPacks = [];
+      for (var e = 0; e < taskFunctions.length; e+=100) {
+        taskFunctionPacks.push(taskFunctions.slice(e,e + 100));
+      }
+      var deferred = $q.defer();
+      var resolvePack = [];
+      doSendPackedRequests(taskFunctionPacks, 0, resolvePack, deferred);
+      return deferred.promise;
+    }
+
+    function doSendPackedRequests (functionPack, index, resolvePack, deferred) {
+      var tasks = [];
+      var currentFunctionPack = functionPack[index];
+      for (var i=0;i<currentFunctionPack.length;i++) {
+        tasks.push(currentFunctionPack[i]());
+      }
+      $q.all(tasks).then(
+        function(response) {
+          resolvePack = resolvePack.concat(response);
+          index++;
+          if (functionPack[index]) {
+            doSendPackedRequests(functionPack, index, resolvePack, deferred);
+          } else {
+            deferred.resolve(resolvePack);
+          }
+        },
+        function fail() {
+          deferred.reject();
+        }
+      );
+    }
 
     function resolveAlias(entityAlias, stateParams) {
         var deferred = $q.defer();
