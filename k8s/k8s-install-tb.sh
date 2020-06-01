@@ -44,6 +44,11 @@ function installPostgres() {
 
 function installCassandra() {
 
+    if [ $CASSANDRA_REPLICATION_FACTOR -lt 1 ]; then
+        echo "CASSANDRA_REPLICATION_FACTOR should be greater or equal to 1. Value $CASSANDRA_REPLICATION_FACTOR is not allowed."
+        exit 1
+    fi
+
     kubectl apply -f common/cassandra.yml
     kubectl apply -f common/tb-node-cassandra-configmap.yml
 
@@ -53,7 +58,7 @@ function installCassandra() {
                     \"CREATE KEYSPACE IF NOT EXISTS thingsboard \
                     WITH replication = { \
                         'class' : 'SimpleStrategy', \
-                        'replication_factor' : 1 \
+                        'replication_factor' : $CASSANDRA_REPLICATION_FACTOR \
                     };\""
 }
 
