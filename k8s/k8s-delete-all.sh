@@ -19,7 +19,7 @@ source .env
 
 kubectl -n thingsboard delete svc,sts,deploy,cm,po,ing --all
 
-if [ "$DEPLOYMENT_TYPE" == "high-availability" ]; then
+if [ "$DEPLOYMENT_TYPE" == "high-availability" ] &&  [ "$DATABASE" == "postgres" ]; then
     helm uninstall my-release
 fi
 
