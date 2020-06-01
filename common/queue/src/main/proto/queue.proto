@@ -183,11 +183,6 @@ message ValidateDeviceLwM2MCredentialsRequestMsg {
   string credentialsId = 1;
 }
 
-message ValidateDeviceLwM2MCredentialsResponseMsg {
-  DeviceInfoProto deviceInfo = 1;
-  string credentialsBody = 2;
-}
-
 message GetTenantRoutingInfoRequestMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -400,7 +395,6 @@ message TransportApiResponseMsg {
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
   LwM2MResponseMsg lwM2MResponseMsg = 5;
-  ValidateDeviceLwM2MCredentialsResponseMsg validateDeviceLwM2MCredentialsResponseMsg = 6;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

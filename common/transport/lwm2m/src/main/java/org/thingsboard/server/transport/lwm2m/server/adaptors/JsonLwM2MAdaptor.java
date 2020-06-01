@@ -20,13 +20,15 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
-@Component("JsonLwM2MAdaptor")
 @Slf4j
+@Component("JsonLwM2MAdaptor")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class JsonLwM2MAdaptor implements LwM2MTransportAdaptor  {
 
     @Override

@@ -63,7 +63,9 @@ export default function ManageDeviceCredentialsController(deviceService, $scope,
                    && vm.deviceCredentials.credentialsValue.length > 0
                    || vm.deviceCredentials.credentialsType === 'LWM2M_CREDENTIALS'
                    && vm.deviceCredentials.credentialsId
-                   && vm.deviceCredentials.credentialsId.length > 0)
+                   && vm.deviceCredentials.credentialsId.length > 0
+                   && vm.deviceCredentials.credentialsValue
+                   && vm.deviceCredentials.credentialsValue.length > 0)
     }
 
     function clear() {

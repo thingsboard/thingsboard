@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider;
+import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.MagicLwM2mValueConverter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -50,6 +51,9 @@ public class LwM2MTransportServerConfiguration {
 
     @Autowired
     private LwM2MTransportCtx context;
+
+    @Autowired
+    private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
     private final static String[] modelPaths = LwM2MProvider.modelPaths;
 
@@ -234,7 +238,7 @@ public class LwM2MTransportServerConfiguration {
 
         if (jedis == null) {
             //            securityStore = new InMemorySecurityStore();
-            securityStore = new LwM2mInMemorySecurityStore();
+            securityStore = lwM2mInMemorySecurityStore;
 
 
             // use jsonStr

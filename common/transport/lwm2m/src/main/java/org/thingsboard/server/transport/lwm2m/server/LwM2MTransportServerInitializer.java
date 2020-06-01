@@ -34,6 +34,7 @@ import org.thingsboard.server.transport.lwm2m.utils.MagicLwM2mValueConverter;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service("LwM2MTransportServerInitializer")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
@@ -43,9 +44,13 @@ public class LwM2MTransportServerInitializer {
     @Autowired
     private LeshanServer lhServer;
 
+    @Autowired
+    private LwM2MTransportCtx context;
+
     @PostConstruct
     public void init() {
-         this.lhServer.start();
+        this.context.setSessions(new ConcurrentHashMap<>());
+        this.lhServer.start();
     }
 
     @PreDestroy

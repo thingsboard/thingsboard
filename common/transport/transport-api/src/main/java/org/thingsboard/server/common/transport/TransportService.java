@@ -18,7 +18,6 @@ package org.thingsboard.server.common.transport;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
@@ -52,7 +51,7 @@ public interface TransportService {
                  TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
 
     void process(ValidateDeviceLwM2MCredentialsRequestMsg msg,
-                 TransportServiceCallback<ValidateDeviceLwM2MCredentialsResponseMsg> callback);
+                 TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
 
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg> callback);

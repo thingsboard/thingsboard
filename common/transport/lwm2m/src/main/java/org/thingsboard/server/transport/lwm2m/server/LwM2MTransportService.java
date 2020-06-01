@@ -30,6 +30,7 @@ import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
+import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,8 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.JsonLwM2MAdaptor;
+import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MCredentials;
+import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResult;
 
 
@@ -54,9 +57,8 @@ import static org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvid
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 @Slf4j
 public class LwM2MTransportService {
-    //    private LwM2MTransportAdaptor adaptor;
+
     private final UUID sessionId = UUID.randomUUID();
-    protected final Map<String /* clientEndPoint */, TransportProtos.LwM2MResponseMsg> sessions = new ConcurrentHashMap<>();
 
     @Autowired
     private JsonLwM2MAdaptor adaptor;
@@ -75,22 +77,22 @@ public class LwM2MTransportService {
 
     public void onRegistered(Registration registration) {
         String endpointId = registration.getEndpoint();
-        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
-        String lwm2mVersion = registration.getLwM2mVersion();
-
-        log.info("[{}] [{}] Received endpoint registration version event", endpointId, lwm2mVersion);
-//        String jReg = this.gson.toJson(registration);
-        TransportProtos.LwM2MRegistrationRequestMsg registrationRequestMsg = TransportProtos.LwM2MRegistrationRequestMsg.newBuilder()
-                .setTenantId(context.getTenantId())
-                .setEndpoint(endpointId)
-                .setLwM2MVersion(lwm2mVersion)
-                .setSmsNumber(smsNumber).build();
-        TransportProtos.LwM2MRequestMsg requestMsg = TransportProtos.LwM2MRequestMsg.newBuilder().setRegistrationMsg(registrationRequestMsg).build();
-        context.getTransportService().process(requestMsg, new TransportServiceCallback<TransportProtos.LwM2MResponseMsg>() {
-            @Override
-            public void onSuccess(TransportProtos.LwM2MResponseMsg msg) {
-                log.info("[{}][{}] Received endpoint registration response: {}", lwm2mVersion, endpointId, msg);
-                sessions.put(endpointId, msg);
+//        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
+//        String lwm2mVersion = registration.getLwM2mVersion();
+//
+//        log.info("[{}] [{}] Received endpoint registration version event", endpointId, lwm2mVersion);
+////        String jReg = this.gson.toJson(registration);
+//        TransportProtos.LwM2MRegistrationRequestMsg registrationRequestMsg = TransportProtos.LwM2MRegistrationRequestMsg.newBuilder()
+//                .setTenantId(context.getTenantId())
+//                .setEndpoint(endpointId)
+//                .setLwM2MVersion(lwm2mVersion)
+//                .setSmsNumber(smsNumber).build();
+//        TransportProtos.LwM2MRequestMsg requestMsg = TransportProtos.LwM2MRequestMsg.newBuilder().setRegistrationMsg(registrationRequestMsg).build();
+//        context.getTransportService().process(requestMsg, new TransportServiceCallback<TransportProtos.LwM2MResponseMsg>() {
+//            @Override
+//            public void onSuccess(TransportProtos.LwM2MResponseMsg msg) {
+//                log.info("[{}][{}] Received endpoint registration response: {}", lwm2mVersion, endpointId, msg);
+//                sessions.put(endpointId, msg);
                 //Tests.
 //                Collection<Registration> registrations = lwM2MTransportRequest.doGetRegistrations();
 //                log.info("Ok process get registrations: [{}]", registrations);
@@ -109,16 +111,17 @@ public class LwM2MTransportService {
 //                typeOper = GET_TYPE_OPER_DISCOVER;
 //                cResponse =  lwM2MTransportRequest.doGet(endpointId,  traget, typeOper, ContentFormat.TLV.getName());
 //                log.info("[{}] [{}] [{}] Ok process get request: [{}]", endpointId, traget, typeOper, cResponse);
-                ReadResult readResult = doGetAttributsTelemetry(endpointId);
-                processDevicePublish(readResult.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
-                processDevicePublish(readResult.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
-            }
+//                SecurityInfo info = getPSK(endpointId);
+//                ReadResult readResult = doGetAttributsTelemetry(endpointId);
+//                processDevicePublish(readResult.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
+//                processDevicePublish(readResult.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
+//            }
 
-            @Override
-            public void onError(Throwable e) {
-                log.warn("[{}][{}] Failed to process registration request [{}]", lwm2mVersion, endpointId, e);
-            }
-        });
+//            @Override
+//            public void onError(Throwable e) {
+//                log.warn("[{}][{}] Failed to process registration request [{}]", lwm2mVersion, endpointId, e);
+//            }
+//        });
     }
 
     public void processDevicePublish(JsonElement msg, String topicName, int msgId, String clientEndpoint) {
@@ -172,20 +175,20 @@ public class LwM2MTransportService {
 
     private TransportProtos.SessionInfoProto getValidateSessionInfo(String endpointId) {
         TransportProtos.SessionInfoProto sessionInfo = null;
-        TransportProtos.LwM2MResponseMsg msg = sessions.get(endpointId);
-        if (msg == null || !msg.getRegistrationMsg().hasDeviceInfo()) {
+        TransportProtos.ValidateDeviceCredentialsResponseMsg msg = context.getSessions().get(endpointId);
+        if (msg == null || msg.getDeviceInfo()== null) {
             log.warn(CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
         } else {
             sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
                     .setNodeId(context.getNodeId())
                     .setSessionIdMSB(sessionId.getMostSignificantBits())
                     .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                    .setDeviceIdMSB(msg.getRegistrationMsg().getDeviceInfo().getDeviceIdMSB())
-                    .setDeviceIdLSB(msg.getRegistrationMsg().getDeviceInfo().getDeviceIdLSB())
-                    .setTenantIdMSB(msg.getRegistrationMsg().getDeviceInfo().getTenantIdMSB())
-                    .setTenantIdLSB(msg.getRegistrationMsg().getDeviceInfo().getTenantIdLSB())
-                    .setDeviceName(msg.getRegistrationMsg().getDeviceInfo().getDeviceName())
-                    .setDeviceType(msg.getRegistrationMsg().getDeviceInfo().getDeviceType())
+                    .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
+                    .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
+                    .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
+                    .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
+                    .setDeviceName(msg.getDeviceInfo().getDeviceName())
+                    .setDeviceType(msg.getDeviceInfo().getDeviceType())
                     .build();
             transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
             log.info("[{}] Client connected!", sessionId);
@@ -198,13 +201,15 @@ public class LwM2MTransportService {
         String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
         log.info("[{}] [{}] Received endpoint updated registration version event", endpointId, lwm2mVersion);
-        //TODO: associate endpointId with device information.
+        ReadResult readResult = doGetAttributsTelemetry(endpointId);
+        processDevicePublish(readResult.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
+        processDevicePublish(readResult.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
     }
 
     public void unReg(Registration registration) {
         String endpointId = registration.getEndpoint();
         log.info("[{}] Received endpoint un registration version event", endpointId);
-        sessions.remove(endpointId);
+        context.getSessions().remove(endpointId);
     }
 
     public void onSleepingDev(Registration registration) {
@@ -246,7 +251,7 @@ public class LwM2MTransportService {
         ReadResult readResult = new ReadResult();
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
-            log.info("Attributes: Key : [{}] Value : [{}]", entry.getKey() , entry.getValue());
+            log.info("Attributes: Key : [{}] Value : [{}]", entry.getKey(), entry.getValue());
             readResult.getPostAttribute().addProperty(entry.getKey(), entry.getValue());
         });
         lwServer.getModelProvider().getObjectModel(registration).getObjectModels().forEach(om -> {
@@ -282,11 +287,4 @@ public class LwM2MTransportService {
         }
         return String.valueOf(resValue);
     }
-
-    // Get Model for this registration
-//    public Collection<ObjectModel> getObjectsModel(String clientEndpoint) {
-//        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
-//        return lwServer.getModelProvider().getObjectModel(registration).getObjectModels();
-//    }
-
 }
