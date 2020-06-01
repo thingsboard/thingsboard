@@ -27,7 +27,7 @@ global:
 #     repmgrUsername: repmgruser
 #     repmgrPassword: repmgrpassword
 #     repmgrDatabase: repmgrdatabase
-#    existingSecret: siot-postgres-helm
+#    existingSecret: myExistingSecret
 #   ldap:
 #     bindpw: bindpassword
 #     existingSecret: myExistingSecret
