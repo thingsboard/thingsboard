@@ -66,11 +66,11 @@ spec:
       - name: cassandra-config
         configMap:
           name: cassandra-config
-          defaultMode: 0777
+          defaultMode: 0755
       terminationGracePeriodSeconds: 1800
       containers:
       - name: cassandra
-        image: bitnami/cassandra:3.11.3
+        image: cassandra:3.11.6
         imagePullPolicy: Always
         ports:
         - containerPort: 7000
@@ -128,7 +128,7 @@ spec:
             - /bin/bash
             - -c
             - /conf/ready-probe.sh
-          initialDelaySeconds: 60
+          initialDelaySeconds: 40
           timeoutSeconds: 5
         volumeMounts:
         - name: cassandra-config
@@ -144,7 +144,7 @@ spec:
       storageClassName: fast
       resources:
         requests:
-          storage: 1Gi
+          storage: 500Mi
 ---
 apiVersion: v1
 kind: Service
