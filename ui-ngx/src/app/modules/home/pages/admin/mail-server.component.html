@@ -90,8 +90,8 @@
           <tb-checkbox formControlName="enableProxy" style="display: block; padding-bottom: 16px;">
             {{ 'admin.enable-proxy' | translate }}
           </tb-checkbox>
-          <div *ngIf="enableProxy()">
-            <div fxLayout.gt-sm="row">
+          <div *ngIf="mailSettings.get('enableProxy').value">
+            <div fxLayout.gt-sm="row" fxLayoutGap.gt-sm="8px">
               <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="60">
                 <mat-label translate>admin.proxy-host</mat-label>
                 <input matInput required formControlName="proxyHost">

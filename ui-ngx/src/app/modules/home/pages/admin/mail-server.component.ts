@@ -53,6 +53,7 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
       (adminSettings) => {
         this.adminSettings = adminSettings;
         this.mailSettings.reset(this.adminSettings.jsonValue);
+        this.enableProxyChanged();
       }
     );
   }
@@ -70,7 +71,7 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
         Validators.maxLength(6)]],
       enableTls: ['false'],
       tlsVersion: [],
-      enableProxy: ['false', []],
+      enableProxy: [false, []],
       proxyHost: ['', [Validators.required]],
       proxyPort: ['', [Validators.required, Validators.min(1), Validators.max(65535)]],
       proxyUser: [''],
@@ -80,9 +81,13 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
     });
     this.registerDisableOnLoadFormControl(this.mailSettings.get('smtpProtocol'));
     this.registerDisableOnLoadFormControl(this.mailSettings.get('enableTls'));
+    this.registerDisableOnLoadFormControl(this.mailSettings.get('enableProxy'));
+    this.mailSettings.get('enableProxy').valueChanges.subscribe(() => {
+      this.enableProxyChanged();
+    });
   }
 
-  enableProxy(): boolean {
+  enableProxyChanged(): void {
     let enableProxy: boolean = this.mailSettings.get('enableProxy').value;
     if (enableProxy) {
       this.mailSettings.get('proxyHost').enable();
@@ -91,7 +96,6 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
       this.mailSettings.get('proxyHost').disable();
       this.mailSettings.get('proxyPort').disable();
     }
-    return enableProxy;
   }
 
   sendTestMail(): void {
