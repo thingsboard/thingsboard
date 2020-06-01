@@ -67,29 +67,5 @@ export default function EntityViewRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "view_quilt", "label": "{{ vm.customerEntityViewsTitle }}", "translate": "false"}'
             }
-        })
-        .state('home.edges.entityViews', {
-            url: '/:edgeId/entityViews',
-            params: {'topIndex': 0},
-            module: 'private',
-            auth: ['TENANT_ADMIN'],
-            views: {
-                "content@home": {
-                    templateUrl: entityViewsTemplate,
-                    controllerAs: 'vm',
-                    controller: 'EntityViewController'
-                }
-            },
-            data: {
-                entityViewsType: 'edge',
-                searchEnabled: true,
-                searchByEntitySubtype: true,
-                searchEntityType: types.entityType.entityView,
-                pageTitle: 'edge.entity-views'
-            },
-            ncyBreadcrumb: {
-                label: '{"icon": "view_quilt", "label": "edge.entity-views"}'
-            }
         });
-
 }

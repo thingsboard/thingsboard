@@ -294,6 +294,19 @@ export function EntityViewController($rootScope, userService, entityViewService,
                 return {"edgeId": edgeId, "topIndex": vm.topIndex};
             };
 
+            entityViewActionsList.push({
+                    onAction: function ($event, item) {
+                        unassignFromEdge($event, item, false);
+                    },
+                    name: function() { return $translate.instant('action.unassign') },
+                    details: function() { return $translate.instant('entity-view.unassign-from-edge') },
+                    icon: "assignment_return",
+                    isEnabled: function(entityView) {
+                        return entityView && entityView.edgeId && entityView.edgeId.id !== types.id.nullUid;
+                    }
+                }
+            );
+
             entityViewGroupActionsList.push(
                 {
                     onAction: function ($event, items) {
@@ -579,6 +592,27 @@ export function EntityViewController($rootScope, userService, entityViewService,
                 tasks.push(entityViewService.unassignEntityViewFromEdge(id));
             }
             $q.all(tasks).then(function () {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
+    function unassignFromEdge($event, entityView) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var title = $translate.instant('entity-view.unassign-entity-view-from-edge-title', {entityViewName: entityView.name});
+        var content = $translate.instant('entity-view.unassign-entity-view-from-edge-text');
+        var label = $translate.instant('entity-view.unassign-entity-view');
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title(title)
+            .htmlContent(content)
+            .ariaLabel(label)
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            entityViewService.unassignEntityViewFromEdge(entityView.id.id).then(function success() {
                 vm.grid.refreshList();
             });
         });

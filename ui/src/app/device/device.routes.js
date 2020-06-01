@@ -67,29 +67,6 @@ export default function DeviceRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "devices_other", "label": "{{ vm.customerDevicesTitle }}", "translate": "false"}'
             }
-        })
-        .state('home.edges.devices', {
-            url: '/:edgeId/devices',
-            params: {'topIndex': 0},
-            module: 'private',
-            auth: ['TENANT_ADMIN'],
-            views: {
-                "content@home": {
-                    templateUrl: devicesTemplate,
-                    controllerAs: 'vm',
-                    controller: 'DeviceController'
-                }
-            },
-            data: {
-                devicesType: 'edge',
-                searchEnabled: true,
-                searchByEntitySubtype: true,
-                searchEntityType: types.entityType.device,
-                pageTitle: 'edge.devices'
-            },
-            ncyBreadcrumb: {
-                label: '{"icon": "devices_other", "label": "edge.devices"}'
-            }
         });
 
 }

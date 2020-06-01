@@ -222,20 +222,6 @@ export function DeviceController($rootScope, userService, deviceService, custome
             deviceActionsList.push(
                 {
                     onAction: function ($event, item) {
-                        unassignFromEdge($event, item, false);
-                    },
-                    name: function() { return $translate.instant('action.unassign') },
-                    details: function() { return $translate.instant('device.unassign-from-edge') },
-                    icon: "portable_wifi_off",
-                    isEnabled: function(device) {
-                        return device && device.edgeId && device.edgeId.id !== types.id.nullUid;
-                    }
-                }
-            );
-
-            deviceActionsList.push(
-                {
-                    onAction: function ($event, item) {
                         manageCredentials($event, item);
                     },
                     name: function() { return $translate.instant('device.credentials') },

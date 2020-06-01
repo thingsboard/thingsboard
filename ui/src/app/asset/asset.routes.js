@@ -67,29 +67,6 @@ export default function AssetRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "domain", "label": "{{ vm.customerAssetsTitle }}", "translate": "false"}'
             }
-        })
-        .state('home.edges.assets', {
-            url: '/:edgeId/assets',
-            params: {'topIndex': 0},
-            module: 'private',
-            auth: ['TENANT_ADMIN'],
-            views: {
-                "content@home": {
-                    templateUrl: assetsTemplate,
-                    controllerAs: 'vm',
-                    controller: 'AssetController'
-                }
-            },
-            data: {
-                assetsType: 'edge',
-                searchEnabled: true,
-                searchByEntitySubtype: true,
-                searchEntityType: types.entityType.asset,
-                pageTitle: 'edge.assets'
-            },
-            ncyBreadcrumb: {
-                label: '{"icon": "domain", "label": "edge.assets"}'
-            }
         });
 
 }

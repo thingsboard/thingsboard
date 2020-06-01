@@ -21,8 +21,6 @@ import addRuleChainsToEdgeTemplate from "./add-rulechains-to-edge.tpl.html";
 
 /* eslint-enable import/no-unresolved, import/default */
 
-import './rulechain-card.scss';
-
 /*@ngInject*/
 export default function RuleChainsController(ruleChainService, userService, edgeService, importExport, $state,
                                              $stateParams, $filter, $translate, $mdDialog, $document, $q, types) {
@@ -342,6 +340,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
         var deferred = $q.defer();
         ruleChainService.getDefaultEdgeRuleChains(null).then(
             function success(response) {
+                defaultEdgeRuleChainIds = [];
                 response.map(function (ruleChain) {
                     defaultEdgeRuleChainIds.push(ruleChain.id.id)
                 });
@@ -368,7 +367,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
 
     function fetchEdgeRuleChains(edgeId, pageLink) {
         var deferred = $q.defer();
-        ruleChainService.getRuleChains(pageLink, null, types.edgeRuleChainType).then(
+        ruleChainService.getEdgeRuleChains(edgeId, pageLink, null).then(
             function success(ruleChains) {
                 getDefaultEdges(ruleChains).then(
                     function success(response) {
@@ -377,7 +376,6 @@ export default function RuleChainsController(ruleChainService, userService, edge
                         deferred.reject();
                     }
                 );
-                // deferred.resolve(response);
             }, function fail() {
                 deferred.reject();
             }
