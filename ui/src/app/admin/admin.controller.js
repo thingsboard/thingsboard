@@ -39,6 +39,9 @@ export default function AdminController(adminService, toast, $scope, $rootScope,
     function loadSettings() {
         adminService.getAdminSettings($state.$current.data.key).then(function success(settings) {
             vm.settings = settings;
+            if(vm.settings.jsonValue && vm.settings.jsonValue.enableTls && angular.isString(vm.settings.jsonValue.enableTls)){
+                vm.settings.jsonValue.enableTls = vm.settings.jsonValue.enableTls === 'true';
+            }
         });
     }
 
