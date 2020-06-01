@@ -427,7 +427,7 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_ce}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
@@ -565,7 +565,6 @@ transport:
     bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${LWM2M_BIND_PORT:5685}"
     timeout: "${LWM2M_TIMEOUT:10000}"
-    tenant_id: "${LWM2M_DEFAULT_TENANT_ID:9bf7b1b0-8de5-11ea-94d1-4f9c993504a9}"
     secure:
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT:5686}"

@@ -46,6 +46,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponse
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -105,7 +106,12 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasLwM2MRequestMsg()) {
             return Futures.transform(handle(transportApiRequestMsg.getLwM2MRequestMsg()),
                     value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+        }else if (transportApiRequestMsg.hasValidateDeviceLwM2MCredentialsRequestMsg()) {
+            ValidateDeviceLwM2MCredentialsRequestMsg msg = transportApiRequestMsg.getValidateDeviceLwM2MCredentialsRequestMsg();
+            return Futures.transform(validateCredentials(msg.getCredentialsId(), DeviceCredentialsType.LWM2M_CREDENTIALS),
+                    value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
+
         return Futures.transform(getEmptyTransportApiResponseFuture(), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
     }
 
