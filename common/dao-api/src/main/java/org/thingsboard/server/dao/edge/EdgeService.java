@@ -82,6 +82,8 @@ public interface EdgeService {
 
     Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws IOException;
 
+    void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId);
+
     ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndRuleChainId(TenantId tenantId, RuleChainId ruleChainId, TimePageLink pageLink);
 
     ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndDashboardId(TenantId tenantId, DashboardId dashboardId, TimePageLink pageLink);

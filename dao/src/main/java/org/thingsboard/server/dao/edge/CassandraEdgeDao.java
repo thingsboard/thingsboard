@@ -116,7 +116,7 @@ public class CassandraEdgeDao extends CassandraAbstractSearchTextDao<EdgeEntity,
         return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<Edge>> edgeFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
-                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getFrom().getId()));
             }
             return Futures.successfulAsList(edgeFutures);
         }, MoreExecutors.directExecutor());
@@ -129,7 +129,7 @@ public class CassandraEdgeDao extends CassandraAbstractSearchTextDao<EdgeEntity,
         return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<Edge>> edgeFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
-                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getFrom().getId()));
             }
             return Futures.successfulAsList(edgeFutures);
         }, MoreExecutors.directExecutor());

@@ -507,7 +507,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public boolean addDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         try {
             createRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_DEFAULT_RULE_CHAIN));
             return true;
         } catch (ExecutionException | InterruptedException e) {
             log.warn("Failed to add default edge rule chain, ruleChainId: [{}]", ruleChainId, e);
@@ -519,7 +519,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public boolean removeDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         try {
             deleteRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_DEFAULT_RULE_CHAIN));
             return true;
         } catch (ExecutionException | InterruptedException e) {
             log.warn("Failed to remove default edge rule chain, ruleChainId: [{}]", ruleChainId, e);

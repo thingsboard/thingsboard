@@ -666,6 +666,20 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     @Override
+    public void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId) {
+        log.trace("Executing assignDefaultRuleChainsToEdge, tenantId [{}], edgeId [{}]", tenantId, edgeId);
+        ListenableFuture<List<RuleChain>> future = ruleChainService.findDefaultEdgeRuleChainsByTenantId(tenantId);
+        Futures.transform(future, ruleChains -> {
+            if (ruleChains != null && !ruleChains.isEmpty()) {
+                for (RuleChain ruleChain : ruleChains) {
+                    ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
+                }
+            }
+            return null;
+        }, MoreExecutors.directExecutor());
+    }
+
+    @Override
     public ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndRuleChainId(TenantId tenantId, RuleChainId ruleChainId, TimePageLink pageLink) {
         log.trace("Executing findEdgesByTenantIdAndRuleChainId, tenantId [{}], ruleChainId [{}], pageLink [{}]", tenantId, ruleChainId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);

@@ -137,8 +137,10 @@ public class RuleChainController extends BaseController {
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 
-            tbClusterService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
-                    created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            if (RuleChainType.SYSTEM.equals(savedRuleChain.getType())) {
+                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
+                        created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            }
 
             logEntityAction(savedRuleChain.getId(), savedRuleChain,
                     null,
@@ -210,7 +212,9 @@ public class RuleChainController extends BaseController {
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
 
-            tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
+            if (RuleChainType.SYSTEM.equals(ruleChain.getType())) {
+                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
+            }
 
             logEntityAction(ruleChain.getId(), ruleChain,
                     null,
@@ -266,10 +270,12 @@ public class RuleChainController extends BaseController {
 
             referencingRuleChainIds.remove(ruleChain.getId());
 
-            referencingRuleChainIds.forEach(referencingRuleChainId ->
-                    tbClusterService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
+            if (RuleChainType.SYSTEM.equals(ruleChain.getType())) {
+                referencingRuleChainIds.forEach(referencingRuleChainId ->
+                        tbClusterService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
 
-            tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
+                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
+            }
 
             logEntityAction(ruleChainId, ruleChain,
                     null,
