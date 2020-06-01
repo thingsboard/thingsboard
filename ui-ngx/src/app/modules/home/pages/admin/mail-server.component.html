@@ -90,33 +90,37 @@
           <tb-checkbox formControlName="enableProxy" style="display: block; padding-bottom: 16px;">
             {{ 'admin.enable-proxy' | translate }}
           </tb-checkbox>
-          <div fxLayout.gt-sm="row">
-            <mat-form-field class="mat-block"  *ngIf="enableProxy()" fxFlex="100" fxFlex.gt-sm="60">
-              <mat-label translate>admin.proxy-host</mat-label>
-              <input matInput required formControlName="proxyHost">
-              <mat-error *ngIf="mailSettings.get('proxyHost').hasError('required')">
-                {{ 'admin.proxy-host-required' | translate }}
-              </mat-error>
+          <div *ngIf="enableProxy()">
+            <div fxLayout.gt-sm="row">
+              <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="60">
+                <mat-label translate>admin.proxy-host</mat-label>
+                <input matInput required formControlName="proxyHost">
+                <mat-error *ngIf="mailSettings.get('proxyHost').hasError('required')">
+                  {{ 'admin.proxy-host-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field class="mat-block" fxFlex="100" fxFlex.gt-sm="40">
+                <mat-label translate>admin.proxy-port</mat-label>
+                <input matInput required formControlName="proxyPort" type="number" step="1" min="1" max="65535">
+                <mat-error *ngIf="mailSettings.get('proxyPort').hasError('required')">
+                  {{ 'admin.proxy-port-required' | translate }}
+                </mat-error>
+                <mat-error *ngIf="mailSettings.get('proxyPort').hasError('pattern')
+              || mailSettings.get('proxyPort').hasError('min')
+              || mailSettings.get('proxyPort').hasError('max')">
+                  {{ 'admin.proxy-port-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <mat-form-field class="mat-block">
+              <mat-label translate>admin.proxy-user</mat-label>
+              <input matInput formControlName="proxyUser">
             </mat-form-field>
-            <mat-form-field class="mat-block" *ngIf="enableProxy()" fxFlex="100" fxFlex.gt-sm="40">
-              <mat-label translate>admin.proxy-port</mat-label>
-              <input matInput required formControlName="proxyPort" maxlength="5">
-              <mat-error *ngIf="mailSettings.get('proxyPort').hasError('required')">
-                {{ 'admin.proxy-port-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="mailSettings.get('proxyPort').hasError('pattern') || mailSettings.get('proxyPort').hasError('maxlength')">
-                {{ 'admin.proxy-port-invalid' | translate }}
-              </mat-error>
+            <mat-form-field class="mat-block">
+              <mat-label translate>admin.proxy-password</mat-label>
+              <input matInput formControlName="proxyPassword">
             </mat-form-field>
           </div>
-          <mat-form-field class="mat-block" *ngIf="enableProxy()">
-            <mat-label translate>admin.proxy-user</mat-label>
-            <input matInput formControlName="proxyUser">
-          </mat-form-field>
-          <mat-form-field class="mat-block" *ngIf="enableProxy()">
-            <mat-label translate>admin.proxy-password</mat-label>
-            <input matInput formControlName="proxyPassword">
-          </mat-form-field>
           <mat-form-field class="mat-block">
             <mat-label translate>common.username</mat-label>
             <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"/>
