@@ -35,8 +35,8 @@ export interface MailServerSettings {
   enableProxy: boolean;
   proxyHost: string;
   proxyPort: number;
-  proxyUser?: string;
-  proxyPassword?: string;
+  proxyUser: string;
+  proxyPassword: string;
 }
 
 export interface GeneralSettings {
