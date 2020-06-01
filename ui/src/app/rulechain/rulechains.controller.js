@@ -93,7 +93,6 @@ export default function RuleChainsController(ruleChainService, userService, edge
     vm.isRootRuleChain = isRootRuleChain;
     vm.isNonRootRuleChain = isNonRootRuleChain;
     vm.isDefaultEdgeRuleChain = isDefaultEdgeRuleChain;
-    var defaultEdgeRuleChainIds = [];
 
     vm.exportRuleChain = exportRuleChain;
     vm.setRootRuleChain = setRootRuleChain;
@@ -340,15 +339,13 @@ export default function RuleChainsController(ruleChainService, userService, edge
         var deferred = $q.defer();
         ruleChainService.getDefaultEdgeRuleChains(null).then(
             function success(response) {
-                defaultEdgeRuleChainIds = [];
+                let defaultEdgeRuleChainIds = [];
                 response.map(function (ruleChain) {
                     defaultEdgeRuleChainIds.push(ruleChain.id.id)
                 });
-
                 const data = ruleChains.data;
                 data.map(function (ruleChain) {
-                    ruleChain.isDefault = defaultEdgeRuleChainIds.some(
-                        id => ruleChain.id.id.includes(id));
+                    ruleChain.isDefault = defaultEdgeRuleChainIds.some(id => ruleChain.id.id.includes(id));
                     return ruleChain;
                 });
                 ruleChains.data = data;
@@ -433,11 +430,11 @@ export default function RuleChainsController(ruleChainService, userService, edge
     }
 
     function isDefaultEdgeRuleChain(ruleChain) {
-        return angular.isDefined(ruleChain) && !ruleChain.root && defaultEdgeRuleChainIds.includes(ruleChain.id.id) === true;
+        return angular.isDefined(ruleChain) && ruleChain.isDefault;
     }
 
     function isNonDefaultEdgeRuleChain(ruleChain) {
-        return angular.isDefined(ruleChain) && !ruleChain.root && defaultEdgeRuleChainIds.includes(ruleChain.id.id) === false;
+        return angular.isDefined(ruleChain) && !ruleChain.isDefault;
     }
 
     function exportRuleChain($event, ruleChain) {
