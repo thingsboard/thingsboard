@@ -96,7 +96,7 @@ public class CassandraRuleChainDao extends CassandraAbstractSearchTextDao<RuleCh
     @Override
     public ListenableFuture<List<RuleChain>> findRuleChainsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
         log.debug("Try to find rule chains by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
-        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.DASHBOARD, pageLink);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.RULE_CHAIN, pageLink);
         return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<RuleChain>> ruleChainFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {

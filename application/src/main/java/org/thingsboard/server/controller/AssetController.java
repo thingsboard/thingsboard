@@ -40,6 +40,8 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -50,6 +52,8 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
 @TbCoreComponent
@@ -336,9 +340,9 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
-    public Asset assignAssetToEdge(@PathVariable("edgeId") String strEdgeId,
+    public Asset assignAssetToEdge(@PathVariable(EDGE_ID) String strEdgeId,
                                        @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
-        checkParameter("edgeId", strEdgeId);
+        checkParameter(EDGE_ID, strEdgeId);
         checkParameter(ASSET_ID, strAssetId);
         try {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
@@ -365,20 +369,20 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/asset/{assetId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/edge/{edgeId}/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Asset unassignAssetFromEdge(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+    public Asset unassignAssetFromEdge(@PathVariable(EDGE_ID) String strEdgeId,
+                                       @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
         checkParameter(ASSET_ID, strAssetId);
         try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId, Operation.UNASSIGN_FROM_EDGE);
-            if (asset.getEdgeId() == null || asset.getEdgeId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Asset isn't assigned to any edge!");
-            }
 
-            Edge edge = checkEdgeId(asset.getEdgeId(), Operation.READ);
-
-            Asset savedAsset = checkNotNull(assetService.unassignAssetFromEdge(getTenantId(), assetId));
+            Asset savedAsset = checkNotNull(assetService.unassignAssetFromEdge(getTenantId(), assetId, edgeId));
 
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
@@ -398,24 +402,20 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/assets", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
-    public TextPageData<Asset> getEdgeAssets(
-            @PathVariable("edgeId") String strEdgeId,
+    public TimePageData<Asset> getEdgeAssets(
+            @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int limit,
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) String textSearch,
-            @RequestParam(required = false) String idOffset,
-            @RequestParam(required = false) String textOffset) throws ThingsboardException {
-        checkParameter("edgeId", strEdgeId);
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
+            @RequestParam(required = false) String offset) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
-            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            if (type != null && type.trim().length()>0) {
-                return checkNotNull(assetService.findAssetsByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink));
-            } else {
-                return checkNotNull(assetService.findAssetsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
-            }
+            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            return checkNotNull(assetService.findAssetsByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get());
         } catch (Exception e) {
             throw handleException(e);
         }

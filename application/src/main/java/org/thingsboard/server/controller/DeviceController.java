@@ -49,6 +49,9 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
@@ -519,19 +522,20 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/device/{deviceId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Device unassignDeviceFromEdge(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public Device unassignDeviceFromEdge(@PathVariable(EDGE_ID) String strEdgeId,
+                                         @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
         checkParameter(DEVICE_ID, strDeviceId);
         try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.UNASSIGN_FROM_EDGE);
-            if (device.getEdgeId() == null || device.getEdgeId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Device isn't assigned to any edge!");
-            }
-            Edge edge = checkEdgeId(device.getEdgeId(), Operation.READ);
 
-            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(getCurrentUser().getTenantId(), deviceId));
+            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(getCurrentUser().getTenantId(), deviceId, edgeId));
 
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
@@ -549,24 +553,20 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/devices", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
-    public TextPageData<Device> getEdgeDevices(
-            @PathVariable("edgeId") String strEdgeId,
+    public TimePageData<Device> getEdgeDevices(
+            @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int limit,
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) String textSearch,
-            @RequestParam(required = false) String idOffset,
-            @RequestParam(required = false) String textOffset) throws ThingsboardException {
-        checkParameter("edgeId", strEdgeId);
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
+            @RequestParam(required = false) String offset) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
-            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            if (type != null && type.trim().length()>0) {
-                return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink));
-            } else {
-                return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
-            }
+            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get());
         } catch (Exception e) {
             throw handleException(e);
         }

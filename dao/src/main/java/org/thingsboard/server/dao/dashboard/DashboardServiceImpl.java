@@ -162,16 +162,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
     }
 
-    private void deleteRelation(TenantId tenantId, EntityRelation dashboardRelation) throws ExecutionException, InterruptedException {
-        log.debug("Deleting Dashboard relation: {}", dashboardRelation);
-        relationService.deleteRelationAsync(tenantId, dashboardRelation).get();
-    }
-
-    private void createRelation(TenantId tenantId, EntityRelation dashboardRelation) throws ExecutionException, InterruptedException {
-        log.debug("Creating Dashboard relation: {}", dashboardRelation);
-        relationService.saveRelationAsync(tenantId, dashboardRelation).get();
-    }
-
     @Override
     public void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing deleteDashboard [{}]", dashboardId);

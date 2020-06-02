@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 
 import java.util.List;
 
@@ -68,11 +70,7 @@ public interface EntityViewService {
 
     EntityView assignEntityViewToEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId);
 
-    EntityView unassignEntityViewFromEdge(TenantId tenantId, EntityViewId entityViewId);
+    EntityView unassignEntityViewFromEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId);
 
-    TextPageData<EntityView> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TextPageLink pageLink);
-
-    TextPageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TextPageLink pageLink);
-
-
+    ListenableFuture<TimePageData<EntityView>> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 }

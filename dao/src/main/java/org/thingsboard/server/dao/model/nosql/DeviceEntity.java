@@ -25,14 +25,21 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_LABEL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Table(name = DEVICE_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
@@ -54,10 +61,6 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     @PartitionKey(value = 3)
     @Column(name = DEVICE_TYPE_PROPERTY)
     private String type;
-
-    @PartitionKey(value = 4)
-    @Column(name = DEVICE_EDGE_ID_PROPERTY)
-    private UUID edgeId;
 
     @Column(name = DEVICE_NAME_PROPERTY)
     private String name;
@@ -84,9 +87,6 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
         }
         if (device.getCustomerId() != null) {
             this.customerId = device.getCustomerId().getId();
-        }
-        if (device.getEdgeId() != null) {
-            this.edgeId = device.getEdgeId().getId();
         }
         this.name = device.getName();
         this.type = device.getType();
@@ -116,14 +116,6 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
 
     public void setCustomerId(UUID customerId) {
         this.customerId = customerId;
-    }
-
-    public UUID getEdgeId() {
-        return edgeId;
-    }
-
-    public void setEdgeId(UUID edgeId) {
-        this.edgeId = edgeId;
     }
 
     public String getName() {
@@ -173,9 +165,6 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
         }
         if (customerId != null) {
             device.setCustomerId(new CustomerId(customerId));
-        }
-        if (edgeId != null) {
-            device.setEdgeId(new EdgeId(edgeId));
         }
         device.setName(name);
         device.setType(type);

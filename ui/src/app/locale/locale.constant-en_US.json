@@ -291,9 +291,12 @@
         "unassign-from-edge": "Unassign from edge",
         "assign-to-edge": "Assign to edge",
         "assign-to-edge-text": "Please select the edge to assign the asset(s)",
+        "unassign-asset-from-edge": "Unassign asset",
         "unassign-asset-from-edge-title": "Are you sure you want to unassign the asset '{{assetName}}'?",
         "unassign-asset-from-edge-text": "After the confirmation the asset will be unassigned and won't be accessible by the edge.",
-        "unassign-assets-from-edge-action-title": "Unassign { count, plural, 1 {1 asset} other {# assets} } from edge"
+        "unassign-assets-from-edge-action-title": "Unassign { count, plural, 1 {1 asset} other {# assets} } from edge",
+        "unassign-assets-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 asset} other {# assets} }?",
+        "unassign-assets-from-edge-text": "After the confirmation all selected assets will be unassigned and won't be accessible by the edge."
     },
     "attribute": {
         "attributes": "Attributes",
@@ -748,7 +751,10 @@
         "assign-to-edge-text": "Please select the edge to assign the device(s)",
         "unassign-device-from-edge-title": "Are you sure you want to unassign the device '{{deviceName}}'?",
         "unassign-device-from-edge-text": "After the confirmation the device will be unassigned and won't be accessible by the edge.",
-        "unassign-devices-from-edge-action-title": "Unassign { count, plural, 1 {1 device} other {# devices} } from edge"
+        "unassign-devices-from-edge-action-title": "Unassign { count, plural, 1 {1 device} other {# devices} } from edge",
+        "unassign-device-from-edge": "Unassign device",
+        "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 device} other {# devices} }?",
+        "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge."
     },
     "dialog": {
         "close": "Close dialog"
@@ -1054,7 +1060,10 @@
         "assign-to-edge-text": "Please select the edge to assign the entity view(s)",
         "unassign-entity-view-from-edge-title": "Are you sure you want to unassign the entity view '{{entityViewName}}'?",
         "unassign-entity-view-from-edge-text": "After the confirmation the entity view will be unassigned and won't be accessible by the edge.",
-        "unassign-entity-views-from-edge-action-title": "Unassign { count, plural, 1 {1 entity view} other {# entity views} } from edge"
+        "unassign-entity-views-from-edge-action-title": "Unassign { count, plural, 1 {1 entity view} other {# entity views} } from edge",
+        "unassign-entity-view-from-edge": "Unassign entity view",
+        "unassign-entity-views-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 entity view} other {# entity views} }?",
+        "unassign-entity-views-from-edge-text": "After the confirmation all selected entity views will be unassigned and won't be accessible by the edge."
     },
     "event": {
         "event-type": "Event type",
@@ -1580,7 +1589,7 @@
         "invalid-rulechain-type-error": "Unable to import rule chain: Invalid rule chain type. Expected type is {{expectedRuleChainType}}.",
         "set-default-edge": "Make edge rule chain default",
         "set-default-edge-title": "Are you sure you want to make the edge rule chain '{{ruleChainName}}' default?",
-        "set-default-edge-text": "After the confirmation the edge rule chain will be added to default list and handle all incoming transport messages.",
+        "set-default-edge-text": "After the confirmation the edge rule chain will be added to default list and assigned to newly created edge(s).",
         "remove-default-edge": "Remove edge rule chain from defaults",
         "remove-default-edge-title": "Are you sure you want to remove the edge rule chain '{{ruleChainName}}' from default list?",
         "remove-default-edge-text": "After the confirmation the edge rule chain will stop handling all incoming transport messages."

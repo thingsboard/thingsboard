@@ -554,7 +554,7 @@ public final class EdgeGrpcSession implements Closeable {
                         case ENTITY_DELETED_RPC_MESSAGE:
                             Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(edge.getTenantId(), deviceName);
                             if (device != null) {
-                                ctx.getDeviceService().unassignDeviceFromEdge(edge.getTenantId(), device.getId());
+                                ctx.getDeviceService().unassignDeviceFromEdge(edge.getTenantId(), device.getId(), edge.getId());
                             }
                             break;
                     }

@@ -327,7 +327,7 @@ export function AssetController($rootScope, userService, assetService, customerS
                 return assetService.getEdgeAssets(edgeId, pageLink, null, assetType);
             };
             deleteAssetFunction = function (assetId) {
-                return assetService.unassignAssetFromEdge(assetId);
+                return assetService.unassignAssetFromEdge(edgeId, assetId);
             };
             refreshAssetsParamsFunction = function () {
                 return {"edgeId": edgeId, "topIndex": vm.topIndex};
@@ -630,7 +630,7 @@ export function AssetController($rootScope, userService, assetService, customerS
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            assetService.unassignAssetFromEdge(asset.id.id).then(function success() {
+            assetService.unassignAssetFromEdge(edgeId, asset.id.id).then(function success() {
                 vm.grid.refreshList();
             });
         });
@@ -639,15 +639,15 @@ export function AssetController($rootScope, userService, assetService, customerS
     function unassignAssetsFromEdge($event, items) {
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('asset.unassign-assets-title', {count: items.selectedCount}, 'messageformat'))
-            .htmlContent($translate.instant('asset.unassign-assets-text'))
-            .ariaLabel($translate.instant('asset.unassign-asset'))
+            .title($translate.instant('asset.unassign-assets-from-edge-title', {count: items.selectedCount}, 'messageformat'))
+            .htmlContent($translate.instant('asset.unassign-assets-from-edge-text'))
+            .ariaLabel($translate.instant('asset.unassign-asset-from-edge'))
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
             var tasks = [];
             for (var id in items.selections) {
-                tasks.push(assetService.unassignAssetFromEdge(id));
+                tasks.push(assetService.unassignAssetFromEdge(edgeId, id));
             }
             $q.all(tasks).then(function () {
                 vm.grid.refreshList();
