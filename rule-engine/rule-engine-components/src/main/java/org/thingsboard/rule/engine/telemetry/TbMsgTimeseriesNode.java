@@ -72,7 +72,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             } catch (NumberFormatException e) {
             }
         } else {
-            ts = System.currentTimeMillis();
+            ts = msg.getTs();
         }
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);

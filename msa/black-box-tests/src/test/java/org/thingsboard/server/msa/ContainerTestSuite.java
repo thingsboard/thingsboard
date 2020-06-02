@@ -46,7 +46,8 @@ public class ContainerTestSuite {
             testContainer = new DockerComposeContainer(
                     new File("./../../docker/docker-compose.yml"),
                     new File("./../../docker/docker-compose.postgres.yml"),
-                    new File("./../../docker/docker-compose.postgres.volumes.yml"))
+                    new File("./../../docker/docker-compose.postgres.volumes.yml"),
+                    new File("./../../docker/docker-compose.kafka.yml"))
                     .withPull(false)
                     .withLocalCompose(true)
                     .withTailChildContainers(!skipTailChildContainers)

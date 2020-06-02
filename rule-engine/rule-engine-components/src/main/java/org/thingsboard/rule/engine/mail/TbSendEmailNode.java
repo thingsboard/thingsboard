@@ -149,6 +149,16 @@ public class TbSendEmailNode implements TbNode {
         if (this.config.isEnableTls() && StringUtils.isNoneEmpty(this.config.getTlsVersion())) {
             javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", this.config.getTlsVersion());
         }
+        if (this.config.isEnableProxy()) {
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", config.getProxyHost());
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", config.getProxyPort());
+            if (StringUtils.isNoneEmpty(config.getProxyUser())) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", config.getProxyUser());
+            }
+            if (StringUtils.isNoneEmpty(config.getProxyPassword())) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", config.getProxyPassword());
+            }
+        }
         return javaMailProperties;
     }
 }

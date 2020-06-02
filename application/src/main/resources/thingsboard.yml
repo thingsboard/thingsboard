@@ -54,6 +54,13 @@ server:
       customer:
         enabled: "${TB_SERVER_REST_LIMITS_CUSTOMER_ENABLED:false}"
         configuration: "${TB_SERVER_REST_LIMITS_CUSTOMER_CONFIGURATION:50:1,1000:60}"
+    server_side_rpc:
+      # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
+      # Since 2.5 migration to queues, the RPC delay depends on the size of the pending messages in the queue,
+      # so default UI parameter of 500ms may not be sufficient for loaded environments.
+      min_timeout:  "${MIN_SERVER_SIDE_RPC_TIMEOUT:5000}"
+      # Default value of the server side RPC timeout.
+      default_timeout:  "${DEFAULT_SERVER_SIDE_RPC_TIMEOUT:10000}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:
@@ -148,6 +155,10 @@ security:
             # If this field is not empty, user will be created as a user under defined Customer
             # %{attribute_key} as placeholder for attribute value of attributes of external user object
             customerNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_CUSTOMER_NAME_PATTERN:}"
+            # If this field is not empty, user will be created with default defined Dashboard
+            defaultDashboardName: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_DEFAULT_DASHBOARD_NAME:}"
+            # If this field is set 'true' along with non-empty 'defaultDashboardName', user will start from the defined Dashboard in fullscreen mode
+            alwaysFullScreen: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_ALWAYS_FULL_SCREEN:false}"
           custom:
             url: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_URL:}"
             username: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_USERNAME:}"
@@ -676,7 +687,7 @@ queue:
     topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
-    pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
@@ -688,6 +699,8 @@ queue:
     # JS Eval max pending requests
     max_pending_requests: "${REMOTE_JS_MAX_PENDING_REQUESTS:10000}"
     # JS Eval max request timeout
+    max_eval_requests_timeout: "${REMOTE_JS_MAX_EVAL_REQUEST_TIMEOUT:60000}"
+    # JS max request timeout
     max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:10000}"
     # JS response poll interval
     response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
@@ -696,7 +709,7 @@ queue:
   rule-engine:
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
     poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
-    pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:2000}"
     stats:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
@@ -705,7 +718,7 @@ queue:
         topic: "${TB_QUEUE_RE_MAIN_TOPIC:tb_rule_engine.main}"
         poll-interval: "${TB_QUEUE_RE_MAIN_POLL_INTERVAL_MS:25}"
         partitions: "${TB_QUEUE_RE_MAIN_PARTITIONS:10}"
-        pack-processing-timeout: "${TB_QUEUE_RE_MAIN_PACK_PROCESSING_TIMEOUT_MS:60000}"
+        pack-processing-timeout: "${TB_QUEUE_RE_MAIN_PACK_PROCESSING_TIMEOUT_MS:2000}"
         submit-strategy:
           type: "${TB_QUEUE_RE_MAIN_SUBMIT_STRATEGY_TYPE:BURST}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
           # For BATCH only
@@ -720,7 +733,7 @@ queue:
         topic: "${TB_QUEUE_RE_HP_TOPIC:tb_rule_engine.hp}"
         poll-interval: "${TB_QUEUE_RE_HP_POLL_INTERVAL_MS:25}"
         partitions: "${TB_QUEUE_RE_HP_PARTITIONS:10}"
-        pack-processing-timeout: "${TB_QUEUE_RE_HP_PACK_PROCESSING_TIMEOUT_MS:60000}"
+        pack-processing-timeout: "${TB_QUEUE_RE_HP_PACK_PROCESSING_TIMEOUT_MS:2000}"
         submit-strategy:
           type: "${TB_QUEUE_RE_HP_SUBMIT_STRATEGY_TYPE:BURST}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
           # For BATCH only
@@ -735,7 +748,7 @@ queue:
         topic: "${TB_QUEUE_RE_SQ_TOPIC:tb_rule_engine.sq}"
         poll-interval: "${TB_QUEUE_RE_SQ_POLL_INTERVAL_MS:25}"
         partitions: "${TB_QUEUE_RE_SQ_PARTITIONS:10}"
-        pack-processing-timeout: "${TB_QUEUE_RE_SQ_PACK_PROCESSING_TIMEOUT_MS:60000}"
+        pack-processing-timeout: "${TB_QUEUE_RE_SQ_PACK_PROCESSING_TIMEOUT_MS:2000}"
         submit-strategy:
           type: "${TB_QUEUE_RE_SQ_SUBMIT_STRATEGY_TYPE:SEQUENTIAL_BY_ORIGINATOR}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
           # For BATCH only

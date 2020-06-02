@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +25,9 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -47,15 +52,16 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     private static final String CREATE_NEW_TS_KV_TABLE = "create_new_ts_kv_table()";
     private static final String CREATE_TS_KV_DICTIONARY_TABLE = "create_ts_kv_dictionary_table()";
     private static final String INSERT_INTO_DICTIONARY = "insert_into_dictionary()";
-    private static final String INSERT_INTO_TS_KV = "insert_into_ts_kv()";
+    private static final String INSERT_INTO_TS_KV = "insert_into_ts_kv(IN path_to_file varchar)";
+    private static final String INSERT_INTO_TS_KV_CURSOR = "insert_into_ts_kv_cursor()";
     private static final String INSERT_INTO_TS_KV_LATEST = "insert_into_ts_kv_latest()";
 
     private static final String CALL_CREATE_TS_KV_LATEST_TABLE = CALL_REGEX + CREATE_TS_KV_LATEST_TABLE;
     private static final String CALL_CREATE_NEW_TENANT_TS_KV_TABLE = CALL_REGEX + CREATE_NEW_TS_KV_TABLE;
     private static final String CALL_CREATE_TS_KV_DICTIONARY_TABLE = CALL_REGEX + CREATE_TS_KV_DICTIONARY_TABLE;
     private static final String CALL_INSERT_INTO_DICTIONARY = CALL_REGEX + INSERT_INTO_DICTIONARY;
-    private static final String CALL_INSERT_INTO_TS_KV = CALL_REGEX + INSERT_INTO_TS_KV;
     private static final String CALL_INSERT_INTO_TS_KV_LATEST = CALL_REGEX + INSERT_INTO_TS_KV_LATEST;
+    private static final String CALL_INSERT_INTO_TS_KV_CURSOR = CALL_REGEX + INSERT_INTO_TS_KV_CURSOR;
 
     private static final String DROP_OLD_TENANT_TS_KV_TABLE = DROP_TABLE + TENANT_TS_KV_OLD_TABLE;
 
@@ -63,7 +69,8 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     private static final String DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY = DROP_PROCEDURE_IF_EXISTS + CREATE_NEW_TS_KV_TABLE;
     private static final String DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_TS_KV_DICTIONARY_TABLE;
     private static final String DROP_PROCEDURE_INSERT_INTO_DICTIONARY = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_DICTIONARY;
-    private static final String DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV;
+    private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV;
+    private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV_CURSOR = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV_CURSOR;
     private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV_LATEST;
 
     @Autowired
@@ -91,7 +98,56 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
 
                             executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                             executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
-                            executeQuery(conn, CALL_INSERT_INTO_TS_KV);
+
+                            Path pathToTempTsKvFile = null;
+                            if (SystemUtils.IS_OS_WINDOWS) {
+                                Path pathToDir;
+                                log.info("Lookup for environment variable: {} ...", THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                                String thingsboardWindowsUpgradeDir = System.getenv(THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                                if (StringUtils.isNotEmpty(thingsboardWindowsUpgradeDir)) {
+                                    log.info("Environment variable: {} was found!", THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                                    pathToDir = Paths.get(thingsboardWindowsUpgradeDir);
+                                } else {
+                                    log.info("Failed to lookup environment variable: {}", THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                                    pathToDir = Paths.get(PATH_TO_USERS_PUBLIC_FOLDER);
+                                }
+                                log.info("Directory: {} will be used for creation temporary upgrade file!", pathToDir);
+                                try {
+                                    Path tsKvFile = Files.createTempFile(pathToDir, "ts_kv", ".sql");
+                                    pathToTempTsKvFile = tsKvFile.toAbsolutePath();
+                                    try {
+                                        executeQuery(conn, "call insert_into_ts_kv('" + pathToTempTsKvFile + "')");
+                                    } catch (Exception e) {
+                                        insertTimeseries(conn);
+                                    }
+                                } catch (IOException | SecurityException e) {
+                                    log.warn("Failed to create time-series upgrade files due to: {}", e.getMessage());
+                                    insertTimeseries(conn);
+                                }
+                            } else {
+                                try {
+                                    Path tempDirPath = Files.createTempDirectory("ts_kv");
+                                    File tempDirAsFile = tempDirPath.toFile();
+                                    boolean writable = tempDirAsFile.setWritable(true, false);
+                                    boolean readable = tempDirAsFile.setReadable(true, false);
+                                    boolean executable = tempDirAsFile.setExecutable(true, false);
+                                    pathToTempTsKvFile = tempDirPath.resolve(TS_KV_SQL).toAbsolutePath();
+                                    try {
+                                        if (writable && readable && executable) {
+                                            executeQuery(conn, "call insert_into_ts_kv('" + pathToTempTsKvFile + "')");
+                                        } else {
+                                            throw new RuntimeException("Failed to grant write permissions for the: " + tempDirPath + "folder!");
+                                        }
+                                    } catch (Exception e) {
+                                        insertTimeseries(conn);
+                                    }
+                                } catch (IOException | SecurityException e) {
+                                    log.warn("Failed to create time-series upgrade files due to: {}", e.getMessage());
+                                    insertTimeseries(conn);
+                                }
+                            }
+                            removeUpgradeFile(pathToTempTsKvFile);
+
                             executeQuery(conn, CALL_INSERT_INTO_TS_KV_LATEST);
 
                             executeQuery(conn, DROP_OLD_TENANT_TS_KV_TABLE);
@@ -100,7 +156,8 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                             executeQuery(conn, DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY);
                             executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_DICTIONARY);
-                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV);
+                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV);
+                            executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_CURSOR);
                             executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
 
                             executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN IF NOT EXISTS json_v json;");
@@ -115,8 +172,28 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                     }
                 }
                 break;
+            case "2.5.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005001");
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
+        }
+    }
+
+    private void insertTimeseries(Connection conn) {
+        log.warn("Upgrade script failed using the copy to/from files strategy!" +
+                " Trying to perfrom the upgrade using Inserts strategy ...");
+        executeQuery(conn, CALL_INSERT_INTO_TS_KV_CURSOR);
+    }
+
+    private void removeUpgradeFile(Path pathToTempTsKvFile) {
+        if (pathToTempTsKvFile != null && pathToTempTsKvFile.toFile().exists()) {
+            boolean deleteTsKvFile = pathToTempTsKvFile.toFile().delete();
+            if (deleteTsKvFile) {
+                log.info("Successfully deleted the temp file for ts_kv table upgrade!");
+            }
         }
     }
 
