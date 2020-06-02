@@ -127,22 +127,20 @@ public interface EdgeDao extends Dao<Edge> {
     Optional<Edge> findByRoutingKey(UUID tenantId, String routingKey);
 
     /**
-     * Find edges by tenantId, ruleChainId and page link.
+     * Find edges by tenantId and ruleChainId.
      *
      * @param tenantId the tenantId
      * @param ruleChainId the ruleChainId
-     * @param pageLink the page link
      * @return the list of rule chain objects
      */
-    ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(UUID tenantId, UUID ruleChainId, TimePageLink pageLink);
+    ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(UUID tenantId, UUID ruleChainId);
 
     /**
-     * Find edges by tenantId, dashboardId and page link.
+     * Find edges by tenantId and dashboardId.
      *
      * @param tenantId the tenantId
      * @param dashboardId the dashboardId
-     * @param pageLink the page link
      * @return the list of rule chain objects
      */
-    ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(UUID tenantId, UUID dashboardId, TimePageLink pageLink);
+    ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(UUID tenantId, UUID dashboardId);
 }

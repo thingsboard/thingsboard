@@ -464,10 +464,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             case DataConstants.ENTITY_DELETED:
             case DataConstants.ENTITY_CREATED:
             case DataConstants.ENTITY_UPDATED:
-                Edge edge = mapper.readValue(tbMsg.getData(), Edge.class);
-                if (edge != null) {
-                    pushEventToEdge(tenantId, edge.getId(), EdgeQueueEntityType.EDGE, tbMsg, callback);
-                }
+                // TODO: voba - handle properly edge creation
                 break;
             default:
                 log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
@@ -693,7 +690,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validateId(ruleChainId, "Incorrect ruleChainId " + ruleChainId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        ListenableFuture<List<Edge>> edges = edgeDao.findEdgesByTenantIdAndRuleChainId(tenantId.getId(), ruleChainId.getId(), pageLink);
+        ListenableFuture<List<Edge>> edges = edgeDao.findEdgesByTenantIdAndRuleChainId(tenantId.getId(), ruleChainId.getId());
 
         return Futures.transform(edges, new Function<List<Edge>, TimePageData<Edge>>() {
             @Nullable
@@ -710,7 +707,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        ListenableFuture<List<Edge>> edges = edgeDao.findEdgesByTenantIdAndDashboardId(tenantId.getId(), dashboardId.getId(), pageLink);
+        ListenableFuture<List<Edge>> edges = edgeDao.findEdgesByTenantIdAndDashboardId(tenantId.getId(), dashboardId.getId());
 
         return Futures.transform(edges, new Function<List<Edge>, TimePageData<Edge>>() {
             @Nullable
