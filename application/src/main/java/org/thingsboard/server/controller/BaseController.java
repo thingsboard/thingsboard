@@ -40,26 +40,14 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.id.WidgetTypeId;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -83,6 +71,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityprofile.EntityProfileService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -181,6 +170,9 @@ public abstract class BaseController {
 
     @Autowired
     protected EntityViewService entityViewService;
+
+    @Autowired
+    protected EntityProfileService entityProfileService;
 
     @Autowired
     protected TelemetrySubscriptionService tsSubService;
@@ -372,6 +364,9 @@ public abstract class BaseController {
                 case ENTITY_VIEW:
                     checkEntityViewId(new EntityViewId(entityId.getId()), operation);
                     return;
+                case ENTITY_PROFILE:
+                    checkEntityProfileId(new EntityProfileId(entityId.getId()), operation);
+                    return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
             }
@@ -411,6 +406,18 @@ public abstract class BaseController {
             checkNotNull(entityView);
             accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation, entityViewId, entityView);
             return entityView;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    protected EntityProfile checkEntityProfileId(EntityProfileId entityProfileId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(entityProfileId, "Incorrect entityProfilesId " + entityProfileId);
+            EntityProfile entityProfile = entityProfileService.findById(getCurrentUser().getTenantId(), entityProfileId);
+            checkNotNull(entityProfile);
+            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_PROFILE, operation, entityProfileId, entityProfile);
+            return entityProfile;
         } catch (Exception e) {
             throw handleException(e, false);
         }

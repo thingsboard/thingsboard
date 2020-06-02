@@ -28,9 +28,7 @@ import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entityprofile.EntityProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -43,19 +41,14 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 @RequiredArgsConstructor
 public class EntityProfileController extends BaseController {
     private static final String ENTITY_PROFILES_ID = "entityProfilesId";
-    private final EntityProfileService service;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping("/entityProfiles/{entityProfilesId}")
     public EntityProfile getEntityProfileById(@PathVariable(ENTITY_PROFILES_ID) String strId) throws ThingsboardException {
         checkParameter(ENTITY_PROFILES_ID, strId);
-        EntityProfileId id = new EntityProfileId(toUUID(strId));
-        SecurityUser user = getCurrentUser();
         try {
-            EntityProfile entityProfile = service.findById(user.getTenantId(), id);
-            checkNotNull(entityProfile);
-            accessControlService.checkPermission(user, Resource.ENTITY_PROFILE, Operation.READ, id, entityProfile);
-            return entityProfile;
+            EntityProfileId id = new EntityProfileId(toUUID(strId));
+            return checkEntityProfileId(id, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -72,7 +65,7 @@ public class EntityProfileController extends BaseController {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_PROFILE, operation,
                     entityProfile.getId(), entityProfile);
-            entityProfile = service.save(entityProfile);
+            entityProfile = entityProfileService.save(entityProfile);
             checkNotNull(entityProfile);
             logEntityAction(entityProfile.getId(), entityProfile, null, actionType, null);
             return entityProfile;
@@ -88,12 +81,9 @@ public class EntityProfileController extends BaseController {
     public void deleteEntityProfile(@PathVariable(ENTITY_PROFILES_ID) String strId) throws ThingsboardException {
         checkParameter(ENTITY_PROFILES_ID, strId);
         EntityProfileId id = new EntityProfileId(toUUID(strId));
-        SecurityUser user = getCurrentUser();
         try {
-            EntityProfile entityProfile = service.findById(user.getTenantId(), id);
-            checkNotNull(entityProfile);
-            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_PROFILE, Operation.DELETE, id, entityProfile);
-            service.delete(user.getTenantId(), id);
+            EntityProfile entityProfile = checkEntityProfileId(new EntityProfileId(toUUID(strId)), Operation.DELETE);
+            entityProfileService.delete(getCurrentUser().getTenantId(), id);
             logEntityAction(id, entityProfile, null, ActionType.DELETED, null);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_PROFILE), null, null, ActionType.DELETED, e, id);
@@ -111,14 +101,14 @@ public class EntityProfileController extends BaseController {
             @RequestParam(required = false) String type) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
         if (getCurrentUser().isSystemAdmin()) {
-            return checkNotNull(service.findTenantProfiles(pageLink));
+            return checkNotNull(entityProfileService.findTenantProfiles(pageLink));
         }
         TenantId tenantId = getCurrentUser().getTenantId();
         try {
             if (isEmpty(type)) {
-                return checkNotNull(service.findEntityProfilesByTenantId(tenantId, pageLink));
+                return checkNotNull(entityProfileService.findEntityProfilesByTenantId(tenantId, pageLink));
             } else {
-                return checkNotNull(service.findEntityProfilesByTenantIdAndType(tenantId, EntityType.valueOf(type), pageLink));
+                return checkNotNull(entityProfileService.findEntityProfilesByTenantIdAndType(tenantId, EntityType.valueOf(type), pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
