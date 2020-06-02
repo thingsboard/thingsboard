@@ -60,11 +60,9 @@ public class EntityProfileController extends BaseController {
         entityProfile = entityProfile.toBuilder()
                 .tenantId(getCurrentUser().getTenantId())
                 .build();
-        Operation operation = entityProfile.getId() == null ? Operation.CREATE : Operation.WRITE;
         ActionType actionType = entityProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_PROFILE, operation,
-                    entityProfile.getId(), entityProfile);
+            checkEntity(entityProfile.getId(), entityProfile, Resource.ENTITY_PROFILE);
             entityProfile = entityProfileService.save(entityProfile);
             checkNotNull(entityProfile);
             logEntityAction(entityProfile.getId(), entityProfile, null, actionType, null);
@@ -96,10 +94,11 @@ public class EntityProfileController extends BaseController {
     public PageData<EntityProfile> getEntityProfiles(
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
-            @RequestParam(required = false) String sortOrder,
-            @RequestParam(required = false) String type) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (getCurrentUser().isSystemAdmin()) {
             return checkNotNull(entityProfileService.findTenantProfiles(pageLink));
         }
