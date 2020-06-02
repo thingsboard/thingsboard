@@ -16,21 +16,10 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.leshan.core.model.ObjectLoader;
-import org.eclipse.leshan.core.model.ObjectModel;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
-import org.eclipse.leshan.core.node.codec.LwM2mNodeDecoder;
 import org.eclipse.leshan.server.californium.LeshanServer;
-import org.eclipse.leshan.server.californium.LeshanServerBuilder;
-import org.eclipse.leshan.server.model.LwM2mModelProvider;
-import org.eclipse.leshan.server.model.VersionedModelProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider;
-import org.thingsboard.server.transport.lwm2m.utils.MagicLwM2mValueConverter;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

@@ -568,6 +568,12 @@ transport:
     secure:
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT:5686}"
+      # RPK server
+      rpk_enabled: "${LWM2M__RPK_ENABLED:true}"
+      public_x: "${LWM2M_PUBLIC_X:fcc28728c123b155be410fc1c0651da374fc6ebe7f96606e90d927d188894a73}"
+      public_y: "${LWM2M_PUBLIC_Y:d2ffaa73957d76984633fc1cc54d0b763ca0559a9dff9706e9f4557dacc3f52a}"
+      private_s: "${LWM2M_PRIVATE_S:1dae121ba406802ef07c193c1ee4df91115aabd79c1ed7f4c0ef7ef6a5449400}"
+      # Redis
       redis_url: ""
 
 swagger:

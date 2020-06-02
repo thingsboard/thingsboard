@@ -30,7 +30,6 @@ import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
-import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -39,16 +38,13 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.JsonLwM2MAdaptor;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MCredentials;
+import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResult;
 
 
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
 import static org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider.*;
@@ -61,7 +57,7 @@ public class LwM2MTransportService {
     private final UUID sessionId = UUID.randomUUID();
 
     @Autowired
-    private JsonLwM2MAdaptor adaptor;
+    private LwM2MJsonAdaptor adaptor;
 
     @Autowired
     private TransportService transportService;
@@ -74,6 +70,9 @@ public class LwM2MTransportService {
 
     @Autowired
     private LwM2MTransportRequest lwM2MTransportRequest;
+
+    @Autowired
+    LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
     public void onRegistered(Registration registration) {
         String endpointId = registration.getEndpoint();
@@ -209,6 +208,7 @@ public class LwM2MTransportService {
     public void unReg(Registration registration) {
         String endpointId = registration.getEndpoint();
         log.info("[{}] Received endpoint un registration version event", endpointId);
+        lwM2mInMemorySecurityStore.remove(endpointId, false);
         context.getSessions().remove(endpointId);
     }
 

@@ -48,12 +48,29 @@ public class LwM2MTransportCtx extends TransportContext {
     private Integer securePort;
 
     @Getter
+    @Value("${transport.lwm2m.timeout:5000}")
+    private Long timeout;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.public_x:}")
+    private String publicX;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk_enabled:}")
+    private boolean rpkEnabled;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.public_y:}")
+    private String publicY;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.private_s:}")
+    private String privateS;
+
+    @Getter
     @Value("${transport.lwm2m.secure.redis_url:}")
     private String redisUrl;
 
-    @Getter
-    @Value("${transport.lwm2m.timeout:5000}")
-    private Long timeout;
 
     @Getter
     @Setter

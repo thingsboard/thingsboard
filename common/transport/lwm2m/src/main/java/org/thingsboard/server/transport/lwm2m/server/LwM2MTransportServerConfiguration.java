@@ -29,24 +29,30 @@ import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.model.VersionedModelProvider;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisSecurityStore;
-import org.eclipse.leshan.server.security.*;
+import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2mInMemorySecurityStore;
-import org.thingsboard.server.transport.lwm2m.utils.MagicLwM2mValueConverter;
+import org.thingsboard.server.transport.lwm2m.server.credentials.LwM2MServerCredentials;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.Pool;
+import java.security.cert.X509Certificate;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.List;
 
 @Slf4j
-@Configuration
+@Configuration("LwM2MTransportServerConfiguration")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportServerConfiguration {
 
     @Autowired
@@ -58,14 +64,14 @@ public class LwM2MTransportServerConfiguration {
     private final static String[] modelPaths = LwM2MProvider.modelPaths;
 
     @Bean
-    public LeshanServer getLeshanServer() throws URISyntaxException, NonUniqueSecurityInfoException {
+    public LeshanServer getLeshanServer() throws URISyntaxException {
         log.info("Starting LwM2M transport... PostConstruct");
         LeshanServerBuilder builder = new LeshanServerBuilder();
         builder.setLocalAddress(context.getHost(), context.getPort());
         builder.setLocalSecureAddress(context.getSecureHost(), context.getSecurePort());
         builder.setEncoder(new DefaultLwM2mNodeEncoder());
         //         use a magic converter to support bad type send by the UI.
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(new MagicLwM2mValueConverter()));
+        builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
         LwM2mNodeDecoder decoder = new DefaultLwM2mNodeDecoder();
         builder.setDecoder(decoder);
 
@@ -104,12 +110,23 @@ public class LwM2MTransportServerConfiguration {
 //        boolean supportDeprecatedCiphers = false;
         dtlsConfig.setRecommendedCipherSuitesOnly(true);
 
+        X509Certificate serverCertificate = null;
+        X509Certificate certificate = null;
+        PublicKey publicKey = null;
+        PrivateKey privateKey = null;
+        // get RPK info: use RPK only
+        if (context.isRpkEnabled()) {
+            LwM2MServerCredentials lwM2MServerCredentials = new LwM2MServerCredentials(context.getPublicX(), context.getPublicY(), context.getPrivateS());
+            publicKey = lwM2MServerCredentials.getServerPublicKey();
+            privateKey = lwM2MServerCredentials.getServerPrivateKey();
+            if (publicKey != null) {
 
-//        // get RPK info
-//        PublicKey publicKey = null;
-//        PrivateKey privateKey = null;
-//        X509Certificate serverCertificate = null;
-//        X509Certificate certificate = null;
+                builder.setPublicKey(publicKey);
+                builder.setPrivateKey(privateKey);
+            }
+        }
+
+
 //
 //        // get X509 info
 //        List<Certificate> trustStore = null;
@@ -150,11 +167,12 @@ public class LwM2MTransportServerConfiguration {
 //            serverCertificate = certificate;
 //            builder.setPrivateKey(privateKey);
 //            builder.setCertificateChain(new X509Certificate[] { serverCertificate });
-//        } else if (publicKey != null) {
-//            // use RPK only
+//        } else  if (publicKey != null) {
+            // use RPK only
 //            builder.setPublicKey(publicKey);
 //            builder.setPrivateKey(privateKey);
-//        } else if (keyStorePath != null) {
+//        }
+//        else if (keyStorePath != null) {
 //           log.warn(
 //                    "Keystore way [-ks, -ksp, -kst, -ksa, -ksap] is DEPRECATED for leshan demo and will probably be removed soon, please use [-cert, -prik, -truststore] options");
 //
@@ -266,7 +284,7 @@ public class LwM2MTransportServerConfiguration {
         builder.setSecurityStore(securityStore);
 
         // use a magic converter to support bad type send by the UI.
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(new MagicLwM2mValueConverter()));
+        builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
 
 
         // Create LWM2M server

@@ -29,7 +29,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.Date;
 
 @Slf4j
-public class MagicLwM2mValueConverter implements LwM2mValueConverter {
+public class LwM2mValueConverterImpl implements LwM2mValueConverter {
 
     @Override
     public Object convertValue(Object value, Type currentType, Type expectedType, LwM2mPath resourcePath)

@@ -27,9 +27,9 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 @Slf4j
-@Component("JsonLwM2MAdaptor")
+@Component("LwM2MJsonAdaptor")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class JsonLwM2MAdaptor implements LwM2MTransportAdaptor  {
+public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
 
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(JsonElement jsonElement) throws AdaptorException {

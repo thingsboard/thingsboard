@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.lwm2m.server.credentials.*;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportCtx;
 
 import java.util.concurrent.CountDownLatch;
@@ -39,18 +40,35 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     private LwM2MCredentials credentials;
 
     @Override
+    public SecurityInfo getByEndpoint(String endpoint) {
+        SecurityInfo info = securityByEp.get(endpoint);
+        if (info == null) {
+            info = addNew(endpoint);
+        }
+        return info;
+    }
+
+    @Override
     public SecurityInfo getByIdentity(String identity) {
         SecurityInfo info = securityByIdentity.get(identity);
         if (info == null) {
-            info = setSecurityInfo(identity);
+            info = addNew(identity);
+        }
+        return info;
+    }
+
+    private SecurityInfo addNew(String identityId) {
+        SecurityInfo info = setSecurityInfo(identityId);
+        if (info != null) {
             try {
                 add(info);
             } catch (NonUniqueSecurityInfoException e) {
-                log.error("[{}] FAILED registration endpointId: [{}]", identity, e.getMessage() );
+                log.error("[{}] FAILED registration endpointId: [{}]", identityId, e.getMessage());
             }
         }
         return info;
     }
+
 
     private SecurityInfo setSecurityInfo(String identity) {
         CountDownLatch latch = new CountDownLatch(1);
@@ -59,9 +77,8 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
                 new TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg>() {
                     @Override
                     public void onSuccess(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
-//                        log.info("Success to process credentials PSK: [{}]", msg);
                         String ingfosStr = msg.getCredentialsBody();
-                        securityInfo[0] = credentials.getSecurityInfo(ingfosStr);
+                        securityInfo[0] = credentials.getSecurityInfo(msg.getDeviceInfo().getDeviceName(), ingfosStr);
                         String endpointId = msg.getDeviceInfo().getDeviceName();
                         context.getSessions().put(endpointId, msg);
                         latch.countDown();
