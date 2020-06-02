@@ -196,7 +196,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       maxItemRows: 1000,
       maxItemArea: 1000000,
       outerMargin: true,
-      margin: this.margin ? this.margin : 10,
+      margin: isDefined(this.margin) ? this.margin : 10,
       minItemCols: 1,
       minItemRows: 1,
       defaultItemCols: 8,
@@ -495,7 +495,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   private updateLayoutOpts() {
     this.gridsterOpts.minCols = this.columns ? this.columns : 24;
-    this.gridsterOpts.margin = this.margin ? this.margin : 10;
+    this.gridsterOpts.margin = isDefined(this.margin) ? this.margin : 10;
   }
 
   private updateEditingOpts() {

@@ -99,6 +99,18 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testUpdateAssetFromDifferentTenant() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        loginDifferentTenant();
+        doPost("/api/asset", savedAsset, Asset.class, status().isForbidden());
+        deleteDifferentTenant();
+    }
+
+    @Test
     public void testFindAssetById() throws Exception {
         Asset asset = new Asset();
         asset.setName("My asset");

@@ -21,11 +21,11 @@ import { FormattedData, PolygonSettings } from './map-models';
 export class Polygon {
 
     leafletPoly: L.Polygon;
-    tooltip;
-    data;
-    dataSources;
+    tooltip: L.Popup;
+    data: FormattedData;
+    dataSources: FormattedData[];
 
-    constructor(public map, polyData: FormattedData, dataSources, private settings: PolygonSettings) {
+    constructor(public map, polyData: FormattedData, dataSources: FormattedData[], private settings: PolygonSettings) {
         this.dataSources = dataSources;
         this.data = polyData;
         const polygonColor = this.getPolygonColor(settings);

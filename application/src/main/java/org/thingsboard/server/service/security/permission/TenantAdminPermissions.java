@@ -80,7 +80,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, UserId userId, User userEntity) {
-            if (userEntity.getAuthority() == Authority.SYS_ADMIN) {
+            if (Authority.SYS_ADMIN.equals(userEntity.getAuthority())) {
                 return false;
             }
             if (!user.getTenantId().equals(userEntity.getTenantId())) {

@@ -91,18 +91,15 @@ public class AssetController extends BaseController {
         try {
             asset.setTenantId(getCurrentUser().getTenantId());
 
-            Operation operation = asset.getId() == null ? Operation.CREATE : Operation.WRITE;
+           checkEntity(asset.getId(), asset, Resource.ASSET);
 
-            accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, operation,
-                    asset.getId(), asset);
-
-            Asset savedAsset  = checkNotNull(assetService.saveAsset(asset));
+            Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
 
             logEntityAction(savedAsset.getId(), savedAsset,
                     savedAsset.getCustomerId(),
                     asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            return  savedAsset;
+            return savedAsset;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET), asset,
                     null, asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
@@ -153,7 +150,7 @@ public class AssetController extends BaseController {
                     savedAsset.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strAssetId, strCustomerId, customer.getName());
 
-            return  savedAsset;
+            return savedAsset;
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.ASSET), null,

@@ -149,7 +149,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entityComponent: Type<EntityComponent<T, P, L>>;
   entityTabsComponent: Type<EntityTabsComponent<T, P, L>>;
   addDialogStyle = {};
-  defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.ASC};
+  defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.DESC};
   displayPagination = true;
   defaultPageSize = 10;
   columns: Array<EntityColumn<L>> = [];

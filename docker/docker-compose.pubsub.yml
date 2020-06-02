@@ -19,10 +19,10 @@ version: '2.2'
 services:
   tb-js-executor:
     env_file:
-      - queue-pubsub.env.env
+      - queue-pubsub.env
   tb-core1:
     env_file:
-      - queue-pubsub.env.env
+      - queue-pubsub.env
     depends_on:
       - zookeeper
       - redis

@@ -112,7 +112,7 @@ public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Eve
         return event;
     }
 
-    private long getTs(UUID uuid) {
+    private static long getTs(UUID uuid) {
         return (uuid.timestamp() - EPOCH_DIFF) / 10000;
     }
 }

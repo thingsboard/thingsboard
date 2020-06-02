@@ -68,9 +68,8 @@ function RabbitMqProducer() {
 (async () => {
     try {
         logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
-        const url = `amqp://${host}:${port}${vhost}`;
+        const url = `amqp://${username}:${password}@${host}:${port}${vhost}`;
 
-        amqp.credentials.amqplain(username, password);
         connection = await new Promise((resolve, reject) => {
             amqp.connect(url, function (err, connection) {
                 if (err) {

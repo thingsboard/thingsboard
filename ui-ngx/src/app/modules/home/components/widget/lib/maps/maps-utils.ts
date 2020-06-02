@@ -20,7 +20,7 @@ import { Datasource } from '@app/shared/models/widget.models';
 import _ from 'lodash';
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { createLabelFromDatasource, hashCode, isNumber, padValue } from '@core/utils';
+import { createLabelFromDatasource, hashCode, isNumber, isUndefined, padValue } from '@core/utils';
 
 export function createTooltip(target: L.Layer,
     settings: MarkerSettings | PolylineSettings | PolygonSettings,
@@ -56,10 +56,26 @@ export function getRatio(firsMoment: number, secondMoment: number, intermediateM
     return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
 }
 
-export function findAngle(startPoint, endPoint) {
-    let angle = -Math.atan2(endPoint.latitude - startPoint.latitude, endPoint.longitude - startPoint.longitude);
-    angle = angle * 180 / Math.PI;
-    return parseInt(angle.toFixed(2), 10);
+export function interpolateOnLineSegment(
+  pointA: FormattedData,
+  pointB: FormattedData,
+  latKeyName: string,
+  lngKeyName: string,
+  ratio: number
+): { [key: string]: number } {
+   return {
+    [latKeyName]: (pointA[latKeyName] + (pointB[latKeyName] - pointA[latKeyName]) * ratio),
+    [lngKeyName]: (pointA[lngKeyName] + (pointB[lngKeyName] - pointA[lngKeyName]) * ratio)
+  };
+}
+
+export function findAngle(startPoint: FormattedData, endPoint: FormattedData, latKeyName: string, lngKeyName: string): number {
+  if(isUndefined(startPoint) || isUndefined(endPoint)){
+    return 0;
+  }
+  let angle = -Math.atan2(endPoint[latKeyName] - startPoint[latKeyName], endPoint[lngKeyName] - startPoint[lngKeyName]);
+  angle = angle * 180 / Math.PI;
+  return parseInt(angle.toFixed(2), 10);
 }
 
 
@@ -238,11 +254,11 @@ export function parseArray(input: any[]): any[] {
         const obj = {
           entityName: entityArray[0]?.datasource?.entityName,
           $datasource: entityArray[0]?.datasource,
-          dsIndex,
+          dsIndex: i,
           time: el[0],
           deviceType: null
         };
-        entityArray.filter(e => e.data.length).forEach(entity => {
+        entityArray.filter(e => e.data.length && e.data[i]).forEach(entity => {
           obj[entity?.dataKey?.label] = entity?.data[i][1];
           obj[entity?.dataKey?.label + '|ts'] = entity?.data[0][0];
           if (entity?.dataKey?.label === 'type') {

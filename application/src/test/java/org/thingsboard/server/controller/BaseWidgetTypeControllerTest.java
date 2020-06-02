@@ -64,7 +64,6 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
         savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
-
     }
 
     @After
@@ -98,6 +97,19 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
 
         WidgetType foundWidgetType = doGet("/api/widgetType/" + savedWidgetType.getId().getId().toString(), WidgetType.class);
         Assert.assertEquals(foundWidgetType.getName(), savedWidgetType.getName());
+    }
+
+    @Test
+    public void testUpdateWidgetTypeFromDifferentTenant() throws Exception {
+        WidgetType widgetType = new WidgetType();
+        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
+        widgetType.setName("Widget Type");
+        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        WidgetType savedWidgetType = doPost("/api/widgetType", widgetType, WidgetType.class);
+
+        loginDifferentTenant();
+        doPost("/api/widgetType", savedWidgetType, WidgetType.class, status().isForbidden());
+        deleteDifferentTenant();
     }
 
     @Test

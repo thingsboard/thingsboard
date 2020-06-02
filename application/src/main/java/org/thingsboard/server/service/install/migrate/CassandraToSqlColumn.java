@@ -38,6 +38,7 @@ public class CassandraToSqlColumn {
     private int sqlType;
     private int size;
     private Class<? extends Enum> enumClass;
+    private boolean allowNullBoolean = false;
 
     public static CassandraToSqlColumn idColumn(String name) {
         return new CassandraToSqlColumn(name, CassandraToSqlColumnType.ID);
@@ -60,7 +61,11 @@ public class CassandraToSqlColumn {
     }
 
     public static CassandraToSqlColumn booleanColumn(String name) {
-        return new CassandraToSqlColumn(name, CassandraToSqlColumnType.BOOLEAN);
+        return booleanColumn(name, false);
+    }
+
+    public static CassandraToSqlColumn booleanColumn(String name, boolean allowNullBoolean) {
+        return new CassandraToSqlColumn(name, name, CassandraToSqlColumnType.BOOLEAN, null, allowNullBoolean);
     }
 
     public static CassandraToSqlColumn jsonColumn(String name) {
@@ -72,32 +77,33 @@ public class CassandraToSqlColumn {
     }
 
     public CassandraToSqlColumn(String columnName) {
-        this(columnName, columnName, CassandraToSqlColumnType.STRING, null);
+        this(columnName, columnName, CassandraToSqlColumnType.STRING, null, false);
     }
 
     public CassandraToSqlColumn(String columnName, CassandraToSqlColumnType type) {
-        this(columnName, columnName, type, null);
+        this(columnName, columnName, type, null, false);
     }
 
     public CassandraToSqlColumn(String columnName, CassandraToSqlColumnType type, Class<? extends Enum> enumClass) {
-        this(columnName, columnName, type, enumClass);
+        this(columnName, columnName, type, enumClass, false);
     }
 
     public CassandraToSqlColumn(String cassandraColumnName, String sqlColumnName) {
-        this(cassandraColumnName, sqlColumnName, CassandraToSqlColumnType.STRING, null);
+        this(cassandraColumnName, sqlColumnName, CassandraToSqlColumnType.STRING, null, false);
     }
 
     public CassandraToSqlColumn(String cassandraColumnName, String sqlColumnName, CassandraToSqlColumnType type,
-                                Class<? extends Enum> enumClass) {
+                                Class<? extends Enum> enumClass, boolean allowNullBoolean) {
         this.cassandraColumnName = cassandraColumnName;
         this.sqlColumnName = sqlColumnName;
         this.type = type;
         this.enumClass = enumClass;
+        this.allowNullBoolean = allowNullBoolean;
     }
 
     public String getColumnValue(Row row) {
         if (row.isNull(index)) {
-            if (this.type == CassandraToSqlColumnType.BOOLEAN) {
+            if (this.type == CassandraToSqlColumnType.BOOLEAN && !this.allowNullBoolean) {
                 return Boolean.toString(false);
             } else {
                 return null;

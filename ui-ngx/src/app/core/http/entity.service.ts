@@ -1006,7 +1006,7 @@ export class EntityService {
 
   private entityRelationInfosToEntitiesInfo(entityRelations: Array<EntityRelationInfo>,
                                             direction: EntitySearchDirection): Observable<Array<EntityInfo>> {
-    if (entityRelations) {
+    if (entityRelations.length) {
       const tasks: Observable<EntityInfo>[] = [];
       entityRelations.forEach((entityRelation) => {
         tasks.push(this.entityRelationInfoToEntityInfo(entityRelation, direction));

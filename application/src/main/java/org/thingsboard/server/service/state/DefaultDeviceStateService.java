@@ -292,28 +292,38 @@ public class DefaultDeviceStateService implements DeviceStateService {
         }
     }
 
+    volatile Set<TopicPartitionInfo> pendingPartitions;
+
     @Override
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
             synchronized (this) {
+                pendingPartitions = partitionChangeEvent.getPartitions();
                 if (!clusterUpdatePending) {
                     clusterUpdatePending = true;
                     queueExecutor.submit(() -> {
                         clusterUpdatePending = false;
-                        initStateFromDB(partitionChangeEvent.getPartitions());
+                        initStateFromDB();
                     });
                 }
             }
         }
     }
 
-    private void initStateFromDB(Set<TopicPartitionInfo> partitions) {
+    private void initStateFromDB() {
         try {
-            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(partitions);
+            log.info("CURRENT PARTITIONS: {}", partitionedDevices.keySet());
+            log.info("NEW PARTITIONS: {}", pendingPartitions);
+
+            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(pendingPartitions);
             addedPartitions.removeAll(partitionedDevices.keySet());
 
+            log.info("ADDED PARTITIONS: {}", addedPartitions);
+
             Set<TopicPartitionInfo> removedPartitions = new HashSet<>(partitionedDevices.keySet());
-            removedPartitions.removeAll(partitions);
+            removedPartitions.removeAll(pendingPartitions);
+
+            log.info("REMOVED PARTITIONS: {}", removedPartitions);
 
             // We no longer manage current partition of devices;
             removedPartitions.forEach(partition -> {

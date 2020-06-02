@@ -48,7 +48,7 @@ export class ResourcesService {
     }
 
     let fileType;
-    const match = /[.](css|less|html|htm|js)?((\?|#).*)?$/.exec(url);
+    const match = /[./](css|less|html|htm|js)?(([?#]).*)?$/.exec(url);
     if (match !== null) {
       fileType = match[1];
     }

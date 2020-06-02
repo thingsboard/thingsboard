@@ -85,7 +85,12 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                     subscribed = true;
                 }
 
-                List<R> records = doPoll(durationInMillis);
+                List<R> records;
+                if (partitions.isEmpty()) {
+                    records = Collections.emptyList();
+                } else {
+                    records = doPoll(durationInMillis);
+                }
                 if (!records.isEmpty()) {
                     List<T> result = new ArrayList<>(records.size());
                     records.forEach(record -> {

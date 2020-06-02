@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { interval } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { HistorySelectSettings } from '@app/modules/home/components/widget/lib/maps/map-models';
@@ -27,13 +27,14 @@ import { HistorySelectSettings } from '@app/modules/home/components/widget/lib/m
 export class HistorySelectorComponent implements OnInit, OnChanges {
 
   @Input() settings: HistorySelectSettings
-  @Input() intervals = [];
+  @Input() minTime: number;
+  @Input() maxTime: number;
+  @Input() step = 1000;
   @Input() anchors = [];
   @Input() useAnchors = false;
 
   @Output() timeUpdated: EventEmitter<number> = new EventEmitter();
 
-  animationTime;
   minTimeIndex = 0;
   maxTimeIndex = 0;
   speed = 1;
@@ -41,6 +42,7 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   playing = false;
   interval;
   speeds = [1, 5, 10, 25];
+  currentTime = null;
 
 
   constructor(private cd: ChangeDetectorRef) { }
@@ -49,7 +51,8 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges() {
-    this.maxTimeIndex = this.intervals?.length - 1;
+    this.maxTimeIndex =  Math.ceil((this.maxTime - this.minTime) / this.step);
+    this.currentTime = this.minTime === Infinity ? null : this.minTime;
   }
 
   play() {
@@ -59,17 +62,18 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
         .pipe(
           filter(() => this.playing)).subscribe(() => {
             this.index++;
-            if (this.index < this.maxTimeIndex) {
+            this.currentTime = this.minTime + this.index * this.step;
+            if (this.index <= this.maxTimeIndex) {
               this.cd.detectChanges();
-              this.timeUpdated.emit(this.intervals[this.index]);
+              this.timeUpdated.emit(this.currentTime);
             }
             else {
               this.interval.complete();
             }
           }, err => {
-            console.log(err);
+            console.error(err);
           }, () => {
-            this.index = this.minTimeIndex;
+            this.currentTime = this.index = this.minTimeIndex;
             this.playing = false;
             this.interval = null;
             this.cd.detectChanges();
@@ -87,18 +91,19 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
 
   pause() {
     this.playing = false;
+    this.currentTime = this.minTime + this.index * this.step;
     this.cd.detectChanges();
-    this.timeUpdated.emit(this.intervals[this.index]);
+    this.timeUpdated.emit(this.currentTime);
   }
 
   moveNext() {
     if (this.index < this.maxTimeIndex) {
       if (this.useAnchors) {
-        const anchorIndex = this.findIndex(this.intervals[this.index], this.anchors)+1;
-        this.index = this.findIndex(this.anchors[anchorIndex], this.intervals);
-      }
-      else
+        const anchorIndex = this.findIndex(this.currentTime, this.anchors) + 1;
+        this.index = Math.floor((this.anchors[anchorIndex] - this.minTime) / this.step);
+      } else {
         this.index++;
+      }
     }
     this.pause();
   }
@@ -106,13 +111,21 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   movePrev() {
     if (this.index > this.minTimeIndex) {
       if (this.useAnchors) {
-        const anchorIndex = this.findIndex(this.intervals[this.index], this.anchors) - 1;
-        this.index = this.findIndex(this.anchors[anchorIndex], this.intervals);
-      }
-      else
+        const anchorIndex = this.findIndex(this.currentTime, this.anchors) - 1;
+        this.index = Math.floor((this.anchors[anchorIndex] - this.minTime) / this.step);
+      } else {
         this.index--;
+      }
     }
     this.pause();
+  }
+
+  findIndex(value: number, array: number[]): number {
+    let i = 0;
+    while (array[i] < value) {
+      i++;
+    }
+    return i;
   }
 
   moveStart() {
@@ -125,15 +138,8 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
     this.pause();
   }
 
-  findIndex(value, array: any[]) {
-    let i = 0;
-    while (array[i] < value) {
-      i++;
-    };
-    return i;
-  }
-
   changeIndex() {
-    this.timeUpdated.emit(this.intervals[this.index]);
+    this.currentTime = this.minTime + this.index * this.step;
+    this.timeUpdated.emit(this.currentTime);
   }
 }
