@@ -114,7 +114,7 @@ spec:
           - name: CASSANDRA_CLUSTER_NAME
             value: "Thingsboard Cluster"
           - name: CASSANDRA_DC
-            value: "DC1-Thingsboard-Cluster"
+            value: "datacenter1"
           - name: CASSANDRA_RACK
             value: "Rack-Thingsboard-Cluster"
           - name: CASSANDRA_AUTO_BOOTSTRAP
