@@ -114,18 +114,18 @@
             </div>
         </md-toolbar>
         <div flex style="position: relative;">
-            <div class="tb-editor tb-absolute-fill" style="">
+            <div class="tb-editor tb-absolute-fill">
                 <div id="top_panel" class="tb-split tb-split-vertical">
                     <div id="top_left_panel" class="tb-split tb-content">
-                        <md-tabs md-selected="1" md-dynamic-height md-border-bottom style="width: 100%; height: 100%;">
-                            <md-tab label="{{ 'widget.resources' | translate }}" style="width: 100%; height: 100%;">
+                        <md-tabs md-selected="1" md-dynamic-height md-border-bottom class="container">
+                            <md-tab label="{{ 'widget.resources' | translate }}">
                                 <div class="tb-resize-container" style="background-color: #fff;">
                                     <div class="md-padding">
                                         <div flex layout="row"
                                              ng-repeat="resource in vm.widget.resources track by $index"
                                              style="max-height: 40px;" layout-align="start center">
                                             <md-input-container flex md-no-float class="md-block"
-                                                                style="margin: 10px 0px 0px 0px; max-height: 40px;">
+                                                                style="margin: 10px 0 0; max-height: 40px;">
                                                 <input placeholder="{{ 'widget.resource-url' | translate }}"
                                                        ng-required="true" name="resource" ng-model="resource.url">
                                             </md-input-container>
@@ -154,7 +154,7 @@
                                     </div>
                                 </div>
                             </md-tab>
-                            <md-tab label="{{ 'widget.html' | translate }}" style="width: 100%; height: 100%;">
+                            <md-tab label="{{ 'widget.html' | translate }}">
                                 <div class="tb-resize-container" tb-expand-fullscreen expand-button-id="expand-button">
                                     <div class="tb-editor-area-title-panel">
                                         <md-button aria-label="{{ 'widget.tidy' | translate }}"
@@ -168,7 +168,7 @@
                                          ng-model="vm.widget.templateHtml"></div>
                                 </div>
                             </md-tab>
-                            <md-tab label="{{ 'widget.css' | translate }}" style="width: 100%; height: 100%;">
+                            <md-tab label="{{ 'widget.css' | translate }}">
                                 <div class="tb-resize-container" tb-expand-fullscreen expand-button-id="expand-button">
                                     <div class="tb-editor-area-title-panel">
                                         <md-button aria-label="{{ 'widget.tidy' | translate }}"
@@ -185,9 +185,8 @@
                         </md-tabs>
                     </div>
                     <div id="top_right_panel" class="tb-split tb-content">
-                        <md-tabs md-dynamic-height md-border-bottom style="width: 100%; height: 100%;">
-                            <md-tab label="{{ 'widget.settings-schema' | translate }}"
-                                    style="width: 100%; height: 100%;">
+                        <md-tabs md-dynamic-height md-border-bottom class="container">
+                            <md-tab label="{{ 'widget.settings-schema' | translate }}">
                                 <div class="tb-resize-container" tb-expand-fullscreen expand-button-id="expand-button">
                                     <div class="tb-editor-area-title-panel">
                                         <md-button aria-label="{{ 'widget.tidy' | translate }}"
@@ -201,8 +200,7 @@
                                          ng-model="vm.widget.settingsSchema"></div>
                                 </div>
                             </md-tab>
-                            <md-tab label="{{ 'widget.datakey-settings-schema' | translate }}"
-                                    style="width: 100%; height: 100%;">
+                            <md-tab label="{{ 'widget.datakey-settings-schema' | translate }}">
                                 <div class="tb-resize-container" tb-expand-fullscreen expand-button-id="expand-button">
                                     <div class="tb-editor-area-title-panel">
                                         <md-button aria-label="{{ 'widget.tidy' | translate }}"
@@ -240,7 +238,7 @@
                             <md-progress-circular ng-disabled="vm.iframeWidgetEditModeInited" md-mode="indeterminate" class="md-warn"
                                                   md-diameter="100"></md-progress-circular>
                         </md-content>
-                        <div tb-expand-fullscreen expand-button-id="expand-button" style="width: 100%; height: 100%;">
+                        <div tb-expand-fullscreen expand-button-id="expand-button" class="container">
                             <iframe frameborder="0" height="100%" width="100%"></iframe>
                             <md-button id="expand-button" aria-label="Fullscreen"
                                        class="md-icon-button tb-fullscreen-button-style"
