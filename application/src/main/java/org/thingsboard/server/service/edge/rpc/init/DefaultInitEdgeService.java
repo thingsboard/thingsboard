@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.init;
 
+import com.google.common.util.concurrent.Futures;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.EntityViewUpdateMsgCo
 import org.thingsboard.server.service.edge.rpc.constructor.RuleChainUpdateMsgConstructor;
 
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 @Service
 @Slf4j
@@ -100,10 +102,10 @@ public class DefaultInitEdgeService implements InitEdgeService {
 
     private void initDevices(Edge edge, StreamObserver<ResponseMsg> outputStream) {
         try {
-            TextPageLink pageLink = new TextPageLink(100);
-            TextPageData<Device> pageData;
+            TimePageLink pageLink = new TimePageLink(100);
+            TimePageData<Device> pageData;
             do {
-                pageData = deviceService.findDevicesByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), pageLink);
+                pageData = deviceService.findDevicesByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), pageLink).get();
                 if (!pageData.getData().isEmpty()) {
                     log.trace("[{}] [{}] device(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                     for (Device device : pageData.getData()) {
@@ -130,10 +132,10 @@ public class DefaultInitEdgeService implements InitEdgeService {
 
     private void initAssets(Edge edge, StreamObserver<ResponseMsg> outputStream) {
         try {
-            TextPageLink pageLink = new TextPageLink(100);
-            TextPageData<Asset> pageData;
+            TimePageLink pageLink = new TimePageLink(100);
+            TimePageData<Asset> pageData;
             do {
-                pageData = assetService.findAssetsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), pageLink);
+                pageData = assetService.findAssetsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), pageLink).get();
                 if (!pageData.getData().isEmpty()) {
                     log.trace("[{}] [{}] asset(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                     for (Asset asset : pageData.getData()) {
@@ -160,10 +162,10 @@ public class DefaultInitEdgeService implements InitEdgeService {
 
     private void initEntityViews(Edge edge, StreamObserver<ResponseMsg> outputStream) {
         try {
-            TextPageLink pageLink = new TextPageLink(100);
-            TextPageData<EntityView> pageData;
+            TimePageLink pageLink = new TimePageLink(100);
+            TimePageData<EntityView> pageData;
             do {
-                pageData = entityViewService.findEntityViewsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), pageLink);
+                pageData = entityViewService.findEntityViewsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), pageLink).get();
                 if (!pageData.getData().isEmpty()) {
                     log.trace("[{}] [{}] entity view(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                     for (EntityView entityView : pageData.getData()) {

@@ -101,7 +101,7 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> extends Abstract
     @Override
     protected void doSubscribe(List<String> topicNames) {
         createReceivers();
-        messagesPerQueue = receivers.size() / partitions.size();
+        messagesPerQueue = receivers.size() / Math.max(partitions.size(), 1);
     }
 
     @Override

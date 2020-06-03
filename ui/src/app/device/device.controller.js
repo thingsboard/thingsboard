@@ -360,7 +360,7 @@ export function DeviceController($rootScope, userService, deviceService, custome
                 return deviceService.getEdgeDevices(edgeId, pageLink, null, deviceType);
             };
             deleteDeviceFunction = function (deviceId) {
-                return deviceService.unassignDeviceFromEdge(deviceId);
+                return deviceService.unassignDeviceFromEdge(edgeId, deviceId);
             };
             refreshDevicesParamsFunction = function () {
                 return {"edgeId": edgeId, "topIndex": vm.topIndex};
@@ -679,7 +679,7 @@ export function DeviceController($rootScope, userService, deviceService, custome
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            deviceService.unassignDeviceFromEdge(device.id.id).then(function success() {
+            deviceService.unassignDeviceFromEdge(edgeId, device.id.id).then(function success() {
                 vm.grid.refreshList();
             });
         });
@@ -688,15 +688,15 @@ export function DeviceController($rootScope, userService, deviceService, custome
     function unassignDevicesFromEdge($event, items) {
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('device.unassign-devices-title', {count: items.selectedCount}, 'messageformat'))
-            .htmlContent($translate.instant('device.unassign-devices-text'))
-            .ariaLabel($translate.instant('device.unassign-device'))
+            .title($translate.instant('device.unassign-devices-from-edge-title', {count: items.selectedCount}, 'messageformat'))
+            .htmlContent($translate.instant('device.unassign-devices-from-edge-text'))
+            .ariaLabel($translate.instant('device.unassign-device-from-edge'))
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
             var tasks = [];
             for (var id in items.selections) {
-                tasks.push(deviceService.unassignDeviceFromEdge(id));
+                tasks.push(deviceService.unassignDeviceFromEdge(edgeId, id));
             }
             $q.all(tasks).then(function () {
                 vm.grid.refreshList();

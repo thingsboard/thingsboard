@@ -148,26 +148,26 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
     }
 
     @Override
-    public ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(UUID tenantId, UUID ruleChainId, TimePageLink pageLink) {
-        log.debug("Try to find edges by tenantId [{}], ruleChainId [{}] and pageLink [{}]", tenantId, ruleChainId, pageLink);
+    public ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(UUID tenantId, UUID ruleChainId) {
+        log.debug("Try to find edges by tenantId [{}], ruleChainId [{}]", tenantId, ruleChainId);
         ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByToAndType(new TenantId(tenantId), new RuleChainId(ruleChainId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
         return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<Edge>> edgeFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
-                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getFrom().getId()));
             }
             return Futures.successfulAsList(edgeFutures);
         }, MoreExecutors.directExecutor());
     }
 
     @Override
-    public ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(UUID tenantId, UUID dashboardId, TimePageLink pageLink) {
-        log.debug("Try to find edges by tenantId [{}], dashboardId [{}] and pageLink [{}]", tenantId, dashboardId, pageLink);
+    public ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(UUID tenantId, UUID dashboardId) {
+        log.debug("Try to find edges by tenantId [{}], dashboardId [{}]", tenantId, dashboardId);
         ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByToAndType(new TenantId(tenantId), new DashboardId(dashboardId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
         return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<Edge>> edgeFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
-                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+                edgeFutures.add(findByIdAsync(new TenantId(tenantId), relation.getFrom().getId()));
             }
             return Futures.successfulAsList(edgeFutures);
         }, MoreExecutors.directExecutor());

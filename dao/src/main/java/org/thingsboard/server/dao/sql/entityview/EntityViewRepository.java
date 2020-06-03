@@ -76,26 +76,4 @@ public interface EntityViewRepository extends CrudRepository<EntityViewEntity, S
 
     @Query("SELECT DISTINCT ev.type FROM EntityViewEntity ev WHERE ev.tenantId = :tenantId")
     List<String> findTenantEntityViewTypes(@Param("tenantId") String tenantId);
-
-    @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
-            "AND e.edgeId = :edgeId " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND e.id > :idOffset ORDER BY e.id")
-    List<EntityViewEntity> findByTenantIdAndEdgeId(@Param("tenantId") String tenantId,
-                                                   @Param("edgeId") String edgeId,
-                                                   @Param("searchText") String searchText,
-                                                   @Param("idOffset") String idOffset,
-                                                   Pageable pageable);
-
-    @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
-            "AND e.edgeId = :edgeId " +
-            "AND e.type = :type " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND e.id > :idOffset ORDER BY e.id")
-    List<EntityViewEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") String tenantId,
-                                                          @Param("edgeId") String edgeId,
-                                                          @Param("type") String type,
-                                                          @Param("searchText") String searchText,
-                                                          @Param("idOffset") String idOffset,
-                                                          Pageable pageable);
 }

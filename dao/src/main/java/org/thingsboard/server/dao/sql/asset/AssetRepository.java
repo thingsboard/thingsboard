@@ -77,26 +77,4 @@ public interface AssetRepository extends CrudRepository<AssetEntity, String> {
 
     @Query("SELECT DISTINCT a.type FROM AssetEntity a WHERE a.tenantId = :tenantId")
     List<String> findTenantAssetTypes(@Param("tenantId") String tenantId);
-
-    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
-            "AND a.edgeId = :edgeId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantIdAndEdgeId(@Param("tenantId") String tenantId,
-                                              @Param("edgeId") String edgeId,
-                                              @Param("textSearch") String textSearch,
-                                              @Param("idOffset") String idOffset,
-                                              Pageable pageable);
-
-    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
-            "AND a.edgeId = :edgeId AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") String tenantId,
-                                                     @Param("edgeId") String edgeId,
-                                                     @Param("type") String type,
-                                                     @Param("textSearch") String textSearch,
-                                                     @Param("idOffset") String idOffset,
-                                                     Pageable pageable);
-
 }

@@ -467,8 +467,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return Futures.transform(ruleChains, new Function<List<RuleChain>, TimePageData<RuleChain>>() {
             @Nullable
             @Override
-            public TimePageData<RuleChain> apply(@Nullable List<RuleChain> ruleChain) {
-                return new TimePageData<>(ruleChain, pageLink);
+            public TimePageData<RuleChain> apply(@Nullable List<RuleChain> ruleChains) {
+                return new TimePageData<>(ruleChains, pageLink);
             }
         }, MoreExecutors.directExecutor());
     }
@@ -507,7 +507,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public boolean addDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         try {
             createRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_DEFAULT_RULE_CHAIN));
             return true;
         } catch (ExecutionException | InterruptedException e) {
             log.warn("Failed to add default edge rule chain, ruleChainId: [{}]", ruleChainId, e);
@@ -519,7 +519,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public boolean removeDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         try {
             deleteRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_DEFAULT_RULE_CHAIN));
             return true;
         } catch (ExecutionException | InterruptedException e) {
             log.warn("Failed to remove default edge rule chain, ruleChainId: [{}]", ruleChainId, e);
@@ -557,15 +557,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         ruleNodeDao.removeById(tenantId, entityId.getId());
     }
 
-    private void createRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
-        log.debug("Creating relation: {}", relation);
-        relationService.saveRelation(tenantId, relation);
-    }
-
-    private void deleteRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
-        log.debug("Deleting relation: {}", relation);
-        relationService.deleteRelation(tenantId, relation);
-    }
 
     private DataValidator<RuleChain> ruleChainValidator =
             new DataValidator<RuleChain>() {

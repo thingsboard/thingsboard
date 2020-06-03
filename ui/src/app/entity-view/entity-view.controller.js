@@ -288,7 +288,7 @@ export function EntityViewController($rootScope, userService, entityViewService,
                 return entityViewService.getEdgeEntityViews(edgeId, pageLink, null, entityViewType);
             };
             deleteEntityViewFunction = function (entityViewId) {
-                return entityViewService.unassignEntityViewFromEdge(entityViewId);
+                return entityViewService.unassignEntityViewFromEdge(edgeId, entityViewId);
             };
             refreshEntityViewsParamsFunction = function () {
                 return {"edgeId": edgeId, "topIndex": vm.topIndex};
@@ -300,10 +300,7 @@ export function EntityViewController($rootScope, userService, entityViewService,
                     },
                     name: function() { return $translate.instant('action.unassign') },
                     details: function() { return $translate.instant('entity-view.unassign-from-edge') },
-                    icon: "assignment_return",
-                    isEnabled: function(entityView) {
-                        return entityView && entityView.edgeId && entityView.edgeId.id !== types.id.nullUid;
-                    }
+                    icon: "assignment_return"
                 }
             );
 
@@ -314,7 +311,7 @@ export function EntityViewController($rootScope, userService, entityViewService,
                     },
                     name: function() { return $translate.instant('entity-view.unassign-entity-views') },
                     details: function(selectedCount) {
-                        return $translate.instant('entity-view.unassign-entity-views-action-title', {count: selectedCount}, "messageformat");
+                        return $translate.instant('entity-view.unassign-entity-views-from-edge-action-title', {count: selectedCount}, "messageformat");
                     },
                     icon: "assignment_return"
                 }
@@ -581,15 +578,15 @@ export function EntityViewController($rootScope, userService, entityViewService,
     function unassignEntityViewsFromEdge($event, items) {
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('entity-view.unassign-entity-views-title', {count: items.selectedCount}, 'messageformat'))
-            .htmlContent($translate.instant('entity-view.unassign-entity-views-text'))
-            .ariaLabel($translate.instant('entity-view.unassign-entity-view'))
+            .title($translate.instant('entity-view.unassign-entity-views-from-edge-title', {count: items.selectedCount}, 'messageformat'))
+            .htmlContent($translate.instant('entity-view.unassign-entity-views-from-edge-text'))
+            .ariaLabel($translate.instant('entity-view.unassign-entity-view-from-edge'))
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
             var tasks = [];
             for (var id in items.selections) {
-                tasks.push(entityViewService.unassignEntityViewFromEdge(id));
+                tasks.push(entityViewService.unassignEntityViewFromEdge(edgeId, id));
             }
             $q.all(tasks).then(function () {
                 vm.grid.refreshList();
@@ -612,7 +609,7 @@ export function EntityViewController($rootScope, userService, entityViewService,
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            entityViewService.unassignEntityViewFromEdge(entityView.id.id).then(function success() {
+            entityViewService.unassignEntityViewFromEdge(edgeId, entityView.id.id).then(function success() {
                 vm.grid.refreshList();
             });
         });

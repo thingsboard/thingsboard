@@ -33,7 +33,6 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,7 +48,6 @@ import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -75,7 +73,6 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -221,6 +218,27 @@ public abstract class AbstractControllerTest {
 
     protected void loginCustomerUser() throws Exception {
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
+    }
+
+    private Tenant savedDifferentTenant;
+    protected void loginDifferentTenant() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Different tenant");
+        savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Assert.assertNotNull(savedDifferentTenant);
+        User differentTenantAdmin = new User();
+        differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
+        differentTenantAdmin.setEmail("different_tenant@thingsboard.org");
+
+        createUserAndLogin(differentTenantAdmin, "testPassword");
+    }
+
+    protected void deleteDifferentTenant() throws Exception {
+        loginSysAdmin();
+        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     protected User createUserAndLogin(User user, String password) throws Exception {

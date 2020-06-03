@@ -15,19 +15,28 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -47,10 +56,14 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
  */
 @Component
 @SqlDao
+@Slf4j
 public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> implements AssetDao {
 
     @Autowired
     private AssetRepository assetRepository;
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<AssetEntity> getEntityClass() {
@@ -141,27 +154,16 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     }
 
     @Override
-    public List<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(assetRepository
-                .findByTenantIdAndEdgeId(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(edgeId),
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        PageRequest.of(0, pageLink.getLimit())));
-    }
-
-
-    @Override
-    public List<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(assetRepository
-                .findByTenantIdAndEdgeIdAndType(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(edgeId),
-                        type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        PageRequest.of(0, pageLink.getLimit())));
+    public ListenableFuture<List<Asset>> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+        log.debug("Try to find assets by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.ASSET, pageLink);
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<Asset>> assetFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                assetFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(assetFutures);
+        }, MoreExecutors.directExecutor());
     }
 
 }

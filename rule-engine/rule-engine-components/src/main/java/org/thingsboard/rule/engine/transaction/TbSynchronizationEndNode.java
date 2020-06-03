@@ -51,7 +51,7 @@ public class TbSynchronizationEndNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        log.warn("Synchronization Start/End nodes are deprecated since TB 2.5. Use queue with submit strategy SEQUENTIAL_WITHIN_ORIGINATOR instead.");
+        log.warn("Synchronization Start/End nodes are deprecated since TB 2.5. Use queue with submit strategy SEQUENTIAL_BY_ORIGINATOR instead.");
         ctx.tellSuccess(msg);
     }
 

@@ -29,7 +29,6 @@ import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -42,7 +41,6 @@ import javax.persistence.Enumerated;
 import java.io.IOException;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_EDGE_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME;
@@ -70,10 +68,6 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
     @PartitionKey(value = 3)
     @Column(name = DEVICE_TYPE_PROPERTY)
     private String type;
-
-    @PartitionKey(value = 4)
-    @Column(name = DEVICE_EDGE_ID_PROPERTY)
-    private UUID edgeId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_PROPERTY)
@@ -121,9 +115,6 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         if (entityView.getCustomerId() != null) {
             this.customerId = entityView.getCustomerId().getId();
         }
-        if (entityView.getEdgeId() != null) {
-            this.edgeId = entityView.getEdgeId().getId();
-        }
         this.type = entityView.getType();
         this.name = entityView.getName();
         try {
@@ -154,9 +145,6 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         }
         if (customerId != null) {
             entityView.setCustomerId(new CustomerId(customerId));
-        }
-        if (edgeId != null) {
-            entityView.setEdgeId(new EdgeId(edgeId));
         }
         entityView.setType(type);
         entityView.setName(name);

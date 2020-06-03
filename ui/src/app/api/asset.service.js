@@ -18,7 +18,7 @@ export default angular.module('thingsboard.api.asset', [])
     .name;
 
 /*@ngInject*/
-function AssetService($http, $q, customerService, userService) {
+function AssetService($http, $q, $filter, customerService, userService) {
 
     var service = {
         getAsset: getAsset,
@@ -307,9 +307,9 @@ function AssetService($http, $q, customerService, userService) {
         return deferred.promise;
     }
 
-    function unassignAssetFromEdge(assetId, ignoreErrors, config) {
+    function unassignAssetFromEdge(edgeId, assetId, ignoreErrors, config) {
         var deferred = $q.defer();
-        var url = '/api/edge/asset/' + assetId;
+        var url = '/api/edge/' + edgeId + '/asset/' + assetId;
         if (!config) {
             config = {};
         }
@@ -325,24 +325,20 @@ function AssetService($http, $q, customerService, userService) {
     function getEdgeAssets(edgeId, pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/edge/' + edgeId + '/assets?limit=' + pageLink.limit;
-        if (angular.isDefined(pageLink.textSearch)) {
-            url += '&textSearch=' + pageLink.textSearch;
-        }
         if (angular.isDefined(pageLink.idOffset)) {
-            url += '&idOffset=' + pageLink.idOffset;
-        }
-        if (angular.isDefined(pageLink.textOffset)) {
-            url += '&textOffset=' + pageLink.textOffset;
-        }
-        if (angular.isDefined(type) && type.length) {
-            url += '&type=' + type;
+            url += '&offset=' + pageLink.idOffset;
         }
         $http.get(url, config).then(function success(response) {
+            if (pageLink.textSearch) {
+                response.data.data = $filter('filter')(response.data.data, {name: pageLink.textSearch});
+            }
+            if (angular.isDefined(type) && type.length) {
+                response.data.data = $filter('filter')(response.data.data, {type: type});
+            }
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
         });
-
         return deferred.promise;
     }
 }

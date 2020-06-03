@@ -39,6 +39,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
@@ -232,7 +233,15 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (msg.hasSubscriptionInfo()) {
             handleSessionActivity(context, msg.getSessionInfo(), msg.getSubscriptionInfo());
         }
+        if (msg.hasClaimDevice()) {
+            handleClaimDeviceMsg(context, msg.getSessionInfo(), msg.getClaimDevice());
+        }
         callback.onSuccess();
+    }
+
+    private void handleClaimDeviceMsg(ActorContext context, SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg) {
+        DeviceId deviceId = new DeviceId(new UUID(msg.getDeviceIdMSB(), msg.getDeviceIdLSB()));
+        systemContext.getClaimDevicesService().registerClaimingInfo(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs());
     }
 
     private void reportSessionOpen() {

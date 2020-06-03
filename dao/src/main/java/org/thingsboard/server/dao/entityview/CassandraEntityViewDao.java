@@ -25,16 +25,23 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
 import org.thingsboard.server.dao.model.nosql.EntityViewEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
 import javax.annotation.Nullable;
@@ -72,6 +79,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_PROPERTY
 @Slf4j
 @NoSqlDao
 public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<EntityViewEntity, EntityView> implements EntityViewDao {
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<EntityViewEntity> getColumnFamilyClass() {
@@ -186,30 +196,16 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     }
 
     @Override
-    public List<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TextPageLink pageLink) {
-//        log.debug("Try to find entity views by tenantId [{}], customerId[{}] and pageLink [{}]",
-//                tenantId, customerId, pageLink);
-//        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(new TenantId(tenantId),
-//                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_CF,
-//                Arrays.asList(eq(CUSTOMER_ID_PROPERTY, customerId), eq(TENANT_ID_PROPERTY, tenantId)),
-//                pageLink);
-//        log.trace("Found find entity views [{}] by tenantId [{}], customerId [{}] and pageLink [{}]",
-//                entityViewEntities, tenantId, customerId, pageLink);
-//        return DaoUtil.convertDataList(entityViewEntities);
-        throw new UnsupportedOperationException("Cassandra is not supported yet");
+    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+        log.debug("Try to find entity views by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.ENTITY_VIEW, pageLink);
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<EntityView>> entityViewFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                entityViewFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(entityViewFutures);
+        }, MoreExecutors.directExecutor());
     }
 
-    @Override
-    public List<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TextPageLink pageLink) {
-//        log.debug("Try to find entity views by tenantId [{}], customerId[{}], type [{}] and pageLink [{}]",
-//                tenantId, customerId, type, pageLink);
-//        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(new TenantId(tenantId),
-//                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_TYPE_CF,
-//                Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type), eq(CUSTOMER_ID_PROPERTY, customerId), eq(TENANT_ID_PROPERTY, tenantId)),
-//                pageLink);
-//        log.trace("Found find entity views [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]",
-//                entityViewEntities, tenantId, customerId, type, pageLink);
-//        return DaoUtil.convertDataList(entityViewEntities);
-        throw new UnsupportedOperationException("Cassandra is not supported yet");
-    }
 }

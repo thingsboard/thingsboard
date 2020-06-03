@@ -312,18 +312,6 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                 loadCql(schemaUpdateFile);
 
                 try {
-                    cluster.getSession().execute("alter table asset add edge_id text");
-                    Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
-                try {
-                    cluster.getSession().execute("alter table device add edge_id text");
-                    Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
-                try {
-                    cluster.getSession().execute("alter table entity_view add edge_id text");
-                    Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
-                try {
                     cluster.getSession().execute("alter table rule_chain add type text");
                     Thread.sleep(2500);
                 } catch (InvalidQueryException e) {}

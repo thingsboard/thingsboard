@@ -15,20 +15,29 @@
  */
 package org.thingsboard.server.dao.sql.entityview;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -47,11 +56,15 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
  */
 @Component
 @SqlDao
+@Slf4j
 public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity, EntityView>
         implements EntityViewDao {
 
     @Autowired
     private EntityViewRepository entityViewRepository;
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<EntityViewEntity> getEntityClass() {
@@ -140,30 +153,15 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
-    public List<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
-                                                               UUID edgeId,
-                                                               TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
-                entityViewRepository.findByTenantIdAndEdgeId(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(edgeId),
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        PageRequest.of(0, pageLink.getLimit())
-                ));
+    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+        log.debug("Try to find entity views by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.ENTITY_VIEW, pageLink);
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<EntityView>> entityViewFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                entityViewFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(entityViewFutures);
+        }, MoreExecutors.directExecutor());
     }
-
-    @Override
-    public List<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
-                entityViewRepository.findByTenantIdAndEdgeIdAndType(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(edgeId),
-                        type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        PageRequest.of(0, pageLink.getLimit())
-                ));
-    }
-
 }

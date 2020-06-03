@@ -20,7 +20,7 @@ export default angular.module('thingsboard.api.entityView', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function EntityViewService($http, $q, $window, userService, attributeService, customerService, types) {
+function EntityViewService($http, $q, $window, $filter, userService, attributeService, customerService, types) {
 
     var service = {
         assignEntityViewToCustomer: assignEntityViewToCustomer,
@@ -234,9 +234,9 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
         return deferred.promise;
     }
 
-    function unassignEntityViewFromEdge(entityViewId) {
+    function unassignEntityViewFromEdge(edgeId, entityViewId) {
         var deferred = $q.defer();
-        var url = '/api/edge/entityView/' + entityViewId;
+        var url = '/api/edge/' + edgeId + '/entityView/' + entityViewId;
         $http.delete(url).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
@@ -248,24 +248,20 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
     function getEdgeEntityViews(edgeId, pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/edge/' + edgeId + '/entityViews?limit=' + pageLink.limit;
-        if (angular.isDefined(pageLink.textSearch)) {
-            url += '&textSearch=' + pageLink.textSearch;
-        }
         if (angular.isDefined(pageLink.idOffset)) {
-            url += '&idOffset=' + pageLink.idOffset;
-        }
-        if (angular.isDefined(pageLink.textOffset)) {
-            url += '&textOffset=' + pageLink.textOffset;
-        }
-        if (angular.isDefined(type) && type.length) {
-            url += '&type=' + type;
+            url += '&offset=' + pageLink.idOffset;
         }
         $http.get(url, config).then(function success(response) {
+            if (pageLink.textSearch) {
+                response.data.data = $filter('filter')(response.data.data, {name: pageLink.textSearch});
+            }
+            if (angular.isDefined(type) && type.length) {
+                response.data.data = $filter('filter')(response.data.data, {type: type});
+            }
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
         });
-
         return deferred.promise;
     }
 }

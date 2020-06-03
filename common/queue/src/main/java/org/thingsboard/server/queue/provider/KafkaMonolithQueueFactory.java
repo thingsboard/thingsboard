@@ -200,7 +200,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(transportApiSettings.getRequestsTopic());
         consumerBuilder.clientId("monolith-transport-api-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("monolith-transport-api-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("monolith-transport-api-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(transportApiAdmin);
         return consumerBuilder.build();

@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,7 +39,6 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     private EntityId entityId;
     private TenantId tenantId;
     private CustomerId customerId;
-    private EdgeId edgeId;
     private String name;
     private String type;
     private TelemetryEntityView keys;

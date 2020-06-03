@@ -21,10 +21,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import javax.annotation.PostConstruct;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public abstract class AbstractEntityService {
@@ -40,6 +42,16 @@ public abstract class AbstractEntityService {
     @PostConstruct
     public void init() {
         sqlDatabaseUsed = "sql".equalsIgnoreCase(databaseType);
+    }
+
+    protected void createRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
+        log.debug("Creating relation: {}", relation);
+        relationService.saveRelation(tenantId, relation);
+    }
+
+    protected void deleteRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
+        log.debug("Deleting relation: {}", relation);
+        relationService.deleteRelation(tenantId, relation);
     }
 
     protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {

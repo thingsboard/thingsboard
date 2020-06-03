@@ -103,15 +103,12 @@ public class DashboardController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/dashboard", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public Dashboard saveDashboard(@RequestBody Dashboard dashboard) throws ThingsboardException {
         try {
             dashboard.setTenantId(getCurrentUser().getTenantId());
 
-            Operation operation = dashboard.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, operation,
-                    dashboard.getId(), dashboard);
+            checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
 
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
 
@@ -155,9 +152,9 @@ public class DashboardController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/dashboard/{dashboardId}", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public Dashboard assignDashboardToCustomer(@PathVariable("customerId") String strCustomerId,
-                                         @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
+                                               @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(DASHBOARD_ID, strDashboardId);
         try {
@@ -166,7 +163,7 @@ public class DashboardController extends BaseController {
 
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-            
+
             Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
 
             logEntityAction(dashboardId, savedDashboard,
@@ -187,7 +184,7 @@ public class DashboardController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/dashboard/{dashboardId}", method = RequestMethod.DELETE)
-    @ResponseBody 
+    @ResponseBody
     public Dashboard unassignDashboardFromCustomer(@PathVariable("customerId") String strCustomerId,
                                                    @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
@@ -421,7 +418,7 @@ public class DashboardController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}/dashboards", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenant/{tenantId}/dashboards", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<DashboardInfo> getTenantDashboards(
             @PathVariable("tenantId") String strTenantId,
@@ -440,7 +437,7 @@ public class DashboardController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/dashboards", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenant/dashboards", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<DashboardInfo> getTenantDashboards(
             @RequestParam int limit,
@@ -457,7 +454,7 @@ public class DashboardController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/dashboards", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/customer/{customerId}/dashboards", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TimePageData<DashboardInfo> getCustomerDashboards(
             @PathVariable("customerId") String strCustomerId,
