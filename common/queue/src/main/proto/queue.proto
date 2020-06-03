@@ -64,11 +64,13 @@ enum SessionType {
 }
 
 enum KeyValueType {
-  BOOLEAN_V = 0;
-  LONG_V = 1;
-  DOUBLE_V = 2;
-  STRING_V = 3;
-  JSON_V = 4;
+  UNKNOWN = 0;
+  BOOLEAN_V = 1;
+  LONG_V = 2;
+  DOUBLE_V = 3;
+  STRING_V = 4;
+  JSON_V = 5;
+  BYTES_V = 6;
 }
 
 message KeyValueProto {
@@ -79,6 +81,7 @@ message KeyValueProto {
   double double_v = 5;
   string string_v = 6;
   string json_v = 7;
+  bytes bytes_v = 8; // added simetrycally with byte type
 }
 
 message TsKvProto {

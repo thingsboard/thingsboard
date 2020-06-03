@@ -57,7 +57,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         byte[] bytes = toBytes(inbound);
         try {
-            return ProtoConverter.convertToAttributesProto(bytes);
+            return ProtoConverter.validatePostAttributeMsg(bytes);
         } catch (InvalidProtocolBufferException | IllegalArgumentException e) {
             throw new AdaptorException(e);
         }

@@ -16,46 +16,10 @@
 syntax = "proto3";
 package transportapi;
 
-//option java_multiple_files = true;
 option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportApiProtos";
 
 import "queue.proto";
-
-enum KeyValueType {
-  //    option allow_alias = true;
-  UNKNOWN = 0;
-  BOOLEAN_V = 1;
-  LONG_V = 2;
-  DOUBLE_V = 3;
-  STRING_V = 4;
-  JSON_V = 5;
-  BYTES_V = 6;
-}
-
-message KeyValueProto {
-  string key = 1;
-  KeyValueType type = 2;
-  bool bool_v = 3;
-  int64 long_v = 4;
-  double double_v = 5;
-  string string_v = 6;
-  string json_v = 7;
-  bytes bytes_v =8; // added simetrycally with byte type
-}
-
-message KvListProto {
-  repeated KeyValueProto kv = 2;
-}
-
-message TsKvListProto {
-  int64 ts = 1;
-  repeated KeyValueProto kv = 2;
-}
-
-message TsKvListProtoArray {
-  repeated TsKvListProto tsKv = 1;
-}
 
 message ClaimDevice {
   string secretKey = 1;
@@ -83,12 +47,12 @@ message ConnectMsg {
 
 message TelemetryMsg {
   string deviceName = 1;
-  TsKvListProtoArray values = 3;
+  transport.PostTelemetryMsg msg = 3;
 }
 
 message AttributesMsg {
   string deviceName = 1;
-  KvListProto kv = 2;
+  transport.PostAttributeMsg msg = 2;
 }
 
 message ClaimDeviceMsg {

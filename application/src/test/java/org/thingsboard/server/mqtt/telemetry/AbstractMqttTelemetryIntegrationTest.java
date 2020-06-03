@@ -24,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
-import org.thingsboard.server.gen.transport.TransportApiProtos;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,13 +105,13 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         client.publish(topic, message);
     }
 
-    protected List<TransportApiProtos.KeyValueProto> getKvProtos(List<String> expectedKeys) {
-        List<TransportApiProtos.KeyValueProto> keyValueProtos = new ArrayList<>();
-        TransportApiProtos.KeyValueProto strKeyValueProto = getKeyValueProto(expectedKeys.get(0), TransportApiProtos.KeyValueType.STRING_V, "value1");
-        TransportApiProtos.KeyValueProto boolKeyValueProto = getKeyValueProto(expectedKeys.get(1), TransportApiProtos.KeyValueType.BOOLEAN_V, "true");
-        TransportApiProtos.KeyValueProto dblKeyValueProto = getKeyValueProto(expectedKeys.get(2), TransportApiProtos.KeyValueType.DOUBLE_V, "3.0");
-        TransportApiProtos.KeyValueProto longKeyValueProto = getKeyValueProto(expectedKeys.get(3), TransportApiProtos.KeyValueType.LONG_V, "4");
-        TransportApiProtos.KeyValueProto jsonKeyValueProto = getKeyValueProto(expectedKeys.get(4), TransportApiProtos.KeyValueType.JSON_V,
+    protected List<TransportProtos.KeyValueProto> getKvProtos(List<String> expectedKeys) {
+        List<TransportProtos.KeyValueProto> keyValueProtos = new ArrayList<>();
+        TransportProtos.KeyValueProto strKeyValueProto = getKeyValueProto(expectedKeys.get(0), TransportProtos.KeyValueType.STRING_V, "value1");
+        TransportProtos.KeyValueProto boolKeyValueProto = getKeyValueProto(expectedKeys.get(1), TransportProtos.KeyValueType.BOOLEAN_V, "true");
+        TransportProtos.KeyValueProto dblKeyValueProto = getKeyValueProto(expectedKeys.get(2), TransportProtos.KeyValueType.DOUBLE_V, "3.0");
+        TransportProtos.KeyValueProto longKeyValueProto = getKeyValueProto(expectedKeys.get(3), TransportProtos.KeyValueType.LONG_V, "4");
+        TransportProtos.KeyValueProto jsonKeyValueProto = getKeyValueProto(expectedKeys.get(4), TransportProtos.KeyValueType.JSON_V,
                 "{\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}");
         keyValueProtos.add(strKeyValueProto);
         keyValueProtos.add(boolKeyValueProto);
@@ -121,8 +121,8 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         return keyValueProtos;
     }
 
-    protected TransportApiProtos.KeyValueProto getKeyValueProto(String key, TransportApiProtos.KeyValueType type, String strValue) {
-        TransportApiProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportApiProtos.KeyValueProto.newBuilder();
+    protected TransportProtos.KeyValueProto getKeyValueProto(String key, TransportProtos.KeyValueType type, String strValue) {
+        TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
         keyValueProtoBuilder.setKey(key);
         keyValueProtoBuilder.setType(type);
         switch (type) {

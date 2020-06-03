@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.mqtt.telemetry.AbstractMqttTelemetryIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTopics;
 
@@ -79,14 +80,14 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     @Test
     public void testPushMqttTelemetryV2Proto() throws Exception {
         List<String> expectedKeys = Arrays.asList("key11", "key12", "key13", "key14", "key15");
-        TransportApiProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 0);
+        TransportProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 0);
         processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC_V2_PROTO, expectedKeys, tsKvListProto.toByteArray(), false);
     }
 
     @Test
     public void testPushMqttTelemetryV2ProtoWithTs() throws Exception {
         List<String> expectedKeys = Arrays.asList("key16", "key17", "key18", "key19", "key20");
-        TransportApiProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 10000);
+        TransportProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 10000);
         processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC_V2_PROTO, expectedKeys, tsKvListProto.toByteArray(), true);
     }
 
@@ -167,16 +168,15 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         String deviceId = savedDevice.getId().getId().toString();
 
         long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 3000;
+        long end = System.currentTimeMillis() + 2000;
 
-        List<String> keys;
         List<String> actualKeys = null;
         while (start <= end) {
-            keys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", List.class);
-            if (keys.size() == expectedKeys.size()) {
-                actualKeys = keys;
+            actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", List.class);
+            if (actualKeys.size() == expectedKeys.size()) {
                 break;
             }
+            Thread.sleep(100);
             start += 100;
         }
         assertNotNull(actualKeys);
@@ -318,18 +318,18 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     private TransportApiProtos.TelemetryMsg getDeviceTelemetryMsgProto(String deviceName, List<String> expectedKeys, long firstTs, long secondTs) {
         TransportApiProtos.TelemetryMsg.Builder deviceTelemetryMsgBuilder = TransportApiProtos.TelemetryMsg.newBuilder();
-        TransportApiProtos.TsKvListProto tsKvListProto1 = getTsKvListProto(expectedKeys, firstTs);
-        TransportApiProtos.TsKvListProto tsKvListProto2 = getTsKvListProto(expectedKeys, secondTs);
-        TransportApiProtos.TsKvListProtoArray.Builder tsKvListProtoArrayBuilder = TransportApiProtos.TsKvListProtoArray.newBuilder();
-        tsKvListProtoArrayBuilder.addAllTsKv(Arrays.asList(tsKvListProto1, tsKvListProto2));
+        TransportProtos.TsKvListProto tsKvListProto1 = getTsKvListProto(expectedKeys, firstTs);
+        TransportProtos.TsKvListProto tsKvListProto2 = getTsKvListProto(expectedKeys, secondTs);
+        TransportProtos.PostTelemetryMsg.Builder msg = TransportProtos.PostTelemetryMsg.newBuilder();
+        msg.addAllTsKvList(Arrays.asList(tsKvListProto1, tsKvListProto2));
         deviceTelemetryMsgBuilder.setDeviceName(deviceName);
-        deviceTelemetryMsgBuilder.setValues(tsKvListProtoArrayBuilder);
+        deviceTelemetryMsgBuilder.setMsg(msg);
         return deviceTelemetryMsgBuilder.build();
     }
 
-    private TransportApiProtos.TsKvListProto getTsKvListProto(List<String> expectedKeys, long ts) {
-        List<TransportApiProtos.KeyValueProto> kvProtos = getKvProtos(expectedKeys);
-        TransportApiProtos.TsKvListProto.Builder builder = TransportApiProtos.TsKvListProto.newBuilder();
+    private TransportProtos.TsKvListProto getTsKvListProto(List<String> expectedKeys, long ts) {
+        List<TransportProtos.KeyValueProto> kvProtos = getKvProtos(expectedKeys);
+        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
         builder.addAllKv(kvProtos);
         builder.setTs(ts);
         return builder.build();

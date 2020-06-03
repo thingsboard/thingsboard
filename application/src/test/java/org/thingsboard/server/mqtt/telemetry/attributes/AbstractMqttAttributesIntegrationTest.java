@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.mqtt.telemetry.AbstractMqttTelemetryIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTopics;
 
@@ -59,8 +60,8 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     @Test
     public void testPushMqttAttributesV2Proto() throws Exception {
         List<String> expectedKeys = Arrays.asList("key11", "key12", "key13", "key14", "key15");
-        TransportApiProtos.KvListProto kvListProto = getKvListProto(expectedKeys);
-        processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO, expectedKeys, kvListProto.toByteArray());
+        TransportProtos.PostAttributeMsg msg = getPostAttributeMsg(expectedKeys);
+        processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO, expectedKeys, msg.toByteArray());
     }
 
     @Test
@@ -104,16 +105,15 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         DeviceId deviceId = savedDevice.getId();
 
         long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 3000;
+        long end = System.currentTimeMillis() + 2000;
 
-        List<String> keys;
         List<String> actualKeys = null;
         while (start <= end) {
-            keys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", List.class);
-            if (keys.size() == expectedKeys.size()) {
-                actualKeys = keys;
+            actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", List.class);
+            if (actualKeys.size() == expectedKeys.size()) {
                 break;
             }
+            Thread.sleep(100);
             start += 100;
         }
         assertNotNull(actualKeys);
@@ -215,15 +215,15 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
     private TransportApiProtos.AttributesMsg getDeviceAttributesMsgProto(String deviceName, List<String> expectedKeys) {
         TransportApiProtos.AttributesMsg.Builder deviceAttributesMsgBuilder = TransportApiProtos.AttributesMsg.newBuilder();
-        TransportApiProtos.KvListProto kvListProto = getKvListProto(expectedKeys);
+        TransportProtos.PostAttributeMsg msg = getPostAttributeMsg(expectedKeys);
         deviceAttributesMsgBuilder.setDeviceName(deviceName);
-        deviceAttributesMsgBuilder.setKv(kvListProto);
+        deviceAttributesMsgBuilder.setMsg(msg);
         return deviceAttributesMsgBuilder.build();
     }
 
-    private TransportApiProtos.KvListProto getKvListProto(List<String> expectedKeys) {
-        List<TransportApiProtos.KeyValueProto> kvProtos = getKvProtos(expectedKeys);
-        TransportApiProtos.KvListProto.Builder builder = TransportApiProtos.KvListProto.newBuilder();
+    private TransportProtos.PostAttributeMsg getPostAttributeMsg(List<String> expectedKeys) {
+        List<TransportProtos.KeyValueProto> kvProtos = getKvProtos(expectedKeys);
+        TransportProtos.PostAttributeMsg.Builder builder = TransportProtos.PostAttributeMsg.newBuilder();
         builder.addAllKv(kvProtos);
         return builder.build();
     }

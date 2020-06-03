@@ -279,16 +279,16 @@ public class GatewaySessionHandler {
                             new FutureCallback<GatewayDeviceSessionCtx>() {
                                 @Override
                                 public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
-                                    TransportApiProtos.TsKvListProtoArray values = telemetryMsg.getValues();
-                                    if (values == null || CollectionUtils.isEmpty(values.getTsKvList())) {
-                                        throw new IllegalArgumentException("Telemetry for device: " + deviceName + " is empty!");
-                                    }
+                                    TransportProtos.PostTelemetryMsg msg = telemetryMsg.getMsg();
+//                                    if (msg == null || CollectionUtils.isEmpty(msg.getTsKvListList())) {
+//                                        throw new IllegalArgumentException("Telemetry for device: " + deviceName + " is empty!");
+//                                    }
                                     try {
-                                        TransportProtos.PostTelemetryMsg postTelemetryMsg = ProtoConverter.convertToTelemetryArrayProto(values.toByteArray());
+                                        TransportProtos.PostTelemetryMsg postTelemetryMsg = ProtoConverter.validatePostTelemetryMsg(msg.toByteArray());
                                         transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
                                     } catch (Throwable e) {
                                         UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                                        log.warn("[{}][{}] Failed to convert telemetry: {}", gatewayId, deviceName, values, e);
+                                        log.warn("[{}][{}] Failed to convert telemetry: {}", gatewayId, deviceName, msg, e);
                                     }
                                 }
 
@@ -428,12 +428,12 @@ public class GatewaySessionHandler {
                             new FutureCallback<GatewayDeviceSessionCtx>() {
                                 @Override
                                 public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
-                                    TransportApiProtos.KvListProto kvListProto = attributesMsg.getKv();
+                                    TransportProtos.PostAttributeMsg kvListProto = attributesMsg.getMsg();
                                     if (kvListProto == null) {
                                         throw new IllegalArgumentException("Attributes List for device: " + deviceName + " is empty!");
                                     }
                                     try {
-                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.convertToAttributesProto(kvListProto.toByteArray());
+                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto.toByteArray());
                                         transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
                                     } catch (Throwable e) {
                                         UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
