@@ -81,10 +81,10 @@ public class ActorSystemTest {
         ActorTestCtx testCtx1 = getActorTestCtx(1);
         ActorTestCtx testCtx2 = getActorTestCtx(1);
 
-        TbActorId actorId1 = actorSystem.createRootActor(ROOT_DISPATCHER, new SlowInitActor.SlowInitActorCreator(
-                new TbActorId(new DeviceId(UUID.randomUUID())), testCtx1));
-        TbActorId actorId2 = actorSystem.createRootActor(ROOT_DISPATCHER, new SlowInitActor.SlowInitActorCreator(
-                new TbActorId(new DeviceId(UUID.randomUUID())), testCtx2));
+        TbActorRef actorId1 = actorSystem.createRootActor(ROOT_DISPATCHER, new SlowInitActor.SlowInitActorCreator(
+                new TbEntityActorId(new DeviceId(UUID.randomUUID())), testCtx1));
+        TbActorRef actorId2 = actorSystem.createRootActor(ROOT_DISPATCHER, new SlowInitActor.SlowInitActorCreator(
+                new TbEntityActorId(new DeviceId(UUID.randomUUID())), testCtx2));
 
         actorSystem.tell(actorId1, new IntTbActorMsg(42));
         actorSystem.tell(actorId2, new IntTbActorMsg(42));
@@ -98,7 +98,7 @@ public class ActorSystemTest {
     public void testOneActorCreated() throws InterruptedException {
         ActorTestCtx testCtx1 = getActorTestCtx(1);
         ActorTestCtx testCtx2 = getActorTestCtx(1);
-        TbActorId actorId = new TbActorId(new DeviceId(UUID.randomUUID()));
+        TbActorId actorId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
         submitPool.submit(() -> actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx1)));
         submitPool.submit(() -> actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx2)));
 
@@ -112,7 +112,7 @@ public class ActorSystemTest {
     @Test
     public void testActorCreatorCalledOnce() throws InterruptedException {
         ActorTestCtx testCtx = getActorTestCtx(1);
-        TbActorId actorId = new TbActorId(new DeviceId(UUID.randomUUID()));
+        TbActorId actorId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
         for(int i =0; i < 1000; i++) {
             submitPool.submit(() -> actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx)));
         }
@@ -138,12 +138,12 @@ public class ActorSystemTest {
 
         List<ActorTestCtx> testCtxes = new ArrayList<>();
 
-        List<TbActorId> actorIds = new ArrayList<>();
+        List<TbActorRef> actorRefs = new ArrayList<>();
         for (int actorIdx = 0; actorIdx < actorsCount; actorIdx++) {
             ActorTestCtx testCtx = getActorTestCtx(msgNumber);
 
-            actorIds.add(actorSystem.createRootActor(ROOT_DISPATCHER, new TestRootActor.TestRootActorCreator(
-                    new TbActorId(new DeviceId(UUID.randomUUID())), testCtx)));
+            actorRefs.add(actorSystem.createRootActor(ROOT_DISPATCHER, new TestRootActor.TestRootActorCreator(
+                    new TbEntityActorId(new DeviceId(UUID.randomUUID())), testCtx)));
             testCtxes.add(testCtx);
         }
 
@@ -151,7 +151,7 @@ public class ActorSystemTest {
 
         for (int i = 0; i < msgNumber; i++) {
             int tmp = randomIntegers[i];
-            submitPool.execute(() -> actorIds.forEach(actorId -> actorSystem.tell(actorId, new IntTbActorMsg(tmp))));
+            submitPool.execute(() -> actorRefs.forEach(actorId -> actorSystem.tell(actorId, new IntTbActorMsg(tmp))));
         }
         log.info("Submitted all messages");
 

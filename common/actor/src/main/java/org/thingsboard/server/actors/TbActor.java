@@ -19,11 +19,15 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 
 public interface TbActor {
 
-    void init();
+    boolean process(TbActorMsg msg);
 
-    boolean process(TbActorCtx ctx, TbActorMsg msg);
+    TbActorRef getActorRef();
 
-    void destroy();
+    default void init(TbActorCtx ctx) {
+    }
+
+    default void destroy() {
+    }
 
     default InitFailureStrategy onInitFailure(int attempt, Throwable t) {
         return InitFailureStrategy.retryWithDelay(5000);

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.rpc;
 
-import akka.actor.ActorRef;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -122,7 +121,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         log.trace("[{}][{}] Processing local rpc call to device actor [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
         UUID requestId = request.getId();
         localToDeviceRpcRequests.put(requestId, rpcMsg);
-        actorContext.tell(rpcMsg, ActorRef.noSender());
+        actorContext.tell(rpcMsg);
         scheduleToDeviceTimeout(request, requestId);
     }
 

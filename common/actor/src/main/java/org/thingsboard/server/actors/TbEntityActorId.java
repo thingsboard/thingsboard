@@ -13,28 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.stats;
+package org.thingsboard.server.actors;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
 
-@AllArgsConstructor
-@Getter
-@ToString
-public final class StatsPersistMsg implements TbActorMsg {
+import java.util.Objects;
 
-    private long messagesProcessed;
-    private long errorsOccurred;
-    private TenantId tenantId;
-    private EntityId entityId;
+public class TbEntityActorId implements TbActorId {
+
+    @Getter
+    private final EntityId entityId;
+
+    public TbEntityActorId(EntityId entityId) {
+        this.entityId = entityId;
+    }
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.STATS_PERSIST_MSG;
+    public String toString() {
+        return entityId.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TbEntityActorId that = (TbEntityActorId) o;
+        return entityId.equals(that.entityId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(entityId);
     }
 }

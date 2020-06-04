@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 @Slf4j
-public class TestRootActor implements TbActor {
+public class TestRootActor extends AbstractTbActor {
 
     @Getter
     private final TbActorId actorId;
@@ -37,12 +37,13 @@ public class TestRootActor implements TbActor {
     }
 
     @Override
-    public void init() {
+    public void init(TbActorCtx ctx) {
+        super.init(ctx);
         initialized = true;
     }
 
     @Override
-    public boolean process(TbActorCtx ctx, TbActorMsg msg) {
+    public boolean process(TbActorMsg msg) {
         if (initialized) {
             int value = ((IntTbActorMsg) msg).getValue();
             sum += value;
