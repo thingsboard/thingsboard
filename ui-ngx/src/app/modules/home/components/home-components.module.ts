@@ -21,7 +21,6 @@ import { AddEntityDialogComponent } from '@home/components/entity/add-entity-dia
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { DetailsPanelComponent } from '@home/components/details-panel.component';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
-import { ContactComponent } from '@home/components/contact.component';
 import { AuditLogDetailsDialogComponent } from '@home/components/audit-log/audit-log-details-dialog.component';
 import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
@@ -74,7 +73,6 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
       AddEntityDialogComponent,
       DetailsPanelComponent,
       EntityDetailsPanelComponent,
-      ContactComponent,
       AuditLogTableComponent,
       AuditLogDetailsDialogComponent,
       EventContentDialogComponent,
@@ -126,7 +124,6 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
     AddEntityDialogComponent,
     DetailsPanelComponent,
     EntityDetailsPanelComponent,
-    ContactComponent,
     AuditLogTableComponent,
     EventTableComponent,
     RelationTableComponent,
