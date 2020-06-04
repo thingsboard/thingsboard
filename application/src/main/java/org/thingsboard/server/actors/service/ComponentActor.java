@@ -15,19 +15,21 @@
  */
 package org.thingsboard.server.actors.service;
 
-import akka.actor.ActorRef;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.actors.stats.StatsPersistMsg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
 /**
  * @author Andrew Shvayka
  */
+@Slf4j
 public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgProcessor<T>> extends ContextAwareActor {
 
     private long lastPersistedErrorTs = 0L;
@@ -43,15 +45,19 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         this.id = id;
     }
 
-    protected void setProcessor(P processor) {
-        this.processor = processor;
-    }
+    abstract protected P createProcessor(TbActorCtx ctx);
 
     @Override
-    public void preStart() {
+    public void init(TbActorCtx ctx) {
+        super.init(ctx);
+        this.processor = createProcessor(ctx);
+        initProcessor(ctx);
+    }
+
+    protected void initProcessor(TbActorCtx ctx) {
         try {
             log.debug("[{}][{}][{}] Starting processor.", tenantId, id, id.getEntityType());
-            processor.start(context());
+            processor.start(ctx);
             logLifecycleEvent(ComponentLifecycleEvent.STARTED);
             if (systemContext.isStatisticsEnabled()) {
                 scheduleStatsPersistTick();
@@ -66,7 +72,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
 
     private void scheduleStatsPersistTick() {
         try {
-            processor.scheduleStatsPersistTick(context(), systemContext.getStatisticsPersistFrequency());
+            processor.scheduleStatsPersistTick(ctx, systemContext.getStatisticsPersistFrequency());
         } catch (Exception e) {
             log.error("[{}][{}] Failed to schedule statistics store message. No statistics is going to be stored: {}", tenantId, id, e.getMessage());
             logAndPersist("onScheduleStatsPersistMsg", e);
@@ -74,10 +80,10 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     }
 
     @Override
-    public void postStop() {
+    public void destroy() {
         try {
-            log.debug("[{}][{}] Stopping processor.", tenantId, id, id.getEntityType());
-            processor.stop(context());
+            log.debug("[{}][{}][{}] Stopping processor.", tenantId, id, id.getEntityType());
+            processor.stop(ctx);
             logLifecycleEvent(ComponentLifecycleEvent.STOPPED);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to stop {} processor: {}", tenantId, id, id.getEntityType(), e.getMessage());
@@ -91,19 +97,20 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         try {
             switch (msg.getEvent()) {
                 case CREATED:
-                    processor.onCreated(context());
+                    processor.onCreated(ctx);
                     break;
                 case UPDATED:
-                    processor.onUpdate(context());
+                    processor.onUpdate(ctx);
                     break;
                 case ACTIVATED:
-                    processor.onActivate(context());
+                    processor.onActivate(ctx);
                     break;
                 case SUSPENDED:
-                    processor.onSuspend(context());
+                    processor.onSuspend(ctx);
                     break;
                 case DELETED:
-                    processor.onStop(context());
+                    processor.onStop(ctx);
+                    ctx.stop(ctx.getSelf());
                     break;
                 default:
                     break;
@@ -125,7 +132,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
 
     protected void onStatsPersistTick(EntityId entityId) {
         try {
-            systemContext.getStatsActor().tell(new StatsPersistMsg(messagesProcessed, errorsOccurred, tenantId, entityId), ActorRef.noSender());
+            systemContext.getStatsActor().tell(new StatsPersistMsg(messagesProcessed, errorsOccurred, tenantId, entityId));
             resetStatsCounters();
         } catch (Exception e) {
             logAndPersist("onStatsPersistTick", e);
@@ -149,10 +156,10 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         errorsOccurred++;
         String componentName = processor != null ? processor.getComponentName() : "Unknown";
         if (critical) {
-            log.warn("[{}][{}][{}] Failed to process {} msg: {}", id, tenantId, componentName, method);
+            log.warn("[{}][{}][{}] Failed to process method: {}", id, tenantId, componentName, method);
             log.warn("Critical Error: ", e);
         } else {
-            log.debug("[{}][{}][{}] Failed to process {} msg: {}", id, tenantId, componentName, method);
+            log.debug("[{}][{}][{}] Failed to process method: {}", id, tenantId, componentName, method);
             log.debug("Debug Error: ", e);
         }
         long ts = System.currentTimeMillis();

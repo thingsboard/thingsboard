@@ -19,9 +19,12 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 @Slf4j
 @Data
@@ -35,7 +38,7 @@ public final class TbActorMailbox implements TbActorCtx {
     private final TbActorSystem system;
     private final TbActorSystemSettings settings;
     private final TbActorId selfId;
-    private final TbActorId parentId;
+    private final TbActorRef parentRef;
     private final TbActor actor;
     private final Dispatcher dispatcher;
     private final ConcurrentLinkedQueue<TbActorMsg> msgs = new ConcurrentLinkedQueue<>();
@@ -47,11 +50,12 @@ public final class TbActorMailbox implements TbActorCtx {
         dispatcher.getExecutor().execute(() -> tryInit(1));
     }
 
+
     private void tryInit(int attempt) {
         try {
             log.debug("[{}] Trying to init actor, attempt: {}", selfId, attempt);
             if (!destroyInProgress.get()) {
-                actor.init();
+                actor.init(this);
                 if (!destroyInProgress.get()) {
                     ready.set(READY);
                     tryProcessQueue(false);
@@ -94,7 +98,7 @@ public final class TbActorMailbox implements TbActorCtx {
             if (msg != null) {
                 try {
                     log.debug("[{}] Going to process message: {}", selfId, msg);
-                    actor.process(this, msg);
+                    actor.process(msg);
                 } catch (Throwable t) {
                     log.debug("[{}] Failed to process message: {}", selfId, msg, t);
                     ProcessFailureStrategy strategy = actor.onProcessFailure(t);
@@ -121,13 +125,38 @@ public final class TbActorMailbox implements TbActorCtx {
     }
 
     @Override
-    public TbActorId getParent() {
-        return parentId;
+    public void tell(TbActorId target, TbActorMsg actorMsg) {
+        system.tell(target, actorMsg);
     }
 
     @Override
-    public void tell(TbActorId target, TbActorMsg actorMsg) {
-        system.tell(target, actorMsg);
+    public void broadcastToChildren(TbActorMsg msg) {
+        system.broadcastToChildren(selfId, msg);
+    }
+
+    @Override
+    public void broadcastToChildren(TbActorMsg msg, Predicate<TbActorId> childFilter) {
+        system.broadcastToChildren(selfId, childFilter, msg);
+    }
+
+    @Override
+    public List<TbActorId> filterChildren(Predicate<TbActorId> childFilter) {
+        return system.filterChildren(selfId, childFilter);
+    }
+
+    @Override
+    public void stop(TbActorId target) {
+        system.stop(target);
+    }
+
+    @Override
+    public TbActorRef getOrCreateChildActor(TbActorId actorId, Supplier<String> dispatcher, Supplier<TbActorCreator> creator) {
+        TbActorRef actorRef = system.getActor(actorId);
+        if (actorRef == null) {
+            return system.createChildActor(dispatcher.get(), creator.get(), selfId);
+        } else {
+            return actorRef;
+        }
     }
 
     public void destroy() {
@@ -140,5 +169,15 @@ public final class TbActorMailbox implements TbActorCtx {
                 log.warn("[{}] Failed to destroy actor: {}", selfId, t);
             }
         });
+    }
+
+    @Override
+    public TbActorId getActorId() {
+        return selfId;
+    }
+
+    @Override
+    public void tell(TbActorMsg actorMsg) {
+        enqueue(actorMsg);
     }
 }

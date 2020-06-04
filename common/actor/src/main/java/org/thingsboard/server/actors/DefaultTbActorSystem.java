@@ -21,13 +21,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Data
@@ -36,6 +42,8 @@ public class DefaultTbActorSystem implements TbActorSystem {
     private final ConcurrentMap<String, Dispatcher> dispatchers = new ConcurrentHashMap<>();
     private final ConcurrentMap<TbActorId, TbActorMailbox> actors = new ConcurrentHashMap<>();
     private final ConcurrentMap<TbActorId, ReentrantLock> actorCreationLocks = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TbActorId, Set<TbActorId>> parentChildMap = new ConcurrentHashMap<>();
+
     @Getter
     private final TbActorSystemSettings settings;
     @Getter
@@ -65,16 +73,21 @@ public class DefaultTbActorSystem implements TbActorSystem {
     }
 
     @Override
-    public TbActorId createRootActor(String dispatcherId, TbActorCreator creator) {
+    public TbActorRef getActor(TbActorId actorId) {
+        return actors.get(actorId);
+    }
+
+    @Override
+    public TbActorRef createRootActor(String dispatcherId, TbActorCreator creator) {
         return createActor(dispatcherId, creator, null);
     }
 
     @Override
-    public TbActorId createChildActor(String dispatcherId, TbActorCreator creator, TbActorId parent) {
+    public TbActorRef createChildActor(String dispatcherId, TbActorCreator creator, TbActorId parent) {
         return createActor(dispatcherId, creator, parent);
     }
 
-    private TbActorId createActor(String dispatcherId, TbActorCreator creator, TbActorId parent) {
+    private TbActorRef createActor(String dispatcherId, TbActorCreator creator, TbActorId parent) {
         Dispatcher dispatcher = dispatchers.get(dispatcherId);
         if (dispatcher == null) {
             log.warn("Dispatcher with id [{}] is not registered!", dispatcherId);
@@ -93,9 +106,20 @@ public class DefaultTbActorSystem implements TbActorSystem {
                 if (actorMailbox == null) {
                     log.debug("Creating actor with id [{}]!", actorId);
                     TbActor actor = creator.createActor();
-                    TbActorMailbox mailbox = new TbActorMailbox(this, settings, actorId, parent, actor, dispatcher);
+                    TbActorRef parentRef = null;
+                    if (parent != null) {
+                        parentRef = getActor(parent);
+                        if (parentRef == null) {
+                            throw new TbActorNotRegisteredException(parent, "Parent Actor with id [" + parent + "] is not registered!");
+                        }
+                    }
+                    TbActorMailbox mailbox = new TbActorMailbox(this, settings, actorId, parentRef, actor, dispatcher);
                     actors.put(actorId, mailbox);
                     mailbox.initActor();
+                    actorMailbox = mailbox;
+                    if (parent != null) {
+                        parentChildMap.computeIfAbsent(parent, id -> ConcurrentHashMap.newKeySet()).add(actorId);
+                    }
                 } else {
                     log.debug("Actor with id [{}] is already registered!", actorId);
                 }
@@ -104,7 +128,12 @@ public class DefaultTbActorSystem implements TbActorSystem {
                 actorCreationLocks.remove(actorId);
             }
         }
-        return actorId;
+        return actorMailbox;
+    }
+
+    @Override
+    public void tell(TbActorRef target, TbActorMsg actorMsg) {
+        target.tell(actorMsg);
     }
 
     @Override
@@ -117,7 +146,41 @@ public class DefaultTbActorSystem implements TbActorSystem {
     }
 
     @Override
+    public void broadcastToChildren(TbActorId parent, TbActorMsg msg) {
+        broadcastToChildren(parent, id -> true, msg);
+    }
+
+    @Override
+    public void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg) {
+        Set<TbActorId> children = parentChildMap.get(parent);
+        if (children != null) {
+            children.stream().filter(childFilter).forEach(id -> tell(id, msg));
+        }
+    }
+
+    @Override
+    public List<TbActorId> filterChildren(TbActorId parent, Predicate<TbActorId> childFilter) {
+        Set<TbActorId> children = parentChildMap.get(parent);
+        if (children != null) {
+            return children.stream().filter(childFilter).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public void stop(TbActorRef actorRef) {
+        stop(actorRef.getActorId());
+    }
+
+    @Override
     public void stop(TbActorId actorId) {
+        Set<TbActorId> children = parentChildMap.remove(actorId);
+        if (children != null) {
+            for (TbActorId child : children) {
+                stop(child);
+            }
+        }
         TbActorMailbox mailbox = actors.remove(actorId);
         if (mailbox != null) {
             mailbox.destroy();
@@ -126,7 +189,17 @@ public class DefaultTbActorSystem implements TbActorSystem {
 
     @Override
     public void stop() {
-        dispatchers.values().forEach(dispatcher -> dispatcher.getExecutor().shutdownNow());
+        dispatchers.values().forEach(dispatcher -> {
+            dispatcher.getExecutor().shutdown();
+            try {
+                dispatcher.getExecutor().awaitTermination(3, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                log.warn("[{}] Failed to stop dispatcher", dispatcher.getDispatcherId(), e);
+            }
+        });
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
         actors.clear();
     }
 

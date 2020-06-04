@@ -15,33 +15,6 @@
  */
 package org.thingsboard.server.actors;
 
-import org.thingsboard.server.common.data.id.EntityId;
+public interface TbActorId {
 
-import java.util.Objects;
-
-public class TbActorId {
-
-    private final EntityId entityId;
-
-    public TbActorId(EntityId entityId) {
-        this.entityId = entityId;
-    }
-
-    @Override
-    public String toString() {
-        return entityId.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        TbActorId actorId = (TbActorId) o;
-        return entityId.equals(actorId.entityId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(entityId);
-    }
 }

@@ -25,13 +25,13 @@ public class SlowInitActor extends TestRootActor {
     }
 
     @Override
-    public void init() {
+    public void init(TbActorCtx ctx) {
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        super.init();
+        super.init(ctx);
     }
 
     public static class SlowInitActorCreator implements TbActorCreator {

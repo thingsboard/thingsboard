@@ -17,8 +17,10 @@ package org.thingsboard.server.actors;
 
 import org.thingsboard.server.common.msg.TbActorMsg;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Predicate;
 
 public interface TbActorSystem {
 
@@ -28,14 +30,25 @@ public interface TbActorSystem {
 
     void destroyDispatcher(String dispatcherId);
 
-    TbActorId createRootActor(String dispatcherId, TbActorCreator creator);
+    TbActorRef getActor(TbActorId actorId);
 
-    TbActorId createChildActor(String dispatcherId, TbActorCreator creator, TbActorId parent);
+    TbActorRef createRootActor(String dispatcherId, TbActorCreator creator);
+
+    TbActorRef createChildActor(String dispatcherId, TbActorCreator creator, TbActorId parent);
+
+    void tell(TbActorRef target, TbActorMsg actorMsg);
 
     void tell(TbActorId target, TbActorMsg actorMsg);
+
+    void stop(TbActorRef actorRef);
 
     void stop(TbActorId actorId);
 
     void stop();
 
+    void broadcastToChildren(TbActorId parent, TbActorMsg msg);
+
+    void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg);
+
+    List<TbActorId> filterChildren(TbActorId parent, Predicate<TbActorId> childFilter);
 }

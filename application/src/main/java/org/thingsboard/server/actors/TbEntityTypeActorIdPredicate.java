@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.stats;
+package org.thingsboard.server.actors;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
 
-@AllArgsConstructor
-@Getter
-@ToString
-public final class StatsPersistMsg implements TbActorMsg {
+import java.util.function.Predicate;
 
-    private long messagesProcessed;
-    private long errorsOccurred;
-    private TenantId tenantId;
-    private EntityId entityId;
+@RequiredArgsConstructor
+public class TbEntityTypeActorIdPredicate implements Predicate<TbActorId> {
+
+    private final EntityType entityType;
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.STATS_PERSIST_MSG;
+    public boolean test(TbActorId actorId) {
+        return actorId instanceof TbEntityActorId && testEntityId(((TbEntityActorId) actorId).getEntityId());
+    }
+
+    protected boolean testEntityId(EntityId entityId) {
+        return entityId.getEntityType().equals(entityType);
     }
 }

@@ -13,28 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.stats;
+package org.thingsboard.server.actors;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.ToString;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
 
-@AllArgsConstructor
-@Getter
-@ToString
-public final class StatsPersistMsg implements TbActorMsg {
+public abstract class AbstractTbActor implements TbActor {
 
-    private long messagesProcessed;
-    private long errorsOccurred;
-    private TenantId tenantId;
-    private EntityId entityId;
+    @Getter
+    protected TbActorCtx ctx;
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.STATS_PERSIST_MSG;
+    public void init(TbActorCtx ctx) {
+        this.ctx = ctx;
+    }
+
+    @Override
+    public TbActorRef getActorRef() {
+        return ctx;
     }
 }

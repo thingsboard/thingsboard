@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.actors.device;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,6 +28,7 @@ import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeout
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
+@Slf4j
 public class DeviceActor extends ContextAwareActor {
 
     private final DeviceActorMessageProcessor processor;
@@ -36,10 +39,11 @@ public class DeviceActor extends ContextAwareActor {
     }
 
     @Override
-    public void preStart() {
+    public void init(TbActorCtx ctx) {
+        super.init(ctx);
         log.debug("[{}][{}] Starting device actor.", processor.tenantId, processor.deviceId);
         try {
-            processor.initSessionTimeout(context());
+            processor.initSessionTimeout(ctx);
             log.debug("[{}][{}] Device actor started.", processor.tenantId, processor.deviceId);
         } catch (Exception e) {
             log.warn("[{}][{}] Unknown failure", processor.tenantId, processor.deviceId, e);
@@ -47,18 +51,13 @@ public class DeviceActor extends ContextAwareActor {
     }
 
     @Override
-    public void postStop() {
-
-    }
-
-    @Override
-    protected boolean process(TbActorMsg msg) {
+    protected boolean doProcess(TbActorMsg msg) {
         switch (msg.getMsgType()) {
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
-                processor.process(context(), (TransportToDeviceActorMsgWrapper) msg);
+                processor.process(ctx, (TransportToDeviceActorMsgWrapper) msg);
                 break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
-                processor.processAttributesUpdate(context(), (DeviceAttributesEventNotificationMsg) msg);
+                processor.processAttributesUpdate(ctx, (DeviceAttributesEventNotificationMsg) msg);
                 break;
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processCredentialsUpdate();
@@ -67,10 +66,10 @@ public class DeviceActor extends ContextAwareActor {
                 processor.processNameOrTypeUpdate((DeviceNameOrTypeUpdateMsg) msg);
                 break;
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
-                processor.processRpcRequest(context(), (ToDeviceRpcRequestActorMsg) msg);
+                processor.processRpcRequest(ctx, (ToDeviceRpcRequestActorMsg) msg);
                 break;
             case DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG:
-                processor.processServerSideRpcTimeout(context(), (DeviceActorServerSideRpcTimeoutMsg) msg);
+                processor.processServerSideRpcTimeout(ctx, (DeviceActorServerSideRpcTimeoutMsg) msg);
                 break;
             case SESSION_TIMEOUT_MSG:
                 processor.checkSessionsTimeout();

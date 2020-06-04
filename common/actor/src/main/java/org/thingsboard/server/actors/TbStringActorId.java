@@ -13,17 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.service;
+package org.thingsboard.server.actors;
 
-import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.TbActorCreator;
+import java.util.Objects;
 
-public abstract class ContextBasedCreator implements TbActorCreator {
+public class TbStringActorId implements TbActorId {
 
-    protected final transient ActorSystemContext context;
+    private final String id;
 
-    public ContextBasedCreator(ActorSystemContext context) {
-        super();
-        this.context = context;
+    public TbStringActorId(String id) {
+        this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TbStringActorId that = (TbStringActorId) o;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }
