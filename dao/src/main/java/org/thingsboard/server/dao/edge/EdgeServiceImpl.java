@@ -32,14 +32,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -47,13 +45,10 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeQueueEntityType;
 import org.thingsboard.server.common.data.edge.EdgeQueueEntry;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
-import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -730,6 +725,11 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                                     throw new DataValidationException("Edge with such name already exists!");
                                 }
                         );
+                        edgeDao.findByRoutingKey(edge.getTenantId().getId(), edge.getRoutingKey()).ifPresent(
+                                d -> {
+                                    throw new DataValidationException("Edge with such routing_key already exists");
+                                }
+                        );
                     }
                 }
 
@@ -740,6 +740,13 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                                 e -> {
                                     if (!e.getUuidId().equals(edge.getUuidId())) {
                                         throw new DataValidationException("Edge with such name already exists!");
+                                    }
+                                }
+                        );
+                        edgeDao.findByRoutingKey(edge.getTenantId().getId(), edge.getRoutingKey()).ifPresent(
+                                e -> {
+                                    if (!e.getUuidId().equals(edge.getUuidId())) {
+                                        throw new DataValidationException("Edge with such routing_key already exists!");
                                     }
                                 }
                         );

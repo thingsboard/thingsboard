@@ -266,7 +266,9 @@ CREATE TABLE IF NOT EXISTS edge (
     routing_key varchar(255),
     secret varchar(255),
     search_text varchar(255),
-    tenant_id varchar(31)
+    tenant_id varchar(31),
+    CONSTRAINT edge_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT edge_routing_key_unq_key UNIQUE (routing_key)
 );
 
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
