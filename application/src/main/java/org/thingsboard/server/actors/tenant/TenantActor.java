@@ -135,12 +135,14 @@ public class TenantActor extends RuleChainManagerActor {
                 onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
+                onToDeviceActorMsg((DeviceAwareMsg) msg, false);
+                break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
-                onToDeviceActorMsg((DeviceAwareMsg) msg);
+                onToDeviceActorMsg((DeviceAwareMsg) msg, true);
                 break;
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
                 onRuleChainMsg((RuleChainAwareMsg) msg);
@@ -183,11 +185,16 @@ public class TenantActor extends RuleChainManagerActor {
         getOrCreateActor(msg.getRuleChainId()).tell(msg);
     }
 
-    private void onToDeviceActorMsg(DeviceAwareMsg msg) {
+    private void onToDeviceActorMsg(DeviceAwareMsg msg, boolean priority) {
         if (!isCore) {
             log.warn("RECEIVED INVALID MESSAGE: {}", msg);
         }
-        getOrCreateDeviceActor(msg.getDeviceId()).tell(msg);
+        TbActorRef deviceActor = getOrCreateDeviceActor(msg.getDeviceId());
+        if (priority) {
+            deviceActor.tellWithHighPriority(msg);
+        } else {
+            deviceActor.tell(msg);
+        }
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
@@ -199,7 +206,7 @@ public class TenantActor extends RuleChainManagerActor {
                             findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
                     visit(ruleChain, target);
                 }
-                target.tell(msg);
+                target.tellWithHighPriority(msg);
             } else {
                 log.debug("[{}] Invalid component lifecycle msg: {}", tenantId, msg);
             }

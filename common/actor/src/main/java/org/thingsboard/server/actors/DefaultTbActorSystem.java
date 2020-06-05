@@ -132,18 +132,27 @@ public class DefaultTbActorSystem implements TbActorSystem {
     }
 
     @Override
-    public void tell(TbActorRef target, TbActorMsg actorMsg) {
-        target.tell(actorMsg);
+    public void tellWithHighPriority(TbActorId target, TbActorMsg actorMsg) {
+        tell(target, actorMsg, true);
     }
 
     @Override
     public void tell(TbActorId target, TbActorMsg actorMsg) {
+        tell(target, actorMsg, false);
+    }
+
+    private void tell(TbActorId target, TbActorMsg actorMsg, boolean highPriority) {
         TbActorMailbox mailbox = actors.get(target);
         if (mailbox == null) {
             throw new TbActorNotRegisteredException(target, "Actor with id [" + target + "] is not registered!");
         }
-        mailbox.enqueue(actorMsg);
+        if (highPriority) {
+            mailbox.tellWithHighPriority(actorMsg);
+        } else {
+            mailbox.tell(actorMsg);
+        }
     }
+
 
     @Override
     public void broadcastToChildren(TbActorId parent, TbActorMsg msg) {

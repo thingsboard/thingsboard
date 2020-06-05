@@ -29,6 +29,9 @@ import java.util.function.Supplier;
 @Slf4j
 @Data
 public final class TbActorMailbox implements TbActorCtx {
+    private static final boolean HIGH_PRIORITY = true;
+    private static final boolean NORMAL_PRIORITY = false;
+
     private static final boolean FREE = false;
     private static final boolean BUSY = true;
 
@@ -41,7 +44,8 @@ public final class TbActorMailbox implements TbActorCtx {
     private final TbActorRef parentRef;
     private final TbActor actor;
     private final Dispatcher dispatcher;
-    private final ConcurrentLinkedQueue<TbActorMsg> msgs = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<TbActorMsg> highPriorityMsgs = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<TbActorMsg> normalPriorityMsgs = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean busy = new AtomicBoolean(FREE);
     private final AtomicBoolean ready = new AtomicBoolean(NOT_READY);
     private final AtomicBoolean destroyInProgress = new AtomicBoolean();
@@ -49,7 +53,6 @@ public final class TbActorMailbox implements TbActorCtx {
     public void initActor() {
         dispatcher.getExecutor().execute(() -> tryInit(1));
     }
-
 
     private void tryInit(int attempt) {
         try {
@@ -78,23 +81,38 @@ public final class TbActorMailbox implements TbActorCtx {
         }
     }
 
-    public void enqueue(TbActorMsg msg) {
-        msgs.add(msg);
+    private void enqueue(TbActorMsg msg, boolean highPriority) {
+        if (highPriority) {
+            highPriorityMsgs.add(msg);
+        } else {
+            normalPriorityMsgs.add(msg);
+        }
         tryProcessQueue(true);
     }
 
     private void tryProcessQueue(boolean newMsg) {
-        if (ready.get() == READY && (newMsg || !msgs.isEmpty()) && busy.compareAndSet(FREE, BUSY)) {
-            dispatcher.getExecutor().execute(this::processMailbox);
+        if (ready.get() == READY) {
+            if (newMsg || !highPriorityMsgs.isEmpty() || !normalPriorityMsgs.isEmpty()) {
+                if (busy.compareAndSet(FREE, BUSY)) {
+                    dispatcher.getExecutor().execute(this::processMailbox);
+                } else {
+                    log.trace("[{}] MessageBox is busy, new msg: {}", selfId, newMsg);
+                }
+            } else {
+                log.trace("[{}] MessageBox is empty, new msg: {}", selfId, newMsg);
+            }
         } else {
-            log.trace("[{}] MessageBox is busy, new msg: {}", selfId, newMsg);
+            log.trace("[{}] MessageBox is not ready, new msg: {}", selfId, newMsg);
         }
     }
 
     private void processMailbox() {
         boolean noMoreElements = false;
         for (int i = 0; i < settings.getActorThroughput(); i++) {
-            TbActorMsg msg = msgs.poll();
+            TbActorMsg msg = highPriorityMsgs.poll();
+            if (msg == null) {
+                msg = normalPriorityMsgs.poll();
+            }
             if (msg != null) {
                 try {
                     log.debug("[{}] Going to process message: {}", selfId, msg);
@@ -178,6 +196,12 @@ public final class TbActorMailbox implements TbActorCtx {
 
     @Override
     public void tell(TbActorMsg actorMsg) {
-        enqueue(actorMsg);
+        enqueue(actorMsg, NORMAL_PRIORITY);
     }
+
+    @Override
+    public void tellWithHighPriority(TbActorMsg actorMsg) {
+        enqueue(actorMsg, HIGH_PRIORITY);
+    }
+
 }

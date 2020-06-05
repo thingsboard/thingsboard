@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.DefaultTbActorSystem;
 import org.thingsboard.server.actors.TbActorId;
@@ -83,10 +84,10 @@ public class DefaultActorService implements ActorService {
         TbActorSystemSettings settings = new TbActorSystemSettings(actorThroughput, schedulerPoolSize, maxActorInitAttempts);
         system = new DefaultTbActorSystem(settings);
 
-        system.createDispatcher(APP_DISPATCHER_NAME, initDispatcherExecutor(appDispatcherSize));
-        system.createDispatcher(TENANT_DISPATCHER_NAME, initDispatcherExecutor(tenantDispatcherSize));
-        system.createDispatcher(DEVICE_DISPATCHER_NAME, initDispatcherExecutor(deviceDispatcherSize));
-        system.createDispatcher(RULE_DISPATCHER_NAME, initDispatcherExecutor(ruleDispatcherSize));
+        system.createDispatcher(APP_DISPATCHER_NAME, initDispatcherExecutor(APP_DISPATCHER_NAME, appDispatcherSize));
+        system.createDispatcher(TENANT_DISPATCHER_NAME, initDispatcherExecutor(TENANT_DISPATCHER_NAME, tenantDispatcherSize));
+        system.createDispatcher(DEVICE_DISPATCHER_NAME, initDispatcherExecutor(DEVICE_DISPATCHER_NAME, deviceDispatcherSize));
+        system.createDispatcher(RULE_DISPATCHER_NAME, initDispatcherExecutor(RULE_DISPATCHER_NAME, ruleDispatcherSize));
 
         actorContext.setActorSystem(system);
 
@@ -99,24 +100,28 @@ public class DefaultActorService implements ActorService {
         log.info("Actor system initialized.");
     }
 
-    private ExecutorService initDispatcherExecutor(int poolSize) {
+    private ExecutorService initDispatcherExecutor(String dispatcherName, int poolSize) {
         if (poolSize == 0) {
             int cores = Runtime.getRuntime().availableProcessors();
             poolSize = Math.max(1, cores / 2);
         }
-        return Executors.newWorkStealingPool(poolSize);
+        if (poolSize == 1) {
+            return Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(dispatcherName));
+        } else {
+            return Executors.newWorkStealingPool(poolSize);
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         log.info("Received application ready event. Sending application init message to actor system");
-        appActor.tell(new AppInitMsg());
+        appActor.tellWithHighPriority(new AppInitMsg());
     }
 
     @EventListener(PartitionChangeEvent.class)
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         log.info("Received partition change event.");
-        this.appActor.tell(new PartitionChangeMsg(partitionChangeEvent.getServiceQueueKey(), partitionChangeEvent.getPartitions()));
+        this.appActor.tellWithHighPriority(new PartitionChangeMsg(partitionChangeEvent.getServiceQueueKey(), partitionChangeEvent.getPartitions()));
     }
 
     @PreDestroy

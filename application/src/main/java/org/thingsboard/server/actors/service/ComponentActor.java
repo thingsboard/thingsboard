@@ -83,7 +83,9 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     public void destroy() {
         try {
             log.debug("[{}][{}][{}] Stopping processor.", tenantId, id, id.getEntityType());
-            processor.stop(ctx);
+            if (processor != null) {
+                processor.stop(ctx);
+            }
             logLifecycleEvent(ComponentLifecycleEvent.STOPPED);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to stop {} processor: {}", tenantId, id, id.getEntityType(), e.getMessage());

@@ -230,7 +230,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             Optional<TbActorMsg> actorMsg = encodingService.decode(nfMsg.getComponentLifecycleMsg().toByteArray());
             if (actorMsg.isPresent()) {
                 log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                actorContext.tell(actorMsg.get());
+                actorContext.tellWithHighPriority(actorMsg.get());
             }
             callback.onSuccess();
         } else if (nfMsg.hasFromDeviceRpcResponse()) {
