@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,23 +40,19 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ActorSystemTest {
 
     public static final String ROOT_DISPATCHER = "root-dispatcher";
-    private static final int _1M = 1024 * 1024;
+    private static final int _100K = 100 * 1024;
 
     private volatile TbActorSystem actorSystem;
     private volatile ExecutorService submitPool;
+    private int parallelism;
 
     @Before
     public void initActorSystem() {
         int cores = Runtime.getRuntime().availableProcessors();
-        int parallelism = Math.max(1, cores / 2);
+        parallelism = Math.max(2, cores / 2);
         TbActorSystemSettings settings = new TbActorSystemSettings(5, parallelism, 42);
         actorSystem = new DefaultTbActorSystem(settings);
         submitPool = Executors.newWorkStealingPool(parallelism);
-//        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newCachedThreadPool());
-//        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newFixedThreadPool(parallelism));
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
-//        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(1));
-//        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newFixedThreadPool(1));
     }
 
     @After
@@ -66,32 +62,44 @@ public class ActorSystemTest {
     }
 
     @Test
-    public void test1actorsAnd1MMessages() throws InterruptedException {
-        testActorsAndMessages(1, _1M, 5);
+    public void test1actorsAnd100KMessages() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        testActorsAndMessages(1, _100K, 1);
     }
 
     @Test
-    public void test10actorsAnd1MMessages() throws InterruptedException {
-        testActorsAndMessages(10, _1M, 5);
+    public void test10actorsAnd100KMessages() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        testActorsAndMessages(10, _100K, 1);
     }
 
     @Test
-    public void test1MActorsAnd1Messages5times() throws InterruptedException {
-        testActorsAndMessages(_1M, 1, 5);
+    public void test100KActorsAnd1Messages5timesSingleThread() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newSingleThreadExecutor());
+        testActorsAndMessages(_100K, 1, 5);
     }
 
     @Test
-    public void test1MActorsAnd10Messages() throws InterruptedException {
-        testActorsAndMessages(_1M, 10, 1);
+    public void test100KActorsAnd1Messages5times() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        testActorsAndMessages(_100K, 1, 5);
+    }
+
+    @Test
+    public void test100KActorsAnd10Messages() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        testActorsAndMessages(_100K, 10, 1);
     }
 
     @Test
     public void test1KActorsAnd1KMessages() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
         testActorsAndMessages(1000, 1000, 10);
     }
 
     @Test
     public void testNoMessagesAfterDestroy() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
         ActorTestCtx testCtx1 = getActorTestCtx(1);
         ActorTestCtx testCtx2 = getActorTestCtx(1);
 
@@ -105,11 +113,12 @@ public class ActorSystemTest {
         actorSystem.stop(actorId1);
 
         Assert.assertTrue(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
-        Assert.assertFalse(testCtx1.getLatch().await(2, TimeUnit.SECONDS));
+        Assert.assertFalse(testCtx1.getLatch().await(1, TimeUnit.SECONDS));
     }
 
     @Test
     public void testOneActorCreated() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
         ActorTestCtx testCtx1 = getActorTestCtx(1);
         ActorTestCtx testCtx2 = getActorTestCtx(1);
         TbActorId actorId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
@@ -119,12 +128,13 @@ public class ActorSystemTest {
         Thread.sleep(1000);
         actorSystem.tell(actorId, new IntTbActorMsg(42));
 
-        Assert.assertTrue(testCtx1.getLatch().await(3, TimeUnit.SECONDS));
-        Assert.assertFalse(testCtx2.getLatch().await(3, TimeUnit.SECONDS));
+        Assert.assertTrue(testCtx1.getLatch().await(1, TimeUnit.SECONDS));
+        Assert.assertFalse(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
     }
 
     @Test
     public void testActorCreatorCalledOnce() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
         ActorTestCtx testCtx = getActorTestCtx(1);
         TbActorId actorId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
         for (int i = 0; i < 1000; i++) {
@@ -170,7 +180,7 @@ public class ActorSystemTest {
             testCtxes.forEach(ctx -> {
                 try {
                     boolean success = ctx.getLatch().await(1, TimeUnit.MINUTES);
-                    if(!success){
+                    if (!success) {
                         log.warn("Failed: {}, {}", ctx.getActual().get(), ctx.getInvocationCount().get());
                     }
                     Assert.assertTrue(success);
