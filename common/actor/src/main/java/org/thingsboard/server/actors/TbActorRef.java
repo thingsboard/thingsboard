@@ -23,4 +23,6 @@ public interface TbActorRef {
 
     void tell(TbActorMsg actorMsg);
 
+    void tellWithHighPriority(TbActorMsg actorMsg);
+
 }

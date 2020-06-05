@@ -82,12 +82,14 @@ public class AppActor extends ContextAwareActor {
                 onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
+                onToDeviceActorMsg((TenantAwareMsg) msg, false);
+                break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
-                onToDeviceActorMsg((TenantAwareMsg) msg);
+                onToDeviceActorMsg((TenantAwareMsg) msg, true);
                 break;
             default:
                 return false;
@@ -155,15 +157,20 @@ public class AppActor extends ContextAwareActor {
             }
         }
         if (target != null) {
-            target.tell(msg);
+            target.tellWithHighPriority(msg);
         } else {
             log.debug("[{}] Invalid component lifecycle msg: {}", msg.getTenantId(), msg);
         }
     }
 
-    private void onToDeviceActorMsg(TenantAwareMsg msg) {
+    private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
         if (!deletedTenants.contains(msg.getTenantId())) {
-            getOrCreateTenantActor(msg.getTenantId()).tell(msg);
+            TbActorRef tenantActor = getOrCreateTenantActor(msg.getTenantId());
+            if (priority) {
+                tenantActor.tellWithHighPriority(msg);
+            } else {
+                tenantActor.tell(msg);
+            }
         } else {
             if (msg instanceof TransportToDeviceActorMsgWrapper) {
                 ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();

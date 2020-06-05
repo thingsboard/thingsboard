@@ -514,6 +514,9 @@ public class ActorSystemContext {
         appActor.tell(tbActorMsg);
     }
 
+    public void tellWithHighPriority(TbActorMsg tbActorMsg) {
+        appActor.tellWithHighPriority(tbActorMsg);
+    }
 
     public void schedulePeriodicMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs, long periodInMs) {
         log.debug("Scheduling periodic msg {} every {} ms with delay {} ms", msg, periodInMs, delayInMs);

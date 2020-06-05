@@ -36,9 +36,9 @@ public interface TbActorSystem {
 
     TbActorRef createChildActor(String dispatcherId, TbActorCreator creator, TbActorId parent);
 
-    void tell(TbActorRef target, TbActorMsg actorMsg);
-
     void tell(TbActorId target, TbActorMsg actorMsg);
+
+    void tellWithHighPriority(TbActorId target, TbActorMsg actorMsg);
 
     void stop(TbActorRef actorRef);
 
