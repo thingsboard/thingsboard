@@ -207,7 +207,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreNotification.getComponentLifecycleMsg().toByteArray());
             if (actorMsg.isPresent()) {
                 log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                actorContext.tell(actorMsg.get());
+                actorContext.tellWithHighPriority(actorMsg.get());
             }
             callback.onSuccess();
         }

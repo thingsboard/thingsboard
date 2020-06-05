@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -104,19 +104,23 @@ public class DefaultActorService implements ActorService {
             int cores = Runtime.getRuntime().availableProcessors();
             poolSize = Math.max(1, cores / 2);
         }
-        return Executors.newWorkStealingPool(poolSize);
+        if (poolSize == 1) {
+            return Executors.newFixedThreadPool(1);
+        } else {
+            return Executors.newWorkStealingPool(poolSize);
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         log.info("Received application ready event. Sending application init message to actor system");
-        appActor.tell(new AppInitMsg());
+        appActor.tellWithHighPriority(new AppInitMsg());
     }
 
     @EventListener(PartitionChangeEvent.class)
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         log.info("Received partition change event.");
-        this.appActor.tell(new PartitionChangeMsg(partitionChangeEvent.getServiceQueueKey(), partitionChangeEvent.getPartitions()));
+        this.appActor.tellWithHighPriority(new PartitionChangeMsg(partitionChangeEvent.getServiceQueueKey(), partitionChangeEvent.getPartitions()));
     }
 
     @PreDestroy
