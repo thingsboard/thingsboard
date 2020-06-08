@@ -28,13 +28,16 @@ import java.util.concurrent.ConcurrentMap;
 public class TbRuleEngineProcessingResult {
 
     @Getter
+    private final String queueName;
+    @Getter
     private final boolean success;
     @Getter
     private final boolean timeout;
     @Getter
     private final TbMsgPackProcessingContext ctx;
 
-    public TbRuleEngineProcessingResult(boolean timeout, TbMsgPackProcessingContext ctx) {
+    public TbRuleEngineProcessingResult(String queueName, boolean timeout, TbMsgPackProcessingContext ctx) {
+        this.queueName = queueName;
         this.timeout = timeout;
         this.ctx = ctx;
         this.success = !timeout && ctx.getPendingMap().isEmpty() && ctx.getFailedMap().isEmpty();

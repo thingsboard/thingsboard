@@ -166,7 +166,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                             TbMsgCallback callback = new TbMsgPackCallback(id, tenantId, ctx);
                             try {
                                 if (toRuleEngineMsg.getTbMsg() != null && !toRuleEngineMsg.getTbMsg().isEmpty()) {
-                                    forwardToRuleEngineActor(tenantId, toRuleEngineMsg, callback);
+                                    forwardToRuleEngineActor(configuration.getName(), tenantId, toRuleEngineMsg, callback);
                                 } else {
                                     callback.onSuccess();
                                 }
@@ -180,7 +180,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                             timeout = true;
                         }
 
-                        TbRuleEngineProcessingResult result = new TbRuleEngineProcessingResult(timeout, ctx);
+                        TbRuleEngineProcessingResult result = new TbRuleEngineProcessingResult(configuration.getName(), timeout, ctx);
                         TbRuleEngineProcessingDecision decision = ackStrategy.analyze(result);
                         if (statsEnabled) {
                             stats.log(result, decision.isCommit());
@@ -246,8 +246,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         }
     }
 
-    private void forwardToRuleEngineActor(TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
-        TbMsg tbMsg = TbMsg.fromBytes(toRuleEngineMsg.getTbMsg().toByteArray(), callback);
+    private void forwardToRuleEngineActor(String queueName, TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
+        TbMsg tbMsg = TbMsg.fromBytes(queueName, toRuleEngineMsg.getTbMsg().toByteArray(), callback);
         QueueToRuleEngineMsg msg;
         ProtocolStringList relationTypesList = toRuleEngineMsg.getRelationTypesList();
         Set<String> relationTypes = null;
