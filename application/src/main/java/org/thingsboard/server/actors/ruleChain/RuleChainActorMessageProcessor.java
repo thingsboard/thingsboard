@@ -244,7 +244,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         try {
             checkActive(msg);
             EntityId entityId = msg.getOriginator();
-            TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
+            TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, msg.getQueueName(), tenantId, entityId);
             List<RuleNodeRelation> relations = nodeRoutes.get(originatorNodeId).stream()
                     .filter(r -> contains(relationTypes, r.getType()))
                     .collect(Collectors.toList());

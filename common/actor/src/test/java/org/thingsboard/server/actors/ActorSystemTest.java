@@ -148,6 +148,25 @@ public class ActorSystemTest {
         Assert.assertEquals(2, testCtx.getInvocationCount().get());
     }
 
+    @Test
+    public void testFailedInit() throws InterruptedException {
+        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        ActorTestCtx testCtx1 = getActorTestCtx(1);
+        ActorTestCtx testCtx2 = getActorTestCtx(1);
+
+        TbActorRef actorId1 = actorSystem.createRootActor(ROOT_DISPATCHER, new FailedToInitActor.FailedToInitActorCreator(
+                new TbEntityActorId(new DeviceId(UUID.randomUUID())), testCtx1, 1, 3000));
+        TbActorRef actorId2 = actorSystem.createRootActor(ROOT_DISPATCHER, new FailedToInitActor.FailedToInitActorCreator(
+                new TbEntityActorId(new DeviceId(UUID.randomUUID())), testCtx2, 2, 1));
+
+        actorId1.tell(new IntTbActorMsg(42));
+        actorId2.tell(new IntTbActorMsg(42));
+
+        Assert.assertFalse(testCtx1.getLatch().await(2, TimeUnit.SECONDS));
+        Assert.assertTrue(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
+        Assert.assertTrue(testCtx1.getLatch().await(3, TimeUnit.SECONDS));
+    }
+
 
     public void testActorsAndMessages(int actorsCount, int msgNumber, int times) throws InterruptedException {
         Random random = new Random();
