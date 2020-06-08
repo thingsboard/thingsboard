@@ -72,10 +72,12 @@ public final class TbActorMailbox implements TbActorCtx {
                 log.info("[{}] Failed to init actor, attempt {}, going to stop attempts.", selfId, attempt, t);
                 system.stop(selfId);
             } else if (strategy.getRetryDelay() > 0) {
-                log.info("[{}] Failed to init actor, attempt {}, going to retry in attempts in {}ms", selfId, attempt, strategy.getRetryDelay(), t);
+                log.info("[{}] Failed to init actor, attempt {}, going to retry in attempts in {}ms", selfId, attempt, strategy.getRetryDelay());
+                log.debug("[{}] Error", selfId, t);
                 system.getScheduler().schedule(() -> dispatcher.getExecutor().execute(() -> tryInit(attemptIdx)), strategy.getRetryDelay(), TimeUnit.MILLISECONDS);
             } else {
-                log.info("[{}] Failed to init actor, attempt {}, going to retry immediately", selfId, attempt, t);
+                log.info("[{}] Failed to init actor, attempt {}, going to retry immediately", selfId, attempt);
+                log.debug("[{}] Error", selfId, t);
                 dispatcher.getExecutor().execute(() -> tryInit(attemptIdx));
             }
         }

@@ -31,7 +31,7 @@ public class TbEntityActorId implements TbActorId {
 
     @Override
     public String toString() {
-        return entityId.toString();
+        return entityId.getEntityType() + "|" + entityId.getId();
     }
 
     @Override
