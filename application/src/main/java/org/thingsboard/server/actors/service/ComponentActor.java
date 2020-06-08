@@ -17,7 +17,9 @@ package org.thingsboard.server.actors.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
+import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.actors.stats.StatsPersistMsg;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,13 +50,13 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     abstract protected P createProcessor(TbActorCtx ctx);
 
     @Override
-    public void init(TbActorCtx ctx) {
+    public void init(TbActorCtx ctx) throws TbActorException {
         super.init(ctx);
         this.processor = createProcessor(ctx);
         initProcessor(ctx);
     }
 
-    protected void initProcessor(TbActorCtx ctx) {
+    protected void initProcessor(TbActorCtx ctx) throws TbActorException {
         try {
             log.debug("[{}][{}][{}] Starting processor.", tenantId, id, id.getEntityType());
             processor.start(ctx);
@@ -63,10 +65,10 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
                 scheduleStatsPersistTick();
             }
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to start {} processor.", tenantId, id, id.getEntityType());
-            log.warn("Error:", e);
+            log.debug("[{}][{}] Failed to start {} processor.", tenantId, id, id.getEntityType(), e);
             logAndPersist("OnStart", e, true);
             logLifecycleEvent(ComponentLifecycleEvent.STARTED, e);
+            throw new TbActorException("Failed to init actor", e);
         }
     }
 
@@ -158,11 +160,11 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         errorsOccurred++;
         String componentName = processor != null ? processor.getComponentName() : "Unknown";
         if (critical) {
-            log.warn("[{}][{}][{}] Failed to process method: {}", id, tenantId, componentName, method);
-            log.warn("Critical Error: ", e);
-        } else {
             log.debug("[{}][{}][{}] Failed to process method: {}", id, tenantId, componentName, method);
-            log.debug("Debug Error: ", e);
+            log.debug("Critical Error: ", e);
+        } else {
+            log.trace("[{}][{}][{}] Failed to process method: {}", id, tenantId, componentName, method);
+            log.trace("Debug Error: ", e);
         }
         long ts = System.currentTimeMillis();
         if (ts - lastPersistedErrorTs > getErrorPersistFrequency()) {

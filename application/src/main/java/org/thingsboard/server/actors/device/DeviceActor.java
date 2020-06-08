@@ -20,6 +20,7 @@ import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
+import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -39,7 +40,7 @@ public class DeviceActor extends ContextAwareActor {
     }
 
     @Override
-    public void init(TbActorCtx ctx) {
+    public void init(TbActorCtx ctx) throws TbActorException {
         super.init(ctx);
         log.debug("[{}][{}] Starting device actor.", processor.tenantId, processor.deviceId);
         try {
@@ -47,6 +48,7 @@ public class DeviceActor extends ContextAwareActor {
             log.debug("[{}][{}] Device actor started.", processor.tenantId, processor.deviceId);
         } catch (Exception e) {
             log.warn("[{}][{}] Unknown failure", processor.tenantId, processor.deviceId, e);
+            throw new TbActorException("Failed to initialize device actor", e);
         }
     }
 

@@ -126,7 +126,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
                 scriptIdToNameMap.put(scriptId, functionName);
                 return scriptId;
             } catch (Exception e) {
-                log.warn("Failed to compile JS script: {}", e.getMessage(), e);
+                log.debug("Failed to compile JS script: {}", e.getMessage(), e);
                 throw new ExecutionException(e);
             }
         });

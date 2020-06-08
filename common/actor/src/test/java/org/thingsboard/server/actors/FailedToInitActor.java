@@ -18,30 +18,45 @@ package org.thingsboard.server.actors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class SlowInitActor extends TestRootActor {
+public class FailedToInitActor extends TestRootActor {
 
-    public SlowInitActor(TbActorId actorId, ActorTestCtx testCtx) {
+    int retryAttempts;
+    int retryDelay;
+    int attempts = 0;
+
+    public FailedToInitActor(TbActorId actorId, ActorTestCtx testCtx, int retryAttempts, int retryDelay) {
         super(actorId, testCtx);
+        this.retryAttempts = retryAttempts;
+        this.retryDelay = retryDelay;
     }
 
     @Override
     public void init(TbActorCtx ctx) throws TbActorException {
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (attempts < retryAttempts) {
+            attempts++;
+            throw new TbActorException("Test attempt", new RuntimeException());
+        } else {
+            super.init(ctx);
         }
-        super.init(ctx);
     }
 
-    public static class SlowInitActorCreator implements TbActorCreator {
+    @Override
+    public InitFailureStrategy onInitFailure(int attempt, Throwable t) {
+        return InitFailureStrategy.retryWithDelay(retryDelay);
+    }
+
+    public static class FailedToInitActorCreator implements TbActorCreator {
 
         private final TbActorId actorId;
         private final ActorTestCtx testCtx;
+        private final int retryAttempts;
+        private final int retryDelay;
 
-        public SlowInitActorCreator(TbActorId actorId, ActorTestCtx testCtx) {
+        public FailedToInitActorCreator(TbActorId actorId, ActorTestCtx testCtx, int retryAttempts, int retryDelay) {
             this.actorId = actorId;
             this.testCtx = testCtx;
+            this.retryAttempts = retryAttempts;
+            this.retryDelay = retryDelay;
         }
 
         @Override
@@ -51,7 +66,7 @@ public class SlowInitActor extends TestRootActor {
 
         @Override
         public TbActor createActor() {
-            return new SlowInitActor(actorId, testCtx);
+            return new FailedToInitActor(actorId, testCtx, retryAttempts, retryDelay);
         }
     }
 }

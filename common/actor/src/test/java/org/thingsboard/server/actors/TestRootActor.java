@@ -37,7 +37,7 @@ public class TestRootActor extends AbstractTbActor {
     }
 
     @Override
-    public void init(TbActorCtx ctx) {
+    public void init(TbActorCtx ctx) throws TbActorException {
         super.init(ctx);
         initialized = true;
     }
