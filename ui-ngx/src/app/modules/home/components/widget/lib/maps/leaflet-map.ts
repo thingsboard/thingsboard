@@ -333,7 +333,7 @@ export default abstract class LeafletMap {
                     point.on('click', () => getTooltip(data));
                 }
                 else {
-                    createTooltip(point, this.options, pointsData, getTooltip(data, false));
+                    createTooltip(point, this.options, data.$datasource, getTooltip(data, false));
                 }
                 this.points.addLayer(point);
             });
