@@ -40,7 +40,7 @@ public class LwM2MCredentials {
                 boolean isPsk = (object.has("psk") && !object.get("psk").isJsonNull()) ? true : false;
                 boolean isRpk = (!isX509 && object.has("rpk") && !object.get("rpk").isJsonNull()) ? true : false;
                 if (isX509) {
-
+                    securityInfo = SecurityInfo.newX509CertInfo(endpoint);
                 } else if (isPsk) {
                     // PSK Deserialization
                     JsonObject psk = (object.get("psk").isJsonObject()) ? object.get("psk").getAsJsonObject() : null;

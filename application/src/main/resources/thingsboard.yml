@@ -427,7 +427,7 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_ce}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
@@ -568,11 +568,41 @@ transport:
     secure:
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT:5686}"
-      # RPK server
-      rpk_enabled: "${LWM2M__RPK_ENABLED:true}"
-      public_x: "${LWM2M_PUBLIC_X:fcc28728c123b155be410fc1c0651da374fc6ebe7f96606e90d927d188894a73}"
-      public_y: "${LWM2M_PUBLIC_Y:d2ffaa73957d76984633fc1cc54d0b763ca0559a9dff9706e9f4557dacc3f52a}"
+      # Server Private Key
       private_s: "${LWM2M_PRIVATE_S:1dae121ba406802ef07c193c1ee4df91115aabd79c1ed7f4c0ef7ef6a5449400}"
+      private_encoded: "${LWM2M_PRIVATE_ENCODED:3041020100301306072A8648CE3D020106082A8648CE3D0301070427302502010104201DAE121BA406802EF07C193C1EE4DF91115AABD79C1ED7F4C0EF7EF6A5449400}"
+      # X509  configuration server, client, bootstrap
+      x509:
+        enabled: "${LWM2M_X509_ENABLED:true}"
+        key_store_type: "${LWM2M_X509_KEYSTORE_TYPE:JKS}"
+        root_alias: "${LWM2M_X509_ROOT_CA:rootca}"
+        bootstrap:
+          alias: "${LWM2M_X509_bootstrap_KEYSTOREALIAS:server_bootstrap}"
+        server:
+          key_store_path: "${LWM2M_X509_SERVER_KEYSTORE_PATH:credentials/serverKeyStore.jks}"
+          key_store_password: "${LWM2M_X509_SERVER_KEYSTORE_PASSWORD:server_ks_password}"
+          alias: "${LWM2M_X509_SERVER_KEYSTORE_ALIAS:server}"
+        client:
+          key_store_path: "${LWM2M_X509_CLIENT_KEYSTORE_PATH:credentials/clientKeyStore.jks}"
+          key_store_password: "${LWM2M_CLIENT_X509_KEYSTORE_PASSWORD:client_ks_password}"
+          alias: "${LWM2M_X509_CLIENT_KEYSTORE_ALIAS:client}"
+      # RPK server, client
+      rpk:
+        enabled: "${LWM2M_RPK_ENABLED:false}"
+        server:
+          create: "${LWM2M_SERVER_CREATE:true}"
+          public_x: "${LWM2M_PUBLIC_X:fcc28728c123b155be410fc1c0651da374fc6ebe7f96606e90d927d188894a73}"
+          public_y: "${LWM2M_PUBLIC_Y:d2ffaa73957d76984633fc1cc54d0b763ca0559a9dff9706e9f4557dacc3f52a}"
+          public_encoded: "${LWM2M_PUBLIC_ENCODED:3059301306072A8648CE3D020106082A8648CE3D03010703420004FCC28728C123B155BE410FC1C0651DA374FC6EBE7F96606E90D927D188894A73D2FFAA73957D76984633FC1CC54D0B763CA0559A9DFF9706E9F4557DACC3F52A}"
+          private_s: "${LWM2M_SERVER_PRIVATE_S:e67b68d2aaeb6550f19d98cade3ad62b39532e02e6b422e1f7ea189dabaea5d2}"
+          private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED:3041020100301306072A8648CE3D020106082A8648CE3D030107042730250201010420E67B68D2AAEB6550F19D98CADE3AD62B39532E02E6B422E1F7EA189DABAEA5D2}"
+        client:
+          create: "${LWM2M_SERVER_CREATE:true}"
+          public_x: "${LWM2M_CLIENT_PUBLIC_X:89c048261979208666f2bfb188be1968fc9021c416ce12828c06f4e314c167b5}"
+          public_y: "${LWM2M_CLIENT_PUBLIC_Y:cbf1eb7587f08e01688d9ada4be859137ca49f79394bad9179326b3090967b68}"
+          public_encoded: "${LWM2M_CLIENT_PUBLIC_ENCODED:3059301306072A8648CE3D020106082A8648CE3D0301070342000489C048261979208666F2BFB188BE1968FC9021C416CE12828C06F4E314C167B5CBF1EB7587F08E01688D9ADA4BE859137CA49F79394BAD9179326B3090967B68}"
+          private_s: "${LWM2M_CLIENT_PRIVATE_S:e67b68d2aaeb6550f19d98cade3ad62b39532e02e6b422e1f7ea189dabaea5d2}"
+          private_encoded: "${LWM2M_CLIENT_PRIVATE_ENCODED:3041020100301306072A8648CE3D020106082A8648CE3D030107042730250201010420E67B68D2AAEB6550F19D98CADE3AD62B39532E02E6B422E1F7EA189DABAEA5D2}"
       # Redis
       redis_url: ""
 

@@ -29,7 +29,9 @@ import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.model.VersionedModelProvider;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisSecurityStore;
+import org.eclipse.leshan.server.security.DefaultAuthorizer;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
+import org.eclipse.leshan.server.security.SecurityChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -41,6 +43,9 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.Pool;
+
+import java.security.KeyStore;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 import java.io.*;
@@ -107,146 +112,27 @@ public class LwM2MTransportServerConfiguration {
 
         // Create DTLS Config
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-//        boolean supportDeprecatedCiphers = false;
-        dtlsConfig.setRecommendedCipherSuitesOnly(true);
+        boolean supportDeprecatedCiphers = false;
+//        dtlsConfig.setRecommendedCipherSuitesOnly(true);
 
         X509Certificate serverCertificate = null;
-        X509Certificate certificate = null;
+        X509Certificate rootCAX509Cert = null;
         PublicKey publicKey = null;
         PrivateKey privateKey = null;
         // get RPK info: use RPK only
-        if (context.isRpkEnabled()) {
-            LwM2MServerCredentials lwM2MServerCredentials = new LwM2MServerCredentials(context.getPublicX(), context.getPublicY(), context.getPrivateS());
+        if (context.isRpkEnabled() && !context.isX509Enabled()) {
+            LwM2MServerCredentials lwM2MServerCredentials = new LwM2MServerCredentials(context.getPublicServerX(), context.getPublicServerY(), context.getPrivateServerS());
             publicKey = lwM2MServerCredentials.getServerPublicKey();
             privateKey = lwM2MServerCredentials.getServerPrivateKey();
             if (publicKey != null) {
-
                 builder.setPublicKey(publicKey);
                 builder.setPrivateKey(privateKey);
             }
         }
-
-
-//
-//        // get X509 info
-//        List<Certificate> trustStore = null;
-//        String truststorePath = null;
-//        if (truststorePath != null) {
-//            trustStore = new ArrayList<>();
-//            File input = new File(truststorePath);
-//
-//            // check input exists
-//            if (!input.exists())
-//                throw new FileNotFoundException(input.toString());
-//
-//            // get input files.
-//            File[] files;
-//            if (input.isDirectory()) {
-//                files = input.listFiles();
-//            } else {
-//                files = new File[] { input };
-//            }
-//            for (File file : files) {
-//                try {
-//                    trustStore.add(SecurityUtil.certificate.readFromFile(file.getAbsolutePath()));
-//                } catch (Exception e) {
-//                    log.warn("Unable to load X509 files [{}]:[{}] ", file.getAbsolutePath(), e.getMessage());
-//                }
-//            }
-//        }
-//
-//        // Get keystore parameters
-//        String keyStorePath = null;
-//        String keyStoreType = null;
-//        String keyStorePass = null;
-//        String keyStoreAlias = null;
-//        String keyStoreAliasPass = null;
-//
-//        if (certificate != null) {
-//            // use X.509 mode (+ RPK)
-//            serverCertificate = certificate;
-//            builder.setPrivateKey(privateKey);
-//            builder.setCertificateChain(new X509Certificate[] { serverCertificate });
-//        } else  if (publicKey != null) {
-            // use RPK only
-//            builder.setPublicKey(publicKey);
-//            builder.setPrivateKey(privateKey);
-//        }
-//        else if (keyStorePath != null) {
-//           log.warn(
-//                    "Keystore way [-ks, -ksp, -kst, -ksa, -ksap] is DEPRECATED for leshan demo and will probably be removed soon, please use [-cert, -prik, -truststore] options");
-//
-//            // Deprecated way : Set up X.509 mode (+ RPK)
-//            try {
-//                KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-//                try (FileInputStream fis = new FileInputStream(keyStorePath)) {
-//                    keyStore.load(fis, keyStorePass == null ? null : keyStorePass.toCharArray());
-//                    List<Certificate> trustedCertificates = new ArrayList<>();
-//                    for (Enumeration<String> aliases = keyStore.aliases(); aliases.hasMoreElements();) {
-//                        String alias = aliases.nextElement();
-//                        if (keyStore.isCertificateEntry(alias)) {
-//                            trustedCertificates.add(keyStore.getCertificate(alias));
-//                        } else if (keyStore.isKeyEntry(alias) && alias.equals(keyStoreAlias)) {
-//                            List<X509Certificate> x509CertificateChain = new ArrayList<>();
-//                            Certificate[] certificateChain = keyStore.getCertificateChain(alias);
-//                            if (certificateChain == null || certificateChain.length == 0) {
-//                                log.error("Keystore alias must have a non-empty chain of X509Certificates.");
-//                                return null;
-//                            }
-//
-//                            for (Certificate cert : certificateChain) {
-//                                if (!(cert instanceof X509Certificate)) {
-//                                    log.error("Non-X.509 certificate in alias chain is not supported: [{}]", cert);
-//                                    return null;
-//                                }
-//                                x509CertificateChain.add((X509Certificate) cert);
-//                            }
-//
-//                            Key key = keyStore.getKey(alias,
-//                                    keyStoreAliasPass == null ? new char[0] : keyStoreAliasPass.toCharArray());
-//                            if (!(key instanceof PrivateKey)) {
-//                                log.error("Keystore alias must have a PrivateKey entry, was [{}]",
-//                                        key == null ? null : key.getClass().getName());
-//                                return null;
-//                            }
-//                            builder.setPrivateKey((PrivateKey) key);
-//                            serverCertificate = (X509Certificate) keyStore.getCertificate(alias);
-//                            builder.setCertificateChain(
-//                                    x509CertificateChain.toArray(new X509Certificate[x509CertificateChain.size()]));
-//                        }
-//                    }
-//                    builder.setTrustedCertificates(
-//                            trustedCertificates.toArray(new Certificate[trustedCertificates.size()]));
-//                }
-//            } catch (KeyStoreException | IOException e) {
-//                log.error("Unable to initialize X.509. Error: [{}]", e.getMessage());
-//                return null;
-//            }
-//        }
-//
-//        if (publicKey == null && serverCertificate == null) {
-//            // public key or server certificated is not defined
-//            // use default embedded credentials (X.509 + RPK mode)
-//            try {
-//                PrivateKey embeddedPrivateKey = SecurityUtil.privateKey.readFromResource("/credentials/server_privkey.der");
-//                serverCertificate = SecurityUtil.certificate.readFromResource("/credentials/server_cert.der");
-//                builder.setPrivateKey(embeddedPrivateKey);
-//                builder.setCertificateChain(new X509Certificate[] { serverCertificate });
-//            } catch (Exception e) {
-//                log.error("Unable to load embedded X.509 certificate. Error: [{}]", e.getMessage());
-//                return null;
-//            }
-//        }
-//
-//        // Define trust store
-//        if (serverCertificate != null && keyStorePath == null) {
-//            if (trustStore != null && !trustStore.isEmpty()) {
-//                builder.setTrustedCertificates(trustStore.toArray(new Certificate[trustStore.size()]));
-//            } else {
-//                // by default trust all
-//                builder.setTrustedCertificates(new X509Certificate[0]);
-//            }
-//        }
+        // get x509 info: use x509 only
+        else if (context.isX509Enabled() && !context.isRpkEnabled() && context.getKeyStorePathServer() != null  && !context.getKeyStorePathServer().isEmpty()) {
+            setServerWithX509Cert (builder);
+        }
 
         // Set DTLS Config
         builder.setDtlsConfig(dtlsConfig);
@@ -255,27 +141,17 @@ public class LwM2MTransportServerConfiguration {
         EditableSecurityStore securityStore;
 
         if (jedis == null) {
-            //            securityStore = new InMemorySecurityStore();
             securityStore = lwM2mInMemorySecurityStore;
-
-
-            // use jsonStr
-//            String  ingfosStr = "{\"endpoint\":\"client1\",\"psk\":{\"identity\":\"client2\",\"key\":\"67f6aad1db5e9bdb9778a35e7f4f24f221c8646ce23cb8cf852fedee029cda9c\"},\"rpk\":null,\"x509\":false}";
-//            SecurityInfo info;
-
-
-//            SecurityStoreListener listener = new SecurityStoreListener() {
-//                @Override
-//                public void securityInfoRemoved(boolean infosAreCompromised, SecurityInfo... infos) {
-//                    log.info ("Security");
-//                }
-//            };
-//            securityStore.setListener(listener);
-
-//                LwM2MCredentials lwM2MCredentials = new LwM2MCredentials();
-//                info =lwM2MCredentials.getSecurityInfo(ingfosStr);
-//                if (info != null) securityStore.add(info);
-
+            if (context.isX509Enabled()) {
+                builder.setAuthorizer(new DefaultAuthorizer(securityStore, new SecurityChecker() {
+                    @Override
+                    protected boolean matchX509Identity(String endpoint, String receivedX509CommonName,
+                                                        String expectedX509CommonName) {
+//                    return expectedX509CommonName.startsWith(receivedX509CommonName);
+                        return endpoint.startsWith(expectedX509CommonName);
+                    }
+                }));
+            }
         } else {
             // use Redis Store
             securityStore = new RedisSecurityStore(jedis);
@@ -286,8 +162,25 @@ public class LwM2MTransportServerConfiguration {
         // use a magic converter to support bad type send by the UI.
         builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
 
-
         // Create LWM2M server
         return builder.build();
+    }
+
+    private void setServerWithX509Cert (LeshanServerBuilder builder) {
+        try (InputStream inServer = ClassLoader.getSystemResourceAsStream(context.getKeyStorePathServer())) {
+            KeyStore keyStoreServer = KeyStore.getInstance(context.getKeyStoreType());
+            keyStoreServer.load(inServer, context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
+            X509Certificate serverCertificate = (X509Certificate) keyStoreServer.getCertificate(context.getAliasServer());
+            PrivateKey privateKey = (PrivateKey) keyStoreServer.getKey(context.getAliasServer(), context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
+            X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(context.getRootAlias());
+            Certificate[] trustedCertificates = new Certificate[1];
+            trustedCertificates[0] = rootCAX509Cert;
+            builder.setPrivateKey(privateKey);
+            builder.setCertificateChain(new X509Certificate[]{serverCertificate});
+            builder.setTrustedCertificates(trustedCertificates);
+        } catch (Exception ex) {
+            System.err.println("Unable to load X509 files server: " + ex.getMessage());
+            ex.printStackTrace();
+        }
     }
 }

@@ -330,6 +330,9 @@
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
                             <exclude>src/main/resources/models/*.xml</exclude>
+                            <exclude>src/main/resources/credentials/*.jks</exclude>
+                            <exclude>src/main/resources/credentials/shell/*.jks</exclude>
+                            <exclude>src/main/resources/credentials/shell/*.jks.old</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>

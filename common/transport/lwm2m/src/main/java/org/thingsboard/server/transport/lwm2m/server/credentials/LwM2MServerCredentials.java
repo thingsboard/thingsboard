@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.credentials;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
 
 import java.math.BigInteger;
@@ -25,6 +26,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.*;
 import java.util.List;
 
+@Slf4j
 @Data
 public class LwM2MServerCredentials {
     PublicKey serverPublicKey;
@@ -39,10 +41,15 @@ public class LwM2MServerCredentials {
      * @param privS
      */
     public LwM2MServerCredentials(String publX, String publY, String privS) {
-        createRPK (publX, publY, privS);
+        generateServerKeyRPK(publX, publY, privS);
+//        log.info("spublk_X: [{}] [{}]",  publX.toUpperCase(), publX.length());
+//        log.info("spublk_Y: [{}] [{}]",  publY.toUpperCase(), publY.length());
+//        log.info("spublk: [{}]",  Hex.encodeHexString(this.serverPublicKey.getEncoded()).toUpperCase());
+//        log.info("spriv_S: [{}] [{}]",  privS.toUpperCase(), privS.length());
+//        log.info("sprivk: [{}]",  Hex.encodeHexString(this.serverPrivateKey.getEncoded()).toUpperCase());
     }
 
-    private void createRPK (String publX, String publY, String privS) {
+    private void generateServerKeyRPK(String publX, String publY, String privS) {
         try {
             // Get point values
             byte[] publicX = Hex.decodeHex(publX.toCharArray());
