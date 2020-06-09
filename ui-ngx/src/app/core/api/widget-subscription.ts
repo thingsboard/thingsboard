@@ -670,6 +670,8 @@ export class WidgetSubscription implements IWidgetSubscription {
           if (!this.executingRpcRequest || rejection.status === 408) {
             this.rpcRejection = rejection;
             if (rejection.status === 408) {
+              this.rpcErrorText = 'Request Timeout.';
+            } else if (rejection.status === 409) {
               this.rpcErrorText = 'Device is offline.';
             } else {
               this.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.queue;
 
-import akka.actor.ActorRef;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -150,7 +149,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         tbCoreDeviceRpcService.forwardRpcRequestToDeviceActor((ToDeviceRpcRequestActorMsg) tbActorMsg);
                                     } else {
                                         log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                                        actorContext.tell(actorMsg.get(), ActorRef.noSender());
+                                        actorContext.tell(actorMsg.get());
                                     }
                                 }
                                 callback.onSuccess();
@@ -161,7 +160,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         }
                     });
                     if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
-                        ctx.getAckMap().forEach((id, msg) -> log.warn("[{}] Timeout to process message: {}", id, msg.getValue()));
+                        ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
                         ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
                     }
                     mainConsumer.commit();
@@ -208,7 +207,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreNotification.getComponentLifecycleMsg().toByteArray());
             if (actorMsg.isPresent()) {
                 log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                actorContext.tell(actorMsg.get(), ActorRef.noSender());
+                actorContext.tellWithHighPriority(actorMsg.get());
             }
             callback.onSuccess();
         }
@@ -279,7 +278,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         if (statsEnabled) {
             stats.log(toDeviceActorMsg);
         }
-        actorContext.tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback), ActorRef.noSender());
+        actorContext.tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback));
     }
 
     private void throwNotHandled(Object msg, TbCallback callback) {

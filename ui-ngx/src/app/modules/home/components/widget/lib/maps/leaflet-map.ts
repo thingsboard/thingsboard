@@ -33,6 +33,7 @@ import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { createTooltip, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
+import { WidgetContext } from '@home/models/widget-component.models';
 
 export default abstract class LeafletMap {
 
@@ -49,7 +50,9 @@ export default abstract class LeafletMap {
     points: FeatureGroup;
     markersData: FormattedData[] = [];
 
-    protected constructor(public $container: HTMLElement, options: UnitedMapSettings) {
+    protected constructor(public ctx: WidgetContext,
+                          public $container: HTMLElement,
+                          options: UnitedMapSettings) {
         this.options = options;
     }
 
@@ -333,15 +336,12 @@ export default abstract class LeafletMap {
                     point.on('click', () => getTooltip(data));
                 }
                 else {
-                    createTooltip(point, this.options, pointsData, getTooltip(data, false));
+                    createTooltip(point, this.options, data.$datasource, getTooltip(data, false));
                 }
                 this.points.addLayer(point);
             });
             map.addLayer(this.points);
         });
-    }
-
-    setImageAlias(alias: Observable<any>) {
     }
 
     // Polyline

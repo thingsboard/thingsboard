@@ -63,8 +63,6 @@
         <jackson-annotations.version>2.10.2</jackson-annotations.version>
         <jackson-core.version>2.10.2</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
-        <scala.version>2.13</scala.version>
-        <akka.version>2.6.3</akka.version>
         <californium.version>1.0.2</californium.version>
         <gson.version>2.6.2</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
@@ -785,6 +783,11 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
+                <artifactId>actor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
                 <artifactId>dao-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1096,16 +1099,6 @@
                         <artifactId>mailapi</artifactId>
                     </exclusion>
                 </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>com.typesafe.akka</groupId>
-                <artifactId>akka-actor_${scala.version}</artifactId>
-                <version>${akka.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.typesafe.akka</groupId>
-                <artifactId>akka-slf4j_${scala.version}</artifactId>
-                <version>${akka.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.californium</groupId>

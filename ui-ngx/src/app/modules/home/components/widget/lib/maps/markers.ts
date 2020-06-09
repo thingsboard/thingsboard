@@ -16,7 +16,7 @@
 
 import L, { LeafletMouseEvent } from 'leaflet';
 import { FormattedData, MarkerSettings } from './map-models';
-import { aspectCache, createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
+import { aspectCache, bindPopupActions, createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined } from '@core/utils';
 
@@ -76,6 +76,9 @@ export class Marker {
         const pattern = this.settings.useTooltipFunction ?
             safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
         this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
+      if (this.tooltip.isOpen() && this.tooltip.getElement()) {
+        bindPopupActions(this.tooltip, this.settings, data.$datasource);
+      }
     }
 
     updateMarkerPosition(position: L.LatLngExpression) {

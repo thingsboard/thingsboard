@@ -165,6 +165,12 @@ export interface HistorySelectSettings {
     buttonColor: string;
 }
 
+export interface MapImage {
+    imageUrl: string;
+    aspect: number;
+    update?: boolean;
+}
+
 export type TripAnimationSettings = {
     showPoints: boolean;
     pointColor: string;

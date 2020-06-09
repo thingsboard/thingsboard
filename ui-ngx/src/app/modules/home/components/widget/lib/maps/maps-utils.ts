@@ -40,16 +40,25 @@ export function createTooltip(target: L.Layer,
         });
     }
     target.on('popupopen', () => {
-        const actions = document.getElementsByClassName('tb-custom-action');
-        Array.from(actions).forEach(
-            (element: HTMLElement) => {
-                const actionName = element.getAttribute('data-action-name');
-                if (element && settings.tooltipAction[actionName]) {
-                    element.addEventListener('click', ($event) => settings.tooltipAction[actionName]($event, datasource));
-                }
-            });
+      bindPopupActions(popup, settings, datasource);
     });
     return popup;
+}
+
+export function bindPopupActions(popup: L.Popup, settings: MarkerSettings | PolylineSettings | PolygonSettings,
+                                 datasource: Datasource) {
+  const actions = popup.getElement().getElementsByClassName('tb-custom-action');
+  Array.from(actions).forEach(
+    (element: HTMLElement) => {
+      const actionName = element.getAttribute('data-action-name');
+      if (element && settings.tooltipAction[actionName]) {
+        element.onclick = ($event) =>
+        {
+          settings.tooltipAction[actionName]($event, datasource);
+          return false;
+        };
+      }
+    });
 }
 
 export function getRatio(firsMoment: number, secondMoment: number, intermediateMoment: number): number {
@@ -133,7 +142,7 @@ const linkActionRegex = /<link-act name=['"]([^['"]*)['"]>([^<]*)<\/link-act>/g;
 const buttonActionRegex = /<button-act name=['"]([^['"]*)['"]>([^<]*)<\/button-act>/g;
 
 function createLinkElement(actionName: string, actionText: string): string {
-  return `<a href="#" class="tb-custom-action" data-action-name=${actionName}>${actionText}</a>`;
+  return `<a href="javascript:void(0);" class="tb-custom-action" data-action-name=${actionName}>${actionText}</a>`;
 }
 
 function createButtonElement(actionName: string, actionText: string) {

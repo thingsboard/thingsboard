@@ -133,6 +133,7 @@ import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-ob
 import { HistorySelectorComponent } from './components/time/history-selector/history-selector.component';
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
+import { ContactComponent } from '@shared/components/contact.component';
 
 @NgModule({
   providers: [
@@ -218,7 +219,8 @@ import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
-    EntityGatewaySelectComponent
+    EntityGatewaySelectComponent,
+    ContactComponent
   ],
   imports: [
     CommonModule,
@@ -379,7 +381,8 @@ import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
-    EntityGatewaySelectComponent
+    EntityGatewaySelectComponent,
+    ContactComponent
   ]
 })
 export class SharedModule { }
