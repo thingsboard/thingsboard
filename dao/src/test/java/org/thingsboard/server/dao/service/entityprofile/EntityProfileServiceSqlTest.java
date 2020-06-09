@@ -15,17 +15,27 @@
  */
 package org.thingsboard.server.dao.service.entityprofile;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.collect.Lists;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.entityprofile.BaseProfile;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.entityprofile.HasEntityProfileId;
+import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entityprofile.EntityProfileDao;
-import org.thingsboard.server.dao.entityprofile.EntityProfileService;
+import org.thingsboard.server.dao.entityprofile.EntityProfilePostProcessor;
+import org.thingsboard.server.dao.entityprofile.EntityProfileServiceImpl;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -41,7 +51,7 @@ import static org.junit.Assert.*;
 @DaoSqlTest
 public class EntityProfileServiceSqlTest extends AbstractServiceTest {
     @Autowired
-    private EntityProfileService profileService;
+    private EntityProfileServiceImpl profileService;
     @Autowired
     private EntityProfileDao entityProfileDao;
 
@@ -106,6 +116,42 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
         assertNull(profileService.findById(TenantId.SYS_TENANT_ID, saved.getId()));
     }
 
+    @Test
+    public void testFindTestProfile() {
+        String testValue = randomAlphanumeric(10);
+        profileService.setProcessors(Lists.newArrayList(new TestProfilePostProcessor(null)));
+        Map<String, Object> profileMap = new HashMap<>();
+        profileMap.put("testValue", testValue);
+        EntityProfile entityProfile = profileService.save(EntityProfile.builder()
+                .name(randomAlphanumeric(10))
+                .tenantId(TenantId.SYS_TENANT_ID)
+                .entityType(EntityType.DEVICE)
+                .profile(mapper.valueToTree(profileMap))
+                .build());
+        TestDevice testDevice = new TestDevice(TenantId.SYS_TENANT_ID, entityProfile.getId());
+        TestProfile profile = profileService.findProfile(testDevice, TestProfile.class);
+        assertEquals(testValue, profile.getTestValue());
+    }
+
+    @Test
+    public void testFindTestProfileWithDefaultValue() {
+        String testValue = randomAlphanumeric(10);
+        profileService.setProcessors(Lists.newArrayList(new TestProfilePostProcessor(testValue)));
+        EntityProfile entityProfile = saveRandomEntityProfile();
+        TestDevice testDevice = new TestDevice(TenantId.SYS_TENANT_ID, entityProfile.getId());
+        TestProfile profile = profileService.findProfile(testDevice, TestProfile.class);
+        assertEquals(testValue, profile.getTestValue());
+    }
+
+    @Test
+    public void testFindTestProfileWhenEntityProfileNotCreated() {
+        String testValue = randomAlphanumeric(10);
+        profileService.setProcessors(Lists.newArrayList(new TestProfilePostProcessor(testValue)));
+        TestDevice testDevice = new TestDevice(TenantId.SYS_TENANT_ID, null);
+        TestProfile profile = profileService.findProfile(testDevice, TestProfile.class);
+        assertEquals(testValue, profile.getTestValue());
+    }
+
     private EntityProfile saveRandomEntityProfile() {
         return saveRandomEntityProfile(randomAlphanumeric(10), EntityType.DEVICE);
     }
@@ -122,5 +168,34 @@ public class EntityProfileServiceSqlTest extends AbstractServiceTest {
                 .build();
 
         return profileService.save(entityProfile);
+    }
+
+    @Value
+    private static class TestDevice implements HasEntityProfileId, HasTenantId {
+        TenantId tenantId;
+        EntityProfileId entityProfileId;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class TestProfile implements BaseProfile {
+        String testValue;
+    }
+
+    @RequiredArgsConstructor
+    private static class TestProfilePostProcessor implements EntityProfilePostProcessor<TestProfile> {
+        private final String defaultTestValue;
+
+        @Override
+        public Class<TestProfile> getProfileClass() {
+            return TestProfile.class;
+        }
+
+        @Override
+        public void setDefaultValues(TestProfile profile) {
+            if (profile.getTestValue() == null) {
+                profile.setTestValue(defaultTestValue);
+            }
+        }
     }
 }

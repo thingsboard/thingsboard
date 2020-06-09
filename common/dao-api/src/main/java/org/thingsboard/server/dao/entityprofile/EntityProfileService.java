@@ -16,7 +16,10 @@
 package org.thingsboard.server.dao.entityprofile;
 
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.entityprofile.BaseProfile;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.entityprofile.HasEntityProfileId;
 import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -37,4 +40,6 @@ public interface EntityProfileService {
     EntityProfile save(EntityProfile entityProfile);
 
     void delete(TenantId tenantId, EntityProfileId id);
+
+    <T extends HasEntityProfileId & HasTenantId, P extends BaseProfile> P findProfile(T obj, Class<P> clazz);
 }

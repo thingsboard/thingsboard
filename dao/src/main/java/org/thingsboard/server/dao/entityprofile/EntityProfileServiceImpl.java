@@ -15,16 +15,29 @@
  */
 package org.thingsboard.server.dao.entityprofile;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.entityprofile.BaseProfile;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.entityprofile.HasEntityProfileId;
 import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -36,7 +49,15 @@ public class EntityProfileServiceImpl implements EntityProfileService {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_ENTITY_PROFILE_ID = "Incorrect entityProfileId ";
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final EntityProfileDao dao;
+    private Map<Class<?>, EntityProfilePostProcessor<?>> processors = Collections.emptyMap();
+
+    @Autowired(required = false)
+    public void setProcessors(List<EntityProfilePostProcessor<?>> processors) {
+        this.processors = processors.stream()
+                .collect(Collectors.toMap(EntityProfilePostProcessor::getProfileClass, Function.identity()));
+    }
 
     @Override
     public PageData<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId, PageLink pageLink) {
@@ -76,6 +97,27 @@ public class EntityProfileServiceImpl implements EntityProfileService {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(entityProfileId, INCORRECT_ENTITY_PROFILE_ID + tenantId);
         dao.removeById(tenantId, entityProfileId);
+    }
+
+    @Override
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    public <T extends HasEntityProfileId & HasTenantId, P extends BaseProfile> P findProfile(T obj, Class<P> clazz) {
+        TenantId tenantId = obj.getTenantId();
+        EntityProfileId entityProfileId = obj.getEntityProfileId();
+        JsonNode jsonProfile = objectMapper.createObjectNode();;
+        if (entityProfileId != null) {
+            EntityProfile entityProfile = findById(tenantId, entityProfileId);
+            if (entityProfile != null) {
+                jsonProfile = entityProfile.getProfile();
+            }
+        }
+        P profile = objectMapper.treeToValue(jsonProfile, clazz);
+        EntityProfilePostProcessor<P> processor = (EntityProfilePostProcessor<P>) processors.get(clazz);
+        if (processor != null) {
+            processor.setDefaultValues(profile);
+        }
+        return profile;
     }
 
     private void validateEntityType(EntityType entityType) {
