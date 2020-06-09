@@ -96,7 +96,19 @@ public class TbKafkaNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(config.getTopicPattern(), msg.getMetaData());
         try {
+            ctx.getExternalCallExecutor().executeAsync(() -> {
+                publish(ctx, msg, topic);
+                return null;
+            });
+        } catch (Exception e) {
+            ctx.tellFailure(msg, e);
+        }
+    }
+
+    protected void publish(TbContext ctx, TbMsg msg, String topic) {
+        try {
             if (!addMetadataKeyValuesAsKafkaHeaders) {
+                //TODO: external system executor
                 producer.send(new ProducerRecord<>(topic, msg.getData()),
                         (metadata, e) -> processRecord(ctx, msg, metadata, e));
             } else {
@@ -105,9 +117,8 @@ public class TbKafkaNode implements TbNode {
                 producer.send(new ProducerRecord<>(topic, null, null, null, msg.getData(), headers),
                         (metadata, e) -> processRecord(ctx, msg, metadata, e));
             }
-
         } catch (Exception e) {
-            ctx.tellFailure(msg, e);
+            log.debug("[{}] Failed to process message: {}", ctx.getSelfId(), msg, e);
         }
     }
 

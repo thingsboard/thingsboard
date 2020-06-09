@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.actors.service;
 
-import akka.japi.Creator;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActorCreator;
 
-public abstract class ContextBasedCreator<T> implements Creator<T> {
-
-    private static final long serialVersionUID = 1L;
+public abstract class ContextBasedCreator implements TbActorCreator {
 
     protected final transient ActorSystemContext context;
 
