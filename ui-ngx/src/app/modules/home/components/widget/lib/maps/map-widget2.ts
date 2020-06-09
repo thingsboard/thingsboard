@@ -68,7 +68,7 @@ export class MapWidgetController implements MapWidgetInterface {
             return;
         }
         parseWithTranslation.setTranslate(this.translate);
-        this.map = new MapClass(this.ctx, $element, this.settings, this.ctx.$injector);
+        this.map = new MapClass(this.ctx, $element, this.settings);
         this.map.saveMarkerLocation = this.setMarkerLocation;
         if (this.settings.draggableMarker) {
             this.map.setDataSources(parseData(this.data));
