@@ -24,7 +24,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,24 +32,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLSyntaxErrorException;
 
-import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
-import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
-import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
-import static org.thingsboard.server.service.install.DatabaseHelper.CUSTOMER_ID;
-import static org.thingsboard.server.service.install.DatabaseHelper.DASHBOARD;
-import static org.thingsboard.server.service.install.DatabaseHelper.END_TS;
-import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_ID;
-import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_TYPE;
-import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEW;
-import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEWS;
-import static org.thingsboard.server.service.install.DatabaseHelper.ID;
-import static org.thingsboard.server.service.install.DatabaseHelper.KEYS;
-import static org.thingsboard.server.service.install.DatabaseHelper.NAME;
-import static org.thingsboard.server.service.install.DatabaseHelper.SEARCH_TEXT;
-import static org.thingsboard.server.service.install.DatabaseHelper.START_TS;
-import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
-import static org.thingsboard.server.service.install.DatabaseHelper.TITLE;
-import static org.thingsboard.server.service.install.DatabaseHelper.TYPE;
+import static org.thingsboard.server.service.install.DatabaseHelper.*;
 
 @Service
 @Profile("install")
@@ -233,13 +216,21 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Schema updated.");
                 }
                 break;
+            case "3.0.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.0", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Schema updated.");
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
     }
 
     private void loadSql(Path sqlFile, Connection conn) throws Exception {
-        String sql = new String(Files.readAllBytes(sqlFile), Charset.forName("UTF-8"));
+        String sql = new String(Files.readAllBytes(sqlFile), StandardCharsets.UTF_8);
         conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
         Thread.sleep(5000);
     }

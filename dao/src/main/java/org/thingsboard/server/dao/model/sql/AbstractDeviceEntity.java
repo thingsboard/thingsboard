@@ -24,6 +24,7 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -44,6 +45,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
 
     @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY)
     private String customerId;
+
+    @Column(name = ModelConstants.ENTITY_PROFILE_ID_PROPERTY)
+    private String entityProfileId;
 
     @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
     private String type;
@@ -75,6 +79,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         if (device.getCustomerId() != null) {
             this.customerId = toString(device.getCustomerId().getId());
         }
+        if (device.getEntityProfileId() != null) {
+            this.customerId = toString(device.getEntityProfileId().getId());
+        }
         this.name = device.getName();
         this.type = device.getType();
         this.label = device.getLabel();
@@ -85,6 +92,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         this.setId(deviceEntity.getId());
         this.tenantId = deviceEntity.getTenantId();
         this.customerId = deviceEntity.getCustomerId();
+        this.entityProfileId = deviceEntity.getEntityProfileId();
         this.type = deviceEntity.getType();
         this.name = deviceEntity.getName();
         this.label = deviceEntity.getLabel();
@@ -110,6 +118,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         }
         if (customerId != null) {
             device.setCustomerId(new CustomerId(toUUID(customerId)));
+        }
+        if (entityProfileId != null) {
+            device.setEntityProfileId(new EntityProfileId(toUUID(entityProfileId)));
         }
         device.setName(name);
         device.setType(type);

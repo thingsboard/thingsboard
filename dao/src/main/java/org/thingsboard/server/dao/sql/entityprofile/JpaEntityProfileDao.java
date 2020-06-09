@@ -29,6 +29,8 @@ import org.thingsboard.server.dao.model.sql.EntityProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Objects;
+
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 @Component
@@ -52,6 +54,7 @@ public class JpaEntityProfileDao extends JpaAbstractDao<EntityProfileEntity, Ent
         return DaoUtil.toPageData(
                 repository.findByTenantId(
                         fromTimeUUID(tenantId.getId()),
+                        Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -61,6 +64,7 @@ public class JpaEntityProfileDao extends JpaAbstractDao<EntityProfileEntity, Ent
                 repository.findByTenantIdAndEntityType(
                         fromTimeUUID(tenantId.getId()),
                         entityType,
+                        Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 }

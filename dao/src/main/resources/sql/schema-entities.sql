@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS device (
     label varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
+    entity_profile_id varchar(31),
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
 );
 
@@ -260,7 +261,7 @@ CREATE TABLE IF NOT EXISTS entity_profile(
     entity_type     varchar(255),
     profile         varchar,
     additional_info varchar,
-    CONSTRAINT name_tenant_id_type_unq_key UNIQUE (name, tenant_id, entity_type)
+    CONSTRAINT name_tenant_id_type_unq_key UNIQUE (tenant_id, entity_type, name)
 );
 
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)

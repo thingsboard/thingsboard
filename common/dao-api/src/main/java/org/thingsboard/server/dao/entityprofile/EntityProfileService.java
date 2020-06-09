@@ -16,17 +16,16 @@
 package org.thingsboard.server.dao.entityprofile;
 
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.entityprofile.BaseProfile;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.entityprofile.HasEntityProfileId;
 import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
-import java.util.List;
-
 public interface EntityProfileService {
-
-    List<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId);
 
     PageData<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId, PageLink pageLink);
 
@@ -38,7 +37,9 @@ public interface EntityProfileService {
 
     EntityProfile findById(TenantId tenantId, EntityProfileId id);
 
-    EntityProfile save(TenantId tenantId, EntityProfile entityProfile);
+    EntityProfile save(EntityProfile entityProfile);
 
     void delete(TenantId tenantId, EntityProfileId id);
+
+    <T extends HasEntityProfileId & HasTenantId, P extends BaseProfile> P findProfile(T obj, Class<P> clazz);
 }

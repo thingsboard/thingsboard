@@ -16,15 +16,18 @@
 package org.thingsboard.server.service.security.permission;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.entityprofile.EntityProfile;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.HashMap;
+import java.util.EnumSet;
+import java.util.Set;
 
 @Component(value="tenantAdminPermissions")
 public class TenantAdminPermissions extends AbstractPermissions {
@@ -42,6 +45,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, widgetsPermissionChecker);
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
+        put(Resource.ENTITY_PROFILE, entityProfilePermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
@@ -100,5 +104,15 @@ public class TenantAdminPermissions extends AbstractPermissions {
             return true;
         }
 
+    };
+
+    private static final PermissionChecker entityProfilePermissionChecker = new PermissionChecker<EntityProfileId, EntityProfile>() {
+        final Set<EntityType> SUPPORTED_TYPES = EnumSet.of(EntityType.ASSET, EntityType.DEVICE, EntityType.CUSTOMER);
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityProfileId entityId, EntityProfile entity) {
+            return tenantEntityPermissionChecker.hasPermission(user, operation, entityId, entity) &&
+                    SUPPORTED_TYPES.contains(entity.getEntityType());
+        }
     };
 }

@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@Builder
+@Builder(toBuilder = true)
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(exclude = {"profile", "profileBytes", "additionalInfo", "additionalInfoBytes"})
