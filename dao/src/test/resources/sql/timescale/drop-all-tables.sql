@@ -22,3 +22,4 @@ DROP TABLE IF EXISTS rule_node;
 DROP TABLE IF EXISTS rule_chain;
 DROP TABLE IF EXISTS entity_view;
 DROP TABLE IF EXISTS tb_schema_settings;
+DROP TABLE IF EXISTS entity_profile;
