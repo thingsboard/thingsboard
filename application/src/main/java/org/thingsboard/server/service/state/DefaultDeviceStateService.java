@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityprofile.EntityProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
@@ -56,6 +58,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.profile.DeviceProfile;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -88,6 +91,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @Service
 @TbCoreComponent
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultDeviceStateService implements DeviceStateService {
 
     private static final ObjectMapper json = new ObjectMapper();
@@ -107,6 +111,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private final TimeseriesService tsService;
     private final TbClusterService clusterService;
     private final PartitionService partitionService;
+    private final EntityProfileService entityProfileService;
 
     private TelemetrySubscriptionService tsSubService;
 
@@ -133,17 +138,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, Long> deviceLastReportedActivity = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, Long> deviceLastSavedActivity = new ConcurrentHashMap<>();
-
-    public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
-                                     AttributesService attributesService, TimeseriesService tsService,
-                                     TbClusterService clusterService, PartitionService partitionService) {
-        this.tenantService = tenantService;
-        this.deviceService = deviceService;
-        this.attributesService = attributesService;
-        this.tsService = tsService;
-        this.clusterService = clusterService;
-        this.partitionService = partitionService;
-    }
 
     @Autowired
     public void setTsSubService(TelemetrySubscriptionService tsSubService) {
@@ -461,9 +455,10 @@ public class DefaultDeviceStateService implements DeviceStateService {
             @Override
             public DeviceStateData apply(@Nullable List<T> data) {
                 try {
+                    DeviceProfile deviceProfile = entityProfileService.findProfile(device, DeviceProfile.class);
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
-                    long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+                    long inactivityTimeout = deviceProfile.getInactivityTimeout();
                     boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
                     DeviceState deviceState = DeviceState.builder()
                             .active(active)

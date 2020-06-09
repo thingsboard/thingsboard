@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS device (
     label varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
+    entity_profile_id varchar(31),
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
 );
 

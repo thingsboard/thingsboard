@@ -16,17 +16,21 @@
 package org.thingsboard.server.common.data;
 
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.entityprofile.HasEntityProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @EqualsAndHashCode(callSuper = true)
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId>
+        implements HasName, HasTenantId, HasCustomerId, HasEntityProfileId {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
     private TenantId tenantId;
     private CustomerId customerId;
+    private EntityProfileId entityProfileId;
     private String name;
     private String type;
     private String label;
@@ -62,6 +66,15 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
 
     public void setCustomerId(CustomerId customerId) {
         this.customerId = customerId;
+    }
+
+    @Override
+    public EntityProfileId getEntityProfileId() {
+        return entityProfileId;
+    }
+
+    public void setEntityProfileId(EntityProfileId entityProfileId) {
+        this.entityProfileId = entityProfileId;
     }
 
     @Override

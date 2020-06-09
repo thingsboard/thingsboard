@@ -25,3 +25,6 @@ CREATE TABLE IF NOT EXISTS entity_profile (
     additional_info varchar,
     CONSTRAINT name_tenant_id_type_unq_key UNIQUE (tenant_id, entity_type, name)
 );
+
+alter table e.message
+    add entity_profile_id customer_id varchar(31);
