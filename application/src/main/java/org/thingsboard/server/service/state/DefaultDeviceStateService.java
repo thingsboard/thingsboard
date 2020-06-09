@@ -455,6 +455,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             @Override
             public DeviceStateData apply(@Nullable List<T> data) {
                 try {
+                    //todo: replace this with cache
                     DeviceProfile deviceProfile = entityProfileService.findProfile(device, DeviceProfile.class);
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
