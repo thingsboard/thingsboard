@@ -49,6 +49,21 @@ public final class RestTemplateBuilder {
     private RestTemplateBuilder() {
     }
 
+    public static RestTemplate buildBySystemProperties() {
+        boolean jdkHttpClientEnabled = StringUtils.isNotEmpty(System.getProperty("tb.proxy.jdk")) && System.getProperty("tb.proxy.jdk").equalsIgnoreCase("true");
+        boolean systemProxyEnabled = StringUtils.isNotEmpty(System.getProperty("tb.proxy.system")) && System.getProperty("tb.proxy.system").equalsIgnoreCase("true");
+        return RestTemplateBuilder
+                .builder()
+                .proxyHost(System.getProperty("tb.proxy.host"))
+                .proxyPort(StringUtils.isNotEmpty(System.getProperty("tb.proxy.port")) ? Integer.parseInt(System.getProperty("tb.proxy.port")) : null)
+                .proxyUser(System.getProperty("tb.proxy.user"))
+                .proxyPassword(System.getProperty("tb.proxy.password"))
+                .proxyHostScheme(System.getProperty("tb.proxy.scheme"))
+                .jdkHttpClientEnabled(jdkHttpClientEnabled)
+                .systemProxyEnabled(systemProxyEnabled)
+                .build();
+    }
+
     public static RestTemplateBuilder builder() {
         return new RestTemplateBuilder();
     }
