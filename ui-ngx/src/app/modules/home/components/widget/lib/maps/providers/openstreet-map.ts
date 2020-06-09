@@ -17,10 +17,11 @@
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { UnitedMapSettings } from '../map-models';
+import { WidgetContext } from '@home/models/widget-component.models';
 
 export class OpenStreetMap extends LeafletMap {
-    constructor($container, options: UnitedMapSettings) {
-        super($container, options);
+    constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
+        super(ctx, $container, options);
         const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
         let tileLayer;
         if (options.useCustomProvider)

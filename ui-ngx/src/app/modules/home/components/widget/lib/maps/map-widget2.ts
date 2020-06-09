@@ -17,26 +17,18 @@
 import { defaultSettings, hereProviders, MapProviders, providerSets, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
-    commonMapSettingsSchema,
-    mapPolygonSchema,
-    mapProviderSchema,
-    markerClusteringSettingsSchema,
-    markerClusteringSettingsSchemaLeaflet,
-    routeMapSettingsSchema
+  commonMapSettingsSchema,
+  mapPolygonSchema,
+  mapProviderSchema,
+  markerClusteringSettingsSchema,
+  markerClusteringSettingsSchemaLeaflet,
+  routeMapSettingsSchema
 } from './schemes';
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
 import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
-import { of, Subject } from 'rxjs';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition, parseArray, parseData, parseFunction, parseWithTranslation } from './maps-utils';
-import {
-    Datasource,
-    DatasourceType,
-    JsonSettingsSchema,
-    WidgetActionDescriptor,
-    widgetType,
-    DatasourceData
-} from '@shared/models/widget.models';
+import { Datasource, DatasourceData, JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -76,8 +68,7 @@ export class MapWidgetController implements MapWidgetInterface {
             return;
         }
         parseWithTranslation.setTranslate(this.translate);
-        this.map = new MapClass($element, this.settings, this.ctx.$injector);
-        this.map.setImageAlias(this.subscribeForImageAttribute());
+        this.map = new MapClass(this.ctx, $element, this.settings, this.ctx.$injector);
         this.map.saveMarkerLocation = this.setMarkerLocation;
         if (this.settings.draggableMarker) {
             this.map.setDataSources(parseData(this.data));
@@ -261,48 +252,6 @@ export class MapWidgetController implements MapWidgetInterface {
     resize() {
         this.map?.invalidateSize();
         this.map.onResize();
-    }
-
-    subscribeForImageAttribute() {
-        const imageEntityAlias = this.settings.imageEntityAlias;
-        const imageUrlAttribute = this.settings.imageUrlAttribute;
-        if (!imageEntityAlias || !imageUrlAttribute) {
-            return of(false);
-        }
-        const entityAliasId = this.ctx.aliasController.getEntityAliasId(imageEntityAlias);
-        if (!entityAliasId) {
-            return of(false);
-        }
-        const datasources = [
-            {
-                type: DatasourceType.entity,
-                name: imageEntityAlias,
-                aliasName: imageEntityAlias,
-                entityAliasId,
-                dataKeys: [
-                    {
-                        type: DataKeyType.attribute,
-                        name: imageUrlAttribute,
-                        label: imageUrlAttribute,
-                        settings: {},
-                        _hash: Math.random()
-                    }
-                ]
-            }
-        ];
-        const result = new Subject();
-        const imageUrlSubscriptionOptions = {
-            datasources,
-            useDashboardTimewindow: false,
-            type: widgetType.latest,
-            callbacks: {
-                onDataUpdated: (subscription) => {
-                    result.next(subscription?.data[0]?.data[0]);
-                }
-            }
-        };
-        this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe(() => { });
-        return result;
     }
 
     onDestroy() {

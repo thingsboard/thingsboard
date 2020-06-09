@@ -21,6 +21,7 @@ import { UnitedMapSettings } from '../map-models';
 import 'leaflet.gridlayer.googlemutant';
 import { ResourcesService } from '@core/services/resources.service';
 import { Injector } from '@angular/core';
+import { WidgetContext } from '@home/models/widget-component.models';
 
 const gmGlobals: GmGlobal = {};
 
@@ -31,8 +32,8 @@ interface GmGlobal {
 export class GoogleMap extends LeafletMap {
   private resource: ResourcesService;
 
-  constructor($container, options: UnitedMapSettings, private injector: Injector) {
-    super($container, options);
+  constructor(ctx: WidgetContext, $container, options: UnitedMapSettings, private injector: Injector) {
+    super(ctx, $container, options);
     this.resource = injector.get(ResourcesService);
     this.loadGoogle(() => {
       const map = L.map($container, {attributionControl: false}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
