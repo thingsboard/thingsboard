@@ -32,9 +32,9 @@ interface GmGlobal {
 export class GoogleMap extends LeafletMap {
   private resource: ResourcesService;
 
-  constructor(ctx: WidgetContext, $container, options: UnitedMapSettings, private injector: Injector) {
+  constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
     super(ctx, $container, options);
-    this.resource = injector.get(ResourcesService);
+    this.resource = ctx.$injector.get(ResourcesService);
     this.loadGoogle(() => {
       const map = L.map($container, {attributionControl: false}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
       (L.gridLayer as any).googleMutant({
