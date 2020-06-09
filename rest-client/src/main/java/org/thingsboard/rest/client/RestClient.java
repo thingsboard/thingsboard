@@ -18,6 +18,7 @@ package org.thingsboard.rest.client;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Builder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -31,6 +32,7 @@ import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.common.util.RestTemplateBuilder;
 import org.thingsboard.rest.client.utils.RestJsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ClaimRequest;
@@ -45,7 +47,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -56,6 +57,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -127,6 +129,22 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     public RestClient(RestTemplate restTemplate, String baseURL) {
         this.restTemplate = restTemplate;
         this.baseURL = baseURL;
+    }
+
+    @Builder
+    public RestClient(String baseURL, String proxyHost, Integer proxyPort, String proxyUser, String proxyPassword,
+                      String proxyHostScheme, boolean jdkHttpClientEnabled, boolean systemProxyEnabled) {
+        this.baseURL = baseURL;
+        this.restTemplate = RestTemplateBuilder
+                .builder()
+                .proxyHost(proxyHost)
+                .proxyPort(proxyPort)
+                .proxyUser(proxyUser)
+                .proxyPassword(proxyPassword)
+                .proxyHostScheme(proxyHostScheme)
+                .jdkHttpClientEnabled(jdkHttpClientEnabled)
+                .systemProxyEnabled(systemProxyEnabled)
+                .build();
     }
 
     @Override

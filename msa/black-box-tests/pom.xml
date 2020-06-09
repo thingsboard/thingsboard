@@ -38,7 +38,6 @@
         <testcontainers.version>1.9.1</testcontainers.version>
         <zeroturnaround.version>1.10</zeroturnaround.version>
         <java-websocket.version>1.3.9</java-websocket.version>
-        <httpclient.version>4.5.6</httpclient.version>
     </properties>
 
     <dependencies>
@@ -60,7 +59,6 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>${httpclient.version}</version>
         </dependency>
         <dependency>
             <groupId>io.takari.junit</groupId>

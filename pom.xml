@@ -106,6 +106,7 @@
         <ua-parser.version>1.4.3</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-collections.version>3.2.2</commons-collections.version>
+        <httpclient.version>4.5.8</httpclient.version>
     </properties>
 
     <modules>
@@ -1376,6 +1377,11 @@
                 <groupId>org.apache.struts</groupId>
                 <artifactId>struts-tiles</artifactId>
                 <version>${struts.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
