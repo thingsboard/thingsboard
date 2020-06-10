@@ -25,6 +25,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -56,6 +57,10 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private DeviceService deviceService;
+
+    @Lazy
+    @Autowired
+    private DeviceCredentialsService deviceCredentialsService;
 
     @Lazy
     @Autowired
