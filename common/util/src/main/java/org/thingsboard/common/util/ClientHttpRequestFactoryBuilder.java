@@ -26,9 +26,9 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.web.client.RestTemplate;
 
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
@@ -36,7 +36,8 @@ import java.net.PasswordAuthentication;
 import java.net.Proxy;
 
 @Slf4j
-public final class RestTemplateBuilder {
+public class ClientHttpRequestFactoryBuilder {
+    private static final int DEFAULT_READ_TIMEOUT = -1;
 
     private String proxyHost;
     private Integer proxyPort;
@@ -45,14 +46,19 @@ public final class RestTemplateBuilder {
     private String proxyHostScheme;
     private boolean jdkHttpClientEnabled;
     private boolean systemProxyEnabled;
+    private int readTimeout = DEFAULT_READ_TIMEOUT;
 
-    private RestTemplateBuilder() {
+    private ClientHttpRequestFactoryBuilder() {
     }
 
-    public static RestTemplate buildBySystemProperties() {
+    public static ClientHttpRequestFactory buildBySystemProperties() {
+        return buildBySystemProperties(DEFAULT_READ_TIMEOUT);
+    }
+
+    public static ClientHttpRequestFactory buildBySystemProperties(int readTimeout) {
         boolean jdkHttpClientEnabled = StringUtils.isNotEmpty(System.getProperty("tb.proxy.jdk")) && System.getProperty("tb.proxy.jdk").equalsIgnoreCase("true");
         boolean systemProxyEnabled = StringUtils.isNotEmpty(System.getProperty("tb.proxy.system")) && System.getProperty("tb.proxy.system").equalsIgnoreCase("true");
-        return RestTemplateBuilder
+        return ClientHttpRequestFactoryBuilder
                 .builder()
                 .proxyHost(System.getProperty("tb.proxy.host"))
                 .proxyPort(StringUtils.isNotEmpty(System.getProperty("tb.proxy.port")) ? Integer.parseInt(System.getProperty("tb.proxy.port")) : null)
@@ -61,49 +67,55 @@ public final class RestTemplateBuilder {
                 .proxyHostScheme(System.getProperty("tb.proxy.scheme"))
                 .jdkHttpClientEnabled(jdkHttpClientEnabled)
                 .systemProxyEnabled(systemProxyEnabled)
+                .readTimeout(readTimeout)
                 .build();
     }
 
-    public static RestTemplateBuilder builder() {
-        return new RestTemplateBuilder();
+    public static ClientHttpRequestFactoryBuilder builder() {
+        return new ClientHttpRequestFactoryBuilder();
     }
 
-    public RestTemplateBuilder proxyHost(String proxyHost) {
+    public ClientHttpRequestFactoryBuilder proxyHost(String proxyHost) {
         this.proxyHost = proxyHost;
         return this;
     }
 
-    public RestTemplateBuilder proxyPort(Integer proxyPort) {
+    public ClientHttpRequestFactoryBuilder proxyPort(Integer proxyPort) {
         this.proxyPort = proxyPort;
         return this;
     }
 
-    public RestTemplateBuilder proxyUser(String proxyUser) {
+    public ClientHttpRequestFactoryBuilder proxyUser(String proxyUser) {
         this.proxyUser = proxyUser;
         return this;
     }
 
-    public RestTemplateBuilder proxyPassword(String proxyPassword) {
+    public ClientHttpRequestFactoryBuilder proxyPassword(String proxyPassword) {
         this.proxyPassword = proxyPassword;
         return this;
     }
 
-    public RestTemplateBuilder proxyHostScheme(String proxyHostScheme) {
+    public ClientHttpRequestFactoryBuilder proxyHostScheme(String proxyHostScheme) {
         this.proxyHostScheme = proxyHostScheme;
         return this;
     }
 
-    public RestTemplateBuilder jdkHttpClientEnabled(boolean jdkHttpClientEnabled) {
+    public ClientHttpRequestFactoryBuilder jdkHttpClientEnabled(boolean jdkHttpClientEnabled) {
         this.jdkHttpClientEnabled = jdkHttpClientEnabled;
         return this;
     }
 
-    public RestTemplateBuilder systemProxyEnabled(boolean systemProxyEnabled) {
+    public ClientHttpRequestFactoryBuilder systemProxyEnabled(boolean systemProxyEnabled) {
         this.systemProxyEnabled = systemProxyEnabled;
         return this;
     }
 
-    public RestTemplate build() {
+    public ClientHttpRequestFactoryBuilder readTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
+        return this;
+    }
+
+    public ClientHttpRequestFactory build() {
         boolean proxyEnabled = StringUtils.isNotEmpty(proxyHost) && proxyPort != null;
         boolean useAuth = StringUtils.isNotEmpty(proxyUser) && StringUtils.isNotEmpty(proxyPassword);
 
@@ -121,9 +133,13 @@ public final class RestTemplateBuilder {
                         return new PasswordAuthentication(proxyUser, proxyPassword.toCharArray());
                     }
                 });
+                System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
             }
 
-            return new RestTemplate(factory);
+            if (readTimeout >= 0) {
+                factory.setReadTimeout(readTimeout);
+            }
+            return factory;
         } else {
             CloseableHttpClient httpClient;
             HttpComponentsClientHttpRequestFactory requestFactory;
@@ -141,7 +157,10 @@ public final class RestTemplateBuilder {
                     });
                 }
 
-                return new RestTemplate(requestFactory);
+                if (readTimeout >= 0) {
+                    requestFactory.setReadTimeout(readTimeout);
+                }
+                return requestFactory;
             } else if (proxyEnabled) {
                 log.warn("Going to use Proxy Server: [{}:{}]", proxyHost, proxyPort);
                 HttpClientBuilder httpClientBuilder = HttpClients
@@ -160,12 +179,18 @@ public final class RestTemplateBuilder {
                 httpClient = httpClientBuilder.build();
                 requestFactory = new HttpComponentsClientHttpRequestFactory();
                 requestFactory.setHttpClient(httpClient);
-                return new RestTemplate(requestFactory);
+                if (readTimeout >= 0) {
+                    requestFactory.setReadTimeout(readTimeout);
+                }
+                return requestFactory;
             } else {
                 httpClient = HttpClients.custom().setSSLHostnameVerifier(new DefaultHostnameVerifier()).build();
                 requestFactory = new HttpComponentsClientHttpRequestFactory();
                 requestFactory.setHttpClient(httpClient);
-                return new RestTemplate(requestFactory);
+                if (readTimeout >= 0) {
+                    requestFactory.setReadTimeout(readTimeout);
+                }
+                return requestFactory;
             }
         }
     }

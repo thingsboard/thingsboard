@@ -26,13 +26,14 @@ import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.common.util.RestTemplateBuilder;
+import org.thingsboard.common.util.ClientHttpRequestFactoryBuilder;
 import org.thingsboard.rest.client.utils.RestJsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ClaimRequest;
@@ -133,9 +134,9 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     @Builder
     public RestClient(String baseURL, String proxyHost, Integer proxyPort, String proxyUser, String proxyPassword,
-                      String proxyHostScheme, boolean jdkHttpClientEnabled, boolean systemProxyEnabled) {
+                      String proxyHostScheme, boolean jdkHttpClientEnabled, boolean systemProxyEnabled, int readTimeout) {
         this.baseURL = baseURL;
-        this.restTemplate = RestTemplateBuilder
+        ClientHttpRequestFactory factory = ClientHttpRequestFactoryBuilder
                 .builder()
                 .proxyHost(proxyHost)
                 .proxyPort(proxyPort)
@@ -144,7 +145,9 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 .proxyHostScheme(proxyHostScheme)
                 .jdkHttpClientEnabled(jdkHttpClientEnabled)
                 .systemProxyEnabled(systemProxyEnabled)
+                .readTimeout(readTimeout)
                 .build();
+        this.restTemplate = new RestTemplate(factory);
     }
 
     @Override
