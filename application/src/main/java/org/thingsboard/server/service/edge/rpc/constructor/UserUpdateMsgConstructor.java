@@ -35,6 +35,8 @@ public class UserUpdateMsgConstructor {
     public UserUpdateMsg constructUserUpdatedMsg(UpdateMsgType msgType, User user) {
         UserUpdateMsg.Builder builder = UserUpdateMsg.newBuilder()
                 .setMsgType(msgType)
+                .setIdMSB(user.getId().getId().getMostSignificantBits())
+                .setIdLSB(user.getId().getId().getLeastSignificantBits())
                 .setEmail(user.getEmail())
                 .setAuthority(user.getAuthority().name())
                 .setEnabled(false);

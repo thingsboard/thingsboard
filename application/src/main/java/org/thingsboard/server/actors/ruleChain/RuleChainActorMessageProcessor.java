@@ -224,6 +224,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 if (targetCtx != null) {
                     log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
                     pushMsgToNode(targetCtx, msg, "");
+                    pushUpdatesToEdges(msg);
                 } else {
                     log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
                     msg.getCallback().onSuccess();
@@ -346,7 +347,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg, String fromRelationType) {
         if (nodeCtx != null) {
-            pushUpdatesToEdges(msg);
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg, fromRelationType), self);
         } else {
             log.error("[{}][{}] RuleNodeCtx is empty", entityId, ruleChainName);

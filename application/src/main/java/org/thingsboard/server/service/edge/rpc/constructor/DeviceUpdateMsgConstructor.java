@@ -34,6 +34,8 @@ public class DeviceUpdateMsgConstructor {
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
+                .setIdMSB(device.getId().getId().getMostSignificantBits())
+                .setIdLSB(device.getId().getId().getLeastSignificantBits())
                 .setName(device.getName())
                 .setType(device.getType());
         if (device.getLabel() != null) {

@@ -141,7 +141,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                     log.debug("[{}] Entity update message received {}", edgeKey, responseMsg.getEntityUpdateMsg());
                     onEntityUpdate.accept(responseMsg.getEntityUpdateMsg());
                 } else if (responseMsg.hasDownlinkMsg()) {
-                    log.debug("[{}] Downlink message received for rule chain {}", edgeKey, responseMsg.getDownlinkMsg());
+                    log.debug("[{}] Downlink message received {}", edgeKey, responseMsg.getDownlinkMsg());
                     onDownlink.accept(responseMsg.getDownlinkMsg());
                 }
             }

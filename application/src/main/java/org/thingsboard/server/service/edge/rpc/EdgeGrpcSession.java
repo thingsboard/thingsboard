@@ -274,7 +274,7 @@ public final class EdgeGrpcSession implements Closeable {
                                 , objectMapper.writeValueAsString(entityNode));
                         log.debug("Sending donwlink entity data msg, entityName [{}], tbMsg [{}]", finalEntityName, tbMsg);
                         outputStream.onNext(ResponseMsg.newBuilder()
-                                .setDownlinkMsg(constructDownlinkEntityDataMsg(finalEntityName, tbMsg))
+                                .setDownlinkMsg(constructDownlinkEntityDataMsg(finalEntityName, finalEntityId, tbMsg))
                                 .build());
                     } catch (Exception e) {
                         log.error("[{}] Failed to send attribute updates to the edge", edge.getName(), e);
@@ -291,25 +291,29 @@ public final class EdgeGrpcSession implements Closeable {
         log.trace("Executing processCustomDownlinkMessage, entry [{}]", entry);
         TbMsg tbMsg = TbMsg.fromBytes(Base64.decodeBase64(entry.getData()), TbMsgCallback.EMPTY);
         String entityName = null;
+        EntityId entityId = null;
         switch (entry.getEntityType()) {
             case DEVICE:
                 Device device = ctx.getDeviceService().findDeviceById(edge.getTenantId(), new DeviceId(tbMsg.getOriginator().getId()));
                 entityName = device.getName();
+                entityId = device.getId();
                 break;
             case ASSET:
                 Asset asset = ctx.getAssetService().findAssetById(edge.getTenantId(), new AssetId(tbMsg.getOriginator().getId()));
                 entityName = asset.getName();
+                entityId = asset.getId();
                 break;
             case ENTITY_VIEW:
                 EntityView entityView = ctx.getEntityViewService().findEntityViewById(edge.getTenantId(), new EntityViewId(tbMsg.getOriginator().getId()));
                 entityName = entityView.getName();
+                entityId = entityView.getId();
                 break;
 
         }
-        if (entityName != null) {
-            log.debug("Sending donwlink entity data msg, entityName [{}], tbMsg [{}]", entityName, tbMsg);
+        if (entityName != null && entityId != null) {
+            log.debug("Sending downlink entity data msg, entityName [{}], tbMsg [{}]", entityName, tbMsg);
             outputStream.onNext(ResponseMsg.newBuilder()
-                    .setDownlinkMsg(constructDownlinkEntityDataMsg(entityName, tbMsg))
+                    .setDownlinkMsg(constructDownlinkEntityDataMsg(entityName, entityId, tbMsg))
                     .build());
         }
     }
@@ -482,10 +486,13 @@ public final class EdgeGrpcSession implements Closeable {
         }
     }
 
-    private DownlinkMsg constructDownlinkEntityDataMsg(String entityName, TbMsg tbMsg) {
+    private DownlinkMsg constructDownlinkEntityDataMsg(String entityName, EntityId entityId, TbMsg tbMsg) {
         EntityDataProto entityData = EntityDataProto.newBuilder()
                 .setEntityName(entityName)
-                .setTbMsg(ByteString.copyFrom(TbMsg.toByteArray(tbMsg))).build();
+                .setTbMsg(ByteString.copyFrom(TbMsg.toByteArray(tbMsg)))
+                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
+                .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
+                .build();
 
         DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                 .addAllEntityData(Collections.singletonList(entityData));

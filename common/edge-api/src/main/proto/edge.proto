@@ -99,7 +99,9 @@ enum UpdateMsgType {
 message EntityDataProto {
   string entityName = 1;
   string entityType = 2;
-  bytes tbMsg = 3;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  bytes tbMsg = 5;
 }
 
 message RuleChainUpdateMsg {
@@ -159,31 +161,37 @@ message DashboardUpdateMsg {
 
 message DeviceUpdateMsg {
   UpdateMsgType msgType = 1;
-  string name = 2;
-  string type = 3;
-  string label = 4;
-  string credentialsType = 5;
-  string credentialsId = 6;
-  string credentialsValue = 7;
-  string groupName = 8;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string type = 5;
+  string label = 6;
+  string credentialsType = 7;
+  string credentialsId = 8;
+  string credentialsValue = 9;
+  string groupName = 10;
 }
 
 message AssetUpdateMsg {
   UpdateMsgType msgType = 1;
-  string name = 2;
-  string type = 3;
-  string label = 4;
-  string groupName = 5;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string type = 5;
+  string label = 6;
+  string groupName = 7;
 }
 
 message EntityViewUpdateMsg {
   UpdateMsgType msgType = 1;
-  string name = 2;
-  string type = 3;
-  string relatedName = 4;
-  string relatedType = 5;
-  EdgeEntityType relatedEntityType = 6;
-  string groupName = 7;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string type = 5;
+  int64 entityIdMSB = 6;
+  int64 entityIdLSB = 7;
+  EdgeEntityType entityType = 8;
+  string groupName = 9;
 }
 
 message AlarmUpdateMsg {
@@ -220,14 +228,16 @@ message CustomerUpdateMsg {
 
 message UserUpdateMsg {
   UpdateMsgType msgType = 1;
-  string email = 2;
-  string authority = 3;
-  string firstName = 4;
-  string lastName = 5;
-  string additionalInfo = 6;
-  bool enabled = 7;
-  string password = 8;
-  string groupName = 9;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string email = 4;
+  string authority = 5;
+  string firstName = 6;
+  string lastName = 7;
+  string additionalInfo = 8;
+  bool enabled = 9;
+  string password = 10;
+  string groupName = 11;
 }
 
 message RuleChainMetadataRequestMsg {
