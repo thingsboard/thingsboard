@@ -28,48 +28,48 @@ import java.util.List;
 
 @Slf4j
 @Data
-public class LwM2MServerCredentials {
+public class LwM2mRPkCredentials {
     PublicKey serverPublicKey;
     PrivateKey serverPrivateKey;
     X509Certificate certificate;
     List<Certificate> trustStore;
 
     /**
-     * create server RPK credentials
+     * create All key RPK credentials
      * @param publX
      * @param publY
      * @param privS
      */
-    public LwM2MServerCredentials(String publX, String publY, String privS) {
-        generateServerKeyRPK(publX, publY, privS);
-//        log.info("spublk_X: [{}] [{}]",  publX.toUpperCase(), publX.length());
-//        log.info("spublk_Y: [{}] [{}]",  publY.toUpperCase(), publY.length());
-//        log.info("spublk: [{}]",  Hex.encodeHexString(this.serverPublicKey.getEncoded()).toUpperCase());
-//        log.info("spriv_S: [{}] [{}]",  privS.toUpperCase(), privS.length());
-//        log.info("sprivk: [{}]",  Hex.encodeHexString(this.serverPrivateKey.getEncoded()).toUpperCase());
+    public LwM2mRPkCredentials(String publX, String publY, String privS) {
+        generatePublicKeyRPK(publX, publY, privS);
     }
 
-    private void generateServerKeyRPK(String publX, String publY, String privS) {
+    private void generatePublicKeyRPK(String publX, String publY, String privS) {
         try {
-            // Get point values
-            byte[] publicX = Hex.decodeHex(publX.toCharArray());
-            byte[] publicY = Hex.decodeHex(publY.toCharArray());
-            byte[] privateS = Hex.decodeHex(privS.toCharArray());
-
             // Get Elliptic Curve Parameter spec for secp256r1
             AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
             algoParameters.init(new ECGenParameterSpec("secp256r1"));
             ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-
-            // Create key specs
-            KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
-                    parameterSpec);
-            KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
-
-            // Get keys
-            this.serverPublicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
-            this.serverPrivateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
-        } catch (GeneralSecurityException e) {
+             if (publX != null && !publX.isEmpty() && publY != null && !publY.isEmpty()) {
+                // Get point values
+                byte[] publicX = Hex.decodeHex(publX.toCharArray());
+                byte[] publicY = Hex.decodeHex(publY.toCharArray());
+                // Create key specs
+                KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
+                        parameterSpec);
+                // Get keys
+                this.serverPublicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
+            }
+            if (privS != null && !privS.isEmpty()) {
+                // Get point values
+                byte[] privateS = Hex.decodeHex(privS.toCharArray());
+                // Create key specs
+                KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
+                // Get keys
+                this.serverPrivateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
+            }
+        } catch (GeneralSecurityException | IllegalArgumentException e) {
+            log.error("[{}] Failed generate Server KeyRPK", e.getMessage());
             throw new RuntimeException(e);
         }
     }

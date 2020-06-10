@@ -40,7 +40,7 @@ import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2mInMemorySecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResult;
+import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
 
 import java.util.NoSuchElementException;
@@ -76,10 +76,8 @@ public class LwM2MTransportService {
 
     public void onRegistered(Registration registration) {
         String endpointId = registration.getEndpoint();
-//        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
-//        String lwm2mVersion = registration.getLwM2mVersion();
-//
-//        log.info("[{}] [{}] Received endpoint registration version event", endpointId, lwm2mVersion);
+        String lwm2mVersion = registration.getLwM2mVersion();
+        log.info("[{}] [{}] Received endpoint registration version event", endpointId, lwm2mVersion);
 ////        String jReg = this.gson.toJson(registration);
 //        TransportProtos.LwM2MRegistrationRequestMsg registrationRequestMsg = TransportProtos.LwM2MRegistrationRequestMsg.newBuilder()
 //                .setTenantId(context.getTenantId())
@@ -111,7 +109,7 @@ public class LwM2MTransportService {
 //                cResponse =  lwM2MTransportRequest.doGet(endpointId,  traget, typeOper, ContentFormat.TLV.getName());
 //                log.info("[{}] [{}] [{}] Ok process get request: [{}]", endpointId, traget, typeOper, cResponse);
 //                SecurityInfo info = getPSK(endpointId);
-//                ReadResult readResult = doGetAttributsTelemetry(endpointId);
+//                ReadResultAttrTel readResult = doGetAttributsTelemetry(endpointId);
 //                processDevicePublish(readResult.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
 //                processDevicePublish(readResult.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
 //            }
@@ -176,7 +174,7 @@ public class LwM2MTransportService {
         TransportProtos.SessionInfoProto sessionInfo = null;
         TransportProtos.ValidateDeviceCredentialsResponseMsg msg = context.getSessions().get(endpointId);
         if (msg == null || msg.getDeviceInfo()== null) {
-            log.warn(CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
+            log.warn("[{}] [{}]", endpointId, CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
         } else {
             sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
                     .setNodeId(context.getNodeId())
@@ -200,9 +198,9 @@ public class LwM2MTransportService {
         String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
         log.info("[{}] [{}] Received endpoint updated registration version event", endpointId, lwm2mVersion);
-        ReadResult readResult = doGetAttributsTelemetry(endpointId);
-        processDevicePublish(readResult.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
-        processDevicePublish(readResult.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
+        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetry(endpointId);
+        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
+        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
     }
 
     public void unReg(Registration registration) {
@@ -247,12 +245,12 @@ public class LwM2MTransportService {
     }
 
     @SneakyThrows
-    public ReadResult doGetAttributsTelemetry(String clientEndpoint) {
-        ReadResult readResult = new ReadResult();
+    public ReadResultAttrTel doGetAttributsTelemetry(String clientEndpoint) {
+        ReadResultAttrTel readResultAttrTel = new ReadResultAttrTel();
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
             log.info("Attributes: Key : [{}] Value : [{}]", entry.getKey(), entry.getValue());
-            readResult.getPostAttribute().addProperty(entry.getKey(), entry.getValue());
+            readResultAttrTel.getPostAttribute().addProperty(entry.getKey(), entry.getValue());
         });
         lwServer.getModelProvider().getObjectModel(registration).getObjectModels().forEach(om -> {
             String idObj = String.valueOf(om.id);
@@ -267,15 +265,15 @@ public class LwM2MTransportService {
                         String attrTelName = om.name + "_" + instanceId + "_" + om.resources.get(resourceId).name;
                         log.info("resource.getValue() [{}] : [{}] -> [{}]", attrTelName, resourceValue, om.resources.get(resourceId).operations.name());
                         if ((om.resources.get(resourceId).operations.name().equals("R"))) {
-                            readResult.getPostAttribute().addProperty(attrTelName, resourceValue);
+                            readResultAttrTel.getPostAttribute().addProperty(attrTelName, resourceValue);
                         } else {
-                            readResult.getPostTelemetry().addProperty(attrTelName, resourceValue);
+                            readResultAttrTel.getPostTelemetry().addProperty(attrTelName, resourceValue);
                         }
                     });
                 });
             }
         });
-        return readResult;
+        return readResultAttrTel;
     }
 
     private String getResourceValueToString(LwM2mResource resource) {

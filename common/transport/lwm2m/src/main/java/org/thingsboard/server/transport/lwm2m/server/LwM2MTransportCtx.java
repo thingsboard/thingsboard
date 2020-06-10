@@ -40,6 +40,32 @@ public class LwM2MTransportCtx extends TransportContext {
     private Integer port;
 
     @Getter
+    @Value("${transport.lwm2m.timeout:5000}")
+    private Long timeout;
+
+    @Getter
+    @Value("${transport.lwm2m.model_folder_path:}")
+    private String modelFolderPath;
+
+    @Getter
+    @Value("${transport.lwm2m.support_deprecated_ciphers_enable:}")
+    private boolean supportDeprecatedCiphersEnable;
+
+    @Getter
+    @Value("${transport.lwm2m.no_sec_enabled:}")
+    private boolean noSecEnabled;
+
+    /**
+     * leshan.core (V1_1)
+     * DTLS security modes:
+     * 0: Pre-Shared Key mode
+     * 1: Raw Public Key mode
+     * 2: Certificate mode X509
+     * 3: NoSec mode  *
+     * OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
+     * 4: Certificate mode X509 with EST
+     */
+    @Getter
     @Value("${transport.lwm2m.secure.bind_address:localhost}")
     private String secureHost;
 
@@ -47,9 +73,55 @@ public class LwM2MTransportCtx extends TransportContext {
     @Value("${transport.lwm2m.secure.bind_port:5686}")
     private Integer securePort;
 
+    /**
+     * Pre-Shared Key: DTLS security mode = 0
+     */
     @Getter
-    @Value("${transport.lwm2m.timeout:5000}")
-    private Long timeout;
+    @Value("${transport.lwm2m.secure.psk.enabled:}")
+    private boolean pskEnabled;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.psk.server.private_s:}")
+    private String pskPrivateServerS;
+
+    /**
+     * Raw Public Key: DTLS security mode = 1
+     */
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.enabled:}")
+    private boolean rpkEnabled;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.server.public_x:}")
+    private String rpkPublicServerX;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.server.public_y:}")
+    private String rpkPublicServerY;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.server.private_s:}")
+    private String rpkPrivateServerS;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.client.public_x:}")
+    private String publicClientX;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.client.public_y:}")
+    private String rpkPublicClientY;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.client.public_encoded:}")
+    private String publicClientEncoded;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.client.private_s:}")
+    private String rpkPrivateClientS;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.rpk.client.private_encoded:}")
+    private String rpkPrivateClientEncoded;
 
     @Getter
     @Value("${transport.lwm2m.secure.x509.enabled:}")
@@ -80,6 +152,17 @@ public class LwM2MTransportCtx extends TransportContext {
     private String aliasServer;
 
     @Getter
+    @Value("${transport.lwm2m.secure.x509_est.enabled:}")
+    private boolean X509EstEnabled;
+
+    @Getter
+    @Value("${transport.lwm2m.secure.redis_url:}")
+    private String redisUrl;
+
+    /**
+     * Test integration - client
+     */
+    @Getter
     @Value("${transport.lwm2m.secure.x509.client.key_store_path:}")
     private String keyStorePathClient;
 
@@ -90,54 +173,6 @@ public class LwM2MTransportCtx extends TransportContext {
     @Getter
     @Value("${transport.lwm2m.secure.x509.client.alias:}")
     private String aliasClient;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.enabled:}")
-    private boolean rpkEnabled;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.server.public_x:}")
-    private String publicServerX;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.server.public_y:}")
-    private String publicServerY;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.server.public_encoded:}")
-    private String publicServerEncoded;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.server.private_s:}")
-    private String privateServerS;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.server.private_encoded:}")
-    private String privateServerEncoded;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.client.public_x:}")
-    private String publicClientX;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.client.public_y:}")
-    private String publicClientY;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.client.public_encoded:}")
-    private String publicClientEncoded;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.client.private_s:}")
-    private String privateClientS;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.rpk.client.private_encoded:}")
-    private String privateClientEncoded;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.redis_url:}")
-    private String redisUrl;
 
     @Getter
     @Setter

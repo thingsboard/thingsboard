@@ -38,22 +38,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2mInMemorySecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.credentials.LwM2MServerCredentials;
+import org.thingsboard.server.transport.lwm2m.server.credentials.LwM2mRPkCredentials;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.Pool;
 
-import java.security.KeyStore;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.List;
+
+import static org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider.*;
 
 @Slf4j
 @Configuration("LwM2MTransportServerConfiguration")
@@ -66,8 +66,6 @@ public class LwM2MTransportServerConfiguration {
     @Autowired
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
-    private final static String[] modelPaths = LwM2MProvider.modelPaths;
-
     @Bean
     public LeshanServer getLeshanServer() throws URISyntaxException {
         log.info("Starting LwM2M transport... PostConstruct");
@@ -75,12 +73,12 @@ public class LwM2MTransportServerConfiguration {
         builder.setLocalAddress(context.getHost(), context.getPort());
         builder.setLocalSecureAddress(context.getSecureHost(), context.getSecurePort());
         builder.setEncoder(new DefaultLwM2mNodeEncoder());
-        //         use a magic converter to support bad type send by the UI.
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
         LwM2mNodeDecoder decoder = new DefaultLwM2mNodeDecoder();
         builder.setDecoder(decoder);
-
-        // Create CoAP Config
+        builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
+        /**
+         * Create CoAP Config
+         */
         NetworkConfig coapConfig;
         File configFile = new File(NetworkConfig.DEFAULT_FILE_NAME);
         if (configFile.isFile()) {
@@ -92,95 +90,132 @@ public class LwM2MTransportServerConfiguration {
         }
         builder.setCoapConfig(coapConfig);
 
-        // Define model provider
+        /**
+         *  Define model provider
+         */
         List<ObjectModel> models = ObjectLoader.loadDefault();
-        models.addAll(ObjectLoader.loadDdfResources("/models/", modelPaths));
-        String modelsFolderPath = null;
-        if (modelsFolderPath != null) {
-            models.addAll(ObjectLoader.loadObjectsFromDir(new File(modelsFolderPath)));
-        }
+        List<ObjectModel> listModels = (context.getModelFolderPath() != null && !context.getModelFolderPath().isEmpty()) ?
+                ObjectLoader.loadObjectsFromDir(new File(context.getModelFolderPath())) :
+                ObjectLoader.loadDdfResources(LwM2MProvider.DEFAULT_MODEL_FOLDER_PATH, LwM2MProvider.modelPaths);
+        models.addAll(listModels);
         LwM2mModelProvider modelProvider = new VersionedModelProvider(models);
         builder.setObjectModelProvider(modelProvider);
 
-        // Connect to redis if needed
-        Pool<Jedis> jedis = null;
-        String redisUrl =  context.getRedisUrl();
-        if (!redisUrl.isEmpty()) {
-            // TODO support sentinel pool and make pool configurable
-            jedis = new JedisPool(new URI(redisUrl));
-        }
+        /**
+         * There can be only one DTLS security mode
+         */
+        int securityMode =
+                (context.isPskEnabled()) ?          SECURITY_MODE_PSK :
+                (context.isRpkEnabled() ?           SECURITY_MODE_RPK :
+                (context.isX509Enabled() ?          SECURITY_MODE_X509 :
+                (context.isNoSecEnabled() ?         SECURITY_MODE_NO_SEC :
+                (context.isX509EstEnabled() ?       SECURITY_MODE_X509_EST :
+                (context.getRedisUrl() != null &&
+                !context.getRedisUrl().isEmpty()) ? SECURITY_MODE_REDIS :
+                                                    SECURITY_MODE_DEFAULT))));
 
-        // Create DTLS Config
+        /**
+         * Create DTLS Config
+         */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        boolean supportDeprecatedCiphers = false;
-//        dtlsConfig.setRecommendedCipherSuitesOnly(true);
-
-        X509Certificate serverCertificate = null;
-        X509Certificate rootCAX509Cert = null;
-        PublicKey publicKey = null;
-        PrivateKey privateKey = null;
-        // get RPK info: use RPK only
-        if (context.isRpkEnabled() && !context.isX509Enabled()) {
-            LwM2MServerCredentials lwM2MServerCredentials = new LwM2MServerCredentials(context.getPublicServerX(), context.getPublicServerY(), context.getPrivateServerS());
-            publicKey = lwM2MServerCredentials.getServerPublicKey();
-            privateKey = lwM2MServerCredentials.getServerPrivateKey();
-            if (publicKey != null) {
-                builder.setPublicKey(publicKey);
-                builder.setPrivateKey(privateKey);
-            }
+        dtlsConfig.setRecommendedCipherSuitesOnly(!context.isSupportDeprecatedCiphersEnable());
+        LwM2mRPkCredentials lwM2mRPkCredentials = new LwM2mRPkCredentials(context.getRpkPublicServerX(), context.getRpkPublicServerY(), context.getRpkPrivateServerS());
+        PublicKey publicKey = lwM2mRPkCredentials.getServerPublicKey();
+        PrivateKey privateKey = lwM2mRPkCredentials.getServerPrivateKey();
+        switch(securityMode) {
+            /** Use PSK only */
+            case 0:
+                if (privateKey != null) {
+                    builder.setPrivateKey(privateKey);
+                    builder.setPublicKey(null);
+                }
+                break;
+            /** Use RPK only */
+            case 1:
+                if (publicKey != null) {
+                    builder.setPublicKey(publicKey);
+                    builder.setPrivateKey(privateKey);
+                }
+                break;
+            /** Use x509 only */
+            case 2:
+                setServerWithX509Cert(builder);
+                break;
+            /** No security */
+            case 3:
+                if (privateKey != null) {
+                    getKeyStoreServer (builder);
+                    builder.setTrustedCertificates(new X509Certificate[0]);
+                }
+                break;
+            /** Use x509 with EST */
+            case 4:
+                // TODO support sentinel pool and make pool configurable
+                break;
+            default:
+                // code block
         }
-        // get x509 info: use x509 only
-        else if (context.isX509Enabled() && !context.isRpkEnabled() && context.getKeyStorePathServer() != null  && !context.getKeyStorePathServer().isEmpty()) {
-            setServerWithX509Cert (builder);
-        }
 
-        // Set DTLS Config
+        /** Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
 
-        // Set securityStore & registrationStore
-        EditableSecurityStore securityStore;
+        /** Set securityStore with new registrationStore */
+        EditableSecurityStore securityStore = null;
 
-        if (jedis == null) {
+//        if (jedis == null) {
+        if (securityMode < SECURITY_MODE_REDIS) {
             securityStore = lwM2mInMemorySecurityStore;
-            if (context.isX509Enabled()) {
+            if (securityMode == SECURITY_MODE_X509) {
                 builder.setAuthorizer(new DefaultAuthorizer(securityStore, new SecurityChecker() {
                     @Override
                     protected boolean matchX509Identity(String endpoint, String receivedX509CommonName,
                                                         String expectedX509CommonName) {
-//                    return expectedX509CommonName.startsWith(receivedX509CommonName);
                         return endpoint.startsWith(expectedX509CommonName);
                     }
                 }));
             }
-        } else {
-            // use Redis Store
+        } else if (securityMode == SECURITY_MODE_REDIS) {
+            /**
+             * Use  Redis Store
+             * Connect to redis if needed
+             */
+            Pool<Jedis> jedis = new JedisPool(new URI(context.getRedisUrl()));
             securityStore = new RedisSecurityStore(jedis);
             builder.setRegistrationStore(new RedisRegistrationStore(jedis));
         }
         builder.setSecurityStore(securityStore);
 
-        // use a magic converter to support bad type send by the UI.
+        /** Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
 
-        // Create LWM2M server
+        /** Create LWM2M server */
         return builder.build();
     }
 
-    private void setServerWithX509Cert (LeshanServerBuilder builder) {
+    private void setServerWithX509Cert(LeshanServerBuilder builder) {
+        try {
+            KeyStore keyStoreServer = getKeyStoreServer (builder);
+            X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(context.getRootAlias());
+        Certificate[] trustedCertificates = new Certificate[1];
+            trustedCertificates[0] = rootCAX509Cert;
+            builder.setTrustedCertificates(trustedCertificates);
+        } catch (KeyStoreException ex) {
+            log.error("[{}] Unable to load X509 files server", ex.getMessage());
+        }
+    }
+
+    private KeyStore getKeyStoreServer (LeshanServerBuilder builder) {
+        KeyStore keyStoreServer = null;
         try (InputStream inServer = ClassLoader.getSystemResourceAsStream(context.getKeyStorePathServer())) {
-            KeyStore keyStoreServer = KeyStore.getInstance(context.getKeyStoreType());
+            keyStoreServer = KeyStore.getInstance(context.getKeyStoreType());
             keyStoreServer.load(inServer, context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
             X509Certificate serverCertificate = (X509Certificate) keyStoreServer.getCertificate(context.getAliasServer());
             PrivateKey privateKey = (PrivateKey) keyStoreServer.getKey(context.getAliasServer(), context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
-            X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(context.getRootAlias());
-            Certificate[] trustedCertificates = new Certificate[1];
-            trustedCertificates[0] = rootCAX509Cert;
             builder.setPrivateKey(privateKey);
             builder.setCertificateChain(new X509Certificate[]{serverCertificate});
-            builder.setTrustedCertificates(trustedCertificates);
         } catch (Exception ex) {
-            System.err.println("Unable to load X509 files server: " + ex.getMessage());
-            ex.printStackTrace();
+            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
         }
+        return keyStoreServer;
     }
 }

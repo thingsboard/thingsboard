@@ -22,25 +22,32 @@ import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultSecurityStore;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+
+import static org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider.*;
 
 @Slf4j
 @Component("LwM2MCredentials")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MCredentials {
 
-    public SecurityInfo getSecurityInfo(String endpoint, String jsonStr) {
-        SecurityInfo securityInfo = null;
+    public ReadResultSecurityStore getSecurityInfo(String endpoint, String jsonStr) {
+        ReadResultSecurityStore result = new ReadResultSecurityStore();
+        result.setSecurityMode(SECURITY_MODE_DEFAULT);
         JsonObject object = validateJson(jsonStr);
         if (!object.isJsonNull()) {
             if (!object.isJsonNull()) {
                 boolean isX509 = (object.has("x509") && !object.get("x509").isJsonNull() && object.get("x509").isJsonPrimitive()) ? object.get("x509").getAsBoolean() : false;
                 boolean isPsk = (object.has("psk") && !object.get("psk").isJsonNull()) ? true : false;
                 boolean isRpk = (!isX509 && object.has("rpk") && !object.get("rpk").isJsonNull()) ? true : false;
+                boolean isNoSec = (!isX509 && object.has("no_sec") && !object.get("no_sec").isJsonNull()) ? true : false;
                 if (isX509) {
-                    securityInfo = SecurityInfo.newX509CertInfo(endpoint);
+                    result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
+                    result.setSecurityMode(SECURITY_MODE_X509);
                 } else if (isPsk) {
                     // PSK Deserialization
                     JsonObject psk = (object.get("psk").isJsonObject()) ? object.get("psk").getAsJsonObject() : null;
@@ -62,7 +69,13 @@ public class LwM2MCredentials {
                             } catch (IllegalArgumentException e) {
                                 log.error("Missing PSK key: " + e.getMessage());
                             }
-                            securityInfo = SecurityInfo.newPreSharedKeyInfo(endpoint, identity, key);
+                            if (key.length > 0) {
+                                if (psk.has("endpoint") && psk.get("endpoint").isJsonPrimitive()) {
+                                    endpoint = psk.get("endpoint").getAsString();
+                                    result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, identity, key));
+                                    result.setSecurityMode(SECURITY_MODE_PSK);
+                                }
+                            }
                         }
                     }
                 } else if (isRpk) {
@@ -79,18 +92,30 @@ public class LwM2MCredentials {
                         } catch (IllegalArgumentException | IOException | GeneralSecurityException e) {
                             log.error("RPK: Invalid security info content: " + e.getMessage());
                         }
-                        securityInfo = SecurityInfo.newRawPublicKeyInfo(endpoint, key);
+                        result.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(endpoint, key));
+                        result.setSecurityMode(SECURITY_MODE_RPK);
+                    }
+                } else if (isNoSec) {
+                    JsonObject noSec = (object.isJsonObject()) ? object.getAsJsonObject() : null;
+                    if (noSec.has("no_sec") && noSec.get("no_sec").isJsonPrimitive() && noSec.get("no_sec").getAsBoolean()) {
+                        result.setSecurityInfo(null);
+                        result.setSecurityMode(SECURITY_MODE_NO_SEC);
+                    }
+                    else {
+                        log.error("[{}] no sec error", endpoint);
                     }
                 }
-
             }
         }
-        return securityInfo;
+        return result;
     }
 
     private JsonObject validateJson(String jsonStr) {
         JsonObject object = null;
         String jsonValidFlesh = jsonStr.replaceAll("\\\\", "");
+        jsonValidFlesh = jsonValidFlesh.replaceAll("\n", "");
+        jsonValidFlesh = jsonValidFlesh.replaceAll("\t", "");
+        jsonValidFlesh = jsonValidFlesh.replaceAll(" ", "");
         String jsonValid = (jsonValidFlesh.substring(0, 1).equals("\"") && jsonValidFlesh.substring(jsonValidFlesh.length() - 1).equals("\"")) ? jsonValidFlesh.substring(1, jsonValidFlesh.length() - 1) : jsonValidFlesh;
         try {
             object = new JsonParser().parse(jsonValid).getAsJsonObject();

@@ -20,14 +20,22 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 
 public interface LwM2MProvider {
 
-    /** The default CoAP port for unsecured CoAP communication */
-    static final int DEFAULT_COAP_PORT = 5685;
+    static final int SECURITY_MODE_PSK = 0;
+    static final int SECURITY_MODE_RPK= 1;
+    static final int SECURITY_MODE_X509 = 2;
+    static final int SECURITY_MODE_NO_SEC = 3;
+    static final int SECURITY_MODE_X509_EST= 4;
+    static final int SECURITY_MODE_REDIS= 5;
+    static final int SECURITY_MODE_DEFAULT= 100;
 
-    /** The default CoAP port for secure CoAP communication */
-    static final int DEFAULT_COAP_SECURE_PORT = 5686;
-
-    // /!\ This field use to ClientDeviceTest.modelPaths /!\
-    // /!\ This field use to server.modelPaths /!\
+    /**
+     * The default modelFolderPath for reading ObjectModel from resource
+     */
+    static final String DEFAULT_MODEL_FOLDER_PATH = "/models/";
+    /**
+     * This field use to server.modelPaths
+     * This field use to ClientDeviceTest.modelPaths
+     */
     final static String[] modelPaths = {"10241.xml", "10242.xml", "10243.xml", "10244.xml",
             "10245.xml", "10246.xml", "10247.xml", "10248.xml", "10249.xml", "10250.xml", "10251.xml",
             "10252.xml", "10253.xml", "10254.xml", "10255.xml", "10256.xml", "10257.xml", "10258.xml",

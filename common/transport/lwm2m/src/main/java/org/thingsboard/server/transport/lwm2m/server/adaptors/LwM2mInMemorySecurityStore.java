@@ -29,6 +29,8 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportCtx;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider.SECURITY_MODE_DEFAULT;
+
 @Slf4j
 @Component("LwM2mInMemorySecurityStore")
 public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
@@ -58,7 +60,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     }
 
     private SecurityInfo addNew(String identityId) {
-        SecurityInfo info = setSecurityInfo(identityId);
+        SecurityInfo info = setSecurityInfo(identityId).getSecurityInfo();
         if (info != null) {
             try {
                 add(info);
@@ -70,24 +72,25 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     }
 
 
-    private SecurityInfo setSecurityInfo(String identity) {
+    private ReadResultSecurityStore setSecurityInfo(String identity) {
         CountDownLatch latch = new CountDownLatch(1);
-        final SecurityInfo[] securityInfo = new SecurityInfo[1];
+        final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
         context.getTransportService().process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(identity).build(),
                 new TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg>() {
                     @Override
                     public void onSuccess(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
                         String ingfosStr = msg.getCredentialsBody();
-                        securityInfo[0] = credentials.getSecurityInfo(msg.getDeviceInfo().getDeviceName(), ingfosStr);
-                        String endpointId = msg.getDeviceInfo().getDeviceName();
-                        context.getSessions().put(endpointId, msg);
+                        resultSecurityStore[0] = credentials.getSecurityInfo(msg.getDeviceInfo().getDeviceName(), ingfosStr);
+                        if (resultSecurityStore[0].getSecurityMode() < SECURITY_MODE_DEFAULT) {
+                            context.getSessions().put(msg.getDeviceInfo().getDeviceName(), msg);
+                        }
                         latch.countDown();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         log.trace("[{}] Failed to process credentials PSK: {}", identity, e);
-                        securityInfo[0] = null;
+                        resultSecurityStore[0]  = null;
                         latch.countDown();
                     }
                 });
@@ -96,6 +99,6 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return securityInfo[0];
+        return resultSecurityStore[0] ;
     }
 }

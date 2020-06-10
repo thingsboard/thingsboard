@@ -19,12 +19,12 @@ import com.google.gson.JsonObject;
 import lombok.Data;
 
 @Data
-public class ReadResult {
+public class ReadResultAttrTel {
 
     JsonObject postAttribute;
     JsonObject postTelemetry;
 
-    public ReadResult() {
+    public ReadResultAttrTel() {
         postAttribute = new JsonObject();
         postTelemetry = new JsonObject();
     }
