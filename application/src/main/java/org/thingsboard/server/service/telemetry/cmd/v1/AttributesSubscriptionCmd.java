@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd;
+package org.thingsboard.server.service.telemetry.cmd.v1;
+
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.service.telemetry.TelemetryFeature;
 
 /**
  * @author Andrew Shvayka
  */
-public interface TelemetryPluginCmd {
+@NoArgsConstructor
+public class AttributesSubscriptionCmd extends SubscriptionCmd {
 
-    int getCmdId();
-
-    void setCmdId(int cmdId);
-
-    String getKeys();
+    @Override
+    public TelemetryFeature getType() {
+        return TelemetryFeature.ATTRIBUTES;
+    }
 
 }

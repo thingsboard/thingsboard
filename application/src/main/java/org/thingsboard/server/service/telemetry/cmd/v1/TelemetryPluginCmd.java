@@ -13,28 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package org.thingsboard.server.service.telemetry.cmd.v1;
 
 /**
  * @author Andrew Shvayka
  */
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class GetHistoryCmd implements TelemetryPluginCmd {
+public interface TelemetryPluginCmd {
 
-    private int cmdId;
-    private String entityType;
-    private String entityId;
-    private String keys;
-    private long startTs;
-    private long endTs;
-    private long interval;
-    private int limit;
-    private String agg;
+    int getCmdId();
+
+    void setCmdId(int cmdId);
+
+    String getKeys();
 
 }

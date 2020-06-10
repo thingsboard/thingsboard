@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd;
+package org.thingsboard.server.service.telemetry.cmd.v1;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.service.telemetry.TelemetryFeature;
 
-/**
- * @author Andrew Shvayka
- */
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class TimeseriesSubscriptionCmd extends SubscriptionCmd {
+public abstract class SubscriptionCmd implements TelemetryPluginCmd {
 
-    private long startTs;
-    private long timeWindow;
-    private long interval;
-    private int limit;
-    private String agg;
+    private int cmdId;
+    private String entityType;
+    private String entityId;
+    private String keys;
+    private String scope;
+    private boolean unsubscribe;
+
+    public abstract TelemetryFeature getType();
 
     @Override
-    public TelemetryFeature getType() {
-        return TelemetryFeature.TIMESERIES;
+    public String toString() {
+        return "SubscriptionCmd [entityType=" + entityType  + ", entityId=" + entityId + ", tags=" + keys + ", unsubscribe=" + unsubscribe + "]";
     }
+
 }

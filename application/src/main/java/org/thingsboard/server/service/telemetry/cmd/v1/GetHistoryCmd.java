@@ -13,20 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd;
+package org.thingsboard.server.service.telemetry.cmd.v1;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.service.telemetry.TelemetryFeature;
 
 /**
  * @author Andrew Shvayka
  */
 @NoArgsConstructor
-public class AttributesSubscriptionCmd extends SubscriptionCmd {
+@AllArgsConstructor
+@Data
+public class GetHistoryCmd implements TelemetryPluginCmd {
 
-    @Override
-    public TelemetryFeature getType() {
-        return TelemetryFeature.ATTRIBUTES;
-    }
+    private int cmdId;
+    private String entityType;
+    private String entityId;
+    private String keys;
+    private long startTs;
+    private long endTs;
+    private long interval;
+    private int limit;
+    private String agg;
 
 }

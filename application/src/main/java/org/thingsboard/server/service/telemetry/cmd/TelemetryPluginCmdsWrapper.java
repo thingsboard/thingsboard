@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,19 @@
  */
 package org.thingsboard.server.service.telemetry.cmd;
 
+import lombok.Data;
+import org.thingsboard.server.service.telemetry.cmd.v1.AttributesSubscriptionCmd;
+import org.thingsboard.server.service.telemetry.cmd.v1.GetHistoryCmd;
+import org.thingsboard.server.service.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
+
 import java.util.List;
 
 /**
  * @author Andrew Shvayka
  */
+@Data
 public class TelemetryPluginCmdsWrapper {
 
     private List<AttributesSubscriptionCmd> attrSubCmds;
@@ -28,31 +36,8 @@ public class TelemetryPluginCmdsWrapper {
 
     private List<GetHistoryCmd> historyCmds;
 
-    public TelemetryPluginCmdsWrapper() {
-        super();
-    }
+    private List<EntityDataCmd> entityDataCmds;
 
-    public List<AttributesSubscriptionCmd> getAttrSubCmds() {
-        return attrSubCmds;
-    }
+    private List<EntityDataUnsubscribeCmd> entityDataUnsubscribeCmds;
 
-    public void setAttrSubCmds(List<AttributesSubscriptionCmd> attrSubCmds) {
-        this.attrSubCmds = attrSubCmds;
-    }
-
-    public List<TimeseriesSubscriptionCmd> getTsSubCmds() {
-        return tsSubCmds;
-    }
-
-    public void setTsSubCmds(List<TimeseriesSubscriptionCmd> tsSubCmds) {
-        this.tsSubCmds = tsSubCmds;
-    }
-
-    public List<GetHistoryCmd> getHistoryCmds() {
-        return historyCmds;
-    }
-
-    public void setHistoryCmds(List<GetHistoryCmd> historyCmds) {
-        this.historyCmds = historyCmds;
-    }
 }

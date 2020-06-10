@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -80,6 +81,11 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         super.deleteEntityRelations(tenantId, entityId);
+    }
+
+    @Override
+    public long countEntitiesByQuery(TenantId tenantId, EntityDataQuery query) {
+        return 0;
     }
 
     @Override

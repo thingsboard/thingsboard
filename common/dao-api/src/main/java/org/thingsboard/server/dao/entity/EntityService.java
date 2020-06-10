@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,11 +18,19 @@ package org.thingsboard.server.dao.entity;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
 
 public interface EntityService {
 
     ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId);
 
     void deleteEntityRelations(TenantId tenantId, EntityId entityId);
+
+    long countEntitiesByQuery(TenantId tenantId, EntityCountQuery query);
+
+    PageData<EntityData> findEntityDataByQuery(TenantId tenantId, EntityDataQuery query);
 
 }
