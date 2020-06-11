@@ -86,6 +86,10 @@ export default function DashboardSettingsController($scope, $mdDialog, $q, $filt
             vm.stateSettings.showDashboardTimewindow = false;
         }
 
+        if (angular.isUndefined(vm.stateSettings.showEntityLabel)) {
+            vm.stateSettings.showEntityLabel = false;
+        }
+
         if (angular.isUndefined(vm.stateSettings.entityAliasesIcon)) {
             vm.stateSettings.entityAliasesIcon = 'devices_other';
         }

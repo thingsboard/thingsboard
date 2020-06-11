@@ -84,6 +84,7 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
                     'entityAliasesIcon': scope.entityAliasesIcon,
                     'entityAliasesLabel': scope.entityAliasesLabel,
                     'entityAliasesList': scope.entityAliasesList,
+                    'showEntityLabel': scope.showEntityLabel,
                     'onEntityAliasesUpdate': function () {
                         scope.updateView();
                     }
@@ -157,6 +158,7 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
             entityAliasesIcon:'=',
             entityAliasesLabel:'=',
             entityAliasesList:'=',
+            showEntityLabel:'=',
             minEntitiesToShowSelect: '='
         },
         link: linker

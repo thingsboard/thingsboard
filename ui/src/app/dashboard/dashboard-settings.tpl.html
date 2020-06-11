@@ -82,6 +82,12 @@
                             </md-checkbox>
                         </div>
                         <div layout="row" layout-align="start center">
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-entity-label' | translate }}"
+                                         ng-disabled="!vm.stateSettings.showEntitiesSelect"
+                                         ng-model="vm.stateSettings.showEntityLabel">{{ 'dashboard.display-entity-label' | translate }}
+                            </md-checkbox>
+                        </div>
+                        <div layout="row" layout-align="start center">
                             <md-input-container flex class="md-block" style="margin-top: 35px;">
                                 <label translate>dashboard.min-entities-to-show-selection</label>
                                 <input type="number" name="minEntities" ng-disabled="!vm.stateSettings.showEntitiesSelect"
@@ -89,7 +95,8 @@
                             </md-input-container>
                             <md-input-container flex class="md-block" style="margin-top: 35px;">
                                 <label translate>dashboard.select-entity-aliases-label</label>
-                                <input name="entityAliasesLabel" ng-model="vm.stateSettings.entityAliasesLabel">
+                                <input name="entityAliasesLabel" ng-model="vm.stateSettings.entityAliasesLabel"
+                                       ng-readonly="!vm.stateSettings.showEntitiesSelect">
                             </md-input-container>
                             <tb-material-icon-select ng-disabled="!vm.stateSettings.showEntitiesSelect" ng-model="vm.stateSettings.entityAliasesIcon">
                             </tb-material-icon-select>
@@ -99,7 +106,6 @@
                                 <md-chips flex
                                           name="entityAliases"
                                           ng-required="vm.stateSettings.showEntitiesSelect"
-                                          ng-disabled="!vm.stateSettings.showEntitiesSelect"
                                           ng-model="vm.stateSettings.entityAliasesList"
                                           md-autocomplete-snap
                                           md-require-match="false">

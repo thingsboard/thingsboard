@@ -484,6 +484,7 @@
         "display-dashboard-timewindow": "Afficher fenêtre de temps",
         "display-dashboards-selection": "Afficher la sélection des tableaux de bord",
         "display-entities-selection": "Afficher la sélection des entités",
+        "display-entity-label": "Utiliser l'étiquette d'entité (si présente) au lieu de son nom",
         "display-title": "Afficher le titre du tableau de bord",
         "drop-image": "Déposer une image ou cliquez pour sélectionner un fichier à télécharger.",
         "edit-state": "Modifier l'état du tableau de bord",

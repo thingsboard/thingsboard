@@ -584,7 +584,8 @@
         "dashboard-settings": "Dashboard common settings",
         "dashboard-state-settings": "Current state settings",
         "select-entity-aliases-label": "Entities selection label",
-        "min-entities-to-show-selection": "Minimum number of resolved entities to show selection"
+        "min-entities-to-show-selection": "Minimum number of resolved entities to show selection",
+        "display-entity-label": "Use entity label (if present) instead of its name"
     },
     "datakey": {
         "settings": "Settings",

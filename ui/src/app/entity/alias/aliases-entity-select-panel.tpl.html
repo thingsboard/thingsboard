@@ -23,7 +23,7 @@
                     <label>{{entityAliasInfo.alias}}</label>
                     <md-select ng-model="entityAliasInfo.selectedId" ng-change="vm.currentAliasEntityChanged(aliasId, entityAliasInfo.selectedId)">
                         <md-option ng-repeat="resolvedEntity in entityAliasInfo.resolvedEntities" ng-value="resolvedEntity.id">
-                            {{resolvedEntity.name}}
+                            {{(vm.showEntityLabel && resolvedEntity.label) ? resolvedEntity.label : resolvedEntity.name}}
                         </md-option>
                     </md-select>
                 </md-input-container>

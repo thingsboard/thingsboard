@@ -565,7 +565,8 @@
         "dashboard-settings": "Impostazioni generali di dashboard",
         "dashboard-state-settings": "Impostazioni dello stato corrente",
         "select-entity-aliases-label": "Etichetta selezione entità",
-        "min-entities-to-show-selection": "Numero minimo di entità risolte per visualizzare la selezione"
+        "min-entities-to-show-selection": "Numero minimo di entità risolte per visualizzare la selezione",
+        "display-entity-label": "Utilizza l'etichetta dell'entità (se presente) anzichè il suo nome"
     },
     "datakey": {
         "settings": "Impostazioni",

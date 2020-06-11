@@ -61,6 +61,11 @@
                     </tb-timewindow>
                     <tb-aliases-entity-select ng-show="!vm.isEdit && vm.displayEntitiesSelect()"
                                               tooltip-direction="bottom"
+                                              show-entity-label="vm.displayEntityLabel()"
+                                              entity-aliases-icon="vm.getEntityAliasesIcon()"
+                                              entity-aliases-label="vm.getEntityAliasesLabel()"
+                                              entity-aliases-list="vm.getEntityAliasesList()"
+                                              min-entities-to-show-select="vm.getMinEntitiesToShowSelect()"
                                               alias-controller="vm.dashboardCtx.aliasController">
                     </tb-aliases-entity-select>
                     <md-button ng-show="vm.isEdit" aria-label="{{ 'entity.aliases' | translate }}" class="md-icon-button"

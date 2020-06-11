@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $filter, types, aliasController, entityAliasesList, onEntityAliasesUpdate) {
+export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $filter, types, aliasController, showEntityLabel) {
 
     var vm = this;
     vm._mdPanelRef = mdPanelRef;
@@ -23,6 +23,7 @@ export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $
     vm.entityAliases = {};
     vm.entityAliasesInfo = {};
     vm.entityAliasesList = entityAliasesList || [];
+    vm.showEntityLabel = showEntityLabel || false;
 
     vm.currentAliasEntityChanged = currentAliasEntityChanged;
 

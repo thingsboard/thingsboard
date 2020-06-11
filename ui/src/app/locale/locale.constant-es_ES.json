@@ -568,7 +568,8 @@
         "dashboard-settings": "Configuración general del panel",
         "dashboard-state-settings": "Configuración de estado actual",
         "select-entity-aliases-label": "Etiqueta de selección de entidades",
-        "min-entities-to-show-selection": "Número mínimo de entidades resueltas para mostrar la selección"
+        "min-entities-to-show-selection": "Número mínimo de entidades resueltas para mostrar la selección",
+        "display-entity-label": "Use la etiqueta de entidad (si está presente) en lugar de su nombre"
     },
     "datakey": {
         "settings": "Configuración",

@@ -185,6 +185,7 @@ function DashboardUtils(types, utils, timeService) {
             showDashboardsSelect: false,
             showDashboardsTimewindow: true,
             showEntitiesSelect: false,
+            showEntityLabel: false,
             entityAliasesIcon: 'devices_other',
             entityAliasesLabel: '',
             entityAliasesList: [],

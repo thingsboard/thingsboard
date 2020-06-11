@@ -196,6 +196,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     vm.displayDashboardTimewindow = displayDashboardTimewindow;
     vm.displayDashboardsSelect = displayDashboardsSelect;
     vm.displayEntitiesSelect = displayEntitiesSelect;
+    vm.displayEntityLabel = displayEntityLabel;
     vm.getEntityAliasesIcon = getEntityAliasesIcon;
     vm.getEntityAliasesLabel = getEntityAliasesLabel;
     vm.getEntityAliasesList = getEntityAliasesList;
@@ -827,6 +828,16 @@ export default function DashboardController(types, utils, dashboardUtils, widget
             }
         }
         return true;
+    }
+
+    function displayEntityLabel() {
+        if (vm.dashboard && vm.dashboardCtx.state) {
+            var stateSettings = vm.dashboard.configuration.states[vm.dashboardCtx.state].settings;
+            if (stateSettings && angular.isDefined(stateSettings.showEntityLabel)) {
+                return stateSettings.showEntityLabel;
+            }
+        }
+        return false;
     }
 
     function getEntityAliasesIcon() {
