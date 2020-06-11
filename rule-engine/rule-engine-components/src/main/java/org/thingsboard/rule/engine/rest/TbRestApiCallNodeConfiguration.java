@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.rest;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
+import java.net.Proxy;
 import java.util.Collections;
 import java.util.Map;
 
@@ -33,6 +34,12 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private boolean useRedisQueueForMsgPersistence;
     private boolean trimQueue;
     private int maxQueueSize;
+    private boolean enableProxy;
+    private String proxyHost;
+    private int proxyPort;
+    private String proxyUser;
+    private String proxyPassword;
+    private Proxy.Type proxyType;
 
     @Override
     public TbRestApiCallNodeConfiguration defaultConfiguration() {
@@ -45,6 +52,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setMaxParallelRequestsCount(0);
         configuration.setUseRedisQueueForMsgPersistence(false);
         configuration.setTrimQueue(false);
+        configuration.setEnableProxy(false);
         return configuration;
     }
 }

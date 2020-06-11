@@ -25,6 +25,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
@@ -37,6 +39,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLException;
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +69,25 @@ class TbHttpClient {
             if (config.getMaxParallelRequestsCount() > 0) {
                 pendingFutures = new ConcurrentLinkedDeque<>();
             }
-            if (config.isUseSimpleClientHttpFactory()) {
+
+            if (config.isEnableProxy()) {
+                SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+                InetSocketAddress address = new InetSocketAddress(config.getProxyHost(), config.getProxyPort());
+                Proxy proxy = new Proxy(config.getProxyType(), address);
+                factory.setProxy(proxy);
+                factory.setReadTimeout(config.getReadTimeoutMs());
+
+                if (!StringUtils.isEmpty(config.getProxyUser()) && !StringUtils.isEmpty(config.getProxyPassword())) {
+                    Authenticator.setDefault(new Authenticator() {
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(config.getProxyUser(), config.getProxyPassword().toCharArray());
+                        }
+                    });
+                    System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+                }
+
+                httpClient = new AsyncRestTemplate(factory);
+            } else if (config.isUseSimpleClientHttpFactory()) {
                 httpClient = new AsyncRestTemplate();
             } else {
                 this.eventLoopGroup = new NioEventLoopGroup();
