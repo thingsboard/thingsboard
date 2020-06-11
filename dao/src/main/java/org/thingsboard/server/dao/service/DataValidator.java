@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.validator.routines.EmailValidator;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -26,11 +25,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public abstract class DataValidator<D extends BaseData<?>> {
-
-    private static EmailValidator emailValidator = EmailValidator.getInstance();
 
     public void validate(D data, Function<D, TenantId> tenantIdFunction) {
         try {
@@ -64,9 +63,23 @@ public abstract class DataValidator<D extends BaseData<?>> {
     }
 
     protected static void validateEmail(String email) {
-        if (!emailValidator.isValid(email)) {
+        if (!doValidateEmail(email)) {
             throw new DataValidationException("Invalid email address format '" + email + "'!");
         }
+    }
+
+    private static boolean doValidateEmail(String email) {
+        if (email == null) {
+            return false;
+        }
+
+        if (email.endsWith(".")) {
+            return false;
+        }
+
+        Pattern emailPattern = Pattern.compile("^\\s*?(.+)@(.+?)\\s*$");
+        Matcher emailMatcher = emailPattern.matcher(email);
+        return emailMatcher.matches();
     }
 
     protected static void validateJsonStructure(JsonNode expectedNode, JsonNode actualNode) {
