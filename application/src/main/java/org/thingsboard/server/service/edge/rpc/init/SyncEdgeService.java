@@ -20,9 +20,9 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.gen.edge.ResponseMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 
-public interface InitEdgeService {
+public interface SyncEdgeService {
 
-    void init(Edge edge, StreamObserver<ResponseMsg> outputStream);
+    void sync(Edge edge, StreamObserver<ResponseMsg> outputStream);
 
-    void initRuleChainMetadata(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg, StreamObserver<ResponseMsg> outputStream);
+    void syncRuleChainMetadata(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg, StreamObserver<ResponseMsg> outputStream);
 }

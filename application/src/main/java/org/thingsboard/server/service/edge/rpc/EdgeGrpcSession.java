@@ -141,7 +141,7 @@ public final class EdgeGrpcSession implements Closeable {
                         outputStream.onError(new RuntimeException(responseMsg.getErrorMsg()));
                     }
                     if (ConnectResponseCode.ACCEPTED == responseMsg.getResponseCode()) {
-                        ctx.getInitEdgeService().init(edge, outputStream);
+                        ctx.getSyncEdgeService().sync(edge, outputStream);
                     }
                 }
                 if (connected) {
@@ -360,6 +360,10 @@ public final class EdgeGrpcSession implements Closeable {
                 User user = objectMapper.readValue(entry.getData(), User.class);
                 onUserUpdated(msgType, user);
                 break;
+            case RELATION:
+                EntityRelation entityRelation = objectMapper.readValue(entry.getData(), EntityRelation.class);
+                onEntityRelationUpdated(msgType, entityRelation);
+                break;
         }
     }
 
@@ -463,6 +467,15 @@ public final class EdgeGrpcSession implements Closeable {
                 .build());
     }
 
+    private void onEntityRelationUpdated(UpdateMsgType msgType, EntityRelation entityRelation) {
+        EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                .setRelationUpdateMsg(ctx.getRelationUpdateMsgConstructor().constructRelationUpdatedMsg(msgType, entityRelation))
+                .build();
+        outputStream.onNext(ResponseMsg.newBuilder()
+                .setEntityUpdateMsg(entityUpdateMsg)
+                .build());
+    }
+
     private UpdateMsgType getResponseMsgType(String msgType) {
         if (msgType.equals(SessionMsgType.POST_TELEMETRY_REQUEST.name()) ||
                 msgType.equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ||
@@ -548,7 +561,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgList() != null && !uplinkMsg.getRuleChainMetadataRequestMsgList().isEmpty()) {
                 for (RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg : uplinkMsg.getRuleChainMetadataRequestMsgList()) {
-                    ctx.getInitEdgeService().initRuleChainMetadata(edge, ruleChainMetadataRequestMsg, outputStream);
+                    ctx.getSyncEdgeService().syncRuleChainMetadata(edge, ruleChainMetadataRequestMsg, outputStream);
                 }
             }
         } catch (Exception e) {
