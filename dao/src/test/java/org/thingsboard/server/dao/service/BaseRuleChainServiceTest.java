@@ -331,6 +331,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         result = ruleChainService.findDefaultEdgeRuleChainsByTenantId(tenantId).get();
         Assert.assertEquals(1, result.size());
     }
+
     private RuleChainId saveRuleChainAndSetDefaultEdge(String name) {
         RuleChain edgeRuleChain = new RuleChain();
         edgeRuleChain.setTenantId(tenantId);

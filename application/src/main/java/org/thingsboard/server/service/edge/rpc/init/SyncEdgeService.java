@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,10 +19,11 @@ import io.grpc.stub.StreamObserver;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.gen.edge.ResponseMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
+import org.thingsboard.server.service.edge.EdgeContextComponent;
 
 public interface SyncEdgeService {
 
-    void sync(Edge edge, StreamObserver<ResponseMsg> outputStream);
+    void sync(EdgeContextComponent ctx, Edge edge, StreamObserver<ResponseMsg> outputStream);
 
     void syncRuleChainMetadata(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg, StreamObserver<ResponseMsg> outputStream);
 }

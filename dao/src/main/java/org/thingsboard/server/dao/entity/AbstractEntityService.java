@@ -31,6 +31,9 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public abstract class AbstractEntityService {
 
+    public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
+
     @Autowired
     protected RelationService relationService;
 

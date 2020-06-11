@@ -35,13 +35,17 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -55,6 +59,8 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
 @TbCoreComponent
@@ -296,6 +302,90 @@ public class UserController extends BaseController {
             User user = checkUserId(userId, Operation.WRITE);
             TenantId tenantId = getCurrentUser().getTenantId();
             userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/user/{userId}", method = RequestMethod.POST)
+    @ResponseBody
+    public User assignUserToEdge(@PathVariable(EDGE_ID) String strEdgeId,
+                                 @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        checkParameter(USER_ID, strUserId);
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+
+            UserId userId = new UserId(toUUID(strUserId));
+            checkUserId(userId, Operation.ASSIGN_TO_EDGE);
+
+            User savedUser = checkNotNull(userService.assignUserToEdge(getTenantId(), userId, edgeId));
+
+            logEntityAction(userId, savedUser,
+                    savedUser.getCustomerId(),
+                    ActionType.ASSIGNED_TO_EDGE, null, strUserId, strEdgeId, edge.getName());
+
+            return savedUser;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.USER), null,
+                    null,
+                    ActionType.ASSIGNED_TO_EDGE, e, strUserId, strEdgeId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/user/{userId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public User unassignUserFromEdge(@PathVariable(EDGE_ID) String strEdgeId,
+                                     @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        checkParameter(USER_ID, strUserId);
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+
+            UserId userId = new UserId(toUUID(strUserId));
+            User user = checkUserId(userId, Operation.UNASSIGN_FROM_EDGE);
+
+            User savedUser = checkNotNull(userService.unassignUserFromEdge(getTenantId(), userId, edgeId));
+
+            logEntityAction(userId, savedUser,
+                    savedUser.getCustomerId(),
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strUserId, edge.getId().toString(), edge.getName());
+
+            return savedUser;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.USER), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strUserId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/users", params = {"limit"}, method = RequestMethod.GET)
+    @ResponseBody
+    public TimePageData<User> getEdgeUsers(
+            @PathVariable(EDGE_ID) String strEdgeId,
+            @RequestParam int limit,
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
+            @RequestParam(required = false) String offset) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            checkEdgeId(edgeId, Operation.READ);
+            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            return checkNotNull(userService.findUsersByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get());
         } catch (Exception e) {
             throw handleException(e);
         }

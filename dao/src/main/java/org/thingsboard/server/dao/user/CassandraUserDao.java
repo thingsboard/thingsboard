@@ -16,18 +16,30 @@
 package org.thingsboard.server.dao.user;
 
 import com.datastax.driver.core.querybuilder.Select.Where;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.UserEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +51,9 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 @Slf4j
 @NoSqlDao
 public class CassandraUserDao extends CassandraAbstractSearchTextDao<UserEntity, User> implements UserDao {
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<UserEntity> getColumnFamilyClass() {
@@ -86,4 +101,16 @@ public class CassandraUserDao extends CassandraAbstractSearchTextDao<UserEntity,
         return DaoUtil.convertDataList(userEntities);
     }
 
+    @Override
+    public ListenableFuture<List<User>> findUsersByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+        log.debug("Try to find users by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.USER, pageLink);
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<User>> userFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                userFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(userFutures);
+        }, MoreExecutors.directExecutor());
+    }
 }

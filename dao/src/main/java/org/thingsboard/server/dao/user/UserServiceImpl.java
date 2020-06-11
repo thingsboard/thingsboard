@@ -18,7 +18,10 @@ package org.thingsboard.server.dao.user;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,15 +31,22 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -45,9 +55,11 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -84,6 +96,9 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    private EdgeService edgeService;
 
     @Override
     public User findUserByEmail(TenantId tenantId, String email) {
@@ -310,6 +325,57 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         int failedLoginAttempts = increaseFailedLoginAttempts(user);
         saveUser(user);
         return failedLoginAttempts;
+    }
+
+    @Override
+    public User assignUserToEdge(TenantId tenantId, UserId userId, EdgeId edgeId) {
+        User user = findUserById(tenantId, userId);
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+        if (edge == null) {
+            throw new DataValidationException("Can't assign user to non-existent edge!");
+        }
+        if (!edge.getTenantId().getId().equals(user.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign user to edge from different tenant!");
+        }
+        try {
+            createRelation(tenantId, new EntityRelation(edgeId, userId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (ExecutionException | InterruptedException e) {
+            log.warn("[{}] Failed to create user relation. Edge Id: [{}]", userId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return user;
+    }
+
+    @Override
+    public User unassignUserFromEdge(TenantId tenantId, UserId userId, EdgeId edgeId) {
+        User user = findUserById(tenantId, userId);
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign user from non-existent edge!");
+        }
+        try {
+            deleteRelation(tenantId, new EntityRelation(edgeId, userId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (ExecutionException | InterruptedException e) {
+            log.warn("[{}] Failed to delete user relation. Edge Id: [{}]", userId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return user;
+    }
+
+    @Override
+    public ListenableFuture<TimePageData<User>> findUsersByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+        log.trace("Executing findUsersByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
+        ListenableFuture<List<User>> users = userDao.findUsersByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+        return Futures.transform(users, new Function<List<User>, TimePageData<User>>() {
+            @Nullable
+            @Override
+            public TimePageData<User> apply(@Nullable List<User> users) {
+                return new TimePageData<>(users, pageLink);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private int increaseFailedLoginAttempts(User user) {
