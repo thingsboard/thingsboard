@@ -13,24 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.entityprofile;
+package org.thingsboard.server.service.entityprofile;
 
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.entityprofile.HasEntityProfileId;
 import org.thingsboard.server.common.data.id.EntityProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.service.entityprofile.profile.BaseProfile;
 
-public interface EntityProfileService {
+public interface TbEntityProfileService {
 
     PageData<EntityProfile> findEntityProfilesByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<EntityProfile> findEntityProfilesByTenantIdAndType(TenantId tenantId, EntityType entityType, PageLink pageLink);
+
+    default PageData<EntityProfile> findTenantProfiles(PageLink pageLink) {
+        return findEntityProfilesByTenantIdAndType(TenantId.SYS_TENANT_ID, EntityType.TENANT, pageLink);
+    }
 
     EntityProfile findById(TenantId tenantId, EntityProfileId id);
 
     EntityProfile save(EntityProfile entityProfile);
 
     void delete(TenantId tenantId, EntityProfileId id);
+
+    <P extends BaseProfile> EntityProfile createDefault(TenantId tenantId, String name, Class<P> clazz);
+
+    <T extends HasEntityProfileId & HasTenantId, P extends BaseProfile> P findProfile(T obj, Class<P> clazz);
 }

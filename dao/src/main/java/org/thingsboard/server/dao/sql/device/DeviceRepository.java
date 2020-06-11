@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.device;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -126,4 +127,11 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
     List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> deviceIds);
 
     List<DeviceEntity> findDevicesByTenantIdAndIdIn(String tenantId, List<String> deviceIds);
+
+    @Query("SELECT DISTINCT d.tenantId, d.type FROM DeviceEntity d WHERE d.entityProfileId IS NULL")
+    List<Object[]> findAllTenantIdAndTypeWhereEmptyEntityProfileId();
+
+    @Modifying
+    @Query("UPDATE DeviceEntity d SET d.entityProfileId = ?1 WHERE d.tenantId = ?2 AND d.type = ?3")
+    void updateEntityProfileId(String entityProfileId, String tenantId, String type);
 }

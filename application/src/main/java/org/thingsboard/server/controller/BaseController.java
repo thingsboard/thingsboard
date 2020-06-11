@@ -27,26 +27,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.thingsboard.server.common.data.*;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.entityprofile.EntityProfile;
-import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.entityprofile.EntityProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -70,7 +59,6 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.entityprofile.EntityProfileService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -86,6 +74,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.entityprofile.TbEntityProfileService;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -170,7 +159,7 @@ public abstract class BaseController {
     protected EntityViewService entityViewService;
 
     @Autowired
-    protected EntityProfileService entityProfileService;
+    protected TbEntityProfileService tbEntityProfileService;
 
     @Autowired
     protected TelemetrySubscriptionService tsSubService;
@@ -430,7 +419,7 @@ public abstract class BaseController {
     protected EntityProfile checkEntityProfileId(EntityProfileId entityProfileId, Operation operation) throws ThingsboardException {
         try {
             validateId(entityProfileId, "Incorrect entityProfilesId " + entityProfileId);
-            EntityProfile entityProfile = entityProfileService.findById(getCurrentUser().getTenantId(), entityProfileId);
+            EntityProfile entityProfile = tbEntityProfileService.findById(getCurrentUser().getTenantId(), entityProfileId);
             checkNotNull(entityProfile);
             accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_PROFILE, operation, entityProfileId, entityProfile);
             return entityProfile;

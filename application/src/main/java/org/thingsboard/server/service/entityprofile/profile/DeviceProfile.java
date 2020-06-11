@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.entityprofile;
+package org.thingsboard.server.service.entityprofile.profile;
 
-public interface BaseProfile {
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class DeviceProfile implements BaseProfile {
 }

@@ -13,15 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.profile;
+package org.thingsboard.server.service.entityprofile.profile;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
-import org.thingsboard.server.common.data.entityprofile.BaseProfile;
-
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class DeviceProfile implements BaseProfile {
-    private Long inactivityTimeout;
-
+public interface BaseProfile {
 }

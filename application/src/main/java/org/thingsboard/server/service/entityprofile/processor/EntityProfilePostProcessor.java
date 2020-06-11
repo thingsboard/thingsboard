@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.entityprofile;
+package org.thingsboard.server.service.entityprofile.processor;
 
-import org.thingsboard.server.common.data.entityprofile.BaseProfile;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.service.entityprofile.profile.BaseProfile;
 
 public interface EntityProfilePostProcessor<P extends BaseProfile> {
 
     Class<P> getProfileClass();
 
+    EntityType getEntityType();
+
     void setDefaultValues(P profile);
+
+    default void initProfile(P profile) {
+
+    }
 }

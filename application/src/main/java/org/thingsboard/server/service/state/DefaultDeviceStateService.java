@@ -17,11 +17,7 @@ package org.thingsboard.server.service.state;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,55 +31,33 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.entityprofile.EntityProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.profile.DeviceProfile;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
-import static org.thingsboard.server.common.data.DataConstants.ACTIVITY_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.CONNECT_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.DISCONNECT_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.*;
 
 /**
  * Created by ashvayka on 01.05.18.
@@ -111,7 +85,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private final TimeseriesService tsService;
     private final TbClusterService clusterService;
     private final PartitionService partitionService;
-    private final EntityProfileService entityProfileService;
 
     private TelemetrySubscriptionService tsSubService;
 
@@ -455,11 +428,9 @@ public class DefaultDeviceStateService implements DeviceStateService {
             @Override
             public DeviceStateData apply(@Nullable List<T> data) {
                 try {
-                    //todo: replace this with cache
-                    DeviceProfile deviceProfile = entityProfileService.findProfile(device, DeviceProfile.class);
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
-                    long inactivityTimeout = deviceProfile.getInactivityTimeout();
+                    long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
                     boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
                     DeviceState deviceState = DeviceState.builder()
                             .active(active)

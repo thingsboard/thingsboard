@@ -63,7 +63,7 @@ public class EntityProfileController extends BaseController {
         ActionType actionType = entityProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             checkEntity(entityProfile.getId(), entityProfile, Resource.ENTITY_PROFILE);
-            entityProfile = entityProfileService.save(entityProfile);
+            entityProfile = tbEntityProfileService.save(entityProfile);
             checkNotNull(entityProfile);
             logEntityAction(entityProfile.getId(), entityProfile, null, actionType, null);
             return entityProfile;
@@ -81,7 +81,7 @@ public class EntityProfileController extends BaseController {
         EntityProfileId id = new EntityProfileId(toUUID(strId));
         try {
             EntityProfile entityProfile = checkEntityProfileId(new EntityProfileId(toUUID(strId)), Operation.DELETE);
-            entityProfileService.delete(getCurrentUser().getTenantId(), id);
+            tbEntityProfileService.delete(getCurrentUser().getTenantId(), id);
             logEntityAction(id, entityProfile, null, ActionType.DELETED, null);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_PROFILE), null, null, ActionType.DELETED, e, id);
@@ -100,14 +100,14 @@ public class EntityProfileController extends BaseController {
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (getCurrentUser().isSystemAdmin()) {
-            return checkNotNull(entityProfileService.findTenantProfiles(pageLink));
+            return checkNotNull(tbEntityProfileService.findTenantProfiles(pageLink));
         }
         TenantId tenantId = getCurrentUser().getTenantId();
         try {
             if (isEmpty(type)) {
-                return checkNotNull(entityProfileService.findEntityProfilesByTenantId(tenantId, pageLink));
+                return checkNotNull(tbEntityProfileService.findEntityProfilesByTenantId(tenantId, pageLink));
             } else {
-                return checkNotNull(entityProfileService.findEntityProfilesByTenantIdAndType(tenantId, EntityType.valueOf(type), pageLink));
+                return checkNotNull(tbEntityProfileService.findEntityProfilesByTenantIdAndType(tenantId, EntityType.valueOf(type), pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);

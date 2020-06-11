@@ -352,6 +352,9 @@ caffeine:
     securitySettings:
       timeToLiveInMinutes: 1440
       maxSize: 1
+    entityProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 redis:
   # standalone or cluster

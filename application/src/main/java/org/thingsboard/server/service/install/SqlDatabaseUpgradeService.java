@@ -15,13 +15,21 @@
  */
 package org.thingsboard.server.service.install;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.entityprofile.EntityProfile;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.sql.device.DeviceRepository;
 import org.thingsboard.server.dao.util.SqlDao;
+import org.thingsboard.server.service.entityprofile.TbEntityProfileService;
+import org.thingsboard.server.service.entityprofile.profile.DeviceProfile;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.StandardCharsets;
@@ -38,6 +46,7 @@ import static org.thingsboard.server.service.install.DatabaseHelper.*;
 @Profile("install")
 @Slf4j
 @SqlDao
+@RequiredArgsConstructor
 public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService {
 
     private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
@@ -51,11 +60,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     @Value("${spring.datasource.password}")
     private String dbPassword;
 
-    @Autowired
-    private DashboardService dashboardService;
-
-    @Autowired
-    private InstallScripts installScripts;
+    private final DashboardService dashboardService;
+    private final InstallScripts installScripts;
+    private final DeviceRepository deviceRepository;
+    private final TbEntityProfileService tbEntityProfileService;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -222,6 +231,25 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.0", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     log.info("Schema updated.");
+                    try {
+                        conn.createStatement().execute(
+                                "ALTER TABLE device ADD entity_profile_id varchar(31);"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {
+                        log.warn(ExceptionUtils.getRootCauseMessage(e));
+                    }
+                    transactionTemplate.execute(transactionStatus -> {
+                        deviceRepository.findAllTenantIdAndTypeWhereEmptyEntityProfileId().forEach(objects -> {
+                            String tenantIdStr = (String) objects[0];
+                            TenantId tenantId = new TenantId(UUIDConverter.fromString(tenantIdStr));
+                            String type = (String) objects[1];
+
+                            EntityProfile profile = tbEntityProfileService.createDefault(tenantId, type, DeviceProfile.class);
+                            String entityProfileStr = UUIDConverter.fromTimeUUID(profile.getId().getId());
+                            deviceRepository.updateEntityProfileId(entityProfileStr, tenantIdStr, type);
+                        });
+                        transactionStatus.flush();
+                        return null;
+                    });
                 }
                 break;
             default:
