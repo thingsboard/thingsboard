@@ -47,6 +47,7 @@ public class ClientHttpRequestFactoryBuilder {
     private boolean jdkHttpClientEnabled;
     private boolean systemProxyEnabled;
     private int readTimeout = DEFAULT_READ_TIMEOUT;
+    private boolean jdkHttpClientProxySocks;
 
     private ClientHttpRequestFactoryBuilder() {
     }
@@ -68,6 +69,7 @@ public class ClientHttpRequestFactoryBuilder {
                 .jdkHttpClientEnabled(jdkHttpClientEnabled)
                 .systemProxyEnabled(systemProxyEnabled)
                 .readTimeout(readTimeout)
+                .jdkHttpClientProxySocks(StringUtils.isNotEmpty(System.getProperty("tb.proxy.jdk.socks")) && System.getProperty("tb.proxy.jdk.socks").equalsIgnoreCase("true"))
                 .build();
     }
 
@@ -115,6 +117,11 @@ public class ClientHttpRequestFactoryBuilder {
         return this;
     }
 
+    public ClientHttpRequestFactoryBuilder jdkHttpClientProxySocks(boolean jdkHttpClientProxySocks) {
+        this.jdkHttpClientProxySocks = jdkHttpClientProxySocks;
+        return this;
+    }
+
     public ClientHttpRequestFactory build() {
         boolean proxyEnabled = StringUtils.isNotEmpty(proxyHost) && proxyPort != null;
         boolean useAuth = StringUtils.isNotEmpty(proxyUser) && StringUtils.isNotEmpty(proxyPassword);
@@ -124,7 +131,8 @@ public class ClientHttpRequestFactoryBuilder {
             SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
             if (proxyEnabled) {
                 log.warn("Going to use Proxy Server: [{}:{}]", proxyHost, proxyPort);
-                factory.setProxy(new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(proxyHost, proxyPort)));
+                Proxy.Type proxyType = jdkHttpClientProxySocks ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
+                factory.setProxy(new Proxy(proxyType, InetSocketAddress.createUnresolved(proxyHost, proxyPort)));
             }
 
             if (useAuth) {
@@ -145,6 +153,8 @@ public class ClientHttpRequestFactoryBuilder {
             HttpComponentsClientHttpRequestFactory requestFactory;
             if (systemProxyEnabled) {
                 log.warn("Going to use System Proxy Server!");
+                checkSystemProxyProperties();
+
                 httpClient = HttpClients.createSystem();
                 requestFactory = new HttpComponentsClientHttpRequestFactory();
                 requestFactory.setHttpClient(httpClient);
@@ -192,6 +202,15 @@ public class ClientHttpRequestFactoryBuilder {
                 }
                 return requestFactory;
             }
+        }
+    }
+
+    private void checkSystemProxyProperties() {
+        boolean useHttpProxy = StringUtils.isNotEmpty(System.getProperty("http.proxyHost")) && StringUtils.isNotEmpty(System.getProperty("http.proxyPort"));
+        boolean useHttpsProxy = StringUtils.isNotEmpty(System.getProperty("https.proxyHost")) && StringUtils.isNotEmpty(System.getProperty("https.proxyPort"));
+        boolean useSocksProxy = StringUtils.isNotEmpty(System.getProperty("socksProxyHost")) && StringUtils.isNotEmpty(System.getProperty("socksProxyPort"));
+        if (!(useHttpProxy || useHttpsProxy || useSocksProxy)) {
+            log.warn("Didn't set any system proxy properties. Should be added next system proxy properties: \"http.proxyHost http.proxyPort\" or  \"https.proxyHost https.proxyPort\" or \"socksProxyHost socksProxyPort\"");
         }
     }
 }
