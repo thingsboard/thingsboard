@@ -33,7 +33,6 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,7 +48,6 @@ import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -75,7 +73,6 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -223,18 +220,34 @@ public abstract class AbstractControllerTest {
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
     }
 
+    protected void loginUser(String userName, String password) throws Exception {
+        login(userName, password);
+    }
+
     protected User createUserAndLogin(User user, String password) throws Exception {
         User savedUser = doPost("/api/user", user, User.class);
         logout();
-        doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
-                .andExpect(status().isSeeOther())
-                .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
-        JsonNode activateRequest = new ObjectMapper().createObjectNode()
-                .put("activateToken", TestMailService.currentActivateToken)
-                .put("password", password);
+        JsonNode activateRequest = getActivateRequest(password);
         JsonNode tokenInfo = readResponse(doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk()), JsonNode.class);
         validateAndSetJwtToken(tokenInfo, user.getEmail());
         return savedUser;
+    }
+
+    protected User createUser(User user, String password) throws Exception {
+        User savedUser = doPost("/api/user", user, User.class);
+        JsonNode activateRequest = getActivateRequest(password);
+        ResultActions resultActions = doPost("/api/noauth/activate", activateRequest);
+        resultActions.andExpect(status().isOk());
+        return savedUser;
+    }
+
+    private JsonNode getActivateRequest(String password) throws Exception {
+        doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
+                .andExpect(status().isSeeOther())
+                .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
+        return new ObjectMapper().createObjectNode()
+                .put("activateToken", TestMailService.currentActivateToken)
+                .put("password", password);
     }
 
     protected void login(String username, String password) throws Exception {
@@ -381,6 +394,10 @@ public abstract class AbstractControllerTest {
     }
 
     protected <T> T doPostAsync(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
+        return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
+    }
+
+    protected <T> T doPostClaimAsync(String urlTemplate, Object content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
         return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
     }
 

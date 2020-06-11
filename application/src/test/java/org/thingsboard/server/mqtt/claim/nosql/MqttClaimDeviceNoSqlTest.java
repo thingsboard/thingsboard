@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.mqtt.attributes.request.nosql;
+package org.thingsboard.server.mqtt.claim.nosql;
 
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
-import org.thingsboard.server.mqtt.attributes.request.AbstractMqttAttributesUpdatesIntegrationTest;
+import org.thingsboard.server.mqtt.claim.AbstractMqttClaimDeviceTest;
 
 
 @DaoNoSqlTest
-public class MqttAttributesUpdatesNoSqlIntegrationTest extends AbstractMqttAttributesUpdatesIntegrationTest {
+public class MqttClaimDeviceNoSqlTest extends AbstractMqttClaimDeviceTest {
 }
