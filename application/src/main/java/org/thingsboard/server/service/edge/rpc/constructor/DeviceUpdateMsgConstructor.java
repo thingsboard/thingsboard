@@ -42,7 +42,8 @@ public class DeviceUpdateMsgConstructor {
             builder.setLabel(device.getLabel());
         }
         if (msgType.equals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE) ||
-                msgType.equals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE)) {
+                msgType.equals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE) ||
+                msgType.equals(UpdateMsgType.DEVICE_CONFLICT_RPC_MESSAGE)) {
             DeviceCredentials deviceCredentials
                     = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
             if (deviceCredentials != null) {
