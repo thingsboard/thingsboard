@@ -545,11 +545,6 @@ public class GatewaySessionHandler {
             int requestId = gatewayAttributesRequestMsg.getId();
             boolean clientScope = gatewayAttributesRequestMsg.getClient();
             ProtocolStringList keysList = gatewayAttributesRequestMsg.getKeysList();
-            if (CollectionUtils.isEmpty(keysList)) {
-                UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                log.debug("[{}][{}] keysList list is empty for: [{}]", sessionId, gatewayId, deviceName);
-                throw new IllegalArgumentException("[" + sessionId + "][" + gatewayId + "] request keysList list is empty for: " + deviceName + "!");
-            }
             Set<String> keys = new HashSet<>(keysList);
             TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
             processGetAttributeRequestMessage(mqttMsg, deviceName, requestMsg);

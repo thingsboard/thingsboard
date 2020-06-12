@@ -325,6 +325,11 @@ public class JsonConverter {
         if (responseMsg.getSharedAttributeListCount() > 0) {
             addValues(result, responseMsg.getSharedAttributeListList());
         }
+        if (responseMsg.getDeletedAttributeKeysCount() > 0) {
+            JsonArray attrObject = new JsonArray();
+            responseMsg.getDeletedAttributeKeysList().forEach(attrObject::add);
+            result.add("deleted", attrObject);
+        }
         return result;
     }
 

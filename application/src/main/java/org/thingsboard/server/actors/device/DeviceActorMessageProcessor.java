@@ -75,6 +75,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -257,10 +258,28 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<List<List<AttributeKvEntry>>>() {
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
+                ArrayList<String> clientAttributeNamesList = new ArrayList<>(request.getClientAttributeNamesList());
+                ArrayList<String> sharedAttributeNamesList = new ArrayList<>(request.getSharedAttributeNamesList());
+
+                List<AttributeKvEntry> clientAttributeKvEntries = result.get(0);
+                List<AttributeKvEntry> sharedAttributeKvEntries = result.get(1);
+                Set<String> deletedKeys = new HashSet<>();
+
+                List<String> clientAttributesKeys = clientAttributeKvEntries.stream().map(AttributeKvEntry::getKey).collect(Collectors.toList());
+                List<String> sharedAttributesKeys = sharedAttributeKvEntries.stream().map(AttributeKvEntry::getKey).collect(Collectors.toList());
+
+                if (CollectionUtils.isNotEmpty(clientAttributeNamesList) || CollectionUtils.isNotEmpty(sharedAttributeNamesList)) {
+                    Set<String> deletedClientKeys = clientAttributeNamesList.stream().filter(key -> !clientAttributesKeys.contains(key)).collect(Collectors.toSet());
+                    Set<String> deletedSharedKeys = sharedAttributeNamesList.stream().filter(key -> !sharedAttributesKeys.contains(key)).collect(Collectors.toSet());
+                    deletedKeys.addAll(deletedClientKeys);
+                    deletedKeys.addAll(deletedSharedKeys);
+                }
+
                 GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                         .setRequestId(requestId)
-                        .addAllClientAttributeList(toTsKvProtos(result.get(0)))
-                        .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
+                        .addAllClientAttributeList(toTsKvProtos(clientAttributeKvEntries))
+                        .addAllSharedAttributeList(toTsKvProtos(sharedAttributeKvEntries))
+                        .addAllDeletedAttributeKeys(deletedKeys)
                         .build();
                 sendToTransport(responseMsg, sessionInfo);
             }
