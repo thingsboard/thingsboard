@@ -18,14 +18,11 @@ package org.thingsboard.server.dao.user;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.page.TimePageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 
 public interface UserService {
@@ -69,10 +66,4 @@ public interface UserService {
 	void onUserLoginSuccessful(TenantId tenantId, UserId userId);
 
 	int onUserLoginIncorrectCredentials(TenantId tenantId, UserId userId);
-
-	User assignUserToEdge(TenantId tenantId, UserId userId, EdgeId edgeId);
-
-	User unassignUserFromEdge(TenantId tenantId, UserId userId, EdgeId edgeId);
-
-	ListenableFuture<TimePageData<User>> findUsersByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 }

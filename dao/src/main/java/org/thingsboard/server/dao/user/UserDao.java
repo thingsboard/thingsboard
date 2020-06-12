@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.dao.user;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -42,7 +40,7 @@ public interface UserDao extends Dao<User> {
      * @return the user entity
      */
     User findByEmail(TenantId tenantId, String email);
-    
+
     /**
      * Find tenant admin users by tenantId and page link.
      *
@@ -51,7 +49,7 @@ public interface UserDao extends Dao<User> {
      * @return the list of user entities
      */
     List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink);
-    
+
     /**
      * Find customer users by tenantId, customerId and page link.
      *
@@ -61,15 +59,4 @@ public interface UserDao extends Dao<User> {
      * @return the list of user entities
      */
     List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink);
-
-    /**
-     * Find users by tenantId, edgeId and page link.
-     *
-     * @param tenantId the tenantId
-     * @param edgeId the edgeId
-     * @param pageLink the page link
-     * @return the list of user objects
-     */
-    ListenableFuture<List<User>> findUsersByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink);
-    
 }
