@@ -13,25 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.entity;
+package org.thingsboard.server.dao.sql.query;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.dao.entity.EntityQueryDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
-public interface EntityService {
+@Component
+@SqlDao
+public class JpaEntityQueryDao implements EntityQueryDao {
 
-    ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId);
+    @Autowired
+    private EntityQueryRepository entityQueryRepository;
 
-    void deleteEntityRelations(TenantId tenantId, EntityId entityId);
+    @Override
+    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
+        return entityQueryRepository.countEntitiesByQuery(tenantId, customerId, query);
+    }
 
-    long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query);
-
-    PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
-
+    @Override
+    public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+        return entityQueryRepository.findEntityDataByQuery(tenantId, customerId, query);
+    }
 }

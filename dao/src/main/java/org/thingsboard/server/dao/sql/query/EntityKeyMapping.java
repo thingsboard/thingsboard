@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.dao.sql.query;
 
-public enum EntityFilterType {
-    SINGLE_ENTITY("singleEntity"),
-    ENTITY_LIST("entityList"),
-    ENTITY_NAME("entityName"),
-    ASSET_TYPE("assetType"),
-    DEVICE_TYPE("deviceType"),
-    ENTITY_VIEW_TYPE("entityViewType"),
-    RELATIONS_QUERY("relationsQuery"),
-    ASSET_SEARCH_QUERY("assetSearchQuery"),
-    DEVICE_SEARCH_QUERY("deviceSearchQuery"),
-    ENTITY_VIEW_SEARCH_QUERY("entityViewSearchQuery");
+import lombok.Data;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.KeyFilter;
 
-    private final String label;
+import java.util.List;
 
-    EntityFilterType(String label) {
-        this.label = label;
+@Data
+public class EntityKeyMapping {
+    private int index;
+    private String alias;
+    private boolean isLatest;
+    private boolean isSelection;
+    private List<KeyFilter> keyFilters;
+    private EntityKey entityKey;
+
+    public boolean hasFilter() {
+        return keyFilters != null && !keyFilters.isEmpty();
     }
 }

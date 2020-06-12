@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.entity;
+package org.thingsboard.server.service.query;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface EntityService {
+public interface EntityQueryService {
 
-    ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId);
+    long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query);
 
-    void deleteEntityRelations(TenantId tenantId, EntityId entityId);
-
-    long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query);
-
-    PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
+    PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query);
 
 }

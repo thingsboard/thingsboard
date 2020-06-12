@@ -15,21 +15,25 @@
  */
 package org.thingsboard.server.common.data.query;
 
-public enum EntityFilterType {
-    SINGLE_ENTITY("singleEntity"),
-    ENTITY_LIST("entityList"),
-    ENTITY_NAME("entityName"),
-    ASSET_TYPE("assetType"),
-    DEVICE_TYPE("deviceType"),
-    ENTITY_VIEW_TYPE("entityViewType"),
-    RELATIONS_QUERY("relationsQuery"),
-    ASSET_SEARCH_QUERY("assetSearchQuery"),
-    DEVICE_SEARCH_QUERY("deviceSearchQuery"),
-    ENTITY_VIEW_SEARCH_QUERY("entityViewSearchQuery");
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.EntityTypeFilter;
 
-    private final String label;
+import java.util.List;
 
-    EntityFilterType(String label) {
-        this.label = label;
+@Data
+public class RelationsQueryFilter implements EntityFilter {
+
+    @Override
+    public EntityFilterType getType() {
+        return EntityFilterType.RELATIONS_QUERY;
     }
+
+    private EntityId rootEntity;
+    private EntitySearchDirection direction;
+    private List<EntityTypeFilter> filters;
+    private int maxLevel;
+    private boolean fetchLastLevelOnly;
+
 }
