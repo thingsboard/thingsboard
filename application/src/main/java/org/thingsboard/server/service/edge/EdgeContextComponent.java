@@ -55,6 +55,10 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
+    private EdgeNotificationService edgeNotificationService;
+
+    @Lazy
+    @Autowired
     private AssetService assetService;
 
     @Lazy

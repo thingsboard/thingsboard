@@ -172,7 +172,7 @@ public final class EdgeGrpcSession implements Closeable {
         TimePageData<Event> pageData;
         UUID ifOffset = null;
         do {
-            pageData = ctx.getEdgeService().findQueueEvents(edge.getTenantId(), edge.getId(), pageLink);
+            pageData = ctx.getEdgeNotificationService().findQueueEvents(edge.getTenantId(), edge.getId(), pageLink);
             if (isConnected() && !pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
                 for (Event event : pageData.getData()) {

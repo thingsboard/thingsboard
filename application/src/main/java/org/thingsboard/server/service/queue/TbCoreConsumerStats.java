@@ -33,6 +33,7 @@ public class TbCoreConsumerStats {
     private final AtomicInteger claimDeviceCounter = new AtomicInteger(0);
 
     private final AtomicInteger deviceStateCounter = new AtomicInteger(0);
+    private final AtomicInteger edgeNotificationCounter = new AtomicInteger(0);
     private final AtomicInteger subscriptionMsgCounter = new AtomicInteger(0);
     private final AtomicInteger toCoreNotificationsCounter = new AtomicInteger(0);
 
@@ -64,6 +65,11 @@ public class TbCoreConsumerStats {
     public void log(TransportProtos.DeviceStateServiceMsgProto msg) {
         totalCounter.incrementAndGet();
         deviceStateCounter.incrementAndGet();
+    }
+
+    public void log(TransportProtos.EdgeNotificationMsgProto msg) {
+        totalCounter.incrementAndGet();
+        edgeNotificationCounter.incrementAndGet();
     }
 
     public void log(TransportProtos.SubscriptionMgrMsgProto msg) {

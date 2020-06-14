@@ -352,6 +352,12 @@ message FromDeviceRPCResponseProto {
   string response = 3;
   int32 error = 4;
 }
+
+message EdgeNotificationMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+}
+
 /**
  * Main messages;
  */
@@ -377,6 +383,7 @@ message ToCoreMsg {
   DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
   bytes toDeviceActorNotificationMsg = 4;
+  EdgeNotificationMsgProto edgeNotificationMsg = 5;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
