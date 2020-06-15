@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entityprofile.processor;
+package org.thingsboard.server.service.profile.processor;
 
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.service.entityprofile.profile.BaseProfile;
+import org.thingsboard.server.service.profile.profile.BaseProfile;
 
 public interface EntityProfilePostProcessor<P extends BaseProfile> {
 

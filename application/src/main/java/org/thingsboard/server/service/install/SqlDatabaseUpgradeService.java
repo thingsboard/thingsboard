@@ -28,8 +28,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.sql.device.DeviceRepository;
 import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.service.entityprofile.TbEntityProfileService;
-import org.thingsboard.server.service.entityprofile.profile.DeviceProfile;
+import org.thingsboard.server.service.profile.TbEntityProfileService;
+import org.thingsboard.server.service.profile.profile.DeviceProfile;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.StandardCharsets;

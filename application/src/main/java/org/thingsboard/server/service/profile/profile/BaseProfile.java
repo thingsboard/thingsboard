@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entityprofile.profile;
+package org.thingsboard.server.service.profile.profile;
 
 public interface BaseProfile {
 }

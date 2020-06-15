@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entityprofile.processor;
+package org.thingsboard.server.service.profile.processor;
 
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.service.entityprofile.profile.DeviceProfile;
+import org.thingsboard.server.service.profile.profile.DeviceProfile;
 
 @Component
 public class DeviceProfilePostProcessor implements EntityProfilePostProcessor<DeviceProfile> {

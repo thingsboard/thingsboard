@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entityprofile;
+package org.thingsboard.server.service.profile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,8 +32,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entityprofile.EntityProfileService;
-import org.thingsboard.server.service.entityprofile.processor.EntityProfilePostProcessor;
-import org.thingsboard.server.service.entityprofile.profile.BaseProfile;
+import org.thingsboard.server.service.profile.processor.EntityProfilePostProcessor;
+import org.thingsboard.server.service.profile.profile.BaseProfile;
 
 import java.util.Collections;
 import java.util.List;
