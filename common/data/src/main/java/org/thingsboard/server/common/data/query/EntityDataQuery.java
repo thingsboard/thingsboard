@@ -23,13 +23,21 @@ import java.util.List;
 public class EntityDataQuery extends EntityCountQuery {
 
     @Getter
-    private final EntityDataPageLink pageLink;
+    private EntityDataPageLink pageLink;
     @Getter
-    private final List<EntityKey> entityFields;
+    private List<EntityKey> entityFields;
     @Getter
-    private final List<EntityKey> latestValues;
+    private List<EntityKey> latestValues;
     @Getter
-    private final List<KeyFilter> keyFilters;
+    private List<KeyFilter> keyFilters;
+
+    public EntityDataQuery() {
+        super();
+    }
+
+    public EntityDataQuery(EntityFilter entityFilter) {
+        super(entityFilter);
+    }
 
     public EntityDataQuery(EntityFilter entityFilter,
                            EntityDataPageLink pageLink,

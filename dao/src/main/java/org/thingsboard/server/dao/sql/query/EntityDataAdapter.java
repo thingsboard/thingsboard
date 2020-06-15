@@ -67,7 +67,7 @@ public class EntityDataAdapter {
                 } else {
                     strValue = convertValue(value);
                     Object tsObject = row[mapping.getIndex() + 1];
-                    ts = Long.parseLong(tsObject.toString());
+                    ts = tsObject != null ? Long.parseLong(tsObject.toString()) : 0;
                 }
                 TsValue tsValue = new TsValue(ts, strValue);
                 latest.computeIfAbsent(entityKey.getType(), entityKeyType -> new HashMap<>()).put(entityKey.getKey(), tsValue);

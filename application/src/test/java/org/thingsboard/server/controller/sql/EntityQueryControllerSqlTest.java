@@ -13,29 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.controller.sql;
 
-import lombok.Data;
+import org.thingsboard.server.controller.BaseEntityQueryControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@Data
-public class EntityDataSortOrder {
-
-    private EntityKey key;
-    private Direction direction;
-
-    public EntityDataSortOrder() {}
-
-    public EntityDataSortOrder(EntityKey key) {
-        this(key, Direction.ASC);
-    }
-
-    public EntityDataSortOrder(EntityKey key, Direction direction) {
-        this.key = key;
-        this.direction = direction;
-    }
-
-    public enum Direction {
-        ASC, DESC
-    }
-
+@DaoSqlTest
+public class EntityQueryControllerSqlTest extends BaseEntityQueryControllerTest {
 }

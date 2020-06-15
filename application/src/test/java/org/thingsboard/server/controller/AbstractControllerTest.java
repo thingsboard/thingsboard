@@ -399,6 +399,14 @@ public abstract class AbstractControllerTest {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
 
+    protected <T,R> R doPostWithResponse(String urlTemplate, T content, Class<R> responseClass, String... params) throws Exception {
+        return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+    }
+
+    protected <T,R> R doPostWithTypedResponse(String urlTemplate, T content, TypeReference<R> responseType, String... params) throws Exception {
+        return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseType);
+    }
+
     protected <T> T doPostAsync(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
         return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
     }

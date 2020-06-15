@@ -15,7 +15,27 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = SingleEntityFilter.class, name = "singleEntity"),
+        @JsonSubTypes.Type(value = EntityListFilter.class, name = "entityList"),
+        @JsonSubTypes.Type(value = EntityNameFilter.class, name = "entityName"),
+        @JsonSubTypes.Type(value = AssetTypeFilter.class, name = "assetType"),
+        @JsonSubTypes.Type(value = DeviceTypeFilter.class, name = "deviceType"),
+        @JsonSubTypes.Type(value = EntityViewTypeFilter.class, name = "entityViewType"),
+        @JsonSubTypes.Type(value = RelationsQueryFilter.class, name = "relationsQuery"),
+        @JsonSubTypes.Type(value = AssetSearchQueryFilter.class, name = "assetSearchQuery"),
+        @JsonSubTypes.Type(value = DeviceSearchQueryFilter.class, name = "deviceSearchQuery"),
+        @JsonSubTypes.Type(value = EntityViewSearchQueryFilter.class, name = "entityViewSearchQuery")})
 public interface EntityFilter {
 
+    @JsonIgnore
     EntityFilterType getType();
 }
