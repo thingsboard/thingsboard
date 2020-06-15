@@ -13,7 +13,7 @@ To be able to change user, **chown** command is used, which requires sudo permis
 
 `
 $ mkdir -p ~/.mytb-data && sudo chown -R 799:799 ~/.mytb-data
-`
+` 
 
 **NOTE**: replace directory `~/.mytb-data` with directory you're planning to use on container creation. 
 
