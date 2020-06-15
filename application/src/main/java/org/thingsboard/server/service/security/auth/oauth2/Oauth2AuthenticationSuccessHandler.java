@@ -32,6 +32,8 @@ import org.thingsboard.server.utils.MiscUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Component(value = "oauth2AuthenticationSuccessHandler")
 @ConditionalOnProperty(prefix = "security.oauth2", value = "enabled", havingValue = "true")
@@ -57,16 +59,22 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
-
-        OAuth2Client oauth2Client = oauth2Configuration.getClientByRegistrationId(token.getAuthorizedClientRegistrationId());
-        OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(oauth2Client.getMapperConfig().getType());
-        SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, oauth2Client.getMapperConfig());
-
-        JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-        JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
 
         String baseUrl = MiscUtils.constructBaseUrl(request);
-        getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());
+        try {
+            OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
+
+            OAuth2Client oauth2Client = oauth2Configuration.getClientByRegistrationId(token.getAuthorizedClientRegistrationId());
+            OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(oauth2Client.getMapperConfig().getType());
+            SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, oauth2Client.getMapperConfig());
+
+            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
+            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+
+            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());
+        } catch (Exception e) {
+            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/login?loginError=" +
+                    URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8.toString()));
+        }
     }
 }

@@ -32,6 +32,11 @@ export interface MailServerSettings {
   enableTls: boolean;
   username: string;
   password: string;
+  enableProxy: boolean;
+  proxyHost: string;
+  proxyPort: number;
+  proxyUser: string;
+  proxyPassword: string;
 }
 
 export interface GeneralSettings {

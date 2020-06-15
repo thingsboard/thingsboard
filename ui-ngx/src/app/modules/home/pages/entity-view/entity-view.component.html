@@ -85,51 +85,53 @@
                           formControlName="entityId">
         </tb-entity-select>
       </section>
-      <div formGroupName="keys">
-        <mat-expansion-panel formGroupName="attributes" [expanded]="true">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <div class="tb-panel-title" translate>entity-view.attributes-propagation</div>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <div translate class="tb-hint">entity-view.attributes-propagation-hint</div>
-          <label translate class="tb-title no-padding">entity-view.client-attributes</label>
-          <tb-entity-keys-list
-            [entityId]="selectedEntityId | async"
-            formControlName="cs"
-            keysText="entity-view.client-attributes-placeholder"
-            [dataKeyType]="dataKeyType.attribute">
-          </tb-entity-keys-list>
-          <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
-          <tb-entity-keys-list
-            [entityId]="selectedEntityId | async"
-            formControlName="sh"
-            keysText="entity-view.shared-attributes-placeholder"
-            [dataKeyType]="dataKeyType.attribute">
-          </tb-entity-keys-list>
-          <label translate class="tb-title no-padding">entity-view.server-attributes</label>
-          <tb-entity-keys-list
-            [entityId]="selectedEntityId | async"
-            formControlName="ss"
-            keysText="entity-view.server-attributes-placeholder"
-            [dataKeyType]="dataKeyType.attribute">
-          </tb-entity-keys-list>
-        </mat-expansion-panel>
-        <mat-expansion-panel [expanded]="true">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <div class="tb-panel-title" translate>entity-view.timeseries-data</div>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <div translate class="tb-hint">entity-view.timeseries-data-hint</div>
-          <label translate class="tb-title no-padding">entity-view.timeseries</label>
-          <tb-entity-keys-list
-            [entityId]="selectedEntityId | async"
-            formControlName="timeseries"
-            keysText="entity-view.timeseries-placeholder"
-            [dataKeyType]="dataKeyType.timeseries">
-          </tb-entity-keys-list>
-        </mat-expansion-panel>
+      <div class="mat-accordion-container" formGroupName="keys">
+        <mat-accordion [multi]="true">
+          <mat-expansion-panel formGroupName="attributes" [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div class="tb-panel-title" translate>entity-view.attributes-propagation</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div translate class="tb-hint">entity-view.attributes-propagation-hint</div>
+            <label translate class="tb-title no-padding">entity-view.client-attributes</label>
+            <tb-entity-keys-list
+              [entityId]="selectedEntityId | async"
+              formControlName="cs"
+              keysText="entity-view.client-attributes-placeholder"
+              [dataKeyType]="dataKeyType.attribute">
+            </tb-entity-keys-list>
+            <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
+            <tb-entity-keys-list
+              [entityId]="selectedEntityId | async"
+              formControlName="sh"
+              keysText="entity-view.shared-attributes-placeholder"
+              [dataKeyType]="dataKeyType.attribute">
+            </tb-entity-keys-list>
+            <label translate class="tb-title no-padding">entity-view.server-attributes</label>
+            <tb-entity-keys-list
+              [entityId]="selectedEntityId | async"
+              formControlName="ss"
+              keysText="entity-view.server-attributes-placeholder"
+              [dataKeyType]="dataKeyType.attribute">
+            </tb-entity-keys-list>
+          </mat-expansion-panel>
+          <mat-expansion-panel [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div class="tb-panel-title" translate>entity-view.timeseries-data</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div translate class="tb-hint">entity-view.timeseries-data-hint</div>
+            <label translate class="tb-title no-padding">entity-view.timeseries</label>
+            <tb-entity-keys-list
+              [entityId]="selectedEntityId | async"
+              formControlName="timeseries"
+              keysText="entity-view.timeseries-placeholder"
+              [dataKeyType]="dataKeyType.timeseries">
+            </tb-entity-keys-list>
+          </mat-expansion-panel>
+        </mat-accordion>
       </div>
       <tb-datetime
         dateText="entity-view.start-date"

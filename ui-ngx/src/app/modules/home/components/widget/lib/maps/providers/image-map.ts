@@ -14,47 +14,121 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngLiteral, LatLngBounds, LatLngTuple } from 'leaflet';
+import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { UnitedMapSettings } from '../map-models';
-import { Observable } from 'rxjs';
-import { map, filter, switchMap } from 'rxjs/operators';
+import { MapImage, PosFuncton, UnitedMapSettings } from '../map-models';
+import { Observable, ReplaySubject } from 'rxjs';
+import { filter, map, mergeMap } from 'rxjs/operators';
 import { aspectCache, calculateNewPointCoordinate, parseFunction } from '@home/components/widget/lib/maps/maps-utils';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 
 const maxZoom = 4;// ?
 
 export class ImageMap extends LeafletMap {
 
-    imageOverlay;
+    imageOverlay: L.ImageOverlay;
     aspect = 0;
     width = 0;
     height = 0;
-    imageUrl;
-    posFunction;
+    imageUrl: string;
+    posFunction: PosFuncton;
 
-    constructor($container: HTMLElement, options: UnitedMapSettings) {
-        super($container, options);
-        this.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as ((origXPos, origYPos) => { x, y });
-        this.imageUrl = options.mapUrl;
-        aspectCache(this.imageUrl).subscribe(aspect => {
-            this.aspect = aspect;
+    constructor(ctx: WidgetContext, $container: HTMLElement, options: UnitedMapSettings) {
+        super(ctx, $container, options);
+        this.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as PosFuncton;
+        this.mapImage(options).subscribe((mapImage) => {
+          this.imageUrl = mapImage.imageUrl;
+          this.aspect = mapImage.aspect;
+          if (mapImage.update) {
+            this.onResize(true);
+          } else {
             this.onResize();
             super.setMap(this.map);
             super.initSettings(options);
+          }
         });
     }
 
-    setImageAlias(alias: Observable<any>) {
-        alias.pipe(filter(result => result), map(el => el[1]), switchMap(res => {
-            this.imageUrl = res;
-            return aspectCache(res);
-        })).subscribe(aspect => {
-            this.aspect = aspect;
-            this.onResize(true);
-        });
+    private mapImage(options: UnitedMapSettings): Observable<MapImage> {
+      const imageEntityAlias = options.imageEntityAlias;
+      const imageUrlAttribute = options.imageUrlAttribute;
+      if (!imageEntityAlias || !imageUrlAttribute) {
+        return this.imageFromUrl(options.mapUrl);
+      }
+      const entityAliasId = this.ctx.aliasController.getEntityAliasId(imageEntityAlias);
+      if (!entityAliasId) {
+        return this.imageFromUrl(options.mapUrl);
+      }
+      const datasources = [
+        {
+          type: DatasourceType.entity,
+          name: imageEntityAlias,
+          aliasName: imageEntityAlias,
+          entityAliasId,
+          dataKeys: [
+            {
+              type: DataKeyType.attribute,
+              name: imageUrlAttribute,
+              label: imageUrlAttribute,
+              settings: {},
+              _hash: Math.random()
+            }
+          ]
+        }
+      ];
+      const result = new ReplaySubject<[DataSet, boolean]>();
+      let isUpdate = false;
+      const imageUrlSubscriptionOptions: WidgetSubscriptionOptions = {
+        datasources,
+        useDashboardTimewindow: false,
+        type: widgetType.latest,
+        callbacks: {
+          onDataUpdated: (subscription) => {
+            result.next([subscription.data[0]?.data, isUpdate]);
+            isUpdate = true;
+          }
+        }
+      };
+      this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe(() => { });
+      return this.imageFromAlias(result);
     }
 
-    updateBounds(updateImage?, lastCenterPos?) {
+    private imageFromUrl(url: string): Observable<MapImage> {
+      return aspectCache(url).pipe(
+        map( aspect => {
+            const mapImage: MapImage = {
+              imageUrl: url,
+              aspect,
+              update: false
+            };
+            return mapImage;
+          }
+        ));
+    }
+
+    private imageFromAlias(alias: Observable<[DataSet, boolean]>): Observable<MapImage> {
+      return alias.pipe(
+        filter(result => result[0].length > 0),
+        mergeMap(res => {
+          const mapImage: MapImage = {
+            imageUrl: res[0][0][1],
+            aspect: null,
+            update: res[1]
+          };
+          return aspectCache(mapImage.imageUrl).pipe(
+            map((aspect) => {
+                mapImage.aspect = aspect;
+                return mapImage;
+              }
+            ));
+        })
+      );
+    }
+
+    updateBounds(updateImage?: boolean, lastCenterPos?) {
         const w = this.width;
         const h = this.height;
         let southWest = this.pointToLatLng(0, h);
@@ -81,12 +155,12 @@ export class ImageMap extends LeafletMap {
             lastCenterPos.y *= h;
             const center = this.pointToLatLng(lastCenterPos.x, lastCenterPos.y);
             setTimeout(() => {
-              this.map.panTo(center, { animate: false });
+                this.map.panTo(center, { animate: false });
             }, 0);
         }
     }
 
-    onResize(updateImage?) {
+    onResize(updateImage?: boolean) {
         let width = this.$container.clientWidth;
         if (width > 0 && this.aspect) {
             let height = width / this.aspect;
@@ -117,7 +191,7 @@ export class ImageMap extends LeafletMap {
 
     fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) { }
 
-    initMap(updateImage?) {
+    initMap(updateImage?: boolean) {
         if (!this.map && this.aspect > 0) {
             const center = this.pointToLatLng(this.width / 2, this.height / 2);
             this.map = L.map(this.$container, {
@@ -137,8 +211,8 @@ export class ImageMap extends LeafletMap {
         if (isNaN(expression[this.options.xPosKeyName]) || isNaN(expression[this.options.yPosKeyName])) return null;
         Object.assign(expression, this.posFunction(expression[this.options.xPosKeyName], expression[this.options.yPosKeyName]));
         return this.pointToLatLng(
-          expression.x * this.width,
-          expression.y * this.height);
+            expression.x * this.width,
+            expression.y * this.height);
     }
 
     pointToLatLng(x, y): L.LatLng {

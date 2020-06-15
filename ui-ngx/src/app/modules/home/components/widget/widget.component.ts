@@ -1043,7 +1043,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             const entityId = entityInfo ? entityInfo.entityId : null;
             const entityName = entityInfo ? entityInfo.entityName : null;
             const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
-            this.handleWidgetAction(event, descriptor, entityId, entityName, null, entityLabel);
+            this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
           }
         });
       }

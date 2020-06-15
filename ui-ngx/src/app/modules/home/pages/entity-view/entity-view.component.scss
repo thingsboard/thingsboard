@@ -14,16 +14,7 @@
  * limitations under the License.
  */
 :host {
-  mat-expansion-panel {
+  .mat-accordion-container {
     margin-bottom: 16px;
-  }
-}
-
-.tb-dialog {
-  :host {
-    mat-expansion-panel {
-      margin-left: 6px;
-      margin-right: 6px;
-    }
   }
 }

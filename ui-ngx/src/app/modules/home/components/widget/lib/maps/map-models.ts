@@ -26,11 +26,13 @@ import {
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
+export type GetTooltip = (point: FormattedData, setTooltip?: boolean) => string;
+export type PosFuncton = (origXPos, origYPos) => { x, y };
 
 export type MapSettings = {
     draggableMarker: boolean;
     initCallback?: () => any;
-    posFunction: (origXPos, origYPos) => { x, y };
+    posFunction: PosFuncton;
     defaultZoomLevel?: number;
     disableScrollZooming?: boolean;
     minZoomLevel?: number;
@@ -47,6 +49,7 @@ export type MapSettings = {
     mapImageUrl?: string;
     provider?: MapProviders;
     credentials?: any; // declare credentials format
+    gmApiKey?: string;
     defaultCenterPosition?: LatLngTuple;
     markerClusteringSetting?;
     useDefaultCenterPosition?: boolean;
@@ -162,10 +165,30 @@ export interface HistorySelectSettings {
     buttonColor: string;
 }
 
+export interface MapImage {
+    imageUrl: string;
+    aspect: number;
+    update?: boolean;
+}
+
 export type TripAnimationSettings = {
+    showPoints: boolean;
     pointColor: string;
     pointSize: number;
     pointTooltipOnRightPanel: boolean;
+    usePointAsAnchor: boolean;
+    normalizationStep: number;
+    showPolygon: boolean;
+    latKeyName: string;
+    lngKeyName: string;
+    rotationAngle: number;
+    label: string;
+    tooltipPattern: string;
+    useTooltipFunction: boolean;
+    useLabelFunction: boolean;
+    pointAsAnchorFunction: GenericFunction;
+    tooltipFunction: GenericFunction;
+    labelFunction: GenericFunction;
 }
 
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;

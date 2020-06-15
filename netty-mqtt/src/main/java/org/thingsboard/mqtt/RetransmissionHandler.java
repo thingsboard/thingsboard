@@ -18,6 +18,8 @@ package org.thingsboard.mqtt;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.ScheduledFuture;
 
 import java.util.concurrent.TimeUnit;
@@ -44,7 +46,11 @@ final class RetransmissionHandler<T extends MqttMessage> {
     private void startTimer(EventLoop eventLoop){
         this.timer = eventLoop.schedule(() -> {
             this.timeout += 5;
-            MqttFixedHeader fixedHeader = new MqttFixedHeader(this.originalMessage.fixedHeader().messageType(), true, this.originalMessage.fixedHeader().qosLevel(), this.originalMessage.fixedHeader().isRetain(), this.originalMessage.fixedHeader().remainingLength());
+            boolean isDup = this.originalMessage.fixedHeader().isDup();
+            if(this.originalMessage.fixedHeader().messageType() == MqttMessageType.PUBLISH && this.originalMessage.fixedHeader().qosLevel() != MqttQoS.AT_MOST_ONCE){
+                isDup = true;
+            }
+            MqttFixedHeader fixedHeader = new MqttFixedHeader(this.originalMessage.fixedHeader().messageType(), isDup, this.originalMessage.fixedHeader().qosLevel(), this.originalMessage.fixedHeader().isRetain(), this.originalMessage.fixedHeader().remainingLength());
             handler.accept(fixedHeader, originalMessage);
             startTimer(eventLoop);
         }, timeout, TimeUnit.SECONDS);

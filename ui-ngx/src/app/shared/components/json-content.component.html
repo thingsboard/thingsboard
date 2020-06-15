@@ -19,7 +19,7 @@
      tb-fullscreen
      [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;" class="tb-json-content-toolbar">
-    <label class="tb-title no-padding">{{ label }}</label>
+    <label class="tb-title no-padding" [ngClass]="{'tb-error': !contentValid}">{{ label }}</label>
     <span fxFlex></span>
     <button type="button"
             mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="beautifyJSON()">

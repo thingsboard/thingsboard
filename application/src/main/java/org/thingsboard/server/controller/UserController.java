@@ -132,17 +132,14 @@ public class UserController extends BaseController {
     @ResponseBody
     public User saveUser(@RequestBody User user,
                          @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
-            HttpServletRequest request) throws ThingsboardException {
+                         HttpServletRequest request) throws ThingsboardException {
         try {
 
-            if (getCurrentUser().getAuthority() == Authority.TENANT_ADMIN) {
+            if (Authority.TENANT_ADMIN.equals(getCurrentUser().getAuthority())) {
                 user.setTenantId(getCurrentUser().getTenantId());
             }
 
-            Operation operation = user.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.USER, operation,
-                    user.getId(), user);
+            checkEntity(user.getId(), user, Resource.USER);
 
             boolean sendEmail = user.getId() == null && sendActivationMail;
             User savedUser = checkNotNull(userService.saveUser(user));

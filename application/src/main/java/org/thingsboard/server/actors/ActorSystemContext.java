@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.actors;
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Scheduler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,8 +22,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +51,7 @@ import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
@@ -90,12 +86,13 @@ import java.io.StringWriter;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
 public class ActorSystemContext {
-    private static final String AKKA_CONF_FILE_NAME = "actor-system.conf";
 
     protected final ObjectMapper mapper = new ObjectMapper();
 
@@ -218,6 +215,10 @@ public class ActorSystemContext {
     @Getter
     private MailService mailService;
 
+    @Autowired
+    @Getter
+    private ClaimDevicesService claimDevicesService;
+
     //TODO: separate context for TbCore and TbRuleEngine
     @Autowired(required = false)
     @Getter
@@ -254,14 +255,6 @@ public class ActorSystemContext {
     @Value("${actors.session.sync.timeout}")
     @Getter
     private long syncSessionTimeout;
-
-    @Value("${actors.queue.enabled}")
-    @Getter
-    private boolean queuePersistenceEnabled;
-
-    @Value("${actors.queue.timeout}")
-    @Getter
-    private long queuePersistenceTimeout;
 
     @Value("${actors.rule.chain.error_persist_frequency}")
     @Getter
@@ -322,17 +315,14 @@ public class ActorSystemContext {
 
     @Getter
     @Setter
-    private ActorSystem actorSystem;
+    private TbActorSystem actorSystem;
 
     @Setter
-    private ActorRef appActor;
+    private TbActorRef appActor;
 
     @Getter
     @Setter
-    private ActorRef statsActor;
-
-    @Getter
-    private final Config config;
+    private TbActorRef statsActor;
 
     @Autowired(required = false)
     @Getter
@@ -346,14 +336,8 @@ public class ActorSystemContext {
     @Getter
     private RedisTemplate<String, Object> redisTemplate;
 
-    public ActorSystemContext() {
-        config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());
-    }
-
-
-
-    public Scheduler getScheduler() {
-        return actorSystem.scheduler();
+    public ScheduledExecutorService getScheduler() {
+        return actorSystem.getScheduler();
     }
 
     public void persistError(TenantId tenantId, EntityId entityId, String method, Exception e) {
@@ -526,7 +510,21 @@ public class ActorSystemContext {
         return Exception.class.isInstance(error) ? (Exception) error : new Exception(error);
     }
 
-    public void tell(TbActorMsg tbActorMsg, ActorRef sender) {
-        appActor.tell(tbActorMsg, sender);
+    public void tell(TbActorMsg tbActorMsg) {
+        appActor.tell(tbActorMsg);
+    }
+
+    public void tellWithHighPriority(TbActorMsg tbActorMsg) {
+        appActor.tellWithHighPriority(tbActorMsg);
+    }
+
+    public void schedulePeriodicMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs, long periodInMs) {
+        log.debug("Scheduling periodic msg {} every {} ms with delay {} ms", msg, periodInMs, delayInMs);
+        getScheduler().scheduleWithFixedDelay(() -> ctx.tell(msg), delayInMs, periodInMs, TimeUnit.MILLISECONDS);
+    }
+
+    public void scheduleMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs) {
+        log.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
+        getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
     }
 }

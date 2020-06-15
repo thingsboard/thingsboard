@@ -90,7 +90,7 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
     }
 
     private void savePartitionIfNotExist(long ts) {
-        if (!tsFormat.equals(SqlTsPartitionDate.INDEFINITE)) {
+        if (!tsFormat.equals(SqlTsPartitionDate.INDEFINITE) && ts >= 0) {
             LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
             LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
             long partitionStartTs = toMills(localDateTimeStart);

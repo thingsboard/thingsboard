@@ -20,7 +20,7 @@ import { Datasource } from '@app/shared/models/widget.models';
 import _ from 'lodash';
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { createLabelFromDatasource, hashCode, isNumber, padValue } from '@core/utils';
+import { createLabelFromDatasource, hashCode, isNumber, isUndefined, padValue } from '@core/utils';
 
 export function createTooltip(target: L.Layer,
     settings: MarkerSettings | PolylineSettings | PolygonSettings,
@@ -40,26 +40,51 @@ export function createTooltip(target: L.Layer,
         });
     }
     target.on('popupopen', () => {
-        const actions = document.getElementsByClassName('tb-custom-action');
-        Array.from(actions).forEach(
-            (element: HTMLElement) => {
-                const actionName = element.getAttribute('data-action-name');
-                if (element && settings.tooltipAction[actionName]) {
-                    element.addEventListener('click', ($event) => settings.tooltipAction[actionName]($event, datasource));
-                }
-            });
+      bindPopupActions(popup, settings, datasource);
     });
     return popup;
+}
+
+export function bindPopupActions(popup: L.Popup, settings: MarkerSettings | PolylineSettings | PolygonSettings,
+                                 datasource: Datasource) {
+  const actions = popup.getElement().getElementsByClassName('tb-custom-action');
+  Array.from(actions).forEach(
+    (element: HTMLElement) => {
+      const actionName = element.getAttribute('data-action-name');
+      if (element && settings.tooltipAction[actionName]) {
+        element.onclick = ($event) =>
+        {
+          settings.tooltipAction[actionName]($event, datasource);
+          return false;
+        };
+      }
+    });
 }
 
 export function getRatio(firsMoment: number, secondMoment: number, intermediateMoment: number): number {
     return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
 }
 
-export function findAngle(startPoint, endPoint) {
-    let angle = -Math.atan2(endPoint.latitude - startPoint.latitude, endPoint.longitude - startPoint.longitude);
-    angle = angle * 180 / Math.PI;
-    return parseInt(angle.toFixed(2), 10);
+export function interpolateOnLineSegment(
+  pointA: FormattedData,
+  pointB: FormattedData,
+  latKeyName: string,
+  lngKeyName: string,
+  ratio: number
+): { [key: string]: number } {
+   return {
+    [latKeyName]: (pointA[latKeyName] + (pointB[latKeyName] - pointA[latKeyName]) * ratio),
+    [lngKeyName]: (pointA[lngKeyName] + (pointB[lngKeyName] - pointA[lngKeyName]) * ratio)
+  };
+}
+
+export function findAngle(startPoint: FormattedData, endPoint: FormattedData, latKeyName: string, lngKeyName: string): number {
+  if(isUndefined(startPoint) || isUndefined(endPoint)){
+    return 0;
+  }
+  let angle = -Math.atan2(endPoint[latKeyName] - startPoint[latKeyName], endPoint[lngKeyName] - startPoint[lngKeyName]);
+  angle = angle * 180 / Math.PI;
+  return parseInt(angle.toFixed(2), 10);
 }
 
 
@@ -117,7 +142,7 @@ const linkActionRegex = /<link-act name=['"]([^['"]*)['"]>([^<]*)<\/link-act>/g;
 const buttonActionRegex = /<button-act name=['"]([^['"]*)['"]>([^<]*)<\/button-act>/g;
 
 function createLinkElement(actionName: string, actionText: string): string {
-  return `<a href="#" class="tb-custom-action" data-action-name=${actionName}>${actionText}</a>`;
+  return `<a href="javascript:void(0);" class="tb-custom-action" data-action-name=${actionName}>${actionText}</a>`;
 }
 
 function createButtonElement(actionName: string, actionText: string) {
@@ -238,11 +263,11 @@ export function parseArray(input: any[]): any[] {
         const obj = {
           entityName: entityArray[0]?.datasource?.entityName,
           $datasource: entityArray[0]?.datasource,
-          dsIndex,
+          dsIndex: i,
           time: el[0],
           deviceType: null
         };
-        entityArray.filter(e => e.data.length).forEach(entity => {
+        entityArray.filter(e => e.data.length && e.data[i]).forEach(entity => {
           obj[entity?.dataKey?.label] = entity?.data[i][1];
           obj[entity?.dataKey?.label + '|ts'] = entity?.data[0][0];
           if (entity?.dataKey?.label === 'type') {

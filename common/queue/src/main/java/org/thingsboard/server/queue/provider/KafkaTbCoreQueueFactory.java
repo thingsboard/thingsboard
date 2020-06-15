@@ -170,7 +170,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(transportApiSettings.getRequestsTopic());
         consumerBuilder.clientId("tb-core-transport-api-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("tb-core-transport-api-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("tb-core-transport-api-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(transportApiAdmin);
         return consumerBuilder.build();

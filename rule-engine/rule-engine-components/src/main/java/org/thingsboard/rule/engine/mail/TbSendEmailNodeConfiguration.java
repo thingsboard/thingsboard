@@ -30,6 +30,11 @@ public class TbSendEmailNodeConfiguration implements NodeConfiguration {
     private int timeout;
     private boolean enableTls;
     private String tlsVersion;
+    private boolean enableProxy;
+    private String proxyHost;
+    private String proxyPort;
+    private String proxyUser;
+    private String proxyPassword;
 
     @Override
     public TbSendEmailNodeConfiguration defaultConfiguration() {
@@ -41,6 +46,7 @@ public class TbSendEmailNodeConfiguration implements NodeConfiguration {
         configuration.setTimeout(10000);
         configuration.setEnableTls(false);
         configuration.setTlsVersion("TLSv1.2");
+        configuration.setEnableProxy(false);
         return configuration;
     }
 }

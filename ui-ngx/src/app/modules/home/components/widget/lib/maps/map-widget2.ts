@@ -14,32 +14,38 @@
 /// limitations under the License.
 ///
 
-import { MapProviders, UnitedMapSettings, providerSets, hereProviders, defaultSettings } from './map-models';
+import { defaultSettings, hereProviders, MapProviders, providerSets, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
-    commonMapSettingsSchema,
-    routeMapSettingsSchema,
-    markerClusteringSettingsSchema,
-    markerClusteringSettingsSchemaLeaflet,
-    mapProviderSchema,
-    mapPolygonSchema
+  commonMapSettingsSchema,
+  mapPolygonSchema,
+  mapProviderSchema,
+  markerClusteringSettingsSchema,
+  markerClusteringSettingsSchemaLeaflet,
+  routeMapSettingsSchema
 } from './schemes';
-import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
-import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@core/schema-utils';
-import { of, Subject } from 'rxjs';
+import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
+import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition, parseArray, parseData, parseFunction, parseWithTranslation } from './maps-utils';
-import { JsonSettingsSchema, WidgetActionDescriptor, DatasourceType, widgetType, Datasource } from '@shared/models/widget.models';
+import { Datasource, DatasourceData, JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
+import _ from 'lodash';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
 
-    constructor(public mapProvider: MapProviders, private drawRoutes: boolean, public ctx: WidgetContext, $element: HTMLElement, isEdit?) {
+    constructor(
+        public mapProvider: MapProviders,
+        private drawRoutes: boolean,
+        public ctx: WidgetContext,
+        $element: HTMLElement,
+        isEdit?: boolean
+    ) {
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -57,21 +63,22 @@ export class MapWidgetController implements MapWidgetInterface {
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
 
-        // this.settings.
         const MapClass = providerSets[this.provider]?.MapClass;
         if (!MapClass) {
             return;
         }
         parseWithTranslation.setTranslate(this.translate);
-        this.map = new MapClass($element, this.settings);
-        this.map.setImageAlias(this.subscribeForImageAttribute());
+        this.map = new MapClass(this.ctx, $element, this.settings);
         this.map.saveMarkerLocation = this.setMarkerLocation;
+        if (this.settings.draggableMarker) {
+            this.map.setDataSources(parseData(this.data));
+        }
     }
 
     map: LeafletMap;
     provider: MapProviders;
     schema: JsonSettingsSchema;
-    data;
+    data: DatasourceData[];
     settings: UnitedMapSettings;
 
     public static dataKeySettingsSchema(): object {
@@ -79,9 +86,9 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     public static getProvidersSchema(mapProvider: MapProviders, ignoreImageMap = false) {
+        const providerSchema = _.cloneDeep(mapProviderSchema);
         if (mapProvider)
-            mapProviderSchema.schema.properties.provider.default = mapProvider;
-        const providerSchema = mapProviderSchema;
+            providerSchema.schema.properties.provider.default = mapProvider;
         if (ignoreImageMap) {
             providerSchema.form[0].items = providerSchema.form[0]?.items.filter(item => item.value !== 'image-map');
         }
@@ -239,57 +246,12 @@ export class MapWidgetController implements MapWidgetInterface {
         if (this.settings.showPolygon) {
             this.map.updatePolygons(parseData(this.data));
         }
-        if (this.settings.draggableMarker) {
-            this.map.setDataSources(parseData(this.data));
-        }
         this.map.updateMarkers(parseData(this.data));
     }
 
     resize() {
         this.map?.invalidateSize();
         this.map.onResize();
-    }
-
-    subscribeForImageAttribute() {
-        const imageEntityAlias = this.settings.imageEntityAlias;
-        const imageUrlAttribute = this.settings.imageUrlAttribute;
-        if (!imageEntityAlias || !imageUrlAttribute) {
-            return of(false);
-        }
-        const entityAliasId = this.ctx.aliasController.getEntityAliasId(imageEntityAlias);
-        if (!entityAliasId) {
-            return of(false);
-        }
-        const datasources = [
-            {
-                type: DatasourceType.entity,
-                name: imageEntityAlias,
-                aliasName: imageEntityAlias,
-                entityAliasId,
-                dataKeys: [
-                    {
-                        type: DataKeyType.attribute,
-                        name: imageUrlAttribute,
-                        label: imageUrlAttribute,
-                        settings: {},
-                        _hash: Math.random()
-                    }
-                ]
-            }
-        ];
-        const result = new Subject();
-        const imageUrlSubscriptionOptions = {
-            datasources,
-            useDashboardTimewindow: false,
-            type: widgetType.latest,
-            callbacks: {
-                onDataUpdated: (subscription) => {
-                    result.next(subscription?.data[0]?.data[0]);
-                }
-            }
-        };
-        this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe(() => { });
-        return result;
     }
 
     onDestroy() {

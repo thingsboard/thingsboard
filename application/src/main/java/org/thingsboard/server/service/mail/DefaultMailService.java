@@ -16,18 +16,17 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.exception.VelocityException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -40,8 +39,6 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -58,8 +55,7 @@ public class DefaultMailService implements MailService {
     private MessageSource messages;
 
     @Autowired
-    @Qualifier("velocityEngine")
-    private VelocityEngine engine;
+    private Configuration freemarkerConfig;
 
     private JavaMailSenderImpl mailSender;
 
@@ -118,6 +114,21 @@ public class DefaultMailService implements MailService {
                 javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", tlsVersion);
             }
         }
+
+        boolean enableProxy = jsonConfig.has("enableProxy") && jsonConfig.get("enableProxy").asBoolean();
+
+        if (enableProxy) {
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", jsonConfig.get("proxyHost").asText());
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", jsonConfig.get("proxyPort").asText());
+            String proxyUser = jsonConfig.get("proxyUser").asText();
+            if (StringUtils.isNoneEmpty(proxyUser)) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", proxyUser);
+            }
+            String proxyPassword = jsonConfig.get("proxyPassword").asText();
+            if (StringUtils.isNoneEmpty(proxyPassword)) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", proxyPassword);
+            }
+        }
         return javaMailProperties;
     }
 
@@ -140,11 +151,10 @@ public class DefaultMailService implements MailService {
         String mailFrom = jsonConfig.get("mailFrom").asText();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
 
-        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, Object> model = new HashMap<>();
         model.put(TARGET_EMAIL, email);
 
-        String message = mergeTemplateIntoString(this.engine,
-                "test.vm", UTF_8, model);
+        String message = mergeTemplateIntoString("test.ftl", model);
 
         sendMail(testMailSender, mailFrom, email, subject, message);
     }
@@ -154,12 +164,11 @@ public class DefaultMailService implements MailService {
 
         String subject = messages.getMessage("activation.subject", null, Locale.US);
 
-        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, Object> model = new HashMap<>();
         model.put("activationLink", activationLink);
         model.put(TARGET_EMAIL, email);
 
-        String message = mergeTemplateIntoString(this.engine,
-                "activation.vm", UTF_8, model);
+        String message = mergeTemplateIntoString("activation.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
     }
@@ -169,12 +178,11 @@ public class DefaultMailService implements MailService {
 
         String subject = messages.getMessage("account.activated.subject", null, Locale.US);
 
-        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, Object> model = new HashMap<>();
         model.put("loginLink", loginLink);
         model.put(TARGET_EMAIL, email);
 
-        String message = mergeTemplateIntoString(this.engine,
-                "account.activated.vm", UTF_8, model);
+        String message = mergeTemplateIntoString("account.activated.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
     }
@@ -184,12 +192,11 @@ public class DefaultMailService implements MailService {
 
         String subject = messages.getMessage("reset.password.subject", null, Locale.US);
 
-        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, Object> model = new HashMap<>();
         model.put("passwordResetLink", passwordResetLink);
         model.put(TARGET_EMAIL, email);
 
-        String message = mergeTemplateIntoString(this.engine,
-                "reset.password.vm", UTF_8, model);
+        String message = mergeTemplateIntoString("reset.password.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
     }
@@ -199,12 +206,11 @@ public class DefaultMailService implements MailService {
 
         String subject = messages.getMessage("password.was.reset.subject", null, Locale.US);
 
-        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, Object> model = new HashMap<>();
         model.put("loginLink", loginLink);
         model.put(TARGET_EMAIL, email);
 
-        String message = mergeTemplateIntoString(this.engine,
-                "password.was.reset.vm", UTF_8, model);
+        String message = mergeTemplateIntoString("password.was.reset.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
     }
@@ -230,13 +236,12 @@ public class DefaultMailService implements MailService {
     public void sendAccountLockoutEmail(String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException {
         String subject = messages.getMessage("account.lockout.subject", null, Locale.US);
 
-        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, Object> model = new HashMap<>();
         model.put("lockoutAccount", lockoutEmail);
         model.put("maxFailedLoginAttempts", maxFailedLoginAttempts);
         model.put(TARGET_EMAIL, email);
 
-        String message = mergeTemplateIntoString(this.engine,
-                "account.lockout.vm", UTF_8, model);
+        String message = mergeTemplateIntoString("account.lockout.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
     }
@@ -257,20 +262,14 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    private static String mergeTemplateIntoString(VelocityEngine velocityEngine, String templateLocation,
-                                                  String encoding, Map<String, Object> model) throws VelocityException {
-
-        StringWriter result = new StringWriter();
-        mergeTemplate(velocityEngine, templateLocation, encoding, model, result);
-        return result.toString();
-    }
-
-    private static void mergeTemplate(
-            VelocityEngine velocityEngine, String templateLocation, String encoding,
-            Map<String, Object> model, Writer writer) throws VelocityException {
-
-        VelocityContext velocityContext = new VelocityContext(model);
-        velocityEngine.mergeTemplate(templateLocation, encoding, velocityContext, writer);
+    private String mergeTemplateIntoString(String templateLocation,
+                                           Map<String, Object> model) throws ThingsboardException {
+        try {
+            Template template = freemarkerConfig.getTemplate(templateLocation);
+            return FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     protected ThingsboardException handleException(Exception exception) {

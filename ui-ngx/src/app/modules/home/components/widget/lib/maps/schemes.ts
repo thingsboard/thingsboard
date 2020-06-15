@@ -409,7 +409,10 @@ export const commonMapSettingsSchema =
             condition: 'model.provider !== "image-map"'
         },
         'draggableMarker',
-        'disableScrollZooming',
+        {
+            key: 'disableScrollZooming',
+            condition: 'model.provider !== "image-map"'
+        },
         {
             key: 'latKeyName',
             condition: 'model.provider !== "image-map"'
@@ -641,7 +644,10 @@ export const markerClusteringSettingsSchema =
         required: []
     },
     form: [
-        'useClusterMarkers',
+        {
+            key: 'useClusterMarkers',
+            condition: 'model.provider !== "image-map"'
+        },
     ]
 };
 
@@ -878,13 +884,18 @@ export const pointSchema =
         required: []
     },
     form: [
-        'showPoints', {
+        'showPoints',
+        {
             key: 'pointColor',
             type: 'color'
-        }, 'pointSize', 'usePointAsAnchor', {
+        },
+        'pointSize',
+        'usePointAsAnchor',
+        {
             key: 'pointAsAnchorFunction',
             type: 'javascript'
-        }, 'pointTooltipOnRightPanel',
+        },
+        'pointTooltipOnRightPanel',
     ]
 };
 

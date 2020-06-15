@@ -16,10 +16,8 @@
 package org.thingsboard.server.controller;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +30,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -91,6 +88,17 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
+    }
+
+    @Test
+    public void testUpdateDashboardFromDifferentTenant() throws Exception {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        loginDifferentTenant();
+        doPost("/api/dashboard", savedDashboard, Dashboard.class, status().isForbidden());
+        deleteDifferentTenant();
     }
     
     @Test

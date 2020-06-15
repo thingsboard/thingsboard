@@ -294,7 +294,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         break;
                 }
             } catch (Exception e) {
-                log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
+                log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS, e);
                 grantedQoSList.add(FAILURE.value());
             }
         }
@@ -521,11 +521,22 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     .setDeviceName(msg.getDeviceInfo().getDeviceName())
                     .setDeviceType(msg.getDeviceInfo().getDeviceType())
                     .build();
-            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
-            transportService.registerAsyncSession(sessionInfo, this);
-            checkGatewaySession();
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
-            log.info("[{}] Client connected!", sessionId);
+            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), new TransportServiceCallback<Void>() {
+                @Override
+                public void onSuccess(Void msg) {
+                    transportService.registerAsyncSession(sessionInfo, MqttTransportHandler.this);
+                    checkGatewaySession();
+                    ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
+                    log.info("[{}] Client connected!", sessionId);
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    log.warn("[{}] Failed to submit session event", sessionId, e);
+                    ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
+                    ctx.close();
+                }
+            });
         }
     }
 

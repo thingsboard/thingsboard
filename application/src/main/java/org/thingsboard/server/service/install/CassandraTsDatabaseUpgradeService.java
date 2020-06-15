@@ -48,6 +48,8 @@ public class CassandraTsDatabaseUpgradeService extends AbstractCassandraDatabase
                 }
                 log.info("Schema updated.");
                 break;
+            case "2.5.0":
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }

@@ -23,7 +23,7 @@ RUN chmod a+x /tmp/*.sh \
 
 RUN yes | dpkg -i /tmp/${pkg.name}.deb
 
-RUN update-rc.d ${pkg.name} disable
+RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
 
 RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}
 

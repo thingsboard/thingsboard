@@ -1006,15 +1006,39 @@ export class EntityService {
 
   private entityRelationInfosToEntitiesInfo(entityRelations: Array<EntityRelationInfo>,
                                             direction: EntitySearchDirection): Observable<Array<EntityInfo>> {
-    if (entityRelations) {
-      const tasks: Observable<EntityInfo>[] = [];
+    if (entityRelations.length) {
+      const packs: Observable<EntityInfo>[][] = [];
+      let packTasks: Observable<EntityInfo>[] = [];
       entityRelations.forEach((entityRelation) => {
-        tasks.push(this.entityRelationInfoToEntityInfo(entityRelation, direction));
+        packTasks.push(this.entityRelationInfoToEntityInfo(entityRelation, direction));
+        if (packTasks.length === 100) {
+          packs.push(packTasks);
+          packTasks = [];
+        }
       });
-      return forkJoin(tasks);
+      if (packTasks.length) {
+        packs.push(packTasks);
+      }
+      return this.executePack(packs, 0);
     } else {
       return of([]);
     }
+  }
+
+  private executePack(packs: Observable<EntityInfo>[][], index: number): Observable<Array<EntityInfo>> {
+    return forkJoin(packs[index]).pipe(
+      expand(() => {
+        index++;
+        if (packs[index]) {
+          return forkJoin(packs[index]);
+        } else {
+          return EMPTY;
+        }
+       }
+      ),
+      concatMap((data) => data),
+      toArray()
+    );
   }
 
   private entityRelationInfoToEntityInfo(entityRelationInfo: EntityRelationInfo, direction: EntitySearchDirection): Observable<EntityInfo> {

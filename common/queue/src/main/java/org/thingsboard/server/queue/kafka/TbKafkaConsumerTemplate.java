@@ -71,8 +71,12 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     @Override
     protected void doSubscribe(List<String> topicNames) {
-        topicNames.forEach(admin::createTopicIfNotExists);
-        consumer.subscribe(topicNames);
+        if (!topicNames.isEmpty()) {
+            topicNames.forEach(admin::createTopicIfNotExists);
+            consumer.subscribe(topicNames);
+        } else {
+            consumer.unsubscribe();
+        }
     }
 
     @Override
