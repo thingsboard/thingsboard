@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service;
+package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -46,88 +39,95 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
-import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.common.data.security.Authority;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-public abstract class BaseEntityServiceTest extends AbstractServiceTest {
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-    @Autowired
-    private AttributesService attributesService;
+public abstract class BaseEntityQueryControllerTest extends AbstractControllerTest {
 
-    private TenantId tenantId;
+    private Tenant savedTenant;
+    private User tenantAdmin;
 
     @Before
-    public void before() {
+    public void beforeTest() throws Exception {
+        loginSysAdmin();
+
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
+        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
+
+        tenantAdmin = new User();
+        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin.setTenantId(savedTenant.getId());
+        tenantAdmin.setEmail("tenant2@thingsboard.org");
+        tenantAdmin.setFirstName("Joe");
+        tenantAdmin.setLastName("Downs");
+
+        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
     }
 
     @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
+    public void afterTest() throws Exception {
+        loginSysAdmin();
+
+        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
-    public void testCountEntitiesByQuery() {
+    public void testCountEntitiesByQuery() throws Exception {
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
-            device.setTenantId(tenantId);
             device.setName("Device" + i);
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
-            devices.add(deviceService.saveDevice(device));
+            devices.add(doPost("/api/device", device, Device.class));
         }
-
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceType("default");
         filter.setDeviceNameFilter("");
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
 
-        long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
-        Assert.assertEquals(97, count);
+        Long count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
 
         filter.setDeviceType("unknown");
-        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
-        Assert.assertEquals(0, count);
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
 
         filter.setDeviceType("default");
         filter.setDeviceNameFilter("Device1");
-        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
-        Assert.assertEquals(11, count);
+
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(11, count.longValue());
 
         EntityListFilter entityListFilter = new EntityListFilter();
         entityListFilter.setEntityType(EntityType.DEVICE);
         entityListFilter.setEntityList(devices.stream().map(Device::getId).map(DeviceId::toString).collect(Collectors.toList()));
 
         countQuery = new EntityCountQuery(entityListFilter);
-        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
-        Assert.assertEquals(97, count);
 
-        deviceService.deleteDevicesByTenantId(tenantId);
-        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
-        Assert.assertEquals(0, count);
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
     }
 
     @Test
-    public void testSimpleFindEntityDataByQuery() {
+    public void testSimpleFindEntityDataByQuery() throws Exception {
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
-            device.setTenantId(tenantId);
             device.setName("Device" + i);
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
-            devices.add(deviceService.saveDevice(device));
+            devices.add(doPost("/api/device", device, Device.class));
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
@@ -141,7 +141,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
-        PageData<EntityData> data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+
+        PageData<EntityData> data =
+                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+                });
 
         Assert.assertEquals(97, data.getTotalElements());
         Assert.assertEquals(10, data.getTotalPages());
@@ -151,7 +154,8 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<EntityData> loadedEntities = new ArrayList<>(data.getData());
         while (data.hasNext()) {
             query = query.next();
-            data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+            data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+            });
             loadedEntities.addAll(data.getData());
         }
         Assert.assertEquals(97, loadedEntities.size());
@@ -173,39 +177,38 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
         pageLink = new EntityDataPageLink(10, 0, "device1", sortOrder);
         query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
-        data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+        });
         Assert.assertEquals(11, data.getTotalElements());
         Assert.assertEquals("Device19", data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
 
-        deviceService.deleteDevicesByTenantId(tenantId);
     }
 
     @Test
-    public void testFindEntityDataByQueryWithAttributes() throws ExecutionException, InterruptedException {
+    public void testFindEntityDataByQueryWithAttributes() throws Exception {
 
         List<Device> devices = new ArrayList<>();
         List<Long> temperatures = new ArrayList<>();
         List<Long> highTemperatures = new ArrayList<>();
         for (int i=0;i<67;i++) {
             Device device = new Device();
-            device.setTenantId(tenantId);
-            device.setName("Device"+i);
+            String name = "Device"+i;
+            device.setName(name);
             device.setType("default");
             device.setLabel("testLabel"+(int)(Math.random()*1000));
-            devices.add(deviceService.saveDevice(device));
+            devices.add(doPost("/api/device?accessToken="+name, device, Device.class));
             long temperature = (long)(Math.random()*100);
             temperatures.add(temperature);
             if (temperature > 45) {
                 highTemperatures.add(temperature);
             }
         }
-
-        List<ListenableFuture<List<Void>>> attributeFutures = new ArrayList<>();
         for (int i=0;i<devices.size();i++) {
             Device device = devices.get(i);
-            attributeFutures.add(saveLongAttribute(device.getId(), "temperature", temperatures.get(i), DataConstants.CLIENT_SCOPE));
+            String payload = "{\"temperature\":"+temperatures.get(i)+"}";
+            doPost("/api/plugins/telemetry/"+device.getId()+"/"+ DataConstants.SHARED_SCOPE, payload, String.class, status().isOk());
         }
-        Futures.successfulAsList(attributeFutures).get();
+        Thread.sleep(1000);
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceType("default");
@@ -219,15 +222,18 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
-        PageData<EntityData> data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        PageData<EntityData> data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+        });
 
         List<EntityData> loadedEntities = new ArrayList<>(data.getData());
         while (data.hasNext()) {
             query = query.next();
-            data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+            data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+            });
             loadedEntities.addAll(data.getData());
         }
         Assert.assertEquals(67, loadedEntities.size());
+
         List<String> loadedTemperatures = loadedEntities.stream().map(entityData ->
                 entityData.getLatest().get(EntityKeyType.ATTRIBUTE).get("temperature").getValue()).collect(Collectors.toList());
         List<String> deviceTemperatures = temperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());
@@ -244,12 +250,13 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
         query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, keyFilters);
 
-        data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
-
+        data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+        });
         loadedEntities = new ArrayList<>(data.getData());
         while (data.hasNext()) {
             query = query.next();
-            data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+            data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+            });
             loadedEntities.addAll(data.getData());
         }
         Assert.assertEquals(highTemperatures.size(), loadedEntities.size());
@@ -260,12 +267,5 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
         Assert.assertEquals(deviceHighTemperatures, loadedHighTemperatures);
 
-        deviceService.deleteDevicesByTenantId(tenantId);
-    }
-
-    private ListenableFuture<List<Void>> saveLongAttribute(EntityId entityId, String key, long value, String scope) {
-        KvEntry attrValue = new LongDataEntry(key, value);
-        AttributeKvEntry attr = new BaseAttributeKvEntry(attrValue, 42L);
-        return attributesService.save(SYSTEM_TENANT_ID, entityId, scope, Collections.singletonList(attr));
     }
 }

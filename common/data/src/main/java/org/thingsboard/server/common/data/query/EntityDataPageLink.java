@@ -16,15 +16,20 @@
 package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class EntityDataPageLink {
 
-    private final int pageSize;
-    private final int page;
-    private final String textSearch;
-    private final EntityDataSortOrder sortOrder;
+    private int pageSize;
+    private int page;
+    private String textSearch;
+    private EntityDataSortOrder sortOrder;
+
+    public EntityDataPageLink() {
+    }
 
     @JsonIgnore
     public EntityDataPageLink nextPageLink() {
