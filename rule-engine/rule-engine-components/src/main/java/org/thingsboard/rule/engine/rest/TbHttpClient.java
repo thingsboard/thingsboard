@@ -71,6 +71,9 @@ class TbHttpClient {
             }
 
             if (config.isEnableProxy()) {
+                checkProxyHost(config.getProxyHost());
+                checkProxyPort(config.getProxyPort());
+
                 SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
                 InetSocketAddress address = new InetSocketAddress(config.getProxyHost(), config.getProxyPort());
                 Proxy proxy = new Proxy(config.getProxyType(), address);
@@ -193,4 +196,15 @@ class TbHttpClient {
         }
     }
 
+    private static void checkProxyHost(String proxyHost) throws TbNodeException {
+        if (StringUtils.isEmpty(proxyHost)) {
+            throw new TbNodeException("Proxy host can't be empty");
+        }
+    }
+
+    private static void checkProxyPort(int proxyPort) throws TbNodeException {
+        if (!(proxyPort >= 0 && proxyPort <= 65535)) {
+            throw new TbNodeException("Proxy port out of range:" + proxyPort);
+        }
+    }
 }
