@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -47,6 +48,11 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.EntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.attributes.AttributesService;
 
 import java.util.ArrayList;
@@ -120,6 +126,61 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testCountHierarchicalEntitiesByQuery() {
+        List<Asset> assets = new ArrayList<>();
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Asset asset = new Asset();
+            asset.setTenantId(tenantId);
+            asset.setName("Asset" + i);
+            asset.setType("type" + i);
+            asset.setLabel("AssetLabel" + i);
+            asset = assetService.saveAsset(asset);
+            assets.add(asset);
+            EntityRelation er = new EntityRelation();
+            er.setFrom(tenantId);
+            er.setTo(asset.getId());
+            er.setType("Manages");
+            er.setTypeGroup(RelationTypeGroup.COMMON);
+            relationService.saveRelation(tenantId, er);
+            for (int j = 0; j < 5; j++) {
+                Device device = new Device();
+                device.setTenantId(tenantId);
+                device.setName("A" + i + "Device" + j);
+                device.setType("default");
+                device.setLabel("testLabel" + (int) (Math.random() * 1000));
+                device = deviceService.saveDevice(device);
+                devices.add(device);
+                er = new EntityRelation();
+                er.setFrom(asset.getId());
+                er.setTo(device.getId());
+                er.setType("Contains");
+                er.setTypeGroup(RelationTypeGroup.COMMON);
+                relationService.saveRelation(tenantId, er);
+            }
+        }
+
+        RelationsQueryFilter filter = new RelationsQueryFilter();
+        filter.setRootEntity(tenantId);
+        filter.setDirection(EntitySearchDirection.FROM);
+
+        EntityCountQuery countQuery = new EntityCountQuery(filter);
+
+        long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(30, count);
+
+        filter.setFilters(Collections.singletonList(new EntityTypeFilter("Contains", Collections.singletonList(EntityType.DEVICE))));
+        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(25, count);
+
+        filter.setRootEntity(devices.get(0).getId());
+        filter.setDirection(EntitySearchDirection.TO);
+        filter.setFilters(Collections.singletonList(new EntityTypeFilter("Manages", Collections.singletonList(EntityType.TENANT))));
+        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(1, count);
+    }
+
+    @Test
     public void testSimpleFindEntityDataByQuery() {
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
@@ -187,14 +248,14 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<Device> devices = new ArrayList<>();
         List<Long> temperatures = new ArrayList<>();
         List<Long> highTemperatures = new ArrayList<>();
-        for (int i=0;i<67;i++) {
+        for (int i = 0; i < 67; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
-            device.setName("Device"+i);
+            device.setName("Device" + i);
             device.setType("default");
-            device.setLabel("testLabel"+(int)(Math.random()*1000));
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
             devices.add(deviceService.saveDevice(device));
-            long temperature = (long)(Math.random()*100);
+            long temperature = (long) (Math.random() * 100);
             temperatures.add(temperature);
             if (temperature > 45) {
                 highTemperatures.add(temperature);
@@ -202,7 +263,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         List<ListenableFuture<List<Void>>> attributeFutures = new ArrayList<>();
-        for (int i=0;i<devices.size();i++) {
+        for (int i = 0; i < devices.size(); i++) {
             Device device = devices.get(i);
             attributeFutures.add(saveLongAttribute(device.getId(), "temperature", temperatures.get(i), DataConstants.CLIENT_SCOPE));
         }
