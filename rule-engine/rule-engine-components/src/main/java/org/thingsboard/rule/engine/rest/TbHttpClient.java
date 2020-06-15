@@ -203,7 +203,7 @@ class TbHttpClient {
     }
 
     private static void checkProxyPort(int proxyPort) throws TbNodeException {
-        if (!(proxyPort >= 0 && proxyPort <= 65535)) {
+        if (proxyPort < 0 || proxyPort > 65535) {
             throw new TbNodeException("Proxy port out of range:" + proxyPort);
         }
     }
