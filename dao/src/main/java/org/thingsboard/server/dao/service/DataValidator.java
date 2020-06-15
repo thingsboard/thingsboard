@@ -30,7 +30,8 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public abstract class DataValidator<D extends BaseData<?>> {
-    private static final String VALID_EMAIL_REGEX = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$";
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
     public void validate(D data, Function<D, TenantId> tenantIdFunction) {
         try {
@@ -74,8 +75,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
             return false;
         }
 
-        Pattern emailPattern = Pattern.compile(VALID_EMAIL_REGEX, Pattern.CASE_INSENSITIVE);
-        Matcher emailMatcher = emailPattern.matcher(email);
+        Matcher emailMatcher = EMAIL_PATTERN.matcher(email);
         return emailMatcher.matches();
     }
 
