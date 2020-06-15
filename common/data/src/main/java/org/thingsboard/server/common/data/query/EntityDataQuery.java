@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 
 import java.util.List;
@@ -40,5 +41,10 @@ public class EntityDataQuery extends EntityCountQuery {
         this.entityFields = entityFields;
         this.latestValues = latestValues;
         this.keyFilters = keyFilters;
+    }
+
+    @JsonIgnore
+    public EntityDataQuery next() {
+        return new EntityDataQuery(getEntityFilter(), pageLink.nextPageLink(), entityFields, latestValues, keyFilters);
     }
 }

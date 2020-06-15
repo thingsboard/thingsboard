@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 @Data
@@ -22,6 +23,12 @@ public class EntityDataPageLink {
 
     private final int pageSize;
     private final int page;
+    private final String textSearch;
     private final EntityDataSortOrder sortOrder;
+
+    @JsonIgnore
+    public EntityDataPageLink nextPageLink() {
+        return new EntityDataPageLink(this.pageSize, this.page+1, this.textSearch, this.sortOrder);
+    }
 
 }

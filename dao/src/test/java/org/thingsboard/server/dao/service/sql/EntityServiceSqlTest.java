@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.dao.service.sql;
 
-import lombok.Data;
+import org.thingsboard.server.dao.service.BaseEntityServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@Data
-public class EntityKey {
-    private final EntityKeyType type;
-    private final String key;
+@DaoSqlTest
+public class EntityServiceSqlTest extends BaseEntityServiceTest {
 }
