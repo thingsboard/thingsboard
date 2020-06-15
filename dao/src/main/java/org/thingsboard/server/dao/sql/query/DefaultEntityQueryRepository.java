@@ -114,25 +114,23 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             entityFieldsSelection = String.format("e.id, '%s'", entityType.name());
         }
         String latestSelection = EntityKeyMapping.buildSelections(latestSelectionMapping);
-        String selection = entityFieldsSelection;
+        String topSelection = "entities.*";
         if (!StringUtils.isEmpty(latestSelection)) {
-            selection = entityFieldsSelection + ", " + latestSelection;
+            topSelection = topSelection + ", " + latestSelection;
         }
 
-        String fromClause = String.format("from (select %s from %s e where %s) entities %s",
-                selection,
+        String fromClause = String.format("from (select %s from (select %s from %s e where %s) entities %s %s) result",
+                topSelection,
+                entityFieldsSelection,
                 entityTableMap.get(entityType),
                 entityWhereClause,
-                latestJoins);
-
-        if (!StringUtils.isEmpty(whereClause)) {
-            fromClause = String.format("%s where %s", fromClause, whereClause);
-        }
+                latestJoins,
+                whereClause);
 
         int totalElements = ((BigInteger)entityManager.createNativeQuery(String.format("select count(*) %s", fromClause))
                 .getSingleResult()).intValue();
 
-        String dataQuery = String.format("select entities.* %s", fromClause);
+        String dataQuery = String.format("select * %s", fromClause);
 
         EntityDataSortOrder sortOrder = pageLink.getSortOrder();
         if (sortOrder != null) {
@@ -198,12 +196,18 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private String buildWhere(List<EntityKeyMapping> selectionMapping, List<EntityKeyMapping> latestFiltersMapping, String searchText) {
         String latestFilters = EntityKeyMapping.buildQuery(latestFiltersMapping);
         String textSearchQuery = this.buildTextSearchQuery(selectionMapping, searchText);
+        String query;
         if (!StringUtils.isEmpty(latestFilters) && !StringUtils.isEmpty(textSearchQuery)) {
-            return String.join(" AND ", latestFilters, textSearchQuery);
+            query = String.join(" AND ", latestFilters, textSearchQuery);
         } else if (!StringUtils.isEmpty(latestFilters)) {
-            return latestFilters;
+            query = latestFilters;
         } else {
-            return textSearchQuery;
+            query = textSearchQuery;
+        }
+        if (!StringUtils.isEmpty(query)) {
+            return String.format("where %s", query);
+        } else {
+            return "";
         }
     }
 

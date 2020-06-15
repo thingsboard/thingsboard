@@ -56,20 +56,22 @@ public class EntityDataAdapter {
         Map<String, TsValue[]> timeseries = new HashMap<>();
         EntityData entityData = new EntityData(entityId, latest, timeseries);
         for (EntityKeyMapping mapping: selectionMapping) {
-            EntityKey entityKey = mapping.getEntityKey();
-            Object value = row[mapping.getIndex()];
-            String strValue;
-            long ts;
-            if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-                strValue = value != null ? value.toString() : null;
-                ts = System.currentTimeMillis();
-            } else {
-                strValue = convertValue(value);
-                Object tsObject = row[mapping.getIndex()+1];
-                ts = Long.parseLong(tsObject.toString());
+            if (!mapping.isIgnore()) {
+                EntityKey entityKey = mapping.getEntityKey();
+                Object value = row[mapping.getIndex()];
+                String strValue;
+                long ts;
+                if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
+                    strValue = value != null ? value.toString() : null;
+                    ts = System.currentTimeMillis();
+                } else {
+                    strValue = convertValue(value);
+                    Object tsObject = row[mapping.getIndex() + 1];
+                    ts = Long.parseLong(tsObject.toString());
+                }
+                TsValue tsValue = new TsValue(ts, strValue);
+                latest.computeIfAbsent(entityKey.getType(), entityKeyType -> new HashMap<>()).put(entityKey.getKey(), tsValue);
             }
-            TsValue tsValue = new TsValue(ts, strValue);
-            latest.computeIfAbsent(entityKey.getType(), entityKeyType -> new HashMap<>()).put(entityKey.getKey(), tsValue);
         }
         return entityData;
     }
@@ -80,8 +82,8 @@ public class EntityDataAdapter {
             // check number
             if (strVal.length() > 0) {
                 try {
-                    int intVal = Integer.parseInt(strVal);
-                    return Integer.toString(intVal);
+                    long longVal = Long.parseLong(strVal);
+                    return Long.toString(longVal);
                 } catch (NumberFormatException ignored) {
                 }
                 try {

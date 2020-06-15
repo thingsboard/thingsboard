@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,6 +66,7 @@ public class EntityKeyMapping {
     private boolean isLatest;
     private boolean isSelection;
     private boolean isSortOrder;
+    private boolean ignore = false;
     private List<KeyFilter> keyFilters;
     private EntityKey entityKey;
 
@@ -151,42 +153,62 @@ public class EntityKeyMapping {
                         query.getKeyFilters().stream().collect(Collectors.groupingBy(KeyFilter::getKey)) : Collections.emptyMap();
         EntityDataSortOrder sortOrder = query.getPageLink().getSortOrder();
         EntityKey sortOrderKey = sortOrder != null ? sortOrder.getKey() : null;
-        EntityKeyMapping sortOrderMapping = null;
         int index = 2;
-        List<EntityKeyMapping> mappings = new ArrayList<>();
-        for (EntityKey entityField : entityFields) {
-            EntityKeyMapping mapping = new EntityKeyMapping();
-            mapping.setIndex(index);
-            mapping.setAlias(String.format("alias%s", index));
-            mapping.setKeyFilters(filters.remove(entityField));
-            mapping.setLatest(false);
-            mapping.setSelection(true);
-            mapping.setEntityKey(entityField);
-            if (entityField.equals(sortOrderKey)) {
-                mapping.setSortOrder(true);
-                sortOrderMapping = mapping;
+        List<EntityKeyMapping> entityFieldsMappings = entityFields.stream().map(
+                key -> {
+                    EntityKeyMapping mapping = new EntityKeyMapping();
+                    mapping.setLatest(false);
+                    mapping.setSelection(true);
+                    mapping.setEntityKey(key);
+                    return mapping;
+                }
+        ).collect(Collectors.toList());
+        List<EntityKeyMapping> latestMappings = latestValues.stream().map(
+                key -> {
+                    EntityKeyMapping mapping = new EntityKeyMapping();
+                    mapping.setLatest(true);
+                    mapping.setSelection(true);
+                    mapping.setEntityKey(key);
+                    return mapping;
+                }
+        ).collect(Collectors.toList());
+        if (sortOrderKey != null) {
+            Optional<EntityKeyMapping> existing;
+            if (sortOrderKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
+                existing =
+                        entityFieldsMappings.stream().filter(mapping -> mapping.entityKey.equals(sortOrderKey)).findFirst();
             } else {
-                mapping.setSortOrder(false);
+                existing =
+                        latestMappings.stream().filter(mapping -> mapping.entityKey.equals(sortOrderKey)).findFirst();
             }
-            mappings.add(mapping);
-            index++;
+            if (existing.isPresent()) {
+                existing.get().setSortOrder(true);
+            } else {
+                EntityKeyMapping sortOrderMapping = new EntityKeyMapping();
+                sortOrderMapping.setLatest(!sortOrderKey.getType().equals(EntityKeyType.ENTITY_FIELD));
+                sortOrderMapping.setSelection(true);
+                sortOrderMapping.setEntityKey(sortOrderKey);
+                sortOrderMapping.setSortOrder(true);
+                sortOrderMapping.setIgnore(true);
+                if (sortOrderKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
+                    entityFieldsMappings.add(sortOrderMapping);
+                } else {
+                    latestMappings.add(sortOrderMapping);
+                }
+            }
         }
-        for (EntityKey latestField : latestValues) {
-            EntityKeyMapping mapping = new EntityKeyMapping();
+        List<EntityKeyMapping> mappings = new ArrayList<>();
+        mappings.addAll(entityFieldsMappings);
+        mappings.addAll(latestMappings);
+        for (EntityKeyMapping mapping : mappings) {
             mapping.setIndex(index);
             mapping.setAlias(String.format("alias%s", index));
-            mapping.setKeyFilters(filters.remove(latestField));
-            mapping.setLatest(true);
-            mapping.setSelection(true);
-            mapping.setEntityKey(latestField);
-            if (latestField.equals(sortOrderKey)) {
-                mapping.setSortOrder(true);
-                sortOrderMapping = mapping;
+            mapping.setKeyFilters(filters.remove(mapping.entityKey));
+            if (mapping.getEntityKey().getType().equals(EntityKeyType.ENTITY_FIELD)) {
+                index++;
             } else {
-                mapping.setSortOrder(false);
+                index +=2;
             }
-            mappings.add(mapping);
-            index +=2;
         }
         if (!filters.isEmpty()) {
             for (EntityKey filterField : filters.keySet()) {
@@ -201,37 +223,28 @@ public class EntityKeyMapping {
                 index +=1;
             }
         }
-        if (sortOrderKey != null && sortOrderMapping == null) {
-            sortOrderMapping = new EntityKeyMapping();
-            sortOrderMapping.setIndex(index);
-            sortOrderMapping.setAlias(String.format("alias%s", index));
-            sortOrderMapping.setLatest(!sortOrderKey.getType().equals(EntityKeyType.ENTITY_FIELD));
-            sortOrderMapping.setSelection(true);
-            sortOrderMapping.setEntityKey(sortOrderKey);
-            sortOrderMapping.setSortOrder(true);
-            mappings.add(sortOrderMapping);
-        }
+
         return mappings;
     }
 
     private String buildAttributeSelection() {
         String attrValAlias = getValueAlias();
         String attrTsAlias = getTsAlias();
-        String attrTsSelection = String.format("%s.last_update_ts as %s", alias, attrTsAlias);
         String attrValSelection =
-                String.format("coalesce(cast(%s.bool_v as varchar), '') || " +
+                String.format("(coalesce(cast(%s.bool_v as varchar), '') || " +
                         "coalesce(%s.str_v, '') || " +
                         "coalesce(cast(%s.long_v as varchar), '') || " +
                         "coalesce(cast(%s.dbl_v as varchar), '') || " +
                         "coalesce(cast(%s.json_v as varchar), '')) as %s", alias, alias, alias, alias, alias, attrValAlias);
-        return String.join(", ", attrTsSelection, attrValSelection);
+        String attrTsSelection = String.format("%s.last_update_ts as %s", alias, attrTsAlias);
+        return String.join(", ", attrValSelection, attrTsSelection);
     }
 
     private String buildTimeseriesSelection() {
         // TODO:
         String attrValAlias = getValueAlias();
         String attrTsAlias = getTsAlias();
-        return String.format("(select 1) as %s, (select '') as %s", attrTsAlias, attrValAlias);
+        return String.format("(select '') as %s, (select 1) as %s", attrValAlias, attrTsAlias);
     }
 
     private String buildKeyQuery(String alias, KeyFilter keyFilter) {
