@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@
 CONF_FOLDER="/config"
 jarfile=${pkg.installFolder}/bin/${pkg.name}.jar
 configfile=${pkg.name}.conf
-run_user=${pkg.name}
+run_user=${pkg.user}
 
 source "${CONF_FOLDER}/${configfile}"
 
 export LOADER_PATH=/config,${LOADER_PATH}
+
+cd ${pkg.installFolder}/bin
 
 if [ "$INSTALL_TB" == "true" ]; then
 

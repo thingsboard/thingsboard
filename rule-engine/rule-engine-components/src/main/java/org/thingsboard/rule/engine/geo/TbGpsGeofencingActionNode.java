@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,12 @@ import java.util.concurrent.TimeoutException;
         type = ComponentType.ACTION,
         name = "gps geofencing events",
         configClazz = TbGpsGeofencingActionNodeConfiguration.class,
-        relationTypes = {"Entered", "Left", "Inside", "Outside"},
+        relationTypes = {"Success", "Entered", "Left", "Inside", "Outside"},
         nodeDescription = "Produces incoming messages using GPS based geofencing",
         nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns different events based on configuration parameters",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeGpsGeofencingConfig")
+        configDirective = "tbActionNodeGpsGeofencingConfig"
+)
 public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofencingActionNodeConfiguration> {
 
     private final Map<EntityId, EntityGeofencingState> entityStates = new HashMap<>();
@@ -66,7 +67,7 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
         EntityGeofencingState entityState = entityStates.computeIfAbsent(msg.getOriginator(), key -> {
             try {
                 Optional<AttributeKvEntry> entry = ctx.getAttributesService()
-                        .find(ctx.getTenantId(), msg.getOriginator(), DataConstants.SERVER_SCOPE, ctx.getNodeId())
+                        .find(ctx.getTenantId(), msg.getOriginator(), DataConstants.SERVER_SCOPE, ctx.getServiceId())
                         .get(1, TimeUnit.MINUTES);
                 if (entry.isPresent()) {
                     JsonObject element = parser.parse(entry.get().getValueAsString()).getAsJsonObject();
@@ -78,16 +79,25 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
                 throw new RuntimeException(e);
             }
         });
+
+        boolean told = false;
         if (entityState.getStateSwitchTime() == 0L || entityState.isInside() != matches) {
             switchState(ctx, msg.getOriginator(), entityState, matches, ts);
             ctx.tellNext(msg, matches ? "Entered" : "Left");
-        } else if (!entityState.isStayed()) {
-            long stayTime = ts - entityState.getStateSwitchTime();
-            if (stayTime > (entityState.isInside() ?
-                    TimeUnit.valueOf(config.getMinInsideDurationTimeUnit()).toMillis(config.getMinInsideDuration()) : TimeUnit.valueOf(config.getMinOutsideDurationTimeUnit()).toMillis(config.getMinOutsideDuration()))) {
-                setStaid(ctx, msg.getOriginator(), entityState);
-                ctx.tellNext(msg, entityState.isInside() ? "Inside" : "Outside");
+            told = true;
+        } else {
+            if (!entityState.isStayed()) {
+                long stayTime = ts - entityState.getStateSwitchTime();
+                if (stayTime > (entityState.isInside() ?
+                        TimeUnit.valueOf(config.getMinInsideDurationTimeUnit()).toMillis(config.getMinInsideDuration()) : TimeUnit.valueOf(config.getMinOutsideDurationTimeUnit()).toMillis(config.getMinOutsideDuration()))) {
+                    setStaid(ctx, msg.getOriginator(), entityState);
+                    ctx.tellNext(msg, entityState.isInside() ? "Inside" : "Outside");
+                    told = true;
+                }
             }
+        }
+        if (!told) {
+            ctx.tellSuccess(msg);
         }
     }
 
@@ -108,7 +118,7 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
         object.addProperty("inside", entityState.isInside());
         object.addProperty("stateSwitchTime", entityState.getStateSwitchTime());
         object.addProperty("stayed", entityState.isStayed());
-        AttributeKvEntry entry = new BaseAttributeKvEntry(new StringDataEntry(ctx.getNodeId(), gson.toJson(object)), System.currentTimeMillis());
+        AttributeKvEntry entry = new BaseAttributeKvEntry(new StringDataEntry(ctx.getServiceId(), gson.toJson(object)), System.currentTimeMillis());
         List<AttributeKvEntry> attributeKvEntryList = Collections.singletonList(entry);
         ctx.getAttributesService().save(ctx.getTenantId(), entityId, DataConstants.SERVER_SCOPE, attributeKvEntryList);
     }

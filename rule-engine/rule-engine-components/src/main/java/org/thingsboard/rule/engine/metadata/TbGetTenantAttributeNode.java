@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
                 "If Latest Telemetry enrichment configured, latest telemetry added into metadata. " +
                 "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.temperature</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeTenantAttributesConfig")
 public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
 

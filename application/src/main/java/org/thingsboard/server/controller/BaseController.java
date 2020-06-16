@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,7 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.thingsboard.server.actors.service.ActorService;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -36,12 +35,14 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -60,7 +61,8 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -71,8 +73,6 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -93,7 +93,11 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -102,7 +106,6 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Optional;
@@ -112,6 +115,7 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
+@TbCoreComponent
 public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
@@ -162,7 +166,7 @@ public abstract class BaseController {
     protected RuleChainService ruleChainService;
 
     @Autowired
-    protected ActorService actorService;
+    protected TbClusterService tbClusterService;
 
     @Autowired
     protected RelationService relationService;
@@ -184,6 +188,12 @@ public abstract class BaseController {
 
     @Autowired
     protected ClaimDevicesService claimDevicesService;
+
+    @Autowired
+    protected PartitionService partitionService;
+
+    @Autowired
+    protected TbQueueProducerProvider producerProvider;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -256,21 +266,27 @@ public abstract class BaseController {
         return UUID.fromString(id);
     }
 
-    TimePageLink createPageLink(int limit, Long startTime, Long endTime, boolean ascOrder, String idOffset) {
-        UUID idOffsetUuid = null;
-        if (StringUtils.isNotEmpty(idOffset)) {
-            idOffsetUuid = toUUID(idOffset);
+    PageLink createPageLink(int pageSize, int page, String textSearch, String sortProperty, String sortOrder) throws ThingsboardException {
+        if (!StringUtils.isEmpty(sortProperty)) {
+            SortOrder.Direction direction = SortOrder.Direction.ASC;
+            if (!StringUtils.isEmpty(sortOrder)) {
+                try {
+                    direction = SortOrder.Direction.valueOf(sortOrder.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    throw new ThingsboardException("Unsupported sort order '" + sortOrder + "'! Only 'ASC' or 'DESC' types are allowed.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                }
+            }
+            SortOrder sort = new SortOrder(sortProperty, direction);
+            return new PageLink(pageSize, page, textSearch, sort);
+        } else {
+            return new PageLink(pageSize, page, textSearch);
         }
-        return new TimePageLink(limit, startTime, endTime, ascOrder, idOffsetUuid);
     }
 
-
-    TextPageLink createPageLink(int limit, String textSearch, String idOffset, String textOffset) {
-        UUID idOffsetUuid = null;
-        if (StringUtils.isNotEmpty(idOffset)) {
-            idOffsetUuid = toUUID(idOffset);
-        }
-        return new TextPageLink(limit, textSearch, idOffsetUuid, textOffset);
+    TimePageLink createTimePageLink(int pageSize, int page, String textSearch,
+                                    String sortProperty, String sortOrder, Long startTime, Long endTime) throws ThingsboardException {
+        PageLink pageLink = this.createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return new TimePageLink(pageLink, startTime, endTime);
     }
 
     protected SecurityUser getCurrentUser() throws ThingsboardException {
@@ -322,11 +338,23 @@ public abstract class BaseController {
         }
     }
 
+    protected <I extends EntityId, T extends HasTenantId> void checkEntity(I entityId, T entity, Resource resource) throws ThingsboardException {
+        if (entityId == null) {
+            accessControlService
+                    .checkPermission(getCurrentUser(), resource, Operation.CREATE, null, entity);
+        } else {
+            checkEntityId(entityId, Operation.WRITE);
+        }
+    }
+
     protected void checkEntityId(EntityId entityId, Operation operation) throws ThingsboardException {
         try {
             checkNotNull(entityId);
             validateId(entityId.getId(), "Incorrect entityId " + entityId);
             switch (entityId.getEntityType()) {
+                case ALARM:
+                    checkAlarmId(new AlarmId(entityId.getId()), operation);
+                    return;
                 case DEVICE:
                     checkDeviceId(new DeviceId(entityId.getId()), operation);
                     return;
@@ -354,6 +382,12 @@ public abstract class BaseController {
                 case ENTITY_VIEW:
                     checkEntityViewId(new EntityViewId(entityId.getId()), operation);
                     return;
+                case WIDGETS_BUNDLE:
+                    checkWidgetsBundleId(new WidgetsBundleId(entityId.getId()), operation);
+                    return;
+                case WIDGET_TYPE:
+                    checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
+                    return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
             }
@@ -374,6 +408,18 @@ public abstract class BaseController {
         }
     }
 
+    DeviceInfo checkDeviceInfoId(DeviceId deviceId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(deviceId, "Incorrect deviceId " + deviceId);
+            DeviceInfo device = deviceService.findDeviceInfoById(getCurrentUser().getTenantId(), deviceId);
+            checkNotNull(device);
+            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation, deviceId, device);
+            return device;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     protected EntityView checkEntityViewId(EntityViewId entityViewId, Operation operation) throws ThingsboardException {
         try {
             validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
@@ -386,10 +432,34 @@ public abstract class BaseController {
         }
     }
 
+    EntityViewInfo checkEntityViewInfoId(EntityViewId entityViewId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
+            EntityViewInfo entityView = entityViewService.findEntityViewInfoById(getCurrentUser().getTenantId(), entityViewId);
+            checkNotNull(entityView);
+            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation, entityViewId, entityView);
+            return entityView;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     Asset checkAssetId(AssetId assetId, Operation operation) throws ThingsboardException {
         try {
             validateId(assetId, "Incorrect assetId " + assetId);
             Asset asset = assetService.findAssetById(getCurrentUser().getTenantId(), assetId);
+            checkNotNull(asset);
+            accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, operation, assetId, asset);
+            return asset;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    AssetInfo checkAssetInfoId(AssetId assetId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(assetId, "Incorrect assetId " + assetId);
+            AssetInfo asset = assetService.findAssetInfoById(getCurrentUser().getTenantId(), assetId);
             checkNotNull(asset);
             accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, operation, assetId, asset);
             return asset;
@@ -513,39 +583,6 @@ public abstract class BaseController {
         return ruleNode;
     }
 
-
-    protected String constructBaseUrl(HttpServletRequest request) {
-        String scheme = request.getScheme();
-
-        String forwardedProto = request.getHeader("x-forwarded-proto");
-        if (forwardedProto != null) {
-            scheme = forwardedProto;
-        }
-
-        int serverPort = request.getServerPort();
-        if (request.getHeader("x-forwarded-port") != null) {
-            try {
-                serverPort = request.getIntHeader("x-forwarded-port");
-            } catch (NumberFormatException e) {
-            }
-        } else if (forwardedProto != null) {
-            switch (forwardedProto) {
-                case "http":
-                    serverPort = 80;
-                    break;
-                case "https":
-                    serverPort = 443;
-                    break;
-            }
-        }
-
-        String baseUrl = String.format("%s://%s:%d",
-                scheme,
-                request.getServerName(),
-                serverPort);
-        return baseUrl;
-    }
-
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
@@ -642,6 +679,8 @@ public abstract class BaseController {
                                     entityNode.put(attr.getKey(), attr.getDoubleValue().get());
                                 } else if (attr.getDataType() == DataType.LONG) {
                                     entityNode.put(attr.getKey(), attr.getLongValue().get());
+                                } else if (attr.getDataType() == DataType.JSON) {
+                                    entityNode.set(attr.getKey(), json.readTree(attr.getJsonValue().get()));
                                 } else {
                                     entityNode.put(attr.getKey(), attr.getValueAsString());
                                 }
@@ -657,10 +696,14 @@ public abstract class BaseController {
                         }
                     }
                 }
-                TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, entityId, metaData, TbMsgDataType.JSON
-                        , json.writeValueAsString(entityNode)
-                        , null, null, 0L);
-                actorService.onMsg(new SendToClusterMsg(entityId, new ServiceToRuleEngineMsg(user.getTenantId(), tbMsg)));
+                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+                TenantId tenantId = user.getTenantId();
+                if (tenantId.isNullUid()) {
+                    if (entity instanceof HasTenantId) {
+                        tenantId = ((HasTenantId) entity).getTenantId();
+                    }
+                }
+                tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }

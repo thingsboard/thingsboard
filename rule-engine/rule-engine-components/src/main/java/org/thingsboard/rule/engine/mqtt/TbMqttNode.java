@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import java.util.concurrent.TimeoutException;
         configClazz = TbMqttNodeConfiguration.class,
         nodeDescription = "Publish messages to the MQTT broker",
         nodeDetails = "Will publish message payload to the MQTT broker with QoS <b>AT_LEAST_ONCE</b>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMqttConfig",
         icon = "call_split"
 )
@@ -72,12 +72,12 @@ public class TbMqttNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(this.config.getTopicPattern(), msg.getMetaData());
         this.mqttClient.publish(topic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE)
                 .addListener(future -> {
                     if (future.isSuccess()) {
-                        ctx.tellNext(msg, TbRelationTypes.SUCCESS);
+                        ctx.tellSuccess(msg);
                     } else {
                         TbMsg next = processException(ctx, msg, future.cause());
                         ctx.tellFailure(next, future.cause());

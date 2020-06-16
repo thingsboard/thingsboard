@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.dao.nosql;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ import java.util.Map;
 @Component
 @Slf4j
 @NoSqlAnyDao
-public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<CassandraStatementTask, ResultSetFuture, ResultSet> {
+public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<CassandraStatementTask, TbResultSetFuture, TbResultSet> {
 
     @Autowired
     private EntityService entityService;
@@ -107,19 +107,22 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
     }
 
     @Override
-    protected SettableFuture<ResultSet> create() {
+    protected SettableFuture<TbResultSet> create() {
         return SettableFuture.create();
     }
 
     @Override
-    protected ResultSetFuture wrap(CassandraStatementTask task, SettableFuture<ResultSet> future) {
+    protected TbResultSetFuture wrap(CassandraStatementTask task, SettableFuture<TbResultSet> future) {
         return new TbResultSetFuture(future);
     }
 
     @Override
-    protected ResultSetFuture execute(AsyncTaskContext<CassandraStatementTask, ResultSet> taskCtx) {
+    protected ListenableFuture<TbResultSet> execute(AsyncTaskContext<CassandraStatementTask, TbResultSet> taskCtx) {
         CassandraStatementTask task = taskCtx.getTask();
-        return task.getSession().executeAsync(task.getStatement());
+        return task.executeAsync(
+                statement ->
+                    this.submit(new CassandraStatementTask(task.getTenantId(), task.getSession(), statement))
+        );
     }
 
 }

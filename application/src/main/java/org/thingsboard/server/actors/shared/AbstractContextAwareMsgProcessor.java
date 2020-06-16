@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,13 @@
  */
 package org.thingsboard.server.actors.shared;
 
-import akka.actor.ActorContext;
-import akka.actor.ActorRef;
-import akka.actor.Scheduler;
-import akka.event.LoggingAdapter;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
-import scala.concurrent.ExecutionContextExecutor;
-import scala.concurrent.duration.Duration;
+import org.thingsboard.server.actors.TbActorCtx;
+import org.thingsboard.server.common.msg.TbActorMsg;
 
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -40,31 +35,16 @@ public abstract class AbstractContextAwareMsgProcessor {
         this.systemContext = systemContext;
     }
 
-    private Scheduler getScheduler() {
+    private ScheduledExecutorService getScheduler() {
         return systemContext.getScheduler();
     }
 
-    private ExecutionContextExecutor getSystemDispatcher() {
-        return systemContext.getActorSystem().dispatcher();
+    protected void schedulePeriodicMsgWithDelay(TbActorCtx ctx, TbActorMsg msg, long delayInMs, long periodInMs) {
+        systemContext.schedulePeriodicMsgWithDelay(ctx, msg, delayInMs, periodInMs);
     }
 
-    protected void schedulePeriodicMsgWithDelay(ActorContext ctx, Object msg, long delayInMs, long periodInMs) {
-        schedulePeriodicMsgWithDelay(msg, delayInMs, periodInMs, ctx.self());
+    protected void scheduleMsgWithDelay(TbActorCtx ctx, TbActorMsg msg, long delayInMs) {
+        systemContext.scheduleMsgWithDelay(ctx, msg, delayInMs);
     }
-
-    private void schedulePeriodicMsgWithDelay(Object msg, long delayInMs, long periodInMs, ActorRef target) {
-        log.debug("Scheduling periodic msg {} every {} ms with delay {} ms", msg, periodInMs, delayInMs);
-        getScheduler().schedule(Duration.create(delayInMs, TimeUnit.MILLISECONDS), Duration.create(periodInMs, TimeUnit.MILLISECONDS), target, msg, getSystemDispatcher(), null);
-    }
-
-    protected void scheduleMsgWithDelay(ActorContext ctx, Object msg, long delayInMs) {
-        scheduleMsgWithDelay(msg, delayInMs, ctx.self());
-    }
-
-    private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {
-        log.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
-        getScheduler().scheduleOnce(Duration.create(delayInMs, TimeUnit.MILLISECONDS), target, msg, getSystemDispatcher(), null);
-    }
-
 
 }

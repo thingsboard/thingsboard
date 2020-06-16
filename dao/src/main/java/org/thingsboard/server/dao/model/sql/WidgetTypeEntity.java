@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -62,7 +62,7 @@ public final class WidgetTypeEntity  extends BaseSqlEntity<WidgetType> implement
 
     public WidgetTypeEntity(WidgetType widgetType) {
         if (widgetType.getId() != null) {
-            this.setId(widgetType.getId().getId());
+            this.setUuid(widgetType.getId().getId());
         }
         if (widgetType.getTenantId() != null) {
             this.tenantId = toString(widgetType.getTenantId().getId());
@@ -75,8 +75,8 @@ public final class WidgetTypeEntity  extends BaseSqlEntity<WidgetType> implement
 
     @Override
     public WidgetType toData() {
-        WidgetType widgetType = new WidgetType(new WidgetTypeId(getId()));
-        widgetType.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        WidgetType widgetType = new WidgetType(new WidgetTypeId(this.getUuid()));
+        widgetType.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
         if (tenantId != null) {
             widgetType.setTenantId(new TenantId(toUUID(tenantId)));
         }

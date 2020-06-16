@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,17 +48,17 @@ public abstract class AbstractComponentDescriptorInsertRepository implements Com
         } catch (Throwable throwable) {
             transactionManager.rollback(insertTransaction);
             if (throwable.getCause() instanceof ConstraintViolationException) {
-                log.trace("Insert request leaded in a violation of a defined integrity constraint {} for Component Descriptor with id {}, name {} and entityType {}", throwable.getMessage(), entity.getId(), entity.getName(), entity.getType());
+                log.trace("Insert request leaded in a violation of a defined integrity constraint {} for Component Descriptor with id {}, name {} and entityType {}", throwable.getMessage(), entity.getUuid(), entity.getName(), entity.getType());
                 TransactionStatus transaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
                 try {
                     componentDescriptorEntity = processSaveOrUpdate(entity, insertOrUpdateOnUniqueKeyConflict);
                 } catch (Throwable th) {
-                    log.trace("Could not execute the update statement for Component Descriptor with id {}, name {} and entityType {}", entity.getId(), entity.getName(), entity.getType());
+                    log.trace("Could not execute the update statement for Component Descriptor with id {}, name {} and entityType {}", entity.getUuid(), entity.getName(), entity.getType());
                     transactionManager.rollback(transaction);
                 }
                 transactionManager.commit(transaction);
             } else {
-                log.trace("Could not execute the insert statement for Component Descriptor with id {}, name {} and entityType {}", entity.getId(), entity.getName(), entity.getType());
+                log.trace("Could not execute the insert statement for Component Descriptor with id {}, name {} and entityType {}", entity.getUuid(), entity.getName(), entity.getType());
             }
         }
         return componentDescriptorEntity;
@@ -69,7 +69,7 @@ public abstract class AbstractComponentDescriptorInsertRepository implements Com
 
     protected Query getQuery(ComponentDescriptorEntity entity, String query) {
         return entityManager.createNativeQuery(query, ComponentDescriptorEntity.class)
-                .setParameter("id", UUIDConverter.fromTimeUUID(entity.getId()))
+                .setParameter("id", UUIDConverter.fromTimeUUID(entity.getUuid()))
                 .setParameter("actions", entity.getActions())
                 .setParameter("clazz", entity.getClazz())
                 .setParameter("configuration_descriptor", entity.getConfigurationDescriptor().toString())

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>2.5.0-SNAPSHOT</version>
+        <version>3.0.1-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -36,7 +36,6 @@
         <main.dir>${basedir}/../..</main.dir>
         <pkg.name>thingsboard</pkg.name>
         <docker.name>tb-node</docker.name>
-        <pkg.user>thingsboard</pkg.user>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
     </properties>
@@ -181,7 +180,7 @@
         <repository>
             <id>jenkins</id>
             <name>Jenkins Repository</name>
-            <url>http://repo.jenkins-ci.org/releases</url>
+            <url>https://repo.jenkins-ci.org/releases</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>

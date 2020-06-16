@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>2.5.0-SNAPSHOT</version>
+        <version>3.0.1-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -35,10 +35,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
         <pkg.name>tb-web-ui</pkg.name>
+        <pkg.type>js</pkg.type>
         <docker.name>tb-web-ui</docker.name>
-        <pkg.user>thingsboard</pkg.user>
-        <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
-        <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <pkg.name>tb-web-ui</pkg.name>
+        <pkg.type>js</pkg.type>
+        <pkg.disabled>false</pkg.disabled>
+        <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
+        <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
     </properties>
@@ -46,7 +49,7 @@
     <dependencies>
         <dependency>
             <groupId>org.thingsboard</groupId>
-            <artifactId>ui</artifactId>
+            <artifactId>ui-ngx</artifactId>
             <version>${project.version}</version>
             <type>jar</type>
             <scope>provided</scope>
@@ -105,7 +108,7 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.thingsboard</groupId>
-                                    <artifactId>ui</artifactId>
+                                    <artifactId>ui-ngx</artifactId>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/web</outputDirectory>
@@ -137,170 +140,185 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-linux-conf</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${pkg.linux.dist}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>config</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/unix.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-linux-init</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${pkg.linux.dist}/init</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/scripts/init</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/unix.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-win-conf</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${pkg.win.dist}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>config</directory>
-                                    <excludes>
-                                        <exclude>tb-web-ui.conf</exclude>
-                                    </excludes>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/windows.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-control</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/control</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/scripts/control</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/unix.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-windows-control</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${pkg.win.dist}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/scripts/windows</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/main/filters/windows.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-docker-config</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>docker</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
-                <groupId>org.fortasoft</groupId>
+                <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
-                <configuration>
-                    <tasks>
-                        <task>build</task>
-                        <task>buildDeb</task>
-                        <task>buildRpm</task>
-                    </tasks>
-                    <args>
-                        <arg>-PprojectBuildDir=${project.build.directory}</arg>
-                        <arg>-PprojectVersion=${project.version}</arg>
-                        <arg>-PpkgName=${pkg.name}</arg>
-                        <arg>-PpkgUser=${pkg.user}</arg>
-                        <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
-                        <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
-                    </args>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>invoke</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.0.0</version>
-                <configuration>
-                    <finalName>${pkg.name}</finalName>
-                    <descriptors>
-                        <descriptor>src/main/assembly/windows.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-resources-plugin</artifactId>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>copy-linux-conf</id>-->
+<!--                        <phase>process-resources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>copy-resources</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <outputDirectory>${pkg.linux.dist}/conf</outputDirectory>-->
+<!--                            <resources>-->
+<!--                                <resource>-->
+<!--                                    <directory>config</directory>-->
+<!--                                    <filtering>true</filtering>-->
+<!--                                </resource>-->
+<!--                            </resources>-->
+<!--                            <filters>-->
+<!--                                <filter>src/main/filters/unix.properties</filter>-->
+<!--                            </filters>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>copy-linux-init</id>-->
+<!--                        <phase>process-resources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>copy-resources</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <outputDirectory>${pkg.linux.dist}/init</outputDirectory>-->
+<!--                            <resources>-->
+<!--                                <resource>-->
+<!--                                    <directory>src/main/scripts/init</directory>-->
+<!--                                    <filtering>true</filtering>-->
+<!--                                </resource>-->
+<!--                            </resources>-->
+<!--                            <filters>-->
+<!--                                <filter>src/main/filters/unix.properties</filter>-->
+<!--                            </filters>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>copy-win-conf</id>-->
+<!--                        <phase>process-resources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>copy-resources</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <outputDirectory>${pkg.win.dist}/conf</outputDirectory>-->
+<!--                            <resources>-->
+<!--                                <resource>-->
+<!--                                    <directory>config</directory>-->
+<!--                                    <excludes>-->
+<!--                                        <exclude>tb-web-ui.conf</exclude>-->
+<!--                                    </excludes>-->
+<!--                                    <filtering>true</filtering>-->
+<!--                                </resource>-->
+<!--                            </resources>-->
+<!--                            <filters>-->
+<!--                                <filter>src/main/filters/windows.properties</filter>-->
+<!--                            </filters>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>copy-control</id>-->
+<!--                        <phase>process-resources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>copy-resources</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <outputDirectory>${project.build.directory}/control</outputDirectory>-->
+<!--                            <resources>-->
+<!--                                <resource>-->
+<!--                                    <directory>src/main/scripts/control</directory>-->
+<!--                                    <filtering>true</filtering>-->
+<!--                                </resource>-->
+<!--                            </resources>-->
+<!--                            <filters>-->
+<!--                                <filter>src/main/filters/unix.properties</filter>-->
+<!--                            </filters>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>copy-windows-control</id>-->
+<!--                        <phase>process-resources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>copy-resources</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <outputDirectory>${pkg.win.dist}</outputDirectory>-->
+<!--                            <resources>-->
+<!--                                <resource>-->
+<!--                                    <directory>src/main/scripts/windows</directory>-->
+<!--                                    <filtering>true</filtering>-->
+<!--                                </resource>-->
+<!--                            </resources>-->
+<!--                            <filters>-->
+<!--                                <filter>src/main/filters/windows.properties</filter>-->
+<!--                            </filters>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>copy-docker-config</id>-->
+<!--                        <phase>process-resources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>copy-resources</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <outputDirectory>${project.build.directory}</outputDirectory>-->
+<!--                            <resources>-->
+<!--                                <resource>-->
+<!--                                    <directory>docker</directory>-->
+<!--                                    <filtering>true</filtering>-->
+<!--                                </resource>-->
+<!--                            </resources>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.thingsboard</groupId>-->
+<!--                <artifactId>gradle-maven-plugin</artifactId>-->
+<!--                <configuration>-->
+<!--                    <gradleProjectDirectory>${basedir}</gradleProjectDirectory>-->
+<!--                    <tasks>-->
+<!--                        <task>build</task>-->
+<!--                        <task>buildDeb</task>-->
+<!--                        <task>buildRpm</task>-->
+<!--                        <task>renameDeb</task>-->
+<!--                        <task>renameRpm</task>-->
+<!--                    </tasks>-->
+<!--                    <args>-->
+<!--                        <arg>-PprojectBuildDir=${project.build.directory}</arg>-->
+<!--                        <arg>-PprojectVersion=${project.version}</arg>-->
+<!--                        <arg>-PpkgName=${pkg.name}</arg>-->
+<!--                        <arg>-PpkgUser=${pkg.user}</arg>-->
+<!--                        <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>-->
+<!--                        <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>-->
+<!--                    </args>-->
+<!--                </configuration>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <phase>package</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>invoke</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-assembly-plugin</artifactId>-->
+<!--                <version>3.0.0</version>-->
+<!--                <configuration>-->
+<!--                    <finalName>${pkg.name}</finalName>-->
+<!--                    <descriptors>-->
+<!--                        <descriptor>../../packaging/js/assembly/windows.xml</descriptor>-->
+<!--                    </descriptors>-->
+<!--                </configuration>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>assembly</id>-->
+<!--                        <phase>package</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>single</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>dockerfile-maven-plugin</artifactId>
@@ -414,7 +432,7 @@
         <repository>
             <id>jenkins</id>
             <name>Jenkins Repository</name>
-            <url>http://repo.jenkins-ci.org/releases</url>
+            <url>https://repo.jenkins-ci.org/releases</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>

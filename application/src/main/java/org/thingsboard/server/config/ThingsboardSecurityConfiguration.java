@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
+import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.jwt.JwtTokenAuthenticationProcessingFilter;
@@ -68,16 +69,33 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
     public static final String FORM_BASED_LOGIN_ENTRY_POINT = "/api/auth/login";
     public static final String PUBLIC_LOGIN_ENTRY_POINT = "/api/auth/login/public";
     public static final String TOKEN_REFRESH_ENTRY_POINT = "/api/auth/token";
-    protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[] {"/index.html", "/static/**", "/api/noauth/**", "/webjars/**"};
+    protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[] {"/index.html", "/assets/**", "/static/**", "/api/noauth/**", "/webjars/**"};
     public static final String TOKEN_BASED_AUTH_ENTRY_POINT = "/api/**";
     public static final String WS_TOKEN_BASED_AUTH_ENTRY_POINT = "/api/ws/**";
 
     @Autowired private ThingsboardErrorResponseHandler restAccessDeniedHandler;
-    @Autowired private AuthenticationSuccessHandler successHandler;
-    @Autowired private AuthenticationFailureHandler failureHandler;
+
+    @Autowired(required = false)
+    @Qualifier("oauth2AuthenticationSuccessHandler")
+    private AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
+
+    @Autowired(required = false)
+    @Qualifier("oauth2AuthenticationFailureHandler")
+    private AuthenticationFailureHandler oauth2AuthenticationFailureHandler;
+
+    @Autowired
+    @Qualifier("defaultAuthenticationSuccessHandler")
+    private AuthenticationSuccessHandler successHandler;
+
+    @Autowired
+    @Qualifier("defaultAuthenticationFailureHandler")
+    private AuthenticationFailureHandler failureHandler;
+
     @Autowired private RestAuthenticationProvider restAuthenticationProvider;
     @Autowired private JwtAuthenticationProvider jwtAuthenticationProvider;
     @Autowired private RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
+
+    @Autowired(required = false) OAuth2Configuration oauth2Configuration;
 
     @Autowired
     @Qualifier("jwtHeaderTokenExtractor")
@@ -107,7 +125,6 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
         return filter;
     }
 
-    @Bean
     protected JwtTokenAuthenticationProcessingFilter buildJwtTokenAuthenticationProcessingFilter() throws Exception {
         List<String> pathsToSkip = new ArrayList(Arrays.asList(NON_TOKEN_BASED_AUTH_ENTRY_POINTS));
         pathsToSkip.addAll(Arrays.asList(WS_TOKEN_BASED_AUTH_ENTRY_POINT, TOKEN_REFRESH_ENTRY_POINT, FORM_BASED_LOGIN_ENTRY_POINT,
@@ -155,7 +172,7 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/static/**");
+        web.ignoring().antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**");
     }
 
     @Override
@@ -190,8 +207,14 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildWsJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
+        if (oauth2Configuration != null && oauth2Configuration.isEnabled()) {
+            http.oauth2Login()
+                    .loginPage("/oauth2Login")
+                    .loginProcessingUrl(oauth2Configuration.getLoginProcessingUrl())
+                    .successHandler(oauth2AuthenticationSuccessHandler)
+                    .failureHandler(oauth2AuthenticationFailureHandler);
+        }
     }
-
 
     @Bean
     @ConditionalOnMissingBean(CorsFilter.class)

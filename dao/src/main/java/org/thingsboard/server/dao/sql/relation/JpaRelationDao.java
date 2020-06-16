@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -42,7 +44,6 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.springframework.data.jpa.domain.Specifications.where;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 /**
@@ -55,6 +56,9 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Autowired
     private RelationRepository relationRepository;
+
+    @Autowired
+    private RelationInsertRepository relationInsertRepository;
 
     @Override
     public ListenableFuture<List<EntityRelation>> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
@@ -117,12 +121,12 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Override
     public boolean saveRelation(TenantId tenantId, EntityRelation relation) {
-        return relationRepository.save(new RelationEntity(relation)) != null;
+        return relationInsertRepository.saveOrUpdate(new RelationEntity(relation)) != null;
     }
 
     @Override
     public ListenableFuture<Boolean> saveRelationAsync(TenantId tenantId, EntityRelation relation) {
-        return service.submit(() -> relationRepository.save(new RelationEntity(relation)) != null);
+        return service.submit(() -> relationInsertRepository.saveOrUpdate(new RelationEntity(relation)) != null);
     }
 
     @Override
@@ -185,13 +189,16 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findRelations(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
+    public ListenableFuture<PageData<EntityRelation>> findRelations(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
         Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "toId");
         Specification<RelationEntity> fieldsSpec = getEntityFieldsSpec(from, relationType, typeGroup, childType);
-        Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, "toId");
+        Sort.Direction sortDirection = Sort.Direction.DESC;
+        if (pageLink.getSortOrder() != null) {
+            sortDirection = pageLink.getSortOrder().getDirection() == SortOrder.Direction.ASC ? Sort.Direction.ASC : Sort.Direction.DESC;
+        }
+        Pageable pageable = PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), sortDirection, "toId");
         return service.submit(() ->
-                DaoUtil.convertDataList(relationRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent()));
+                DaoUtil.toPageData(relationRepository.findAll(Specification.where(timeSearchSpec).and(fieldsSpec), pageable)));
     }
 
     private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {

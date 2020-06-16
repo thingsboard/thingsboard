@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserEntity;
@@ -29,7 +29,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -62,29 +61,27 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
-    public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
+    public PageData<User> findTenantAdmins(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(
                 userRepository
                         .findUsersByAuthority(
                                 fromTimeUUID(tenantId),
                                 NULL_UUID_STR,
-                                pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.TENANT_ADMIN,
-                                new PageRequest(0, pageLink.getLimit())));
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
+    public PageData<User> findCustomerUsers(UUID tenantId, UUID customerId, PageLink pageLink) {
+        return DaoUtil.toPageData(
                 userRepository
                         .findUsersByAuthority(
                                 fromTimeUUID(tenantId),
                                 fromTimeUUID(customerId),
-                                pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.CUSTOMER_USER,
-                                new PageRequest(0, pageLink.getLimit())));
+                                DaoUtil.toPageable(pageLink)));
 
     }
 }

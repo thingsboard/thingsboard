@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@ package org.thingsboard.server.dao.component;
 
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -37,9 +38,9 @@ public interface ComponentDescriptorDao extends Dao<ComponentDescriptor> {
 
     ComponentDescriptor findByClazz(TenantId tenantId, String clazz);
 
-    List<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, TextPageLink pageLink);
+    PageData<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, PageLink pageLink);
 
-    List<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, TextPageLink pageLink);
+    PageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, PageLink pageLink);
 
     void deleteById(TenantId tenantId, ComponentDescriptorId componentId);
 

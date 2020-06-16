@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class TbMsgTypeSwitchNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         String relationType;
         if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
             relationType = "Post attributes";

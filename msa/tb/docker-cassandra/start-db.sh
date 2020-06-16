@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,23 @@
 # limitations under the License.
 #
 
-cassandra_data_dir=${DATA_FOLDER}/db
+firstlaunch=${DATA_FOLDER}/.firstlaunch
+
+export PG_CTL=$(find /usr/lib/postgresql/ -name pg_ctl)
+
+if [ ! -d ${PGDATA} ]; then
+    mkdir -p ${PGDATA}
+    chown -R postgres:postgres ${PGDATA}
+    su postgres -c '${PG_CTL} initdb -U postgres'
+fi
+
+su postgres -c '${PG_CTL} -l /var/log/postgres/postgres.log -w start'
+
+if [ ! -f ${firstlaunch} ]; then
+    su postgres -c 'psql -U postgres -d postgres -c "CREATE DATABASE thingsboard"'
+fi
+
+cassandra_data_dir=${CASSANDRA_DATA}
 cassandra_data_link=/var/lib/cassandra
 
 if [ ! -L ${cassandra_data_link} ]; then

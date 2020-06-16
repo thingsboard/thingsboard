@@ -1,0 +1,69 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="relationFormGroup" (ngSubmit)="save()" style="min-width: 600px;">
+  <mat-toolbar fxLayout="row" color="primary">
+    <h2>{{ (isAdd ? 'relation.add' : 'relation.edit' ) | translate }}</h2>
+    <span fxFlex></span>
+    <button mat-button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <tb-relation-type-autocomplete
+        formControlName="type"
+        required="true">
+      </tb-relation-type-autocomplete>
+      <small>{{(direction === entitySearchDirection.FROM ?
+          'relation.to-entity' : 'relation.from-entity') | translate}}</small>
+      <tb-entity-list-select
+        formControlName="targetEntityIds"
+        required="true">
+      </tb-entity-list-select>
+      <tb-json-object-edit
+        #additionalInfoEdit
+        [formControl]="additionalInfo"
+        label="{{ 'relation.additional-info' | translate }}">
+      </tb-json-object-edit>
+      <div class="tb-error-messages" *ngIf="submitted &&
+                                            additionalInfo.invalid" role="alert">
+        <div translate class="tb-error-message">relation.invalid-additional-info</div>
+      </div>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions fxLayout="row">
+    <span fxFlex></span>
+    <button mat-button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || relationFormGroup.invalid || !(relationFormGroup.dirty || additionalInfo.dirty)">
+      {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
+    </button>
+    <button mat-button color="primary"
+            style="margin-right: 20px;"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+  </div>
+</form>

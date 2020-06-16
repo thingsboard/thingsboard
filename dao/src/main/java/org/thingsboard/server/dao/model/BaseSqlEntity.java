@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,15 @@ public abstract class BaseSqlEntity<D> implements BaseEntity<D> {
     protected String id;
 
     @Override
-    public UUID getId() {
+    public UUID getUuid() {
         if (id == null) {
             return null;
         }
         return UUIDConverter.fromString(id);
     }
 
-    public void setId(UUID id) {
+    @Override
+    public void setUuid(UUID id) {
         this.id = UUIDConverter.fromTimeUUID(id);
     }
 

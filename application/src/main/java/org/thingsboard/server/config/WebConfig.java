@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class WebConfig {
 
-    @RequestMapping(value = "/{path:^(?!api$)(?!static$)(?!webjars$)[^\\.]*}/**")
+    @RequestMapping(value = "/{path:^(?!api$)(?!assets$)(?!static$)(?!webjars$)[^\\.]*}/**")
     public String redirect() {
         return "forward:/index.html";
     }

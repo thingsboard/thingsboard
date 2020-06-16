@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -24,8 +24,8 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -105,7 +105,7 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
     public void testSaveCustomerWithInvalidTenant() {
         Customer customer = new Customer();
         customer.setTitle("My customer");
-        customer.setTenantId(new TenantId(UUIDs.timeBased()));
+        customer.setTenantId(new TenantId(Uuids.timeBased()));
         customerService.saveCustomer(customer);
     }
 
@@ -146,13 +146,13 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         }
 
         List<Customer> loadedCustomers = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(23);
-        TextPageData<Customer> pageData = null;
+        PageLink pageLink = new PageLink(23);
+        PageData<Customer> pageData = null;
         do {
             pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
             loadedCustomers.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -163,7 +163,7 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
 
         customerService.deleteCustomersByTenantId(tenantId);
 
-        pageLink = new TextPageLink(33);
+        pageLink = new PageLink(33);
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -197,13 +197,13 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         }
 
         List<Customer> loadedCustomersTitle1 = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(15, title1);
-        TextPageData<Customer> pageData = null;
+        PageLink pageLink = new PageLink(15, 0, title1);
+        PageData<Customer> pageData = null;
         do {
             pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
             loadedCustomersTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -213,12 +213,12 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         Assert.assertEquals(customersTitle1, loadedCustomersTitle1);
 
         List<Customer> loadedCustomersTitle2 = new ArrayList<>();
-        pageLink = new TextPageLink(4, title2);
+        pageLink = new PageLink(4, 0, title2);
         do {
             pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
             loadedCustomersTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -231,7 +231,7 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
             customerService.deleteCustomer(tenantId, customer.getId());
         }
 
-        pageLink = new TextPageLink(4, title1);
+        pageLink = new PageLink(4, 0, title1);
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -240,7 +240,7 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
             customerService.deleteCustomer(tenantId, customer.getId());
         }
 
-        pageLink = new TextPageLink(4, title2);
+        pageLink = new PageLink(4, 0, title2);
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());

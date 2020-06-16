@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,12 +18,18 @@ FROM thingsboard/openjdk8
 
 RUN apt-get update
 RUN apt-get install -y curl nmap procps
+RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
+RUN curl -L https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
 RUN echo 'deb http://www.apache.org/dist/cassandra/debian 311x main' | tee --append /etc/apt/sources.list.d/cassandra.list > /dev/null
-RUN curl https://www.apache.org/dist/cassandra/KEYS | apt-key add -
+RUN curl -L https://www.apache.org/dist/cassandra/KEYS | apt-key add -
 RUN apt-get update
-RUN apt-get install -y cassandra cassandra-tools
+RUN apt-get install -y cassandra cassandra-tools postgresql-11
 RUN update-rc.d cassandra disable
+RUN update-rc.d postgresql disable
 RUN sed -i.old '/ulimit/d' /etc/init.d/cassandra
+
+RUN mkdir -p /var/log/postgres
+RUN chown -R postgres:postgres /var/log/postgres
 
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
@@ -45,7 +51,15 @@ ENV DATA_FOLDER=/data
 
 ENV HTTP_BIND_PORT=9090
 ENV DATABASE_TS_TYPE=cassandra
-ENV DATABASE_ENTITIES_TYPE=cassandra
+
+ENV PGDATA=/data/db
+ENV CASSANDRA_DATA=/data/cassandra
+
+ENV SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+ENV SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
+ENV SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/thingsboard
+ENV SPRING_DATASOURCE_USERNAME=postgres
+ENV SPRING_DATASOURCE_PASSWORD=postgres
 
 ENV CASSANDRA_HOST=localhost
 ENV CASSANDRA_PORT=9042

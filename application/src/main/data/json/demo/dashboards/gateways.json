@@ -1,0 +1,1267 @@
+{
+  "title": "Gateways",
+  "configuration": {
+    "widgets": {
+      "94715984-ae74-76e4-20b7-2f956b01ed80": {
+        "isSystemType": true,
+        "bundleAlias": "entity_admin_widgets",
+        "typeAlias": "device_admin_table",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 24,
+        "sizeY": 12,
+        "config": {
+          "timewindow": {
+            "realtime": {
+              "interval": 1000,
+              "timewindowMs": 86400000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "4px",
+          "settings": {
+            "enableSearch": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "defaultSortOrder": "entityName",
+            "displayEntityName": true,
+            "displayEntityType": false,
+            "entitiesTitle": "List of gateways",
+            "enableSelectColumnDisplay": true,
+            "displayEntityLabel": false,
+            "entityNameColumnTitle": "Gateway Name"
+          },
+          "title": "Devices gateway table",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "active",
+                  "type": "attribute",
+                  "label": "Active",
+                  "color": "#2196f3",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "cellContentFunction": "value = '&#11044;';\nreturn value;",
+                    "cellStyleFunction": "var color;\nif (value == 'false') {\n    color = '#EB5757';\n} else {\n    color = '#27AE60';\n}\nreturn {\n    color: color,\n    fontSize: '18px'\n};"
+                  },
+                  "_hash": 0.3646047595211721
+                },
+                {
+                  "name": "eventsSent",
+                  "type": "timeseries",
+                  "label": "Sent",
+                  "color": "#4caf50",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.7235710720767985
+                },
+                {
+                  "name": "eventsProduced",
+                  "type": "timeseries",
+                  "label": "Events",
+                  "color": "#f44336",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.5085933386303254
+                },
+                {
+                  "name": "LOGS",
+                  "type": "timeseries",
+                  "label": "Latest log",
+                  "color": "#ffc107",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.3504240371585048,
+                  "postFuncBody": "if(value) {\n    return value.substring(0, 31) +  \"...\";\n} else {\n    return '';\n}"
+                },
+                {
+                  "name": "RemoteLoggingLevel",
+                  "type": "attribute",
+                  "label": "Log level",
+                  "color": "#607d8b",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.9785994222542516
+                }
+              ],
+              "entityAliasId": "3e0f533a-0db1-3292-184f-06e73535061a"
+            }
+          ],
+          "showTitleIcon": true,
+          "titleIcon": "list",
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "List device",
+          "widgetStyle": {},
+          "displayTimewindow": true,
+          "actions": {
+            "headerButton": [
+              {
+                "name": "Add device",
+                "icon": "add",
+                "type": "customPretty",
+                "customHtml": "<form #addDeviceForm=\"ngForm\" [formGroup]=\"addDeviceFormGroup\"\n      (ngSubmit)=\"save()\" style=\"width: 480px;\">\n  <mat-toolbar fxLayout=\"row\" color=\"primary\">\n    <h2>Add device</h2>\n    <span fxFlex></span>\n    <button mat-button mat-icon-button\n            (click)=\"cancel()\"\n            type=\"button\">\n      <mat-icon class=\"material-icons\">close</mat-icon>\n    </button>\n  </mat-toolbar>\n  <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n  </mat-progress-bar>\n  <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n  <div mat-dialog-content>\n      <div class=\"mat-padding\" fxLayout=\"column\">\n            <mat-form-field class=\"mat-block\">\n                <mat-label>Device name</mat-label>\n                <input matInput formControlName=\"deviceName\" required>\n                <mat-error *ngIf=\"addDeviceFormGroup.get('deviceName').hasError('required')\">\n                    Device name is required.\n                </mat-error>\n            </mat-form-field>\n            <div formGroupName=\"attributes\" fxFlex fxLayout=\"row\" fxLayoutGap=\"8px\">\n                <mat-form-field fxFlex=\"50\" class=\"mat-block\">\n                    <mat-label>Latitude</mat-label>\n                    <input type=\"number\" step=\"any\" matInput formControlName=\"latitude\">\n                </mat-form-field>\n                <mat-form-field fxFlex=\"50\" class=\"mat-block\">\n                    <mat-label>Longitude</mat-label>\n                    <input type=\"number\" step=\"any\" matInput formControlName=\"longitude\">\n                </mat-form-field>\n            </div>\n            <mat-form-field class=\"mat-block\">\n                <mat-label>Label</mat-label>\n                <input matInput formControlName=\"deviceLabel\">\n            </mat-form-field>\n      </div>  \n  </div>\n  <div mat-dialog-actions fxLayout=\"row\">\n    <span fxFlex></span>\n    <button mat-button mat-raised-button color=\"primary\"\n            type=\"submit\"\n            [disabled]=\"(isLoading$ | async) || addDeviceForm.invalid || !addDeviceForm.dirty\">\n      Create\n    </button>\n    <button mat-button color=\"primary\"\n            style=\"margin-right: 20px;\"\n            type=\"button\"\n            [disabled]=\"(isLoading$ | async)\"\n            (click)=\"cancel()\" cdkFocusInitial>\n      Cancel\n    </button>\n  </div>\n</form>\n",
+                "customCss": "",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\n\nopenAddDeviceDialog();\n\nfunction openAddDeviceDialog() {\n    customDialog.customDialog(htmlTemplate, AddDeviceDialogController).subscribe();\n}\n\nfunction AddDeviceDialogController(instance) {\n    let vm = instance;\n    \n    vm.addDeviceFormGroup = vm.fb.group({\n      deviceName: ['', [vm.validators.required]],\n      deviceLabel: [''],\n      attributes: vm.fb.group({\n          latitude: [null],\n          longitude: [null]\n      })      \n    });\n    \n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n    \n    vm.save = function() {\n        vm.addDeviceFormGroup.markAsPristine();\n        let device = {\n            additionalInfo: {gateway: true},\n            name: vm.addDeviceFormGroup.get('deviceName').value,\n            type: 'gateway',\n            label: vm.addDeviceFormGroup.get('deviceLabel').value\n        };\n        deviceService.saveDevice(device).subscribe(\n            function (device) {\n                saveAttributes(device.id).subscribe(\n                    function () {\n                        widgetContext.updateAliases();\n                        vm.dialogRef.close(null);\n                    }\n                );\n            }\n        );\n    };\n    \n    function saveAttributes(entityId) {\n        let attributes = vm.addDeviceFormGroup.get('attributes').value;\n        let attributesArray = [];\n        for (let key in attributes) {\n            attributesArray.push({key: key, value: attributes[key]});\n        }\n        if (attributesArray.length > 0) {\n            return attributeService.saveEntityAttributes(entityId, \"SERVER_SCOPE\", attributesArray);\n        } else {\n            return widgetContext.rxjs.of([]);\n        }\n    }\n}\n",
+                "customResources": [],
+                "id": "70837a9d-c3de-a9a7-03c5-dccd14998758"
+              }
+            ],
+            "actionCellButton": [
+              {
+                "id": "78845501-234e-a452-6819-82b5b776e99f",
+                "name": "Configuration",
+                "icon": "settings",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "__entityname__config",
+                "openRightLayout": false,
+                "setEntityId": true
+              },
+              {
+                "id": "f6ffdba8-e40f-2b8d-851b-f5ecaf18606b",
+                "name": "Graphs",
+                "icon": "show_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "__entityname_grafic",
+                "setEntityId": true
+              },
+              {
+                "name": "Edit device",
+                "icon": "edit",
+                "type": "customPretty",
+                "customHtml": "<form #editDeviceForm=\"ngForm\" [formGroup]=\"editDeviceFormGroup\"\n      (ngSubmit)=\"save()\" style=\"width: 480px;\">\n  <mat-toolbar fxLayout=\"row\" color=\"primary\">\n    <h2>Edit device</h2>\n    <span fxFlex></span>\n    <button mat-button mat-icon-button\n            (click)=\"cancel()\"\n            type=\"button\">\n      <mat-icon class=\"material-icons\">close</mat-icon>\n    </button>\n  </mat-toolbar>\n  <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n  </mat-progress-bar>\n  <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n  <div mat-dialog-content>\n      <div class=\"mat-padding\" fxLayout=\"column\">\n            <mat-form-field class=\"mat-block\">\n                <mat-label>Device name</mat-label>\n                <input matInput formControlName=\"deviceName\" required>\n                <mat-error *ngIf=\"editDeviceFormGroup.get('deviceName').hasError('required')\">\n                    Device name is required.\n                </mat-error>\n            </mat-form-field>\n            <div formGroupName=\"attributes\" fxFlex fxLayout=\"row\" fxLayoutGap=\"8px\">\n                <mat-form-field fxFlex=\"50\" class=\"mat-block\">\n                    <mat-label>Latitude</mat-label>\n                    <input type=\"number\" step=\"any\" matInput formControlName=\"latitude\">\n                </mat-form-field>\n                <mat-form-field fxFlex=\"50\" class=\"mat-block\">\n                    <mat-label>Longitude</mat-label>\n                    <input type=\"number\" step=\"any\" matInput formControlName=\"longitude\">\n                </mat-form-field>\n            </div>\n            <mat-form-field class=\"mat-block\">\n                <mat-label>Label</mat-label>\n                <input matInput formControlName=\"deviceLabel\">\n            </mat-form-field>\n      </div>  \n  </div>\n  <div mat-dialog-actions fxLayout=\"row\">\n    <span fxFlex></span>\n    <button mat-button mat-raised-button color=\"primary\"\n            type=\"submit\"\n            [disabled]=\"(isLoading$ | async) || editDeviceForm.invalid || !editDeviceForm.dirty\">\n      Update\n    </button>\n    <button mat-button color=\"primary\"\n            style=\"margin-right: 20px;\"\n            type=\"button\"\n            [disabled]=\"(isLoading$ | async)\"\n            (click)=\"cancel()\" cdkFocusInitial>\n      Cancel\n    </button>\n  </div>\n</form>\n",
+                "customCss": "/*=======================================================================*/\n/*==========  There are two examples: for edit and add entity  ==========*/\n/*=======================================================================*/\n/*========================  Edit entity example  ========================*/\n/*=======================================================================*/\n/*\n.edit-entity-form md-input-container {\n    padding-right: 10px;\n}\n\n.edit-entity-form .boolean-value-input {\n    padding-left: 5px;\n}\n\n.edit-entity-form .boolean-value-input .checkbox-label {\n    margin-bottom: 8px;\n    color: rgba(0,0,0,0.54);\n    font-size: 12px;\n}\n\n.relations-list .header {\n    padding-right: 5px;\n    padding-bottom: 5px;\n    padding-left: 5px;\n}\n\n.relations-list .header .cell {\n    padding-right: 5px;\n    padding-left: 5px;\n    font-size: 12px;\n    font-weight: 700;\n    color: rgba(0, 0, 0, .54);\n    white-space: nowrap;\n}\n\n.relations-list .body {\n    padding-right: 5px;\n    padding-bottom: 15px;\n    padding-left: 5px;\n}\n\n.relations-list .body .row {\n    padding-top: 5px;\n}\n\n.relations-list .body .cell {\n    padding-right: 5px;\n    padding-left: 5px;\n}\n\n.relations-list .body md-autocomplete-wrap md-input-container {\n    height: 30px;\n}\n\n.relations-list .body .md-button {\n    margin: 0;\n}\n\n.relations-list.old-relations tb-entity-select tb-entity-autocomplete button {\n    display: none;\n} \n*/\n/*========================================================================*/\n/*=========================  Add entity example  =========================*/\n/*========================================================================*/\n/*\n.add-entity-form md-input-container {\n    padding-right: 10px;\n}\n\n.add-entity-form .boolean-value-input {\n    padding-left: 5px;\n}\n\n.add-entity-form .boolean-value-input .checkbox-label {\n    margin-bottom: 8px;\n    color: rgba(0,0,0,0.54);\n    font-size: 12px;\n}\n\n.relations-list .header {\n    padding-right: 5px;\n    padding-bottom: 5px;\n    padding-left: 5px;\n}\n\n.relations-list .header .cell {\n    padding-right: 5px;\n    padding-left: 5px;\n    font-size: 12px;\n    font-weight: 700;\n    color: rgba(0, 0, 0, .54);\n    white-space: nowrap;\n}\n\n.relations-list .body {\n    padding-right: 5px;\n    padding-bottom: 15px;\n    padding-left: 5px;\n}\n\n.relations-list .body .row {\n    padding-top: 5px;\n}\n\n.relations-list .body .cell {\n    padding-right: 5px;\n    padding-left: 5px;\n}\n\n.relations-list .body md-autocomplete-wrap md-input-container {\n    height: 30px;\n}\n\n.relations-list .body .md-button {\n    margin: 0;\n}\n*/\n",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\n\nopenEditDeviceDialog();\n\nfunction openEditDeviceDialog() {\n    customDialog.customDialog(htmlTemplate, EditDeviceDialogController).subscribe();\n}\n\nfunction EditDeviceDialogController(instance) {\n    let vm = instance;\n    \n    vm.device = null;\n    vm.attributes = {};\n    \n    vm.editDeviceFormGroup = vm.fb.group({\n      deviceName: ['', [vm.validators.required]],\n      deviceLabel: [''],\n      attributes: vm.fb.group({\n          latitude: [null],\n          longitude: [null]\n      })      \n    });\n    \n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n    \n    vm.save = function() {\n        vm.editDeviceFormGroup.markAsPristine();\n        vm.device.name = vm.editDeviceFormGroup.get('deviceName').value;\n        vm.device.label = vm.editDeviceFormGroup.get('deviceLabel').value;\n        deviceService.saveDevice(vm.device).subscribe(\n            function () {\n                saveAttributes().subscribe(\n                    function () {\n                        widgetContext.updateAliases();\n                        vm.dialogRef.close(null);\n                    }\n                );\n            }\n        );\n    };\n    \n    getEntityInfo();\n    \n    function getEntityInfo() {\n        deviceService.getDevice(entityId.id).subscribe(\n            function (device) {\n                attributeService.getEntityAttributes(entityId, 'SERVER_SCOPE',\n                                                    ['latitude', 'longitude']).subscribe(\n                   function (attributes) {\n                        for (let i = 0; i < attributes.length; i++) {\n                            vm.attributes[attributes[i].key] = attributes[i].value; \n                        }\n                        vm.device = device;\n                        vm.editDeviceFormGroup.patchValue(\n                            {\n                                deviceName: vm.device.name,\n                                deviceLabel: vm.device.label,\n                                attributes: {\n                                    latitude: vm.attributes.latitude,\n                                    longitude: vm.attributes.longitude\n                                }\n                            }, {emitEvent: false}\n                        );\n                   } \n                );\n            }\n        );    \n    }\n    \n    function saveAttributes() {\n        let attributes = vm.editDeviceFormGroup.get('attributes').value;\n        let attributesArray = [];\n        for (let key in attributes) {\n            attributesArray.push({key: key, value: attributes[key]});\n        }\n        if (attributesArray.length > 0) {\n            return attributeService.saveEntityAttributes(entityId, 'SERVER_SCOPE', attributesArray);\n        } else {\n            return widgetContext.rxjs.of([]);\n        }\n    }\n}\n",
+                "customResources": [],
+                "id": "242671f3-76c6-6982-7acc-6f12addf0ccc"
+              },
+              {
+                "name": "Delete device",
+                "icon": "delete",
+                "type": "custom",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet dialogs = $injector.get(widgetContext.servicesMap.get('dialogs'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenDeleteDeviceDialog();\n\nfunction openDeleteDeviceDialog() {\n    let title = \"Are you sure you want to delete the device \" + entityName +  \"?\";\n    let content = \"Be careful, after the confirmation, the device and all related data will become unrecoverable!\";\n    dialogs.confirm(title, content, 'Cancel', 'Delete').subscribe(\n        function (result) {\n            if (result) {\n                deleteDevice();\n            }\n        }\n    );\n}\n\nfunction deleteDevice() {\n    deviceService.deleteDevice(entityId.id).subscribe(\n        function () {\n            widgetContext.updateAliases();\n        }\n    );\n}\n",
+                "id": "862ec2b7-fbcf-376e-f85f-b77c07f36efa"
+              }
+            ],
+            "rowClick": [
+              {
+                "id": "ad5fc7e1-5e60-e056-6940-a75a383466a1",
+                "name": "to_entityname__config",
+                "icon": "more_horiz",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "__entityname__config",
+                "setEntityId": true,
+                "stateEntityParamName": ""
+              }
+            ]
+          }
+        },
+        "id": "94715984-ae74-76e4-20b7-2f956b01ed80"
+      },
+      "eadabbc7-519e-76fc-ba10-b3fe8c18da10": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "timeseries_table",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 14,
+        "sizeY": 13,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "LOGS",
+                  "type": "timeseries",
+                  "label": "LOGS",
+                  "color": "#2196f3",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.3496649158709739,
+                  "postFuncBody": "return value.replace(/ - (.*) - \\[/gi, ' - <b style=\"color:#0f0;\">$1</b> - [');"
+                }
+              ],
+              "entityAliasId": "b2487e75-2fa4-f211-142c-434dfd50c70c"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "interval": 1000,
+              "timewindowMs": 2592000000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "showTimestamp": true,
+            "displayPagination": true,
+            "defaultPageSize": 10
+          },
+          "title": "Debug events (logs)",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "widgetStyle": {},
+          "actions": {},
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "displayTimewindow": true
+        },
+        "id": "eadabbc7-519e-76fc-ba10-b3fe8c18da10"
+      },
+      "f928afc4-30d1-8d0c-e3cf-777f9f9d1155": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "basic_timeseries",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 17,
+        "sizeY": 4,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "opcuaEventsProduced",
+                  "type": "timeseries",
+                  "label": "opcuaEventsProduced",
+                  "color": "#2196f3",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "var size = radius * Math.sqrt(Math.PI) / 2;\nctx.moveTo(x - size, y - size);\nctx.lineTo(x + size, y + size);\nctx.moveTo(x - size, y + size);\nctx.lineTo(x + size, y - size);",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisPosition": "left",
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    }
+                  },
+                  "_hash": 0.1477920581839779
+                },
+                {
+                  "name": "opcuaEventsSent",
+                  "type": "timeseries",
+                  "label": "opcuaEventsSent",
+                  "color": "#4caf50",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "var size = radius * Math.sqrt(Math.PI) / 2;\nctx.moveTo(x - size, y - size);\nctx.lineTo(x + size, y + size);\nctx.moveTo(x - size, y + size);\nctx.lineTo(x + size, y - size);",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisPosition": "left",
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    }
+                  },
+                  "_hash": 0.6500957113784758
+                }
+              ],
+              "entityAliasId": "b2487e75-2fa4-f211-142c-434dfd50c70c"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "interval": 1000,
+              "timewindowMs": 120000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 25000
+            },
+            "hideInterval": false,
+            "hideAggregation": false
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Real time information",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "mobileHeight": null,
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "displayTimewindow": true,
+          "showLegend": true,
+          "legendConfig": {
+            "direction": "column",
+            "position": "right",
+            "showMin": true,
+            "showMax": true,
+            "showAvg": true,
+            "showTotal": true
+          },
+          "actions": {}
+        },
+        "id": "f928afc4-30d1-8d0c-e3cf-777f9f9d1155"
+      },
+      "2a95b473-042d-59d0-2da2-40d0cccb6c8a": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "timeseries_table",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 7,
+        "sizeY": 7,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "eventsSent",
+                  "type": "timeseries",
+                  "label": "Events",
+                  "color": "#2196f3",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.8156044798125357
+                },
+                {
+                  "name": "eventsProduced",
+                  "type": "timeseries",
+                  "label": "Produced",
+                  "color": "#4caf50",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.6538259344015449
+                }
+              ],
+              "entityAliasId": "b2487e75-2fa4-f211-142c-434dfd50c70c"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "interval": 1000,
+              "timewindowMs": 604800000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "showTimestamp": true,
+            "displayPagination": true,
+            "defaultPageSize": 6,
+            "hideEmptyLines": true
+          },
+          "title": "Total Messages",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "widgetStyle": {},
+          "actions": {},
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "displayTimewindow": true,
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "showMin": false,
+            "showMax": false,
+            "showAvg": true,
+            "showTotal": false
+          }
+        },
+        "id": "2a95b473-042d-59d0-2da2-40d0cccb6c8a"
+      },
+      "aaa69366-aacc-9028-65aa-645c0f8533ec": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "basic_timeseries",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 17,
+        "sizeY": 4,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "eventsSent",
+                  "type": "timeseries",
+                  "label": "eventsSent",
+                  "color": "#2196f3",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "var size = radius * Math.sqrt(Math.PI) / 2;\nctx.moveTo(x - size, y - size);\nctx.lineTo(x + size, y + size);\nctx.moveTo(x - size, y + size);\nctx.lineTo(x + size, y - size);",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisPosition": "left",
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    }
+                  },
+                  "_hash": 0.41414001784591314
+                },
+                {
+                  "name": "eventsProduced",
+                  "type": "timeseries",
+                  "label": "eventsProduced",
+                  "color": "#4caf50",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "var size = radius * Math.sqrt(Math.PI) / 2;\nctx.moveTo(x - size, y - size);\nctx.lineTo(x + size, y + size);\nctx.moveTo(x - size, y + size);\nctx.lineTo(x + size, y - size);",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisPosition": "left",
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    }
+                  },
+                  "_hash": 0.7819101846284422
+                }
+              ],
+              "entityAliasId": "b2487e75-2fa4-f211-142c-434dfd50c70c"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "History information",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "mobileHeight": null,
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {},
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "showLegend": true,
+          "legendConfig": {
+            "direction": "column",
+            "position": "right",
+            "showMin": true,
+            "showMax": true,
+            "showAvg": true,
+            "showTotal": true
+          },
+          "actions": {}
+        },
+        "id": "aaa69366-aacc-9028-65aa-645c0f8533ec"
+      },
+      "ce5c7d01-a3ef-5cf0-4578-8505135c23a0": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "basic_timeseries",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 17,
+        "sizeY": 4,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "bleEventsProduced",
+                  "type": "timeseries",
+                  "label": "bleEventsProduced",
+                  "color": "#2196f3",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "var size = radius * Math.sqrt(Math.PI) / 2;\nctx.moveTo(x - size, y - size);\nctx.lineTo(x + size, y + size);\nctx.moveTo(x - size, y + size);\nctx.lineTo(x + size, y - size);",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisPosition": "left",
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    }
+                  },
+                  "_hash": 0.5625165504526104
+                },
+                {
+                  "name": "bleEventsSent",
+                  "type": "timeseries",
+                  "label": "bleEventsSent",
+                  "color": "#4caf50",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "var size = radius * Math.sqrt(Math.PI) / 2;\nctx.moveTo(x - size, y - size);\nctx.lineTo(x + size, y + size);\nctx.moveTo(x - size, y + size);\nctx.lineTo(x + size, y - size);",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisPosition": "left",
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    }
+                  },
+                  "_hash": 0.6817950080745288
+                }
+              ],
+              "entityAliasId": "b2487e75-2fa4-f211-142c-434dfd50c70c"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "interval": 5000,
+              "timewindowMs": 120000
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Real time information",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "mobileHeight": null,
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "displayTimewindow": true,
+          "showLegend": true,
+          "legendConfig": {
+            "direction": "column",
+            "position": "right",
+            "showMin": true,
+            "showMax": true,
+            "showAvg": true,
+            "showTotal": true
+          },
+          "actions": {}
+        },
+        "id": "ce5c7d01-a3ef-5cf0-4578-8505135c23a0"
+      },
+      "466f046d-6005-a168-b107-60fcb2469cd5": {
+        "isSystemType": true,
+        "bundleAlias": "gateway_widgets",
+        "typeAlias": "attributes_card",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [],
+              "entityAliasId": "b2487e75-2fa4-f211-142c-434dfd50c70c"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "eventsTitle": "Gateway Events Form",
+            "eventsReg": [
+              "EventsProduced",
+              "EventsSent"
+            ]
+          },
+          "title": "Gateway events",
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "showLegend": false,
+          "actions": {}
+        },
+        "id": "466f046d-6005-a168-b107-60fcb2469cd5"
+      },
+      "8fc32225-164f-3258-73f7-e6b6d959cf0b": {
+        "isSystemType": true,
+        "bundleAlias": "gateway_widgets",
+        "typeAlias": "config_form_latest",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 10,
+        "sizeY": 9,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [],
+              "entityAliasId": "b2487e75-2fa4-f211-142c-434dfd50c70c"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "gatewayTitle": "Gateway configuration (Single device)",
+            "readOnly": false
+          },
+          "title": "New Gateway configuration (Single device)",
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "showLegend": false,
+          "actions": {}
+        },
+        "id": "8fc32225-164f-3258-73f7-e6b6d959cf0b"
+      },
+      "063fc179-c9fd-f952-e714-f24e9c43c05c": {
+        "isSystemType": true,
+        "bundleAlias": "control_widgets",
+        "typeAlias": "rpcbutton",
+        "type": "rpc",
+        "title": "New widget",
+        "sizeX": 4,
+        "sizeY": 2,
+        "config": {
+          "targetDeviceAliases": [],
+          "showTitle": false,
+          "backgroundColor": "#e6e7e8",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "requestTimeout": 5000,
+            "oneWayElseTwoWay": true,
+            "styleButton": {
+              "isRaised": true,
+              "isPrimary": false
+            },
+            "methodParams": "{}",
+            "methodName": "gateway_reboot",
+            "buttonText": "GATEWAY REBOOT"
+          },
+          "title": "New RPC Button",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {},
+          "datasources": [],
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "displayTimewindow": true,
+          "targetDeviceAliasIds": [
+            "b2487e75-2fa4-f211-142c-434dfd50c70c"
+          ]
+        },
+        "id": "063fc179-c9fd-f952-e714-f24e9c43c05c"
+      },
+      "3c2134cc-27a0-93e1-dbe1-2fa7c1ce16b7": {
+        "isSystemType": true,
+        "bundleAlias": "control_widgets",
+        "typeAlias": "rpcbutton",
+        "type": "rpc",
+        "title": "New widget",
+        "sizeX": 4,
+        "sizeY": 2,
+        "config": {
+          "targetDeviceAliases": [],
+          "showTitle": false,
+          "backgroundColor": "#e6e7e8",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "requestTimeout": 5000,
+            "oneWayElseTwoWay": true,
+            "styleButton": {
+              "isRaised": true,
+              "isPrimary": false
+            },
+            "methodName": "gateway_restart",
+            "methodParams": "{}",
+            "buttonText": "gateway restart"
+          },
+          "title": "New RPC Button",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {},
+          "datasources": [],
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "displayTimewindow": true,
+          "targetDeviceAliasIds": [
+            "b2487e75-2fa4-f211-142c-434dfd50c70c"
+          ]
+        },
+        "id": "3c2134cc-27a0-93e1-dbe1-2fa7c1ce16b7"
+      },
+      "6770b6ba-eff8-df05-75f8-c1f9326d4842": {
+        "isSystemType": true,
+        "bundleAlias": "input_widgets",
+        "typeAlias": "markers_placement_openstreetmap",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 6,
+        "sizeY": 4,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "latitude",
+                  "type": "attribute",
+                  "label": "latitude",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.9743324774725604
+                },
+                {
+                  "name": "longitude",
+                  "type": "attribute",
+                  "label": "longitude",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5530093635101525
+                }
+              ],
+              "entityAliasId": "b2487e75-2fa4-f211-142c-434dfd50c70c"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "fitMapBounds": true,
+            "latKeyName": "latitude",
+            "lngKeyName": "longitude",
+            "showLabel": true,
+            "label": "${entityName}",
+            "tooltipPattern": "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}<br/><br/><link-act name='delete'>Delete</link-act>",
+            "markerImageSize": 34,
+            "useColorFunction": false,
+            "markerImages": [],
+            "useMarkerImageFunction": false,
+            "color": "#fe7569",
+            "mapProvider": "OpenStreetMap.Mapnik",
+            "showTooltip": true,
+            "autocloseTooltip": true,
+            "defaultCenterPosition": [
+              0,
+              0
+            ],
+            "customProviderTileUrl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "showTooltipAction": "click",
+            "polygonKeyName": "coordinates",
+            "polygonOpacity": 0.5,
+            "polygonStrokeOpacity": 1,
+            "polygonStrokeWeight": 1,
+            "zoomOnClick": true,
+            "showCoverageOnHover": true,
+            "animate": true,
+            "maxClusterRadius": 80,
+            "removeOutsideVisibleBounds": true,
+            "defaultZoomLevel": 5
+          },
+          "title": "Gateway Location",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "widgetStyle": {},
+          "actions": {
+            "tooltipAction": [
+              {
+                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66",
+                "name": "delete",
+                "icon": "more_horiz",
+                "type": "custom",
+                "customFunction": "var $rootScope = widgetContext.$scope.$injector.get('$rootScope');\nvar entityDatasource = widgetContext.map.subscription.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.map.saveMarkerLocation(entityDatasource[0],\n    widgetContext.map.locations[0], {\n        \"lat\": null,\n        \"lng\": null\n    }).then(function succes() {\n        $rootScope.$broadcast('widgetForceReInit');\n    });"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "displayTimewindow": true
+        },
+        "id": "6770b6ba-eff8-df05-75f8-c1f9326d4842"
+      }
+    },
+    "states": {
+      "main_gateway": {
+        "name": "Gateways",
+        "root": true,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "94715984-ae74-76e4-20b7-2f956b01ed80": {
+                "sizeX": 24,
+                "sizeY": 12,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "margin": 10
+            }
+          }
+        }
+      },
+      "__entityname__config": {
+        "name": "${entityName} Configuration",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "eadabbc7-519e-76fc-ba10-b3fe8c18da10": {
+                "sizeX": 14,
+                "sizeY": 13,
+                "row": 0,
+                "col": 10
+              },
+              "8fc32225-164f-3258-73f7-e6b6d959cf0b": {
+                "sizeX": 10,
+                "sizeY": 9,
+                "row": 0,
+                "col": 0
+              },
+              "063fc179-c9fd-f952-e714-f24e9c43c05c": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "row": 9,
+                "col": 0
+              },
+              "3c2134cc-27a0-93e1-dbe1-2fa7c1ce16b7": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "row": 11,
+                "col": 0
+              },
+              "6770b6ba-eff8-df05-75f8-c1f9326d4842": {
+                "sizeX": 6,
+                "sizeY": 4,
+                "row": 9,
+                "col": 4
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "margin": 10
+            }
+          }
+        }
+      },
+      "__entityname_grafic": {
+        "name": "${entityName} Details",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "f928afc4-30d1-8d0c-e3cf-777f9f9d1155": {
+                "sizeX": 17,
+                "sizeY": 4,
+                "mobileHeight": null,
+                "row": 4,
+                "col": 7
+              },
+              "2a95b473-042d-59d0-2da2-40d0cccb6c8a": {
+                "sizeX": 7,
+                "sizeY": 7,
+                "row": 5,
+                "col": 0
+              },
+              "aaa69366-aacc-9028-65aa-645c0f8533ec": {
+                "sizeX": 17,
+                "sizeY": 4,
+                "mobileHeight": null,
+                "row": 0,
+                "col": 7
+              },
+              "ce5c7d01-a3ef-5cf0-4578-8505135c23a0": {
+                "sizeX": 17,
+                "sizeY": 4,
+                "mobileHeight": null,
+                "row": 8,
+                "col": 7
+              },
+              "466f046d-6005-a168-b107-60fcb2469cd5": {
+                "sizeX": 7,
+                "sizeY": 5,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "backgroundSizeMode": "auto 100%",
+              "autoFillHeight": true,
+              "mobileAutoFillHeight": true,
+              "mobileRowHeight": 70,
+              "margin": 10
+            }
+          }
+        }
+      }
+    },
+    "entityAliases": {
+      "3e0f533a-0db1-3292-184f-06e73535061a": {
+        "id": "3e0f533a-0db1-3292-184f-06e73535061a",
+        "alias": "Gateways",
+        "filter": {
+          "type": "deviceType",
+          "resolveMultiple": true,
+          "deviceType": "gateway",
+          "deviceNameFilter": ""
+        }
+      },
+      "b2487e75-2fa4-f211-142c-434dfd50c70c": {
+        "id": "b2487e75-2fa4-f211-142c-434dfd50c70c",
+        "alias": "Current Gateway",
+        "filter": {
+          "type": "stateEntity",
+          "resolveMultiple": false,
+          "stateEntityParamName": "",
+          "defaultStateEntity": null
+        }
+      }
+    },
+    "timewindow": {
+      "realtime": {
+        "interval": 1000,
+        "timewindowMs": 86400000
+      },
+      "aggregation": {
+        "type": "NONE",
+        "limit": 25000
+      },
+      "hideInterval": false,
+      "hideAggregation": false,
+      "hideAggInterval": false
+    },
+    "settings": {
+      "stateControllerId": "entity",
+      "showTitle": true,
+      "showDashboardsSelect": true,
+      "showEntitiesSelect": true,
+      "showDashboardTimewindow": true,
+      "showDashboardExport": true,
+      "toolbarAlwaysOpen": true,
+      "titleColor": "rgba(0,0,0,0.870588)"
+    }
+  },
+  "name": "Gateways"
+}

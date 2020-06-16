@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
-import org.thingsboard.server.common.data.page.BasePageLink;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.List;
@@ -116,9 +116,13 @@ public class Validator {
      * @param pageLink     the page link
      * @param errorMessage the error message for exception
      */
-    public static void validatePageLink(BasePageLink pageLink, String errorMessage) {
-        if (pageLink == null || pageLink.getLimit() < 1 || (pageLink.getIdOffset() != null && pageLink.getIdOffset().version() != 1)) {
-            throw new IncorrectParameterException(errorMessage);
+    public static void validatePageLink(PageLink pageLink) {
+        if (pageLink == null) {
+            throw new IncorrectParameterException("Page link must be specified.");
+        } else if (pageLink.getPageSize() < 1) {
+            throw new IncorrectParameterException("Incorrect page link page size '"+pageLink.getPageSize()+"'. Page size must be greater than zero.");
+        } else if (pageLink.getPage() < 0) {
+            throw new IncorrectParameterException("Incorrect page link page '"+pageLink.getPage()+"'. Page must be positive integer.");
         }
     }
 

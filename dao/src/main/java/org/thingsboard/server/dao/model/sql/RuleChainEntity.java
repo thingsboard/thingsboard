@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -74,7 +74,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
 
     public RuleChainEntity(RuleChain ruleChain) {
         if (ruleChain.getId() != null) {
-            this.setId(ruleChain.getUuidId());
+            this.setUuid(ruleChain.getUuidId());
         }
         this.tenantId = toString(DaoUtil.getId(ruleChain.getTenantId()));
         this.name = ruleChain.getName();
@@ -100,8 +100,8 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
 
     @Override
     public RuleChain toData() {
-        RuleChain ruleChain = new RuleChain(new RuleChainId(getId()));
-        ruleChain.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        RuleChain ruleChain = new RuleChain(new RuleChainId(this.getUuid()));
+        ruleChain.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
         ruleChain.setTenantId(new TenantId(toUUID(tenantId)));
         ruleChain.setName(name);
         if (firstRuleNodeId != null) {

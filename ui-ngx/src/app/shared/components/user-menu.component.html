@@ -1,0 +1,41 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section fxLayout="row">
+  <div fxHide.lt-lg *ngIf="displayUserInfo" class="tb-user-info" fxLayout="row">
+    <mat-icon class="material-icons tb-mini-avatar">account_circle</mat-icon>
+    <div fxLayout="column" fxLayoutAlign="center">
+      <span *ngIf="userDisplayName$ | async; let userDisplayName" class="tb-user-display-name">{{ userDisplayName }}</span>
+      <span *ngIf="authorityName$ | async; let authorityName" class="tb-user-authority">{{ authorityName | translate }}</span>
+    </div>
+  </div>
+  <button mat-button mat-icon-button [matMenuTriggerFor]="userMenu">
+    <mat-icon class="material-icons">more_vert</mat-icon>
+  </button>
+  <mat-menu #userMenu="matMenu" xPosition="before">
+    <div class="tb-user-menu-items" *ngIf="authority$ | async; let authority">
+      <button mat-menu-item (click)="openProfile()">
+        <mat-icon class="material-icons">account_circle</mat-icon>
+        <span translate>home.profile</span>
+      </button>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon class="material-icons">exit_to_app</mat-icon>
+        <span translate>home.logout</span>
+      </button>
+    </div>
+  </mat-menu>
+</section>

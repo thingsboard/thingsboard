@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package org.thingsboard.server.actors.service;
 
-import akka.actor.Terminated;
-import akka.actor.UntypedActor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thingsboard.server.actors.AbstractTbActor;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.ProcessFailureStrategy;
+import org.thingsboard.server.actors.TbActor;
+import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
-
-public abstract class ContextAwareActor extends UntypedActor {
-
-    protected final Logger log = LoggerFactory.getLogger(getClass());
+@Slf4j
+public abstract class ContextAwareActor extends AbstractTbActor {
 
     public static final int ENTITY_PACK_LIMIT = 1024;
 
@@ -37,27 +38,29 @@ public abstract class ContextAwareActor extends UntypedActor {
     }
 
     @Override
-    public void onReceive(Object msg) {
+    public boolean process(TbActorMsg msg) {
         if (log.isDebugEnabled()) {
             log.debug("Processing msg: {}", msg);
         }
-        if (msg instanceof TbActorMsg) {
-            try {
-                if (!process((TbActorMsg) msg)) {
-                    log.warn("Unknown message: {}!", msg);
-                }
-            } catch (Exception e) {
-                throw e;
-            }
-        } else if (msg instanceof Terminated) {
-            processTermination((Terminated) msg);
+        if (!doProcess(msg)) {
+            log.warn("Unprocessed message: {}!", msg);
+        }
+        return false;
+    }
+
+    protected abstract boolean doProcess(TbActorMsg msg);
+
+    @Override
+    public ProcessFailureStrategy onProcessFailure(Throwable t) {
+        log.debug("[{}] Processing failure: ", getActorRef().getActorId(), t);
+        return doProcessFailure(t);
+    }
+
+    protected ProcessFailureStrategy doProcessFailure(Throwable t) {
+        if (t instanceof Error) {
+            return ProcessFailureStrategy.stop();
         } else {
-            log.warn("Unknown message: {}!", msg);
+            return ProcessFailureStrategy.resume();
         }
     }
-
-    protected void processTermination(Terminated msg) {
-    }
-
-    protected abstract boolean process(TbActorMsg msg);
 }

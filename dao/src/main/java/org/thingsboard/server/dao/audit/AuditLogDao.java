@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
 import java.util.List;
@@ -30,19 +31,11 @@ public interface AuditLogDao {
 
     ListenableFuture<Void> saveByTenantId(AuditLog auditLog);
 
-    ListenableFuture<Void> saveByTenantIdAndEntityId(AuditLog auditLog);
+    PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink);
 
-    ListenableFuture<Void> saveByTenantIdAndCustomerId(AuditLog auditLog);
+    PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink);
 
-    ListenableFuture<Void> saveByTenantIdAndUserId(AuditLog auditLog);
+    PageData<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink);
 
-    ListenableFuture<Void> savePartitionsByTenantId(AuditLog auditLog);
-
-    List<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink);
-
-    List<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink);
-
-    List<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink);
-
-    List<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink);
+    PageData<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink);
 }

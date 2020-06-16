@@ -1,0 +1,353 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import './rule-node-colors';
+
+.tb-rulechain {
+  width: 100%;
+  height: 100%;
+
+  .mat-tab-group.tb-rulenode-details {
+    > .mat-tab-body-wrapper {
+      position: absolute;
+      top: 49px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+    > .mat-tab-header {
+      .mat-tab-label {
+        min-width: 40px;
+      }
+    }
+  }
+
+  button.mat-button.mat-icon-button.tb-fullscreen-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ccc;
+    color: #666;
+    opacity: .85;
+    margin: 0 6px;
+    z-index: 2;
+  }
+  section.tb-header-buttons.tb-library-open {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    pointer-events: none;
+
+    .mat-fab {
+      .mat-button-wrapper {
+        padding: 0;
+      }
+    }
+
+    .mat-button.tb-btn-open-library {
+      top: 0;
+      left: 0;
+      width: 36px;
+      height: 36px;
+      margin: 4px 0 0 4px;
+      line-height: 36px;
+      opacity: .5;
+    }
+  }
+
+  .tb-rulechain-library {
+    z-index: 1;
+    width: 250px;
+    min-width: 250px;
+
+    .mat-toolbar {
+      height: 48px;
+      min-height: 48px;
+      padding: 0;
+
+      .mat-toolbar-tools {
+        height: 48px;
+        padding: 0 6px;
+        font-size: 14px;
+
+        .mat-form-field {
+          .mat-form-field-infix {
+            width: auto;
+          }
+        }
+
+        .mat-button.mat-icon-button {
+          margin: 0;
+
+          &.tb-small {
+            width: 32px;
+            height: 32px;
+            min-height: 32px;
+            padding: 6px;
+            line-height: 20px;
+            mat-icon {
+              width: 20px;
+              min-width: 20px;
+              height: 20px;
+              min-height: 20px;
+              font-size: 20px;
+              line-height: 20px;
+            }
+          }
+        }
+      }
+    }
+    .tb-rulechain-library-panel-group {
+      overflow-x: hidden;
+      overflow-y: auto;
+      .mat-expansion-panel {
+        border-radius: 0;
+        &:last-child {
+          margin-bottom: 5px;
+        }
+        .mat-expansion-panel-header {
+          background: #e6e6e6;
+          &:hover {
+            background: #dadada;
+          }
+          .mat-expansion-panel-header-title {
+            line-height: 48px;
+            height: 48px;
+            .mat-icon {
+              min-width: 24px;
+              margin: auto 8px auto auto;
+            }
+            .tb-panel-title {
+              min-width: 140px;
+              user-select: none;
+            }
+          }
+        }
+        &.mat-expanded {
+          .mat-expansion-panel-header {
+            border-bottom: 1px solid;
+            border-color: #909090;
+          }
+        }
+      }
+      .mat-expansion-panel-body {
+        padding: 0;
+      }
+      .fc-canvas {
+        background: #f9f9f9;
+      }
+    }
+  }
+  .mat-drawer-content.tb-rulechain-graph-content {
+    overflow: hidden;
+    .tb-rulechain-graph {
+      z-index: 0;
+      overflow: auto;
+    }
+  }
+  .fc-canvas {
+    .fc-node {
+      border-radius: 8px;
+      &.fc-selected {
+        &:not(.fc-edit) {
+          margin: -3px;
+          border: solid 3px #f00;
+        }
+      }
+    }
+
+    .fc-edit {
+      .fc-nodeedit,
+      .fc-nodedelete {
+        box-sizing: content-box;
+        border: solid 2px #fff;
+        background: #f83e05;
+        outline: none;
+      }
+    }
+
+    .fc-arrow-marker {
+      polygon {
+        fill: #808080;
+        stroke: #808080;
+      }
+    }
+
+    .fc-arrow-marker-selected {
+      polygon {
+        fill: #f00;
+        stroke: #f00;
+      }
+    }
+
+    .fc-edge {
+      outline: none;
+      stroke: #808080;
+
+      &.fc-selected {
+        stroke: #f00;
+      }
+
+      &.fc-hover {
+        stroke: #808080;
+      }
+    }
+
+    .edge-endpoint {
+      fill: #808080;
+    }
+
+    .fc-edge-label {
+      opacity: 1 !important;
+      &:focus {
+        outline: 0;
+      }
+
+      &.fc-selected {
+        .fc-edge-label-text {
+          span {
+            color: #fff !important;
+            background-color: #f00 !important;
+            border: solid #f00 !important;
+          }
+        }
+      }
+
+      .fc-edge-label-text {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+
+        span {
+          background-color: #fff !important;
+          color: #003a79 !important;
+          border: solid 2px #003a79 !important;
+        }
+      }
+    }
+  }
+}
+
+.tb-rule-node-tooltip,
+.tb-rule-node-help {
+  color: #333;
+}
+
+.tb-rule-node-tooltip {
+  max-width: 300px;
+  font-size: 14px;
+
+  &.tb-lib-tooltip {
+    width: 300px;
+  }
+}
+
+.tb-rule-node-help {
+  font-size: 16px;
+}
+
+.tb-rule-node-error-tooltip {
+  font-size: 16px;
+  color: #ea0d0d;
+}
+
+.tb-rule-node-tooltip,
+.tb-rule-node-error-tooltip,
+.tb-rule-node-help {
+  #tb-node-content {
+    .tb-node-title {
+      font-weight: 600;
+    }
+
+    .tb-node-description {
+      font-style: italic;
+      color: #555;
+    }
+
+    .tb-node-details {
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    code {
+      padding: 0 3px 2px 3px;
+      margin: 1px;
+      font-size: 12px;
+      color: #ad1625;
+      white-space: nowrap;
+      background-color: #f7f7f9;
+      border: 1px solid #e1e1e8;
+      border-radius: 2px;
+    }
+  }
+}
+
+.tb-rule-chain-context-menu {
+  min-width: 256px;
+  max-height: 404px;
+  border-radius: 8px;
+  margin-left: -20px;
+
+  &.mat-menu-below {
+    margin-top: -60px;
+  }
+
+  .mat-menu-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    .tb-rule-chain-context-menu-container {
+      pointer-events: auto;
+      padding: 0 0 8px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+  }
+
+  .tb-context-menu-header {
+    display: flex;
+    box-sizing: content-box;
+    flex-direction: row;
+    height: 36px;
+    min-height: 36px;
+    padding: 8px 5px 5px;
+    font-size: 14px;
+
+    @include rule-node-colors();
+
+    &.tb-rulechain-header {
+      background-color: #aac7e4;
+    }
+
+    &.tb-link-header {
+      background-color: #aac7e4;
+    }
+
+    .mat-icon {
+      padding-right: 10px;
+      padding-left: 2px;
+      margin: auto;
+    }
+
+    .tb-context-menu-title {
+      font-weight: 500;
+    }
+
+    .tb-context-menu-subtitle {
+      font-size: 12px;
+    }
+  }
+}

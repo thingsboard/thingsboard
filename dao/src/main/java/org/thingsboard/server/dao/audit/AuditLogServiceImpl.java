@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.audit;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -81,38 +81,34 @@ public class AuditLogServiceImpl implements AuditLogService {
     private AuditLogSink auditLogSink;
 
     @Override
-    public TimePageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndCustomerId [{}], [{}], [{}]", tenantId, customerId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
-        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndCustomerId(tenantId.getId(), customerId, actionTypes, pageLink);
-        return new TimePageData<>(auditLogs, pageLink);
+        return auditLogDao.findAuditLogsByTenantIdAndCustomerId(tenantId.getId(), customerId, actionTypes, pageLink);
     }
 
     @Override
-    public TimePageData<AuditLog> findAuditLogsByTenantIdAndUserId(TenantId tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndUserId(TenantId tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndUserId [{}], [{}], [{}]", tenantId, userId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(userId, "Incorrect userId" + userId);
-        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndUserId(tenantId.getId(), userId, actionTypes, pageLink);
-        return new TimePageData<>(auditLogs, pageLink);
+        return auditLogDao.findAuditLogsByTenantIdAndUserId(tenantId.getId(), userId, actionTypes, pageLink);
     }
 
     @Override
-    public TimePageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndEntityId [{}], [{}], [{}]", tenantId, entityId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateEntityId(entityId, INCORRECT_TENANT_ID + entityId);
-        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantId.getId(), entityId, actionTypes, pageLink);
-        return new TimePageData<>(auditLogs, pageLink);
+        return auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantId.getId(), entityId, actionTypes, pageLink);
     }
 
     @Override
-    public TimePageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogs [{}]", pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        List<AuditLog> auditLogs = auditLogDao.findAuditLogsByTenantId(tenantId.getId(), actionTypes, pageLink);
-        return new TimePageData<>(auditLogs, pageLink);
+        return auditLogDao.findAuditLogsByTenantId(tenantId.getId(), actionTypes, pageLink);
     }
 
     @Override
@@ -300,7 +296,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                                          ActionStatus actionStatus,
                                          String actionFailureDetails) {
         AuditLog result = new AuditLog();
-        result.setId(new AuditLogId(UUIDs.timeBased()));
+        result.setId(new AuditLogId(Uuids.timeBased()));
         result.setTenantId(tenantId);
         result.setEntityId(entityId);
         result.setEntityName(entityName);
@@ -329,11 +325,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         log.trace("Executing logAction [{}]", auditLogEntry);
         auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
-        futures.add(auditLogDao.savePartitionsByTenantId(auditLogEntry));
         futures.add(auditLogDao.saveByTenantId(auditLogEntry));
-        futures.add(auditLogDao.saveByTenantIdAndEntityId(auditLogEntry));
-        futures.add(auditLogDao.saveByTenantIdAndCustomerId(auditLogEntry));
-        futures.add(auditLogDao.saveByTenantIdAndUserId(auditLogEntry));
 
         auditLogSink.logAction(auditLogEntry);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
@@ -141,7 +141,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
 
         WidgetType widgetType = new WidgetType();
-        widgetType.setTenantId(new TenantId(UUIDs.timeBased()));
+        widgetType.setTenantId(new TenantId(Uuids.timeBased()));
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));

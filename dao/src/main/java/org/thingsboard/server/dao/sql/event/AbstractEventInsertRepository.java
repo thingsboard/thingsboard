@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,13 +69,14 @@ public abstract class AbstractEventInsertRepository implements EventInsertReposi
 
     protected Query getQuery(EventEntity entity, String query) {
         return entityManager.createNativeQuery(query, EventEntity.class)
-                .setParameter("id", UUIDConverter.fromTimeUUID(entity.getId()))
+                .setParameter("id", UUIDConverter.fromTimeUUID(entity.getUuid()))
                 .setParameter("body", entity.getBody().toString())
                 .setParameter("entity_id", entity.getEntityId())
                 .setParameter("entity_type", entity.getEntityType().name())
                 .setParameter("event_type", entity.getEventType())
                 .setParameter("event_uid", entity.getEventUid())
-                .setParameter("tenant_id", entity.getTenantId());
+                .setParameter("tenant_id", entity.getTenantId())
+                .setParameter("ts", entity.getTs());
     }
 
     private EventEntity processSaveOrUpdate(EventEntity entity, String query) {

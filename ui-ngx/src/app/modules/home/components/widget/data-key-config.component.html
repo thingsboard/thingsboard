@@ -1,0 +1,102 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-tab-group class="tb-datakey-config" [ngClass]="{'tb-headless': !displayAdvanced}">
+  <mat-tab [formGroup]="dataKeyFormGroup" label="{{ 'datakey.settings' | translate }}">
+    <div class="mat-padding settings" fxLayout="column">
+      <mat-form-field class="mat-block" *ngIf="modelValue.type !== dataKeyTypes.function">
+        <mat-label>{{ 'entity.key' | translate }}</mat-label>
+        <input matInput type="text" placeholder="{{ 'entity.key-name' | translate }}"
+               #keyInput
+               formControlName="name"
+               required
+               [matAutocomplete]="keyAutocomplete">
+        <button *ngIf="dataKeyFormGroup.get('name').value"
+                type="button"
+                matSuffix mat-icon-button aria-label="Clear"
+                (click)="clearKey()">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+        <mat-autocomplete
+          class="tb-autocomplete"
+          #keyAutocomplete="matAutocomplete">
+          <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
+            <span [innerHTML]="key | highlight:keySearchText"></span>
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" fxLayoutAlign.xs fxLayoutGap="8px">
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>datakey.label</mat-label>
+          <input matInput formControlName="label" required>
+        </mat-form-field>
+        <tb-color-input fxFlex
+          required
+          label="{{'datakey.color' | translate}}"
+          icon="format_color_fill"
+          openOnInput
+          formControlName="color">
+        </tb-color-input>
+      </div>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" fxLayoutAlign.xs fxLayoutGap="8px" *ngIf="modelValue.type !== dataKeyTypes.alarm">
+        <mat-form-field fxFlex>
+          <mat-label translate>datakey.units</mat-label>
+          <input matInput formControlName="units">
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label translate>datakey.decimals</mat-label>
+          <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
+        </mat-form-field>
+      </div>
+      <section fxLayout="column" *ngIf="modelValue.type === dataKeyTypes.function">
+        <span translate>datakey.data-generation-func</span>
+        <br/>
+        <tb-js-func #funcBodyEdit
+          [functionArgs]="['time', 'prevValue']"
+          [validationArgs]="[[1, 1],[1, '1']]"
+          resultType="any"
+          formControlName="funcBody">
+        </tb-js-func>
+      </section>
+      <section fxLayout="column" *ngIf="modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute">
+        <mat-checkbox formControlName="usePostProcessing">
+          {{ 'datakey.use-data-post-processing-func' | translate }}
+        </mat-checkbox>
+        <tb-js-func *ngIf="dataKeyFormGroup.get('usePostProcessing').value" #postFuncBodyEdit
+                    [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
+                    [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
+                    resultType="any"
+                    formControlName="postFuncBody">
+        </tb-js-func>
+        <label *ngIf="dataKeyFormGroup.get('usePostProcessing').value" class="tb-title" style="margin-left: 15px;">
+          time - {{ 'datakey.time-description' | translate }}<br/>
+          value - {{ 'datakey.value-description' | translate }}<br/>
+          prevValue - {{ 'datakey.prev-value-description' | translate }}<br/>
+          timePrev - {{ 'datakey.time-prev-description' | translate }}<br/>
+          prevOrigValue - {{ 'datakey.prev-orig-value-description' | translate }}
+        </label>
+      </section>
+    </div>
+  </mat-tab>
+  <mat-tab [formGroup]="dataKeySettingsFormGroup" label="{{ 'datakey.advanced' | translate }}" *ngIf="displayAdvanced">
+    <div class="mat-padding" fxLayout="column">
+      <tb-json-form
+        formControlName="settings">
+      </tb-json-form>
+    </div>
+  </mat-tab>
+</mat-tab-group>

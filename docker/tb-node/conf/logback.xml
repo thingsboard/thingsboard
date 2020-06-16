@@ -21,10 +21,10 @@
 
     <appender name="fileLogAppender"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/var/log/thingsboard/${TB_HOST}/thingsboard.log</file>
+        <file>/var/log/thingsboard/${TB_SERVICE_ID}/thingsboard.log</file>
         <rollingPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>/var/log/thingsboard/${TB_HOST}/thingsboard.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>/var/log/thingsboard/${TB_SERVICE_ID}/thingsboard.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>

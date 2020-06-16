@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -144,12 +144,11 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     }
 
     @Override
-    public TextPageData<Customer> findCustomersByTenantId(TenantId tenantId, TextPageLink pageLink) {
+    public PageData<Customer> findCustomersByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findCustomersByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<Customer> customers = customerDao.findCustomersByTenantId(tenantId.getId(), pageLink);
-        return new TextPageData<>(customers, pageLink);
+        Validator.validatePageLink(pageLink);
+        return customerDao.findCustomersByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
@@ -208,7 +207,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             new PaginatedRemover<TenantId, Customer>() {
 
                 @Override
-                protected List<Customer> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
+                protected PageData<Customer> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
                     return customerDao.findCustomersByTenantId(id.getId(), pageLink);
                 }
 

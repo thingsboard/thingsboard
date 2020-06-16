@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 
-public class PageDataIterable<T extends SearchTextBased<? extends UUIDBased>> implements Iterable<T>, Iterator<T> {
+public class PageDataIterable<T> implements Iterable<T>, Iterator<T> {
 
     private final FetchFunction<T> function;
     private final int fetchSize;
@@ -31,7 +32,7 @@ public class PageDataIterable<T extends SearchTextBased<? extends UUIDBased>> im
     private List<T> currentItems;
     private int currentIdx;
     private boolean hasNextPack;
-    private TextPageLink nextPackLink;
+    private PageLink nextPackLink;
     private boolean initialized;
 
     public PageDataIterable(FetchFunction<T> function, int fetchSize) {
@@ -48,7 +49,7 @@ public class PageDataIterable<T extends SearchTextBased<? extends UUIDBased>> im
     @Override
     public boolean hasNext() {
         if(!initialized){
-            fetch(new TextPageLink(fetchSize));
+            fetch(new PageLink(fetchSize));
             initialized = true;
         }
         if(currentIdx == currentItems.size()){
@@ -59,12 +60,12 @@ public class PageDataIterable<T extends SearchTextBased<? extends UUIDBased>> im
         return currentIdx < currentItems.size();
     }
 
-    private void fetch(TextPageLink link) {
-        TextPageData<T> pageData = function.fetch(link);
+    private void fetch(PageLink link) {
+        PageData<T> pageData = function.fetch(link);
         currentIdx = 0;
         currentItems = pageData.getData();
         hasNextPack = pageData.hasNext();
-        nextPackLink = pageData.getNextPageLink();
+        nextPackLink = link.nextPageLink();
     }
 
     @Override
@@ -75,9 +76,9 @@ public class PageDataIterable<T extends SearchTextBased<? extends UUIDBased>> im
         return currentItems.get(currentIdx++);
     }
 
-    public static interface FetchFunction<T extends SearchTextBased<? extends UUIDBased>> {
+    public static interface FetchFunction<T> {
 
-        TextPageData<T> fetch(TextPageLink link);
+        PageData<T> fetch(PageLink link);
 
     }
 }

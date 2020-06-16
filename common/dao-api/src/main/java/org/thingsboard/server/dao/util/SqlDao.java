@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package org.thingsboard.server.dao.util;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-@ConditionalOnProperty(prefix = "database.entities", value = "type", havingValue = "sql")
+@Retention(RetentionPolicy.RUNTIME)
 public @interface SqlDao {
 }

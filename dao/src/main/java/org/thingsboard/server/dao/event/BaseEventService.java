@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -78,15 +78,13 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
-        List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, pageLink);
-        return new TimePageData<>(events, pageLink);
+    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
+        return eventDao.findEvents(tenantId.getId(), entityId, pageLink);
     }
 
     @Override
-    public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
-        return new TimePageData<>(events, pageLink);
+    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
+        return eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
     }
 
     @Override

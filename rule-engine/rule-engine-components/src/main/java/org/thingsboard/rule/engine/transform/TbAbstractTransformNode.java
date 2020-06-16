@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public abstract class TbAbstractTransformNode implements TbNode {
 
     protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
         if (m != null) {
-            ctx.tellNext(m, SUCCESS);
+            ctx.tellSuccess(m);
         } else {
             ctx.tellNext(msg, FAILURE);
         }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         entity.setDoubleValue(attribute.getDoubleValue().orElse(null));
         entity.setLongValue(attribute.getLongValue().orElse(null));
         entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
+        entity.setJsonValue(attribute.getJsonValue().orElse(null));
         return addToQueue(entity);
     }
 
@@ -137,16 +138,10 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Override
     public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys) {
-        List<AttributeKvEntity> entitiesToDelete = keys
-                .stream()
-                .map(key -> {
-                    AttributeKvEntity entityToDelete = new AttributeKvEntity();
-                    entityToDelete.setId(new AttributeKvCompositeKey(entityId.getEntityType(), fromTimeUUID(entityId.getId()), attributeType, key));
-                    return entityToDelete;
-                }).collect(Collectors.toList());
-
         return service.submit(() -> {
-            attributeKvRepository.deleteAll(entitiesToDelete);
+            keys.forEach(key ->
+                    attributeKvRepository.delete(entityId.getEntityType(), UUIDConverter.fromTimeUUID(entityId.getId()), attributeType, key)
+            );
             return null;
         });
     }

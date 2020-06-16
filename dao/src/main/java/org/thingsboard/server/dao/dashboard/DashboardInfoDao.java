@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@ package org.thingsboard.server.dao.dashboard;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -36,7 +37,7 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
      * @param pageLink the page link
      * @return the list of dashboard objects
      */
-    List<DashboardInfo> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink);
+    PageData<DashboardInfo> findDashboardsByTenantId(UUID tenantId, PageLink pageLink);
 
     /**
      * Find dashboards by tenantId, customerId and page link.
@@ -46,6 +47,6 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
      * @param pageLink the page link
      * @return the list of dashboard objects
      */
-    ListenableFuture<List<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TimePageLink pageLink);
+    PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
 
 }

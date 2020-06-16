@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
 
@@ -83,15 +84,15 @@ public class TbChangeOriginatorNodeTest {
     @Test
     public void originatorCanBeChangedToCustomerId() throws TbNodeException {
         init();
-        AssetId assetId = new AssetId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        AssetId assetId = new AssetId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(),eq( assetId))).thenReturn(Futures.immediateFuture(asset));
@@ -111,15 +112,15 @@ public class TbChangeOriginatorNodeTest {
     @Test
     public void newChainCanBeStarted() throws TbNodeException {
         init();
-        AssetId assetId = new AssetId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        AssetId assetId = new AssetId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(asset));
@@ -138,15 +139,15 @@ public class TbChangeOriginatorNodeTest {
     @Test
     public void exceptionThrownIfCannotFindNewOriginator() throws TbNodeException {
         init();
-        AssetId assetId = new AssetId(UUIDs.timeBased());
-        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        AssetId assetId = new AssetId(Uuids.timeBased());
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(null));

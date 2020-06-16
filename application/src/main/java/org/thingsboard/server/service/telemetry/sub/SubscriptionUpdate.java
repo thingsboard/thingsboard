@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class SubscriptionUpdate {
         if (data == null) {
             return Collections.emptyMap();
         } else {
-            return data.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> {
+            return data.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
                 List<Object> data = e.getValue();
                 Object[] latest = (Object[]) data.get(data.size() - 1);
                 return (long) latest[0];

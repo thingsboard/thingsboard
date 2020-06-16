@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,23 +25,35 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+
+import java.util.Arrays;
 
 @Service
 @Profile("install")
@@ -74,7 +86,16 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     private CustomerService customerService;
 
     @Autowired
+    private RelationService relationService;
+
+    @Autowired
+    private AssetService assetService;
+
+    @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private AttributesService attributesService;
 
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
@@ -106,9 +127,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         node.put("smtpHost", "localhost");
         node.put("smtpPort", "25");
         node.put("timeout", "10000");
-        node.put("enableTls", "false");
+        node.put("enableTls", false);
         node.put("username", "");
-        node.put("password", ""); //NOSONAR, key used to identify password field (not password value itself)
+        node.put("password", "");
+        node.put("tlsVersion", "TLSv1.2");//NOSONAR, key used to identify password field (not password value itself)
+        node.put("enableProxy", false);
         mailSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, mailSettings);
     }
@@ -119,7 +142,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         demoTenant.setRegion("Global");
         demoTenant.setTitle("Tenant");
         demoTenant = tenantService.saveTenant(demoTenant);
-        installScripts.createDefaultRuleChains(demoTenant.getId());
+        installScripts.loadDemoRuleChains(demoTenant.getId());
         createUser(Authority.TENANT_ADMIN, demoTenant.getId(), null, "tenant@thingsboard.org", "tenant");
 
         Customer customerA = new Customer();
@@ -151,6 +174,34 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         createDevice(demoTenant.getId(), null, DEFAULT_DEVICE_TYPE, "Raspberry Pi Demo Device", "RASPBERRY_PI_DEMO_TOKEN", "Demo device that is used in " +
                 "Raspberry Pi GPIO control sample application");
 
+        Asset thermostatAlarms = new Asset();
+        thermostatAlarms.setTenantId(demoTenant.getId());
+        thermostatAlarms.setName("Thermostat Alarms");
+        thermostatAlarms.setType("AlarmPropagationAsset");
+        thermostatAlarms = assetService.saveAsset(thermostatAlarms);
+
+        DeviceId t1Id = createDevice(demoTenant.getId(), null, "thermostat", "Thermostat T1", "T1_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
+        DeviceId t2Id = createDevice(demoTenant.getId(), null, "thermostat", "Thermostat T2", "T2_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
+
+        relationService.saveRelation(thermostatAlarms.getTenantId(), new EntityRelation(thermostatAlarms.getId(), t1Id, "ToAlarmPropagationAsset"));
+        relationService.saveRelation(thermostatAlarms.getTenantId(), new EntityRelation(thermostatAlarms.getId(), t2Id, "ToAlarmPropagationAsset"));
+
+        attributesService.save(demoTenant.getId(), t1Id, DataConstants.SERVER_SCOPE,
+                Arrays.asList(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 37.3948)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", -122.1503)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("alarmTemperature", true)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("alarmHumidity", true)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("thresholdTemperature", (long) 20)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("thresholdHumidity", (long) 50))));
+
+        attributesService.save(demoTenant.getId(), t2Id, DataConstants.SERVER_SCOPE,
+                Arrays.asList(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 37.493801)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", -121.948769)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("alarmTemperature", true)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("alarmHumidity", true)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("thresholdTemperature", (long) 25)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("thresholdHumidity", (long) 30))));
+
         installScripts.loadDashboards(demoTenant.getId(), null);
     }
 
@@ -164,6 +215,24 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void loadSystemWidgets() throws Exception {
+        installScripts.loadSystemWidgets();
+    }
+
+    @Override
+    public void updateSystemWidgets() throws Exception {
+        this.deleteSystemWidgetBundle("charts");
+        this.deleteSystemWidgetBundle("cards");
+        this.deleteSystemWidgetBundle("maps");
+        this.deleteSystemWidgetBundle("analogue_gauges");
+        this.deleteSystemWidgetBundle("digital_gauges");
+        this.deleteSystemWidgetBundle("gpio_widgets");
+        this.deleteSystemWidgetBundle("alarm_widgets");
+        this.deleteSystemWidgetBundle("control_widgets");
+        this.deleteSystemWidgetBundle("maps_v2");
+        this.deleteSystemWidgetBundle("gateway_widgets");
+        this.deleteSystemWidgetBundle("input_widgets");
+        this.deleteSystemWidgetBundle("date");
+        this.deleteSystemWidgetBundle("entity_admin_widgets");
         installScripts.loadSystemWidgets();
     }
 

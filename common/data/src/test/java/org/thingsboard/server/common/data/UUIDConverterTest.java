@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,8 +61,8 @@ public class UUIDConverterTest {
                 before = tmp;
             }
 
-            String beforeStr = UUIDConverter.fromTimeUUID(UUIDs.startOf(before));
-            String afterStr = UUIDConverter.fromTimeUUID(UUIDs.startOf(after));
+            String beforeStr = UUIDConverter.fromTimeUUID(Uuids.startOf(before));
+            String afterStr = UUIDConverter.fromTimeUUID(Uuids.startOf(after));
 
             if (afterStr.compareTo(beforeStr) < 0) {
                 System.out.println("Before: " + before + " | " + beforeStr);

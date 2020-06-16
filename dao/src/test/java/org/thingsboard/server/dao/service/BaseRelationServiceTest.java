@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -47,8 +47,8 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveRelation() throws ExecutionException, InterruptedException {
-        AssetId parentId = new AssetId(UUIDs.timeBased());
-        AssetId childId = new AssetId(UUIDs.timeBased());
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
 
         EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
 
@@ -65,9 +65,9 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteRelation() throws ExecutionException, InterruptedException {
-        AssetId parentId = new AssetId(UUIDs.timeBased());
-        AssetId childId = new AssetId(UUIDs.timeBased());
-        AssetId subChildId = new AssetId(UUIDs.timeBased());
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
+        AssetId subChildId = new AssetId(Uuids.timeBased());
 
         EntityRelation relationA = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationB = new EntityRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE);
@@ -86,9 +86,9 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteEntityRelations() throws ExecutionException, InterruptedException {
-        AssetId parentId = new AssetId(UUIDs.timeBased());
-        AssetId childId = new AssetId(UUIDs.timeBased());
-        AssetId subChildId = new AssetId(UUIDs.timeBased());
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
+        AssetId subChildId = new AssetId(Uuids.timeBased());
 
         EntityRelation relationA = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationB = new EntityRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE);
@@ -105,10 +105,10 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindFrom() throws ExecutionException, InterruptedException {
-        AssetId parentA = new AssetId(UUIDs.timeBased());
-        AssetId parentB = new AssetId(UUIDs.timeBased());
-        AssetId childA = new AssetId(UUIDs.timeBased());
-        AssetId childB = new AssetId(UUIDs.timeBased());
+        AssetId parentA = new AssetId(Uuids.timeBased());
+        AssetId parentB = new AssetId(Uuids.timeBased());
+        AssetId childA = new AssetId(Uuids.timeBased());
+        AssetId childB = new AssetId(Uuids.timeBased());
 
         EntityRelation relationA1 = new EntityRelation(parentA, childA, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationA2 = new EntityRelation(parentA, childB, EntityRelation.CONTAINS_TYPE);
@@ -157,10 +157,10 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindTo() throws ExecutionException, InterruptedException {
-        AssetId parentA = new AssetId(UUIDs.timeBased());
-        AssetId parentB = new AssetId(UUIDs.timeBased());
-        AssetId childA = new AssetId(UUIDs.timeBased());
-        AssetId childB = new AssetId(UUIDs.timeBased());
+        AssetId parentA = new AssetId(Uuids.timeBased());
+        AssetId parentB = new AssetId(Uuids.timeBased());
+        AssetId childA = new AssetId(Uuids.timeBased());
+        AssetId childB = new AssetId(Uuids.timeBased());
 
         EntityRelation relationA1 = new EntityRelation(parentA, childA, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationA2 = new EntityRelation(parentA, childB, EntityRelation.CONTAINS_TYPE);
@@ -207,9 +207,9 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     @Test
     public void testCyclicRecursiveRelation() throws ExecutionException, InterruptedException {
         // A -> B -> C -> A
-        AssetId assetA = new AssetId(UUIDs.timeBased());
-        AssetId assetB = new AssetId(UUIDs.timeBased());
-        AssetId assetC = new AssetId(UUIDs.timeBased());
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
 
         EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationB = new EntityRelation(assetB, assetC, EntityRelation.CONTAINS_TYPE);
@@ -239,10 +239,10 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     @Test
     public void testRecursiveRelation() throws ExecutionException, InterruptedException {
         // A -> B -> [C,D]
-        AssetId assetA = new AssetId(UUIDs.timeBased());
-        AssetId assetB = new AssetId(UUIDs.timeBased());
-        AssetId assetC = new AssetId(UUIDs.timeBased());
-        DeviceId deviceD = new DeviceId(UUIDs.timeBased());
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        DeviceId deviceD = new DeviceId(Uuids.timeBased());
 
         EntityRelation relationAB = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationBC = new EntityRelation(assetB, assetC, EntityRelation.CONTAINS_TYPE);
@@ -272,7 +272,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     @Test(expected = DataValidationException.class)
     public void testSaveRelationWithEmptyFrom() throws ExecutionException, InterruptedException {
         EntityRelation relation = new EntityRelation();
-        relation.setTo(new AssetId(UUIDs.timeBased()));
+        relation.setTo(new AssetId(Uuids.timeBased()));
         relation.setType(EntityRelation.CONTAINS_TYPE);
         Assert.assertTrue(saveRelation(relation));
     }
@@ -280,7 +280,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     @Test(expected = DataValidationException.class)
     public void testSaveRelationWithEmptyTo() throws ExecutionException, InterruptedException {
         EntityRelation relation = new EntityRelation();
-        relation.setFrom(new AssetId(UUIDs.timeBased()));
+        relation.setFrom(new AssetId(Uuids.timeBased()));
         relation.setType(EntityRelation.CONTAINS_TYPE);
         Assert.assertTrue(saveRelation(relation));
     }
@@ -288,8 +288,8 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     @Test(expected = DataValidationException.class)
     public void testSaveRelationWithEmptyType() throws ExecutionException, InterruptedException {
         EntityRelation relation = new EntityRelation();
-        relation.setFrom(new AssetId(UUIDs.timeBased()));
-        relation.setTo(new AssetId(UUIDs.timeBased()));
+        relation.setFrom(new AssetId(Uuids.timeBased()));
+        relation.setTo(new AssetId(Uuids.timeBased()));
         Assert.assertTrue(saveRelation(relation));
     }
 }

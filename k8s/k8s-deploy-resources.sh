@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,14 @@
 
 set -e
 
-kubectl apply -f tb-namespace.yml
+source .env
+
+kubectl apply -f common/tb-namespace.yml
 kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
-kubectl apply -f tb-node-configmap.yml
-kubectl apply -f tb-mqtt-transport-configmap.yml
-kubectl apply -f tb-http-transport-configmap.yml
-kubectl apply -f tb-coap-transport-configmap.yml
-kubectl apply -f thingsboard.yml
+kubectl apply -f common/tb-node-configmap.yml
+kubectl apply -f common/tb-mqtt-transport-configmap.yml
+kubectl apply -f common/tb-http-transport-configmap.yml
+kubectl apply -f common/tb-coap-transport-configmap.yml
+kubectl apply -f common/thingsboard.yml
+kubectl apply -f $DEPLOYMENT_TYPE/tb-node-cache-configmap.yml
+kubectl apply -f common/tb-node.yml

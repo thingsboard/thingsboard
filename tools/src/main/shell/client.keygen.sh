@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ usage() {
     echo "and imports server public key to client keystore"
     echo "usage: ./client.keygen.sh [-p file]"
     echo "    -p | --props | --properties file  Properties file. default value is ./keygen.properties"
-	echo "    -h | --help  | ?                  Show this message"
+    echo "    -h | --help  | ?                  Show this message"
 }
 
 PROPERTIES_FILE=keygen.properties
@@ -55,7 +55,7 @@ while :
             echo "Done"
             exit 0
             ;;
-        [yY]|[yY][eE]|[yY][eE]|[sS]|[yY]|"")
+        [yY]|[yY][eE]|[yY][eE][sS]|"")
             echo "Cleaning up files"
             rm -rf $CLIENT_FILE_PREFIX.jks
             rm -rf $CLIENT_FILE_PREFIX.pub.pem

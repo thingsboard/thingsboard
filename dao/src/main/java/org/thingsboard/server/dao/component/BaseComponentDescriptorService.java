@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -70,17 +70,15 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
     }
 
     @Override
-    public TextPageData<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, TextPageLink pageLink) {
-        Validator.validatePageLink(pageLink, "Incorrect PageLink object for search plugin components request.");
-        List<ComponentDescriptor> components = componentDescriptorDao.findByTypeAndPageLink(tenantId, type, pageLink);
-        return new TextPageData<>(components, pageLink);
+    public PageData<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, PageLink pageLink) {
+        Validator.validatePageLink(pageLink);
+        return componentDescriptorDao.findByTypeAndPageLink(tenantId, type, pageLink);
     }
 
     @Override
-    public TextPageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, TextPageLink pageLink) {
-        Validator.validatePageLink(pageLink, "Incorrect PageLink object for search plugin components request.");
-        List<ComponentDescriptor> components = componentDescriptorDao.findByScopeAndTypeAndPageLink(tenantId, scope, type, pageLink);
-        return new TextPageData<>(components, pageLink);
+    public PageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, PageLink pageLink) {
+        Validator.validatePageLink(pageLink);
+        return componentDescriptorDao.findByScopeAndTypeAndPageLink(tenantId, scope, type, pageLink);
     }
 
     @Override

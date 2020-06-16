@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.filter;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
@@ -28,10 +28,14 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.ScriptException;
@@ -40,7 +44,9 @@ import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbJsSwitchNodeTest {
@@ -54,8 +60,8 @@ public class TbJsSwitchNodeTest {
     @Mock
     private ScriptEngine scriptEngine;
 
-    private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-    private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+    private RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+    private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Test
     public void multipleRoutesAreAllowed() throws TbNodeException, ScriptException {
@@ -65,7 +71,7 @@ public class TbJsSwitchNodeTest {
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
         mockJsExecutor();
         when(scriptEngine.executeSwitch(msg)).thenReturn(Sets.newHashSet("one", "three"));
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,24 +40,27 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class AuditLogController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/customer/{customerId}", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/audit/logs/customer/{customerId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public TimePageData<AuditLog> getAuditLogsByCustomerId(
+    public PageData<AuditLog> getAuditLogsByCustomerId(
             @PathVariable("customerId") String strCustomerId,
-            @RequestParam int limit,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
-            @RequestParam(required = false) String offset,
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         try {
             checkParameter("CustomerId", strCustomerId);
             TenantId tenantId = getCurrentUser().getTenantId();
-            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
             List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
             return checkNotNull(auditLogService.findAuditLogsByTenantIdAndCustomerId(tenantId, new CustomerId(UUID.fromString(strCustomerId)), actionTypes, pageLink));
         } catch (Exception e) {
@@ -65,20 +69,22 @@ public class AuditLogController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/user/{userId}", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/audit/logs/user/{userId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public TimePageData<AuditLog> getAuditLogsByUserId(
+    public PageData<AuditLog> getAuditLogsByUserId(
             @PathVariable("userId") String strUserId,
-            @RequestParam int limit,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
-            @RequestParam(required = false) String offset,
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         try {
             checkParameter("UserId", strUserId);
             TenantId tenantId = getCurrentUser().getTenantId();
-            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
             List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
             return checkNotNull(auditLogService.findAuditLogsByTenantIdAndUserId(tenantId, new UserId(UUID.fromString(strUserId)), actionTypes, pageLink));
         } catch (Exception e) {
@@ -87,22 +93,24 @@ public class AuditLogController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public TimePageData<AuditLog> getAuditLogsByEntityId(
+    public PageData<AuditLog> getAuditLogsByEntityId(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
-            @RequestParam int limit,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
-            @RequestParam(required = false) String offset,
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         try {
             checkParameter("EntityId", strEntityId);
             checkParameter("EntityType", strEntityType);
             TenantId tenantId = getCurrentUser().getTenantId();
-            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
             List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
             return checkNotNull(auditLogService.findAuditLogsByTenantIdAndEntityId(tenantId, EntityIdFactory.getByTypeAndId(strEntityType, strEntityId), actionTypes, pageLink));
         } catch (Exception e) {
@@ -111,19 +119,21 @@ public class AuditLogController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/audit/logs", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public TimePageData<AuditLog> getAuditLogs(
-            @RequestParam int limit,
+    public PageData<AuditLog> getAuditLogs(
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
-            @RequestParam(required = false) String offset,
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
-            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
             List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
             return checkNotNull(auditLogService.findAuditLogsByTenantId(tenantId, actionTypes, pageLink));
         } catch (Exception e) {
             throw handleException(e);

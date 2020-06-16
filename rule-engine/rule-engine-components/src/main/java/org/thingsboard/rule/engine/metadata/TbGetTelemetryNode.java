@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.JsonParseException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -104,8 +106,7 @@ public class TbGetTelemetryNode implements TbNode {
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
-                    TbMsg newMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
-                    ctx.tellNext(newMsg, SUCCESS);
+                    ctx.tellSuccess(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData()));
                 }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
@@ -179,6 +180,13 @@ public class TbGetTelemetryNode implements TbNode {
                 break;
             case DOUBLE:
                 obj.put("value", entry.getDoubleValue().get());
+                break;
+            case JSON:
+                try {
+                    obj.set("value", mapper.readTree(entry.getJsonValue().get()));
+                } catch (IOException e) {
+                    throw new JsonParseException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
+                }
                 break;
         }
         return obj;

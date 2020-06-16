@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,7 +28,8 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -58,8 +59,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveAndFetchAlarm() throws ExecutionException, InterruptedException {
-        AssetId parentId = new AssetId(UUIDs.timeBased());
-        AssetId childId = new AssetId(UUIDs.timeBased());
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
 
         EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
 
@@ -95,8 +96,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAlarm() throws ExecutionException, InterruptedException {
-        AssetId parentId = new AssetId(UUIDs.timeBased());
-        AssetId childId = new AssetId(UUIDs.timeBased());
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
 
         EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
 
@@ -112,10 +113,11 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Alarm created = alarmService.createOrUpdateAlarm(alarm);
 
         // Check child relation
-        TimePageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+        PageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -125,7 +127,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(parentId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
@@ -137,7 +140,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -147,7 +151,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(parentId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -159,7 +164,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.ACTIVE_ACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -169,7 +175,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
@@ -180,7 +187,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.CLEARED_ACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -189,8 +197,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteAlarm() throws ExecutionException, InterruptedException {
-        AssetId parentId = new AssetId(UUIDs.timeBased());
-        AssetId childId = new AssetId(UUIDs.timeBased());
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
 
         EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
 
@@ -205,10 +213,11 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         Alarm created = alarmService.createOrUpdateAlarm(alarm);
 
-        TimePageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+        PageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -218,7 +227,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(parentId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -243,7 +253,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
@@ -252,7 +263,8 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(parentId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());

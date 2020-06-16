@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
 public class TenantController extends BaseController {
@@ -70,10 +72,7 @@ public class TenantController extends BaseController {
         try {
             boolean newTenant = tenant.getId() == null;
 
-            Operation operation = newTenant ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation,
-                    tenant.getId(), tenant);
+            checkEntity(tenant.getId(), tenant, Resource.TENANT);
 
             tenant = checkNotNull(tenantService.saveTenant(tenant));
             if (newTenant) {
@@ -94,22 +93,22 @@ public class TenantController extends BaseController {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             checkTenantId(tenantId, Operation.DELETE);
             tenantService.deleteTenant(tenantId);
-
-            actorService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
+            tbClusterService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenants", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenants", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public TextPageData<Tenant> getTenants(@RequestParam int limit,
-                                           @RequestParam(required = false) String textSearch,
-                                           @RequestParam(required = false) String idOffset,
-                                           @RequestParam(required = false) String textOffset) throws ThingsboardException {
+    public PageData<Tenant> getTenants(@RequestParam int pageSize,
+                                       @RequestParam int page,
+                                       @RequestParam(required = false) String textSearch,
+                                       @RequestParam(required = false) String sortProperty,
+                                       @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(tenantService.findTenants(pageLink));
         } catch (Exception e) {
             throw handleException(e);

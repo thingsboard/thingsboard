@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -116,17 +117,16 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     }
 
     @Override
-    public TextPageData<Tenant> findTenants(TextPageLink pageLink) {
+    public PageData<Tenant> findTenants(PageLink pageLink) {
         log.trace("Executing findTenants pageLink [{}]", pageLink);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<Tenant> tenants = tenantDao.findTenantsByRegion(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION, pageLink);
-        return new TextPageData<>(tenants, pageLink);
+        Validator.validatePageLink(pageLink);
+        return tenantDao.findTenantsByRegion(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION, pageLink);
     }
 
     @Override
     public void deleteTenants() {
         log.trace("Executing deleteTenants");
-        tenantsRemover.removeEntities(new TenantId(EntityId.NULL_UUID),DEFAULT_TENANT_REGION);
+        tenantsRemover.removeEntities(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION);
     }
 
     private DataValidator<Tenant> tenantValidator =
@@ -140,19 +140,31 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                         validateEmail(tenant.getEmail());
                     }
                 }
-    };
+
+                @Override
+                protected void validateUpdate(TenantId tenantId, Tenant tenant) {
+                    Tenant old = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
+                    if (old == null) {
+                        throw new DataValidationException("Can't update non existing tenant!");
+                    } else if (old.isIsolatedTbRuleEngine() != tenant.isIsolatedTbRuleEngine()) {
+                        throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
+                    } else if (old.isIsolatedTbCore() != tenant.isIsolatedTbCore()) {
+                        throw new DataValidationException("Can't update isolatedTbCore property!");
+                    }
+                }
+            };
 
     private PaginatedRemover<String, Tenant> tenantsRemover =
             new PaginatedRemover<String, Tenant>() {
 
-        @Override
-        protected List<Tenant> findEntities(TenantId tenantId, String region, TextPageLink pageLink) {
-            return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
-        }
+                @Override
+                protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
+                    return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
+                }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, Tenant entity) {
-            deleteTenant(new TenantId(entity.getUuidId()));
-        }
-    };
+                @Override
+                protected void removeEntity(TenantId tenantId, Tenant entity) {
+                    deleteTenant(new TenantId(entity.getUuidId()));
+                }
+            };
 }

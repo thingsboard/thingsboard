@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,7 +32,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -43,39 +43,42 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.rpc.RpcRequest;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.service.rpc.DeviceRpcService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.LocalRequestMetaData;
+import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.exception.ToErrorResponseEntity;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by ashvayka on 22.03.18.
  */
 @RestController
+@TbCoreComponent
 @RequestMapping(TbUrlConstants.RPC_URL_PREFIX)
 @Slf4j
 public class RpcController extends BaseController {
 
-    public static final int DEFAULT_TIMEOUT = 10000;
     protected final ObjectMapper jsonMapper = new ObjectMapper();
 
     @Autowired
-    private DeviceRpcService deviceRpcService;
+    private TbCoreDeviceRpcService deviceRpcService;
 
     @Autowired
     private AccessValidator accessValidator;
+
+    @Value("${server.rest.server_side_rpc.min_timeout:5000}")
+    private long minTimeout;
+
+    @Value("${server.rest.server_side_rpc.default_timeout:10000}")
+    private long defaultTimeout;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/oneway/{deviceId}", method = RequestMethod.POST)
@@ -91,7 +94,6 @@ public class RpcController extends BaseController {
         return handleDeviceRPCRequest(false, new DeviceId(UUID.fromString(deviceIdStr)), requestBody);
     }
 
-
     private DeferredResult<ResponseEntity> handleDeviceRPCRequest(boolean oneWay, DeviceId deviceId, String requestBody) throws ThingsboardException {
         try {
             JsonNode rpcRequestBody = jsonMapper.readTree(requestBody);
@@ -104,7 +106,8 @@ public class RpcController extends BaseController {
             SecurityUser currentUser = getCurrentUser();
             TenantId tenantId = currentUser.getTenantId();
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            long timeout = System.currentTimeMillis() + (cmd.getTimeout() != null ? cmd.getTimeout() : DEFAULT_TIMEOUT);
+            long timeout = cmd.getTimeout() != null ? cmd.getTimeout() : defaultTimeout;
+            long expTime = System.currentTimeMillis() + Math.max(minTimeout, timeout);
             ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
             accessValidator.validate(currentUser, Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
                 @Override
@@ -113,10 +116,10 @@ public class RpcController extends BaseController {
                             tenantId,
                             deviceId,
                             oneWay,
-                            timeout,
+                            expTime,
                             body
                     );
-                    deviceRpcService.processRestAPIRpcRequestToRuleEngine(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse));
+                    deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse));
                 }
 
                 @Override
