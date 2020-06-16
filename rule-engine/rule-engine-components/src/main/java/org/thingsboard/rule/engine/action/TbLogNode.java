@@ -38,7 +38,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeLogConfig",
         icon = "menu",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 
 public class TbLogNode implements TbNode {

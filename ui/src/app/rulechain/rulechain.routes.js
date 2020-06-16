@@ -31,12 +31,12 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             url: '/ruleChains',
             module: 'private',
             auth: ['SYS_ADMIN', 'TENANT_ADMIN'],
-            redirectTo: 'home.ruleChains.system',
+            redirectTo: 'home.ruleChains.core',
             ncyBreadcrumb: {
                 label: '{"icon": "settings_ethernet", "label": "rulechain.rulechains"}'
             }
         })
-        .state('home.ruleChains.system', {
+        .state('home.ruleChains.core', {
             url: '/ruleChains/system',
             params: {'topIndex': 0},
             module: 'private',
@@ -50,13 +50,13 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             },
             data: {
                 searchEnabled: true,
-                pageTitle: 'rulechain.system-rulechains',
+                pageTitle: 'rulechain.core-rulechains',
                 ruleChainsType: 'tenant'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "settings_ethernet", "label": "rulechain.system-rulechains"}'
+                label: '{"icon": "settings_ethernet", "label": "rulechain.core-rulechains"}'
             }
-        }).state('home.ruleChains.system.ruleChain', {
+        }).state('home.ruleChains.core.ruleChain', {
             url: '/:ruleChainId',
             reloadOnSearch: false,
             module: 'private',

@@ -18,14 +18,11 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import com.google.common.util.concurrent.FutureCallback;
-import com.sun.istack.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -102,7 +99,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         if (!started) {
             RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
             if (ruleChain != null) {
-                if (ruleChain.getType().equals(RuleChainType.SYSTEM)) {
+                if (ruleChain.getType().equals(RuleChainType.CORE)) {
                     List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
                     log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
                     // Creating and starting the actors;
@@ -124,7 +121,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     public void onUpdate(ActorContext context) {
         RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
         if (ruleChain != null) {
-            if (ruleChain.getType().equals(RuleChainType.SYSTEM)) {
+            if (ruleChain.getType().equals(RuleChainType.CORE)) {
                 ruleChainName = ruleChain.getName();
                 List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
                 log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
@@ -224,7 +221,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 if (targetCtx != null) {
                     log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
                     pushMsgToNode(targetCtx, msg, "");
-                    pushUpdatesToEdges(msg);
                 } else {
                     log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
                     msg.getCallback().onSuccess();
@@ -352,30 +348,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             log.error("[{}][{}] RuleNodeCtx is empty", entityId, ruleChainName);
             msg.getCallback().onFailure(new RuleEngineException("Rule Node CTX is empty"));
         }
-    }
-
-    private void pushUpdatesToEdges(TbMsg msg) {
-        switch (msg.getType()) {
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_UPDATED:
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-            case DataConstants.ALARM_ACK:
-            case DataConstants.ALARM_CLEAR:
-                edgeService.pushEventToEdge(tenantId, msg, new FutureCallback<Void>() {
-                    @Override
-                    public void onSuccess(@Nullable Void aVoid) {
-                        log.debug("Event saved successfully!");
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.debug("Failure during event save", t);
-                    }
-                });
-        }
-
     }
 
     @Override

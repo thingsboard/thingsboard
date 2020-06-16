@@ -56,7 +56,7 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
     }
 
     protected void initRuleChains() {
-        for (RuleChain ruleChain : new PageDataIterable<>(link -> ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, link), ContextAwareActor.ENTITY_PACK_LIMIT)) {
+        for (RuleChain ruleChain : new PageDataIterable<>(link -> ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, link), ContextAwareActor.ENTITY_PACK_LIMIT)) {
             RuleChainId ruleChainId = ruleChain.getId();
             log.debug("[{}|{}] Creating rule chain actor", ruleChainId.getEntityType(), ruleChain.getId());
             //TODO: remove this cast making UUIDBased subclass of EntityId an interface and vice versa.
@@ -67,7 +67,7 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
     }
 
     protected void visit(RuleChain entity, ActorRef actorRef) {
-        if (entity != null && entity.isRoot() && entity.getType().equals(RuleChainType.SYSTEM)) {
+        if (entity != null && entity.isRoot() && entity.getType().equals(RuleChainType.CORE)) {
             rootChain = entity;
             rootChainActor = actorRef;
         }

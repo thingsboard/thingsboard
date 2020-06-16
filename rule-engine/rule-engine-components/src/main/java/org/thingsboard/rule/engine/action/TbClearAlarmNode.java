@@ -46,7 +46,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeClearAlarmConfig",
         icon = "notifications_off",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfiguration> {
 

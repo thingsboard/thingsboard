@@ -41,7 +41,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "Message type can be accessed via <code>msgType</code> property.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeSwitchConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbJsSwitchNode implements TbNode {
 

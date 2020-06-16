@@ -289,7 +289,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public RuleChain getRootTenantRuleChain(TenantId tenantId) {
-        return getRootRuleChainByType(tenantId, RuleChainType.SYSTEM);
+        return getRootRuleChainByType(tenantId, RuleChainType.CORE);
     }
 
     private RuleChain getRootRuleChainByType(TenantId tenantId, RuleChainType type) {
@@ -566,7 +566,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                         throw new DataValidationException("Rule chain name should be specified!");
                     }
                     if (ruleChain.getType() == null) {
-                        ruleChain.setType(RuleChainType.SYSTEM);
+                        ruleChain.setType(RuleChainType.CORE);
                     }
                     if (ruleChain.getTenantId() == null || ruleChain.getTenantId().isNullUid()) {
                         throw new DataValidationException("Rule chain should be assigned to tenant!");
@@ -575,7 +575,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     if (tenant == null) {
                         throw new DataValidationException("Rule chain is referencing to non-existent tenant!");
                     }
-                    if (ruleChain.isRoot() && RuleChainType.SYSTEM.equals(ruleChain.getType())) {
+                    if (ruleChain.isRoot() && RuleChainType.CORE.equals(ruleChain.getType())) {
                         RuleChain rootRuleChain = getRootTenantRuleChain(ruleChain.getTenantId());
                         if (rootRuleChain != null && !rootRuleChain.getId().equals(ruleChain.getId())) {
                             throw new DataValidationException("Another root rule chain is present in scope of current tenant!");

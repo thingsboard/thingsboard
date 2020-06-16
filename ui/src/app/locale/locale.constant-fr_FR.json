@@ -1429,7 +1429,7 @@
         "rulechain-required": "Chaîne de règles requise",
         "rulechains": "Chaînes de règles",
         "select-rulechain": "Sélectionner la chaîne de règles",
-        "system-rulechains": "Chaînes de règles du système",
+        "core-rulechains": "Chaînes de règles fondamentales",
         "edge-rulechains": "Chaînes de règles de la bordure",
         "set-root": "Rend la chaîne de règles racine (root) ",
         "set-root-rulechain-text": "Après la confirmation, la chaîne de règles deviendra racine (root) et gérera tous les messages de transport entrants.",

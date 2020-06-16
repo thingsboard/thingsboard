@@ -68,7 +68,7 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
                 "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbGetTelemetryNode implements TbNode {
 

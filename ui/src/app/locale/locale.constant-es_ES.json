@@ -1410,7 +1410,7 @@
     "rulechain": {
         "rulechain": "Cadena de reglas",
         "rulechains": "Cadenas de reglas",
-        "system-rulechains": "Cadenas de reglas del sistema",
+        "core-rulechains": "Cadenas de reglas centrales",
         "edge-rulechains": "Cadenas de reglas de borde",
         "root": "Raíz",
         "delete": "Eliminar cadena de reglas",

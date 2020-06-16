@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.dao.service.sql;
 
-public enum EdgeQueueEntityType {
-    DASHBOARD, ASSET, DEVICE, ENTITY_VIEW, ALARM, RULE_CHAIN, RULE_CHAIN_METADATA, EDGE, USER, CUSTOMER, RELATION
+import org.thingsboard.server.dao.service.BaseEdgeEventServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+
+@DaoSqlTest
+public class EdgeEventServiceSqlTest extends BaseEdgeEventServiceTest {
 }

@@ -356,6 +356,14 @@ message FromDeviceRPCResponseProto {
 message EdgeNotificationMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
+  string edgeEventType = 3;
+  string edgeEventAction = 4;
+  int64 entityIdMSB = 5;
+  int64 entityIdLSB = 6;
+  string entityType = 7;
+  string entityBody = 8;
+  PostTelemetryMsg postTelemetryMsg = 9;
+  PostAttributeMsg postAttributesMsg = 10;
 }
 
 /**

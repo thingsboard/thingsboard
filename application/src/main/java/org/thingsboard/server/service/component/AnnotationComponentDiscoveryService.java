@@ -116,7 +116,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     private void putComponentIntoMaps(ComponentType type, RuleNode ruleNodeAnnotation, ComponentDescriptor component) {
-        if (ruleChainTypeContainsArray(RuleChainType.SYSTEM, ruleNodeAnnotation.ruleChainTypes())) {
+        if (ruleChainTypeContainsArray(RuleChainType.CORE, ruleNodeAnnotation.ruleChainTypes())) {
             systemComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
         }
         if (ruleChainTypeContainsArray(RuleChainType.EDGE, ruleNodeAnnotation.ruleChainTypes())) {
@@ -225,7 +225,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     @Override
     public List<ComponentDescriptor> getComponents(Set<ComponentType> types, RuleChainType ruleChainType) {
-        if (RuleChainType.SYSTEM.equals(ruleChainType)) {
+        if (RuleChainType.CORE.equals(ruleChainType)) {
             return getComponents(types, systemComponentsMap);
         } else if (RuleChainType.EDGE.equals(ruleChainType)) {
             return getComponents(types, edgeComponentsMap);

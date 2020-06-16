@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -134,7 +135,7 @@ public class RuleChainController extends BaseController {
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 
-            if (RuleChainType.SYSTEM.equals(savedRuleChain.getType())) {
+            if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
                 tbClusterService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
                         created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             }
@@ -142,6 +143,12 @@ public class RuleChainController extends BaseController {
             logEntityAction(savedRuleChain.getId(), savedRuleChain,
                     null,
                     created ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
+                sendNotificationMsgToEdgeService(savedRuleChain.getTenantId(),
+                        savedRuleChain.getId(), EdgeEventType.RULE_CHAIN,
+                        savedRuleChain.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+            }
 
             return savedRuleChain;
         } catch (Exception e) {
@@ -209,13 +216,19 @@ public class RuleChainController extends BaseController {
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
 
-            if (RuleChainType.SYSTEM.equals(ruleChain.getType())) {
+            if (RuleChainType.CORE.equals(ruleChain.getType())) {
                 tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
             }
 
             logEntityAction(ruleChain.getId(), ruleChain,
                     null,
                     ActionType.UPDATED, null, ruleChainMetaData);
+
+            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                sendNotificationMsgToEdgeService(ruleChain.getTenantId(),
+                        ruleChain.getId(), EdgeEventType.RULE_CHAIN,
+                        ActionType.UPDATED);
+            }
 
             return savedRuleChainMetaData;
         } catch (Exception e) {
@@ -243,7 +256,7 @@ public class RuleChainController extends BaseController {
                 RuleChainType type = RuleChainType.valueOf(typeStr);
                 return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, type, pageLink));
             } else {
-                return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink));
+                return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -267,7 +280,7 @@ public class RuleChainController extends BaseController {
 
             referencingRuleChainIds.remove(ruleChain.getId());
 
-            if (RuleChainType.SYSTEM.equals(ruleChain.getType())) {
+            if (RuleChainType.CORE.equals(ruleChain.getType())) {
                 referencingRuleChainIds.forEach(referencingRuleChainId ->
                         tbClusterService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
 
@@ -277,6 +290,12 @@ public class RuleChainController extends BaseController {
             logEntityAction(ruleChainId, ruleChain,
                     null,
                     ActionType.DELETED, null, strRuleChainId);
+
+            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                sendNotificationMsgToEdgeService(ruleChain.getTenantId(),
+                        ruleChain.getId(), EdgeEventType.RULE_CHAIN,
+                        ActionType.DELETED);
+            }
 
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.RULE_CHAIN),
@@ -407,6 +426,8 @@ public class RuleChainController extends BaseController {
                     null,
                     ActionType.ASSIGNED_TO_EDGE, null, strRuleChainId, strEdgeId, edge.getName());
 
+            sendNotificationMsgToEdgeService(getTenantId(), savedRuleChain.getId(),
+                    EdgeEventType.RULE_CHAIN, ActionType.ASSIGNED_TO_EDGE);
 
             return savedRuleChain;
         } catch (Exception e) {
@@ -437,6 +458,9 @@ public class RuleChainController extends BaseController {
             logEntityAction(ruleChainId, ruleChain,
                     null,
                     ActionType.UNASSIGNED_FROM_EDGE, null, strRuleChainId, edge.getId().toString(), edge.getName());
+
+            sendNotificationMsgToEdgeService(getTenantId(), savedRuleChain.getId(),
+                    EdgeEventType.RULE_CHAIN, ActionType.UNASSIGNED_FROM_EDGE);
 
             return savedRuleChain;
         } catch (Exception e) {

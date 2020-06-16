@@ -58,7 +58,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "content_copy",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbCopyAttributesToEntityViewNode implements TbNode {
 

@@ -162,9 +162,9 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'settings_ethernet',
                             pages: [
                                 {
-                                    name: 'rulechain.system-rulechains',
+                                    name: 'rulechain.core-rulechains',
                                     type: 'link',
-                                    state: 'home.ruleChains.system',
+                                    state: 'home.ruleChains.core',
                                     icon: 'settings_ethernet'
                                 },
                                 {
@@ -229,9 +229,9 @@ function Menu(userService, $state, $rootScope) {
                             name: 'rulechain.management',
                             places: [
                                 {
-                                    name: 'rulechain.system-rulechains',
+                                    name: 'rulechain.core-rulechains',
                                     icon: 'settings_ethernet',
-                                    state: 'home.ruleChains.system'
+                                    state: 'home.ruleChains.core'
                                 },
                                 {
                                     name: 'rulechain.edge-rulechains',

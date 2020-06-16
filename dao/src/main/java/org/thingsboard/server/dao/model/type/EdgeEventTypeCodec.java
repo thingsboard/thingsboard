@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.dao.model.type;
 
-import lombok.Data;
+import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 
-@Data
-public class EdgeQueueEntry {
-    private String type;
-    private EdgeQueueEntityType entityType;
-    private String data;
+public class EdgeEventTypeCodec extends EnumNameCodec<EdgeEventType> {
+
+    public EdgeEventTypeCodec() {
+        super(EdgeEventType.class);
+    }
+
 }

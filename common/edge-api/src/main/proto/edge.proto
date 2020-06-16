@@ -19,6 +19,8 @@ option java_package = "org.thingsboard.server.gen.edge";
 option java_multiple_files = true;
 option java_outer_classname = "EdgeProtos";
 
+import "queue.proto";
+
 package edge;
 
 // Interface exported by the ThingsBoard Edge Transport.
@@ -94,15 +96,16 @@ enum UpdateMsgType {
   ENTITY_DELETED_RPC_MESSAGE = 2;
   ALARM_ACK_RPC_MESSAGE = 3;
   ALARM_CLEAR_RPC_MESSAGE = 4;
-  RULE_CHAIN_CUSTOM_MESSAGE = 5;
-  DEVICE_CONFLICT_RPC_MESSAGE = 6;
+  DEVICE_CONFLICT_RPC_MESSAGE = 5;
 }
 
 message EntityDataProto {
   string entityName = 1;
   int64 entityIdMSB = 2;
   int64 entityIdLSB = 3;
-  bytes tbMsg = 4;
+  transport.PostTelemetryMsg postTelemetryMsg = 4;
+  transport.PostAttributeMsg postAttributesMsg = 5;
+  // transport.ToDeviceRpcRequestMsg ???
 }
 
 message RuleChainUpdateMsg {

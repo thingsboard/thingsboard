@@ -125,6 +125,8 @@ public class AlarmController extends BaseController {
             alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, ackTs).get();
             alarm.setAckTs(ackTs);
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
+
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.ALARM_ACK);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -142,6 +144,8 @@ public class AlarmController extends BaseController {
             alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, clearTs).get();
             alarm.setClearTs(clearTs);
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
+
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.ALARM_CLEAR);
         } catch (Exception e) {
             throw handleException(e);
         }

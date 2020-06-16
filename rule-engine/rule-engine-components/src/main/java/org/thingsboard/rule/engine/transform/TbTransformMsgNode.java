@@ -39,7 +39,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "All fields in resulting object are optional and will be taken from original message if not specified.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbTransformationNodeScriptConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 

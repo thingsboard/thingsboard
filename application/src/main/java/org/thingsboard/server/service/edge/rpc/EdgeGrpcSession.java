@@ -33,14 +33,14 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeQueueEntry;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -63,7 +63,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
@@ -169,36 +168,28 @@ public final class EdgeGrpcSession implements Closeable {
     void processHandleMessages() throws ExecutionException, InterruptedException {
         Long queueStartTs = getQueueStartTs().get();
         TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), queueStartTs, null, true);
-        TimePageData<Event> pageData;
+        TimePageData<EdgeEvent> pageData;
         UUID ifOffset = null;
         do {
-            pageData = ctx.getEdgeNotificationService().findQueueEvents(edge.getTenantId(), edge.getId(), pageLink);
+            pageData = ctx.getEdgeNotificationService().findEdgeEvents(edge.getTenantId(), edge.getId(), pageLink);
             if (isConnected() && !pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
-                for (Event event : pageData.getData()) {
-                    log.trace("[{}] Processing event [{}]", this.sessionId, event);
+                for (EdgeEvent edgeEvent : pageData.getData()) {
+                    log.trace("[{}] Processing edge event [{}]", this.sessionId, edgeEvent);
                     try {
-                        EdgeQueueEntry entry = objectMapper.treeToValue(event.getBody(), EdgeQueueEntry.class);
-                        UpdateMsgType msgType = getResponseMsgType(entry.getType());
-                        switch (msgType) {
-                            case ENTITY_DELETED_RPC_MESSAGE:
-                            case ENTITY_UPDATED_RPC_MESSAGE:
-                            case ENTITY_CREATED_RPC_MESSAGE:
-                            case ALARM_ACK_RPC_MESSAGE:
-                            case ALARM_CLEAR_RPC_MESSAGE:
-                                processEntityCRUDMessage(entry, msgType);
-                                break;
-                            case RULE_CHAIN_CUSTOM_MESSAGE:
-                                processCustomDownlinkMessage(entry);
-                                break;
+                        UpdateMsgType msgType = getResponseMsgType(ActionType.valueOf(edgeEvent.getEdgeEventAction()));
+                        if (msgType == null) {
+                            processTelemetryMessage(edgeEvent);
+                        } else {
+                            processEntityCRUDMessage(edgeEvent, msgType);
                         }
                         if (ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
-                            pushEntityAttributesToEdge(entry);
+                            pushEntityAttributesToEdge(edgeEvent);
                         }
                     } catch (Exception e) {
                         log.error("Exception during processing records from queue", e);
                     }
-                    ifOffset = event.getUuidId();
+                    ifOffset = edgeEvent.getUuidId();
                 }
             }
             if (isConnected() && pageData.hasNext()) {
@@ -222,10 +213,10 @@ public final class EdgeGrpcSession implements Closeable {
         }
     }
 
-    private void pushEntityAttributesToEdge(EdgeQueueEntry entry) throws IOException {
+    private void pushEntityAttributesToEdge(EdgeEvent edgeEvent) throws IOException {
         EntityId entityId = null;
         String entityName = null;
-        switch (entry.getEntityType()) {
+        switch (edgeEvent.getEdgeEventType()) {
             case EDGE:
                 Edge edge = objectMapper.readValue(entry.getData(), Edge.class);
                 entityId = edge.getId();
@@ -277,7 +268,7 @@ public final class EdgeGrpcSession implements Closeable {
                                 , objectMapper.writeValueAsString(entityNode));
                         log.debug("Sending donwlink entity data msg, entityName [{}], tbMsg [{}]", finalEntityName, tbMsg);
                         outputStream.onNext(ResponseMsg.newBuilder()
-                                .setDownlinkMsg(constructDownlinkEntityDataMsg(finalEntityName, finalEntityId, tbMsg))
+                                .setDownlinkMsg(constructEntityDataProtoMsg(finalEntityName, finalEntityId, tbMsg))
                                 .build());
                     } catch (Exception e) {
                         log.error("[{}] Failed to send attribute updates to the edge", edge.getName(), e);
@@ -290,12 +281,12 @@ public final class EdgeGrpcSession implements Closeable {
         }
     }
 
-    private void processCustomDownlinkMessage(EdgeQueueEntry entry) throws IOException {
-        log.trace("Executing processCustomDownlinkMessage, entry [{}]", entry);
+    private void processTelemetryMessage(EdgeEvent edgeEvent) throws IOException {
+        log.trace("Executing processTelemetryMessage, edgeEvent [{}]", edgeEvent);
         TbMsg tbMsg = TbMsg.fromBytes(Base64.decodeBase64(entry.getData()), TbMsgCallback.EMPTY);
         String entityName = null;
         EntityId entityId = null;
-        switch (entry.getEntityType()) {
+        switch (edgeEvent.getEdgeEventType()) {
             case DEVICE:
                 Device device = ctx.getDeviceService().findDeviceById(edge.getTenantId(), new DeviceId(tbMsg.getOriginator().getId()));
                 entityName = device.getName();
@@ -316,14 +307,14 @@ public final class EdgeGrpcSession implements Closeable {
         if (entityName != null && entityId != null) {
             log.debug("Sending downlink entity data msg, entityName [{}], tbMsg [{}]", entityName, tbMsg);
             outputStream.onNext(ResponseMsg.newBuilder()
-                    .setDownlinkMsg(constructDownlinkEntityDataMsg(entityName, entityId, tbMsg))
+                    .setDownlinkMsg(constructEntityDataProtoMsg(entityName, entityId, tbMsg))
                     .build());
         }
     }
 
-    private void processEntityCRUDMessage(EdgeQueueEntry entry, UpdateMsgType msgType) throws java.io.IOException {
-        log.trace("Executing processEntityCRUDMessage, entry [{}], msgType [{}]", entry, msgType);
-        switch (entry.getEntityType()) {
+    private void processEntityCRUDMessage(EdgeEvent edgeEvent, UpdateMsgType msgType) throws java.io.IOException {
+        log.trace("Executing processEntityCRUDMessage, edgeEvent [{}], msgType [{}]", edgeEvent, msgType);
+        switch (edgeEvent.getEdgeEventType()) {
             case EDGE:
                 Edge edge = objectMapper.readValue(entry.getData(), Edge.class);
                 onEdgeUpdated(msgType, edge);
@@ -476,33 +467,30 @@ public final class EdgeGrpcSession implements Closeable {
                 .build());
     }
 
-    private UpdateMsgType getResponseMsgType(String msgType) {
-        if (msgType.equals(SessionMsgType.POST_TELEMETRY_REQUEST.name()) ||
-                msgType.equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ||
-                msgType.equals(DataConstants.ATTRIBUTES_UPDATED) ||
-                msgType.equals(DataConstants.ATTRIBUTES_DELETED)) {
-            return UpdateMsgType.RULE_CHAIN_CUSTOM_MESSAGE;
-        } else {
-            switch (msgType) {
-                case DataConstants.ENTITY_UPDATED:
-                    return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
-                case DataConstants.ENTITY_CREATED:
-                case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-                    return ENTITY_CREATED_RPC_MESSAGE;
-                case DataConstants.ENTITY_DELETED:
-                case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                    return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
-                case DataConstants.ALARM_ACK:
-                    return UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
-                case DataConstants.ALARM_CLEAR:
-                    return UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
-                default:
-                    throw new RuntimeException("Unsupported msgType [" + msgType + "]");
-            }
+    private UpdateMsgType getResponseMsgType(ActionType actionType) {
+        switch (actionType) {
+            case ADDED:
+                return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
+            case UPDATED:
+            case ASSIGNED_TO_EDGE:
+                return ENTITY_CREATED_RPC_MESSAGE;
+            case DELETED:
+            case UNASSIGNED_FROM_EDGE:
+                return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+            case ALARM_ACK:
+                return UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
+            case ALARM_CLEAR:
+                return UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
+            case ATTRIBUTES_UPDATED:
+            case ATTRIBUTES_DELETED:
+            case TIMESERIES_DELETED:
+                return null;
+            default:
+                throw new RuntimeException("Unsupported actionType [" + actionType + "]");
         }
     }
 
-    private DownlinkMsg constructDownlinkEntityDataMsg(String entityName, EntityId entityId, TbMsg tbMsg) {
+    private DownlinkMsg constructEntityDataProtoMsg(String entityName, EntityId entityId, TbMsg tbMsg) {
         EntityDataProto entityData = EntityDataProto.newBuilder()
                 .setEntityName(entityName)
                 .setTbMsg(ByteString.copyFrom(TbMsg.toByteArray(tbMsg)))

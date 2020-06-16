@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcRequestConfig",
         icon = "call_made",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbSendRPCRequestNode implements TbNode {
 

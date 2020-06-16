@@ -41,7 +41,7 @@ import java.util.UUID;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcReplyConfig",
         icon = "call_merge",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbSendRPCReplyNode implements TbNode {
 

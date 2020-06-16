@@ -27,12 +27,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -86,6 +88,8 @@ public class AssetController extends BaseController {
 
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
 
+            sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(), EdgeEventType.ASSET, asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+
             logEntityAction(savedAsset.getId(), savedAsset,
                     savedAsset.getCustomerId(),
                     asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
@@ -112,6 +116,7 @@ public class AssetController extends BaseController {
                     asset.getCustomerId(),
                     ActionType.DELETED, null, strAssetId);
 
+            sendNotificationMsgToEdgeService(getTenantId(), assetId, EdgeEventType.ASSET, ActionType.DELETED);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET),
                     null,
@@ -354,6 +359,8 @@ public class AssetController extends BaseController {
                     savedAsset.getCustomerId(),
                     ActionType.ASSIGNED_TO_EDGE, null, strAssetId, strEdgeId, edge.getName());
 
+            sendNotificationMsgToEdgeService(getTenantId(), savedAsset.getId(), EdgeEventType.ASSET, ActionType.ASSIGNED_TO_EDGE);
+
             return  savedAsset;
         } catch (Exception e) {
 
@@ -384,6 +391,8 @@ public class AssetController extends BaseController {
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_EDGE, null, strAssetId, edge.getId().toString(), edge.getName());
+
+            sendNotificationMsgToEdgeService(getTenantId(), savedAsset.getId(), EdgeEventType.ASSET, ActionType.UNASSIGNED_FROM_EDGE);
 
             return savedAsset;
         } catch (Exception e) {

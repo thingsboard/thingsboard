@@ -1533,7 +1533,7 @@
     "rulechain": {
         "rulechain": "Rule chain",
         "rulechains": "Rule chains",
-        "system-rulechains": "System Rule chains",
+        "core-rulechains": "Core Rule chains",
         "edge-rulechains": "Edge Rule chains",
         "root": "Root",
         "delete": "Delete rule chain",
