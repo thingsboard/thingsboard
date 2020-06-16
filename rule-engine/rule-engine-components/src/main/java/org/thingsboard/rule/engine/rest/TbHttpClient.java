@@ -20,11 +20,20 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
+import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
@@ -36,7 +45,9 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +74,30 @@ class TbHttpClient {
             if (config.getMaxParallelRequestsCount() > 0) {
                 pendingFutures = new ConcurrentLinkedDeque<>();
             }
-            if (config.isUseSimpleClientHttpFactory()) {
+
+            if (config.isEnableProxy()) {
+                checkProxyHost(config.getProxyHost());
+                checkProxyPort(config.getProxyPort());
+
+                HttpAsyncClientBuilder httpAsyncClientBuilder = HttpAsyncClientBuilder.create()
+                        .setSSLHostnameVerifier(new DefaultHostnameVerifier())
+                        .setSSLContext(SSLContext.getDefault())
+                        .setProxy(new HttpHost(config.getProxyHost(), config.getProxyPort()));
+
+                if (!StringUtils.isEmpty(config.getProxyUser()) && !StringUtils.isEmpty(config.getProxyPassword())) {
+                    CredentialsProvider credsProvider = new BasicCredentialsProvider();
+                    credsProvider.setCredentials(
+                            new AuthScope(config.getProxyHost(), config.getProxyPort()),
+                            new UsernamePasswordCredentials(config.getProxyUser(), config.getProxyPassword())
+                    );
+                    httpAsyncClientBuilder.setDefaultCredentialsProvider(credsProvider);
+                }
+
+                HttpComponentsAsyncClientHttpRequestFactory requestFactory = new HttpComponentsAsyncClientHttpRequestFactory();
+                requestFactory.setAsyncClient(httpAsyncClientBuilder.build());
+                requestFactory.setReadTimeout(config.getReadTimeoutMs());
+                httpClient = new AsyncRestTemplate(requestFactory);
+            } else if (config.isUseSimpleClientHttpFactory()) {
                 httpClient = new AsyncRestTemplate();
             } else {
                 this.eventLoopGroup = new NioEventLoopGroup();
@@ -72,7 +106,7 @@ class TbHttpClient {
                 nettyFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(nettyFactory);
             }
-        } catch (SSLException e) {
+        } catch (SSLException | NoSuchAlgorithmException e) {
             throw new TbNodeException(e);
         }
     }
@@ -169,4 +203,15 @@ class TbHttpClient {
         }
     }
 
+    private static void checkProxyHost(String proxyHost) throws TbNodeException {
+        if (StringUtils.isEmpty(proxyHost)) {
+            throw new TbNodeException("Proxy host can't be empty");
+        }
+    }
+
+    private static void checkProxyPort(int proxyPort) throws TbNodeException {
+        if (proxyPort < 0 || proxyPort > 65535) {
+            throw new TbNodeException("Proxy port out of range:" + proxyPort);
+        }
+    }
 }
