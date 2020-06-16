@@ -26,7 +26,9 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -47,6 +49,8 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.security.NoSuchAlgorithmException;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -61,6 +65,7 @@ class TbHttpClient {
     private static final String STATUS_REASON = "statusReason";
     private static final String ERROR = "error";
     private static final String ERROR_BODY = "error_body";
+    private static final String ERROR_SYSTEM_PROPERTIES = "Didn't set any system proxy properties. Should be added next system proxy properties: \"http.proxyHost\" and \"http.proxyPort\" or  \"https.proxyHost\" and \"https.proxyPort\" or \"socksProxyHost\" and \"socksProxyPort\"";
 
     private final TbRestApiCallNodeConfiguration config;
 
@@ -79,22 +84,48 @@ class TbHttpClient {
                 checkProxyHost(config.getProxyHost());
                 checkProxyPort(config.getProxyPort());
 
-                HttpAsyncClientBuilder httpAsyncClientBuilder = HttpAsyncClientBuilder.create()
-                        .setSSLHostnameVerifier(new DefaultHostnameVerifier())
-                        .setSSLContext(SSLContext.getDefault())
-                        .setProxy(new HttpHost(config.getProxyHost(), config.getProxyPort()));
+                String proxyUser;
+                String proxyPassword;
 
-                if (!StringUtils.isEmpty(config.getProxyUser()) && !StringUtils.isEmpty(config.getProxyPassword())) {
-                    CredentialsProvider credsProvider = new BasicCredentialsProvider();
-                    credsProvider.setCredentials(
-                            new AuthScope(config.getProxyHost(), config.getProxyPort()),
-                            new UsernamePasswordCredentials(config.getProxyUser(), config.getProxyPassword())
-                    );
-                    httpAsyncClientBuilder.setDefaultCredentialsProvider(credsProvider);
+                CloseableHttpAsyncClient asyncClient;
+                HttpComponentsAsyncClientHttpRequestFactory requestFactory = new HttpComponentsAsyncClientHttpRequestFactory();
+
+                if (config.isUseSystemProxyProperties()) {
+                    checkSystemProxyProperties();
+
+                    asyncClient = HttpAsyncClients.createSystem();
+
+                    proxyUser = System.getProperty("tb.proxy.user");
+                    proxyPassword = System.getProperty("tb.proxy.password");
+
+                    if (useAuth(proxyUser, proxyPassword)) {
+                        Authenticator.setDefault(new Authenticator() {
+                            protected PasswordAuthentication getPasswordAuthentication() {
+                                return new PasswordAuthentication(proxyUser, proxyPassword.toCharArray());
+                            }
+                        });
+                    }
+                } else {
+                    HttpAsyncClientBuilder httpAsyncClientBuilder = HttpAsyncClientBuilder.create()
+                            .setSSLHostnameVerifier(new DefaultHostnameVerifier())
+                            .setSSLContext(SSLContext.getDefault())
+                            .setProxy(new HttpHost(config.getProxyHost(), config.getProxyPort(), config.getProxyScheme()));
+
+                    proxyUser = config.getProxyUser();
+                    proxyPassword = config.getProxyPassword();
+
+                    if (useAuth(proxyUser, proxyPassword)) {
+                        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+                        credsProvider.setCredentials(
+                                new AuthScope(config.getProxyHost(), config.getProxyPort()),
+                                new UsernamePasswordCredentials(proxyUser, proxyPassword)
+                        );
+                        httpAsyncClientBuilder.setDefaultCredentialsProvider(credsProvider);
+                    }
+                    asyncClient = httpAsyncClientBuilder.build();
                 }
 
-                HttpComponentsAsyncClientHttpRequestFactory requestFactory = new HttpComponentsAsyncClientHttpRequestFactory();
-                requestFactory.setAsyncClient(httpAsyncClientBuilder.build());
+                requestFactory.setAsyncClient(asyncClient);
                 requestFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(requestFactory);
             } else if (config.isUseSimpleClientHttpFactory()) {
@@ -109,6 +140,20 @@ class TbHttpClient {
         } catch (SSLException | NoSuchAlgorithmException e) {
             throw new TbNodeException(e);
         }
+    }
+
+    private void checkSystemProxyProperties() throws TbNodeException {
+        boolean useHttpProxy = !StringUtils.isEmpty(System.getProperty("http.proxyHost")) && !StringUtils.isEmpty(System.getProperty("http.proxyPort"));
+        boolean useHttpsProxy = !StringUtils.isEmpty(System.getProperty("https.proxyHost")) && !StringUtils.isEmpty(System.getProperty("https.proxyPort"));
+        boolean useSocksProxy = !StringUtils.isEmpty(System.getProperty("socksProxyHost")) && !StringUtils.isEmpty(System.getProperty("socksProxyPort"));
+        if (!(useHttpProxy || useHttpsProxy || useSocksProxy)) {
+            log.warn(ERROR_SYSTEM_PROPERTIES);
+            throw new TbNodeException(ERROR_SYSTEM_PROPERTIES);
+        }
+    }
+
+    private boolean useAuth(String proxyUser, String proxyPassword) {
+        return !StringUtils.isEmpty(proxyUser) && !StringUtils.isEmpty(proxyPassword);
     }
 
     void destroy() {
