@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m;
+package org.thingsboard.server.transport.lwm2m.server.secure;
 
-public class server {
+import lombok.Data;
+import org.eclipse.leshan.server.security.SecurityInfo;
+
+@Data
+public class ReadResultSecurityStore {
+    SecurityInfo securityInfo;
+    int securityMode;
 }

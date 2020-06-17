@@ -562,55 +562,50 @@ transport:
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
-    bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-    bind_port: "${LWM2M_BIND_PORT:5685}"
     timeout: "${LWM2M_TIMEOUT:10000}"
     model_folder_path: "${LWM2M_MODEL_FOLDER_PATH:}"
-    support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:false}"
-    # NO_SEC (DTLS security mode = 3)
-    no_sec_enabled: "${LWM2M_NO_SEC_ENABLED:false}"
+    support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:true}"
     secure:
+      #leshan.core (V1_1)
+      #DTLS security modes:
+      #0: Pre-Shared Key mode
+      #1: Raw Public Key mode
+      #2: Certificate mode X509
+      #3: NoSec mode  *
+      #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
+      #4: Certificate mode X509 with EST
+      dtls_mode: "${LWM2M_SECURITY_MODE:3}"
+      # Only Certificate_x509:
+      key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
+      key_store_path: "${LWM2M_KEYSTORE_PATH_SERVER:credentials/serverKeyStore.jks}"
+      key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
+      root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
+    server:
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-      bind_port: "${LWM2M_BIND_PORT:5686}"
-      # Pre-Shared Key: (DTLS security mode = 0)
-      psk:
-        enabled: "${LWM2M_PSK_ENABLED:false}"
-        server:
-          # Private Key
-          private_s: "${LWM2M_PRIVATE_S:1dae121ba406802ef07c193c1ee4df91115aabd79c1ed7f4c0ef7ef6a5449400}"
-      # Raw Public Key: server, client, bootstrap  (DTLS security mode = 1)
-      rpk:
-        enabled: "${LWM2M_RPK_ENABLED:false}"
-        server:
-          public_x: "${LWM2M_PUBLIC_X:fcc28728c123b155be410fc1c0651da374fc6ebe7f96606e90d927d188894a73}"
-          public_y: "${LWM2M_PUBLIC_Y:d2ffaa73957d76984633fc1cc54d0b763ca0559a9dff9706e9f4557dacc3f52a}"
-          private_s: "${LWM2M_SERVER_PRIVATE_S:1DAE121BA406802EF07C193C1EE4DF91115AABD79C1ED7F4C0EF7EF6A5449400}"
-        client:
-          create: "${LWM2M_CLIENT_CREATE:true}"
-          public_x: "${LWM2M_CLIENT_PUBLIC_X:89c048261979208666f2bfb188be1968fc9021c416ce12828c06f4e314c167b5}"
-          public_y: "${LWM2M_CLIENT_PUBLIC_Y:cbf1eb7587f08e01688d9ada4be859137ca49f79394bad9179326b3090967b68}"
-          public_encoded: "${LWM2M_CLIENT_PUBLIC_ENCODED:3059301306072A8648CE3D020106082A8648CE3D0301070342000489C048261979208666F2BFB188BE1968FC9021C416CE12828C06F4E314C167B5CBF1EB7587F08E01688D9ADA4BE859137CA49F79394BAD9179326B3090967B68}"
-          private_s: "${LWM2M_CLIENT_PRIVATE_S:e67b68d2aaeb6550f19d98cade3ad62b39532e02e6b422e1f7ea189dabaea5d2}"
-          private_encoded: "${LWM2M_CLIENT_PRIVATE_ENCODED:3041020100301306072A8648CE3D020106082A8648CE3D030107042730250201010420E67B68D2AAEB6550F19D98CADE3AD62B39532E02E6B422E1F7EA189DABAEA5D2}"
-      # Certificate X509  configuration server, client, bootstrap  (DTLS security mode = 2)
-      x509:
-        enabled: "${LWM2M_X509_ENABLED:true}"
-        key_store_type: "${LWM2M_X509_KEYSTORE_TYPE:JKS}"
-        root_alias: "${LWM2M_X509_ROOT_CA:rootca}"
-        bootstrap:
-          alias: "${LWM2M_X509_bootstrap_KEYSTOREALIAS:server_bootstrap}"
-        server:
-          key_store_path: "${LWM2M_X509_SERVER_KEYSTORE_PATH:credentials/serverKeyStore.jks}"
-          key_store_password: "${LWM2M_X509_SERVER_KEYSTORE_PASSWORD:server_ks_password}"
-          alias: "${LWM2M_X509_SERVER_KEYSTORE_ALIAS:server}"
-        client:
-          key_store_path: "${LWM2M_X509_CLIENT_KEYSTORE_PATH:credentials/clientKeyStore.jks}"
-          key_store_password: "${LWM2M_CLIENT_X509_KEYSTORE_PASSWORD:client_ks_password}"
-          alias: "${LWM2M_X509_CLIENT_KEYSTORE_ALIAS:client}"
-      x509_est:
-        enabled: "${LWM2M_X509_EST_ENABLED:false}"
+      bind_port: "${LWM2M_BIND_PORT:5685}"
+      secure:
+        bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
+        bind_port: "${LWM2M_BIND_PORT:5686}"
+        # Only RPK: Public & Private Key
+        public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
+        private_s: "${LWM2M_SERVER_PRIVATE_S:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
+        # Only Certificate_x509:
+        alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
+    bootstrap:
+      bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
+      bind_port: "${LWM2M_BIND_PORT:5687}"
+      secure:
+        bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
+        bind_port: "${LWM2M_BIND_PORT:5688}"
+        # Only RPK: Public & Private Key
+        public_x: "${LWM2M_SERVER_PUBLIC_X:2d46abb8f35cacb55952930f1559da60b9b0c891e5052cbd66e6e925ae85332d}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y:55bbeb93fe136d36131043ed607e0ea4de1af05973f6bf9c0a11a4129f2f7519}"
+        private_s: "${LWM2M_SERVER_PRIVATE_S:da94b0f94a64c1101ca2c0703de9a23f4deab833d10974e7d92c8cf479c700c3}"
+        # Only Certificate_x509:
+        alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:server_bootstrap}"
       # Redis
-      redis_url: ""
+    redis_url: ""
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"

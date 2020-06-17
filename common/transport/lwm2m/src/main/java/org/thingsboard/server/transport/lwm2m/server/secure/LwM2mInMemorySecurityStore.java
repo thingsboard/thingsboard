@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.adaptors;
+package org.thingsboard.server.transport.lwm2m.server.secure;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.security.InMemorySecurityStore;
@@ -23,13 +23,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.server.credentials.*;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportCtx;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider.SECURITY_MODE_DEFAULT;
+import static org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityMode.DEFAULT_MODE;
 
 @Slf4j
 @Component("LwM2mInMemorySecurityStore")
@@ -81,7 +80,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
                     public void onSuccess(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
                         String ingfosStr = msg.getCredentialsBody();
                         resultSecurityStore[0] = credentials.getSecurityInfo(msg.getDeviceInfo().getDeviceName(), ingfosStr);
-                        if (resultSecurityStore[0].getSecurityMode() < SECURITY_MODE_DEFAULT) {
+                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code) {
                             context.getSessions().put(msg.getDeviceInfo().getDeviceName(), msg);
                         }
                         latch.countDown();

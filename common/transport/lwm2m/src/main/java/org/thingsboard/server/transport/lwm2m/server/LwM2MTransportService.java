@@ -39,7 +39,7 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2mInMemorySecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
 
@@ -47,7 +47,10 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
-import static org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider.*;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_READ;
+
 
 @Service("LwM2MTransportService")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")

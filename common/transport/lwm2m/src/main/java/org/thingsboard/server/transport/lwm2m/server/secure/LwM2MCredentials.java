@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.credentials;
+package org.thingsboard.server.transport.lwm2m.server.secure;
 
 import com.google.gson.*;
 import lombok.extern.slf4j.Slf4j;
@@ -22,13 +22,17 @@ import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultSecurityStore;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+import java.security.interfaces.ECPublicKey;
 
-import static org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MProvider.*;
+import static org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityMode.PSK;
+import static org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityMode.RPK;
+import static org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityMode.X509;
+import static org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityMode.DEFAULT_MODE;
 
 @Slf4j
 @Component("LwM2MCredentials")
@@ -37,7 +41,7 @@ public class LwM2MCredentials {
 
     public ReadResultSecurityStore getSecurityInfo(String endpoint, String jsonStr) {
         ReadResultSecurityStore result = new ReadResultSecurityStore();
-        result.setSecurityMode(SECURITY_MODE_DEFAULT);
+        result.setSecurityMode(DEFAULT_MODE.code);
         JsonObject object = validateJson(jsonStr);
         if (!object.isJsonNull()) {
             if (!object.isJsonNull()) {
@@ -47,7 +51,7 @@ public class LwM2MCredentials {
                 boolean isNoSec = (!isX509 && object.has("no_sec") && !object.get("no_sec").isJsonNull()) ? true : false;
                 if (isX509) {
                     result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
-                    result.setSecurityMode(SECURITY_MODE_X509);
+                    result.setSecurityMode(X509.code);
                 } else if (isPsk) {
                     // PSK Deserialization
                     JsonObject psk = (object.get("psk").isJsonObject()) ? object.get("psk").getAsJsonObject() : null;
@@ -73,7 +77,7 @@ public class LwM2MCredentials {
                                 if (psk.has("endpoint") && psk.get("endpoint").isJsonPrimitive()) {
                                     endpoint = psk.get("endpoint").getAsString();
                                     result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, identity, key));
-                                    result.setSecurityMode(SECURITY_MODE_PSK);
+                                    result.setSecurityMode(PSK.code);
                                 }
                             }
                         }
@@ -84,8 +88,12 @@ public class LwM2MCredentials {
                         PublicKey key = null;
                         try {
                             if (rpk.has("key") && rpk.get("key").isJsonPrimitive()) {
-                                byte[] rpkkey = Hex.decodeHex(rpk.get("key").getAsString().toCharArray());
+                                byte[] rpkkey = Hex.decodeHex(rpk.get("key").getAsString().toLowerCase().toCharArray());
                                 key = SecurityUtil.publicKey.decode(rpkkey);
+                                ECPublicKey ecPublicKey = (ECPublicKey) key;
+                                log.info("params : [{}]", ecPublicKey.getParams().toString());
+                                log.info("x : [{}]", Hex.encodeHexString( ecPublicKey.getW().getAffineX().toByteArray() ));
+                                log.info("y : [{}]", Hex.encodeHexString( ecPublicKey.getW().getAffineY().toByteArray() ));
                             } else {
                                 log.error("Missing RPK key");
                             }
@@ -93,13 +101,13 @@ public class LwM2MCredentials {
                             log.error("RPK: Invalid security info content: " + e.getMessage());
                         }
                         result.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(endpoint, key));
-                        result.setSecurityMode(SECURITY_MODE_RPK);
+                        result.setSecurityMode(RPK.code);
                     }
                 } else if (isNoSec) {
                     JsonObject noSec = (object.isJsonObject()) ? object.getAsJsonObject() : null;
                     if (noSec.has("no_sec") && noSec.get("no_sec").isJsonPrimitive() && noSec.get("no_sec").getAsBoolean()) {
                         result.setSecurityInfo(null);
-                        result.setSecurityMode(SECURITY_MODE_NO_SEC);
+                        result.setSecurityMode(NO_SEC.code);
                     }
                     else {
                         log.error("[{}] no sec error", endpoint);
