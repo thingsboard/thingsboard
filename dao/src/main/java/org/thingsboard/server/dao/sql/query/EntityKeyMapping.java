@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityFilter;
+import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.FilterPredicateType;
@@ -43,6 +45,7 @@ import java.util.stream.Stream;
 public class EntityKeyMapping {
 
     public static final Map<String, String> entityFieldColumnMap = new HashMap<>();
+
     static {
         entityFieldColumnMap.put("createdTime", "id");
         entityFieldColumnMap.put("name", "name");
@@ -107,14 +110,20 @@ public class EntityKeyMapping {
         }
     }
 
-    public String toLatestJoin(EntityType entityType) {
+    public String toLatestJoin(EntityFilter entityFilter, EntityType entityType) {
+        String entityTypeStr;
+        if (entityFilter.getType().equals(EntityFilterType.RELATIONS_QUERY)) {
+            entityTypeStr = "entities.entity_type";
+        } else {
+            entityTypeStr = "'" + entityType.name() + "'";
+        }
         String join = hasFilter() ? "left join" : "left outer join";
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
             // TODO:
             throw new RuntimeException("Not implemented!");
         } else {
-            String query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type='%s' AND %s.attribute_key='%s'",
-                    join, alias, alias, alias, entityType.name(), alias, entityKey.getKey());
+            String query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key='%s'",
+                    join, alias, alias, alias, entityTypeStr, alias, entityKey.getKey());
             if (!entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
                 String scope;
                 if (entityKey.getType().equals(EntityKeyType.CLIENT_ATTRIBUTE)) {
@@ -135,8 +144,8 @@ public class EntityKeyMapping {
                 Collectors.joining(", "));
     }
 
-    public static String buildLatestJoins(EntityType entityType, List<EntityKeyMapping> latestMappings) {
-        return latestMappings.stream().map(mapping -> mapping.toLatestJoin(entityType)).collect(
+    public static String buildLatestJoins(EntityFilter entityFilter, EntityType entityType, List<EntityKeyMapping> latestMappings) {
+        return latestMappings.stream().map(mapping -> mapping.toLatestJoin(entityFilter, entityType)).collect(
                 Collectors.joining(" "));
     }
 
@@ -207,7 +216,7 @@ public class EntityKeyMapping {
             if (mapping.getEntityKey().getType().equals(EntityKeyType.ENTITY_FIELD)) {
                 index++;
             } else {
-                index +=2;
+                index += 2;
             }
         }
         if (!filters.isEmpty()) {
@@ -220,7 +229,7 @@ public class EntityKeyMapping {
                 mapping.setSelection(false);
                 mapping.setEntityKey(filterField);
                 mappings.add(mapping);
-                index +=1;
+                index += 1;
             }
         }
 
@@ -253,7 +262,7 @@ public class EntityKeyMapping {
 
     private String buildPredicateQuery(String alias, EntityKey key, KeyFilterPredicate predicate) {
         if (predicate.getType().equals(FilterPredicateType.COMPLEX)) {
-            return this.buildComplexPredicateQuery(alias, key, (ComplexFilterPredicate)predicate);
+            return this.buildComplexPredicateQuery(alias, key, (ComplexFilterPredicate) predicate);
         } else {
             return this.buildSimplePredicateQuery(alias, key, predicate);
         }
@@ -270,10 +279,10 @@ public class EntityKeyMapping {
         if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
             if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
                 String column = entityFieldColumnMap.get(key.getKey());
-                return this.buildNumericPredicateQuery(alias + "." + column, (NumericFilterPredicate)predicate);
+                return this.buildNumericPredicateQuery(alias + "." + column, (NumericFilterPredicate) predicate);
             } else {
-                String longQuery = this.buildNumericPredicateQuery(alias + ".long_v", (NumericFilterPredicate)predicate);
-                String doubleQuery = this.buildNumericPredicateQuery(alias + ".dbl_v", (NumericFilterPredicate)predicate);
+                String longQuery = this.buildNumericPredicateQuery(alias + ".long_v", (NumericFilterPredicate) predicate);
+                String doubleQuery = this.buildNumericPredicateQuery(alias + ".dbl_v", (NumericFilterPredicate) predicate);
                 return String.format("(%s or %s)", longQuery, doubleQuery);
             }
         } else {
@@ -285,9 +294,9 @@ public class EntityKeyMapping {
             }
             String field = alias + "." + column;
             if (predicate.getType().equals(FilterPredicateType.STRING)) {
-                return this.buildStringPredicateQuery(field, (StringFilterPredicate)predicate);
+                return this.buildStringPredicateQuery(field, (StringFilterPredicate) predicate);
             } else {
-                return this.buildBooleanPredicateQuery(field, (BooleanFilterPredicate)predicate);
+                return this.buildBooleanPredicateQuery(field, (BooleanFilterPredicate) predicate);
             }
         }
     }
