@@ -91,8 +91,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                     List<Response> responses = responseTemplate.poll(pollInterval);
                     if (responses.size() > 0) {
                         log.trace("Polling responses completed, consumer records count [{}]", responses.size());
-                    } else {
-                        continue;
                     }
                     responses.forEach(response -> {
                         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
