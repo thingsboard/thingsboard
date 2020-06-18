@@ -254,7 +254,8 @@ CREATE TABLE IF NOT EXISTS entity_view (
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_client_registration (
-    registration_id                 varchar(255) NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
+    id                              varchar(31) NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
+    registration_id                 varchar(255) UNIQUE,
     mapper_config_id                varchar(31),
     client_id                       varchar(255),
     client_secret                   varchar(255),
