@@ -26,7 +26,9 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.server.mqtt.rpc.sql.*Test", "org.thingsboard.server.mqtt.telemetry.sql.*Test"})
+        "org.thingsboard.server.mqtt.rpc.sql.*Test",
+        "org.thingsboard.server.mqtt.telemetry.sql.*Test"
+})
 public class MqttSqlTestSuite {
 
     @ClassRule

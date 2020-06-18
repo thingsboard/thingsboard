@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
-import akka.actor.ActorContext;
-import akka.actor.ActorRef;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActorCtx;
+import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,13 +34,13 @@ import org.thingsboard.server.common.msg.queue.RuleNodeException;
 public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNodeId> {
 
     private final String ruleChainName;
-    private final ActorRef self;
+    private final TbActorRef self;
     private RuleNode ruleNode;
     private TbNode tbNode;
     private DefaultTbContext defaultCtx;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, String ruleChainName, RuleNodeId ruleNodeId, ActorSystemContext systemContext
-            , ActorRef parent, ActorRef self) {
+            , TbActorRef parent, TbActorRef self) {
         super(systemContext, tenantId, ruleNodeId);
         this.ruleChainName = ruleChainName;
         this.self = self;
@@ -49,7 +49,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void start(ActorContext context) throws Exception {
+    public void start(TbActorCtx context) throws Exception {
         tbNode = initComponent(ruleNode);
         if (tbNode != null) {
             state = ComponentLifecycleState.ACTIVE;
@@ -57,7 +57,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void onUpdate(ActorContext context) throws Exception {
+    public void onUpdate(TbActorCtx context) throws Exception {
         RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         boolean restartRequired = state != ComponentLifecycleState.ACTIVE ||
                 !(ruleNode.getType().equals(newRuleNode.getType()) && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
@@ -72,11 +72,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void stop(ActorContext context) {
+    public void stop(TbActorCtx context) {
         if (tbNode != null) {
             tbNode.destroy();
+            state = ComponentLifecycleState.SUSPENDED;
         }
-        context.stop(self);
     }
 
     @Override

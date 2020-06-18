@@ -35,7 +35,6 @@
     </appender>
 
     <logger name="org.thingsboard.server" level="INFO" />
-    <logger name="akka" level="INFO" />
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 
     <root level="INFO">
