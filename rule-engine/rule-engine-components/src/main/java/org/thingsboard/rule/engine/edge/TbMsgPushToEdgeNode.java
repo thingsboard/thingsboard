@@ -70,34 +70,23 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (EntityType.DEVICE.equals(msg.getOriginator().getEntityType()) ||
-                EntityType.DEVICE.equals(msg.getOriginator().getEntityType()) ||
-        EntityType.DEVICE.equals(msg.getOriginator().getEntityType()) ||
-                EntityType.DEVICE.equals(msg.getOriginator().getEntityType())) {
-            if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msg.getType()) ||
-                    SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msg.getType()) ||
-                    DataConstants.ATTRIBUTES_UPDATED.equals(msg.getType()) ||
-                    DataConstants.ATTRIBUTES_DELETED.equals(msg.getType())) {
+        if (DataConstants.EDGE_MSG_SOURCE.equalsIgnoreCase(msg.getMetaData().getValue(DataConstants.MSG_SOURCE_KEY))) {
+            log.debug("Ignoring msg from the cloud, msg [{}]", msg);
+            return;
+        }
+        if (isSupportedOriginator(msg.getOriginator().getEntityType())) {
+            if (isSupportedMsgType(msg.getType())) {
                 ListenableFuture<EdgeId> getEdgeIdFuture = getEdgeIdByOriginatorId(ctx, ctx.getTenantId(), msg.getOriginator());
                 Futures.transform(getEdgeIdFuture, edgeId -> {
                     EdgeEventType edgeEventTypeByEntityType = ctx.getEdgeEventService().getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
                     if (edgeEventTypeByEntityType == null) {
                         log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
-                        ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '"+ msg.getOriginator().getEntityType() + "'"));
-                    }
-                    ActionType actionType;
-                    if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msg.getType())) {
-                        actionType = ActionType.TIMESERIES_UPDATED;
-                    } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msg.getType()) ||
-                            DataConstants.ATTRIBUTES_UPDATED.equals(msg.getType())) {
-                        actionType = ActionType.ATTRIBUTES_UPDATED;
-                    } else {
-                        actionType = ActionType.ATTRIBUTES_DELETED;
+                        ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
                     }
                     EdgeEvent edgeEvent = new EdgeEvent();
                     edgeEvent.setTenantId(ctx.getTenantId());
                     edgeEvent.setEdgeId(edgeId);
-                    edgeEvent.setEdgeEventAction(actionType.name());
+                    edgeEvent.setEdgeEventAction(getActionTypeByMsgType(msg.getType()).name());
                     edgeEvent.setEntityId(msg.getOriginator().getId());
                     edgeEvent.setEdgeEventType(edgeEventTypeByEntityType);
                     edgeEvent.setEntityBody(json.valueToTree(msg.getData()));
@@ -123,6 +112,42 @@ public class TbMsgPushToEdgeNode implements TbNode {
         } else {
             log.debug("Unsupported originator type {}", msg.getOriginator().getEntityType());
             ctx.tellFailure(msg, new RuntimeException("Unsupported originator type '" + msg.getOriginator().getEntityType() + "'"));
+        }
+    }
+
+    private ActionType getActionTypeByMsgType(String msgType) {
+        ActionType actionType;
+        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)) {
+            actionType = ActionType.TIMESERIES_UPDATED;
+        } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)
+                || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
+            actionType = ActionType.ATTRIBUTES_UPDATED;
+        } else {
+            actionType = ActionType.ATTRIBUTES_DELETED;
+        }
+        return actionType;
+    }
+
+    private boolean isSupportedOriginator(EntityType entityType) {
+        switch (entityType) {
+            case DEVICE:
+            case ASSET:
+            case ENTITY_VIEW:
+            case DASHBOARD:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isSupportedMsgType(String msgType) {
+        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
+                || SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)
+                || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)
+                || DataConstants.ATTRIBUTES_DELETED.equals(msgType)) {
+            return true;
+        } else {
+            return false;
         }
     }
 

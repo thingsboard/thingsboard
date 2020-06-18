@@ -2,7 +2,7 @@
   "ruleChain": {
     "additionalInfo": null,
     "name": "Thermostat Alarms",
-    "type": "SYSTEM",
+    "type": "CORE",
     "firstRuleNodeId": null,
     "root": false,
     "debugMode": false,

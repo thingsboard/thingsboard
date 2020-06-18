@@ -2,7 +2,7 @@
   "ruleChain": {
     "additionalInfo": null,
     "name": "Root Rule Chain",
-    "type": "SYSTEM",
+    "type": "CORE",
     "firstRuleNodeId": null,
     "root": true,
     "debugMode": false,

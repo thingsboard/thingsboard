@@ -15,29 +15,25 @@
  */
 package org.thingsboard.server.service.edge;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -46,29 +42,28 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleChainType;
-import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Service
 @TbCoreComponent
@@ -81,22 +76,19 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private EdgeService edgeService;
 
     @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private AssetService assetService;
-
-    @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
     private RuleChainService ruleChainService;
+
+    @Autowired
+    private AlarmService alarmService;
 
     @Autowired
     private RelationService relationService;
 
     @Autowired
     private EdgeEventService edgeEventService;
+
+    @Autowired
+    private DbCallbackExecutorService dbCallbackExecutorService;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -121,315 +113,160 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws IOException {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = edgeService.saveEdge(edge);
-        RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
-        saveEventToEdgeQueue(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, DataConstants.ENTITY_UPDATED, mapper.writeValueAsString(ruleChain), new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void aVoid) {
-                log.debug("Event saved successfully!");
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.debug("Failure during event save", t);
-            }
-        });
+        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, ActionType.UPDATED, ruleChainId, null);
         return savedEdge;
     }
 
-    private void saveEventToEdgeQueue(TenantId tenantId, EdgeId edgeId, EdgeEventType entityType, String type, String data, FutureCallback<Void> callback) throws IOException {
-        log.debug("Pushing single event to edge queue. tenantId [{}], edgeId [{}], entityType [{}], type[{}], data [{}]", tenantId, edgeId, entityType, type, data);
-
-//        EdgeEQueueEntry queueEntry = new EdgeQueueEntry();
-//        queueEntry.setEntityType(entityType);
-//        queueEntry.setType(type);
-//        queueEntry.setData(data);
+    private void saveEdgeEvent(TenantId tenantId,
+                               EdgeId edgeId,
+                               EdgeEventType edgeEventType,
+                               ActionType edgeEventAction,
+                               EntityId entityId,
+                               JsonNode entityBody) {
+        log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], edgeEventType [{}], edgeEventAction[{}], entityId [{}], entityBody [{}]",
+                tenantId, edgeId, edgeEventType, edgeEventAction, entityId, entityBody);
 
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setTenantId(tenantId);
-//        event.setType(DataConstants.EDGE_QUEUE_EVENT_TYPE);
-//        event.setBody(mapper.valueToTree(queueEntry));
-        ListenableFuture<EdgeEvent> saveFuture = edgeEventService.saveAsync(edgeEvent);
-
-        addMainCallback(saveFuture, callback);
-    }
-
-    private void addMainCallback(ListenableFuture<EdgeEvent> saveFuture, final FutureCallback<Void> callback) {
-        Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
-            @Override
-            public void onSuccess(@Nullable EdgeEvent result) {
-                callback.onSuccess(null);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        }, tsCallBackExecutor);
+        edgeEvent.setEdgeEventType(edgeEventType);
+        edgeEvent.setEdgeEventAction(edgeEventAction.name());
+        if (entityId != null) {
+            edgeEvent.setEntityId(entityId.getId());
+        }
+        edgeEvent.setEntityBody(entityBody);
+        edgeEventService.saveAsync(edgeEvent);
     }
 
     @Override
     public void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {
-//        if (tbMsg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name()) ||
-//                tbMsg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ||
-//                tbMsg.getType().equals(DataConstants.ATTRIBUTES_UPDATED) ||
-//                tbMsg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
-//            processCustomTbMsg(tenantId, tbMsg, callback);
-//        } else {
-//            try {
-//                switch (tbMsg.getOriginator().getEntityType()) {
-//                    case EDGE:
-//                        processEdge(tenantId, tbMsg, callback);
-//                        break;
-//                    case ASSET:
-//                        processAsset(tenantId, tbMsg, callback);
-//                        break;
-//                    case DEVICE:
-//                        processDevice(tenantId, tbMsg, callback);
-//                        break;
-//                    case DASHBOARD:
-//                        processDashboard(tenantId, tbMsg, callback);
-//                        break;
-//                    case RULE_CHAIN:
-//                        processRuleChain(tenantId, tbMsg, callback);
-//                        break;
-//                    case ENTITY_VIEW:
-//                        processEntityView(tenantId, tbMsg, callback);
-//                        break;
-//                    case ALARM:
-//                        processAlarm(tenantId, tbMsg, callback);
-//                        break;
-//                    default:
-//                        log.debug("Entity type [{}] is not designed to be pushed to edge", tbMsg.getOriginator().getEntityType());
-//                }
-//            } catch (IOException e) {
-//                log.error("Can't push to edge updates, entity type [{}], data [{}]", tbMsg.getOriginator().getEntityType(), tbMsg.getData(), e);
-//            }
-//        }
-    }
-
-
-    private void processCustomTbMsg(TenantId tenantId, TbMsg tbMsg, FutureCallback<Void> callback) {
-        ListenableFuture<EdgeId> edgeIdFuture = getEdgeIdByOriginatorId(tenantId, tbMsg.getOriginator());
-        Futures.transform(edgeIdFuture, edgeId -> {
-            EdgeEventType edgeEventType = getEdgeQueueTypeByEntityType(tbMsg.getOriginator().getEntityType());
-            if (edgeId != null && edgeEventType != null) {
-                try {
-                    saveEventToEdgeQueue(tenantId, edgeId, edgeEventType, tbMsg.getType(), Base64.encodeBase64String(TbMsg.toByteArray(tbMsg)), callback);
-                } catch (IOException e) {
-                    log.error("Error while saving custom tbMsg into Edge Queue", e);
-                }
-            }
-            return null;
-        }, MoreExecutors.directExecutor());
-    }
-
-    private void processDevice(TenantId tenantId, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                processAssignedEntity(tenantId, tbMsg, EdgeEventType.DEVICE, callback);
-                break;
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_UPDATED:
-                Device device = mapper.readValue(tbMsg.getData(), Device.class);
-                pushEventToEdge(tenantId, device.getId(), EdgeEventType.DEVICE, tbMsg, callback);
-                break;
-            default:
-                log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
-        }
-    }
-
-    private void processEdge(TenantId tenantId, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_UPDATED:
-                // TODO: voba - handle properly edge creation
-                break;
-            default:
-                log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
-        }
-    }
-
-    private void processAsset(TenantId tenantId, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                processAssignedEntity(tenantId, tbMsg, EdgeEventType.ASSET, callback);
-                break;
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_UPDATED:
-                Asset asset = mapper.readValue(tbMsg.getData(), Asset.class);
-                pushEventToEdge(tenantId, asset.getId(), EdgeEventType.ASSET, tbMsg, callback);
-                break;
-            default:
-                log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
-        }
-    }
-
-    private void processEntityView(TenantId tenantId, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                processAssignedEntity(tenantId, tbMsg, EdgeEventType.ENTITY_VIEW, callback);
-                break;
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_UPDATED:
-                EntityView entityView = mapper.readValue(tbMsg.getData(), EntityView.class);
-                pushEventToEdge(tenantId, entityView.getId(), EdgeEventType.ENTITY_VIEW, tbMsg, callback);
-                break;
-            default:
-                log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
-        }
-    }
-
-    private void processAlarm(TenantId tenantId, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_UPDATED:
-            case DataConstants.ALARM_ACK:
-            case DataConstants.ALARM_CLEAR:
-                Alarm alarm = mapper.readValue(tbMsg.getData(), Alarm.class);
-                EdgeEventType edgeEventType = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
-                if (edgeEventType != null) {
-                    pushEventToEdge(tenantId, alarm.getOriginator(), EdgeEventType.ALARM, tbMsg, callback);
-                }
-                break;
-            default:
-                log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
-        }
-    }
-
-    private void processDashboard(TenantId tenantId, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                processAssignedEntity(tenantId, tbMsg, EdgeEventType.DASHBOARD, callback);
-                break;
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_UPDATED:
-                Dashboard dashboard = mapper.readValue(tbMsg.getData(), Dashboard.class);
-                ListenableFuture<TimePageData<Edge>> future = edgeService.findEdgesByTenantIdAndDashboardId(tenantId, dashboard.getId(), new TimePageLink(Integer.MAX_VALUE));
-                Futures.transform(future, edges -> {
-                    if (edges != null && edges.getData() != null && !edges.getData().isEmpty()) {
-                        try {
-                            for (Edge edge : edges.getData()) {
-                                pushEventToEdge(tenantId, edge.getId(), EdgeEventType.DASHBOARD, tbMsg, callback);
-                            }
-                        } catch (IOException e) {
-                            log.error("Can't push event to edge", e);
-                        }
-                    }
-                    return null;
-                }, MoreExecutors.directExecutor());
-                break;
-            default:
-                log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
-        }
-    }
-
-    private void processRuleChain(TenantId tenantId, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                processAssignedEntity(tenantId, tbMsg, EdgeEventType.RULE_CHAIN, callback);
-                break;
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_UPDATED:
-                RuleChain ruleChain = mapper.readValue(tbMsg.getData(), RuleChain.class);
-                if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                    ListenableFuture<TimePageData<Edge>> future = edgeService.findEdgesByTenantIdAndRuleChainId(tenantId, ruleChain.getId(), new TimePageLink(Integer.MAX_VALUE));
-                    Futures.transform(future, edges -> {
-                        if (edges != null && edges.getData() != null && !edges.getData().isEmpty()) {
-                            try {
-                                for (Edge edge : edges.getData()) {
-                                    pushEventToEdge(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, tbMsg, callback);
+        try {
+            EdgeEventType edgeEventType = EdgeEventType.valueOf(edgeNotificationMsg.getEdgeEventType());
+            ActionType edgeEventAction = ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction());
+            TenantId tenantId = new TenantId(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
+            switch (edgeEventType) {
+                // TODO: voba - handle edge updates
+                // case EDGE:
+                case ASSET:
+                case DEVICE:
+                case ENTITY_VIEW:
+                case DASHBOARD:
+                case RULE_CHAIN:
+                    EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
+                    ListenableFuture<List<EdgeId>> edgeIdsFuture = findRelatedEdgeIdsEntityId(tenantId, entityId);
+                    Futures.transform(edgeIdsFuture, edgeIds -> {
+                        if (edgeIds != null && !edgeIds.isEmpty()) {
+                            for (EdgeId edgeId : edgeIds) {
+                                try {
+                                    saveEdgeEvent(tenantId, edgeId, edgeEventType, edgeEventAction, entityId, null);
+                                    if (edgeEventType.equals(EdgeEventType.RULE_CHAIN) &&
+                                            (ActionType.UPDATED.equals(edgeEventAction) || ActionType.ADDED.equals(edgeEventAction))) {
+                                        RuleChainMetaData ruleChainMetaData = ruleChainService.loadRuleChainMetaData(tenantId, new RuleChainId(entityId.getId()));
+                                        saveEdgeEvent(tenantId, edgeId, EdgeEventType.RULE_CHAIN_METADATA, edgeEventAction, ruleChainMetaData.getRuleChainId(), null);
+                                    }
+                                } catch (Exception e) {
+                                    log.error("[{}] Failed to push event to edge, edgeId [{}], edgeEventType [{}], edgeEventAction [{}], entityId [{}]",
+                                            tenantId, edgeId, edgeEventType, edgeEventAction, entityId, e);
                                 }
-                            } catch (IOException e) {
-                                log.error("Can't push event to edge", e);
                             }
                         }
                         return null;
-                    }, MoreExecutors.directExecutor());
-                }
-                break;
-            default:
-                log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
+                    }, dbCallbackExecutorService);
+                    break;
+                case ALARM:
+                    EntityId alarmId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
+                    processAlarm(tenantId, edgeEventAction, alarmId);
+                    break;
+                case RELATION:
+                    EntityRelation entityRelation = mapper.convertValue(edgeNotificationMsg.getEntityBody(), EntityRelation.class);
+                    processRelation(tenantId, edgeEventAction, entityRelation);
+                    break;
+                default:
+                    log.debug("Edge event type [{}] is not designed to be pushed to edge", edgeEventType);
+            }
+        } catch (Exception e) {
+            callback.onFailure(e);
+            log.error("Can't push to edge updates, edgeNotificationMsg [{}]", edgeNotificationMsg, e);
+        } finally {
+            callback.onSuccess();
         }
     }
 
-
-    private void processAssignedEntity(TenantId tenantId, TbMsg tbMsg, EdgeEventType entityType, FutureCallback<Void> callback) throws IOException {
-        EdgeId edgeId;
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-                edgeId = new EdgeId(UUID.fromString(tbMsg.getMetaData().getValue("assignedEdgeId")));
-                pushEventToEdge(tenantId, edgeId, entityType, tbMsg, callback);
-                break;
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                edgeId = new EdgeId(UUID.fromString(tbMsg.getMetaData().getValue("unassignedEdgeId")));
-                pushEventToEdge(tenantId, edgeId, entityType, tbMsg, callback);
-                break;
-
-        }
-    }
-
-    private void pushEventToEdge(TenantId tenantId, EntityId originatorId, EdgeEventType edgeEventType, TbMsg tbMsg, FutureCallback<Void> callback) {
-        ListenableFuture<EdgeId> edgeIdFuture = getEdgeIdByOriginatorId(tenantId, originatorId);
-        Futures.transform(edgeIdFuture, edgeId -> {
-                    if (edgeId != null) {
-                        try {
-                            pushEventToEdge(tenantId, edgeId, edgeEventType, tbMsg, callback);
-                        } catch (Exception e) {
-                            log.error("Failed to push event to edge, edgeId [{}], tbMsg [{}]", edgeId, tbMsg, e);
+    private void processAlarm(TenantId tenantId, ActionType edgeActionType, EntityId alarmId) {
+        ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, new AlarmId(alarmId.getId()));
+        Futures.transform(alarmFuture, alarm -> {
+            if (alarm != null) {
+                EdgeEventType edgeEventType = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
+                if (edgeEventType != null) {
+                    ListenableFuture<List<EdgeId>> relatedEdgeIdsEntityIdFuture = findRelatedEdgeIdsEntityId(tenantId, alarm.getOriginator());
+                    Futures.transform(relatedEdgeIdsEntityIdFuture, relatedEdgeIdsEntityId -> {
+                        if (relatedEdgeIdsEntityId != null) {
+                            for (EdgeId edgeId : relatedEdgeIdsEntityId) {
+                                saveEdgeEvent(tenantId, edgeId, EdgeEventType.ALARM, edgeActionType, alarmId, null);
+                            }
                         }
+                        return null;
+                    }, dbCallbackExecutorService);
+                }
+            }
+            return null;
+        }, dbCallbackExecutorService);
+    }
+
+    private void processRelation(TenantId tenantId, ActionType edgeActionType, EntityRelation entityRelation) {
+        List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
+        futures.add(findRelatedEdgeIdsEntityId(tenantId, entityRelation.getTo()));
+        futures.add(findRelatedEdgeIdsEntityId(tenantId, entityRelation.getFrom()));
+        ListenableFuture<List<List<EdgeId>>> combinedFuture = Futures.allAsList(futures);
+        Futures.transform(combinedFuture, listOfListsEdgeIds -> {
+            Set<EdgeId> uniqueEdgeIds = new HashSet<>();
+            if (listOfListsEdgeIds != null && !listOfListsEdgeIds.isEmpty()) {
+                for (List<EdgeId> listOfListsEdgeId : listOfListsEdgeIds) {
+                    if (listOfListsEdgeId != null) {
+                        uniqueEdgeIds.addAll(listOfListsEdgeId);
                     }
-                    return null;
-                },
-                MoreExecutors.directExecutor());
+                }
+            }
+            if (!uniqueEdgeIds.isEmpty()) {
+                for (EdgeId edgeId : uniqueEdgeIds) {
+                    saveEdgeEvent(tenantId, edgeId, EdgeEventType.RELATION, edgeActionType, null, mapper.valueToTree(entityRelation));
+                }
+            }
+            return null;
+        }, dbCallbackExecutorService);
     }
 
-    private ListenableFuture<EdgeId> getEdgeIdByOriginatorId(TenantId tenantId, EntityId originatorId) {
-        List<EntityRelation> originatorEdgeRelations = relationService.findByToAndType(tenantId, originatorId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
-        if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0) {
-            return Futures.immediateFuture(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
-        } else {
-            return Futures.immediateFuture(null);
-        }
-    }
-
-
-    private void pushEventToEdge(TenantId tenantId, EdgeId edgeId, EdgeEventType entityType, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        log.debug("Pushing event(s) to edge queue. tenantId [{}], edgeId [{}], entityType [{}], tbMsg [{}]", tenantId, edgeId, entityType, tbMsg);
-
-        saveEventToEdgeQueue(tenantId, edgeId, entityType, tbMsg.getType(), tbMsg.getData(), callback);
-
-        if (entityType.equals(EdgeEventType.RULE_CHAIN)) {
-            pushRuleChainMetadataToEdge(tenantId, edgeId, tbMsg, callback);
-        }
-    }
-
-    private void pushRuleChainMetadataToEdge(TenantId tenantId, EdgeId edgeId, TbMsg tbMsg, FutureCallback<Void> callback) throws IOException {
-        RuleChain ruleChain = mapper.readValue(tbMsg.getData(), RuleChain.class);
-        switch (tbMsg.getType()) {
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-            case DataConstants.ENTITY_UPDATED:
-                RuleChainMetaData ruleChainMetaData = ruleChainService.loadRuleChainMetaData(tenantId, ruleChain.getId());
-                saveEventToEdgeQueue(tenantId, edgeId, EdgeEventType.RULE_CHAIN_METADATA, tbMsg.getType(), mapper.writeValueAsString(ruleChainMetaData), callback);
-                break;
+    private ListenableFuture<List<EdgeId>> findRelatedEdgeIdsEntityId(TenantId tenantId, EntityId entityId) {
+        switch (entityId.getEntityType()) {
+            case DEVICE:
+            case ASSET:
+            case ENTITY_VIEW:
+                ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture = relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+                return Futures.transform(originatorEdgeRelationsFuture, originatorEdgeRelations -> {
+                    if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0) {
+                        return Collections.singletonList(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
+                    } else {
+                        return Collections.emptyList();
+                    }
+                }, dbCallbackExecutorService);
+            case DASHBOARD:
+                return convertToEdgeIds(edgeService.findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId()), new TimePageLink(Integer.MAX_VALUE)));
+            case RULE_CHAIN:
+                return convertToEdgeIds(edgeService.findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId()), new TimePageLink(Integer.MAX_VALUE)));
             default:
-                log.warn("Unsupported msgType [{}], tbMsg [{}]", tbMsg.getType(), tbMsg);
+                return Futures.immediateFuture(Collections.emptyList());
         }
     }
 
+    private ListenableFuture<List<EdgeId>> convertToEdgeIds(ListenableFuture<TimePageData<Edge>> future) {
+        return Futures.transform(future, edges -> {
+            if (edges != null && edges.getData() != null && !edges.getData().isEmpty()) {
+                return edges.getData().stream().map(IdBased::getId).collect(Collectors.toList());
+            } else {
+                return Collections.emptyList();
+            }
+        }, dbCallbackExecutorService);
+    }
 
     private EdgeEventType getEdgeQueueTypeByEntityType(EntityType entityType) {
         switch (entityType) {
@@ -445,4 +282,5 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         }
     }
 }
+
 

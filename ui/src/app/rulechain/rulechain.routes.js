@@ -37,7 +37,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             }
         })
         .state('home.ruleChains.core', {
-            url: '/ruleChains/system',
+            url: '/ruleChains/core',
             params: {'topIndex': 0},
             module: 'private',
             auth: ['SYS_ADMIN', 'TENANT_ADMIN'],

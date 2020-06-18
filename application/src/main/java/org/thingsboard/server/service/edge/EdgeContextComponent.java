@@ -31,11 +31,14 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.constructor.AlarmUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AssetUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.DashboardUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.DeviceUpdateMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityViewUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RelationUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RuleChainUpdateMsgConstructor;
@@ -95,6 +98,14 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
+    private RuleChainService ruleChainService;
+
+    @Lazy
+    @Autowired
+    private UserService userService;
+
+    @Lazy
+    @Autowired
     private ActorService actorService;
 
     @Lazy
@@ -140,6 +151,10 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private RelationUpdateMsgConstructor relationUpdateMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private EntityDataMsgConstructor entityDataMsgConstructor;
 
     @Lazy
     @Autowired
