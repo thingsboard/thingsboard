@@ -49,8 +49,10 @@ import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.ValidationCallback;
 import org.thingsboard.server.service.security.ValidationResult;
 import org.thingsboard.server.service.security.ValidationResultCode;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.subscription.TbEntityDataSubscriptionService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.subscription.TbAttributeSubscription;
@@ -61,6 +63,9 @@ import org.thingsboard.server.service.telemetry.cmd.v1.SubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.TelemetryPluginCmd;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.exception.UnauthorizedException;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
@@ -104,7 +109,10 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     private final ConcurrentMap<String, WsSessionMetaData> wsSessionsMap = new ConcurrentHashMap<>();
 
     @Autowired
-    private TbLocalSubscriptionService subService;
+    private TbLocalSubscriptionService oldSubService;
+
+    @Autowired
+    private TbEntityDataSubscriptionService entityDataSubService;
 
     @Autowired
     private TelemetryWebSocketMsgEndpoint msgEndpoint;
@@ -164,7 +172,8 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 break;
             case CLOSED:
                 wsSessionsMap.remove(sessionId);
-                subService.cancelAllSessionSubscriptions(sessionId);
+                oldSubService.cancelAllSessionSubscriptions(sessionId);
+                entityDataSubService.cancelAllSessionSubscriptions(sessionId);
                 processSessionClose(sessionRef);
                 break;
         }
@@ -196,6 +205,12 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 if (cmdsWrapper.getHistoryCmds() != null) {
                     cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(sessionRef, cmd));
                 }
+                if (cmdsWrapper.getEntityDataCmds() != null) {
+                    cmdsWrapper.getEntityDataCmds().forEach(cmd -> handleWsEntityDataCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getEntityDataUnsubscribeCmds() != null) {
+                    cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsEntityDataUnsubscribeCmd(sessionRef, cmd));
+                }
             }
         } catch (IOException e) {
             log.warn("Failed to decode subscription cmd: {}", e.getMessage(), e);
@@ -204,11 +219,39 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         }
     }
 
+    private void handleWsEntityDataCmd(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
+        String sessionId = sessionRef.getSessionId();
+        log.debug("[{}] Processing: {}", sessionId, cmd);
+
+        if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)
+                && validateSubscriptionCmd(sessionRef, cmd)) {
+            entityDataSubService.handleCmd(sessionRef, cmd);
+        }
+    }
+
+    private void handleWsEntityDataUnsubscribeCmd(TelemetryWebSocketSessionRef sessionRef, EntityDataUnsubscribeCmd cmd) {
+        String sessionId = sessionRef.getSessionId();
+        log.debug("[{}] Processing: {}", sessionId, cmd);
+
+        if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)) {
+            entityDataSubService.cancelSubscription(sessionRef.getSessionId(), cmd);
+        }
+    }
+
     @Override
     public void sendWsMsg(String sessionId, SubscriptionUpdate update) {
+        sendWsMsg(sessionId, update.getSubscriptionId(), update);
+    }
+
+    @Override
+    public void sendWsMsg(String sessionId, EntityDataUpdate update) {
+        sendWsMsg(sessionId, update.getCmdId(), update);
+    }
+
+    private <T> void sendWsMsg(String sessionId, int cmdId, T update) {
         WsSessionMetaData md = wsSessionsMap.get(sessionId);
         if (md != null) {
-            sendWsMsg(md.getSessionRef(), update);
+            sendWsMsg(md.getSessionRef(), cmdId, update);
         }
     }
 
@@ -356,7 +399,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .allKeys(false)
                         .keyStates(subState)
                         .scope(scope).build();
-                subService.addSubscription(sub);
+                oldSubService.addSubscription(sub);
             }
 
             @Override
@@ -453,7 +496,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .allKeys(true)
                         .keyStates(subState)
                         .scope(scope).build();
-                subService.addSubscription(sub);
+                oldSubService.addSubscription(sub);
             }
 
             @Override
@@ -534,7 +577,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .entityId(entityId)
                         .allKeys(true)
                         .keyStates(subState).build();
-                subService.addSubscription(sub);
+                oldSubService.addSubscription(sub);
             }
 
             @Override
@@ -571,7 +614,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .entityId(entityId)
                         .allKeys(false)
                         .keyStates(subState).build();
-                subService.addSubscription(sub);
+                oldSubService.addSubscription(sub);
             }
 
             @Override
@@ -590,10 +633,30 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     private void unsubscribe(TelemetryWebSocketSessionRef sessionRef, SubscriptionCmd cmd, String sessionId) {
         if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty()) {
-            subService.cancelAllSessionSubscriptions(sessionId);
+            oldSubService.cancelAllSessionSubscriptions(sessionId);
         } else {
-            subService.cancelSubscription(sessionId, cmd.getCmdId());
+            oldSubService.cancelSubscription(sessionId, cmd.getCmdId());
         }
+    }
+
+    private boolean validateSubscriptionCmd(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
+        if (cmd.getCmdId() < 0) {
+            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Cmd id is negative value!");
+            sendWsMsg(sessionRef, update);
+            return false;
+        } else if (cmd.getQuery() == null) {
+            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Query is empty!");
+            sendWsMsg(sessionRef, update);
+            return false;
+        } else if (cmd.getHistoryCmd() == null && cmd.getLatestCmd() == null && cmd.getTsCmd() == null) {
+            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "No history, latest or timeseries command present!");
+            sendWsMsg(sessionRef, update);
+            return false;
+        }
+        return true;
     }
 
     private boolean validateSubscriptionCmd(TelemetryWebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
@@ -607,10 +670,14 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private boolean validateSessionMetadata(TelemetryWebSocketSessionRef sessionRef, SubscriptionCmd cmd, String sessionId) {
+        return validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId);
+    }
+
+    private boolean validateSessionMetadata(TelemetryWebSocketSessionRef sessionRef, int cmdId, String sessionId) {
         WsSessionMetaData sessionMD = wsSessionsMap.get(sessionId);
         if (sessionMD == null) {
             log.warn("[{}] Session meta data not found. ", sessionId);
-            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+            SubscriptionUpdate update = new SubscriptionUpdate(cmdId, SubscriptionErrorCode.INTERNAL_ERROR,
                     SESSION_META_DATA_NOT_FOUND);
             sendWsMsg(sessionRef, update);
             return false;
@@ -619,10 +686,18 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         }
     }
 
+    private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, EntityDataUpdate update) {
+        sendWsMsg(sessionRef, update.getCmdId(), update);
+    }
+
     private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, SubscriptionUpdate update) {
+        sendWsMsg(sessionRef, update.getSubscriptionId(), update);
+    }
+
+    private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, int cmdId, Object update) {
         executor.submit(() -> {
             try {
-                msgEndpoint.send(sessionRef, update.getSubscriptionId(), jsonMapper.writeValueAsString(update));
+                msgEndpoint.send(sessionRef, cmdId, jsonMapper.writeValueAsString(update));
             } catch (JsonProcessingException e) {
                 log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
             } catch (IOException e) {
@@ -630,6 +705,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             }
         });
     }
+
 
     private static Optional<Set<String>> getKeys(TelemetryPluginCmd cmd) {
         if (!StringUtils.isEmpty(cmd.getKeys())) {

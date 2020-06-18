@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd.v2;
+package org.thingsboard.server.controller.sql;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.controller.BaseEntityQueryControllerTest;
+import org.thingsboard.server.controller.BaseWebsocketApiTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.List;
-
-@Data
-public class EntityHistoryCmd {
-
-    private List<String> keys;
-    private long startTs;
-    private long endTs;
-    private long interval;
-    private int limit;
-    private Aggregation agg;
-
+@DaoSqlTest
+public class WebsocketApiSqlTest extends BaseWebsocketApiTest {
 }
