@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.queue.sqs;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.*;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
@@ -37,9 +35,16 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
     public TbAwsSqsAdmin(TbAwsSqsSettings sqsSettings, Map<String, String> attributes) {
         this.attributes = attributes;
 
-        AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
+        AWSCredentialsProvider credentialsProvider;
+        if (sqsSettings.getUseDefaultCredentialProviderChain()) {
+            credentialsProvider = new DefaultAWSCredentialsProviderChain();
+        } else {
+            AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
+            credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
+        }
+
         sqsClient = AmazonSQSClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .withCredentials(credentialsProvider)
                 .withRegion(sqsSettings.getRegion())
                 .build();
 
