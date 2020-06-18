@@ -70,7 +70,6 @@ public interface EdgeService {
 
     ListenableFuture<List<EntitySubtype>> findEdgeTypesByTenantId(TenantId tenantId);
 
-
     void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId);
 
     ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndRuleChainId(TenantId tenantId, RuleChainId ruleChainId, TimePageLink pageLink);

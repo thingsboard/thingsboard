@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -126,7 +125,6 @@ public class RuleChainUpdateMsgConstructor {
                 .build();
     }
 
-
     private RuleNodeProto constructNode(RuleNode node) throws JsonProcessingException {
         return RuleNodeProto.newBuilder()
                 .setIdMSB(node.getId().getId().getMostSignificantBits())
@@ -137,6 +135,13 @@ public class RuleChainUpdateMsgConstructor {
                 .setConfiguration(objectMapper.writeValueAsString(node.getConfiguration()))
                 .setAdditionalInfo(objectMapper.writeValueAsString(node.getAdditionalInfo()))
                 .build();
+    }
+
+    public RuleChainUpdateMsg constructRuleChainDeleteMsg(RuleChainId ruleChainId) {
+        return RuleChainUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(ruleChainId.getId().getMostSignificantBits())
+                .setIdLSB(ruleChainId.getId().getLeastSignificantBits()).build();
     }
 
 }

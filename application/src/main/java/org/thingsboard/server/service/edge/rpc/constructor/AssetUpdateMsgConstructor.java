@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 
@@ -38,4 +39,10 @@ public class AssetUpdateMsgConstructor {
         return builder.build();
     }
 
+    public AssetUpdateMsg constructAssetDeleteMsg(AssetId assetId) {
+        return AssetUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(assetId.getId().getMostSignificantBits())
+                .setIdLSB(assetId.getId().getLeastSignificantBits()).build();
+    }
 }

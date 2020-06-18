@@ -360,122 +360,193 @@ public final class EdgeGrpcSession implements Closeable {
 
     private void processDeviceCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
         DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
-        ListenableFuture<Device> deviceFuture = ctx.getDeviceService().findDeviceByIdAsync(edgeEvent.getTenantId(), deviceId);
-        Futures.addCallback(deviceFuture,
-                new FutureCallback<Device>() {
-                    @Override
-                    public void onSuccess(@Nullable Device device) {
-                        if (device != null) {
-                            EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                    .setDeviceUpdateMsg(ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(msgType, device))
-                                    .build();
-                            outputStream.onNext(ResponseMsg.newBuilder()
-                                    .setEntityUpdateMsg(entityUpdateMsg)
-                                    .build());
-                        }
-                    }
+        switch (msgType) {
+            case ENTITY_CREATED_RPC_MESSAGE:
+            case ENTITY_UPDATED_RPC_MESSAGE:
+            case DEVICE_CONFLICT_RPC_MESSAGE:
+                ListenableFuture<Device> deviceFuture = ctx.getDeviceService().findDeviceByIdAsync(edgeEvent.getTenantId(), deviceId);
+                Futures.addCallback(deviceFuture,
+                        new FutureCallback<Device>() {
+                            @Override
+                            public void onSuccess(@Nullable Device device) {
+                                if (device != null) {
+                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                                            .setDeviceUpdateMsg(ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(msgType, device))
+                                            .build();
+                                    outputStream.onNext(ResponseMsg.newBuilder()
+                                            .setEntityUpdateMsg(entityUpdateMsg)
+                                            .build());
+                                }
+                            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("Can't processDeviceCRUD, edgeEvent [{}]", edgeEvent, t);
-                    }
-                }, ctx.getDbCallbackExecutor());
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("Can't processDeviceCRUD, edgeEvent [{}]", edgeEvent, t);
+                            }
+                        }, ctx.getDbCallbackExecutor());
+                break;
+            case ENTITY_DELETED_RPC_MESSAGE:
+                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setDeviceUpdateMsg(ctx.getDeviceUpdateMsgConstructor().constructDeviceDeleteMsg(deviceId))
+                        .build();
+                outputStream.onNext(ResponseMsg.newBuilder()
+                        .setEntityUpdateMsg(entityUpdateMsg)
+                        .build());
+        }
+
+
     }
 
     private void processAssetCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
-        ListenableFuture<Asset> assetFuture = ctx.getAssetService().findAssetByIdAsync(edgeEvent.getTenantId(), assetId);
-        Futures.addCallback(assetFuture,
-                new FutureCallback<Asset>() {
-                    @Override
-                    public void onSuccess(@Nullable Asset asset) {
-                        if (asset != null) {
-                            EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                    .setAssetUpdateMsg(ctx.getAssetUpdateMsgConstructor().constructAssetUpdatedMsg(msgType, asset))
-                                    .build();
-                            outputStream.onNext(ResponseMsg.newBuilder()
-                                    .setEntityUpdateMsg(entityUpdateMsg)
-                                    .build());
-                        }
-                    }
+        switch (msgType) {
+            case ENTITY_CREATED_RPC_MESSAGE:
+            case ENTITY_UPDATED_RPC_MESSAGE:
+            case DEVICE_CONFLICT_RPC_MESSAGE:
+                ListenableFuture<Asset> assetFuture = ctx.getAssetService().findAssetByIdAsync(edgeEvent.getTenantId(), assetId);
+                Futures.addCallback(assetFuture,
+                        new FutureCallback<Asset>() {
+                            @Override
+                            public void onSuccess(@Nullable Asset asset) {
+                                if (asset != null) {
+                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                                            .setAssetUpdateMsg(ctx.getAssetUpdateMsgConstructor().constructAssetUpdatedMsg(msgType, asset))
+                                            .build();
+                                    outputStream.onNext(ResponseMsg.newBuilder()
+                                            .setEntityUpdateMsg(entityUpdateMsg)
+                                            .build());
+                                }
+                            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("Can't processAssetCRUD, edgeEvent [{}]", edgeEvent, t);
-                    }
-                }, ctx.getDbCallbackExecutor());
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("Can't processAssetCRUD, edgeEvent [{}]", edgeEvent, t);
+                            }
+                        }, ctx.getDbCallbackExecutor());
+                break;
+            case ENTITY_DELETED_RPC_MESSAGE:
+                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setAssetUpdateMsg(ctx.getAssetUpdateMsgConstructor().constructAssetDeleteMsg(assetId))
+                        .build();
+                outputStream.onNext(ResponseMsg.newBuilder()
+                        .setEntityUpdateMsg(entityUpdateMsg)
+                        .build());
+                break;
+        }
     }
 
     private void processEntityViewCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
         EntityViewId entityViewId = new EntityViewId(edgeEvent.getEntityId());
-        ListenableFuture<EntityView> entityViewFuture = ctx.getEntityViewService().findEntityViewByIdAsync(edgeEvent.getTenantId(), entityViewId);
-        Futures.addCallback(entityViewFuture,
-                new FutureCallback<EntityView>() {
-                    @Override
-                    public void onSuccess(@Nullable EntityView entityView) {
-                        if (entityView != null) {
-                            EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                    .setEntityViewUpdateMsg(ctx.getEntityViewUpdateMsgConstructor().constructEntityViewUpdatedMsg(msgType, entityView))
-                                    .build();
-                            outputStream.onNext(ResponseMsg.newBuilder()
-                                    .setEntityUpdateMsg(entityUpdateMsg)
-                                    .build());
-                        }
-                    }
+        switch (msgType) {
+            case ENTITY_CREATED_RPC_MESSAGE:
+            case ENTITY_UPDATED_RPC_MESSAGE:
+            case DEVICE_CONFLICT_RPC_MESSAGE:
+                ListenableFuture<EntityView> entityViewFuture = ctx.getEntityViewService().findEntityViewByIdAsync(edgeEvent.getTenantId(), entityViewId);
+                Futures.addCallback(entityViewFuture,
+                        new FutureCallback<EntityView>() {
+                            @Override
+                            public void onSuccess(@Nullable EntityView entityView) {
+                                if (entityView != null) {
+                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                                            .setEntityViewUpdateMsg(ctx.getEntityViewUpdateMsgConstructor().constructEntityViewUpdatedMsg(msgType, entityView))
+                                            .build();
+                                    outputStream.onNext(ResponseMsg.newBuilder()
+                                            .setEntityUpdateMsg(entityUpdateMsg)
+                                            .build());
+                                }
+                            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("Can't processEntityViewCRUD, edgeEvent [{}]", edgeEvent, t);
-                    }
-                }, ctx.getDbCallbackExecutor());
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("Can't processEntityViewCRUD, edgeEvent [{}]", edgeEvent, t);
+                            }
+                        }, ctx.getDbCallbackExecutor());
+                break;
+            case ENTITY_DELETED_RPC_MESSAGE:
+                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setEntityViewUpdateMsg(ctx.getEntityViewUpdateMsgConstructor().constructEntityViewDeleteMsg(entityViewId))
+                        .build();
+                outputStream.onNext(ResponseMsg.newBuilder()
+                        .setEntityUpdateMsg(entityUpdateMsg)
+                        .build());
+                break;
+        }
     }
 
     private void processDashboardCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
-        ListenableFuture<Dashboard> dashboardFuture = ctx.getDashboardService().findDashboardByIdAsync(edgeEvent.getTenantId(), dashboardId);
-        Futures.addCallback(dashboardFuture,
-                new FutureCallback<Dashboard>() {
-                    @Override
-                    public void onSuccess(@Nullable Dashboard dashboard) {
-                        if (dashboard != null) {
-                            EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                    .setDashboardUpdateMsg(ctx.getDashboardUpdateMsgConstructor().constructDashboardUpdatedMsg(msgType, dashboard))
-                                    .build();
-                            outputStream.onNext(ResponseMsg.newBuilder()
-                                    .setEntityUpdateMsg(entityUpdateMsg)
-                                    .build());
-                        }
-                    }
+        switch (msgType) {
+            case ENTITY_CREATED_RPC_MESSAGE:
+            case ENTITY_UPDATED_RPC_MESSAGE:
+            case DEVICE_CONFLICT_RPC_MESSAGE:
+                ListenableFuture<Dashboard> dashboardFuture = ctx.getDashboardService().findDashboardByIdAsync(edgeEvent.getTenantId(), dashboardId);
+                Futures.addCallback(dashboardFuture,
+                        new FutureCallback<Dashboard>() {
+                            @Override
+                            public void onSuccess(@Nullable Dashboard dashboard) {
+                                if (dashboard != null) {
+                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                                            .setDashboardUpdateMsg(ctx.getDashboardUpdateMsgConstructor().constructDashboardUpdatedMsg(msgType, dashboard))
+                                            .build();
+                                    outputStream.onNext(ResponseMsg.newBuilder()
+                                            .setEntityUpdateMsg(entityUpdateMsg)
+                                            .build());
+                                }
+                            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("Can't processDashboardCRUD, edgeEvent [{}]", edgeEvent, t);
-                    }
-                }, ctx.getDbCallbackExecutor());
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("Can't processDashboardCRUD, edgeEvent [{}]", edgeEvent, t);
+                            }
+                        }, ctx.getDbCallbackExecutor());
+                break;
+            case ENTITY_DELETED_RPC_MESSAGE:
+                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setDashboardUpdateMsg(ctx.getDashboardUpdateMsgConstructor().constructDashboardDeleteMsg(dashboardId))
+                        .build();
+                outputStream.onNext(ResponseMsg.newBuilder()
+                        .setEntityUpdateMsg(entityUpdateMsg)
+                        .build());
+                break;
+        }
     }
 
     private void processRuleChainCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
-        ListenableFuture<RuleChain> ruleChainFuture = ctx.getRuleChainService().findRuleChainByIdAsync(edgeEvent.getTenantId(), ruleChainId);
-        Futures.addCallback(ruleChainFuture,
-                new FutureCallback<RuleChain>() {
-                    @Override
-                    public void onSuccess(@Nullable RuleChain ruleChain) {
-                        if (ruleChain != null) {
-                            EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                    .setRuleChainUpdateMsg(ctx.getRuleChainUpdateMsgConstructor().constructRuleChainUpdatedMsg(edge.getRootRuleChainId(), msgType, ruleChain))
-                                    .build();
-                            outputStream.onNext(ResponseMsg.newBuilder()
-                                    .setEntityUpdateMsg(entityUpdateMsg)
-                                    .build());
-                        }
-                    }
+        switch (msgType) {
+            case ENTITY_CREATED_RPC_MESSAGE:
+            case ENTITY_UPDATED_RPC_MESSAGE:
+            case DEVICE_CONFLICT_RPC_MESSAGE:
+                ListenableFuture<RuleChain> ruleChainFuture = ctx.getRuleChainService().findRuleChainByIdAsync(edgeEvent.getTenantId(), ruleChainId);
+                Futures.addCallback(ruleChainFuture,
+                        new FutureCallback<RuleChain>() {
+                            @Override
+                            public void onSuccess(@Nullable RuleChain ruleChain) {
+                                if (ruleChain != null) {
+                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                                            .setRuleChainUpdateMsg(ctx.getRuleChainUpdateMsgConstructor().constructRuleChainUpdatedMsg(edge.getRootRuleChainId(), msgType, ruleChain))
+                                            .build();
+                                    outputStream.onNext(ResponseMsg.newBuilder()
+                                            .setEntityUpdateMsg(entityUpdateMsg)
+                                            .build());
+                                }
+                            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("Can't processRuleChainCRUD, edgeEvent [{}]", edgeEvent, t);
-                    }
-                }, ctx.getDbCallbackExecutor());
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("Can't processRuleChainCRUD, edgeEvent [{}]", edgeEvent, t);
+                            }
+                        }, ctx.getDbCallbackExecutor());
+                break;
+            case ENTITY_DELETED_RPC_MESSAGE:
+                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setRuleChainUpdateMsg(ctx.getRuleChainUpdateMsgConstructor().constructRuleChainDeleteMsg(ruleChainId))
+                        .build();
+                outputStream.onNext(ResponseMsg.newBuilder()
+                        .setEntityUpdateMsg(entityUpdateMsg)
+                        .build());
+                break;
+        }
     }
 
     private void processRuleChainMetadataCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
@@ -509,26 +580,40 @@ public final class EdgeGrpcSession implements Closeable {
 
     private void processUserCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
         UserId userId = new UserId(edgeEvent.getEntityId());
-        ListenableFuture<User> userFuture = ctx.getUserService().findUserByIdAsync(edgeEvent.getTenantId(), userId);
-        Futures.addCallback(userFuture,
-                new FutureCallback<User>() {
-                    @Override
-                    public void onSuccess(@Nullable User user) {
-                        if (user != null) {
-                            EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                    .setUserUpdateMsg(ctx.getUserUpdateMsgConstructor().constructUserUpdatedMsg(msgType, user))
-                                    .build();
-                            outputStream.onNext(ResponseMsg.newBuilder()
-                                    .setEntityUpdateMsg(entityUpdateMsg)
-                                    .build());
-                        }
-                    }
+        switch (msgType) {
+            case ENTITY_CREATED_RPC_MESSAGE:
+            case ENTITY_UPDATED_RPC_MESSAGE:
+            case DEVICE_CONFLICT_RPC_MESSAGE:
+                ListenableFuture<User> userFuture = ctx.getUserService().findUserByIdAsync(edgeEvent.getTenantId(), userId);
+                Futures.addCallback(userFuture,
+                        new FutureCallback<User>() {
+                            @Override
+                            public void onSuccess(@Nullable User user) {
+                                if (user != null) {
+                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                                            .setUserUpdateMsg(ctx.getUserUpdateMsgConstructor().constructUserUpdatedMsg(msgType, user))
+                                            .build();
+                                    outputStream.onNext(ResponseMsg.newBuilder()
+                                            .setEntityUpdateMsg(entityUpdateMsg)
+                                            .build());
+                                }
+                            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("Can't processUserCRUD, edgeEvent [{}]", edgeEvent, t);
-                    }
-                }, ctx.getDbCallbackExecutor());
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("Can't processUserCRUD, edgeEvent [{}]", edgeEvent, t);
+                            }
+                        }, ctx.getDbCallbackExecutor());
+                break;
+            case ENTITY_DELETED_RPC_MESSAGE:
+                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setUserUpdateMsg(ctx.getUserUpdateMsgConstructor().constructUserDeleteMsg(userId))
+                        .build();
+                outputStream.onNext(ResponseMsg.newBuilder()
+                        .setEntityUpdateMsg(entityUpdateMsg)
+                        .build());
+                break;
+        }
     }
 
     private void processRelationCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
@@ -567,9 +652,9 @@ public final class EdgeGrpcSession implements Closeable {
 
     private UpdateMsgType getResponseMsgType(ActionType actionType) {
         switch (actionType) {
-            case ADDED:
-                return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
             case UPDATED:
+                return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
+            case ADDED:
             case ASSIGNED_TO_EDGE:
                 return ENTITY_CREATED_RPC_MESSAGE;
             case DELETED:

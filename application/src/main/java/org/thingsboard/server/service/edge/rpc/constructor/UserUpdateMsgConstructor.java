@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
@@ -60,5 +61,12 @@ public class UserUpdateMsgConstructor {
             }
         }
         return builder.build();
+    }
+
+    public UserUpdateMsg constructUserDeleteMsg(UserId userId) {
+        return UserUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(userId.getId().getMostSignificantBits())
+                .setIdLSB(userId.getId().getLeastSignificantBits()).build();
     }
 }

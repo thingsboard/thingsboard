@@ -701,7 +701,7 @@ public abstract class BaseController {
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType edgeEventAction) {
         try {
-            sendNotificationMsgToEdgeService(tenantId, null, json.writeValueAsString(relation), EdgeEventType.RELATION, edgeEventAction);
+            sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation), EdgeEventType.RELATION, edgeEventAction);
         } catch (Exception e) {
             log.warn("Failed to push relation to core: {}", relation, e);
         }
@@ -710,15 +710,15 @@ public abstract class BaseController {
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, ActionType edgeEventAction) {
         EdgeEventType edgeEventType = edgeEventService.getEdgeEventTypeByEntityType(entityId.getEntityType());
         if (edgeEventType != null) {
-            sendNotificationMsgToEdgeService(tenantId, entityId, null, edgeEventType, edgeEventAction);
+            sendNotificationMsgToEdgeService(tenantId, null, entityId, null, edgeEventType, edgeEventAction);
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, EdgeEventType edgeEventType, ActionType edgeEventAction) {
-        sendNotificationMsgToEdgeService(tenantId, entityId, null, edgeEventType, edgeEventAction);
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventType edgeEventType, ActionType edgeEventAction) {
+        sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, null, edgeEventType, edgeEventAction);
     }
 
-    private void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, String entityBody, EdgeEventType edgeEventType, ActionType edgeEventAction) {
+    private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String entityBody, EdgeEventType edgeEventType, ActionType edgeEventAction) {
         TransportProtos.EdgeNotificationMsgProto.Builder builder = TransportProtos.EdgeNotificationMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
@@ -728,6 +728,10 @@ public abstract class BaseController {
             builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
             builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
             builder.setEntityType(entityId.getEntityType().name());
+        }
+        if (edgeId != null) {
+            builder.setEdgeIdMSB(edgeId.getId().getMostSignificantBits());
+            builder.setEdgeIdLSB(edgeId.getId().getLeastSignificantBits());
         }
         if (entityBody != null) {
             builder.setEntityBody(entityBody);
