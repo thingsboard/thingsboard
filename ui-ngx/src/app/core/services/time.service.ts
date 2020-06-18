@@ -38,7 +38,7 @@ export interface TimeInterval {
 const MIN_INTERVAL = SECOND;
 const MAX_INTERVAL = 365 * 20 * DAY;
 
-const MIN_LIMIT = 10;
+const MIN_LIMIT = 5;
 
 const MAX_DATAPOINTS_LIMIT = 500;
 
