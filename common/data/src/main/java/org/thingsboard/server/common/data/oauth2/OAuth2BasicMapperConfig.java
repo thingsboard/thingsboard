@@ -10,7 +10,7 @@ public class OAuth2BasicMapperConfig {
     private final String emailAttributeKey;
     private final String firstNameAttributeKey;
     private final String lastNameAttributeKey;
-    private final String tenantNameStrategy;
+    private final TenantNameStrategyType tenantNameStrategy;
     private final String tenantNamePattern;
     private final String customerNamePattern;
     private final String defaultDashboardName;

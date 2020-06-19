@@ -78,8 +78,9 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
     private String firstNameAttributeKey;
     @Column(name = ModelConstants.OAUTH2_LAST_NAME_ATTRIBUTE_KEY_PROPERTY)
     private String lastNameAttributeKey;
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.OAUTH2_TENANT_NAME_STRATEGY_PROPERTY)
-    private String tenantNameStrategy;
+    private TenantNameStrategyType tenantNameStrategy;
     @Column(name = ModelConstants.OAUTH2_TENANT_NAME_PATTERN_PROPERTY)
     private String tenantNamePattern;
     @Column(name = ModelConstants.OAUTH2_CUSTOMER_NAME_PATTERN_PROPERTY)
