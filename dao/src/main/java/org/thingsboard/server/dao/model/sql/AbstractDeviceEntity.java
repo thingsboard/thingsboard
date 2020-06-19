@@ -24,7 +24,6 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -45,9 +44,6 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
 
     @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY)
     private String customerId;
-
-    @Column(name = ModelConstants.DEVICE_EDGE_ID_PROPERTY)
-    private String edgeId;
 
     @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
     private String type;
@@ -78,9 +74,6 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         }
         if (device.getCustomerId() != null) {
             this.customerId = toString(device.getCustomerId().getId());
-        }
-        if (device.getEdgeId() != null) {
-            this.edgeId = toString(device.getEdgeId().getId());
         }
         this.name = device.getName();
         this.type = device.getType();
@@ -117,9 +110,6 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         }
         if (customerId != null) {
             device.setCustomerId(new CustomerId(toUUID(customerId)));
-        }
-        if (edgeId != null) {
-            device.setEdgeId(new EdgeId(toUUID(edgeId)));
         }
         device.setName(name);
         device.setType(type);

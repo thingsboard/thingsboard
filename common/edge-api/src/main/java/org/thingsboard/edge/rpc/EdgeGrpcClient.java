@@ -79,6 +79,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 throw new RuntimeException(e);
             }
         }
+        gracefulShutdown();
         channel = builder.build();
         EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
         log.info("[{}] Sending a connect request to the TB!", edgeKey);
@@ -87,6 +88,16 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder().setEdgeRoutingKey(edgeKey).setEdgeSecret(edgeSecret).build())
                 .build());
+    }
+
+    private void gracefulShutdown() {
+        try {
+            if (channel != null) {
+                channel.shutdown().awaitTermination(timeoutSecs, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            log.debug("Error during shutdown of the previous channel", e);
+        }
     }
 
     @Override
@@ -130,7 +141,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                     log.debug("[{}] Entity update message received {}", edgeKey, responseMsg.getEntityUpdateMsg());
                     onEntityUpdate.accept(responseMsg.getEntityUpdateMsg());
                 } else if (responseMsg.hasDownlinkMsg()) {
-                    log.debug("[{}] Downlink message received for rule chain {}", edgeKey, responseMsg.getDownlinkMsg());
+                    log.debug("[{}] Downlink message received {}", edgeKey, responseMsg.getDownlinkMsg());
                     onDownlink.accept(responseMsg.getDownlinkMsg());
                 }
             }

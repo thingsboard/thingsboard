@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -25,13 +28,19 @@ import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -50,10 +59,14 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUIDs;
  */
 @Component
 @SqlDao
+@Slf4j
 public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device> implements DeviceDao {
 
     @Autowired
     private DeviceRepository deviceRepository;
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<DeviceEntity> getEntityClass() {
@@ -191,23 +204,22 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                deviceRepository.findByTenantIdAndEdgeId(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(edgeId),
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));
-    }
-
-    @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                deviceRepository.findByTenantIdAndEdgeIdAndType(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(edgeId),
-                        type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));
+    public ListenableFuture<PageData<Device>> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+        log.debug("Try to find devices by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+        ListenableFuture<PageData<EntityRelation>> relations =
+                relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.DEVICE, pageLink);
+        return Futures.transformAsync(relations, relationsData -> {
+            if (relationsData != null && relationsData.getData() != null && !relationsData.getData().isEmpty()) {
+                List<ListenableFuture<Device>> deviceFutures = new ArrayList<>(relationsData.getData().size());
+                for (EntityRelation relation : relationsData.getData()) {
+                    deviceFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+                }
+                return Futures.transform(Futures.successfulAsList(deviceFutures),
+                        devices -> new PageData<>(devices, relationsData.getTotalPages(), relationsData.getTotalElements(),
+                                relationsData.hasNext()), MoreExecutors.directExecutor());
+            } else {
+                return Futures.immediateFuture(new PageData<>());
+            }
+        }, MoreExecutors.directExecutor());
     }
 }

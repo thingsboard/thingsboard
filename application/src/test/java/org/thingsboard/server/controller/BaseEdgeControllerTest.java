@@ -28,8 +28,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -48,6 +47,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     private IdComparator<Edge> idComparator = new IdComparator<>();
 
     private Tenant savedTenant;
+    private TenantId tenantId;
     private User tenantAdmin;
 
     @Before
@@ -57,6 +57,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        tenantId = savedTenant.getId();
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -79,9 +80,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveEdge() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
         Assert.assertNotNull(savedEdge);
@@ -101,9 +100,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindEdgeById() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
         Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertNotNull(foundEdge);
@@ -114,21 +111,15 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     public void testFindEdgeTypesByTenantId() throws Exception {
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Edge edge = new Edge();
-            edge.setName("My edge B" + i);
-            edge.setType("typeB");
+            Edge edge = constructEdge("My edge B" + i, "typeB");
             edges.add(doPost("/api/edge", edge, Edge.class));
         }
         for (int i = 0; i < 7; i++) {
-            Edge edge = new Edge();
-            edge.setName("My edge C" + i);
-            edge.setType("typeC");
+            Edge edge = constructEdge("My edge C" + i, "typeC");
             edges.add(doPost("/api/edge", edge, Edge.class));
         }
         for (int i = 0; i < 9; i++) {
-            Edge edge = new Edge();
-            edge.setName("My edge A" + i);
-            edge.setType("typeA");
+            Edge edge = constructEdge("My edge A" + i, "typeA");
             edges.add(doPost("/api/edge", edge, Edge.class));
         }
         List<EntitySubtype> edgeTypes = doGetTyped("/api/edge/types",
@@ -144,9 +135,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteEdge() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
         doDelete("/api/edge/" + savedEdge.getId().getId().toString())
@@ -158,8 +147,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveEdgeWithEmptyType() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
+        Edge edge = constructEdge("My edge", null);
         doPost("/api/edge", edge)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Edge type should be specified")));
@@ -167,8 +155,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveEdgeWithEmptyName() throws Exception {
-        Edge edge = new Edge();
-        edge.setType("default");
+        Edge edge = constructEdge(null, "default");
         doPost("/api/edge", edge)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Edge name should be specified")));
@@ -176,9 +163,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAssignUnassignEdgeToCustomer() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
         Customer customer = new Customer();
@@ -202,9 +187,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAssignEdgeToNonExistentCustomer() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
         doPost("/api/customer/" + Uuids.timeBased().toString()
@@ -236,9 +219,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
         login(tenantAdmin.getEmail(), "testPassword1");
 
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
+        Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
@@ -255,9 +236,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     public void testFindTenantEdges() throws Exception {
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
-            Edge edge = new Edge();
-            edge.setName("Edge" + i);
-            edge.setType("default");
+            Edge edge = constructEdge("Edge" + i, "default");
             edges.add(doPost("/api/edge", edge, Edge.class));
         }
         List<Edge> loadedEdges = new ArrayList<>();
@@ -284,23 +263,19 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            Edge edge = new Edge();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType("default");
+            Edge edge = constructEdge(name, "default");
             edgesTitle1.add(doPost("/api/edge", edge, Edge.class));
         }
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
         for (int i = 0; i < 75; i++) {
-            Edge edge = new Edge();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType("default");
+            Edge edge = constructEdge(name, "default");
             edgesTitle2.add(doPost("/api/edge", edge, Edge.class));
         }
 
@@ -370,24 +345,20 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         String type1 = "typeA";
         List<Edge> edgesType1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            Edge edge = new Edge();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType(type1);
+            Edge edge = constructEdge(name, type1);
             edgesType1.add(doPost("/api/edge", edge, Edge.class));
         }
         String title2 = "Edge title 2";
         String type2 = "typeB";
         List<Edge> edgesType2 = new ArrayList<>();
         for (int i = 0; i < 75; i++) {
-            Edge edge = new Edge();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType(type2);
+            Edge edge = constructEdge(name, type2);
             edgesType2.add(doPost("/api/edge", edge, Edge.class));
         }
 
@@ -460,9 +431,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 128; i++) {
-            Edge edge = new Edge();
-            edge.setName("Edge" + i);
-            edge.setType("default");
+            Edge edge = constructEdge("Edge" + i, "default");
             edge = doPost("/api/edge", edge, Edge.class);
             edges.add(doPost("/api/customer/" + customerId.getId().toString()
                     + "/edge/" + edge.getId().getId().toString(), Edge.class));
@@ -497,12 +466,10 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
         for (int i = 0; i < 125; i++) {
-            Edge edge = new Edge();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType("default");
+            Edge edge = constructEdge(name, "default");
             edge = doPost("/api/edge", edge, Edge.class);
             edgesTitle1.add(doPost("/api/customer/" + customerId.getId().toString()
                     + "/edge/" + edge.getId().getId().toString(), Edge.class));
@@ -510,12 +477,10 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            Edge edge = new Edge();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType("default");
+            Edge edge = constructEdge(name, "default");
             edge = doPost("/api/edge", edge, Edge.class);
             edgesTitle2.add(doPost("/api/customer/" + customerId.getId().toString()
                     + "/edge/" + edge.getId().getId().toString(), Edge.class));
@@ -592,12 +557,10 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         String type1 = "typeC";
         List<Edge> edgesType1 = new ArrayList<>();
         for (int i = 0; i < 125; i++) {
-            Edge edge = new Edge();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType(type1);
+            Edge edge = constructEdge(name, type1);
             edge = doPost("/api/edge", edge, Edge.class);
             edgesType1.add(doPost("/api/customer/" + customerId.getId().toString()
                     + "/edge/" + edge.getId().getId().toString(), Edge.class));
@@ -606,12 +569,10 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         String type2 = "typeD";
         List<Edge> edgesType2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            Edge edge = new Edge();
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            edge.setName(name);
-            edge.setType(type2);
+            Edge edge = constructEdge(name, type2);
             edge = doPost("/api/edge", edge, Edge.class);
             edgesType2.add(doPost("/api/customer/" + customerId.getId().toString()
                     + "/edge/" + edge.getId().getId().toString(), Edge.class));
@@ -675,5 +636,19 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                 }, pageLink, type2);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    private Edge constructEdge(String name, String type) {
+        return constructEdge(tenantId, name, type);
+    }
+
+    private Edge constructEdge(TenantId tenantId, String name, String type) {
+        Edge edge = new Edge();
+        edge.setTenantId(tenantId);
+        edge.setName(name);
+        edge.setType(type);
+        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
+        return edge;
     }
 }

@@ -19,6 +19,8 @@ option java_package = "org.thingsboard.server.gen.edge";
 option java_multiple_files = true;
 option java_outer_classname = "EdgeProtos";
 
+import "queue.proto";
+
 package edge;
 
 // Interface exported by the ThingsBoard Edge Transport.
@@ -54,6 +56,7 @@ message EntityUpdateMsg {
   AlarmUpdateMsg alarmUpdateMsg = 7;
   UserUpdateMsg userUpdateMsg = 8;
   CustomerUpdateMsg customerUpdateMsg = 9;
+  RelationUpdateMsg relationUpdateMsg = 10;
 }
 
 enum RequestMsgType {
@@ -88,140 +91,165 @@ message EdgeConfiguration {
 }
 
 enum UpdateMsgType {
-    ENTITY_CREATED_RPC_MESSAGE = 0;
-    ENTITY_UPDATED_RPC_MESSAGE = 1;
-    ENTITY_DELETED_RPC_MESSAGE = 2;
-    ALARM_ACK_RPC_MESSAGE = 3;
-    ALARM_CLEAR_RPC_MESSAGE = 4;
-    RULE_CHAIN_CUSTOM_MESSAGE = 5;
+  ENTITY_CREATED_RPC_MESSAGE = 0;
+  ENTITY_UPDATED_RPC_MESSAGE = 1;
+  ENTITY_DELETED_RPC_MESSAGE = 2;
+  ALARM_ACK_RPC_MESSAGE = 3;
+  ALARM_CLEAR_RPC_MESSAGE = 4;
+  DEVICE_CONFLICT_RPC_MESSAGE = 5;
 }
 
 message EntityDataProto {
-    string entityName = 1;
-    string entityType = 2;
-    bytes tbMsg = 3;
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  string entityType = 3;
+  transport.PostTelemetryMsg postTelemetryMsg = 4;
+  transport.PostAttributeMsg postAttributesMsg = 5;
+  // transport.ToDeviceRpcRequestMsg ???
 }
 
 message RuleChainUpdateMsg {
-    UpdateMsgType msgType = 1;
-    int64 idMSB = 2;
-    int64 idLSB = 3;
-    string name = 4;
-    int64 firstRuleNodeIdMSB = 5;
-    int64 firstRuleNodeIdLSB = 6;
-    bool root = 7;
-    bool debugMode = 8;
-    string configuration = 9;
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  int64 firstRuleNodeIdMSB = 5;
+  int64 firstRuleNodeIdLSB = 6;
+  bool root = 7;
+  bool debugMode = 8;
+  string configuration = 9;
 }
 
 message RuleChainMetadataUpdateMsg {
-    UpdateMsgType msgType = 1;
-    int64 ruleChainIdMSB = 2;
-    int64 ruleChainIdLSB = 3;
-    int32 firstNodeIndex = 4;
-    repeated RuleNodeProto nodes =  5;
-    repeated NodeConnectionInfoProto connections =  6;
-    repeated RuleChainConnectionInfoProto ruleChainConnections =  7;
+  UpdateMsgType msgType = 1;
+  int64 ruleChainIdMSB = 2;
+  int64 ruleChainIdLSB = 3;
+  int32 firstNodeIndex = 4;
+  repeated RuleNodeProto nodes = 5;
+  repeated NodeConnectionInfoProto connections = 6;
+  repeated RuleChainConnectionInfoProto ruleChainConnections = 7;
 }
 
 message RuleNodeProto {
-    int64 idMSB = 1;
-    int64 idLSB = 2;
-    string type = 3;
-    string name = 4;
-    bool debugMode = 5;
-    string configuration = 6;
-    string additionalInfo = 7;
+  int64 idMSB = 1;
+  int64 idLSB = 2;
+  string type = 3;
+  string name = 4;
+  bool debugMode = 5;
+  string configuration = 6;
+  string additionalInfo = 7;
 }
 
 message NodeConnectionInfoProto {
-    int32 fromIndex = 1;
-    int32 toIndex = 2;
-    string type = 3;
+  int32 fromIndex = 1;
+  int32 toIndex = 2;
+  string type = 3;
 }
 
 message RuleChainConnectionInfoProto {
-    int32 fromIndex = 1;
-    int64 targetRuleChainIdMSB = 2;
-    int64 targetRuleChainIdLSB = 3;
-    string type = 4;
-    string additionalInfo = 5;
+  int32 fromIndex = 1;
+  int64 targetRuleChainIdMSB = 2;
+  int64 targetRuleChainIdLSB = 3;
+  string type = 4;
+  string additionalInfo = 5;
 }
 
 message DashboardUpdateMsg {
-    UpdateMsgType msgType = 1;
-    int64 idMSB = 2;
-    int64 idLSB = 3;
-    string title = 4;
-    string configuration = 5;
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string title = 4;
+  string configuration = 5;
 }
 
 message DeviceUpdateMsg {
-    UpdateMsgType msgType = 1;
-    string name = 2;
-    string type = 3;
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string type = 5;
+  string label = 6;
+  string credentialsType = 7;
+  string credentialsId = 8;
+  string credentialsValue = 9;
 }
 
 message AssetUpdateMsg {
-    UpdateMsgType msgType = 1;
-    string name = 2;
-    string type = 3;
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string type = 5;
+  string label = 6;
 }
 
 message EntityViewUpdateMsg {
-    UpdateMsgType msgType = 1;
-    string name = 2;
-    string type = 3;
-    string relatedName = 4;
-    string relatedType = 5;
-    EntityType relatedEntityType = 6;
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string type = 5;
+  int64 entityIdMSB = 6;
+  int64 entityIdLSB = 7;
+  EdgeEntityType entityType = 8;
 }
 
 message AlarmUpdateMsg {
-    UpdateMsgType msgType = 1;
-    string name = 2;
-    string type = 3;
-    string originatorType = 4;
-    string originatorName = 5;
-    string severity = 6;
-    string status = 7;
-    int64 startTs = 8;
-    int64 endTs = 9;
-    int64 ackTs = 10;
-    int64 clearTs = 11;
-    string details = 12;
-    bool propagate = 13;
+  UpdateMsgType msgType = 1;
+  string name = 2;
+  string type = 3;
+  string originatorType = 4;
+  string originatorName = 5;
+  string severity = 6;
+  string status = 7;
+  int64 startTs = 8;
+  int64 endTs = 9;
+  int64 ackTs = 10;
+  int64 clearTs = 11;
+  string details = 12;
+  bool propagate = 13;
 }
 
 message CustomerUpdateMsg {
-    UpdateMsgType msgType = 1;
-    int64 idMSB = 2;
-    int64 idLSB = 3;
-    string title = 4;
-    string country = 5;
-    string state = 6;
-    string city = 7;
-    string address = 8;
-    string address2 = 9;
-    string zip = 10;
-    string phone = 11;
-    string email = 12;
-    string additionalInfo = 13;
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string title = 4;
+  string country = 5;
+  string state = 6;
+  string city = 7;
+  string address = 8;
+  string address2 = 9;
+  string zip = 10;
+  string phone = 11;
+  string email = 12;
+  string additionalInfo = 13;
+}
+
+message RelationUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 fromIdMSB = 2;
+  int64 fromIdLSB = 3;
+  string fromEntityType = 4;
+  int64 toIdMSB = 5;
+  int64 toIdLSB = 6;
+  string toEntityType = 7;
+  string type = 8;
+  string typeGroup = 9;
+  string additionalInfo = 10;
 }
 
 message UserUpdateMsg {
-    UpdateMsgType msgType = 1;
-    int64 idMSB = 2;
-    int64 idLSB = 3;
-    int64 customerIdMSB = 4;
-    int64 customerIdLSB = 5;
-    string email = 7;
-    string authority = 8;
-    string firstName = 9;
-    string lastName = 10;
-    string additionalInfo = 11;
-    bool enabled = 12;
-    string password = 13;
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string email = 4;
+  string authority = 5;
+  string firstName = 6;
+  string lastName = 7;
+  string additionalInfo = 8;
+  bool enabled = 9;
+  string password = 10;
 }
 
 message RuleChainMetadataRequestMsg {
@@ -229,9 +257,9 @@ message RuleChainMetadataRequestMsg {
   int64 ruleChainIdLSB = 2;
 }
 
-enum EntityType {
-    DEVICE = 0;
-    ASSET = 1;
+enum EdgeEntityType {
+  DEVICE = 0;
+  ASSET = 1;
 }
 
 /**

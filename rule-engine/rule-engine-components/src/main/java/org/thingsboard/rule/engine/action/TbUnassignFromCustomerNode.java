@@ -35,7 +35,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeUnAssignToCustomerConfig",
         icon = "remove_circle",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbUnassignFromCustomerNodeConfiguration> {
 
@@ -62,6 +62,9 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
             case ENTITY_VIEW:
                 processUnassignEntityView(ctx, msg);
                 break;
+            case EDGE:
+                processUnassignEdge(ctx, msg);
+                break;
             case DASHBOARD:
                 processUnnasignDashboard(ctx, msg, customerId);
                 break;
@@ -86,5 +89,9 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
 
     private void processUnassignEntityView(TbContext ctx, TbMsg msg) {
         ctx.getEntityViewService().unassignEntityViewFromCustomer(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId()));
+    }
+
+    private void processUnassignEdge(TbContext ctx, TbMsg msg) {
+        ctx.getEdgeService().unassignEdgeFromCustomer(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId()));
     }
 }

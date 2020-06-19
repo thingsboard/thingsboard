@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.common.data.asset;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @EqualsAndHashCode(callSuper = true)
@@ -30,7 +28,6 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
 
     private TenantId tenantId;
     private CustomerId customerId;
-    private EdgeId edgeId;
     private String name;
     private String type;
     private String label;
@@ -47,7 +44,6 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         super(asset);
         this.tenantId = asset.getTenantId();
         this.customerId = asset.getCustomerId();
-        this.edgeId = asset.getEdgeId();
         this.name = asset.getName();
         this.type = asset.getType();
         this.label = asset.getLabel();
@@ -67,14 +63,6 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
 
     public void setCustomerId(CustomerId customerId) {
         this.customerId = customerId;
-    }
-
-    public EdgeId getEdgeId() {
-        return edgeId;
-    }
-
-    public void setEdgeId(EdgeId edgeId) {
-        this.edgeId = edgeId;
     }
 
     @Override
@@ -114,8 +102,6 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         builder.append(tenantId);
         builder.append(", customerId=");
         builder.append(customerId);
-        builder.append(", edgeId=");
-        builder.append(edgeId);
         builder.append(", name=");
         builder.append(name);
         builder.append(", type=");

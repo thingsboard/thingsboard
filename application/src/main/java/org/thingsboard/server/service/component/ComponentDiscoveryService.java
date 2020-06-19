@@ -35,5 +35,4 @@ public interface ComponentDiscoveryService {
     List<ComponentDescriptor> getComponents(Set<ComponentType> types, RuleChainType ruleChainType);
 
     Optional<ComponentDescriptor> getComponent(String clazz);
-
 }

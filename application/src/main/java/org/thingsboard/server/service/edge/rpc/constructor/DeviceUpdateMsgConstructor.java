@@ -16,8 +16,12 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 
@@ -25,11 +29,41 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 @Slf4j
 public class DeviceUpdateMsgConstructor {
 
+    @Autowired
+    private DeviceCredentialsService deviceCredentialsService;
+
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
+                .setIdMSB(device.getId().getId().getMostSignificantBits())
+                .setIdLSB(device.getId().getId().getLeastSignificantBits())
                 .setName(device.getName())
                 .setType(device.getType());
+        if (device.getLabel() != null) {
+            builder.setLabel(device.getLabel());
+        }
+        if (msgType.equals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE) ||
+                msgType.equals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE) ||
+                msgType.equals(UpdateMsgType.DEVICE_CONFLICT_RPC_MESSAGE)) {
+            DeviceCredentials deviceCredentials
+                    = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
+            if (deviceCredentials != null) {
+                if (deviceCredentials.getCredentialsType() != null) {
+                    builder.setCredentialsType(deviceCredentials.getCredentialsType().name())
+                            .setCredentialsId(deviceCredentials.getCredentialsId());
+                }
+                if (deviceCredentials.getCredentialsValue() != null) {
+                    builder.setCredentialsValue(deviceCredentials.getCredentialsValue());
+                }
+            }
+        }
         return builder.build();
+    }
+
+    public DeviceUpdateMsg constructDeviceDeleteMsg(DeviceId deviceId) {
+        return DeviceUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(deviceId.getId().getMostSignificantBits())
+                .setIdLSB(deviceId.getId().getLeastSignificantBits()).build();
     }
 }

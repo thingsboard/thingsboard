@@ -93,6 +93,9 @@ public class AlarmController extends BaseController {
             logEntityAction(savedAlarm.getId(), savedAlarm,
                     getCurrentUser().getCustomerId(),
                     alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            sendNotificationMsgToEdgeService(getTenantId(), savedAlarm.getId(), alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+
             return savedAlarm;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ALARM), alarm,
@@ -109,8 +112,11 @@ public class AlarmController extends BaseController {
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             checkAlarmId(alarmId, Operation.WRITE);
+
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.DELETED);
+
             return alarmService.deleteAlarm(getTenantId(), alarmId);
-        } catch (Exception e) {
+         } catch (Exception e) {
             throw handleException(e);
         }
     }
@@ -127,6 +133,8 @@ public class AlarmController extends BaseController {
             alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, ackTs).get();
             alarm.setAckTs(ackTs);
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
+
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.ALARM_ACK);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -144,6 +152,8 @@ public class AlarmController extends BaseController {
             alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, clearTs).get();
             alarm.setClearTs(clearTs);
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
+
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.ALARM_CLEAR);
         } catch (Exception e) {
             throw handleException(e);
         }

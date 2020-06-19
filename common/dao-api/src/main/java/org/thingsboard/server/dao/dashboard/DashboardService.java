@@ -60,7 +60,5 @@ public interface DashboardService {
 
     void unassignEdgeDashboards(TenantId tenantId, EdgeId edgeId);
 
-    void updateEdgeDashboards(TenantId tenantId, EdgeId edgeId);
-
-    PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
+    ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 }

@@ -37,7 +37,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "Size of the queue per originator and timeout values are configurable on a system level",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE})
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE})
 @Deprecated
 public class TbSynchronizationBeginNode implements TbNode {
 

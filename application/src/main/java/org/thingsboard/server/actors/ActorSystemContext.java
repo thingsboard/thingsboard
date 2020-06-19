@@ -53,7 +53,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
@@ -253,6 +253,11 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private TbCoreDeviceRpcService tbCoreDeviceRpcService;
+
+    @Lazy
+    @Autowired
+    @Getter
+    private EdgeEventService edgeEventService;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter

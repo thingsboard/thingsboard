@@ -469,6 +469,7 @@ audit-log:
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
       "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}"
+      "edge": "${AUDIT_LOG_MASK_EDGE:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -579,7 +580,7 @@ transport:
 edges:
   rpc:
     enabled: "${EDGES_RPC_ENABLED:true}"
-    port: "${EDGES_RPC_PORT:60061}"
+    port: "${EDGES_RPC_PORT:60100}"
     ssl:
       # Enable/disable SSL support
       enabled: "${EDGES_RPC_SSL_ENABLED:false}"

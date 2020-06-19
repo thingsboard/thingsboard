@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 public abstract class TimePaginatedRemover<I, D extends IdBased<?>> {
 

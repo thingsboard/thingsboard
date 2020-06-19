@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 
 import java.util.List;
 
@@ -79,9 +80,7 @@ public interface DeviceService {
 
     Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
 
-    Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId);
+    Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
 
-    PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
-
-    PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
+    ListenableFuture<PageData<Device>> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 }

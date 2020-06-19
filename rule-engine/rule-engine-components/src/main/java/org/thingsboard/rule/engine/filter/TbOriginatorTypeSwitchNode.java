@@ -33,7 +33,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "Routes messages to chain according to the originator type ('Device', 'Asset', etc.).",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbOriginatorTypeSwitchNode implements TbNode {
 
@@ -69,6 +69,9 @@ public class TbOriginatorTypeSwitchNode implements TbNode {
                 break;
             case ENTITY_VIEW:
                 relationType = "Entity View";
+                break;
+            case EDGE:
+                relationType = "Edge";
                 break;
             case RULE_CHAIN:
                 relationType = "Rule chain";

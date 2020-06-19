@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 
 import java.util.List;
 import java.util.Optional;
@@ -78,9 +79,7 @@ public interface AssetService {
 
     Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId);
 
-    Asset unassignAssetFromEdge(TenantId tenantId, AssetId assetId);
+    Asset unassignAssetFromEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId);
 
-    PageData<Asset> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
-
-    PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
+    ListenableFuture<PageData<Asset>> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 }

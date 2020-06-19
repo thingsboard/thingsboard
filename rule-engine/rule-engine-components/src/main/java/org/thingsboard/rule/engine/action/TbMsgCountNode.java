@@ -44,7 +44,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         icon = "functions",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgCountConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbMsgCountNode implements TbNode {
 

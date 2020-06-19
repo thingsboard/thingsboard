@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.dao.service.sql;
 
-import lombok.Data;
+import org.thingsboard.server.dao.service.BaseEdgeEventServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@Data
-public class EdgeQueueEntry {
-    private String type;
-    private EdgeQueueEntityType entityType;
-    private String data;
+@DaoSqlTest
+public class EdgeEventServiceSqlTest extends BaseEdgeEventServiceTest {
 }

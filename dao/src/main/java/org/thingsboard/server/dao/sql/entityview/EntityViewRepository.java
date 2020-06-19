@@ -121,22 +121,4 @@ public interface EntityViewRepository extends PagingAndSortingRepository<EntityV
 
     @Query("SELECT DISTINCT ev.type FROM EntityViewEntity ev WHERE ev.tenantId = :tenantId")
     List<String> findTenantEntityViewTypes(@Param("tenantId") String tenantId);
-
-    @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
-            "AND e.edgeId = :edgeId " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<EntityViewEntity> findByTenantIdAndEdgeId(@Param("tenantId") String tenantId,
-                                                   @Param("edgeId") String edgeId,
-                                                   @Param("searchText") String searchText,
-                                                   Pageable pageable);
-
-    @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
-            "AND e.edgeId = :edgeId " +
-            "AND e.type = :type " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<EntityViewEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") String tenantId,
-                                                          @Param("edgeId") String edgeId,
-                                                          @Param("type") String type,
-                                                          @Param("searchText") String searchText,
-                                                          Pageable pageable);
 }

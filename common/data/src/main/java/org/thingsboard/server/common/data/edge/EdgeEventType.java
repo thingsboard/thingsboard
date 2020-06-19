@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.init;
+package org.thingsboard.server.common.data.edge;
 
-import io.grpc.stub.StreamObserver;
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.gen.edge.ResponseMsg;
-import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
-
-public interface InitEdgeService {
-
-    void init(Edge edge, StreamObserver<ResponseMsg> outputStream);
-
-    void initRuleChainMetadata(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg, StreamObserver<ResponseMsg> outputStream);
+public enum EdgeEventType {
+    DASHBOARD, ASSET, DEVICE, ENTITY_VIEW, ALARM, RULE_CHAIN, RULE_CHAIN_METADATA, EDGE, USER, CUSTOMER, RELATION
 }

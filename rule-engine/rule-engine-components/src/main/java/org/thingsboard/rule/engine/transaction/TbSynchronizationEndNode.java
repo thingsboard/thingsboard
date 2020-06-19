@@ -40,7 +40,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         nodeDetails = "",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = ("tbNodeEmptyConfig"),
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 @Deprecated
 public class TbSynchronizationEndNode implements TbNode {

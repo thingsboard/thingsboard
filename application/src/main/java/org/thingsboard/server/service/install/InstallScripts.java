@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -109,22 +110,7 @@ public class InstallScripts {
         Path tenantChainsDir = getTenantRuleChainsDir();
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(tenantChainsDir, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
             dirStream.forEach(
-                    path -> {
-                        try {
-                            JsonNode ruleChainJson = objectMapper.readTree(path.toFile());
-                            RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
-                            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
-
-                            ruleChain.setTenantId(tenantId);
-                            ruleChain = ruleChainService.saveRuleChain(ruleChain);
-
-                            ruleChainMetaData.setRuleChainId(ruleChain.getId());
-                            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
-                        } catch (Exception e) {
-                            log.error("Unable to load rule chain from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load rule chain from json", e);
-                        }
-                    }
+                    path -> loadRuleChainFromFile(tenantId, path)
             );
         }
     }
@@ -205,9 +191,28 @@ public class InstallScripts {
             rootChain = ruleChainService.saveRuleChain(rootChain);
             rootChainMetaData.setRuleChainId(rootChain.getId());
             ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), rootChainMetaData);
+
+            loadRuleChainFromFile(tenantId, ruleChainsDir.resolve("edge_root_rule_chain.json"));
         } catch (Exception e) {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);
+        }
+    }
+
+    private void loadRuleChainFromFile(TenantId tenantId, Path ruleChainPath) {
+        try {
+            JsonNode ruleChainJson = objectMapper.readTree(ruleChainPath.toFile());
+            RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
+            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
+
+            ruleChain.setTenantId(tenantId);
+            ruleChain = ruleChainService.saveRuleChain(ruleChain);
+
+            ruleChainMetaData.setRuleChainId(ruleChain.getId());
+            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
+        } catch (Exception e) {
+            log.error("Unable to load rule chain from json: [{}]", ruleChainPath.toString());
+            throw new RuntimeException("Unable to load rule chain from json", e);
         }
     }
 }

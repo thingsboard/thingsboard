@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge;
 
 import lombok.Data;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -25,18 +26,27 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.constructor.AlarmUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AssetUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.DashboardUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.DeviceUpdateMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityViewUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.init.InitEdgeService;
+import org.thingsboard.server.service.edge.rpc.constructor.RelationUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RuleChainUpdateMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.UserUpdateMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.state.DeviceStateService;
 
 @Component
 @Data
@@ -48,11 +58,19 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
+    private EdgeNotificationService edgeNotificationService;
+
+    @Lazy
+    @Autowired
     private AssetService assetService;
 
     @Lazy
     @Autowired
     private DeviceService deviceService;
+
+    @Lazy
+    @Autowired
+    private DeviceCredentialsService deviceCredentialsService;
 
     @Lazy
     @Autowired
@@ -80,11 +98,27 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
+    private RuleChainService ruleChainService;
+
+    @Lazy
+    @Autowired
+    private UserService userService;
+
+    @Lazy
+    @Autowired
     private ActorService actorService;
 
     @Lazy
     @Autowired
-    private InitEdgeService initEdgeService;
+    private DeviceStateService deviceStateService;
+
+    @Lazy
+    @Autowired
+    private TbClusterService tbClusterService;
+
+    @Lazy
+    @Autowired
+    private SyncEdgeService syncEdgeService;
 
     @Lazy
     @Autowired
@@ -112,5 +146,21 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
+    private UserUpdateMsgConstructor userUpdateMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private RelationUpdateMsgConstructor relationUpdateMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private EntityDataMsgConstructor entityDataMsgConstructor;
+
+    @Lazy
+    @Autowired
     private EdgeEventStorageSettings edgeEventStorageSettings;
+
+    @Autowired
+    @Getter
+    private DbCallbackExecutorService dbCallbackExecutor;
 }

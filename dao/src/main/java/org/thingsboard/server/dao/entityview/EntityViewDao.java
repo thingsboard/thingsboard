@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -161,22 +162,8 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @param pageLink the page link
      * @return the list of entity view objects
      */
-    PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
-                                                        UUID edgeId,
-                                                        PageLink pageLink);
-
-    /**
-     * Find entity views by tenantId, edgeId, type and page link.
-     *
-     * @param tenantId the tenantId
-     * @param edgeId   the edgeId
-     * @param type     the type
-     * @param pageLink the page link
-     * @return the list of entity view objects
-     */
-    PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId,
-                                                               UUID edgeId,
-                                                               String type,
-                                                               PageLink pageLink);
+    ListenableFuture<PageData<EntityView>> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
+                                                                          UUID edgeId,
+                                                                          TimePageLink pageLink);
 
 }

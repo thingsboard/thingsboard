@@ -47,7 +47,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 
 public class TbMsgDelayNode implements TbNode {

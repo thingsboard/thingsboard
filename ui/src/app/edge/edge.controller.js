@@ -577,7 +577,6 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             });
     }
 
-
     function assignEdgesToCustomer($event, items) {
         var edgeIds = [];
         for (var id in items.selections) {
@@ -666,7 +665,6 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
         }
         $state.go('home.edges.ruleChains', {edgeId: edge.id.id});
     }
-
 
     function openEdgeAssets($event, edge) {
         if ($event) {

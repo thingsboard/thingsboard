@@ -97,7 +97,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         if (!started) {
             RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
             if (ruleChain != null) {
-                if (ruleChain.getType().equals(RuleChainType.SYSTEM)) {
+                if (ruleChain.getType().equals(RuleChainType.CORE)) {
                     List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
                     log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
                     // Creating and starting the actors;
@@ -119,7 +119,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     public void onUpdate(TbActorCtx context) {
         RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
         if (ruleChain != null) {
-            if (ruleChain.getType().equals(RuleChainType.SYSTEM)) {
+            if (ruleChain.getType().equals(RuleChainType.CORE)) {
                 ruleChainName = ruleChain.getName();
                 List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
                 log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());

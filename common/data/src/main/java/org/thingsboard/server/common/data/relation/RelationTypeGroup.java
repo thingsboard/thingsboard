@@ -22,6 +22,7 @@ public enum RelationTypeGroup {
     DASHBOARD,
     RULE_CHAIN,
     RULE_NODE,
-    EDGE
+    EDGE,
+    EDGE_DEFAULT_RULE_CHAIN
 
 }

@@ -356,6 +356,8 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         edge.setType("default");
         edge.setName("Test different edge");
         edge.setType("default");
+        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
         edge = edgeService.saveEdge(edge);
         try {
             dashboardService.assignDashboardToEdge(tenantId, dashboard.getId(), edge.getId());

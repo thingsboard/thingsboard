@@ -20,15 +20,30 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public abstract class AbstractEntityService {
 
+    public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
+
     @Autowired
     protected RelationService relationService;
+
+    protected void createRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
+        log.debug("Creating relation: {}", relation);
+        relationService.saveRelation(tenantId, relation);
+    }
+
+    protected void deleteRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
+        log.debug("Deleting relation: {}", relation);
+        relationService.deleteRelation(tenantId, relation);
+    }
 
     protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);

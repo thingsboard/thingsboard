@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -43,9 +44,12 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -59,6 +63,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.ENTITY_VIEW_CACHE;
@@ -88,6 +93,9 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    private EdgeService edgeService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -333,40 +341,46 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Override
     public EntityView assignEntityViewToEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
-        entityView.setEdgeId(edgeId);
-        return saveEntityView(entityView);
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+        if (edge == null) {
+            throw new DataValidationException("Can't assign entityView to non-existent edge!");
+        }
+        if (!edge.getTenantId().getId().equals(entityView.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign entityView to edge from different tenant!");
+        }
+        try {
+            createRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (ExecutionException | InterruptedException e) {
+            log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return entityView;
     }
 
-    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
-    public EntityView unassignEntityViewFromEdge(TenantId tenantId, EntityViewId entityViewId) {
+    public EntityView unassignEntityViewFromEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
-        entityView.setEdgeId(null);
-        return saveEntityView(entityView);
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign entityView from non-existent edge!");
+        }
+        try {
+            deleteRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (ExecutionException | InterruptedException e) {
+            log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return entityView;
     }
 
     @Override
-    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId,
-                                                                       PageLink pageLink) {
-        log.trace("Executing findEntityViewsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}]," +
-                " pageLink [{}]", tenantId, edgeId, pageLink);
+    public ListenableFuture<PageData<EntityView>> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId,
+                                                                                     TimePageLink pageLink) {
+        log.trace("Executing findEntityViewsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
         validatePageLink(pageLink);
-        return entityViewDao.findEntityViewsByTenantIdAndEdgeId(tenantId.getId(),
-                edgeId.getId(), pageLink);
-    }
-
-    @Override
-    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink) {
-        log.trace("Executing findEntityViewsByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}]," +
-                " pageLink [{}], type [{}]", tenantId, edgeId, pageLink, type);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
-        validatePageLink(pageLink);
-        validateString(type, "Incorrect type " + type);
-        return entityViewDao.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId.getId(),
-                edgeId.getId(), type, pageLink);
+        return entityViewDao.findEntityViewsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
     }
 
     private DataValidator<EntityView> entityViewValidator =

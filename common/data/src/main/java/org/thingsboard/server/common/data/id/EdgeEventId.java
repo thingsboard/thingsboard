@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.nosql;
+package org.thingsboard.server.common.data.id;
 
-import org.thingsboard.server.dao.service.BaseEdgeServiceTest;
-import org.thingsboard.server.dao.service.DaoNoSqlTest;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@DaoNoSqlTest
-public class EdgeServiceNoSqlTest extends BaseEdgeServiceTest {
+import java.util.UUID;
+
+public class EdgeEventId extends UUIDBased {
+
+    private static final long serialVersionUID = 1L;
+
+    @JsonCreator
+    public EdgeEventId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
+
+    public static EdgeEventId fromString(String edgeEventId) {
+        return new EdgeEventId(UUID.fromString(edgeEventId));
+    }
 }

@@ -126,22 +126,4 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
     List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> deviceIds);
 
     List<DeviceEntity> findDevicesByTenantIdAndIdIn(String tenantId, List<String> deviceIds);
-
-    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
-            "AND d.edgeId = :edgeId " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<DeviceEntity> findByTenantIdAndEdgeId(@Param("tenantId") String tenantId,
-                                               @Param("edgeId") String edgeId,
-                                               @Param("searchText") String searchText,
-                                               Pageable pageable);
-
-    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
-            "AND d.edgeId = :edgeId " +
-            "AND d.type = :type " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<DeviceEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") String tenantId,
-                                                      @Param("edgeId") String edgeId,
-                                                      @Param("type") String type,
-                                                      @Param("textSearch") String textSearch,
-                                                      Pageable pageable);
 }

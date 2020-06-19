@@ -41,7 +41,7 @@ public interface UserDao extends Dao<User> {
      * @return the user entity
      */
     User findByEmail(TenantId tenantId, String email);
-    
+
     /**
      * Find tenant admin users by tenantId and page link.
      *

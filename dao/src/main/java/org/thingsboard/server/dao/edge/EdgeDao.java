@@ -130,4 +130,21 @@ public interface EdgeDao extends Dao<Edge> {
 
     PageData<EdgeInfo> findEdgeInfosByTenantId(UUID tenantId, PageLink pageLink);
 
+    /**
+     * Find edges by tenantId and ruleChainId.
+     *
+     * @param tenantId the tenantId
+     * @param ruleChainId the ruleChainId
+     * @return the list of rule chain objects
+     */
+    ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(UUID tenantId, UUID ruleChainId);
+
+    /**
+     * Find edges by tenantId and dashboardId.
+     *
+     * @param tenantId the tenantId
+     * @param dashboardId the dashboardId
+     * @return the list of rule chain objects
+     */
+    ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(UUID tenantId, UUID dashboardId);
 }

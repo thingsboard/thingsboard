@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,6 +42,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -79,21 +81,29 @@ public class EdgeController extends BaseController {
             edge.setTenantId(tenantId);
             boolean created = edge.getId() == null;
 
+            RuleChain defaultRootEdgeRuleChain = null;
+            if (created) {
+                defaultRootEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenantId);
+                if (defaultRootEdgeRuleChain == null) {
+                    throw new DataValidationException("Root edge rule chain is not available!");
+                }
+            }
+
             Operation operation = created ? Operation.CREATE : Operation.WRITE;
 
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation,
                     edge.getId(), edge);
 
-            Edge result = checkNotNull(edgeService.saveEdge(edge));
+            Edge savedEdge = checkNotNull(edgeService.saveEdge(edge));
 
             if (created) {
-                RuleChain defaultRootEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenantId);
-                ruleChainService.assignRuleChainToEdge(tenantId, defaultRootEdgeRuleChain.getId(), result.getId());
-                edgeService.setRootRuleChain(tenantId, result, defaultRootEdgeRuleChain.getId());
+                ruleChainService.assignRuleChainToEdge(tenantId, defaultRootEdgeRuleChain.getId(), savedEdge.getId());
+                edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, defaultRootEdgeRuleChain.getId());
+                edgeService.assignDefaultRuleChainsToEdge(tenantId, savedEdge.getId());
             }
 
-            logEntityAction(result.getId(), result, null, created ? ActionType.ADDED : ActionType.UPDATED, null);
-            return result;
+            logEntityAction(savedEdge.getId(), savedEdge, null, created ? ActionType.ADDED : ActionType.UPDATED, null);
+            return savedEdge;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.EDGE), edge,
                     null, edge.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
@@ -273,8 +283,7 @@ public class EdgeController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/edges", params = {"edgeName"}, method = RequestMethod.GET)
     @ResponseBody
-    public Edge getTenantEdge(
-            @RequestParam String edgeName) throws ThingsboardException {
+    public Edge getTenantEdge(@RequestParam String edgeName) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             return checkNotNull(edgeService.findEdgeByTenantIdAndName(tenantId, edgeName));
@@ -299,7 +308,7 @@ public class EdgeController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, Operation.WRITE,
                     edge.getId(), edge);
 
-            Edge updatedEdge = edgeService.setRootRuleChain(getTenantId(), edge, ruleChainId);
+            Edge updatedEdge = edgeNotificationService.setEdgeRootRuleChain(getTenantId(), edge, ruleChainId);
 
             logEntityAction(updatedEdge.getId(), updatedEdge, null, ActionType.UPDATED, null);
 

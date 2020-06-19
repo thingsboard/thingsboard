@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-rule-chain-assigned-edges {
-  display: block;
-  display: -webkit-box; /* stylelint-disable-line value-no-vendor-prefix */
-  height: 34px;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical; /* stylelint-disable-line property-no-vendor-prefix */
+package org.thingsboard.server.service.edge.rpc.init;
+
+import io.grpc.stub.StreamObserver;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
+import org.thingsboard.server.service.edge.EdgeContextComponent;
+
+public interface SyncEdgeService {
+
+    void sync(EdgeContextComponent ctx, Edge edge, StreamObserver<ResponseMsg> outputStream);
+
+    void syncRuleChainMetadata(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg, StreamObserver<ResponseMsg> outputStream);
 }

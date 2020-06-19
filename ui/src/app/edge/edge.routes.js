@@ -16,6 +16,11 @@
 /* eslint-disable import/no-unresolved, import/default */
 
 import edgesTemplate from './edges.tpl.html';
+import entityViewsTemplate from "../entity-view/entity-views.tpl.html";
+import devicesTemplate from "../device/devices.tpl.html";
+import assetsTemplate from "../asset/assets.tpl.html";
+import dashboardsTemplate from "../dashboard/dashboards.tpl.html";
+import dashboardTemplate from "../dashboard/dashboard.tpl.html";
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -45,27 +50,116 @@ export default function EdgeRoutes($stateProvider, types) {
                 label: '{"icon": "transform", "label": "edge.edges"}'
             }
         })
-        .state('home.customers.edges', {
-            url: '/:customerId/edges',
+        .state('home.edges.entityViews', {
+            url: '/:edgeId/entityViews',
             params: {'topIndex': 0},
             module: 'private',
             auth: ['TENANT_ADMIN'],
             views: {
                 "content@home": {
-                    templateUrl: edgesTemplate,
+                    templateUrl: entityViewsTemplate,
                     controllerAs: 'vm',
-                    controller: 'EdgeController'
+                    controller: 'EntityViewController'
                 }
             },
             data: {
-                edgesType: 'customer',
+                entityViewsType: 'edge',
                 searchEnabled: true,
                 searchByEntitySubtype: true,
-                searchEntityType: types.entityType.edge,
-                pageTitle: 'customer.edges'
+                searchEntityType: types.entityType.entityView,
+                pageTitle: 'edge.entity-views'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "transform", "label": "{{ vm.customerEdgesTitle }}", "translate": "false"}'
+                label: '{"icon": "view_quilt", "label": "edge.entity-views"}'
+            }
+        })
+        .state('home.edges.devices', {
+            url: '/:edgeId/devices',
+            params: {'topIndex': 0},
+            module: 'private',
+            auth: ['TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: devicesTemplate,
+                    controllerAs: 'vm',
+                    controller: 'DeviceController'
+                }
+            },
+            data: {
+                devicesType: 'edge',
+                searchEnabled: true,
+                searchByEntitySubtype: true,
+                searchEntityType: types.entityType.device,
+                pageTitle: 'edge.devices'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "devices_other", "label": "edge.devices"}'
+            }
+        })
+        .state('home.edges.assets', {
+            url: '/:edgeId/assets',
+            params: {'topIndex': 0},
+            module: 'private',
+            auth: ['TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: assetsTemplate,
+                    controllerAs: 'vm',
+                    controller: 'AssetController'
+                }
+            },
+            data: {
+                assetsType: 'edge',
+                searchEnabled: true,
+                searchByEntitySubtype: true,
+                searchEntityType: types.entityType.asset,
+                pageTitle: 'edge.assets'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "domain", "label": "edge.assets"}'
+            }
+        })
+        .state('home.edges.dashboards', {
+        url: '/:edgeId/dashboards',
+        params: {'topIndex': 0},
+        module: 'private',
+        auth: ['TENANT_ADMIN'],
+        views: {
+            "content@home": {
+                templateUrl: dashboardsTemplate,
+                controllerAs: 'vm',
+                controller: 'DashboardsController'
+            }
+        },
+        data: {
+            dashboardsType: 'edge',
+            searchEnabled: true,
+            pageTitle: 'edge.dashboards'
+        },
+        ncyBreadcrumb: {
+            label: '{"icon": "dashboard", "label": "edge.dashboards"}'
+        }
+    })
+        .state('home.edges.dashboards.dashboard', {
+            url: '/:dashboardId?state',
+            reloadOnSearch: false,
+            module: 'private',
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
+            views: {
+                "content@home": {
+                    templateUrl: dashboardTemplate,
+                    controller: 'DashboardController',
+                    controllerAs: 'vm'
+                }
+            },
+            data: {
+                widgetEditMode: false,
+                searchEnabled: false,
+                pageTitle: 'dashboard.dashboard',
+                dashboardsType: 'edge',
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "dashboard", "label": "{{ vm.dashboard.title }}", "translate": "false"}'
             }
         });
 }
