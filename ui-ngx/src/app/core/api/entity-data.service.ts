@@ -86,9 +86,9 @@ export class EntityDataService {
       subscription = new EntityDataSubscription(entityDataSubscriptionOptions,
         this.telemetryService, this.utils);
       this.subscriptions[listener.entityDataSubscriptionKey] = subscription;
+      subscription.addListener(listener);
       subscription.start();
     }
-    subscription.addListener(listener);
   }
 
   public unsubscribeFromDatasource(listener: EntityDataListener) {

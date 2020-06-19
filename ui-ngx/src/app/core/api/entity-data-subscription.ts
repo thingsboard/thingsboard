@@ -136,9 +136,6 @@ export class EntityDataSubscription {
 
   public addListener(listener: EntityDataListener) {
     this.listeners.push(listener);
-    if (this.history) {
-      this.start();
-    }
   }
 
   public hasListeners(): boolean {
@@ -172,6 +169,7 @@ export class EntityDataSubscription {
       }
       listener.dataLoaded(this.pageData, data, listener.configDatasourceIndex);
     }
+    this.listeners.push(listener);
   }
 
   public unsubscribe() {
@@ -195,9 +193,6 @@ export class EntityDataSubscription {
   }
 
   public start() {
-    if (this.history && !this.hasListeners()) {
-      return;
-    }
     this.subsTw = this.entityDataSubscriptionOptions.subscriptionTimewindow;
     if (this.datasourceType === DatasourceType.entity) {
       const entityFields: Array<EntityKey> =
@@ -350,16 +345,18 @@ export class EntityDataSubscription {
     this.dataAggregators = [];
     this.entityIdToDataIndex = {};
     let tsKeyNames;
-    if (this.datasourceType === DatasourceType.function) {
-      tsKeyNames = [];
-      for (const key of Object.keys(this.dataKeys)) {
-        const dataKeysList = this.dataKeys[key] as Array<SubscriptionDataKey>;
-        dataKeysList.forEach((subscriptionDataKey) => {
-          tsKeyNames.push(`${subscriptionDataKey.name}_${subscriptionDataKey.index}`);
-        });
+    if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
+      if (this.datasourceType === DatasourceType.function) {
+        tsKeyNames = [];
+        for (const key of Object.keys(this.dataKeys)) {
+          const dataKeysList = this.dataKeys[key] as Array<SubscriptionDataKey>;
+          dataKeysList.forEach((subscriptionDataKey) => {
+            tsKeyNames.push(`${subscriptionDataKey.name}_${subscriptionDataKey.index}`);
+          });
+        }
+      } else {
+        tsKeyNames = this.tsFields ? this.tsFields.map(field => field.key) : [];
       }
-    } else {
-      tsKeyNames = this.tsFields.map(field => field.key);
     }
     for (let dataIndex = 0; dataIndex < pageData.data.length; dataIndex++) {
       const entityData = pageData.data[dataIndex];
@@ -404,6 +401,8 @@ export class EntityDataSubscription {
         }
       );
     }
+
+    this.pageData = pageData;
 
     this.listeners.forEach((listener) => {
       listener.dataLoaded(pageData, data,
@@ -505,7 +504,7 @@ export class EntityDataSubscription {
             update = true;
           }
           if (update) {
-            this.datasourceData[datasourceKey].data = data;
+            this.datasourceData[dataIndex][datasourceKey].data = data;
             dataUpdatedCb(this.datasourceData[dataIndex][datasourceKey], dataIndex, dataKey.index, detectChanges);
           }
         }

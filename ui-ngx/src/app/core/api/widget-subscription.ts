@@ -78,6 +78,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   entityDataListeners: Array<EntityDataListener>;
   configuredDatasources: Array<Datasource>;
 
+  initDataSubscriptionSubject: Subject<void>;
   data: Array<DatasourceData>;
   datasources: Array<Datasource>;
   // datasourceListeners: Array<DatasourceListener>;
@@ -134,6 +135,8 @@ export class WidgetSubscription implements IWidgetSubscription {
   targetDeviceId: string;
   targetDeviceName: string;
   executingSubjects: Array<Subject<any>>;
+
+  subscribed = false;
 
   constructor(subscriptionContext: WidgetSubscriptionContext, public options: WidgetSubscriptionOptions) {
     const subscriptionSubject = new ReplaySubject<IWidgetSubscription>();
@@ -345,32 +348,34 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private initDataSubscription(): Observable<any> {
-    const initDataSubscriptionSubject = new ReplaySubject(1);
+    this.initDataSubscriptionSubject = new ReplaySubject(1);
     this.loadStDiff().subscribe(() => {
       if (!this.ctx.aliasController) {
         this.hasResolvedData = true;
         // this.configureData();
-        initDataSubscriptionSubject.next();
-        initDataSubscriptionSubject.complete();
+        // initDataSubscriptionSubject.next();
+        // initDataSubscriptionSubject.complete();
+        this.subscribe();
       } else {
         this.ctx.aliasController.resolveDatasources(this.configuredDatasources).subscribe(
           (datasources) => {
             this.configuredDatasources = datasources;
-            if (datasources && datasources.length) {
+            /* if (datasources && datasources.length) {
               this.hasResolvedData = true;
-            }
+            }*/
+            this.subscribe();
             // this.configureData();
-            initDataSubscriptionSubject.next();
-            initDataSubscriptionSubject.complete();
+            // initDataSubscriptionSubject.next();
+            // initDataSubscriptionSubject.complete();
           },
           (err) => {
             this.notifyDataLoaded();
-            initDataSubscriptionSubject.error(err);
+            this.initDataSubscriptionSubject.error(err);
           }
         );
       }
     });
-    return initDataSubscriptionSubject.asObservable();
+    return this.initDataSubscriptionSubject.asObservable();
   }
 
 /*  private initDataSubscriptionOld(): Observable<any> {
@@ -587,15 +592,18 @@ export class WidgetSubscription implements IWidgetSubscription {
     });
   }
 
-  onDashboardTimewindowChanged(newDashboardTimewindow: Timewindow): void {
+  onDashboardTimewindowChanged(newDashboardTimewindow: Timewindow): boolean {
     if (this.type === widgetType.timeseries || this.type === widgetType.alarm) {
       if (this.useDashboardTimewindow) {
         if (!isEqual(this.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
-          this.timeWindowConfig = deepClone(newDashboardTimewindow);
-          this.update();
+          // this.timeWindowConfig = deepClone(newDashboardTimewindow);
+          // this.update();
+          // TODO:
+          return true;
         }
       }
     }
+    return false;
   }
 
   private onAlarmSearchStatusChanged() {
@@ -782,13 +790,16 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   subscribe(): void {
-    if (this.cafs.subscribe) {
-      this.cafs.subscribe();
-      this.cafs.subscribe = null;
+    if (!this.subscribed) {
+      this.subscribed = true;
+      if (this.cafs.subscribe) {
+        this.cafs.subscribe();
+        this.cafs.subscribe = null;
+      }
+      this.cafs.subscribe = this.ctx.raf.raf(() => {
+        this.doSubscribe();
+      });
     }
-    this.cafs.subscribe = this.ctx.raf.raf(() => {
-      this.doSubscribe();
-    });
   }
 
   private doSubscribe() {
@@ -995,6 +1006,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.resetData();
       }
     }
+    this.subscribed = false;
   }
 
 /*  unsubscribeOld() {
@@ -1119,6 +1131,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private dataLoaded(pageData: PageData<EntityData>, data: Array<Array<DataSetHolder>>, datasourceIndex: number) {
     const datasource = this.configuredDatasources[datasourceIndex];
+    datasource.dataReceived = true;
     const datasources = pageData.data.map((entityData, index) =>
       this.entityDataToDatasource(datasource, entityData, index)
     );
@@ -1140,7 +1153,15 @@ export class WidgetSubscription implements IWidgetSubscription {
     };
     this.dataPages[datasourceIndex] = datasourceDataPage;
     this.configureLoadedData();
-    this.notifyDataLoaded();
+    const readyCount = this.configuredDatasources.filter(d => d.dataReceived).length;
+    if (this.configuredDatasources.length === readyCount) {
+      this.hasResolvedData = true;
+      this.initDataSubscriptionSubject.next();
+      this.initDataSubscriptionSubject.complete();
+      this.configureLoadedData();
+      this.notifyDataLoaded();
+      this.onDataUpdated(true);
+    }
   }
 
   private configureLoadedData() {
@@ -1204,7 +1225,6 @@ export class WidgetSubscription implements IWidgetSubscription {
       });
       this.callbacks.legendDataUpdated(this, true);
     }
-    this.onDataUpdated(true);
   }
 
   private entityDataToDatasourceData(datasource: Datasource, data: Array<DataSetHolder>): Array<DatasourceData> {
@@ -1224,7 +1244,6 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private entityDataToDatasource(configDatasource: Datasource, entityData: EntityData, index: number): Datasource {
     const newDatasource = deepClone(configDatasource);
-    newDatasource.dataReceived = true;
     newDatasource.entity = {};
     newDatasource.entityId = entityData.entityId.id;
     newDatasource.entityType = entityData.entityId.entityType as EntityType;

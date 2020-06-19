@@ -264,7 +264,7 @@ export interface IWidgetSubscription {
 
   onAliasesChanged(aliasIds: Array<string>): boolean;
 
-  onDashboardTimewindowChanged(dashboardTimewindow: Timewindow): void;
+  onDashboardTimewindowChanged(dashboardTimewindow: Timewindow): boolean;
 
   updateDataVisibility(index: number): void;
 

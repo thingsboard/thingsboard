@@ -87,7 +87,6 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { DashboardService } from '@core/http/dashboard.service';
-import { DatasourceService } from '@core/api/datasource.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
 import { ServicesMap } from '@home/models/services.map';
@@ -621,9 +620,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.rxSubscriptions.push(this.widgetContext.dashboard.dashboardTimewindowChanged.subscribe(
       (dashboardTimewindow) => {
+        // TODO:
+        let subscriptionChanged = false;
         for (const id of Object.keys(this.widgetContext.subscriptions)) {
           const subscription = this.widgetContext.subscriptions[id];
-          subscription.onDashboardTimewindowChanged(dashboardTimewindow);
+          subscriptionChanged = subscriptionChanged || subscription.onDashboardTimewindowChanged(dashboardTimewindow);
+        }
+        if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
+          this.reInit();
         }
       }
     ));
