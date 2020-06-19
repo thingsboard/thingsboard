@@ -21,14 +21,12 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.OAuth2IntegrationId;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
+import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -39,8 +37,6 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
 
     @Column(name = ModelConstants.OAUTH2_CLIENT_REGISTRATION_ID_PROPERTY)
     private String registrationId;
-    @Column(name = ModelConstants.OAUTH2_CLIENT_REGISTRATION_MAPPER_CONFIG_ID_PROPERTY)
-    private String mapperConfigId;
     @Column(name = ModelConstants.OAUTH2_CLIENT_ID_PROPERTY)
     private String clientId;
     @Column(name = ModelConstants.OAUTH2_CLIENT_SECRET_PROPERTY)
@@ -69,6 +65,35 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
     private String loginButtonLabel;
     @Column(name = ModelConstants.OAUTH2_LOGIN_BUTTON_ICON_PROPERTY)
     private String loginButtonIcon;
+    @Column(name = ModelConstants.OAUTH2_ALLOW_USER_CREATION_PROPERTY)
+    private Boolean allowUserCreation;
+    @Column(name = ModelConstants.OAUTH2_ACTIVATE_USER_PROPERTY)
+    private Boolean activateUser;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.OAUTH2_MAPPER_TYPE_PROPERTY)
+    private MapperType type;
+    @Column(name = ModelConstants.OAUTH2_EMAIL_ATTRIBUTE_KEY_PROPERTY)
+    private String emailAttributeKey;
+    @Column(name = ModelConstants.OAUTH2_FIRST_NAME_ATTRIBUTE_KEY_PROPERTY)
+    private String firstNameAttributeKey;
+    @Column(name = ModelConstants.OAUTH2_LAST_NAME_ATTRIBUTE_KEY_PROPERTY)
+    private String lastNameAttributeKey;
+    @Column(name = ModelConstants.OAUTH2_TENANT_NAME_STRATEGY_PROPERTY)
+    private String tenantNameStrategy;
+    @Column(name = ModelConstants.OAUTH2_TENANT_NAME_PATTERN_PROPERTY)
+    private String tenantNamePattern;
+    @Column(name = ModelConstants.OAUTH2_CUSTOMER_NAME_PATTERN_PROPERTY)
+    private String customerNamePattern;
+    @Column(name = ModelConstants.OAUTH2_DEFAULT_DASHBOARD_NAME_PROPERTY)
+    private String defaultDashboardName;
+    @Column(name = ModelConstants.OAUTH2_ALWAYS_FULL_SCREEN_PROPERTY)
+    private Boolean alwaysFullScreen;
+    @Column(name = ModelConstants.OAUTH2_MAPPER_URL_PROPERTY)
+    private String url;
+    @Column(name = ModelConstants.OAUTH2_MAPPER_USERNAME_PROPERTY)
+    private String username;
+    @Column(name = ModelConstants.OAUTH2_MAPPER_PASSWORD_PROPERTY)
+    private String password;
 
     public OAuth2ClientRegistrationEntity() {
         super();
@@ -79,7 +104,30 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
         return OAuth2ClientRegistration.builder()
                 .id(new OAuth2IntegrationId(toUUID(id)))
                 .registrationId(registrationId)
-                .mapperConfigId(new OAuth2IntegrationId(toUUID(mapperConfigId)))
+                .mapperConfig(OAuth2MapperConfig.builder()
+                        .allowUserCreation(allowUserCreation)
+                        .activateUser(activateUser)
+                        .type(type)
+                        .basicConfig(
+                                OAuth2BasicMapperConfig.builder()
+                                        .emailAttributeKey(emailAttributeKey)
+                                        .firstNameAttributeKey(firstNameAttributeKey)
+                                        .lastNameAttributeKey(lastNameAttributeKey)
+                                        .tenantNameStrategy(tenantNameStrategy)
+                                        .tenantNamePattern(tenantNamePattern)
+                                        .customerNamePattern(customerNamePattern)
+                                        .defaultDashboardName(defaultDashboardName)
+                                        .alwaysFullScreen(alwaysFullScreen)
+                                        .build()
+                        )
+                        .customConfig(
+                                OAuth2CustomMapperConfig.builder()
+                                        .url(url)
+                                        .username(username)
+                                        .password(password)
+                                        .build()
+                        )
+                        .build())
                 .clientId(clientId)
                 .clientSecret(clientSecret)
                 .authorizationUri(authorizationUri)

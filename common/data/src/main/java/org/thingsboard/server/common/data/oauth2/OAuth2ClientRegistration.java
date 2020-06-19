@@ -10,7 +10,7 @@ import org.thingsboard.server.common.data.id.OAuth2IntegrationId;
 public class OAuth2ClientRegistration extends BaseData<OAuth2IntegrationId> {
 
     private String registrationId;
-    private OAuth2IntegrationId mapperConfigId;
+    private OAuth2MapperConfig mapperConfig;
     private String clientId;
     private String clientSecret;
     private String authorizationUri;
@@ -35,7 +35,7 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2IntegrationId> {
     }
 
     @Builder(toBuilder = true)
-    public OAuth2ClientRegistration(OAuth2IntegrationId id, String registrationId, String clientId, String clientSecret, String authorizationUri, String tokenUri, String redirectUriTemplate, String scope, String authorizationGrantType, String userInfoUri, String userNameAttribute, String jwkSetUri, String clientAuthenticationMethod, String clientName, String loginButtonLabel, String loginButtonIcon, OAuth2IntegrationId mapperConfigId) {
+    public OAuth2ClientRegistration(OAuth2IntegrationId id, String registrationId, String clientId, String clientSecret, String authorizationUri, String tokenUri, String redirectUriTemplate, String scope, String authorizationGrantType, String userInfoUri, String userNameAttribute, String jwkSetUri, String clientAuthenticationMethod, String clientName, String loginButtonLabel, String loginButtonIcon, OAuth2MapperConfig mapperConfig) {
         super(id);
         this.registrationId = registrationId;
         this.clientId = clientId;
@@ -52,6 +52,6 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2IntegrationId> {
         this.clientName = clientName;
         this.loginButtonLabel = loginButtonLabel;
         this.loginButtonIcon = loginButtonIcon;
-        this.mapperConfigId = mapperConfigId;
+        this.mapperConfig = mapperConfig;
     }
 }

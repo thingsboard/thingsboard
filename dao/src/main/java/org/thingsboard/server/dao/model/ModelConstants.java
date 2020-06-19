@@ -359,7 +359,6 @@ public class ModelConstants {
      */
     public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
     public static final String OAUTH2_CLIENT_REGISTRATION_ID_PROPERTY = "registration_id";
-    public static final String OAUTH2_CLIENT_REGISTRATION_MAPPER_CONFIG_ID_PROPERTY = "mapper_config_id";
     public static final String OAUTH2_CLIENT_ID_PROPERTY = "client_id";
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
@@ -374,11 +373,6 @@ public class ModelConstants {
     public static final String OAUTH2_CLIENT_NAME_PROPERTY = "client_name";
     public static final String OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY = "login_button_label";
     public static final String OAUTH2_LOGIN_BUTTON_ICON_PROPERTY = "login_button_icon";
-
-    /**
-     * Cassandra OAuth2 mapper config constants.
-     */
-    public static final String OAUTH2_MAPPER_CONFIG_COLUMN_FAMILY_NAME = "oauth2_mapper_config";
     public static final String OAUTH2_ALLOW_USER_CREATION_PROPERTY = "allow_user_creation";
     public static final String OAUTH2_ACTIVATE_USER_PROPERTY = "activate_user";
     public static final String OAUTH2_MAPPER_TYPE_PROPERTY = "type";

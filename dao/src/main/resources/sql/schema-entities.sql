@@ -254,27 +254,22 @@ CREATE TABLE IF NOT EXISTS entity_view (
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_client_registration (
-    id                              varchar(31) NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
-    registration_id                 varchar(255) UNIQUE,
-    mapper_config_id                varchar(31),
-    client_id                       varchar(255),
-    client_secret                   varchar(255),
-    authorization_uri               varchar(255),
-    token_uri                       varchar(255),
-    redirect_uri_template           varchar(255),
-    scope                           varchar(255),
-    authorization_grant_type        varchar(255),
-    user_info_uri                   varchar(255),
-    user_name_attribute             varchar(255),
-    jwk_set_uri                     varchar(255),
-    client_authentication_method    varchar(255),
-    client_name                     varchar(255),
-    login_button_label              varchar(255),
-    login_button_icon               varchar(255)
-);
-
-CREATE TABLE IF NOT EXISTS oauth2_mapper_config (
-    id                                  varchar(31) NOT NULL CONSTRAINT oauth2_mapper_config_pkey PRIMARY KEY,
+    id                                  varchar(31) NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
+    registration_id                     varchar(255) UNIQUE,
+    client_id                           varchar(255),
+    client_secret                       varchar(255),
+    authorization_uri                   varchar(255),
+    token_uri                           varchar(255),
+    redirect_uri_template               varchar(255),
+    scope                               varchar(255),
+    authorization_grant_type            varchar(255),
+    user_info_uri                       varchar(255),
+    user_name_attribute                 varchar(255),
+    jwk_set_uri                         varchar(255),
+    client_authentication_method        varchar(255),
+    client_name                         varchar(255),
+    login_button_label                  varchar(255),
+    login_button_icon                   varchar(255),
     allow_user_creation                 boolean,
     activate_user                       boolean,
     type                                varchar(31),
