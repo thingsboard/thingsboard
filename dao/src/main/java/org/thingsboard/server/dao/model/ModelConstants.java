@@ -367,7 +367,7 @@ public class ModelConstants {
     public static final String OAUTH2_SCOPE_PROPERTY = "scope";
     public static final String OAUTH2_AUTHORIZATION_GRANT_TYPE_PROPERTY = "authorization_grant_type";
     public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
-    public static final String OAUTH2_USER_NAME_ATTRIBUTE_PROPERTY = "user_name_attribute";
+    public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
     public static final String OAUTH2_JWK_SET_URI_PROPERTY = "jwk_set_uri";
     public static final String OAUTH2_CLIENT_AUTHENTICATION_METHOD_PROPERTY = "client_authentication_method";
     public static final String OAUTH2_CLIENT_NAME_PROPERTY = "client_name";

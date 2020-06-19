@@ -19,16 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
@@ -94,8 +90,8 @@ public class OAuth2ClientRegistrationServiceImpl implements OAuth2ClientRegistra
         if (StringUtils.isEmpty(clientRegistration.getUserInfoUri())) {
             throw new DataValidationException("User info uri should be specified!");
         }
-        if (StringUtils.isEmpty(clientRegistration.getUserNameAttribute())) {
-            throw new DataValidationException("User name attribute should be specified!");
+        if (StringUtils.isEmpty(clientRegistration.getUserNameAttributeName())) {
+            throw new DataValidationException("User name attribute name should be specified!");
         }
         if (StringUtils.isEmpty(clientRegistration.getJwkSetUri())) {
             throw new DataValidationException("Jwk set uri should be specified!");

@@ -34,7 +34,7 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
                 .clientName(localClientRegistration.getClientName())
                 .authorizationGrantType(new AuthorizationGrantType(localClientRegistration.getAuthorizationGrantType()))
                 .userInfoUri(localClientRegistration.getUserInfoUri())
-                .userNameAttributeName(localClientRegistration.getUserNameAttribute())
+                .userNameAttributeName(localClientRegistration.getUserNameAttributeName())
                 .jwkSetUri(localClientRegistration.getJwkSetUri())
                 .clientAuthenticationMethod(new ClientAuthenticationMethod(localClientRegistration.getClientAuthenticationMethod()))
                 .build();

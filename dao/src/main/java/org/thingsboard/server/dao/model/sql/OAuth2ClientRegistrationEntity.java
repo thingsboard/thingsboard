@@ -17,9 +17,7 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.OAuth2IntegrationId;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -53,8 +51,8 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
     private String authorizationGrantType;
     @Column(name = ModelConstants.OAUTH2_USER_INFO_URI_PROPERTY)
     private String userInfoUri;
-    @Column(name = ModelConstants.OAUTH2_USER_NAME_ATTRIBUTE_PROPERTY)
-    private String userNameAttribute;
+    @Column(name = ModelConstants.OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY)
+    private String userNameAttributeName;
     @Column(name = ModelConstants.OAUTH2_JWK_SET_URI_PROPERTY)
     private String jwkSetUri;
     @Column(name = ModelConstants.OAUTH2_CLIENT_AUTHENTICATION_METHOD_PROPERTY)
@@ -113,7 +111,7 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
         this.scope = clientRegistration.getScope();
         this.authorizationGrantType = clientRegistration.getAuthorizationGrantType();
         this.userInfoUri = clientRegistration.getUserInfoUri();
-        this.userNameAttribute = clientRegistration.getUserNameAttribute();
+        this.userNameAttributeName = clientRegistration.getUserNameAttributeName();
         this.jwkSetUri = clientRegistration.getJwkSetUri();
         this.clientAuthenticationMethod = clientRegistration.getClientAuthenticationMethod();
         this.clientName = clientRegistration.getClientName();
@@ -181,7 +179,7 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
                 .scope(scope)
                 .authorizationGrantType(authorizationGrantType)
                 .userInfoUri(userInfoUri)
-                .userNameAttribute(userNameAttribute)
+                .userNameAttributeName(userNameAttributeName)
                 .jwkSetUri(jwkSetUri)
                 .clientAuthenticationMethod(clientAuthenticationMethod)
                 .clientName(clientName)

@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     scope                               varchar(255),
     authorization_grant_type            varchar(255),
     user_info_uri                       varchar(255),
-    user_name_attribute                 varchar(255),
+    user_name_attribute_name            varchar(255),
     jwk_set_uri                         varchar(255),
     client_authentication_method        varchar(255),
     client_name                         varchar(255),

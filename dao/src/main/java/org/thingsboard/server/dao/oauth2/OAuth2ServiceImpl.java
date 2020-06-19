@@ -136,7 +136,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 .scope(oAuth2Client.getScope())
                 .authorizationGrantType(oAuth2Client.getAuthorizationGrantType())
                 .userInfoUri(oAuth2Client.getUserInfoUri())
-                .userNameAttribute(oAuth2Client.getUserNameAttributeName())
+                .userNameAttributeName(oAuth2Client.getUserNameAttributeName())
                 .jwkSetUri(oAuth2Client.getJwkSetUri())
                 .clientAuthenticationMethod(oAuth2Client.getClientAuthenticationMethod())
                 .clientName(oAuth2Client.getClientName())

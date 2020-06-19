@@ -19,7 +19,7 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2IntegrationId> {
     private String scope;
     private String authorizationGrantType;
     private String userInfoUri;
-    private String userNameAttribute;
+    private String userNameAttributeName;
     private String jwkSetUri;
     private String clientAuthenticationMethod;
     private String clientName;
@@ -35,7 +35,7 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2IntegrationId> {
     }
 
     @Builder(toBuilder = true)
-    public OAuth2ClientRegistration(OAuth2IntegrationId id, String registrationId, String clientId, String clientSecret, String authorizationUri, String tokenUri, String redirectUriTemplate, String scope, String authorizationGrantType, String userInfoUri, String userNameAttribute, String jwkSetUri, String clientAuthenticationMethod, String clientName, String loginButtonLabel, String loginButtonIcon, OAuth2MapperConfig mapperConfig) {
+    public OAuth2ClientRegistration(OAuth2IntegrationId id, String registrationId, String clientId, String clientSecret, String authorizationUri, String tokenUri, String redirectUriTemplate, String scope, String authorizationGrantType, String userInfoUri, String userNameAttributeName, String jwkSetUri, String clientAuthenticationMethod, String clientName, String loginButtonLabel, String loginButtonIcon, OAuth2MapperConfig mapperConfig) {
         super(id);
         this.registrationId = registrationId;
         this.clientId = clientId;
@@ -46,7 +46,7 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2IntegrationId> {
         this.scope = scope;
         this.authorizationGrantType = authorizationGrantType;
         this.userInfoUri = userInfoUri;
-        this.userNameAttribute = userNameAttribute;
+        this.userNameAttributeName = userNameAttributeName;
         this.jwkSetUri = jwkSetUri;
         this.clientAuthenticationMethod = clientAuthenticationMethod;
         this.clientName = clientName;
