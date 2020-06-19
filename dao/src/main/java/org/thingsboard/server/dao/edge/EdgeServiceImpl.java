@@ -303,37 +303,19 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     @Override
-    public ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndRuleChainId(TenantId tenantId, RuleChainId ruleChainId, TimePageLink pageLink) {
-        log.trace("Executing findEdgesByTenantIdAndRuleChainId, tenantId [{}], ruleChainId [{}], pageLink [{}]", tenantId, ruleChainId, pageLink);
+    public ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(TenantId tenantId, RuleChainId ruleChainId) {
+        log.trace("Executing findEdgesByTenantIdAndRuleChainId, tenantId [{}], ruleChainId [{}]", tenantId, ruleChainId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validateId(ruleChainId, "Incorrect ruleChainId " + ruleChainId);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        ListenableFuture<List<Edge>> edges = edgeDao.findEdgesByTenantIdAndRuleChainId(tenantId.getId(), ruleChainId.getId());
-
-        return Futures.transform(edges, new Function<List<Edge>, TimePageData<Edge>>() {
-            @Nullable
-            @Override
-            public TimePageData<Edge> apply(@Nullable List<Edge> edges) {
-                return new TimePageData<>(edges, pageLink);
-            }
-        }, MoreExecutors.directExecutor());
+        return edgeDao.findEdgesByTenantIdAndRuleChainId(tenantId.getId(), ruleChainId.getId());
     }
 
     @Override
-    public ListenableFuture<TimePageData<Edge>> findEdgesByTenantIdAndDashboardId(TenantId tenantId, DashboardId dashboardId, TimePageLink pageLink) {
-        log.trace("Executing findEdgesByTenantIdAndDashboardId, tenantId [{}], dashboardId [{}], pageLink [{}]", tenantId, dashboardId, pageLink);
+    public ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(TenantId tenantId, DashboardId dashboardId) {
+        log.trace("Executing findEdgesByTenantIdAndDashboardId, tenantId [{}], dashboardId [{}]", tenantId, dashboardId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        ListenableFuture<List<Edge>> edges = edgeDao.findEdgesByTenantIdAndDashboardId(tenantId.getId(), dashboardId.getId());
-
-        return Futures.transform(edges, new Function<List<Edge>, TimePageData<Edge>>() {
-            @Nullable
-            @Override
-            public TimePageData<Edge> apply(@Nullable List<Edge> edges) {
-                return new TimePageData<>(edges, pageLink);
-            }
-        }, MoreExecutors.directExecutor());
+        return edgeDao.findEdgesByTenantIdAndDashboardId(tenantId.getId(), dashboardId.getId());
     }
 
     private DataValidator<Edge> edgeValidator =

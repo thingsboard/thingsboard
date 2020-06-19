@@ -175,7 +175,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         try {
             ListenableFuture<TimePageData<Device>> future = deviceService.findDevicesByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             return Futures.transform(future, pageData -> {
-                if (!pageData.getData().isEmpty()) {
+                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                     log.trace("[{}] [{}] device(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                     for (Device device : pageData.getData()) {
                         DeviceUpdateMsg deviceUpdateMsg =

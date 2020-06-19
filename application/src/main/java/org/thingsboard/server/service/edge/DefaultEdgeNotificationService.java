@@ -287,18 +287,18 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     }
                 }, dbCallbackExecutorService);
             case DASHBOARD:
-                return convertToEdgeIds(edgeService.findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId()), new TimePageLink(Integer.MAX_VALUE)));
+                return convertToEdgeIds(edgeService.findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())));
             case RULE_CHAIN:
-                return convertToEdgeIds(edgeService.findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId()), new TimePageLink(Integer.MAX_VALUE)));
+                return convertToEdgeIds(edgeService.findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())));
             default:
                 return Futures.immediateFuture(Collections.emptyList());
         }
     }
 
-    private ListenableFuture<List<EdgeId>> convertToEdgeIds(ListenableFuture<TimePageData<Edge>> future) {
+    private ListenableFuture<List<EdgeId>> convertToEdgeIds(ListenableFuture<List<Edge>> future) {
         return Futures.transform(future, edges -> {
-            if (edges != null && edges.getData() != null && !edges.getData().isEmpty()) {
-                return edges.getData().stream().map(IdBased::getId).collect(Collectors.toList());
+            if (edges != null && !edges.isEmpty()) {
+                return edges.stream().map(IdBased::getId).collect(Collectors.toList());
             } else {
                 return Collections.emptyList();
             }

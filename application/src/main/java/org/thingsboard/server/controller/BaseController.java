@@ -629,6 +629,12 @@ public abstract class BaseController {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
+            case ASSIGNED_TO_EDGE:
+                msgType = DataConstants.ENTITY_ASSIGNED_TO_EDGE;
+                break;
+            case UNASSIGNED_FROM_EDGE:
+                msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
