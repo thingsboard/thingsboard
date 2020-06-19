@@ -41,6 +41,9 @@ import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import * as moment_ from 'moment';
+import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
+import { EntityDataService } from '@core/api/entity-data.service';
+import { PageData } from '@shared/models/page/page-data';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -76,6 +79,7 @@ export interface WidgetActionsApi {
 export interface AliasInfo {
   alias?: string;
   stateEntity?: boolean;
+  entityFilter?: EntityFilter;
   currentEntity?: EntityInfo;
   selectedId?: string;
   resolvedEntities?: Array<EntityInfo>;
@@ -169,7 +173,8 @@ export class WidgetSubscriptionContext {
   timeService: TimeService;
   deviceService: DeviceService;
   alarmService: AlarmService;
-  datasourceService: DatasourceService;
+  // datasourceService: DatasourceService;
+  entityDataService: EntityDataService;
   utils: UtilsService;
   raf: RafService;
   widgetUtils: IWidgetUtils;
@@ -197,6 +202,8 @@ export interface WidgetSubscriptionOptions {
   alarmsMaxCountLoad?: number;
   alarmsFetchSize?: number;
   datasources?: Array<Datasource>;
+  keyFilters?: Array<KeyFilter>;
+  pageLink?: EntityDataPageLink;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
   useDashboardTimewindow?: boolean;
@@ -230,6 +237,9 @@ export interface IWidgetSubscription {
   useDashboardTimewindow: boolean;
 
   legendData: LegendData;
+
+  datasourcePages?: PageData<Datasource>[];
+  dataPages?: PageData<Array<DatasourceData>>[];
   datasources?: Array<Datasource>;
   data?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;

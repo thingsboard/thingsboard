@@ -52,7 +52,7 @@ import {
   EntitySearchQuery
 } from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { isDefined } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType, DeviceSearchQuery } from '@shared/models/device.models';
 import { EntityViewSearchQuery } from '@shared/models/entity-view.models';
@@ -604,10 +604,11 @@ export class EntityService {
 
   public resolveAlias(entityAlias: EntityAlias, stateParams: StateParams): Observable<AliasInfo> {
     const filter = entityAlias.filter;
-    return this.resolveAliasFilter(filter, stateParams, -1, false).pipe(
+    return this.resolveAliasFilter(filter, stateParams).pipe(
       map((result) => {
         const aliasInfo: AliasInfo = {
           alias: entityAlias.alias,
+          entityFilter: result.entityFilter,
           stateEntity: result.stateEntity,
           entityParamName: result.entityParamName,
           resolveMultiple: filter.resolveMultiple
@@ -621,11 +622,28 @@ export class EntityService {
       })
     );
   }
+/*
+  public resolveEntityFilter(filter: EntityAliasFilter, stateParams: StateParams): EntityFilter {
+    const stateEntityInfo = this.getStateEntityInfo(filter, stateParams);
+    let result: EntityFilter = filter;
+    const stateEntityId = stateEntityInfo.entityId;
+    if (filter.type === AliasFilterType.stateEntity) {
+      result = {
+        singleEntity: stateEntityId,
+        type: AliasFilterType.singleEntity
+      };
+    } else if (filter.rootStateEntity) {
+      let rootEntityType;
+      let rootEntityId;
 
-  public resolveAliasFilter(filter: EntityAliasFilter, stateParams: StateParams,
-                            maxItems: number, failOnEmpty: boolean): Observable<EntityAliasFilterResult> {
+    }
+    return result;
+  }*/
+
+  public resolveAliasFilter(filter: EntityAliasFilter, stateParams: StateParams): Observable<EntityAliasFilterResult> {
     const result: EntityAliasFilterResult = {
       entities: [],
+      entityFilter: null,
       stateEntity: false
     };
     if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
@@ -636,14 +654,21 @@ export class EntityService {
     switch (filter.type) {
       case AliasFilterType.singleEntity:
         const aliasEntityId = this.resolveAliasEntityId(filter.singleEntity.entityType, filter.singleEntity.id);
-        return this.getEntity(aliasEntityId.entityType as EntityType, aliasEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
+        result.entityFilter = {
+          type: AliasFilterType.singleEntity,
+          singleEntity: aliasEntityId
+        };
+        return of(result);
+        /*return this.getEntity(aliasEntityId.entityType as EntityType, aliasEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entity) => {
             result.entities = this.entitiesToEntitiesInfo([entity]);
             return result;
           }
-        ));
+        ));*/
       case AliasFilterType.entityList:
-        return this.getEntities(filter.entityType, filter.entityList, {ignoreLoading: true, ignoreErrors: true}).pipe(
+        result.entityFilter = deepClone(filter);
+        return of(result);
+        /*return this.getEntities(filter.entityType, filter.entityList, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
                 result.entities = this.entitiesToEntitiesInfo(entities);
@@ -652,9 +677,11 @@ export class EntityService {
                 throw new Error();
               }
             }
-          ));
+          ));*/
       case AliasFilterType.entityName:
-        return this.getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems,
+        result.entityFilter = deepClone(filter);
+        return of(result);
+        /*return this.getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems,
           '', {ignoreLoading: true, ignoreErrors: true}).pipe(
             map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
@@ -665,11 +692,17 @@ export class EntityService {
               }
             }
           )
-        );
+        );*/
       case AliasFilterType.stateEntity:
         result.stateEntity = true;
         if (stateEntityId) {
-          return this.getEntity(stateEntityId.entityType as EntityType, stateEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
+          result.entityFilter = {
+            type: AliasFilterType.singleEntity,
+            singleEntity: stateEntityId
+          };
+        }
+        return of(result);
+          /*return this.getEntity(stateEntityId.entityType as EntityType, stateEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
             map((entity) => {
                 result.entities = this.entitiesToEntitiesInfo([entity]);
                 return result;
@@ -677,9 +710,11 @@ export class EntityService {
             ));
         } else {
           return of(result);
-        }
+        }*/
       case AliasFilterType.assetType:
-        return this.getEntitiesByNameFilter(EntityType.ASSET, filter.assetNameFilter, maxItems,
+        result.entityFilter = deepClone(filter);
+        return of(result);
+        /*return this.getEntitiesByNameFilter(EntityType.ASSET, filter.assetNameFilter, maxItems,
           filter.assetType, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
@@ -690,9 +725,11 @@ export class EntityService {
               }
             }
           )
-        );
+        );*/
       case AliasFilterType.deviceType:
-        return this.getEntitiesByNameFilter(EntityType.DEVICE, filter.deviceNameFilter, maxItems,
+        result.entityFilter = deepClone(filter);
+        return of(result);
+        /*return this.getEntitiesByNameFilter(EntityType.DEVICE, filter.deviceNameFilter, maxItems,
           filter.deviceType, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
@@ -703,9 +740,11 @@ export class EntityService {
               }
             }
           )
-        );
+        );*/
       case AliasFilterType.entityViewType:
-        return this.getEntitiesByNameFilter(EntityType.ENTITY_VIEW, filter.entityViewNameFilter, maxItems,
+        result.entityFilter = deepClone(filter);
+        return of(result);
+        /*return this.getEntitiesByNameFilter(EntityType.ENTITY_VIEW, filter.entityViewNameFilter, maxItems,
           filter.entityViewType, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
@@ -716,7 +755,7 @@ export class EntityService {
               }
             }
           )
-        );
+        );*/
       case AliasFilterType.relationsQuery:
         result.stateEntity = filter.rootStateEntity;
         let rootEntityType;
@@ -730,7 +769,10 @@ export class EntityService {
         }
         if (rootEntityType && rootEntityId) {
           const relationQueryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
-          const searchQuery: EntityRelationsQuery = {
+          result.entityFilter = deepClone(filter);
+          result.entityFilter.rootEntity = relationQueryRootEntityId;
+          return of(result);
+          /*const searchQuery: EntityRelationsQuery = {
             parameters: {
               rootId: relationQueryRootEntityId.id,
               rootType: relationQueryRootEntityId.entityType as EntityType,
@@ -757,7 +799,7 @@ export class EntityService {
                 return throwError(null);
               }
             })
-          );
+          );*/
         } else {
           return of(result);
         }
@@ -774,7 +816,10 @@ export class EntityService {
         }
         if (rootEntityType && rootEntityId) {
           const searchQueryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
-          const searchQuery: EntitySearchQuery = {
+          result.entityFilter = deepClone(filter);
+          result.entityFilter.rootEntity = searchQueryRootEntityId;
+          return of(result);
+          /* const searchQuery: EntitySearchQuery = {
             parameters: {
               rootId: searchQueryRootEntityId.id,
               rootType: searchQueryRootEntityId.entityType as EntityType,
@@ -811,7 +856,7 @@ export class EntityService {
                 throw Error();
               }
             })
-          );
+          );*/
         } else {
           return of(result);
         }
@@ -819,17 +864,18 @@ export class EntityService {
   }
 
   public checkEntityAlias(entityAlias: EntityAlias): Observable<boolean> {
-    return this.resolveAliasFilter(entityAlias.filter, null, 1, true).pipe(
+    return this.resolveAliasFilter(entityAlias.filter, null).pipe(
       map((result) => {
         if (result.stateEntity) {
           return true;
         } else {
-          const entities = result.entities;
+          return isDefinedAndNotNull(result.entityFilter);
+          /*const entities = result.entities;
           if (entities && entities.length) {
             return true;
           } else {
             return false;
-          }
+          }*/
         }
       }),
       catchError(err => of(false))
