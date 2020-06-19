@@ -68,15 +68,6 @@ public class OAuth2Configuration {
     }
 
     public OAuth2Client getClientByRegistrationId(String registrationId) {
-        OAuth2Client result = null;
-        if (clients != null && !clients.isEmpty()) {
-            for (String key : clients.keySet()) {
-                if (key.equals(registrationId)) {
-                    result = clients.get(key);
-                    break;
-                }
-            }
-        }
-        return result;
+        return clients != null ? clients.get(registrationId) : null;
     }
 }
