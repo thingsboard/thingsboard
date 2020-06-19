@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.oauth2.MapperType;
 
 @Component
 @Slf4j
@@ -32,14 +33,14 @@ public class OAuth2ClientMapperProvider {
     @Qualifier("customOAuth2ClientMapper")
     private OAuth2ClientMapper customOAuth2ClientMapper;
 
-    public OAuth2ClientMapper getOAuth2ClientMapperByType(String oauth2ClientType) {
-        switch (oauth2ClientType) {
-            case "custom":
+    public OAuth2ClientMapper getOAuth2ClientMapperByType(MapperType oauth2MapperType) {
+        switch (oauth2MapperType) {
+            case CUSTOM:
                 return customOAuth2ClientMapper;
-            case "basic":
+            case BASIC:
                 return basicOAuth2ClientMapper;
             default:
-                throw new RuntimeException("OAuth2ClientMapper with type " + oauth2ClientType + " is not supported!");
+                throw new RuntimeException("OAuth2ClientRegistrationMapper with type " + oauth2MapperType + " is not supported!");
         }
     }
 }

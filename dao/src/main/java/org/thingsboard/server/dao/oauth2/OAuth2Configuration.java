@@ -66,8 +66,4 @@ public class OAuth2Configuration {
         }
         return new InMemoryClientRegistrationRepository(result);
     }
-
-    public OAuth2Client getClientByRegistrationId(String registrationId) {
-        return clients != null ? clients.get(registrationId) : null;
-    }
 }

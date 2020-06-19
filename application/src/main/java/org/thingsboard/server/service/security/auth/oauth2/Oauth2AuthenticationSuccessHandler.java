@@ -21,8 +21,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.oauth2.OAuth2Client;
-import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtToken;
@@ -42,17 +42,17 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final JwtTokenFactory tokenFactory;
     private final RefreshTokenRepository refreshTokenRepository;
     private final OAuth2ClientMapperProvider oauth2ClientMapperProvider;
-    private final OAuth2Configuration oauth2Configuration;
+    private final OAuth2Service oAuth2Service;
 
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
                                               final RefreshTokenRepository refreshTokenRepository,
                                               final OAuth2ClientMapperProvider oauth2ClientMapperProvider,
-                                              final OAuth2Configuration oauth2Configuration) {
+                                              final OAuth2Service oAuth2Service) {
         this.tokenFactory = tokenFactory;
         this.refreshTokenRepository = refreshTokenRepository;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
-        this.oauth2Configuration = oauth2Configuration;
+        this.oAuth2Service = oAuth2Service;
     }
 
     @Override
@@ -64,9 +64,9 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
-            OAuth2Client oauth2Client = oauth2Configuration.getClientByRegistrationId(token.getAuthorizedClientRegistrationId());
-            OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(oauth2Client.getMapperConfig().getType());
-            SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, oauth2Client.getMapperConfig());
+            OAuth2ClientRegistration clientRegistration = oAuth2Service.getClientRegistrationByRegistrationId(token.getAuthorizedClientRegistrationId());
+            OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(clientRegistration.getMapperConfig().getType());
+            SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, clientRegistration.getMapperConfig());
 
             JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
             JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);

@@ -16,10 +16,12 @@
 package org.thingsboard.server.dao.oauth2;
 
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 
 import java.util.List;
 
 public interface OAuth2Service {
+    OAuth2ClientRegistration getClientRegistrationByRegistrationId(String registrationId);
 
     List<OAuth2ClientInfo> getOAuth2Clients();
 }

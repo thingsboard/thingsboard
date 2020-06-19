@@ -23,7 +23,8 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.server.dao.oauth2.OAuth2ClientMapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -36,12 +37,12 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig config) {
-        OAuth2User oauth2User = getOAuth2User(token, config.getCustom());
+    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, OAuth2MapperConfig config) {
+        OAuth2User oauth2User = getOAuth2User(token, config.getCustomConfig());
         return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.isAllowUserCreation(), config.isActivateUser());
     }
 
-    private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig.CustomOAuth2ClientMapperConfig custom) {
+    private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, OAuth2CustomMapperConfig custom) {
         if (!StringUtils.isEmpty(custom.getUsername()) && !StringUtils.isEmpty(custom.getPassword())) {
             restTemplateBuilder = restTemplateBuilder.basicAuthentication(custom.getUsername(), custom.getPassword());
         }

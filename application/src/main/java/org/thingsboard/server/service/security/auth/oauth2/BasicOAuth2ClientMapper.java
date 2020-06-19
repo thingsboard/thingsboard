@@ -20,7 +20,7 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.dao.oauth2.OAuth2ClientMapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -32,50 +32,47 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
 
     private static final String START_PLACEHOLDER_PREFIX = "%{";
     private static final String END_PLACEHOLDER_PREFIX = "}";
-    private static final String EMAIL_TENANT_STRATEGY = "email";
-    private static final String DOMAIN_TENANT_STRATEGY = "domain";
-    private static final String CUSTOM_TENANT_STRATEGY = "custom";
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig config) {
+    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, OAuth2MapperConfig config) {
         OAuth2User oauth2User = new OAuth2User();
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
-        String email = getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
+        String email = getStringAttributeByKey(attributes, config.getBasicConfig().getEmailAttributeKey());
         oauth2User.setEmail(email);
         oauth2User.setTenantName(getTenantName(attributes, config));
-        if (!StringUtils.isEmpty(config.getBasic().getLastNameAttributeKey())) {
-            String lastName = getStringAttributeByKey(attributes, config.getBasic().getLastNameAttributeKey());
+        if (!StringUtils.isEmpty(config.getBasicConfig().getLastNameAttributeKey())) {
+            String lastName = getStringAttributeByKey(attributes, config.getBasicConfig().getLastNameAttributeKey());
             oauth2User.setLastName(lastName);
         }
-        if (!StringUtils.isEmpty(config.getBasic().getFirstNameAttributeKey())) {
-            String firstName = getStringAttributeByKey(attributes, config.getBasic().getFirstNameAttributeKey());
+        if (!StringUtils.isEmpty(config.getBasicConfig().getFirstNameAttributeKey())) {
+            String firstName = getStringAttributeByKey(attributes, config.getBasicConfig().getFirstNameAttributeKey());
             oauth2User.setFirstName(firstName);
         }
-        if (!StringUtils.isEmpty(config.getBasic().getCustomerNamePattern())) {
+        if (!StringUtils.isEmpty(config.getBasicConfig().getCustomerNamePattern())) {
             StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
-            String customerName = sub.replace(config.getBasic().getCustomerNamePattern());
+            String customerName = sub.replace(config.getBasicConfig().getCustomerNamePattern());
             oauth2User.setCustomerName(customerName);
         }
-        oauth2User.setAlwaysFullScreen(config.getBasic().isAlwaysFullScreen());
-        if (!StringUtils.isEmpty(config.getBasic().getDefaultDashboardName())) {
-            oauth2User.setDefaultDashboardName(config.getBasic().getDefaultDashboardName());
+        oauth2User.setAlwaysFullScreen(config.getBasicConfig().isAlwaysFullScreen());
+        if (!StringUtils.isEmpty(config.getBasicConfig().getDefaultDashboardName())) {
+            oauth2User.setDefaultDashboardName(config.getBasicConfig().getDefaultDashboardName());
         }
 
         return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.isAllowUserCreation(), config.isActivateUser());
     }
 
-    private String getTenantName(Map<String, Object> attributes, OAuth2ClientMapperConfig config) {
-        switch (config.getBasic().getTenantNameStrategy()) {
-            case EMAIL_TENANT_STRATEGY:
-                return getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
-            case DOMAIN_TENANT_STRATEGY:
-                String email = getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
+    private String getTenantName(Map<String, Object> attributes, OAuth2MapperConfig config) {
+        switch (config.getBasicConfig().getTenantNameStrategy()) {
+            case EMAIL:
+                return getStringAttributeByKey(attributes, config.getBasicConfig().getEmailAttributeKey());
+            case DOMAIN:
+                String email = getStringAttributeByKey(attributes, config.getBasicConfig().getEmailAttributeKey());
                 return email.substring(email .indexOf("@") + 1);
-            case CUSTOM_TENANT_STRATEGY:
+            case CUSTOM:
                 StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
-                return sub.replace(config.getBasic().getTenantNamePattern());
+                return sub.replace(config.getBasicConfig().getTenantNamePattern());
             default:
-                throw new RuntimeException("Tenant Name Strategy with type " + config.getBasic().getTenantNameStrategy() + " is not supported!");
+                throw new RuntimeException("Tenant Name Strategy with type " + config.getBasicConfig().getTenantNameStrategy() + " is not supported!");
         }
     }
 

@@ -16,9 +16,9 @@
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.thingsboard.server.dao.oauth2.OAuth2ClientMapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface OAuth2ClientMapper {
-    SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, OAuth2ClientMapperConfig config);
+    SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, OAuth2MapperConfig config);
 }
