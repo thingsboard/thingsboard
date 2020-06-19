@@ -99,6 +99,50 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
         super();
     }
 
+    public OAuth2ClientRegistrationEntity(OAuth2ClientRegistration clientRegistration) {
+        if (clientRegistration.getId() != null) {
+            this.setUuid(clientRegistration.getId().getId());
+        }
+        this.registrationId = clientRegistration.getRegistrationId();
+        this.clientId = clientRegistration.getClientId();
+        this.clientSecret = clientRegistration.getClientSecret();
+        this.authorizationUri = clientRegistration.getAuthorizationUri();
+        this.tokenUri = clientRegistration.getTokenUri();
+        this.redirectUriTemplate = clientRegistration.getRedirectUriTemplate();
+        this.scope = clientRegistration.getScope();
+        this.authorizationGrantType = clientRegistration.getAuthorizationGrantType();
+        this.userInfoUri = clientRegistration.getUserInfoUri();
+        this.userNameAttribute = clientRegistration.getUserNameAttribute();
+        this.jwkSetUri = clientRegistration.getJwkSetUri();
+        this.clientAuthenticationMethod = clientRegistration.getClientAuthenticationMethod();
+        this.clientName = clientRegistration.getClientName();
+        this.loginButtonLabel = clientRegistration.getLoginButtonLabel();
+        this.loginButtonIcon = clientRegistration.getLoginButtonIcon();
+        OAuth2MapperConfig mapperConfig = clientRegistration.getMapperConfig();
+        if (mapperConfig != null) {
+            this.allowUserCreation = mapperConfig.isAllowUserCreation();
+            this.activateUser = mapperConfig.isActivateUser();
+            this.type = mapperConfig.getType();
+            OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasicConfig();
+            if (basicConfig != null) {
+                this.emailAttributeKey = basicConfig.getEmailAttributeKey();
+                this.firstNameAttributeKey = basicConfig.getFirstNameAttributeKey();
+                this.lastNameAttributeKey = basicConfig.getLastNameAttributeKey();
+                this.tenantNameStrategy = basicConfig.getTenantNameStrategy();
+                this.tenantNamePattern = basicConfig.getTenantNamePattern();
+                this.customerNamePattern = basicConfig.getCustomerNamePattern();
+                this.defaultDashboardName = basicConfig.getDefaultDashboardName();
+                this.alwaysFullScreen = basicConfig.isAlwaysFullScreen();
+            }
+            OAuth2CustomMapperConfig customConfig = mapperConfig.getCustomConfig();
+            if (customConfig != null){
+                this.url = customConfig.getUrl();
+                this.username = customConfig.getUsername();
+                this.password = customConfig.getPassword();
+            }
+        }
+    }
+
     @Override
     public OAuth2ClientRegistration toData() {
         return OAuth2ClientRegistration.builder()
