@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
+import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,24 +23,35 @@ import org.thingsboard.server.common.data.id.OAuth2IntegrationId;
 import org.thingsboard.server.common.data.oauth2.*;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
 public class OAuth2ServiceImpl implements OAuth2Service {
 
+    private static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
+
     @Autowired(required = false)
     OAuth2Configuration oauth2Configuration;
 
     @Autowired
-    private OAuth2ClientRegistrationDao clientRegistrationDao;
+    private OAuth2ClientRegistrationService clientRegistrationService;
 
     @PostConstruct
     public void init() {
-
+        if (oauth2Configuration == null || !oauth2Configuration.isEnabled()) {
+            return;
+        }
+        Set<String> dbClientRegistration = clientRegistrationService.findClientRegistrations().stream()
+                .map(OAuth2ClientRegistration::getRegistrationId)
+                .collect(Collectors.toSet());
+        // TODO decide what to do with same registrationIds in DB
+        Sets.SetView<String> intersection = Sets.intersection(dbClientRegistration, oauth2Configuration.getClients().keySet());
+        if (!intersection.isEmpty()) {
+            throw new RuntimeException("OAuth2 configurations " + intersection + " are already stored in DB.");
+        }
     }
 
     @Override
@@ -47,21 +59,41 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         if (oauth2Configuration == null || !oauth2Configuration.isEnabled()) {
             return Collections.emptyList();
         }
-        List<OAuth2ClientInfo> result = new ArrayList<>();
-        for (Map.Entry<String, OAuth2Client> entry : oauth2Configuration.getClients().entrySet()) {
-            OAuth2ClientInfo client = new OAuth2ClientInfo();
-            client.setName(entry.getValue().getLoginButtonLabel());
-            client.setUrl(String.format("/oauth2/authorization/%s", entry.getKey()));
-            client.setIcon(entry.getValue().getLoginButtonIcon());
-            result.add(client);
-        }
-        return result;
+
+        Stream<OAuth2ClientInfo> startUpConfiguration = oauth2Configuration.getClients().entrySet().stream()
+                .map(entry -> {
+                    OAuth2ClientInfo client = new OAuth2ClientInfo();
+                    client.setName(entry.getValue().getLoginButtonLabel());
+                    client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, entry.getKey()));
+                    client.setIcon(entry.getValue().getLoginButtonIcon());
+                    return client;
+                });
+
+        Stream<OAuth2ClientInfo> dbConfiguration = clientRegistrationService.findClientRegistrations().stream()
+                .map(clientRegistration -> {
+                    OAuth2ClientInfo client = new OAuth2ClientInfo();
+                    client.setName(clientRegistration.getLoginButtonLabel());
+                    client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
+                    client.setIcon(clientRegistration.getLoginButtonIcon());
+                    return client;
+                });
+
+        return Stream.concat(startUpConfiguration, dbConfiguration)
+                .collect(Collectors.toList());
     }
 
     @Override
     public OAuth2ClientRegistration getClientRegistrationByRegistrationId(String registrationId) {
-        if (oauth2Configuration == null || oauth2Configuration.getClients() == null) return null;
-        OAuth2Client oAuth2Client = oauth2Configuration.getClients().get(registrationId);
+        if (oauth2Configuration == null || !oauth2Configuration.isEnabled()) return null;
+        OAuth2Client oAuth2Client = oauth2Configuration.getClients() == null ? null : oauth2Configuration.getClients().get(registrationId);
+        if (oAuth2Client != null){
+            return toClientRegistration(registrationId, oAuth2Client);
+        }
+
+        return clientRegistrationService.findClientRegistrationsByRegistrationId(registrationId);
+    }
+
+    private OAuth2ClientRegistration toClientRegistration(String registrationId, OAuth2Client oAuth2Client) {
         OAuth2ClientMapperConfig mapperConfig = oAuth2Client.getMapperConfig();
         OAuth2ClientMapperConfig.BasicOAuth2ClientMapperConfig basicConfig = mapperConfig.getBasic();
         OAuth2ClientMapperConfig.CustomOAuth2ClientMapperConfig customConfig = mapperConfig.getCustom();
