@@ -18,7 +18,7 @@ DROP TABLE IF EXISTS oauth2_client_registration;
 
 CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     id                                  varchar(31) NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
-    registration_id                     varchar(255) UNIQUE,
+    registration_id                     varchar(255),
     client_id                           varchar(255),
     client_secret                       varchar(255),
     authorization_uri                   varchar(255),
@@ -46,5 +46,6 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     basic_always_full_screen            boolean,
     custom_url                          varchar(255),
     custom_username                     varchar(255),
-    custom_password                     varchar(255)
+    custom_password                     varchar(255),
+    CONSTRAINT oauth2_registration_id_unq_key UNIQUE (registration_id)
 );
