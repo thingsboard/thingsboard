@@ -16,28 +16,18 @@
 package org.thingsboard.server.dao.sql.oauth2;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientRegistrationDao;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 @Slf4j
 @Component
@@ -68,14 +58,14 @@ public class JpaOAuth2ClientRegistrationDao implements OAuth2ClientRegistrationD
     }
 
     @Override
-    public OAuth2ClientRegistration findById(String registrationId) {
+    public OAuth2ClientRegistration findByRegistrationId(String registrationId) {
         log.debug("Get entity by registration id {}", registrationId);
         Optional<OAuth2ClientRegistrationEntity> entity = repository.findByRegistrationId(registrationId);
         return DaoUtil.getData(entity);
     }
 
     @Override
-    public boolean removeById(String registrationId) {
+    public boolean removeByRegistrationId(String registrationId) {
         repository.deleteByRegistrationId(registrationId);
         log.debug("Remove request: {}", registrationId);
         return !repository.existsByRegistrationId(registrationId);

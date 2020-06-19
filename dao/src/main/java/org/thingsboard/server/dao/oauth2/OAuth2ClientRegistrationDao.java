@@ -7,9 +7,9 @@ import java.util.List;
 public interface OAuth2ClientRegistrationDao {
     List<OAuth2ClientRegistration> find();
 
-    OAuth2ClientRegistration findById(String registrationId);
+    OAuth2ClientRegistration findByRegistrationId(String registrationId);
 
     OAuth2ClientRegistration save(OAuth2ClientRegistration clientRegistration);
 
-    boolean removeById(String registrationId);
+    boolean removeByRegistrationId(String registrationId);
 }
