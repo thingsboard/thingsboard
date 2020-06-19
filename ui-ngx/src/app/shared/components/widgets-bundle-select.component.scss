@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../scss/constants';
+
 tb-widgets-bundle-select {
   mat-select {
     margin: 0;
@@ -95,6 +97,10 @@ mat-toolbar {
           .mat-select-arrow {
             color: #fff !important;
           }
+        }
+
+        @media #{$mat-xs} {
+          width: auto;
         }
       }
       .mat-form-field-underline {

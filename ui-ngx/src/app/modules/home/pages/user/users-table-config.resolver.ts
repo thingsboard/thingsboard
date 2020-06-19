@@ -24,25 +24,18 @@ import {
 } from '@home/models/entity/entities-table-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import {
-  EntityType,
-  entityTypeResources,
-  entityTypeTranslations
-} from '@shared/models/entity-type.models';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { User } from '@shared/models/user.model';
 import { UserService } from '@core/http/user.service';
 import { UserComponent } from '@modules/home/pages/user/user.component';
 import { CustomerService } from '@core/http/customer.service';
 import { map, mergeMap, take, tap } from 'rxjs/operators';
-import { forkJoin, noop, Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import {
-  AddUserDialogComponent,
-  AddUserDialogData
-} from '@modules/home/pages/user/add-user-dialog.component';
+import { AddUserDialogComponent, AddUserDialogData } from '@modules/home/pages/user/add-user-dialog.component';
 import { AuthState } from '@core/auth/auth.models';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -54,9 +47,8 @@ import {
 } from '@modules/home/pages/user/activation-link-dialog.component';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { Customer } from '@shared/models/customer.model';
-import {TenantService} from '@app/core/http/tenant.service';
-import {TenantId} from '@app/shared/models/id/tenant-id';
+import { TenantService } from '@app/core/http/tenant.service';
+import { TenantId } from '@app/shared/models/id/tenant-id';
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
 
 export interface UsersTableRouteData {
@@ -89,7 +81,7 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
     this.config.entityResources = entityTypeResources.get(EntityType.USER);
 
     this.config.columns.push(
-      new DateEntityTableColumn<User>('createdTime', 'user.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<User>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<User>('firstName', 'user.first-name', '33%'),
       new EntityTableColumn<User>('lastName', 'user.last-name', '33%'),
       new EntityTableColumn<User>('email', 'user.email', '33%')

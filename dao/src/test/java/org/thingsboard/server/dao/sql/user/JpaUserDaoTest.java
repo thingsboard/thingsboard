@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
@@ -71,8 +71,8 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     @Test
     @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void testFindTenantAdmins() {
-        UUID tenantId = UUIDs.timeBased();
-        UUID customerId = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID customerId = Uuids.timeBased();
         create30Adminsand60Users(tenantId, customerId);
         PageLink pageLink = new PageLink(20);
         PageData<User> tenantAdmins1 = userDao.findTenantAdmins(tenantId, pageLink);
@@ -90,8 +90,8 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     @Test
     @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void testFindCustomerUsers() {
-        UUID tenantId = UUIDs.timeBased();
-        UUID customerId = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID customerId = Uuids.timeBased();
         create30Adminsand60Users(tenantId, customerId);
         PageLink pageLink = new PageLink(40);
         PageData<User> customerUsers1 = userDao.findCustomerUsers(tenantId, customerId, pageLink);
@@ -138,7 +138,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
 
     private void saveUser(UUID tenantId, UUID customerId) {
         User user = new User();
-        UUID id = UUIDs.timeBased();
+        UUID id = Uuids.timeBased();
         user.setId(new UserId(id));
         user.setTenantId(new TenantId(tenantId));
         user.setCustomerId(new CustomerId(customerId));

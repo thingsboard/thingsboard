@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons">
+<div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
@@ -69,7 +69,7 @@
   </mat-form-field>
   <div fxLayout="column" [fxShow]="!isEdit && (dashboardScope === 'tenant' && isPublic(entity)
                                 || dashboardScope === 'customer' && isCurrentPublicCustomer(entity))">
-    <tb-social-share-panel style="padding-bottom: 10px;"
+    <tb-social-share-panel style="padding-bottom: 1.25em;"
                            shareTitle="{{ 'dashboard.socialshare-title' | translate:{dashboardTitle: entity?.title} }}"
                            shareText="{{ 'dashboard.socialshare-text' | translate:{dashboardTitle: entity?.title} }}"
                            shareLink="{{ publicLink }}"
@@ -90,7 +90,7 @@
       </button>
     </div>
   </div>
-  <form #entityNgForm="ngForm" [formGroup]="entityForm">
+  <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>dashboard.title</mat-label>

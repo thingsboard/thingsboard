@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons">
+<div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
@@ -40,7 +40,7 @@
           [fxShow]="!hideDelete() && !isEdit">
     {{'asset.delete' | translate }}
   </button>
-  <div fxLayout="row">
+  <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onAssetIdCopied($event)"
@@ -62,7 +62,7 @@
        [fxShow]="!isEdit && entity?.customerIsPublic && (assetScope === 'customer' || assetScope === 'tenant')">
     {{ 'asset.asset-public' | translate }}
   </div>
-  <form #entityNgForm="ngForm" [formGroup]="entityForm">
+  <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>asset.name</mat-label>

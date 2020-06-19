@@ -35,9 +35,11 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
 
   public currentEntity: T = null;
 
+  public dataLoading = true;
+
   constructor(private fetchFunction: EntitiesFetchFunction<T, P>,
-              private selectionEnabledFunction: EntityBooleanFunction<T>,
-              private dataLoadedFunction: () => void) {}
+              protected selectionEnabledFunction: EntityBooleanFunction<T>,
+              protected dataLoadedFunction: (col?: number, row?: number) => void) {}
 
   connect(collectionViewer: CollectionViewer): Observable<T[] | ReadonlyArray<T>> {
     return this.entitiesSubject.asObservable();
@@ -50,12 +52,13 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
 
   reset() {
     const pageData = emptyPageData<T>();
-    this.entitiesSubject.next(pageData.data);
+    this.onEntities(pageData.data);
     this.pageDataSubject.next(pageData);
     this.dataLoadedFunction();
   }
 
   loadEntities(pageLink: P): Observable<PageData<T>> {
+    this.dataLoading = true;
     const result = new ReplaySubject<PageData<T>>();
     this.fetchFunction(pageLink).pipe(
       tap(() => {
@@ -64,13 +67,18 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
       catchError(() => of(emptyPageData<T>())),
     ).subscribe(
       (pageData) => {
-        this.entitiesSubject.next(pageData.data);
+        this.onEntities(pageData.data);
         this.pageDataSubject.next(pageData);
         result.next(pageData);
         this.dataLoadedFunction();
+        this.dataLoading = false;
       }
     );
     return result;
+  }
+
+  protected onEntities(entities: T[]) {
+    this.entitiesSubject.next(entities);
   }
 
   isAllSelected(): Observable<boolean> {

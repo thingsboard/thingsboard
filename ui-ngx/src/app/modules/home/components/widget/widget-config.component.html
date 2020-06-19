@@ -16,12 +16,12 @@
 
 -->
 <mat-tab-group [ngClass]="{'tb-headless': (widgetType === widgetTypes.static && !displayAdvanced())}"
-               fxFlex class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
+               class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
   <mat-tab label="{{ 'widget-config.data' | translate }}" [fxShow]="widgetType !== widgetTypes.static">
     <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
-      <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm"
-            fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
-        <div fxLayout="column" fxLayoutGap="8px" fxFlex>
+      <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm" fxFlex="100"
+           fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
+        <div fxLayout="column" fxLayoutGap="8px" fxFlex.gt-xs>
           <mat-checkbox formControlName="useDashboardTimewindow">
             {{ 'widget-config.use-dashboard-timewindow' | translate }}
           </mat-checkbox>
@@ -29,8 +29,10 @@
             {{ 'widget-config.display-timewindow' | translate }}
           </mat-checkbox>
         </div>
-        <section fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
-          <span [ngClass]="{'tb-disabled-label': dataSettings.get('useDashboardTimewindow').value}" translate style="padding-right: 8px;">widget-config.timewindow</span>
+        <section fxLayout="row" fxLayoutAlign="start center" fxLayout.lt-lg="column" fxLayoutAlign.lt-lg="center start"
+                 fxFlex.gt-xs style="margin-bottom: 16px;">
+          <span [ngClass]="{'tb-disabled-label': dataSettings.get('useDashboardTimewindow').value}" translate
+                style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
                          isEdit="true"
                          aggregation="{{ widgetType === widgetTypes.timeseries }}"
@@ -38,10 +40,11 @@
         </section>
       </div>
       <div *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutAlign="center">
-        <div fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px">
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
+             fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>alarm.alarm-status</mat-label>
-            <mat-select matInput formControlName="alarmSearchStatus">
+            <mat-select formControlName="alarmSearchStatus">
               <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
                 {{ ('alarm.search-status.' + searchStatus) | translate }}
               </mat-option>
@@ -61,7 +64,8 @@
             </mat-error>
           </mat-form-field>
         </div>
-        <div fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px">
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
+             fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>alarm.max-count-load</mat-label>
             <input matInput required
@@ -100,7 +104,7 @@
           <mat-panel-title fxLayout="column">
             <div class="tb-panel-title" translate>widget-config.datasources</div>
             <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
-                 class="tb-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
+                 class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
           </mat-panel-title>
         </mat-expansion-panel-header>
         <div *ngIf="datasourcesFormArray().length === 0; else datasourcesTemplate">
@@ -133,7 +137,7 @@
                          fxLayout.gt-sm="row"
                          fxLayoutAlign.gt-sm="start center">
                   <mat-form-field class="tb-datasource-type">
-                    <mat-select matInput formControlName="type">
+                    <mat-select formControlName="type">
                       <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
                         {{ datasourceTypesTranslations.get(datasourceType) | translate }}
                       </mat-option>
@@ -172,7 +176,7 @@
                 </section>
                 <button [disabled]="isLoading$ | async"
                         type="button"
-                        mat-button mat-icon-button color="primary"
+                        mat-icon-button color="primary"
                         style="min-width: 40px;"
                         (click)="removeDatasource($index)"
                         matTooltip="{{ 'widget-config.remove-datasource' | translate }}"
@@ -186,7 +190,7 @@
         <div fxFlex fxLayout="row" fxLayoutAlign="start center">
           <button [disabled]="isLoading$ | async"
                   type="button"
-                  mat-button mat-raised-button color="primary"
+                  mat-raised-button color="primary"
                   [fxShow]="modelValue?.typeParameters &&
                             (modelValue?.typeParameters.maxDatasources == -1 || datasourcesFormArray().controls.length < modelValue?.typeParameters.maxDatasources)"
                   (click)="addDatasource()"
@@ -228,7 +232,7 @@
                    fxLayout.gt-sm="row"
                    fxLayoutAlign.gt-sm="start center">
             <mat-form-field class="tb-datasource-type">
-              <mat-select matInput formControlName="type">
+              <mat-select formControlName="type">
                 <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
                   {{ datasourceTypesTranslations.get(datasourceType) | translate }}
                 </mat-option>
@@ -268,15 +272,20 @@
     </div>
   </mat-tab>
   <mat-tab label="{{ 'widget-config.settings' | translate }}">
-    <div class="mat-content mat-padding"
-         fxLayout="column" fxLayoutGap="8px">
+    <div class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
       <div [formGroup]="widgetSettings" fxLayout="column" fxLayoutGap="8px">
         <span translate>widget-config.general-settings</span>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>widget-config.title</mat-label>
-            <input matInput formControlName="title">
-          </mat-form-field>
+        <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
+          <div fxLayout="column" fxLayoutAlign="center" fxFlex.sm="40%" fxFlex.gt-sm="30%">
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>widget-config.title</mat-label>
+              <input matInput formControlName="title">
+            </mat-form-field>
+            <mat-form-field fxFlex>
+              <mat-label translate>widget-config.title-tooltip</mat-label>
+              <input matInput formControlName="titleTooltip">
+            </mat-form-field>
+          </div>
           <div fxFlex [fxShow]="widgetSettings.get('showTitle').value">
             <tb-json-object-edit
               [editorStyle]="{minHeight: '100px'}"
@@ -286,46 +295,40 @@
             ></tb-json-object-edit>
           </div>
         </div>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-md="row" fxLayoutAlign.gt-md="start center" fxFlex="100%"
              fxLayoutGap="8px">
-          <div fxLayout="row" fxFlex>
-            <mat-checkbox formControlName="showTitleIcon">
+          <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
+               fxLayoutGap="8px" fxFlex.gt-md>
+            <mat-checkbox fxFlex formControlName="showTitleIcon">
               {{ 'widget-config.display-icon' | translate }}
             </mat-checkbox>
-          </div>
-          <div fxFlex>
-            <tb-material-icon-select
+            <tb-material-icon-select fxFlex
               formControlName="titleIcon">
             </tb-material-icon-select>
           </div>
-          <tb-color-input fxFlex
-                          label="{{'widget-config.icon-color' | translate}}"
-                          icon="format_color_fill"
-                          openOnInput
-                          formControlName="iconColor">
-          </tb-color-input>
-          <mat-form-field fxFlex>
-            <mat-label translate>widget-config.icon-size</mat-label>
-            <input matInput formControlName="iconSize">
-          </mat-form-field>
-          <mat-form-field fxFlex>
-            <mat-label translate>widget-config.title-tooltip</mat-label>
-            <input matInput formControlName="titleTooltip">
-          </mat-form-field>
+          <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
+               fxLayoutGap="8px" fxFlex.gt-md>
+            <tb-color-input fxFlex
+                            label="{{'widget-config.icon-color' | translate}}"
+                            icon="format_color_fill"
+                            openOnInput
+                            formControlName="iconColor">
+            </tb-color-input>
+            <mat-form-field fxFlex>
+              <mat-label translate>widget-config.icon-size</mat-label>
+              <input matInput formControlName="iconSize">
+            </mat-form-field>
+          </div>
         </div>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+        <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
              fxLayoutGap="8px">
-          <div fxLayout="row">
+          <div fxLayout="column" fxLayoutAlign="center" fxLayoutGap="8px" fxFlex.sm="40%" fxFlex.gt-sm="30%">
             <mat-checkbox formControlName="showTitle">
               {{ 'widget-config.display-title' | translate }}
             </mat-checkbox>
-          </div>
-          <div fxLayout="row">
             <mat-checkbox formControlName="dropShadow">
               {{ 'widget-config.drop-shadow' | translate }}
             </mat-checkbox>
-          </div>
-          <div fxLayout="row">
             <mat-checkbox formControlName="enableFullscreen">
               {{ 'widget-config.enable-fullscreen' | translate }}
             </mat-checkbox>
@@ -339,30 +342,36 @@
             ></tb-json-object-edit>
           </div>
         </div>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
-             fxLayoutGap="8px">
-          <tb-color-input fxFlex
-                          label="{{'widget-config.background-color' | translate}}"
-                          icon="format_color_fill"
-                          openOnInput
-                          formControlName="backgroundColor">
-          </tb-color-input>
-          <tb-color-input fxFlex
-                          label="{{'widget-config.text-color' | translate}}"
-                          icon="format_color_fill"
-                          openOnInput
-                          formControlName="color">
-          </tb-color-input>
-          <mat-form-field fxFlex>
-            <mat-label translate>widget-config.padding</mat-label>
-            <input matInput formControlName="padding">
-          </mat-form-field>
-          <mat-form-field fxFlex>
-            <mat-label translate>widget-config.margin</mat-label>
-            <input matInput formControlName="margin">
-          </mat-form-field>
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-md="row" fxLayoutAlign.gt-md="start center"
+             fxFlex="100%" fxLayoutGap="8px">
+          <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
+               fxLayoutGap="8px" fxFlex.gt-md>
+            <tb-color-input fxFlex
+                            label="{{'widget-config.background-color' | translate}}"
+                            icon="format_color_fill"
+                            openOnInput
+                            formControlName="backgroundColor">
+            </tb-color-input>
+            <tb-color-input fxFlex
+                            label="{{'widget-config.text-color' | translate}}"
+                            icon="format_color_fill"
+                            openOnInput
+                            formControlName="color">
+            </tb-color-input>
+          </div>
+          <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
+               fxLayoutGap="8px" fxFlex.gt-md>
+            <mat-form-field fxFlex>
+              <mat-label translate>widget-config.padding</mat-label>
+              <input matInput formControlName="padding">
+            </mat-form-field>
+            <mat-form-field fxFlex>
+              <mat-label translate>widget-config.margin</mat-label>
+              <input matInput formControlName="margin">
+            </mat-form-field>
+          </div>
         </div>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+        <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
              fxLayoutGap="8px">
           <mat-form-field fxFlex>
             <mat-label translate>widget-config.units</mat-label>
@@ -373,14 +382,13 @@
             <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
           </mat-form-field>
         </div>
-        <div [fxShow]="widgetType === widgetTypes.timeseries ||
-                       widgetType === widgetTypes.latest"
-             fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
-             fxLayoutGap="8px">
-          <mat-checkbox fxFlex formControlName="showLegend">
+        <div [fxShow]="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.latest"
+             fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
+             fxLayoutGap="8px" fxFlex="100%">
+          <mat-checkbox fxFlex.gt-xs formControlName="showLegend">
             {{ 'widget-config.display-legend' | translate }}
           </mat-checkbox>
-          <section fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
+          <section fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
             <tb-legend-config formControlName="legendConfig">
             </tb-legend-config>
           </section>
@@ -388,7 +396,7 @@
       </div>
       <div [formGroup]="layoutSettings" fxLayout="column" fxLayoutGap="8px">
         <span translate>widget-config.mobile-mode-settings</span>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+        <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
              fxLayoutGap="8px">
           <mat-form-field fxFlex>
             <mat-label translate>widget-config.order</mat-label>

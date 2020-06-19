@@ -26,8 +26,10 @@ import {
   DashboardConfiguration,
   DashboardLayoutId,
   DashboardLayoutInfo,
-  DashboardLayoutsInfo, DashboardState,
-  DashboardStateLayouts, GridSettings,
+  DashboardLayoutsInfo,
+  DashboardState,
+  DashboardStateLayouts,
+  GridSettings,
   WidgetLayout
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
@@ -45,7 +47,7 @@ import {
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
-import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Widget, WidgetConfig, WidgetPosition, widgetTypesData } from '@app/shared/models/widget.models';
 import { environment as env } from '@env/environment';
 import { Authority } from '@shared/models/authority.enum';
@@ -157,7 +159,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         widgets: null,
         widgetLayouts: {},
         gridSettings: {},
-        ignoreLoading: false,
+        ignoreLoading: true,
         ctrl: null,
         dashboardCtrl: this
       }
@@ -169,7 +171,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         widgets: null,
         widgetLayouts: {},
         gridSettings: {},
-        ignoreLoading: false,
+        ignoreLoading: true,
         ctrl: null,
         dashboardCtrl: this
       }

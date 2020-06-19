@@ -21,6 +21,7 @@
     bottom: 8px;
   }
   .mat-form-field-infix {
-    width: 150px;
+    width: auto;
+    min-width: 100px;
   }
 }

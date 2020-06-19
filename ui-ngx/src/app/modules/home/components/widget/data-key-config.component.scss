@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
+
 :host {
   .tb-datakey-config {
-    min-width: 500px !important;
-    min-height: 500px !important;
-    height: 500px !important;
+    height: 100%;
+
+    .settings{
+      &> :first-child{
+        padding-top: 12px;
+      }
+      &> :nth-child(n){
+        padding-right: 12px;
+        padding-left: 12px;
+      }
+    }
   }
 }
 
@@ -25,7 +35,11 @@
   .tb-datakey-config {
     .mat-tab-body.mat-tab-body-active {
       .mat-tab-body-content > div {
-        height: 100%;
+        height: calc(65vh - 50px);
+        overflow: initial;
+        @media #{$mat-xs} {
+          height: 500px;
+        }
       }
     }
   }

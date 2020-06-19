@@ -18,7 +18,6 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DeviceInfo } from '@shared/models/device.models';
-import { EntityType } from '@shared/models/entity-type.models';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 
 @Component({

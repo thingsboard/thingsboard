@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form #stateForm="ngForm" [formGroup]="stateFormGroup" (ngSubmit)="save()" style="min-width: 600px;">
-  <mat-toolbar fxLayout="row" color="primary">
+<form [formGroup]="stateFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+  <mat-toolbar color="primary">
     <h2 translate>{{ isAdd ? 'dashboard.add-state' : 'dashboard.edit-state' }}</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -51,15 +51,13 @@
       </mat-checkbox>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || stateFormGroup.invalid || !stateFormGroup.dirty">
       {{ (isAdd ? 'action.add' : 'action.save') | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

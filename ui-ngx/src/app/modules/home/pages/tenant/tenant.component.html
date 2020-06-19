@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons">
+<div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageTenantAdmins')"
@@ -28,7 +28,7 @@
           [fxShow]="!hideDelete() && !isEdit">
     {{'tenant.delete' | translate }}
   </button>
-  <div fxLayout="row">
+  <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onTenantIdCopied($event)"
@@ -40,7 +40,7 @@
   </div>
 </div>
 <div class="mat-padding" fxLayout="column">
-  <form #entityNgForm="ngForm" [formGroup]="entityForm">
+  <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>tenant.title</mat-label>
@@ -56,6 +56,16 @@
         </mat-form-field>
       </div>
       <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
+      <div fxLayout="column">
+        <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbCore">
+          <div>{{ 'tenant.isolated-tb-core' | translate }}</div>
+          <div class="tb-hint">{{'tenant.isolated-tb-core-details' | translate}}</div>
+        </mat-checkbox>
+        <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbRuleEngine">
+          <div>{{ 'tenant.isolated-tb-rule-engine' | translate }}</div>
+          <div class="tb-hint">{{'tenant.isolated-tb-rule-engine-details' | translate}}</div>
+        </mat-checkbox>
+      </div>
     </fieldset>
   </form>
 </div>

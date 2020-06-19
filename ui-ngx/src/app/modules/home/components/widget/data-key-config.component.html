@@ -15,10 +15,9 @@
     limitations under the License.
 
 -->
-<mat-tab-group class="tb-datakey-config" [ngClass]="{'tb-headless': !displayAdvanced}"
-               class="tb-datakey-config">
+<mat-tab-group class="tb-datakey-config" [ngClass]="{'tb-headless': !displayAdvanced}">
   <mat-tab [formGroup]="dataKeyFormGroup" label="{{ 'datakey.settings' | translate }}">
-    <div class="mat-content mat-padding" fxLayout="column">
+    <div class="mat-padding settings" fxLayout="column">
       <mat-form-field class="mat-block" *ngIf="modelValue.type !== dataKeyTypes.function">
         <mat-label>{{ 'entity.key' | translate }}</mat-label>
         <input matInput type="text" placeholder="{{ 'entity.key-name' | translate }}"
@@ -28,7 +27,7 @@
                [matAutocomplete]="keyAutocomplete">
         <button *ngIf="dataKeyFormGroup.get('name').value"
                 type="button"
-                matSuffix mat-button mat-icon-button aria-label="Clear"
+                matSuffix mat-icon-button aria-label="Clear"
                 (click)="clearKey()">
           <mat-icon class="material-icons">close</mat-icon>
         </button>
@@ -40,7 +39,7 @@
           </mat-option>
         </mat-autocomplete>
       </mat-form-field>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" fxLayoutAlign.xs fxLayoutGap="8px">
         <mat-form-field fxFlex class="mat-block">
           <mat-label translate>datakey.label</mat-label>
           <input matInput formControlName="label" required>
@@ -53,7 +52,7 @@
           formControlName="color">
         </tb-color-input>
       </div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" *ngIf="modelValue.type !== dataKeyTypes.alarm">
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" fxLayoutAlign.xs fxLayoutGap="8px" *ngIf="modelValue.type !== dataKeyTypes.alarm">
         <mat-form-field fxFlex>
           <mat-label translate>datakey.units</mat-label>
           <input matInput formControlName="units">
@@ -94,12 +93,10 @@
     </div>
   </mat-tab>
   <mat-tab [formGroup]="dataKeySettingsFormGroup" label="{{ 'datakey.advanced' | translate }}" *ngIf="displayAdvanced">
-    <div class="mat-content mat-padding" fxLayout="column">
-      <div style="overflow: auto;">
-        <tb-json-form
-          formControlName="settings">
-        </tb-json-form>
-      </div>
+    <div class="mat-padding" fxLayout="column">
+      <tb-json-form
+        formControlName="settings">
+      </tb-json-form>
     </div>
   </mat-tab>
 </mat-tab-group>

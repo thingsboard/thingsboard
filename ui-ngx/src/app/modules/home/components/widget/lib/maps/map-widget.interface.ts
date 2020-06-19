@@ -15,6 +15,7 @@
 ///
 
 import { JsonSettingsSchema } from '@shared/models/widget.models';
+import { MapProviders } from './map-models';
 
 export interface MapWidgetInterface {
     resize(),
@@ -24,8 +25,8 @@ export interface MapWidgetInterface {
 }
 
 export interface MapWidgetStaticInterface {
-    settingsSchema(mapProvider?, drawRoutes?): JsonSettingsSchema;
-    getProvidersSchema():JsonSettingsSchema
+    settingsSchema(mapProvider?: MapProviders, drawRoutes?: boolean): JsonSettingsSchema;
+    getProvidersSchema(mapProvider?: MapProviders, ignoreImageMap?: boolean): JsonSettingsSchema
     dataKeySettingsSchema(): object;
     actionSources(): object;
 }

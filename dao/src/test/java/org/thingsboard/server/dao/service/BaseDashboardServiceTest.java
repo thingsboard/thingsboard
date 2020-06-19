@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -100,7 +100,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
     public void testSaveDashboardWithInvalidTenant() {
         Dashboard dashboard = new Dashboard();
         dashboard.setTitle("My dashboard");
-        dashboard.setTenantId(new TenantId(UUIDs.timeBased()));
+        dashboard.setTenantId(new TenantId(Uuids.timeBased()));
         dashboardService.saveDashboard(dashboard);
     }
     
@@ -111,7 +111,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         dashboard.setTenantId(tenantId);
         dashboard = dashboardService.saveDashboard(dashboard);
         try {
-            dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), new CustomerId(UUIDs.timeBased()));
+            dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), new CustomerId(Uuids.timeBased()));
         } finally {
             dashboardService.deleteDashboard(tenantId, dashboard.getId());
         }
@@ -336,7 +336,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         dashboard.setTenantId(tenantId);
         dashboard = dashboardService.saveDashboard(dashboard);
         try {
-            dashboardService.assignDashboardToEdge(tenantId, dashboard.getId(), new EdgeId(UUIDs.timeBased()));
+            dashboardService.assignDashboardToEdge(tenantId, dashboard.getId(), new EdgeId(Uuids.timeBased()));
         } finally {
             dashboardService.deleteDashboard(tenantId, dashboard.getId());
         }

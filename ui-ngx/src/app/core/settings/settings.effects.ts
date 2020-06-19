@@ -14,27 +14,16 @@
 /// limitations under the License.
 ///
 
-import { ActivationEnd, ActivationStart, Router } from '@angular/router';
+import { ActivationEnd, Router } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
 import { merge } from 'rxjs';
-import {
-  tap,
-  withLatestFrom,
-  map,
-  distinctUntilChanged,
-  filter
-} from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, tap, withLatestFrom } from 'rxjs/operators';
 
-import {
-  SettingsActionTypes,
-  SettingsActions,
-} from './settings.actions';
-import {
-  selectSettingsState
-} from './settings.selectors';
+import { SettingsActions, SettingsActionTypes, } from './settings.actions';
+import { selectSettingsState } from './settings.selectors';
 import { AppState } from '@app/core/core.state';
 import { LocalStorageService } from '@app/core/local-storage/local-storage.service';
 import { TitleService } from '@app/core/services/title.service';

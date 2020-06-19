@@ -21,7 +21,7 @@ import { isObject } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import {
   JsonObjectEditDialogComponent,
-  JsonObjectEdittDialogData
+  JsonObjectEditDialogData
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 
 @Component({
@@ -69,7 +69,7 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEdittDialogData, Object>(JsonObjectEditDialogComponent, {
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, object>(JsonObjectEditDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {

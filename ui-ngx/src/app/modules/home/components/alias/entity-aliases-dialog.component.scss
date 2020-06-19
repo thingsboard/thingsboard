@@ -17,13 +17,17 @@
 
   .tb-aliases-header {
     min-height: 40px;
-    padding: 0 34px 0 34px;
+    padding: 0 11px;
     margin: 5px;
 
     .tb-header-label {
       font-size: 14px;
       color: rgba(0, 0, 0, .570588);
     }
+  }
+
+  mat-divider{
+    margin: -1px -24px;
   }
 
   .tb-alias {

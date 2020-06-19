@@ -378,7 +378,8 @@
     "password": "Κωδικός πρόσβασης",
     "enter-username": "Εισάγετε Όνομα χρήστη",
     "enter-password": "Εισάγετε Κωδικό πρόσβασης",
-    "enter-search": "Αναζήτηση"
+    "enter-search": "Αναζήτηση",
+    "created-time": "Δημιουργήθηκε"
   },
   "converter": {
     "converter": "Μετατροπέας δεδομένων",
@@ -1705,7 +1706,9 @@
     "password-link-sent-message": "Ο σύνδεσμος επαναφοράς κωδικού πρόσβασης στάλθηκε με επιτυχία!",
     "email": "Email",
     "no-account": "Δεν έχετε λογαριασμό;",
-    "create-account": "Δημιουργία λογαριασμού"
+    "create-account": "Δημιουργία λογαριασμού",
+    "login-with": "Σύνδεση μέσω {{name}}",
+    "or": "ή"
   },
   "signup": {
     "firstname": "Όνομα",

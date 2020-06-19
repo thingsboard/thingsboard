@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 :host {
+  width: min-content; //for Safari
   min-width: 52px;
 
   mat-select {

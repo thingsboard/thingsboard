@@ -14,17 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  forwardRef,
-  Input,
-  OnDestroy,
-  OnInit,
-  ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -39,14 +29,13 @@ import { MatSort } from '@angular/material/sort';
 import { fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import {
+  toWidgetActionDescriptor,
+  WidgetActionCallbacks,
   WidgetActionDescriptorInfo,
   WidgetActionsData,
-  WidgetActionsDatasource,
-  WidgetActionCallbacks, toWidgetActionDescriptor
+  WidgetActionsDatasource
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { EntityRelation, EntitySearchDirection, RelationTypeGroup } from '@shared/models/relation.models';
-import { RelationDialogComponent, RelationDialogData } from '@home/components/relation/relation-dialog.component';
 import { WidgetActionDescriptor, WidgetActionSource } from '@shared/models/widget.models';
 import {
   WidgetActionDialogComponent,

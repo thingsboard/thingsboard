@@ -147,18 +147,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         log.trace("Executing saveDevice [{}]", device);
         deviceValidator.validate(device, Device::getTenantId);
         Device savedDevice;
-        if (!sqlDatabaseUsed) {
+        try {
             savedDevice = deviceDao.save(device.getTenantId(), device);
-        } else {
-            try {
-                savedDevice = deviceDao.save(device.getTenantId(), device);
-            } catch (Exception t) {
-                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
-                    throw new DataValidationException("Device with such name already exists!");
-                } else {
-                    throw t;
-                }
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
+                throw new DataValidationException("Device with such name already exists!");
+            } else {
+                throw t;
             }
         }
         if (device.getId() == null) {
@@ -398,26 +394,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateCreate(TenantId tenantId, Device device) {
-                    if (!sqlDatabaseUsed) {
-                        deviceDao.findDeviceByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
-                                d -> {
-                                    throw new DataValidationException("Device with such name already exists!");
-                                }
-                        );
-                    }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, Device device) {
-                    if (!sqlDatabaseUsed) {
-                        deviceDao.findDeviceByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
-                                d -> {
-                                    if (!d.getUuidId().equals(device.getUuidId())) {
-                                        throw new DataValidationException("Device with such name already exists!");
-                                    }
-                                }
-                        );
-                    }
                 }
 
                 @Override

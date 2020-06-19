@@ -22,9 +22,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { isDefined, isNumber } from '@core/utils';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
-import GenericOptions = CanvasGauges.GenericOptions;
 import * as tinycolor_ from 'tinycolor2';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ResizeObserver } from '@juggle/resize-observer';
+import GenericOptions = CanvasGauges.GenericOptions;
 
 const tinycolor = tinycolor_;
 
@@ -103,7 +103,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
 
   private canvasBar: CanvasDigitalGauge;
 
-  private knobResizeListener: any;
+  private knobResize$: ResizeObserver;
 
   constructor(private utils: UtilsService,
               protected store: Store<AppState>) {
@@ -122,20 +122,20 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     this.knobErrorContainer = $(this.knobErrorContainerRef.nativeElement);
     this.knobError = $(this.knobErrorRef.nativeElement);
     this.knobMinmaxContainer = $(this.knobMinmaxContainerRef.nativeElement);
-    this.minmaxLabel = this.knobMinmaxContainer.find('.minmax-label');
+    this.minmaxLabel = this.knobMinmaxContainer.find<HTMLElement>('.minmax-label');
     this.textMeasure = $(this.textMeasureRef.nativeElement);
     this.canvasBarElement = this.canvasBarElementRef.nativeElement;
 
-    this.knobResizeListener = this.resize.bind(this);
-    // @ts-ignore
-    addResizeListener(this.knobContainerRef.nativeElement, this.knobResizeListener);
+    this.knobResize$ = new ResizeObserver(() => {
+      this.resize();
+    });
+    this.knobResize$.observe(this.knobContainerRef.nativeElement);
     this.init();
   }
 
   ngOnDestroy(): void {
-    if (this.knobResizeListener) {
-      // @ts-ignore
-      removeResizeListener(this.knobContainerRef.nativeElement, this.knobResizeListener);
+    if (this.knobResize$) {
+      this.knobResize$.disconnect();
     }
   }
 

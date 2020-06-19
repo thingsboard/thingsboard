@@ -15,28 +15,43 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActor;
+import org.thingsboard.server.actors.TbActorCtx;
+import org.thingsboard.server.actors.TbActorId;
+import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
+@Slf4j
 public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessageProcessor> {
 
+    private final String ruleChainName;
     private final RuleChainId ruleChainId;
+    private final RuleNodeId ruleNodeId;
 
-    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
         super(systemContext, tenantId, ruleNodeId);
+        this.ruleChainName = ruleChainName;
         this.ruleChainId = ruleChainId;
-        setProcessor(new RuleNodeActorMessageProcessor(tenantId, ruleChainId, ruleNodeId, systemContext,
-                context().parent(), context().self()));
+        this.ruleNodeId = ruleNodeId;
     }
 
     @Override
-    protected boolean process(TbActorMsg msg) {
+    protected RuleNodeActorMessageProcessor createProcessor(TbActorCtx ctx) {
+        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx.getParentRef(), ctx);
+    }
+
+    @Override
+    protected boolean doProcess(TbActorMsg msg) {
         switch (msg.getMsgType()) {
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
@@ -52,6 +67,9 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
                 break;
             case STATS_PERSIST_TICK_MSG:
                 onStatsPersistTick(id);
+                break;
+            case PARTITION_CHANGE_MSG:
+                onClusterEventMsg((PartitionChangeMsg) msg);
                 break;
             default:
                 return false;
@@ -87,24 +105,30 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
         logAndPersist("onRuleMsg", ActorSystemContext.toException(msg.getError()));
     }
 
-    public static class ActorCreator extends ContextBasedCreator<RuleNodeActor> {
-        private static final long serialVersionUID = 1L;
+    public static class ActorCreator extends ContextBasedCreator {
 
         private final TenantId tenantId;
         private final RuleChainId ruleChainId;
+        private final String ruleChainName;
         private final RuleNodeId ruleNodeId;
 
-        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
             super(context);
             this.tenantId = tenantId;
             this.ruleChainId = ruleChainId;
+            this.ruleChainName = ruleChainName;
             this.ruleNodeId = ruleNodeId;
 
         }
 
         @Override
-        public RuleNodeActor create() throws Exception {
-            return new RuleNodeActor(context, tenantId, ruleChainId, ruleNodeId);
+        public TbActorId createActorId() {
+            return new TbEntityActorId(ruleNodeId);
+        }
+
+        @Override
+        public TbActor createActor() {
+            return new RuleNodeActor(context, tenantId, ruleChainId, ruleChainName, ruleNodeId);
         }
     }
 

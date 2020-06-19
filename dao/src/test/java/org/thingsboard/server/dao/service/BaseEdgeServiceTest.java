@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -103,7 +103,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         Edge edge = new Edge();
         edge.setName("My edge");
         edge.setType("default");
-        edge.setTenantId(new TenantId(UUIDs.timeBased()));
+        edge.setTenantId(new TenantId(Uuids.timeBased()));
         edgeService.saveEdge(edge);
     }
 
@@ -115,7 +115,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         edge.setTenantId(tenantId);
         edge = edgeService.saveEdge(edge);
         try {
-            edgeService.assignEdgeToCustomer(tenantId, edge.getId(), new CustomerId(UUIDs.timeBased()));
+            edgeService.assignEdgeToCustomer(tenantId, edge.getId(), new CustomerId(Uuids.timeBased()));
         } finally {
             edgeService.deleteEdge(tenantId, edge.getId());
         }

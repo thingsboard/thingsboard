@@ -15,10 +15,8 @@
     limitations under the License.
 
 -->
-<a class="mat-button" routerLinkActive="tb-active" [routerLinkActiveOptions]="{exact: true}" routerLink="{{section.path}}">
-  <span class="mat-button-wrapper">
-    <mat-icon *ngIf="!section.isMdiIcon && section.icon != null" class="material-icons">{{section.icon}}</mat-icon>
-    <mat-icon *ngIf="section.isMdiIcon && section.icon != null" [svgIcon]="section.icon"></mat-icon>
-    <span>{{section.name | translate}}</span>
-  </span>
+<a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{exact: true}" routerLink="{{section.path}}">
+  <mat-icon *ngIf="!section.isMdiIcon && section.icon != null" class="material-icons">{{section.icon}}</mat-icon>
+  <mat-icon *ngIf="section.isMdiIcon && section.icon != null" [svgIcon]="section.icon"></mat-icon>
+  <span>{{section.name | translate}}</span>
 </a>

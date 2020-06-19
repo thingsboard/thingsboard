@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,12 @@ import ThingsboardCheckbox from './json-form-checkbox';
 import ThingsboardHelp from './json-form-help';
 import ThingsboardFieldSet from './json-form-fieldset';
 import ThingsboardIcon from './json-form-icon';
-import { JsonFormProps, JsonFormData, onChangeFn, OnColorClickFn, OnIconClickFn } from './json-form.models';
+import { JsonFormData, JsonFormProps, onChangeFn, OnColorClickFn, OnIconClickFn } from './json-form.models';
 
 import _ from 'lodash';
 import * as tinycolor_ from 'tinycolor2';
 import { GroupInfo } from '@shared/models/widget.models';
+
 const tinycolor = tinycolor_;
 
 class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {

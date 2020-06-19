@@ -43,6 +43,7 @@ import { map, mergeMap, startWith, tap } from 'rxjs/operators';
 import { DashboardService } from '@core/http/dashboard.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { CustomActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
@@ -55,7 +56,7 @@ export interface WidgetActionDialogData {
   selector: 'tb-widget-action-dialog',
   templateUrl: './widget-action-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: WidgetActionDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./widget-action-dialog.component.scss']
 })
 export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDialogComponent,
                                                  WidgetActionDescriptorInfo> implements OnInit, ErrorStateMatcher {
@@ -75,6 +76,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   filteredDashboardStates: Observable<Array<string>>;
   targetDashboardStateSearchText = '';
   selectedDashboardStateIds: Observable<Array<string>>;
+
+  customActionEditorCompleter = CustomActionEditorCompleter;
 
   submitted = false;
 

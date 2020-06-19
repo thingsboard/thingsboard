@@ -27,14 +27,9 @@ import {
 import { TenantService } from '@core/http/tenant.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import {
-  EntityType,
-  entityTypeResources,
-  entityTypeTranslations
-} from '@shared/models/entity-type.models';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { TenantComponent } from '@modules/home/pages/tenant/tenant.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { User } from '@shared/models/user.model';
 import { TenantTabsComponent } from '@home/pages/tenant/tenant-tabs.component';
 
 @Injectable()
@@ -54,7 +49,7 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
     this.config.entityResources = entityTypeResources.get(EntityType.TENANT);
 
     this.config.columns.push(
-      new DateEntityTableColumn<Tenant>('createdTime', 'tenant.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<Tenant>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<Tenant>('title', 'tenant.title', '25%'),
       new EntityTableColumn<Tenant>('email', 'contact.email', '25%'),
       new EntityTableColumn<Tenant>('country', 'contact.country', '25%'),

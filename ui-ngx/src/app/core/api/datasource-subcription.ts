@@ -28,7 +28,7 @@ import {
 } from '@shared/models/telemetry/telemetry.models';
 import { DatasourceListener } from './datasource.service';
 import { AggregationType, SubscriptionTimewindow, YEAR } from '@shared/models/time/time.models';
-import { deepClone, isDefined, isObject, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isObject, objectHashCode } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataAggregator } from '@core/api/data-aggregator';
@@ -120,7 +120,7 @@ export class DatasourceSubscription {
           data: []
         };
       } else {
-        key = String(this.utils.objectHashCode(dataKey));
+        key = String(objectHashCode(dataKey));
         this.datasourceData[key] = {
           data: []
         };
@@ -314,7 +314,7 @@ export class DatasourceSubscription {
                       });
                     stateDataReceived = true;
                   } else {
-                    firstStateData = data;
+                    firstStateData = subscriptionUpdate;
                   }
                 } else {
                   if (subsTw.aggregation.stateData && !stateDataReceived) {

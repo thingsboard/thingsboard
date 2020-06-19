@@ -15,19 +15,14 @@
 ///
 
 import { Injectable, NgZone } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  CanActivate,
-  CanActivateChild,
-  RouterStateSnapshot
-} from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
 import { selectAuth } from '../auth/auth.selectors';
-import { catchError, map, skipWhile, take } from 'rxjs/operators';
+import { catchError, map, mergeMap, skipWhile, take } from 'rxjs/operators';
 import { AuthState } from '../auth/auth.models';
-import { Observable, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { enterZone } from '@core/operator/enterZone';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
@@ -59,7 +54,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
               state: RouterStateSnapshot) {
 
     return this.getAuthState().pipe(
-      map((authState) => {
+      mergeMap((authState) => {
         const url: string = state.url;
 
         let lastChild = state.root;
@@ -83,13 +78,21 @@ export class AuthGuard implements CanActivate, CanActivateChild {
           if (publicId && publicId.length > 0) {
             this.authService.setUserFromJwtToken(null, null, false);
             this.authService.reloadUser();
-            return false;
+            return of(false);
           } else if (!isPublic) {
             this.authService.redirectUrl = url;
             // this.authService.gotoDefaultPlace(false);
-            return this.authService.defaultUrl(false);
+            return of(this.authService.defaultUrl(false));
           } else {
-            return true;
+            if (path === 'login') {
+              return forkJoin([this.authService.loadOAuth2Clients()]).pipe(
+                map(() => {
+                  return true;
+                })
+              );
+            } else {
+              return of(true);
+            }
           }
         } else {
           if (authState.authUser.isPublic) {
@@ -100,20 +103,20 @@ export class AuthGuard implements CanActivate, CanActivateChild {
               } else {
                 this.authService.logout();
               }
-              return false;
+              return of(false);
             }
           }
           const defaultUrl = this.authService.defaultUrl(true, authState, path, params);
           if (defaultUrl) {
             // this.authService.gotoDefaultPlace(true);
-            return defaultUrl;
+            return of(defaultUrl);
           } else {
             const authority = Authority[authState.authUser.authority];
             if (data.auth && data.auth.indexOf(authority) === -1) {
               this.dialogService.forbidden();
-              return false;
+              return of(false);
             } else {
-              return true;
+              return of(true);
             }
           }
         }

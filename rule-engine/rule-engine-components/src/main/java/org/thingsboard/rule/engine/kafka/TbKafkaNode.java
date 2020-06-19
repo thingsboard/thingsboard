@@ -17,12 +17,21 @@ package org.thingsboard.rule.engine.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -31,7 +40,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @RuleNode(
@@ -65,7 +73,7 @@ public class TbKafkaNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbKafkaNodeConfiguration.class);
         Properties properties = new Properties();
-        properties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + ctx.getSelfId().getId().toString() + "-" + ctx.getNodeId());
+        properties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + ctx.getSelfId().getId().toString() + "-" + ctx.getServiceId());
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
         properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer());
         properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer());
@@ -75,8 +83,7 @@ public class TbKafkaNode implements TbNode {
         properties.put(ProducerConfig.LINGER_MS_CONFIG, config.getLinger());
         properties.put(ProducerConfig.BUFFER_MEMORY_CONFIG, config.getBufferMemory());
         if (config.getOtherProperties() != null) {
-            config.getOtherProperties()
-                    .forEach(properties::put);
+            config.getOtherProperties().forEach(properties::put);
         }
         addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
         toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
@@ -88,10 +95,22 @@ public class TbKafkaNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(config.getTopicPattern(), msg.getMetaData());
         try {
+            ctx.getExternalCallExecutor().executeAsync(() -> {
+                publish(ctx, msg, topic);
+                return null;
+            });
+        } catch (Exception e) {
+            ctx.tellFailure(msg, e);
+        }
+    }
+
+    protected void publish(TbContext ctx, TbMsg msg, String topic) {
+        try {
             if (!addMetadataKeyValuesAsKafkaHeaders) {
+                //TODO: external system executor
                 producer.send(new ProducerRecord<>(topic, msg.getData()),
                         (metadata, e) -> processRecord(ctx, msg, metadata, e));
             } else {
@@ -100,9 +119,8 @@ public class TbKafkaNode implements TbNode {
                 producer.send(new ProducerRecord<>(topic, null, null, null, msg.getData(), headers),
                         (metadata, e) -> processRecord(ctx, msg, metadata, e));
             }
-
         } catch (Exception e) {
-            ctx.tellFailure(msg, e);
+            log.debug("[{}] Failed to process message: {}", ctx.getSelfId(), msg, e);
         }
     }
 

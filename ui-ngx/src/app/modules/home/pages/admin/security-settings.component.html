@@ -28,7 +28,7 @@
     </mat-progress-bar>
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
-      <form #securitySettingsForm="ngForm" [formGroup]="securitySettingsFormGroup" (ngSubmit)="save()">
+      <form [formGroup]="securitySettingsFormGroup" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
           <mat-expansion-panel [expanded]="true">
             <mat-expansion-panel-header>
@@ -140,7 +140,7 @@
             </section>
           </mat-expansion-panel>
           <div fxLayout="row" fxLayoutAlign="end center" style="width: 100%;" class="layout-wrap">
-            <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || securitySettingsForm.invalid || !securitySettingsForm.dirty"
+            <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || securitySettingsFormGroup.invalid || !securitySettingsFormGroup.dirty"
                     type="submit">{{'action.save' | translate}}
             </button>
           </div>

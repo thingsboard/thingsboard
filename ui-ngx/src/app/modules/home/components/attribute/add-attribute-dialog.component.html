@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="attributeFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar color="primary">
     <h2>{{ 'attribute.add' | translate }}</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -43,15 +43,13 @@
       </tb-value-input>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || attributeFormGroup.invalid || !attributeFormGroup.dirty">
       {{ 'action.add' | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

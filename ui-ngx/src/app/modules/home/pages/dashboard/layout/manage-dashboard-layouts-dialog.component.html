@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form #widgetForm="ngForm" [formGroup]="layoutsFormGroup" (ngSubmit)="save()">
-  <mat-toolbar fxLayout="row" color="primary">
+<form [formGroup]="layoutsFormGroup" (ngSubmit)="save()">
+  <mat-toolbar color="primary">
     <h2 translate>layout.manage</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -38,33 +38,32 @@
         </mat-checkbox>
       </div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <button fxFlex fxLayout="column"
-                type="button" mat-button mat-raised-button color="primary"
+        <button fxFlex
+                type="button" mat-raised-button color="primary"
                 class="tb-layout-button"
                 (click)="openLayoutSettings('main')">
           <span translate>layout.main</span>
         </button>
-        <button fxFlex fxLayout="column" [fxShow]="layoutsFormGroup.get('right').value"
-                type="button" mat-button mat-raised-button color="primary"
+        <button fxFlex [fxShow]="layoutsFormGroup.get('right').value"
+                type="button" mat-raised-button color="primary"
                 class="tb-layout-button"
-          (click)="openLayoutSettings('right')">
+                (click)="openLayoutSettings('right')">
           <span translate>layout.right</span>
         </button>
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
-      [disabled]="(isLoading$ | async) || layoutsFormGroup.invalid || !layoutsFormGroup.dirty">
+            [disabled]="(isLoading$ | async) || layoutsFormGroup.invalid || !layoutsFormGroup.dirty">
       {{ 'action.save' | translate }}
     </button>
-    <button mat-button color="primary"
-            style="margin-right: 20px;"
+    <button mat-button
+            color="primary"
             type="button"
-      [disabled]="(isLoading$ | async)"
-      (click)="cancel()" cdkFocusInitial>
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
   </div>

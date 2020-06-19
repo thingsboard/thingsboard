@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form #statesForm="ngForm" [formGroup]="statesFormGroup" (ngSubmit)="save()" style="min-width: 620px;">
-  <mat-toolbar fxLayout="row" color="primary">
+<form [formGroup]="statesFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+  <mat-toolbar color="primary">
     <h2 translate>dashboard.manage-states</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -28,22 +28,22 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" fxLayout="column">
-      <div class="manage-dashboard-states" fxLayout="column">
+    <fieldset [disabled]="isLoading$ | async">
+      <div class="manage-dashboard-states">
         <div class="tb-entity-table">
           <div fxLayout="column" class="tb-entity-table-content">
             <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
               <div class="mat-toolbar-tools">
                 <span class="tb-entity-table-title" translate>dashboard.states</span>
                 <span fxFlex></span>
-                <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                <button mat-icon-button [disabled]="isLoading$ | async"
                         type="button"
                         (click)="addState($event)"
                         matTooltip="{{ 'dashboard.add-state' | translate }}"
                         matTooltipPosition="above">
                   <mat-icon>add</mat-icon>
                 </button>
-                <button mat-button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
+                <button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
                         type="button"
                         matTooltip="{{ 'action.search' | translate }}"
                         matTooltipPosition="above">
@@ -53,7 +53,7 @@
             </mat-toolbar>
             <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
               <div class="mat-toolbar-tools">
-                <button mat-button mat-icon-button
+                <button mat-icon-button
                         type="button"
                         matTooltip="{{ 'dashboard.search-states' | translate }}"
                         matTooltipPosition="above">
@@ -66,7 +66,7 @@
                          [ngModelOptions]="{standalone: true}"
                          placeholder="{{ 'dashboard.search-states' | translate }}"/>
                 </mat-form-field>
-                <button mat-button mat-icon-button (click)="exitFilterMode()"
+                <button mat-icon-button (click)="exitFilterMode()"
                         type="button"
                         matTooltip="{{ 'action.close' | translate }}"
                         matTooltipPosition="above">
@@ -75,7 +75,7 @@
               </div>
             </mat-toolbar>
             <div class="table-container">
-              <mat-table [dataSource]="dataSource"
+              <table  mat-table [dataSource]="dataSource"
                          matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
                 <ng-container matColumnDef="name">
                   <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 60%"> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
@@ -100,14 +100,14 @@
                   </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     <div fxFlex fxLayout="row">
-                      <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                      <button mat-icon-button [disabled]="isLoading$ | async"
                               type="button"
                               matTooltip="{{ 'dashboard.edit-state' | translate }}"
                               matTooltipPosition="above"
                               (click)="editState($event, state)">
                         <mat-icon>edit</mat-icon>
                       </button>
-                      <button [fxShow]="!state.root" mat-button mat-icon-button [disabled]="isLoading$ | async"
+                      <button [fxShow]="!state.root" mat-icon-button [disabled]="isLoading$ | async"
                               type="button"
                               matTooltip="{{ 'dashboard.delete-state' | translate }}"
                               matTooltipPosition="above"
@@ -120,7 +120,7 @@
                 <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
                 <mat-row class="mat-row-select"
                          *matRowDef="let state; columns: displayedColumns;"></mat-row>
-              </mat-table>
+              </table>
               <span [fxShow]="dataSource.isEmpty() | async"
                     fxLayoutAlign="center center"
                     class="no-data-found" translate>{{ 'dashboard.no-states-text' }}</span>
@@ -135,15 +135,13 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || statesFormGroup.invalid || !statesFormGroup.dirty">
       {{ 'action.save' | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

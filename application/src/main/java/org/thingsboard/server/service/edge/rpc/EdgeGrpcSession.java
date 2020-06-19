@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -59,9 +59,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
@@ -209,7 +207,7 @@ public final class EdgeGrpcSession implements Cloneable {
         } while (pageData.hasNext());
 
         if (ifOffset != null) {
-            Long newStartTs = UUIDs.unixTimestamp(ifOffset);
+            Long newStartTs = Uuids.unixTimestamp(ifOffset);
             updateQueueStartTs(newStartTs);
         }
         try {
@@ -259,9 +257,8 @@ public final class EdgeGrpcSession implements Cloneable {
                                 entityNode.put(attr.getKey(), attr.getValueAsString());
                             }
                         }
-                        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), DataConstants.ATTRIBUTES_UPDATED, finalEntityId, metaData, TbMsgDataType.JSON
-                                , objectMapper.writeValueAsString(entityNode)
-                                , null, null, 0L);
+                        TbMsg tbMsg = TbMsg.newMsg(DataConstants.ATTRIBUTES_UPDATED, finalEntityId, metaData, TbMsgDataType.JSON
+                                , objectMapper.writeValueAsString(entityNode));
                         log.debug("Sending donwlink entity data msg, entityName [{}], tbMsg [{}]", entityName, tbMsg);
                         outputStream.onNext(ResponseMsg.newBuilder()
                                 .setDownlinkMsg(constructDownlinkEntityDataMsg(entityName, tbMsg))
@@ -352,13 +349,13 @@ public final class EdgeGrpcSession implements Cloneable {
         ListenableFuture<Optional<AttributeKvEntry>> future =
                 ctx.getAttributesService().find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, QUEUE_START_TS_ATTR_KEY);
         return Futures.transform(future, attributeKvEntryOpt -> {
-                    if (attributeKvEntryOpt != null && attributeKvEntryOpt.isPresent()) {
-                        AttributeKvEntry attributeKvEntry = attributeKvEntryOpt.get();
-                        return attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
-                    } else {
-                        return 0L;
-                    }
-                }, MoreExecutors.directExecutor());
+            if (attributeKvEntryOpt != null && attributeKvEntryOpt.isPresent()) {
+                AttributeKvEntry attributeKvEntry = attributeKvEntryOpt.get();
+                return attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
+            } else {
+                return 0L;
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private void onEdgeUpdated(UpdateMsgType msgType, Edge edge) {
@@ -462,7 +459,7 @@ public final class EdgeGrpcSession implements Cloneable {
     private DownlinkMsg constructDownlinkEntityDataMsg(String entityName, TbMsg tbMsg) {
         EntityDataProto entityData = EntityDataProto.newBuilder()
                 .setEntityName(entityName)
-                .setTbMsg(ByteString.copyFrom(TbMsg.toBytes(tbMsg))).build();
+                .setTbMsg(ByteString.copyFrom(TbMsg.toByteArray(tbMsg))).build();
 
         DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                 .addAllEntityData(Collections.singletonList(entityData));
@@ -487,36 +484,33 @@ public final class EdgeGrpcSession implements Cloneable {
             if (uplinkMsg.getEntityDataList() != null && !uplinkMsg.getEntityDataList().isEmpty()) {
                 for (EntityDataProto entityData : uplinkMsg.getEntityDataList()) {
                     TbMsg tbMsg = null;
-                    TbMsg originalTbMsg = TbMsg.fromBytes(entityData.getTbMsg().toByteArray());
+                    TbMsg originalTbMsg = TbMsg.fromBytes(null, entityData.getTbMsg().toByteArray(), null);
                     switch (originalTbMsg.getOriginator().getEntityType()) {
                         case DEVICE:
                             String deviceName = entityData.getEntityName();
                             String deviceType = entityData.getEntityType();
                             Device device = getOrCreateDevice(deviceName, deviceType);
                             if (device != null) {
-                                tbMsg = new TbMsg(UUIDs.timeBased(), originalTbMsg.getType(), device.getId(), originalTbMsg.getMetaData().copy(),
-                                        originalTbMsg.getDataType(), originalTbMsg.getData(), null, null, 0L);
+                                tbMsg = TbMsg.newMsg(originalTbMsg.getType(), device.getId(), originalTbMsg.getMetaData().copy(),
+                                        originalTbMsg.getDataType(), originalTbMsg.getData());
                             }
                             break;
                         case ASSET:
                             String assetName = entityData.getEntityName();
                             Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(edge.getTenantId(), assetName);
                             if (asset != null) {
-                                tbMsg = new TbMsg(UUIDs.timeBased(), originalTbMsg.getType(), asset.getId(), originalTbMsg.getMetaData().copy(),
-                                        originalTbMsg.getDataType(), originalTbMsg.getData(), null, null, 0L);
+                                tbMsg = TbMsg.newMsg(originalTbMsg.getType(), asset.getId(), originalTbMsg.getMetaData().copy(),
+                                        originalTbMsg.getDataType(), originalTbMsg.getData());
                             }
                             break;
                         case ENTITY_VIEW:
                             String entityViewName = entityData.getEntityName();
                             EntityView entityView = ctx.getEntityViewService().findEntityViewByTenantIdAndName(edge.getTenantId(), entityViewName);
                             if (entityView != null) {
-                                tbMsg = new TbMsg(UUIDs.timeBased(), originalTbMsg.getType(), entityView.getId(), originalTbMsg.getMetaData().copy(),
-                                        originalTbMsg.getDataType(), originalTbMsg.getData(), null, null, 0L);
+                                tbMsg = TbMsg.newMsg(originalTbMsg.getType(), entityView.getId(), originalTbMsg.getMetaData().copy(),
+                                        originalTbMsg.getDataType(), originalTbMsg.getData());
                             }
                             break;
-                    }
-                    if (tbMsg != null) {
-                        ctx.getActorService().onMsg(new SendToClusterMsg(tbMsg.getOriginator(), new ServiceToRuleEngineMsg(edge.getTenantId(), tbMsg)));
                     }
                 }
             }
@@ -631,7 +625,7 @@ public final class EdgeGrpcSession implements Cloneable {
             device = ctx.getDeviceService().saveDevice(device);
             device = ctx.getDeviceService().assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
             createRelationFromEdge(device.getId());
-            ctx.getActorService().onDeviceAdded(device);
+//            ctx.getActorService().onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(device);
         }
         return device;
@@ -640,8 +634,8 @@ public final class EdgeGrpcSession implements Cloneable {
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
         try {
             ObjectNode entityNode = objectMapper.valueToTree(device);
-            TbMsg msg = new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, device.getId(), deviceActionTbMsgMetaData(device), objectMapper.writeValueAsString(entityNode), null, null, 0L);
-            ctx.getActorService().onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(edge.getTenantId(), msg)));
+            TbMsg msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, device.getId(), deviceActionTbMsgMetaData(device), objectMapper.writeValueAsString(entityNode));
+//            ctx.getActorService().onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(edge.getTenantId(), msg)));
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
         }

@@ -15,14 +15,7 @@
 ///
 
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormBuilder, FormControl,
-  FormGroup,
-  NG_VALUE_ACCESSOR,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { AliasFilterType, aliasFilterTypeTranslationMap, EntityAliasFilter } from '@shared/models/alias.models';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';

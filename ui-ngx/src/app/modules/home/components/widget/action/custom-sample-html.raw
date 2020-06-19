@@ -1,349 +1,355 @@
 <!--=======================================================================-->
-<!--===================  New TB 3.0 / Angular 8 Example   =================-->
-<!--=======================================================================-->
-<!--<form #editEntityForm="ngForm" [formGroup]="editEntityFormGroup"-->
-<!--      class="edit-entity-form"-->
-<!--      (ngSubmit)="save()" style="width: 600px;">-->
-<!--  <mat-toolbar fxLayout="row" color="primary">-->
-<!--    <h2>Edit {{entityType.toLowerCase()}} {{entityName}}</h2>-->
-<!--    <span fxFlex></span>-->
-<!--    <button mat-button mat-icon-button-->
-<!--            (click)="cancel()"-->
-<!--            type="button">-->
-<!--      <mat-icon class="material-icons">close</mat-icon>-->
-<!--    </button>-->
-<!--  </mat-toolbar>-->
-<!--  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">-->
-<!--  </mat-progress-bar>-->
-<!--  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>-->
-<!--  <div mat-dialog-content>-->
-<!--      <div class="mat-padding" fxLayout="column">-->
-<!--          <mat-form-field class="mat-block">-->
-<!--                <mat-label>Entity name</mat-label>-->
-<!--                <input matInput formControlName="entityName" required>-->
-<!--                <mat-error *ngIf="editEntityFormGroup.get('entityName').hasError('required')">-->
-<!--                    Entity name required-->
-<!--                </mat-error>-->
-<!--           </mat-form-field>-->
-<!--      </div>  -->
-<!--  </div>-->
-<!--  <div mat-dialog-actions fxLayout="row">-->
-<!--    <span fxFlex></span>-->
-<!--    <button mat-button mat-raised-button color="primary"-->
-<!--            type="submit"-->
-<!--            [disabled]="(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty">-->
-<!--      {{ 'action.save' | translate }}-->
-<!--    </button>-->
-<!--    <button mat-button color="primary"-->
-<!--            style="margin-right: 20px;"-->
-<!--            type="button"-->
-<!--            [disabled]="(isLoading$ | async)"-->
-<!--            (click)="cancel()" cdkFocusInitial>-->
-<!--      {{ 'action.cancel' | translate }}-->
-<!--    </button>-->
-<!--  </div>-->
-<!--</form>-->
-<!--=======================================================================-->
 <!--=====  There are two example templates: for edit and add entity   =====-->
 <!--=======================================================================-->
 <!--========================  Edit entity example  ========================-->
 <!--=======================================================================-->
 <!-- -->
-<!--<md-dialog aria-label="Edit entity">-->
-<!--    <form name="editEntityForm" class="edit-entity-form" ng-submit="vm.save()">-->
-<!--        <md-toolbar>-->
-<!--            <div class="md-toolbar-tools">-->
-<!--                <h2>Edit {{vm.entityType.toLowerCase()}} {{vm.entityName}}</h2>-->
-<!--                <span flex></span>-->
-<!--                <md-button class="md-icon-button" ng-click="vm.cancel()">-->
-<!--                    <ng-md-icon icon="close" aria-label="Close"></ng-md-icon>-->
-<!--                </md-button>-->
+<!--<form #editEntityForm="ngForm" [formGroup]="editEntityFormGroup"-->
+<!--      (ngSubmit)="save()"  class="edit-entity-form">-->
+<!--    <mat-toolbar fxLayout="row" color="primary">-->
+<!--        <h2>Edit {{entityType.toLowerCase()}} {{entityName}}</h2>-->
+<!--        <span fxFlex></span>-->
+<!--        <button mat-icon-button (click)="cancel()" type="button">-->
+<!--            <mat-icon class="material-icons">close</mat-icon>-->
+<!--        </button>-->
+<!--    </mat-toolbar>-->
+<!--    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">-->
+<!--    </mat-progress-bar>-->
+<!--    <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>-->
+<!--    <div mat-dialog-content fxLayout="column">-->
+<!--        <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--            <mat-form-field fxFlex class="mat-block">-->
+<!--                <mat-label>Entity Name</mat-label>-->
+<!--                <input matInput formControlName="entityName" required readonly="">-->
+<!--            </mat-form-field>-->
+<!--            <mat-form-field fxFlex class="mat-block">-->
+<!--                <mat-label>Entity Label</mat-label>-->
+<!--                <input matInput formControlName="entityLabel">-->
+<!--            </mat-form-field>-->
+<!--        </div>-->
+<!--        <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--            <mat-form-field fxFlex class="mat-block">-->
+<!--                <mat-label>Entity Type</mat-label>-->
+<!--                <input matInput formControlName="entityType" readonly>-->
+<!--            </mat-form-field>-->
+<!--            <mat-form-field fxFlex class="mat-block">-->
+<!--                <mat-label>Type</mat-label>-->
+<!--                <input matInput formControlName="type" readonly>-->
+<!--            </mat-form-field>-->
+<!--        </div>-->
+<!--        <div formGroupName="attributes" fxLayout="column">-->
+<!--            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Latitude</mat-label>-->
+<!--                    <input type="number" step="any" matInput formControlName="latitude">-->
+<!--                </mat-form-field>-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Longitude</mat-label>-->
+<!--                    <input type="number" step="any" matInput formControlName="longitude">-->
+<!--                </mat-form-field>-->
 <!--            </div>-->
-<!--        </md-toolbar>-->
-<!--        <md-dialog-content>-->
-<!--            <div class="md-dialog-content">-->
-<!--                <div layout="row">-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Entity Name</label>-->
-<!--                        <input ng-model="vm.entityName" readonly>-->
-<!--                    </md-input-container>-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Entity Type</label>-->
-<!--                        <input ng-model="vm.entityType" readonly>-->
-<!--                    </md-input-container>-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Type</label>-->
-<!--                        <input ng-model="vm.type" readonly>-->
-<!--                    </md-input-container>-->
-<!--                </div>-->
-<!--                <div layout="row">-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Latitude</label>-->
-<!--                        <input name="latitude" type="number" step="any" ng-model="vm.attributes.latitude">-->
-<!--                    </md-input-container>-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Longitude</label>-->
-<!--                        <input name="longitude" type="number" step="any" ng-model="vm.attributes.longitude">-->
-<!--                    </md-input-container>-->
-<!--                </div>-->
-<!--                 <div layout="row">-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Address</label>-->
-<!--                        <input ng-model="vm.attributes.address">-->
-<!--                    </md-input-container>-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Owner</label>-->
-<!--                        <input ng-model="vm.attributes.owner">-->
-<!--                    </md-input-container>-->
-<!--                </div>-->
-<!--                <div layout="row">-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Integer Value</label>-->
-<!--                        <input name="integerNumber" type="number" step="1" ng-pattern="/^-?[0-9]+$/" ng-model="vm.attributes.number">-->
-<!--                        <div ng-messages="editEntityForm.integerNumber.$error">-->
-<!--                            <div ng-message="pattern">Invalid integer value.</div>-->
-<!--                        </div>-->
-<!--                    </md-input-container>-->
-<!--                    <div class="boolean-value-input" layout="column" layout-align="center start" flex>-->
-<!--                        <label class="checkbox-label">Boolean Value</label>-->
-<!--                        <md-checkbox ng-model="vm.attributes.booleanValue" style="margin-bottom: 40px;">-->
-<!--                            {{ (vm.attributes.booleanValue ? "value.true" : "value.false") | translate }}-->
-<!--                        </md-checkbox>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <div class="relations-list old-relations">-->
-<!--                    <div class="md-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">Relations</div>-->
-<!--                    <div class="body" ng-show="vm.relations.length">-->
-<!--                        <div class="row" layout="row" layout-align="start center" ng-repeat="relation in vm.relations track by $index">-->
-<!--                            <div class="md-whiteframe-1dp" flex layout="row" style="padding-left: 5px; margin-bottom: 3px;">-->
-<!--                                <div flex layout="column">-->
-<!--                                    <div layout="row">-->
-<!--                                        <md-input-container class="md-block" style="min-width: 100px;">-->
-<!--                                            <label>Direction</label>-->
-<!--                                            <md-select ng-disabled="true" required ng-model="relation.direction">-->
-<!--                                                <md-option ng-repeat="direction in vm.entitySearchDirection" ng-value="direction">-->
-<!--                                                    {{ ("relation.search-direction." + direction) | translate}}-->
-<!--                                                </md-option>-->
-<!--                                            </md-select>-->
-<!--                                        </md-input-container>-->
-<!--                                        <tb-relation-type-autocomplete ng-disabled="true" flex class="md-block"-->
-<!--                                           the-form="editEntityForm"-->
-<!--                                           ng-model="relation.relationType"-->
-<!--                                           tb-required="true">-->
-<!--                                        </tb-relation-type-autocomplete>-->
-<!--                                    </div>-->
-<!--                                    <div layout="row">-->
-<!--                                        <tb-entity-select flex class="md-block"-->
-<!--                                            the-form="editEntityForm"-->
-<!--                                            ng-disabled="true"-->
-<!--                                            tb-required="true"-->
-<!--                                            ng-model="relation.relatedEntity">-->
-<!--                                        </tb-entity-select>-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                                <div layout="column" layout-align="center center">-->
-<!--                                    <md-button class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"-->
-<!--                                               ng-click="vm.removeOldRelation($index,relation)" aria-label="Remove">-->
-<!--                                        <md-tooltip md-direction="top">Remove relation</md-tooltip>-->
-<!--                                        <md-icon aria-label="Remove" class="material-icons">-->
-<!--                                            close-->
-<!--                                        </md-icon>-->
-<!--                                    </md-button>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <div class="relations-list">-->
-<!--                    <div class="md-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">New Relations</div>-->
-<!--                    <div class="body" ng-show="vm.newRelations.length">-->
-<!--                        <div class="row" layout="row" layout-align="start center" ng-repeat="relation in vm.newRelations track by $index">-->
-<!--                            <div class="md-whiteframe-1dp" flex layout="row" style="padding-left: 5px; margin-bottom: 3px;">-->
-<!--                                <div flex layout="column">-->
-<!--                                    <div layout="row">-->
-<!--                                        <md-input-container class="md-block" style="min-width: 100px;">-->
-<!--                                            <label>Direction</label>-->
-<!--                                            <md-select name="direction" required ng-model="relation.direction">-->
-<!--                                                <md-option ng-repeat="direction in vm.entitySearchDirection" ng-value="direction">-->
-<!--                                                    {{ ("relation.search-direction." + direction) | translate}}-->
-<!--                                                </md-option>-->
-<!--                                            </md-select>-->
-<!--                                            <div ng-messages="editEntityForm.direction.$error">-->
-<!--                                                <div ng-message="required">Relation direction is required.</div>-->
-<!--                                            </div>-->
-<!--                                        </md-input-container>-->
-<!--                                        <tb-relation-type-autocomplete flex class="md-block"-->
-<!--                                           the-form="editEntityForm"-->
-<!--                                           ng-model="relation.relationType"-->
-<!--                                           tb-required="true">-->
-<!--                                        </tb-relation-type-autocomplete>-->
-<!--                                    </div>-->
-<!--                                    <div layout="row">-->
-<!--                                        <tb-entity-select flex class="md-block"-->
-<!--                                            the-form="editEntityForm"-->
-<!--                                            tb-required="true"-->
-<!--                                            ng-model="relation.relatedEntity">-->
-<!--                                        </tb-entity-select>-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                                <div layout="column" layout-align="center center">-->
-<!--                                    <md-button class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"-->
-<!--                                               ng-click="vm.removeRelation($index)" aria-label="Remove">-->
-<!--                                        <md-tooltip md-direction="top">Remove relation</md-tooltip>-->
-<!--                                        <md-icon aria-label="Remove" class="material-icons">-->
-<!--                                            close-->
-<!--                                        </md-icon>-->
-<!--                                    </md-button>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                   <div>-->
-<!--                       <md-button class="md-primary md-raised" ng-click="vm.addRelation()" aria-label="Add">-->
-<!--                           <md-tooltip md-direction="top">Add Relation</md-tooltip>-->
-<!--                           Add-->
-<!--                       </md-button>-->
-<!--                   </div> -->
+<!--            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Address</mat-label>-->
+<!--                    <input matInput formControlName="address">-->
+<!--                </mat-form-field>-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Owner</mat-label>-->
+<!--                    <input matInput formControlName="owner">-->
+<!--                </mat-form-field>-->
+<!--            </div>-->
+<!--            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Integer Value</mat-label>-->
+<!--                    <input type="number" step="1" matInput formControlName="number">-->
+<!--                    <mat-error *ngIf="editEntityFormGroup.get('attributes').get('number').hasError('pattern')">-->
+<!--                        Invalid integer value.-->
+<!--                    </mat-error>-->
+<!--                </mat-form-field>-->
+<!--                <div class="boolean-value-input" fxLayout="column" fxLayoutAlign="center start" fxFlex>-->
+<!--                    <label class="checkbox-label">Boolean Value</label>-->
+<!--                    <mat-checkbox formControlName="booleanValue" style="margin-bottom: 40px;">-->
+<!--                        {{ (editEntityFormGroup.get('attributes').get('booleanValue').value ? "value.true" : "value.false") | translate }}-->
+<!--                    </mat-checkbox>-->
 <!--                </div>-->
 <!--            </div>-->
-<!--        </md-dialog-content>-->
-<!--        <md-dialog-actions>-->
-<!--            <md-button type="submit" ng-disabled="editEntityForm.$invalid || !editEntityForm.$dirty" class="md-raised md-primary">Save</md-button>-->
-<!--            <md-button ng-click="vm.cancel()" class="md-primary">Cancel</md-button>-->
-<!--        </md-dialog-actions>-->
-<!--    </form>-->
-<!--</md-dialog>-->
+<!--        </div>-->
+<!--        <div class="relations-list old-relations">-->
+<!--            <div class="mat-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">Relations</div>-->
+<!--            <div class="body" [fxShow]="oldRelations().length">-->
+<!--                <div class="row" fxLayout="row" fxLayoutAlign="start center" formArrayName="oldRelations" -->
+<!--                     *ngFor="let relation of oldRelations().controls; let i = index;">-->
+<!--                    <div [formGroupName]="i" class="mat-elevation-z2" fxFlex fxLayout="row" style="padding: 5px 0 5px 5px;">-->
+<!--                        <div fxFlex fxLayout="column">-->
+<!--                            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                                <mat-form-field class="mat-block" style="min-width: 100px;">-->
+<!--                                    <mat-label>Direction</mat-label>-->
+<!--                                    <mat-select formControlName="direction" name="direction">-->
+<!--                                        <mat-option *ngFor="let direction of entitySearchDirection | keyvalue" [value]="direction.value">-->
+<!--                                            {{ ("relation.search-direction." + direction.value) | translate}}-->
+<!--                                        </mat-option>-->
+<!--                                    </mat-select>-->
+<!--                                    <mat-error *ngIf="relation.get('direction').hasError('required')">-->
+<!--                                        Relation direction is required.-->
+<!--                                    </mat-error>-->
+<!--                                </mat-form-field>-->
+<!--                                <tb-relation-type-autocomplete-->
+<!--                                        fxFlex class="mat-block"-->
+<!--                                        formControlName="relationType"-->
+<!--                                        required="true">-->
+<!--                                </tb-relation-type-autocomplete>-->
+<!--                            </div>-->
+<!--                            <div fxLayout="row" fxLayout.xs="column">-->
+<!--                                <tb-entity-select-->
+<!--                                        fxFlex class="mat-block"-->
+<!--                                        required="true"-->
+<!--                                        formControlName="relatedEntity">-->
+<!--                                </tb-entity-select>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div fxLayout="column" fxLayoutAlign="center center">-->
+<!--                            <button mat-icon-button color="primary"-->
+<!--                                    aria-label="Remove"-->
+<!--                                    type="button"-->
+<!--                                    (click)="removeOldRelation(i)"-->
+<!--                                    matTooltip="Remove relation"-->
+<!--                                    matTooltipPosition="above">-->
+<!--                                <mat-icon>close</mat-icon>-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="relations-list">-->
+<!--            <div class="mat-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">New Relations</div>-->
+<!--            <div class="body" [fxShow]="relations().length">-->
+<!--                <div class="row" fxLayout="row" fxLayoutAlign="start center" formArrayName="relations" *ngFor="let relation of relations().controls; let i = index;">-->
+<!--                    <div [formGroupName]="i" class="mat-elevation-z2" fxFlex fxLayout="row" style="padding: 5px 0 5px 5px;">-->
+<!--                        <div fxFlex fxLayout="column">-->
+<!--                            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                                <mat-form-field class="mat-block" style="min-width: 100px;">-->
+<!--                                    <mat-label>Direction</mat-label>-->
+<!--                                    <mat-select formControlName="direction" name="direction">-->
+<!--                                        <mat-option *ngFor="let direction of entitySearchDirection | keyvalue" [value]="direction.value">-->
+<!--                                            {{ ("relation.search-direction." + direction.value) | translate}}-->
+<!--                                        </mat-option>-->
+<!--                                    </mat-select>-->
+<!--                                    <mat-error *ngIf="relation.get('direction').hasError('required')">-->
+<!--                                        Relation direction is required.-->
+<!--                                    </mat-error>-->
+<!--                                </mat-form-field>-->
+<!--                                <tb-relation-type-autocomplete-->
+<!--                                        fxFlex class="mat-block"-->
+<!--                                        formControlName="relationType"-->
+<!--                                        [required]="true">-->
+<!--                                </tb-relation-type-autocomplete>-->
+<!--                            </div>-->
+<!--                            <div fxLayout="row" fxLayout.xs="column">-->
+<!--                                <tb-entity-select-->
+<!--                                        fxFlex class="mat-block"-->
+<!--                                        [required]="true"-->
+<!--                                        formControlName="relatedEntity">-->
+<!--                                </tb-entity-select>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div fxLayout="column" fxLayoutAlign="center center">-->
+<!--                            <button mat-icon-button color="primary"-->
+<!--                                    aria-label="Remove"-->
+<!--                                    type="button"-->
+<!--                                    (click)="removeRelation(i)"-->
+<!--                                    matTooltip="Remove relation"-->
+<!--                                    matTooltipPosition="above">-->
+<!--                                <mat-icon>close</mat-icon>-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div>-->
+<!--                <button mat-raised-button color="primary"-->
+<!--                        type="button"-->
+<!--                        (click)="addRelation()"-->
+<!--                        matTooltip="Add Relation"-->
+<!--                        matTooltipPosition="above">-->
+<!--                    Add-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">-->
+<!--        <button mat-button mat-raised-button color="primary"-->
+<!--                type="submit"-->
+<!--                [disabled]="(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty">-->
+<!--            Save-->
+<!--        </button>-->
+<!--        <button mat-button color="primary"-->
+<!--                style="margin-right: 20px;"-->
+<!--                type="button"-->
+<!--                [disabled]="(isLoading$ | async)"-->
+<!--                (click)="cancel()" cdkFocusInitial>-->
+<!--            Cancel-->
+<!--        </button>-->
+<!--    </div>-->
+<!--</form>-->
 <!---->
 <!--========================================================================-->
 <!--=========================  Add entity example  =========================-->
 <!--========================================================================-->
 <!---->
-<!--<md-dialog aria-label="Add entity">-->
-<!--    <form name="addEntityForm" class="add-entity-form" ng-submit="vm.save()">-->
-<!--        <md-toolbar>-->
-<!--            <div class="md-toolbar-tools">-->
-<!--                <h2>Add entity</h2>-->
-<!--                <span flex></span>-->
-<!--                <md-button class="md-icon-button" ng-click="vm.cancel()">-->
-<!--                    <ng-md-icon icon="close" aria-label="Close"></ng-md-icon>-->
-<!--                </md-button>-->
+<!--<form #addEntityForm="ngForm" [formGroup]="addEntityFormGroup"-->
+<!--      (ngSubmit)="save()" class="add-entity-form">-->
+<!--    <mat-toolbar fxLayout="row" color="primary">-->
+<!--        <h2>Add entity</h2>-->
+<!--        <span fxFlex></span>-->
+<!--        <button mat-icon-button (click)="cancel()" type="button">-->
+<!--            <mat-icon class="material-icons">close</mat-icon>-->
+<!--        </button>-->
+<!--    </mat-toolbar>-->
+<!--    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">-->
+<!--    </mat-progress-bar>-->
+<!--    <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>-->
+<!--    <div mat-dialog-content fxLayout="column">-->
+<!--        <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--            <mat-form-field fxFlex class="mat-block">-->
+<!--                <mat-label>Entity Name</mat-label>-->
+<!--                <input matInput formControlName="entityName" required>-->
+<!--                <mat-error *ngIf="addEntityFormGroup.get('entityName').hasError('required')">-->
+<!--                    Entity name is required.-->
+<!--                </mat-error>-->
+<!--            </mat-form-field>-->
+<!--            <mat-form-field fxFlex class="mat-block">-->
+<!--                <mat-label>Entity Label</mat-label>-->
+<!--                <input matInput formControlName="entityLabel" >-->
+<!--            </mat-form-field>-->
+<!--        </div>-->
+<!--        <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--            <tb-entity-type-select-->
+<!--                    class="mat-block"-->
+<!--                    formControlName="entityType"-->
+<!--                    [showLabel]="true"-->
+<!--                    [allowedEntityTypes]="allowedEntityTypes"-->
+<!--            ></tb-entity-type-select>-->
+<!--            <tb-entity-subtype-autocomplete-->
+<!--                    fxFlex *ngIf="addEntityFormGroup.get('entityType').value == 'ASSET'"-->
+<!--                    class="mat-block"-->
+<!--                    formControlName="type"-->
+<!--                    [required]="true"-->
+<!--                    [entityType]="'ASSET'"-->
+<!--            ></tb-entity-subtype-autocomplete>-->
+<!--            <tb-entity-subtype-autocomplete-->
+<!--                    fxFlex *ngIf="addEntityFormGroup.get('entityType').value != 'ASSET'"-->
+<!--                    class="mat-block"-->
+<!--                    formControlName="type"-->
+<!--                    [required]="true"-->
+<!--                    [entityType]="'DEVICE'"-->
+<!--            ></tb-entity-subtype-autocomplete>-->
+<!--        </div>-->
+<!--        <div formGroupName="attributes" fxLayout="column">-->
+<!--            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Latitude</mat-label>-->
+<!--                    <input type="number" step="any" matInput formControlName="latitude">-->
+<!--                </mat-form-field>-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Longitude</mat-label>-->
+<!--                    <input type="number" step="any" matInput formControlName="longitude">-->
+<!--                </mat-form-field>-->
 <!--            </div>-->
-<!--        </md-toolbar>-->
-<!--        <md-dialog-content>-->
-<!--            <div class="md-dialog-content">-->
-<!--                <div layout="row">-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Entity Name</label>-->
-<!--                        <input ng-model="vm.entityName" name=entityName required>-->
-<!--                        <div ng-messages="addEntityForm.entityName.$error">-->
-<!--                            <div ng-message="required">Entity name is required.</div>-->
-<!--                        </div>-->
-<!--                    </md-input-container>-->
-<!--                    <tb-entity-type-select class="md-block" style="min-width: 100px; width: 100px;"-->
-<!--                       the-form="addEntityForm"-->
-<!--                       tb-required="true"-->
-<!--                       allowed-entity-types="vm.allowedEntityTypes"-->
-<!--                       ng-model="vm.entityType">-->
-<!--                    </tb-entity-type-select>-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Entity Subtype</label>-->
-<!--                        <input ng-model="vm.type" name=type required>-->
-<!--                        <div ng-messages="addEntityForm.type.$error">-->
-<!--                            <div ng-message="required">Entity subtype is required.</div>-->
-<!--                        </div>-->
-<!--                    </md-input-container>-->
+<!--            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Address</mat-label>-->
+<!--                    <input matInput formControlName="address">-->
+<!--                </mat-form-field>-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Owner</mat-label>-->
+<!--                    <input matInput formControlName="owner">-->
+<!--                </mat-form-field>-->
+<!--            </div>-->
+<!--            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                <mat-form-field fxFlex class="mat-block">-->
+<!--                    <mat-label>Integer Value</mat-label>-->
+<!--                    <input type="number" step="1" matInput formControlName="number">-->
+<!--                    <mat-error *ngIf="addEntityFormGroup.get('attributes').get('number').hasError('pattern')">-->
+<!--                        Invalid integer value.-->
+<!--                    </mat-error>-->
+<!--                </mat-form-field>-->
+<!--                <div class="boolean-value-input" fxLayout="column" fxLayoutAlign="center start" fxFlex>-->
+<!--                    <label class="checkbox-label">Boolean Value</label>-->
+<!--                    <mat-checkbox formControlName="booleanValue" style="margin-bottom: 40px;">-->
+<!--                        {{ (addEntityFormGroup.get('attributes').get('booleanValue').value ? "value.true" : "value.false") | translate }}-->
+<!--                    </mat-checkbox>-->
 <!--                </div>-->
-<!--                <div layout="row">-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Latitude</label>-->
-<!--                        <input name="latitude" type="number" step="any" ng-model="vm.attributes.latitude">-->
-<!--                    </md-input-container>-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Longitude</label>-->
-<!--                        <input name="longitude" type="number" step="any" ng-model="vm.attributes.longitude">-->
-<!--                    </md-input-container>-->
-<!--                </div>-->
-<!--                 <div layout="row">-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Address</label>-->
-<!--                        <input ng-model="vm.attributes.address">-->
-<!--                    </md-input-container>-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Owner</label>-->
-<!--                        <input ng-model="vm.attributes.owner">-->
-<!--                    </md-input-container>-->
-<!--                </div>-->
-<!--                <div layout="row">-->
-<!--                    <md-input-container flex class="md-block">-->
-<!--                        <label>Integer Value</label>-->
-<!--                        <input name="integerNumber" type="number" step="1" ng-pattern="/^-?[0-9]+$/" ng-model="vm.attributes.number">-->
-<!--                        <div ng-messages="addEntityForm.integerNumber.$error">-->
-<!--                            <div ng-message="pattern">Invalid integer value.</div>-->
-<!--                        </div>-->
-<!--                    </md-input-container>-->
-<!--                    <div class="boolean-value-input" layout="column" layout-align="center start" flex>-->
-<!--                        <label class="checkbox-label">Boolean Value</label>-->
-<!--                        <md-checkbox ng-model="vm.attributes.booleanValue" style="margin-bottom: 40px;">-->
-<!--                            {{ (vm.attributes.booleanValue ? "value.true" : "value.false") | translate }}-->
-<!--                        </md-checkbox>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <div class="relations-list">-->
-<!--                    <div class="md-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">Relations</div>-->
-<!--                    <div class="body" ng-show="vm.relations.length">-->
-<!--                        <div class="row" layout="row" layout-align="start center" ng-repeat="relation in vm.relations track by $index">-->
-<!--                            <div class="md-whiteframe-1dp" flex layout="row" style="padding-left: 5px;">-->
-<!--                                <div flex layout="column">-->
-<!--                                    <div layout="row">-->
-<!--                                        <md-input-container class="md-block" style="min-width: 100px;">-->
-<!--                                            <label>Direction</label>-->
-<!--                                            <md-select name="direction" required ng-model="relation.direction">-->
-<!--                                                <md-option ng-repeat="direction in vm.entitySearchDirection" ng-value="direction">-->
-<!--                                                    {{ ("relation.search-direction." + direction) | translate}}-->
-<!--                                                </md-option>-->
-<!--                                            </md-select>-->
-<!--                                            <div ng-messages="addEntityForm.direction.$error">-->
-<!--                                                <div ng-message="required">Relation direction is required.</div>-->
-<!--                                            </div>-->
-<!--                                        </md-input-container>-->
-<!--                                        <tb-relation-type-autocomplete flex class="md-block"-->
-<!--                                           the-form="addEntityForm"-->
-<!--                                           ng-model="relation.relationType"-->
-<!--                                           tb-required="true">-->
-<!--                                        </tb-relation-type-autocomplete>-->
-<!--                                    </div>-->
-<!--                                    <div layout="row">-->
-<!--                                        <tb-entity-select flex class="md-block"-->
-<!--                                            the-form="addEntityForm"-->
-<!--                                            tb-required="true"-->
-<!--                                            ng-model="relation.relatedEntity">-->
-<!--                                        </tb-entity-select>-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                                <div layout="column" layout-align="center center">-->
-<!--                                    <md-button class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"-->
-<!--                                               ng-click="vm.removeRelation($index)" aria-label="Remove">-->
-<!--                                        <md-tooltip md-direction="top">Remove relation</md-tooltip>-->
-<!--                                        <md-icon aria-label="Remove" class="material-icons">-->
-<!--                                            close-->
-<!--                                        </md-icon>-->
-<!--                                    </md-button>-->
-<!--                                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="relations-list">-->
+<!--            <div class="mat-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">Relations</div>-->
+<!--            <div class="body" [fxShow]="relations().length">-->
+<!--                <div class="row" fxLayout="row" fxLayoutAlign="start center" formArrayName="relations" *ngFor="let relation of relations().controls; let i = index;">-->
+<!--                    <div [formGroupName]="i" class="mat-elevation-z2" fxFlex fxLayout="row" style="padding: 5px 0 5px 5px;">-->
+<!--                        <div fxFlex fxLayout="column">-->
+<!--                            <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column"  fxLayoutGap.xs="0">-->
+<!--                                <mat-form-field class="mat-block" style="min-width: 100px;">-->
+<!--                                    <mat-label>Direction</mat-label>-->
+<!--                                    <mat-select formControlName="direction" name="direction">-->
+<!--                                        <mat-option *ngFor="let direction of entitySearchDirection | keyvalue" [value]="direction.value">-->
+<!--                                            {{ ("relation.search-direction." + direction.value) | translate}}-->
+<!--                                        </mat-option>-->
+<!--                                    </mat-select>-->
+<!--                                    <mat-error *ngIf="relation.get('direction').hasError('required')">-->
+<!--                                        Relation direction is required.-->
+<!--                                    </mat-error>-->
+<!--                                </mat-form-field>-->
+<!--                                <tb-relation-type-autocomplete-->
+<!--                                        fxFlex class="mat-block"-->
+<!--                                        formControlName="relationType"-->
+<!--                                        [required]="true">-->
+<!--                                </tb-relation-type-autocomplete>-->
+<!--                            </div>-->
+<!--                            <div fxLayout="row" fxLayout.xs="column">-->
+<!--                                <tb-entity-select-->
+<!--                                        fxFlex class="mat-block"-->
+<!--                                        [required]="true"-->
+<!--                                        formControlName="relatedEntity">-->
+<!--                                </tb-entity-select>-->
 <!--                            </div>-->
 <!--                        </div>-->
+<!--                        <div fxLayout="column" fxLayoutAlign="center center">-->
+<!--                            <button mat-icon-button color="primary"-->
+<!--                                    aria-label="Remove"-->
+<!--                                    type="button"-->
+<!--                                    (click)="removeRelation(i)"-->
+<!--                                    matTooltip="Remove relation"-->
+<!--                                    matTooltipPosition="above">-->
+<!--                                <mat-icon>close</mat-icon>-->
+<!--                            </button>-->
+<!--                        </div>-->
 <!--                    </div>-->
-<!--                   <div>-->
-<!--                       <md-button class="md-primary md-raised" ng-click="vm.addRelation()" aria-label="Add">-->
-<!--                           <md-tooltip md-direction="top">Add Relation</md-tooltip>-->
-<!--                           Add-->
-<!--                       </md-button>-->
-<!--                   </div> -->
 <!--                </div>-->
 <!--            </div>-->
-<!--        </md-dialog-content>-->
-<!--        <md-dialog-actions>-->
-<!--            <md-button type="submit" ng-disabled="addEntityForm.$invalid || !addEntityForm.$dirty" class="md-raised md-primary">Create</md-button>-->
-<!--            <md-button ng-click="vm.cancel()" class="md-primary">Cancel</md-button>-->
-<!--        </md-dialog-actions>-->
-<!--    </form>-->
-<!--</md-dialog>-->
+<!--            <div>-->
+<!--                <button mat-raised-button color="primary"-->
+<!--                        type="button"-->
+<!--                        (click)="addRelation()"-->
+<!--                        matTooltip="Add Relation"-->
+<!--                        matTooltipPosition="above">-->
+<!--                    Add-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">-->
+<!--        <button mat-button mat-raised-button color="primary"-->
+<!--                type="submit"-->
+<!--                [disabled]="(isLoading$ | async) || addEntityForm.invalid || !addEntityForm.dirty">-->
+<!--            Create-->
+<!--        </button>-->
+<!--        <button mat-button color="primary"-->
+<!--                style="margin-right: 20px;"-->
+<!--                type="button"-->
+<!--                [disabled]="(isLoading$ | async)"-->
+<!--                (click)="cancel()" cdkFocusInitial>-->
+<!--            Cancel-->
+<!--        </button>-->
+<!--    </div>-->
+<!--</form>-->

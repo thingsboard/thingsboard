@@ -15,43 +15,52 @@
     limitations under the License.
 
 -->
-<div class="tb-login-content mat-app-background tb-dark" fxLayout="row" fxLayoutAlign="center center" fxFlex>
-  <mat-card style="height: 100%; max-height: 600px; overflow-y: auto; overflow-x: hidden;">
+<div class="tb-login-content mat-app-background tb-dark" fxFlex fxLayoutAlign="center center">
+  <mat-card style="max-height: 80vh; overflow-y: auto;">
     <mat-card-content>
-      <form #loginForm="ngForm" class="tb-login-form" fxLayout="column" [formGroup]="loginFormGroup" (ngSubmit)="login()">
-        <fieldset [disabled]="isLoading$ | async">
-          <div fxFlex fxLayout="column">
-            <div fxLayout="column" fxLayoutAlign="start center" style="padding: 15px 0;">
-              <tb-logo class="login-logo" style="padding-bottom: 25px;"></tb-logo>
+      <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()">
+        <fieldset [disabled]="isLoading$ | async" fxLayout="column">
+          <div fxLayout="column" fxLayoutAlign="start center" style="padding: 15px 0;">
+            <tb-logo class="login-logo"></tb-logo>
+          </div>
+          <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+          </mat-progress-bar>
+          <span style="height: 4px;" *ngIf="!(isLoading$ | async)"></span>
+          <div tb-toast fxLayout="column" class="layout-padding">
+            <span style="height: 50px;"></span>
+            <mat-form-field>
+              <mat-label translate>login.username</mat-label>
+              <input id="username-input" matInput type="email" autofocus formControlName="username" email required/>
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error *ngIf="loginFormGroup.get('username').invalid">
+                {{ 'user.invalid-email-format' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label translate>common.password</mat-label>
+              <input id="password-input" matInput type="password" formControlName="password"/>
+              <mat-icon matPrefix>lock</mat-icon>
+            </mat-form-field>
+            <div fxLayoutAlign="end center">
+              <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">{{ 'login.forgot-password' | translate }}
+              </button>
             </div>
-            <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-            </mat-progress-bar>
-            <span style="height: 4px;" *ngIf="!(isLoading$ | async)"></span>
-            <div tb-toast fxLayout="column" class="layout-padding">
-              <span style="height: 50px;"></span>
-              <mat-form-field>
-                <mat-label translate>login.username</mat-label>
-                <input id="username-input" matInput type="email" autofocus formControlName="username" email required/>
-                <mat-icon class="material-icons" matPrefix>email</mat-icon>
-                <mat-error *ngIf="loginFormGroup.get('username').invalid">
-                  {{ 'user.invalid-email-format' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <mat-form-field>
-                <mat-label translate>common.password</mat-label>
-                <input id="password-input" matInput type="password" formControlName="password"/>
-                <mat-icon class="material-icons" matPrefix>lock</mat-icon>
-              </mat-form-field>
-              <div fxLayout.gt-sm="column" fxLayoutAlign="space-between stretch">
-                <div fxLayout.gt-sm="column" fxLayoutAlign="space-between end">
-                  <button mat-button type="button" routerLink="/login/resetPasswordRequest">{{ 'login.forgot-password' | translate }}
-                  </button>
-                </div>
+            <div fxLayout="column" class="tb-action-button">
+              <button mat-raised-button color="accent" [disabled]="(isLoading$ | async)"
+                      type="submit">{{ 'login.login' | translate }}</button>
+            </div>
+            <div class="oauth-container" fxLayout="column" fxLayoutGap="16px" *ngIf="oauth2Clients?.length">
+              <div class="container-divider">
+                <div class="line"><mat-divider></mat-divider></div>
+                <div class="text mat-typography">{{ "login.or" | translate | uppercase }}</div>
+                <div class="line"><mat-divider></mat-divider></div>
               </div>
-              <div fxLayout="column" style="padding: 15px 0;">
-                <button mat-raised-button color="accent" [disabled]="(isLoading$ | async)"
-                        type="submit">{{ 'login.login' | translate }}</button>
-              </div>
+              <ng-container *ngFor="let oauth2Client of oauth2Clients">
+                <a mat-raised-button color="warn" class="centered" href="{{ oauth2Client.url }}">
+                  <mat-icon svgIcon="{{ oauth2Client.icon }}"></mat-icon>
+                  {{ 'login.login-with' | translate: {name: oauth2Client.name} }}
+                </a>
+              </ng-container>
             </div>
           </div>
         </fieldset>

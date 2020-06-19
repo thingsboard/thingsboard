@@ -39,13 +39,12 @@ import {
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, isDefined, isNumber } from '@core/utils';
+import { deepClone, isDefined, isNumber, createLabelFromDatasource, hashCode } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
-import { DataSource } from '@angular/cdk/collections';
+import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { CollectionViewer } from '@angular/cdk/collections';
 import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -55,20 +54,21 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
-    CellContentInfo,
-    CellStyleInfo,
-    constructTableCssString,
-    DisplayColumn,
-    EntityColumn,
-    EntityData,
-    fromEntityColumnDef,
-    getCellContentInfo,
-    getCellStyleInfo,
-    getColumnWidth,
-    getEntityValue,
-    TableWidgetDataKeySettings,
-    TableWidgetSettings,
-    toEntityColumnDef, widthStyle
+  CellContentInfo,
+  CellStyleInfo,
+  constructTableCssString,
+  DisplayColumn,
+  EntityColumn,
+  EntityData,
+  fromEntityColumnDef,
+  getCellContentInfo,
+  getCellStyleInfo,
+  getColumnWidth,
+  getEntityValue,
+  TableWidgetDataKeySettings,
+  TableWidgetSettings,
+  toEntityColumnDef,
+  widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
@@ -210,7 +210,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
 
     const datasource = this.subscription.datasources[0];
-    this.ctx.widgetTitle = this.utils.createLabelFromDatasource(datasource, entitiesTitle);
+    this.ctx.widgetTitle = createLabelFromDatasource(datasource, entitiesTitle);
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
@@ -226,7 +226,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();
     cssParser.testMode = false;
-    const namespace = 'entities-table-' + this.utils.hashCode(cssString);
+    const namespace = 'entities-table-' + hashCode(cssString);
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);

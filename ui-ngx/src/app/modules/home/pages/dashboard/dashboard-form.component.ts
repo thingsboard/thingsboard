@@ -14,21 +14,22 @@
 /// limitations under the License.
 ///
 
-import {Component} from '@angular/core';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {EntityComponent} from '../../components/entity/entity.component';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {ActionNotificationShow} from '@core/notification/notification.actions';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, Inject } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { EntityComponent } from '../../components/entity/entity.component';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { TranslateService } from '@ngx-translate/core';
 import {
   Dashboard,
-  isPublicDashboard,
   getDashboardAssignedCustomersText,
   isCurrentPublicDashboardCustomer,
-  DashboardInfo
+  isPublicDashboard
 } from '@shared/models/dashboard.models';
-import {DashboardService} from '@core/http/dashboard.service';
+import { DashboardService } from '@core/http/dashboard.service';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-dashboard-form',
@@ -46,8 +47,10 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               private dashboardService: DashboardService,
+              @Inject('entity') protected entityValue: Dashboard,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Dashboard>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   ngOnInit() {
@@ -92,6 +95,11 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
     this.entityForm.patchValue({configuration: {description: entity.configuration ? entity.configuration.description : ''}});
   }
 
+  prepareFormValue(formValue: any): any {
+    formValue.configuration = {...(this.entity.configuration || {}), ...(formValue.configuration || {})};
+    return formValue;
+  }
+
   onPublicLinkCopied($event) {
     this.store.dispatch(new ActionNotificationShow(
      {
@@ -104,7 +112,9 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
   }
 
   private updateFields(entity: Dashboard): void {
-    this.assignedCustomersText = getDashboardAssignedCustomersText(entity);
-    this.publicLink = this.dashboardService.getPublicDashboardLink(entity);
+    if (entity && !isEqual(entity, {})) {
+      this.assignedCustomersText = getDashboardAssignedCustomersText(entity);
+      this.publicLink = this.dashboardService.getPublicDashboardLink(entity);
+    }
   }
 }

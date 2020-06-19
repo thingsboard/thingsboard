@@ -14,40 +14,59 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngExpression, LatLngTuple } from 'leaflet';
-import { createTooltip } from './maps-utils';
-import { PolygonSettings } from './map-models';
-import { DatasourceData } from '@app/shared/models/widget.models';
+import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
+import { createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
+import { FormattedData, PolygonSettings } from './map-models';
 
 export class Polygon {
 
     leafletPoly: L.Polygon;
-    tooltip;
-    data;
-    dataSources;
+    tooltip: L.Popup;
+    data: FormattedData;
+    dataSources: FormattedData[];
 
-    constructor(public map, coordinates, dataSources, settings: PolygonSettings, onClickListener?) {
-        this.leafletPoly = L.polygon(coordinates, {
-            fill: true,
-            fillColor: settings.polygonColor,
-            color: settings.polygonStrokeColor,
-            weight: settings.polygonStrokeWeight,
-            fillOpacity: settings.polygonOpacity,
-            opacity: settings.polygonStrokeOpacity
+    constructor(public map, polyData: FormattedData, dataSources: FormattedData[], private settings: PolygonSettings) {
+        this.dataSources = dataSources;
+        this.data = polyData;
+        const polygonColor = this.getPolygonColor(settings);
+
+        this.leafletPoly = L.polygon(polyData[this.settings.polygonKeyName], {
+          fill: true,
+          fillColor: polygonColor,
+          color: settings.polygonStrokeColor,
+          weight: settings.polygonStrokeWeight,
+          fillOpacity: settings.polygonOpacity,
+          opacity: settings.polygonStrokeOpacity
         }).addTo(this.map);
 
-        if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletPoly, settings);
+        if (settings.showPolygonTooltip) {
+            this.tooltip = createTooltip(this.leafletPoly, settings, polyData.$datasource);
+            this.updateTooltip(polyData);
         }
-        if (onClickListener) {
-            this.leafletPoly.on('click', onClickListener);
+        if (settings.polygonClick) {
+            this.leafletPoly.on('click', (event: LeafletMouseEvent) => {
+                for (const action in this.settings.polygonClick) {
+                    if (typeof (this.settings.polygonClick[action]) === 'function') {
+                        this.settings.polygonClick[action](event.originalEvent, polyData.datasource);
+                    }
+                }
+            });
         }
     }
 
-    updatePolygon(data: LatLngTuple[], dataSources: DatasourceData[], settings: PolygonSettings) {
+    updateTooltip(data: FormattedData) {
+        const pattern = this.settings.usePolygonTooltipFunction ?
+            safeExecute(this.settings.polygonTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
+            this.settings.polygonTooltipPattern;
+        this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
+    }
+
+    updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.data = data;
         this.dataSources = dataSources;
-        this.leafletPoly.setLatLngs(data);
+        this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
+        if (settings.showPolygonTooltip)
+            this.updateTooltip(this.data);
         this.updatePolygonColor(settings);
     }
 
@@ -55,11 +74,12 @@ export class Polygon {
         this.map.removeLayer(this.leafletPoly);
     }
 
-    updatePolygonColor(settings) {
+    updatePolygonColor(settings: PolygonSettings) {
+        const polygonColor = this.getPolygonColor(settings);
         const style: L.PathOptions = {
             fill: true,
-            fillColor: settings.color,
-            color: settings.color,
+            fillColor: polygonColor,
+            color: settings.polygonStrokeColor,
             weight: settings.polygonStrokeWeight,
             fillOpacity: settings.polygonOpacity,
             opacity: settings.polygonStrokeOpacity
@@ -74,5 +94,13 @@ export class Polygon {
     setPolygonLatLngs(latLngs: LatLngExpression[]) {
         this.leafletPoly.setLatLngs(latLngs);
         this.leafletPoly.redraw();
+    }
+
+    private getPolygonColor(settings: PolygonSettings): string | null {
+      if (settings.usePolygonColorFunction) {
+        return safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]);
+      } else {
+        return settings.polygonColor;
+      }
     }
 }

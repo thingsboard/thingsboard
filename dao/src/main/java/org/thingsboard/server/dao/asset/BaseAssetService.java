@@ -129,18 +129,14 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         log.trace("Executing saveAsset [{}]", asset);
         assetValidator.validate(asset, Asset::getTenantId);
         Asset savedAsset;
-        if (!sqlDatabaseUsed) {
+        try {
             savedAsset = assetDao.save(asset.getTenantId(), asset);
-        } else {
-            try {
-                savedAsset = assetDao.save(asset.getTenantId(), asset);
-            } catch (Exception t) {
-                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("asset_name_unq_key")) {
-                    throw new DataValidationException("Asset with such name already exists!");
-                } else {
-                    throw t;
-                }
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("asset_name_unq_key")) {
+                throw new DataValidationException("Asset with such name already exists!");
+            } else {
+                throw t;
             }
         }
         return savedAsset;
@@ -360,26 +356,10 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
                 @Override
                 protected void validateCreate(TenantId tenantId, Asset asset) {
-                    if (!sqlDatabaseUsed) {
-                        assetDao.findAssetsByTenantIdAndName(asset.getTenantId().getId(), asset.getName()).ifPresent(
-                                d -> {
-                                    throw new DataValidationException("Asset with such name already exists!");
-                                }
-                        );
-                    }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, Asset asset) {
-                    if (!sqlDatabaseUsed) {
-                        assetDao.findAssetsByTenantIdAndName(asset.getTenantId().getId(), asset.getName()).ifPresent(
-                                d -> {
-                                    if (!d.getId().equals(asset.getId())) {
-                                        throw new DataValidationException("Asset with such name already exists!");
-                                    }
-                                }
-                        );
-                    }
                 }
 
                 @Override

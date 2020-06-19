@@ -18,9 +18,7 @@ import { createFeatureSelector, createSelector, select, Store } from '@ngrx/stor
 
 import { AppState } from '../core.state';
 import { LoadState } from './load.models';
-import { AuthUser } from '@shared/models/user.model';
 import { take } from 'rxjs/operators';
-import { selectAuthUser } from '@core/auth/auth.selectors';
 
 export const selectLoadState = createFeatureSelector<AppState, LoadState>(
   'load'

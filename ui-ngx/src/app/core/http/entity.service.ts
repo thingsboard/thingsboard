@@ -480,6 +480,7 @@ export class EntityService {
         entityTypes.push(EntityType.DASHBOARD);
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
+          entityTypes.push(AliasEntityType.CURRENT_TENANT);
         }
         break;
       case Authority.CUSTOMER_USER:
@@ -641,7 +642,6 @@ export class EntityService {
             return result;
           }
         ));
-        break;
       case AliasFilterType.entityList:
         return this.getEntities(filter.entityType, filter.entityList, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
@@ -653,7 +653,6 @@ export class EntityService {
               }
             }
           ));
-        break;
       case AliasFilterType.entityName:
         return this.getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems,
           '', {ignoreLoading: true, ignoreErrors: true}).pipe(
@@ -667,7 +666,6 @@ export class EntityService {
             }
           )
         );
-        break;
       case AliasFilterType.stateEntity:
         result.stateEntity = true;
         if (stateEntityId) {
@@ -680,7 +678,6 @@ export class EntityService {
         } else {
           return of(result);
         }
-        break;
       case AliasFilterType.assetType:
         return this.getEntitiesByNameFilter(EntityType.ASSET, filter.assetNameFilter, maxItems,
           filter.assetType, {ignoreLoading: true, ignoreErrors: true}).pipe(
@@ -694,7 +691,6 @@ export class EntityService {
             }
           )
         );
-        break;
       case AliasFilterType.deviceType:
         return this.getEntitiesByNameFilter(EntityType.DEVICE, filter.deviceNameFilter, maxItems,
           filter.deviceType, {ignoreLoading: true, ignoreErrors: true}).pipe(
@@ -708,7 +704,6 @@ export class EntityService {
             }
           )
         );
-        break;
       case AliasFilterType.entityViewType:
         return this.getEntitiesByNameFilter(EntityType.ENTITY_VIEW, filter.entityViewNameFilter, maxItems,
           filter.entityViewType, {ignoreLoading: true, ignoreErrors: true}).pipe(
@@ -722,7 +717,6 @@ export class EntityService {
             }
           )
         );
-        break;
       case AliasFilterType.relationsQuery:
         result.stateEntity = filter.rootStateEntity;
         let rootEntityType;
@@ -767,7 +761,6 @@ export class EntityService {
         } else {
           return of(result);
         }
-        break;
       case AliasFilterType.assetSearchQuery:
       case AliasFilterType.deviceSearchQuery:
       case AliasFilterType.entityViewSearchQuery:
@@ -822,7 +815,6 @@ export class EntityService {
         } else {
           return of(result);
         }
-        break;
     }
   }
 
@@ -1014,15 +1006,39 @@ export class EntityService {
 
   private entityRelationInfosToEntitiesInfo(entityRelations: Array<EntityRelationInfo>,
                                             direction: EntitySearchDirection): Observable<Array<EntityInfo>> {
-    if (entityRelations) {
-      const tasks: Observable<EntityInfo>[] = [];
+    if (entityRelations.length) {
+      const packs: Observable<EntityInfo>[][] = [];
+      let packTasks: Observable<EntityInfo>[] = [];
       entityRelations.forEach((entityRelation) => {
-        tasks.push(this.entityRelationInfoToEntityInfo(entityRelation, direction));
+        packTasks.push(this.entityRelationInfoToEntityInfo(entityRelation, direction));
+        if (packTasks.length === 100) {
+          packs.push(packTasks);
+          packTasks = [];
+        }
       });
-      return forkJoin(tasks);
+      if (packTasks.length) {
+        packs.push(packTasks);
+      }
+      return this.executePack(packs, 0);
     } else {
       return of([]);
     }
+  }
+
+  private executePack(packs: Observable<EntityInfo>[][], index: number): Observable<Array<EntityInfo>> {
+    return forkJoin(packs[index]).pipe(
+      expand(() => {
+        index++;
+        if (packs[index]) {
+          return forkJoin(packs[index]);
+        } else {
+          return EMPTY;
+        }
+       }
+      ),
+      concatMap((data) => data),
+      toArray()
+    );
   }
 
   private entityRelationInfoToEntityInfo(entityRelationInfo: EntityRelationInfo, direction: EntitySearchDirection): Observable<EntityInfo> {
@@ -1065,6 +1081,10 @@ export class EntityService {
       if (authUser.authority === Authority.CUSTOMER_USER) {
         entityId.id = authUser.customerId;
       }
+    } else if (entityType === AliasEntityType.CURRENT_TENANT){
+      const authUser =  getCurrentAuthUser(this.store);
+      entityId.entityType = EntityType.TENANT;
+      entityId.id = authUser.tenantId;
     }
     return entityId;
   }

@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<form #widgetForm="ngForm">
-  <mat-toolbar fxLayout="row" color="primary">
+<form>
+  <mat-toolbar color="primary">
     <h2 translate>layout.select</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
       (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -30,16 +30,18 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" fxLayout="column" fxLayoutGap="8px">
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <button fxFlex fxLayout="column"
-                type="button" mat-button mat-raised-button color="primary"
+        <button fxFlex
+                mat-raised-button color="primary"
+                type="button"
                 class="tb-layout-button"
-          (click)="selectLayout('main')">
+                (click)="selectLayout('main')">
           <span translate>layout.main</span>
         </button>
-        <button fxFlex fxLayout="column"
-                type="button" mat-button mat-raised-button color="primary"
+        <button fxFlex
+                mat-raised-button color="primary"
+                type="button"
                 class="tb-layout-button"
-          (click)="selectLayout('right')">
+                (click)="selectLayout('right')">
           <span translate>layout.right</span>
         </button>
       </div>

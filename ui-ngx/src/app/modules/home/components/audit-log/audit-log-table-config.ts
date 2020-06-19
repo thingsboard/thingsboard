@@ -25,17 +25,13 @@ import {
   AuditLog,
   AuditLogMode
 } from '@shared/models/audit-log.models';
-import {
-  EntityTypeResource,
-  EntityTypeTranslation,
-  entityTypeTranslations
-} from '@shared/models/entity-type.models';
+import { EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { AuditLogService } from '@core/http/audit-log.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
 import { MatDialog } from '@angular/material/dialog';
-import { PageLink, TimePageLink } from '@shared/models/page/page-link';
+import { TimePageLink } from '@shared/models/page/page-link';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -72,7 +68,7 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
       search: 'audit-log.search'
     };
     this.entityResources = {
-    } as EntityTypeResource;
+    } as EntityTypeResource<AuditLog>;
 
     this.entitiesFetchFunction = pageLink => this.fetchAuditLogs(pageLink);
 

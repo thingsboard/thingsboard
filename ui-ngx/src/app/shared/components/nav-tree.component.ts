@@ -43,7 +43,7 @@ export interface NavTreeEditCallbacks {
   nodeIsLoaded?: (id: string) => boolean;
   refreshNode?: (id: string) => void;
   updateNode?: (id: string, newName: string) => void;
-  createNode?: (parentId: string, node: NavTreeNode, pos: number) => void;
+  createNode?: (parentId: string, node: NavTreeNode, pos: number | string) => void;
   deleteNode?: (id: string) => void;
   disableNode?: (id: string) => void;
   enableNode?: (id: string) => void;

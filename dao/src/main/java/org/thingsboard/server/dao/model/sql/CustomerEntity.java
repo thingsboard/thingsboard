@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -84,7 +84,7 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
 
     public CustomerEntity(Customer customer) {
         if (customer.getId() != null) {
-            this.setId(customer.getId().getId());
+            this.setUuid(customer.getId().getId());
         }
         this.tenantId = UUIDConverter.fromTimeUUID(customer.getTenantId().getId());
         this.title = customer.getTitle();
@@ -111,8 +111,8 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
 
     @Override
     public Customer toData() {
-        Customer customer = new Customer(new CustomerId(getId()));
-        customer.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        Customer customer = new Customer(new CustomerId(this.getUuid()));
+        customer.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
         customer.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         customer.setTitle(title);
         customer.setCountry(country);

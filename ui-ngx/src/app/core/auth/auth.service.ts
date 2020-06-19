@@ -21,7 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
-import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
+import { LoginRequest, LoginResponse, OAuth2Client, PublicLoginRequest } from '@shared/models/login.models';
 import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { defaultHttpOptions } from '../http/http-utils';
 import { ReplaySubject } from 'rxjs/internal/ReplaySubject';
@@ -43,6 +43,8 @@ import { DashboardInfo } from '@shared/models/dashboard.models';
 import { PageData } from '@app/shared/models/page/page-data';
 import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 
 @Injectable({
     providedIn: 'root'
@@ -60,11 +62,13 @@ export class AuthService {
     private utils: UtilsService,
     private dashboardService: DashboardService,
     private adminService: AdminService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private dialog: MatDialog
   ) {
   }
 
   redirectUrl: string;
+  oauth2Clients: Array<OAuth2Client> = null;
 
   private refreshTokenSubject: ReplaySubject<LoginResponse> = null;
   private jwtHelper = new JwtHelperService();
@@ -127,8 +131,9 @@ export class AuthService {
       {email}, defaultHttpOptions());
   }
 
-  public activate(activateToken: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>('/api/noauth/activate', {activateToken, password}, defaultHttpOptions()).pipe(
+  public activate(activateToken: string, password: string, sendActivationMail: boolean): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`/api/noauth/activate?sendActivationMail=${sendActivationMail}`,
+      {activateToken, password}, defaultHttpOptions()).pipe(
       tap((loginResponse: LoginResponse) => {
           this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
         }
@@ -190,6 +195,15 @@ export class AuthService {
     this.zone.run(() => {
       this.router.navigateByUrl(url);
     });
+  }
+
+  public loadOAuth2Clients(): Observable<Array<OAuth2Client>> {
+    return this.http.post<Array<OAuth2Client>>(`/api/noauth/oauth2Clients`,
+      null, defaultHttpOptions()).pipe(
+        tap((OAuth2Clients) => {
+          this.oauth2Clients = OAuth2Clients;
+        })
+      );
   }
 
   private forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
@@ -260,6 +274,9 @@ export class AuthService {
       const publicId = this.utils.getQueryParam('publicId');
       const accessToken = this.utils.getQueryParam('accessToken');
       const refreshToken = this.utils.getQueryParam('refreshToken');
+      const username = this.utils.getQueryParam('username');
+      const password = this.utils.getQueryParam('password');
+      const loginError = this.utils.getQueryParam('loginError');
       if (publicId) {
         return this.publicLogin(publicId).pipe(
           mergeMap((response) => {
@@ -289,11 +306,46 @@ export class AuthService {
           return throwError(e);
         }
         return this.procceedJwtTokenValidate();
+      } else if (username && password) {
+        this.utils.updateQueryParam('username', null);
+        this.utils.updateQueryParam('password', null);
+        const loginRequest: LoginRequest = {
+          username,
+          password
+        };
+        return this.http.post<LoginResponse>('/api/auth/login', loginRequest, defaultHttpOptions()).pipe(
+          mergeMap((loginResponse: LoginResponse) => {
+              this.updateAndValidateToken(loginResponse.token, 'jwt_token', false);
+              this.updateAndValidateToken(loginResponse.refreshToken, 'refresh_token', false);
+              return this.procceedJwtTokenValidate();
+            }
+          )
+        );
+      } else if (loginError) {
+        this.showLoginErrorDialog(loginError);
+        this.utils.updateQueryParam('loginError', null);
+        return throwError(Error());
       }
       return this.procceedJwtTokenValidate(doTokenRefresh);
     } else {
       return of({} as AuthPayload);
     }
+  }
+
+  private showLoginErrorDialog(loginError: string) {
+    this.translate.get(['login.error', 'action.close']).subscribe(
+      (translations) => {
+        const dialogConfig: MatDialogConfig = {
+          disableClose: true,
+          data: {
+            title: translations['login.error'],
+            message: loginError,
+            ok: translations['action.close']
+          }
+        };
+        this.dialog.open(AlertDialogComponent, dialogConfig);
+      }
+    );
   }
 
   private procceedJwtTokenValidate(doTokenRefresh?: boolean): Observable<AuthPayload> {

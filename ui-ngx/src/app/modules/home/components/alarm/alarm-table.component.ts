@@ -20,8 +20,6 @@ import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { DialogService } from '@core/services/dialog.service';
 import { AlarmTableConfig } from './alarm-table-config';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
@@ -70,8 +68,7 @@ export class AlarmTableComponent implements OnInit {
               private dialogService: DialogService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private dialog: MatDialog,
-              private store: Store<AppState>) {
+              private dialog: MatDialog) {
   }
 
   ngOnInit() {

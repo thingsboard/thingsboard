@@ -74,10 +74,10 @@
 
     .trip-animation-tooltip {
       position: absolute;
-      top: 38px;
+      top: 30px;
       right: 0;
-      z-index: 400;
-      padding: 10px;
+      z-index: 1000;
+      padding: 5px;
       background-color: #fff;
       transition: 0.3s ease-in-out;
 

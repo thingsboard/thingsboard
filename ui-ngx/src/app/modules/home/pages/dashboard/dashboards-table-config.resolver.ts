@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -26,20 +26,20 @@ import {
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@home/models/entity/entity-component.models';
-import {forkJoin, Observable, of} from 'rxjs';
-import {select, Store} from '@ngrx/store';
-import {selectAuthUser} from '@core/auth/auth.selectors';
-import {map, mergeMap, take, tap} from 'rxjs/operators';
-import {AppState} from '@core/core.state';
-import {Authority} from '@app/shared/models/authority.enum';
-import {CustomerService} from '@core/http/customer.service';
-import {Customer} from '@app/shared/models/customer.model';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { forkJoin, Observable, of } from 'rxjs';
+import { select, Store } from '@ngrx/store';
+import { selectAuthUser } from '@core/auth/auth.selectors';
+import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { AppState } from '@core/core.state';
+import { Authority } from '@app/shared/models/authority.enum';
+import { CustomerService } from '@core/http/customer.service';
+import { Customer } from '@app/shared/models/customer.model';
 import { MatDialog } from '@angular/material/dialog';
-import {DialogService} from '@core/services/dialog.service';
+import { DialogService } from '@core/services/dialog.service';
 import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
@@ -51,8 +51,8 @@ import {
   isCurrentPublicDashboardCustomer,
   isPublicDashboard
 } from '@app/shared/models/dashboard.models';
-import {DashboardService} from '@app/core/http/dashboard.service';
-import {DashboardFormComponent} from '@modules/home/pages/dashboard/dashboard-form.component';
+import { DashboardService } from '@app/core/http/dashboard.service';
+import { DashboardFormComponent } from '@modules/home/pages/dashboard/dashboard-form.component';
 import {
   ManageDashboardCustomersActionType,
   ManageDashboardCustomersDialogComponent,
@@ -142,7 +142,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
 
   configureColumns(dashboardScope: string): Array<EntityTableColumn<DashboardInfo>> {
     const columns: Array<EntityTableColumn<DashboardInfo>> = [
-      new DateEntityTableColumn<DashboardInfo>('createdTime', 'dashboard.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<DashboardInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<DashboardInfo>('title', 'dashboard.title', '50%')
     ];
     if (dashboardScope === 'tenant') {

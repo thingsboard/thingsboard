@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.Properties;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -81,7 +80,7 @@ public class TbSendEmailNode implements TbNode {
                         sendEmail(ctx, email);
                         return null;
                     }),
-                    ok -> ctx.tellNext(msg, SUCCESS),
+                    ok -> ctx.tellSuccess(msg),
                     fail -> ctx.tellFailure(msg, fail));
         } catch (Exception ex) {
             ctx.tellFailure(msg, ex);
@@ -149,6 +148,16 @@ public class TbSendEmailNode implements TbNode {
         javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", Boolean.valueOf(this.config.isEnableTls()).toString());
         if (this.config.isEnableTls() && StringUtils.isNoneEmpty(this.config.getTlsVersion())) {
             javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", this.config.getTlsVersion());
+        }
+        if (this.config.isEnableProxy()) {
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", config.getProxyHost());
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", config.getProxyPort());
+            if (StringUtils.isNoneEmpty(config.getProxyUser())) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", config.getProxyUser());
+            }
+            if (StringUtils.isNoneEmpty(config.getProxyPassword())) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", config.getProxyPassword());
+            }
         }
         return javaMailProperties;
     }

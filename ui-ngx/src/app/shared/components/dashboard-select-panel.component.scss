@@ -32,10 +32,6 @@
     max-height: 250px;
   }
 
-  @media #{$mat-gt-xs} {
-    max-width: 100%;
-  }
-
   .mat-content {
     background-color: #fff;
   }

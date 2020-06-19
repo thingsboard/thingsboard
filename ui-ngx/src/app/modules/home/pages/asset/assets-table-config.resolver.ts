@@ -146,7 +146,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
 
   configureColumns(assetScope: string): Array<EntityTableColumn<AssetInfo>> {
     const columns: Array<EntityTableColumn<AssetInfo>> = [
-      new DateEntityTableColumn<AssetInfo>('createdTime', 'asset.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<AssetInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<AssetInfo>('name', 'asset.name', '25%'),
       new EntityTableColumn<AssetInfo>('type', 'asset.asset-type', '25%'),
       new EntityTableColumn<DeviceInfo>('label', 'asset.label', '25%'),

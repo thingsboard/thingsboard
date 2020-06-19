@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
@@ -207,7 +207,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         edge.setType("default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
-        doPost("/api/customer/" + UUIDs.timeBased().toString()
+        doPost("/api/customer/" + Uuids.timeBased().toString()
                 + "/edge/" + savedEdge.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }

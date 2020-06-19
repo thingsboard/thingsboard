@@ -21,14 +21,14 @@
       <div class="mat-toolbar-tools">
         <span class="tb-entity-table-title" translate>widget-config.actions</span>
         <span fxFlex></span>
-        <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+        <button mat-icon-button [disabled]="isLoading$ | async"
                 type="button"
                 (click)="addAction($event)"
                 matTooltip="{{ 'widget-config.add-action' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>add</mat-icon>
         </button>
-        <button mat-button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
                 type="button"
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
@@ -38,7 +38,7 @@
     </mat-toolbar>
     <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
-        <button mat-button mat-icon-button
+        <button mat-icon-button
                 type="button"
                 matTooltip="{{ 'widget-config.search-actions' | translate }}"
                 matTooltipPosition="above">
@@ -50,7 +50,7 @@
                  [(ngModel)]="pageLink.textSearch"
                  placeholder="{{ 'widget-config.search-actions' | translate }}"/>
         </mat-form-field>
-        <button mat-button mat-icon-button (click)="exitFilterMode()"
+        <button mat-icon-button (click)="exitFilterMode()"
                 type="button"
                 matTooltip="{{ 'action.close' | translate }}"
                 matTooltipPosition="above">
@@ -59,7 +59,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <mat-table [dataSource]="dataSource"
+      <table mat-table [dataSource]="dataSource"
                  matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="actionSourceName">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%"> {{ 'widget-config.action-source' | translate }} </mat-header-cell>
@@ -90,14 +90,14 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let action">
             <div fxFlex fxLayout="row" fxLayoutAlign="end">
-              <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+              <button mat-icon-button [disabled]="isLoading$ | async"
                       type="button"
                       matTooltip="{{ 'widget-config.edit-action' | translate }}"
                       matTooltipPosition="above"
                       (click)="editAction($event, action)">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+              <button mat-icon-button [disabled]="isLoading$ | async"
                       type="button"
                       matTooltip="{{ 'widget-config.delete-action' | translate }}"
                       matTooltipPosition="above"
@@ -110,7 +110,7 @@
         <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row [ngClass]="{'mat-row-select': true}"
                  *matRowDef="let action; columns: displayedColumns;"></mat-row>
-      </mat-table>
+      </table>
       <span [fxShow]="dataSource.isEmpty() | async"
             fxLayoutAlign="center center"
             class="no-data-found" translate>{{ 'widget-config.no-actions-text' }}</span>

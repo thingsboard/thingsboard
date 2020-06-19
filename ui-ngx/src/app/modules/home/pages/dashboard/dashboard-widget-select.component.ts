@@ -14,23 +14,12 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  ViewEncapsulation,
-  Input,
-  Output,
-  EventEmitter,
-  OnChanges,
-  SimpleChanges
-} from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
-import { widgetType, Widget } from '@shared/models/widget.models';
+import { Widget, widgetType } from '@shared/models/widget.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
 import { DashboardCallbacks } from '../../models/dashboard-component.models';
 

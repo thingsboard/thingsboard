@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -81,7 +81,7 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
 
     public UserEntity(User user) {
         if (user.getId() != null) {
-            this.setId(user.getId().getId());
+            this.setUuid(user.getId().getId());
         }
         this.authority = user.getAuthority();
         if (user.getTenantId() != null) {
@@ -108,8 +108,8 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
 
     @Override
     public User toData() {
-        User user = new User(new UserId(getId()));
-        user.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        User user = new User(new UserId(this.getUuid()));
+        user.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
         user.setAuthority(authority);
         if (tenantId != null) {
             user.setTenantId(new TenantId(fromString(tenantId)));

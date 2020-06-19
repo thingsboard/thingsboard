@@ -14,35 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ActivatedRoute, Router } from '@angular/router';
-import { WidgetService } from '@core/http/widget.service';
-import { DialogService } from '@core/services/dialog.service';
 import { MatDialog } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
 import { Dashboard, WidgetLayout } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { Widget, WidgetActionSource, WidgetTypeParameters } from '@shared/models/widget.models';
+import { Widget } from '@shared/models/widget.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
-import { deepClone, isDefined, isString } from '@core/utils';
-import { FormBuilder, FormGroup, NgForm, Validators } from '@angular/forms';
-import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of } from 'rxjs';
-import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
-import { WidgetConfigCallbacks } from '@home/components/widget/widget-config.component.models';
-import {
-  EntityAliasesDialogComponent,
-  EntityAliasesDialogData
-} from '@home/components/alias/entity-aliases-dialog.component';
-import {
-  EntityAliasDialogComponent,
-  EntityAliasDialogData
-} from '@home/components/alias/entity-alias-dialog.component';
-import { tap } from 'rxjs/operators';
+import { isDefined, isString } from '@core/utils';
+import { FormBuilder, FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'tb-edit-widget',
@@ -65,8 +48,6 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
 
   @Input()
   widgetLayout: WidgetLayout;
-
-  @ViewChild('widgetForm', {static: true}) widgetForm: NgForm;
 
   widgetFormGroup: FormGroup;
 

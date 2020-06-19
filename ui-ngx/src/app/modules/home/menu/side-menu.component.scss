@@ -34,18 +34,8 @@
   a.mat-button {
     text-transform: uppercase;
     display: flex;
-    width: 100%;
-    max-height: 40px;
-    padding: 0 16px;
-    margin: 0;
     overflow: hidden;
     line-height: 40px;
-    color: inherit;
-    text-align: left;
-    text-decoration: none;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    cursor: pointer;
     border-radius: 0;
     &:hover {
       border-bottom: none;
@@ -61,6 +51,8 @@
 
     .mat-button-wrapper {
       width: 100%;
+      display: inline-flex;
+      align-items: center;
       mat-icon {
         margin-right: 8px;
         margin-left: 0;
@@ -76,35 +68,4 @@
       }
     }
   }
-
-  .tb-button-toggle {
-    .tb-toggle-icon {
-      display: inline-block;
-      width: 15px;
-      margin: auto 0 auto auto;
-      background-size: 100% auto;
-      transition: transform .3s, ease-in-out;
-      &.tb-toggled {
-        transform: rotateZ(180deg);
-      }
-    }
-  }
-
-  .tb-menu-toggle-list {
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
-
-    transition: .75s cubic-bezier(.35, 0, .25, 1);
-
-    transition-property: height;
-
-    a.mat-button {
-      padding: 0 16px 0 32px;
-      font-weight: 500;
-      text-transform: none !important;
-      text-rendering: optimizeLegibility;
-    }
-  }
-
 }

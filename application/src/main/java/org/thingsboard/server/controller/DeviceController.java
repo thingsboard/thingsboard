@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
@@ -53,6 +55,7 @@ import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -66,6 +69,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class DeviceController extends BaseController {
 
@@ -106,19 +110,12 @@ public class DeviceController extends BaseController {
         try {
             device.setTenantId(getCurrentUser().getTenantId());
 
-            Operation operation = device.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation,
-                    device.getId(), device);
+            checkEntity(device.getId(), device, Resource.DEVICE);
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            actorService
-                    .onDeviceNameOrTypeUpdate(
-                            savedDevice.getTenantId(),
-                            savedDevice.getId(),
-                            savedDevice.getName(),
-                            savedDevice.getType());
+            tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
+                    savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
 
             logEntityAction(savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
@@ -271,7 +268,9 @@ public class DeviceController extends BaseController {
         try {
             Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(getCurrentUser().getTenantId(), deviceCredentials));
-            actorService.onCredentialsUpdate(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId());
+
+            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId()), null);
+
             logEntityAction(device.getId(), device,
                     device.getCustomerId(),
                     ActionType.CREDENTIALS_UPDATED, null, deviceCredentials);

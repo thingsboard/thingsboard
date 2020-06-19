@@ -15,11 +15,11 @@
 ///
 
 import {
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   forwardRef,
-  Input, OnDestroy,
+  Input,
+  OnDestroy,
   OnInit,
   ViewChild,
   ViewEncapsulation
@@ -31,9 +31,12 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { isUndefined } from '@app/core/utils';
+import { guid, isUndefined } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 
 @Component({
   selector: 'tb-js-func',
@@ -60,7 +63,9 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   private jsEditor: ace.Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
-  private editorResizeListener: any;
+  private editorResize$: ResizeObserver;
+
+  toastTargetId = `jsFuncEditor-${guid()}`;
 
   @Input() functionName: string;
 
@@ -73,6 +78,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @Input() disabled: boolean;
 
   @Input() fillHeight: boolean;
+
+  @Input() editorCompleter: TbEditorCompleter;
 
   private noValidateValue: boolean;
   get noValidate(): boolean {
@@ -150,16 +157,18 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
       this.cleanupJsErrors();
       this.updateView();
     });
-    this.editorResizeListener = this.onAceEditorResize.bind(this);
-    // @ts-ignore
-    addResizeListener(editorElement, this.editorResizeListener);
+    if (this.editorCompleter) {
+      this.jsEditor.completers = [this.editorCompleter, ...(this.jsEditor.completers || [])];
+    }
+    this.editorResize$ = new ResizeObserver(() => {
+      this.onAceEditorResize();
+    });
+    this.editorResize$.observe(editorElement);
   }
 
   ngOnDestroy(): void {
-    if (this.editorResizeListener) {
-      const editorElement = this.javascriptEditorElmRef.nativeElement;
-      // @ts-ignore
-      removeResizeListener(editorElement, this.editorResizeListener);
+    if (this.editorResize$) {
+      this.editorResize$.disconnect();
     }
   }
 
@@ -183,6 +192,9 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.jsEditor) {
+      this.jsEditor.setReadOnly(this.disabled);
+    }
   }
 
   public validate(c: FormControl) {
@@ -209,7 +221,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
           {
             message: this.validationError,
             type: 'error',
-            target: 'jsFuncEditor',
+            target: this.toastTargetId,
             verticalPosition: 'bottom',
             horizontalPosition: 'left'
           }));
@@ -301,7 +313,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     if (this.errorShowed) {
       this.store.dispatch(new ActionNotificationHide(
         {
-          target: 'jsFuncEditor'
+          target: this.toastTargetId
         }));
       this.errorShowed = false;
     }

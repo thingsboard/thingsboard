@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
@@ -25,12 +25,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -38,20 +41,35 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.alarm.AlarmService;
 
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.*;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.IS_CLEARED_ALARM;
+import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.IS_EXISTING_ALARM;
+import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.IS_NEW_ALARM;
 import static org.thingsboard.server.common.data.alarm.AlarmSeverity.CRITICAL;
 import static org.thingsboard.server.common.data.alarm.AlarmSeverity.WARNING;
-import static org.thingsboard.server.common.data.alarm.AlarmStatus.*;
+import static org.thingsboard.server.common.data.alarm.AlarmStatus.ACTIVE_UNACK;
+import static org.thingsboard.server.common.data.alarm.AlarmStatus.CLEARED_ACK;
+import static org.thingsboard.server.common.data.alarm.AlarmStatus.CLEARED_UNACK;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbAlarmNodeTest {
@@ -66,13 +84,18 @@ public class TbAlarmNodeTest {
     @Mock
     private ScriptEngine detailsJs;
 
-    private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-    private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+    @Captor
+    private ArgumentCaptor<Runnable> successCaptor;
+    @Captor
+    private ArgumentCaptor<Consumer<Throwable>> failureCaptor;
+
+    private RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+    private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     private ListeningExecutor dbExecutor;
 
-    private EntityId originator = new DeviceId(UUIDs.timeBased());
-    private TenantId tenantId = new TenantId(UUIDs.timeBased());
+    private EntityId originator = new DeviceId(Uuids.timeBased());
+    private TenantId tenantId = new TenantId(Uuids.timeBased());
     private TbMsgMetaData metaData = new TbMsgMetaData();
     private String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 
@@ -99,15 +122,16 @@ public class TbAlarmNodeTest {
     public void newAlarmCanBeCreated() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
-
         doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(any(Alarm.class));
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Created"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -141,7 +165,7 @@ public class TbAlarmNodeTest {
     public void buildDetailsThrowsException() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFailedFuture(new NotImplementedException("message")));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
@@ -164,7 +188,7 @@ public class TbAlarmNodeTest {
     public void ifAlarmClearedCreateNew() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         Alarm clearedAlarm = Alarm.builder().status(CLEARED_ACK).build();
 
@@ -175,6 +199,8 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Created"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -209,7 +235,7 @@ public class TbAlarmNodeTest {
     public void alarmCanBeUpdated() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).status(ACTIVE_UNACK).severity(WARNING).endTs(oldEndDate).build();
@@ -256,7 +282,7 @@ public class TbAlarmNodeTest {
     public void alarmCanBeCleared() throws ScriptException, IOException {
         initWithClearAlarmScript();
         metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg msg = TbMsg.newMsg( "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).status(ACTIVE_UNACK).severity(WARNING).endTs(oldEndDate).build();

@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -37,16 +36,19 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.UUID;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class AlarmController extends BaseController {
 
@@ -84,8 +86,9 @@ public class AlarmController extends BaseController {
     public Alarm saveAlarm(@RequestBody Alarm alarm) throws ThingsboardException {
         try {
             alarm.setTenantId(getCurrentUser().getTenantId());
-            Operation operation = alarm.getId() == null ? Operation.CREATE : Operation.WRITE;
-            accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, operation, alarm.getId(), alarm);
+
+           checkEntity(alarm.getId(), alarm, Resource.ALARM);
+
             Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm));
             logEntityAction(savedAlarm.getId(), savedAlarm,
                     getCurrentUser().getCustomerId(),
@@ -120,7 +123,9 @@ public class AlarmController extends BaseController {
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-            alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, System.currentTimeMillis()).get();
+            long ackTs = System.currentTimeMillis();
+            alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, ackTs).get();
+            alarm.setAckTs(ackTs);
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
         } catch (Exception e) {
             throw handleException(e);
@@ -135,7 +140,9 @@ public class AlarmController extends BaseController {
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-            alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, System.currentTimeMillis()).get();
+            long clearTs = System.currentTimeMillis();
+            alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, clearTs).get();
+            alarm.setClearTs(clearTs);
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
         } catch (Exception e) {
             throw handleException(e);

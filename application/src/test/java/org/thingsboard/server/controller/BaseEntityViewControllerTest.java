@@ -15,8 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -42,6 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
@@ -51,6 +53,7 @@ import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
+@Slf4j
 public abstract class BaseEntityViewControllerTest extends AbstractControllerTest {
 
     private IdComparator<EntityView> idComparator;
@@ -124,6 +127,15 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(foundEntityView.getKeys(), telemetry);
     }
 
+
+    @Test
+    public void testUpdateEntityViewFromDifferentTenant() throws Exception {
+        EntityView savedView = getNewSavedEntityView("Test entity view");
+        loginDifferentTenant();
+        doPost("/api/entityView", savedView, EntityView.class, status().isForbidden());
+        deleteDifferentTenant();
+    }
+
     @Test
     public void testDeleteEntityView() throws Exception {
         EntityView view = getNewSavedEntityView("Test entity view");
@@ -172,7 +184,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testAssignEntityViewToNonExistentCustomer() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
-        doPost("/api/customer/" + UUIDs.timeBased().toString() + "/device/" + savedView.getId().getId().toString())
+        doPost("/api/customer/" + Uuids.timeBased().toString() + "/device/" + savedView.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
 
@@ -417,12 +429,22 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(accessToken);
         client.connect(options);
-        Thread.sleep(3000);
-
+        awaitConnected(client, TimeUnit.SECONDS.toMillis(30));
         MqttMessage message = new MqttMessage();
         message.setPayload(strKvs.getBytes());
         client.publish("v1/devices/me/telemetry", message);
         Thread.sleep(1000);
+        client.disconnect();
+    }
+
+    private void awaitConnected(MqttAsyncClient client, long ms) throws InterruptedException {
+        long start = System.currentTimeMillis();
+        while (!client.isConnected()) {
+            Thread.sleep(100);
+            if (start + ms < System.currentTimeMillis()) {
+                throw new RuntimeException("Client is not connected!");
+            }
+        }
     }
 
     private Set<String> getTelemetryKeys(String type, String id) throws Exception {
@@ -449,13 +471,13 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(accessToken);
         client.connect(options);
-        Thread.sleep(3000);
+        awaitConnected(client, TimeUnit.SECONDS.toMillis(30));
 
         MqttMessage message = new MqttMessage();
         message.setPayload((stringKV).getBytes());
         client.publish("v1/devices/me/attributes", message);
         Thread.sleep(1000);
-
+        client.disconnect();
         return new HashSet<>(doGetAsync("/api/plugins/telemetry/DEVICE/" + viewDeviceId + "/keys/attributes", List.class));
     }
 

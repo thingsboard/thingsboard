@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.audit;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -312,7 +312,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                                          ActionStatus actionStatus,
                                          String actionFailureDetails) {
         AuditLog result = new AuditLog();
-        result.setId(new AuditLogId(UUIDs.timeBased()));
+        result.setId(new AuditLogId(Uuids.timeBased()));
         result.setTenantId(tenantId);
         result.setEntityId(entityId);
         result.setEntityName(entityName);

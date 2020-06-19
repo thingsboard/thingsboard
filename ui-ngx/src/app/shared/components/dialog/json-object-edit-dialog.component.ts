@@ -14,16 +14,17 @@
 /// limitations under the License.
 ///
 
-import {Component, Inject, OnInit} from '@angular/core';
-import {DialogComponent} from '@shared/components/dialog.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {Router} from '@angular/router';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import { Component, Inject, OnInit } from '@angular/core';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 
-export interface JsonObjectEdittDialogData {
-  jsonValue: Object;
+export interface JsonObjectEditDialogData {
+  jsonValue: object;
   title?: string;
 }
 
@@ -32,22 +33,24 @@ export interface JsonObjectEdittDialogData {
   templateUrl: './json-object-edit-dialog.component.html',
   styleUrls: []
 })
-export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEditDialogComponent, Object>
-  implements OnInit {
+export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEditDialogComponent, object> implements OnInit {
 
   jsonFormGroup: FormGroup;
+  title: string;
 
   submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: JsonObjectEdittDialogData,
-              public dialogRef: MatDialogRef<JsonObjectEditDialogComponent, Object>,
-              public fb: FormBuilder) {
+              @Inject(MAT_DIALOG_DATA) public data: JsonObjectEditDialogData,
+              public dialogRef: MatDialogRef<JsonObjectEditDialogComponent, object>,
+              public fb: FormBuilder,
+              private translate: TranslateService) {
     super(store, router, dialogRef);
   }
 
   ngOnInit(): void {
+    this.title = this.data.title ? this.data.title : this.translate.instant('details.edit-json');
     this.jsonFormGroup = this.fb.group({
       json: [this.data.jsonValue, []]
     });

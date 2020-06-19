@@ -40,6 +40,6 @@ export class EventTableHeaderComponent extends EntityTableHeaderComponent<Event>
 
   eventTypeChanged(eventType: EventType | DebugEventType) {
     this.eventTableConfig.eventType = eventType;
-    this.eventTableConfig.table.updateData();
+    this.eventTableConfig.table.resetSortAndFilter(true, true);
   }
 }

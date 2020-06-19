@@ -19,25 +19,45 @@ import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { getDescendantProp, isObject } from '@core/utils';
 import { SortDirection } from '@angular/material/sort';
 
-export type PageLinkSearchFunction<T> = (entity: T, textSearch: string) => boolean;
+export const MAX_SAFE_PAGE_SIZE = 2147483647;
 
-const defaultPageLinkSearchFunction: PageLinkSearchFunction<any> =
-  (entity: any, textSearch: string) => {
+export type PageLinkSearchFunction<T> = (entity: T, textSearch: string, searchProperty?: string) => boolean;
+
+export function defaultPageLinkSearchFunction(searchProperty?: string): PageLinkSearchFunction<any> {
+  return (entity, textSearch) => defaultPageLinkSearch(entity, textSearch, searchProperty);
+}
+
+const defaultPageLinkSearch: PageLinkSearchFunction<any> =
+  (entity: any, textSearch: string, searchProperty?: string) => {
     if (textSearch === null || !textSearch.length) {
       return true;
     }
     const expected = ('' + textSearch).toLowerCase();
-    for (const key of Object.keys(entity)) {
-      const val = entity[key];
-      if (val !== null) {
-        if (val !== Object(val)) {
-          const actual = ('' + val).toLowerCase();
-          if (actual.indexOf(expected) !== -1) {
-            return true;
+    if (searchProperty && searchProperty.length) {
+      if (Object.prototype.hasOwnProperty.call(entity, searchProperty)) {
+        const val = entity[searchProperty];
+        if (val !== null) {
+          if (val !== Object(val)) {
+            const actual = ('' + val).toLowerCase();
+            if (actual.indexOf(expected) !== -1) {
+              return true;
+            }
           }
-        } else if (isObject(val)) {
-          if (defaultPageLinkSearchFunction(val, textSearch)) {
-            return true;
+        }
+      }
+    } else {
+      for (const key of Object.keys(entity)) {
+        const val = entity[key];
+        if (val !== null) {
+          if (val !== Object(val)) {
+            const actual = ('' + val).toLowerCase();
+            if (actual.indexOf(expected) !== -1) {
+              return true;
+            }
+          } else if (isObject(val)) {
+            if (defaultPageLinkSearch(val, textSearch)) {
+              return true;
+            }
           }
         }
       }
@@ -101,7 +121,7 @@ export class PageLink {
   }
 
   public filterData<T>(data: Array<T>,
-                       searchFunction: PageLinkSearchFunction<T> = defaultPageLinkSearchFunction): PageData<T> {
+                       searchFunction: PageLinkSearchFunction<T> = defaultPageLinkSearchFunction()): PageData<T> {
     const pageData = emptyPageData<T>();
     pageData.data = [...data];
     if (this.textSearch && this.textSearch.length) {

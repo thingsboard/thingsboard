@@ -13,89 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const { logLevel, Kafka } = require('kafkajs');
 
-const config = require('config'),
-      JsInvokeMessageProcessor = require('./api/jsInvokeMessageProcessor'),
-      logger = require('./config/logger')._logger('main'),
-      KafkaJsWinstonLogCreator = require('./config/logger').KafkaJsWinstonLogCreator;
+const config = require('config'), logger = require('./config/logger')._logger('main');
 
-var kafkaClient;
-var consumer;
-var producer;
-
-(async() => {
-    try {
-        logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
-
-        const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
-        const kafkaRequestTopic = config.get('kafka.request_topic');
-
-        logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
-        logger.info('Kafka Requests Topic: %s', kafkaRequestTopic);
-
-        kafkaClient = new Kafka({
-            brokers: kafkaBootstrapServers.split(','),
-            logLevel: logLevel.INFO,
-            logCreator: KafkaJsWinstonLogCreator
-        });
-
-        consumer = kafkaClient.consumer({ groupId: 'js-executor-group' });
-        producer = kafkaClient.producer();
-        const messageProcessor = new JsInvokeMessageProcessor(producer);
-        await consumer.connect();
-        await producer.connect();
-        await consumer.subscribe({ topic: kafkaRequestTopic});
-
-        logger.info('Started ThingsBoard JavaScript Executor Microservice.');
-        await consumer.run({
-            eachMessage: async ({ topic, partition, message }) => {
-                messageProcessor.onJsInvokeMessage(message);
-            },
-        });
-
-    } catch (e) {
-        logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
-        logger.error(e.stack);
-        exit(-1);
-    }
-})();
-
-process.on('exit', () => {
-    exit(0);
-});
-
-async function exit(status) {
-    logger.info('Exiting with status: %d ...', status);
-    if (consumer) {
-        logger.info('Stopping Kafka Consumer...');
-        var _consumer = consumer;
-        consumer = null;
-        try {
-            await _consumer.disconnect();
-            logger.info('Kafka Consumer stopped.');
-            await disconnectProducer();
-            process.exit(status);
-        } catch (e) {
-            logger.info('Kafka Consumer stop error.');
-            await disconnectProducer();
-            process.exit(status);
-        }
-    } else {
-        process.exit(status);
-    }
+const serviceType = config.get('queue_type');
+switch (serviceType) {
+    case 'kafka':
+        logger.info('Starting kafka template.');
+        require('./queue/kafkaTemplate');
+        logger.info('kafka template started.');
+        break;
+    case 'pubsub':
+        logger.info('Starting Pub/Sub template.')
+        require('./queue/pubSubTemplate');
+        logger.info('Pub/Sub template started.')
+        break;
+    case 'aws-sqs':
+        logger.info('Starting Aws Sqs template.')
+        require('./queue/awsSqsTemplate');
+        logger.info('Aws Sqs template started.')
+        break;
+    case 'rabbitmq':
+        logger.info('Starting RabbitMq template.')
+        require('./queue/rabbitmqTemplate');
+        logger.info('RabbitMq template started.')
+        break;
+    case 'service-bus':
+        logger.info('Starting Azure Service Bus template.')
+        require('./queue/serviceBusTemplate');
+        logger.info('Azure Service Bus template started.')
+        break;
+    default:
+        logger.error('Unknown service type: ', serviceType);
+        process.exit(-1);
 }
 
-async function disconnectProducer() {
-    if (producer) {
-        logger.info('Stopping Kafka Producer...');
-        var _producer = producer;
-        producer = null;
-        try {
-            await _producer.disconnect();
-            logger.info('Kafka Producer stopped.');
-        } catch (e) {
-            logger.info('Kafka Producer stop error.');
-        }
-    }
-}

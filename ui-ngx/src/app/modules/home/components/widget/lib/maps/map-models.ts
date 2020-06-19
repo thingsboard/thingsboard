@@ -15,33 +15,56 @@
 ///
 
 import { LatLngTuple } from 'leaflet';
+import { Datasource, JsonSettingsSchema } from '@app/shared/models/widget.models';
+import { Type } from '@angular/core';
+import LeafletMap from './leaflet-map';
+import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
+import {
+    openstreetMapSettingsSchema, tencentMapSettingsSchema,
+    googleMapSettingsSchema, hereMapSettingsSchema, imageMapSettingsSchema
+} from './schemes';
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
+export type GetTooltip = (point: FormattedData, setTooltip?: boolean) => string;
+export type PosFuncton = (origXPos, origYPos) => { x, y };
 
 export type MapSettings = {
-    polygonKeyName: any;
     draggableMarker: boolean;
     initCallback?: () => any;
+    posFunction: PosFuncton;
     defaultZoomLevel?: number;
-    dontFitMapBounds?: boolean;
     disableScrollZooming?: boolean;
     minZoomLevel?: number;
+    useClusterMarkers: boolean;
     latKeyName?: string;
     lngKeyName?: string;
     xPosKeyName?: string;
     yPosKeyName?: string;
+    imageEntityAlias: string;
+    imageUrlAttribute: string;
     mapProvider: MapProviders;
+    mapProviderHere: string;
     mapUrl?: string;
     mapImageUrl?: string;
     provider?: MapProviders;
     credentials?: any; // declare credentials format
+    gmApiKey?: string;
     defaultCenterPosition?: LatLngTuple;
     markerClusteringSetting?;
     useDefaultCenterPosition?: boolean;
     gmDefaultMapType?: string;
     useLabelFunction: string;
     icon?: any;
+    zoomOnClick: boolean,
+    maxZoom: number,
+    showCoverageOnHover: boolean,
+    animate: boolean,
+    maxClusterRadius: number,
+    chunkedLoading: boolean,
+    removeOutsideVisibleBounds: boolean,
+    useCustomProvider: boolean,
+    customProviderTileUrl: string;
 }
 
 export enum MapProviders {
@@ -54,6 +77,7 @@ export enum MapProviders {
 
 export type MarkerSettings = {
     tooltipPattern?: any;
+    tooltipAction: { [name: string]: actionsHandler };
     icon?: any;
     showLabel?: boolean;
     label: string;
@@ -62,52 +86,62 @@ export type MarkerSettings = {
     useLabelFunction: boolean;
     draggableMarker: boolean;
     showTooltip?: boolean;
+    useTooltipFunction: boolean;
+    useColorFunction: boolean;
     color?: string;
     autocloseTooltip: boolean;
-    displayTooltipAction: string;
+    showTooltipAction: string;
+    useClusterMarkers: boolean;
     currentImage?: string;
     useMarkerImageFunction?: boolean;
     markerImages?: string[];
-    useMarkerImage: boolean;
     markerImageSize: number;
     fitMapBounds: boolean;
-    markerImage: {
-        length: number
-    }
-
+    markerImage: string;
+    markerClick: { [name: string]: actionsHandler };
     colorFunction: GenericFunction;
     tooltipFunction: GenericFunction;
     labelFunction: GenericFunction;
     markerImageFunction?: MarkerImageFunction;
+    markerOffsetX: number;
+    markerOffsetY: number;
 }
 
 export interface FormattedData {
-    aliasName: string;
+    $datasource: Datasource;
     entityName: string;
-    $datasource: string;
     dsIndex: number;
-    deviceType: string
+    deviceType: string;
+    [key: string]: any
 }
 
 export type PolygonSettings = {
     showPolygon: boolean;
-    showTooltip: any;
+    polygonKeyName: string;
+    polKeyName: string;// deprecated
     polygonStrokeOpacity: number;
     polygonOpacity: number;
     polygonStrokeWeight: number;
     polygonStrokeColor: string;
     polygonColor: string;
+    showPolygonTooltip: boolean;
     autocloseTooltip: boolean;
-    displayTooltipAction: string;
-
+    showTooltipAction: string;
+    tooltipAction: { [name: string]: actionsHandler };
+    polygonTooltipPattern: string;
+    usePolygonTooltipFunction: boolean;
+    polygonClick: { [name: string]: actionsHandler };
+    usePolygonColorFunction: boolean;
+    polygonTooltipFunction: GenericFunction;
     polygonColorFunction?: GenericFunction;
 }
 
 export type PolylineSettings = {
     usePolylineDecorator: any;
     autocloseTooltip: boolean;
-    displayTooltipAction: string;
+    showTooltipAction: string;
     useColorFunction: any;
+    tooltipAction: { [name: string]: actionsHandler };
     color: string;
     useStrokeOpacityFunction: any;
     strokeOpacity: number;
@@ -131,4 +165,108 @@ export interface HistorySelectSettings {
     buttonColor: string;
 }
 
-export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings;
+export interface MapImage {
+    imageUrl: string;
+    aspect: number;
+    update?: boolean;
+}
+
+export type TripAnimationSettings = {
+    showPoints: boolean;
+    pointColor: string;
+    pointSize: number;
+    pointTooltipOnRightPanel: boolean;
+    usePointAsAnchor: boolean;
+    normalizationStep: number;
+    showPolygon: boolean;
+    latKeyName: string;
+    lngKeyName: string;
+    rotationAngle: number;
+    label: string;
+    tooltipPattern: string;
+    useTooltipFunction: boolean;
+    useLabelFunction: boolean;
+    pointAsAnchorFunction: GenericFunction;
+    tooltipFunction: GenericFunction;
+    labelFunction: GenericFunction;
+}
+
+export type actionsHandler = ($event: Event, datasource: Datasource) => void;
+
+export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings & TripAnimationSettings;
+
+interface IProvider {
+    MapClass: Type<LeafletMap>,
+    schema: JsonSettingsSchema,
+    name: string
+}
+
+export const providerSets: { [key: string]: IProvider } = {
+    'openstreet-map': {
+        MapClass: OpenStreetMap,
+        schema: openstreetMapSettingsSchema,
+        name: 'openstreet-map',
+    },
+    'tencent-map': {
+        MapClass: TencentMap,
+        schema: tencentMapSettingsSchema,
+        name: 'tencent-map'
+    },
+    'google-map': {
+        MapClass: GoogleMap,
+        schema: googleMapSettingsSchema,
+        name: 'google-map'
+    },
+    here: {
+        MapClass: HEREMap,
+        schema: hereMapSettingsSchema,
+        name: 'here'
+    },
+    'image-map': {
+        MapClass: ImageMap,
+        schema: imageMapSettingsSchema,
+        name: 'image-map'
+    }
+};
+
+export const defaultSettings: any = {
+    xPosKeyName: 'xPos',
+    yPosKeyName: 'yPos',
+    markerOffsetX: 0.5,
+    markerOffsetY: 1,
+    latKeyName: 'latitude',
+    lngKeyName: 'longitude',
+    polygonKeyName: 'coordinates',
+    showLabel: false,
+    label: '${entityName}',
+    showTooltip: false,
+    useDefaultCenterPosition: false,
+    showTooltipAction: 'click',
+    autocloseTooltip: false,
+    showPolygon: false,
+    labelColor: '#000000',
+    color: '#FE7569',
+    polygonColor: '#0000ff',
+    polygonStrokeColor: '#fe0001',
+    polygonOpacity: 0.5,
+    polygonStrokeOpacity: 1,
+    polygonStrokeWeight: 1,
+    useLabelFunction: false,
+    markerImages: [],
+    strokeWeight: 2,
+    strokeOpacity: 1.0,
+    initCallback: () => { },
+    defaultZoomLevel: 8,
+    disableScrollZooming: false,
+    minZoomLevel: 16,
+    credentials: '',
+    markerClusteringSetting: null,
+    draggableMarker: false,
+    fitMapBounds: true
+};
+
+export const hereProviders = [
+    'HERE.normalDay',
+    'HERE.normalNight',
+    'HERE.hybridDay',
+    'HERE.terrainDay']

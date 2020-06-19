@@ -19,7 +19,8 @@
       padding-bottom: 1px;
     }
     mat-select-trigger {
-      mat-icon {
+      .mat-icon {
+        vertical-align: middle;
         margin-right: 16px;
       }
     }

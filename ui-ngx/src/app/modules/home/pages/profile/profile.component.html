@@ -18,7 +18,7 @@
 <div>
   <mat-card class="profile-card">
     <mat-card-title>
-      <div fxLayout="row">
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px">
         <div fxFlex fxLayout="column">
           <span class="mat-headline" translate>profile.profile</span>
           <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>
@@ -35,7 +35,7 @@
     </mat-progress-bar>
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
-      <form #profileForm="ngForm" [formGroup]="profile" (ngSubmit)="save()">
+      <form [formGroup]="profile" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
           <mat-form-field class="mat-block">
             <mat-label translate>user.email</mat-label>
@@ -74,7 +74,7 @@
             <span fxFlex></span>
             <button mat-button mat-raised-button color="primary"
                     type="submit"
-                    [disabled]="(isLoading$ | async) || profileForm.invalid || !profileForm.dirty">
+                    [disabled]="(isLoading$ | async) || profile.invalid || !profile.dirty">
               {{ 'action.save' | translate }}
             </button>
           </div>

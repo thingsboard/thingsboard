@@ -11,7 +11,8 @@
     },
     "import-blacklist": [
       true,
-      "rxjs/Rx"
+      "rxjs/Rx",
+      "^.*/public-api$"
     ],
     "interface-name": false,
     "max-classes-per-file": false,

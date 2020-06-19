@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form #dashboardCustomersForm="ngForm" style="width: 600px;"
+<form style="width: 600px;"
       [formGroup]="dashboardCustomersFormGroup" (ngSubmit)="submit()">
   <mat-toolbar fxLayout="row" color="primary">
     <h2>{{ titleText | translate }}</h2>
@@ -34,7 +34,7 @@
       <span>{{ labelText | translate }}</span>
       <tb-entity-list
         formControlName="assignedCustomerIds"
-        required
+        [required]="data.actionType !== 'manage'"
         [entityType]="entityType.CUSTOMER">
       </tb-entity-list>
     </fieldset>
@@ -43,8 +43,8 @@
     <span fxFlex></span>
     <button mat-button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || dashboardCustomersForm.invalid
-            || !dashboardCustomersForm.dirty">
+            [disabled]="(isLoading$ | async) || dashboardCustomersFormGroup.invalid
+            || !dashboardCustomersFormGroup.dirty">
       {{ actionName | translate }}
     </button>
     <button mat-button color="primary"

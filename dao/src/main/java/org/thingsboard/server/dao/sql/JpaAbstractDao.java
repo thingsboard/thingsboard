@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -58,8 +58,8 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         setSearchText(entity);
         log.debug("Saving entity {}", entity);
-        if (entity.getId() == null) {
-            entity.setId(UUIDs.timeBased());
+        if (entity.getUuid() == null) {
+            entity.setUuid(Uuids.timeBased());
         }
         entity = getCrudRepository().save(entity);
         return DaoUtil.getData(entity);

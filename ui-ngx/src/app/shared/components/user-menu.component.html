@@ -16,7 +16,7 @@
 
 -->
 <section fxLayout="row">
-  <div fxHide.xs fxHide.sm fxHide.md *ngIf="displayUserInfo" class="tb-user-info" fxLayout="row">
+  <div fxHide.lt-lg *ngIf="displayUserInfo" class="tb-user-info" fxLayout="row">
     <mat-icon class="material-icons tb-mini-avatar">account_circle</mat-icon>
     <div fxLayout="column" fxLayoutAlign="center">
       <span *ngIf="userDisplayName$ | async; let userDisplayName" class="tb-user-display-name">{{ userDisplayName }}</span>

@@ -6,7 +6,9 @@
         "access-forbidden": "Přístup zakázán",
         "access-forbidden-text": "Pro přístup do tohoto umístění nemáte přístupová oprávnění!<br/>Pokud si stále přejete získat přístup do tohoto umístění, zkuste se zaregistrovat pod jiným uživatelem.",
         "refresh-token-expired": "Relace vypršela",
-        "refresh-token-failed": "Nemohu aktualizovat relaci"
+        "refresh-token-failed": "Nemohu aktualizovat relaci",
+        "permission-denied": "Oprávnění zamítnuto",
+        "permission-denied-text": "Pro provedení této operace nemáte oprávnění!"
     },
     "action": {
         "activate": "Aktivovat",
@@ -21,6 +23,7 @@
         "no": "Ne",
         "update": "Aktualizovat",
         "remove": "Odstranit",
+        "select": "Vybrat",
         "search": "Vyhledat",
         "clear-search": "Zrušit hledání",
         "assign": "Přiřadit",
@@ -48,7 +51,10 @@
         "paste-reference": "Vložit referenci",
         "import": "Importovat",
         "export": "Exportovat",
-        "share-via": "Sdílet přes {{provider}}"
+        "share-via": "Sdílet přes {{provider}}",
+        "continue": "Pokračovat",
+        "discard-changes": "Zahodit změny",
+        "download": "Stáhnout"
     },
     "aggregation": {
         "aggregation": "Agregace",
@@ -84,7 +90,36 @@
         "timeout-invalid": "Tohle nevypadá jako platný časový limit.",
         "enable-tls": "Povolit TLS",
         "tls-version": "Verze TLS",
-        "send-test-mail": "Odeslat testovací zprávu"
+        "enable-proxy": "Povolit proxy",
+        "proxy-host": "Host proxy",
+        "proxy-host-required": "Host proxy je povinný.",
+        "proxy-port": "Port proxy",
+        "proxy-port-required": "Port proxy je povinný.",
+        "proxy-port-range": "Port proxy by měl být v rozsahu od 1 do 65535.",
+        "proxy-user": "Uživatel proxy",
+        "proxy-password": "Heslo proxy",
+        "send-test-mail": "Odeslat testovací zprávu",
+        "security-settings": "Bezpečnostní nastavení",
+        "password-policy": "Politika hesel",
+        "minimum-password-length": "Minimální délka hesla",
+        "minimum-password-length-required": "Minimální délka hesla je povinná",
+        "minimum-password-length-range": "Minimální délka hesla by měla být v rozsahu od 5 do 50",
+        "minimum-uppercase-letters": "Minimální počet velkých písmen",
+        "minimum-uppercase-letters-range": "Minimální počet velkých písmen nemůže být záporný",
+        "minimum-lowercase-letters": "Minimální počet malých písmen",
+        "minimum-lowercase-letters-range": "Minimální počet malých písmen nemůže být záporný",
+        "minimum-digits": "Minimální počet číslic",
+        "minimum-digits-range": "Minimální počet číslic nemůže být záporný ",
+        "minimum-special-characters": "Minimální počet speciálních znaků",
+        "minimum-special-characters-range": "Minimální počet speciálních znaků nemůže být záporný",
+        "password-expiration-period-days": "Lhůta expirace hesla ve dnech",
+        "password-expiration-period-days-range": "Lhůta expirace hesla ve dnech nemůže být záporná",
+        "password-reuse-frequency-days": "Frekvence opětovného použití hesla ve dnech",
+        "password-reuse-frequency-days-range": "Frekvence opětovného použití hesla ve dnech nemůže být záporná",
+        "general-policy": "Obecná politika",
+        "max-failed-login-attempts": "Maximální počet neúspěšných pokusů o přihlášení před zablokováním účtu",
+        "minimum-max-failed-login-attempts-range": "Maximální počet neúspěšných pokusů o přihlášení před zablokováním účtu nemůže být záporný",
+        "user-lockout-notification-email": "V případě zablokování uživatelského účtu odeslat upozornění na email"
     },
     "alarm": {
         "alarm": "Alarm",
@@ -140,7 +175,13 @@
         "clear-alarms-text": "Jste si jisti, že chcete odstranit { count, plural, 1 {1 alarm} other {# alarmů} }?",
         "clear-alarm-title": "Odstranit alarm",
         "clear-alarm-text": "Jste si jisti, že chcete alarm odstranit?",
-        "alarm-status-filter": "Filtr stavu alarmu"
+        "alarm-status-filter": "Filtr stavu alarmu",
+        "max-count-load": "Maximální počet nahraných alarmů (0 - neomezeně)",
+        "max-count-load-required": "Maximální počet nahraných alarmů je povinný.",
+        "max-count-load-error-min": "Minimální hodnota je 0.",
+        "fetch-size": "Velikost dávky",
+        "fetch-size-required": "Velikost dávky je povinná.",
+        "fetch-size-error-min": "Minimální hodnota je 10."
     },
     "alias": {
         "add": "Přidat alias",
@@ -177,6 +218,7 @@
         "entity-filter-no-entity-matched": "Žádné entity odpovídající specifikovanému filtru nebyly nalezeny.",
         "no-entity-filter-specified": "Nebyl specifikován žádný filtr entit",
         "root-state-entity": "Použít stav entity dashboard jako kořenovou",
+        "last-level-relation": "Nahrát pouze vztah poslední úrovně",
         "root-entity": "Kořenová entita",
         "state-entity-parameter-name": "Název parametru stavu entity",
         "default-state-entity": "Defaultní stav entity",
@@ -196,7 +238,7 @@
         "assign-to-customer": "Přiřadit zákazníkovi",
         "assign-asset-to-customer": "Přiřadit aktiva zákazníkovi",
         "assign-asset-to-customer-text": "Prosím vyberte aktiva, která mají být přiřazena zákazníkovi",
-        "no-assets-text": "Žádná aktiva nenalezena",
+        "no-assets-text": "Žádná aktiva nebyla nalezena",
         "assign-to-customer-text": "Prosím vyberte zákazníka, kterému mají být aktiva přiřazena",
         "public": "Veřejné",
         "assignedToCustomer": "Přiřazeno zákazníkovi",
@@ -248,7 +290,11 @@
         "no-assets-matching": "Žádná aktiva odpovídající '{{entity}}' nebyla nalezena.",
         "asset-required": "Aktivum je povinné",
         "name-starts-with": "Název aktiva začíná",
-        "label": "Název"
+        "import": "Importovat aktiva",
+        "asset-file": "Soubor aktiva",
+        "search": "Vyhledat aktiva",
+        "selected-assets": "Vybráno { count, plural, 1 {1 aktiv} other {# aktiv} }",
+        "label": "Označení"
     },
     "attribute": {
         "attributes": "Atributy",
@@ -275,7 +321,9 @@
         "add-to-dashboard": "Přidat na dashboard",
         "add-widget-to-dashboard": "Přidat widget na dashboard",
         "selected-attributes": "Vybráno { count, plural, 1 {1 atributů} other {# atributů} }",
-        "selected-telemetry": "Vybráno { count, plural, 1 {1 jednotek telemetrie} other {# jednotek telemetrie} }"
+        "selected-telemetry": "Vybráno { count, plural, 1 {1 jednotek telemetrie} other {# jednotek telemetrie} }",
+        "no-attributes-text": "Žádné atributy nebyly nalezeny",
+        "no-telemetry-text": "Žádná telemetrie nebyla nalezena"
     },
     "audit-log": {
         "audit": "Audit",
@@ -305,10 +353,13 @@
         "type-relations-delete": "Všechny vztahy smazány",
         "type-alarm-ack": "Přijato",
         "type-alarm-clear": "Odstraněno",
+        "type-login": "Přihlášení",
+        "type-logout": "Odhlášení",
+        "type-lockout": "Zablokování",
         "status-success": "Úspěch",
         "status-failure": "Chyba",
         "audit-log-details": "Detail záznamu auditu",
-        "no-audit-logs-prompt": "Žádné záznamy nenalezeny",
+        "no-audit-logs-prompt": "Žádné záznamy nebyly nalezeny",
         "action-data": "Data akce",
         "failure-details": "Detail chyby",
         "search": "Prohledat záznamy auditu",
@@ -336,7 +387,9 @@
         "password": "Heslo",
         "enter-username": "Zadejte uživatelské jméno",
         "enter-password": "Zadejte heslo",
-        "enter-search": "Zadejte hledaný řetězec"
+        "enter-search": "Zadejte hledaný řetězec",
+        "created-time": "Datum vytvoření",
+        "loading": "Načítám..."
     },
     "content-type": {
         "json": "JSON",
@@ -366,7 +419,7 @@
         "manage-customer-assets": "Spravovat aktiva zákazníka",
         "manage-public-assets": "Spravovat veřejná aktiva",
         "add-customer-text": "Přidat nového zákazníka",
-        "no-customers-text": "Žádní zákazníci nenalezeni",
+        "no-customers-text": "Žádní zákazníci nebyli nalezeni",
         "customer-details": "Detail zákazníka",
         "delete-customer-title": "Jste si jisti, že chcete smazat zákazníka '{{customerTitle}}'?",
         "delete-customer-text": "Buďte opatrní, protože po potvrzení nebude možné zákazníka ani žádná související data obnovit.",
@@ -385,11 +438,13 @@
         "copyId": "Kopírovat Id zákazníka",
         "idCopiedMessage": "Id zákazníka bylo zkopírováno do schránky",
         "select-customer": "Vybrat zákazníka",
-        "no-customers-matching": "Žádní zákazníky odpovídající '{{entity}}' nebyli nalezeni.",
+        "no-customers-matching": "Žádní zákazníci odpovídající '{{entity}}' nebyli nalezeni.",
         "customer-required": "Zákazník je povinný",
         "select-default-customer": "Vybrat defaultního zákazníka",
         "default-customer": "Defaultní zákazník",
-        "default-customer-required": "Aby bylo možné ladit dashboard na úrovni tenanta, je nutné zadat defaultního zákazníka."
+        "default-customer-required": "Aby bylo možné ladit dashboard na úrovni tenanta, je nutné zadat defaultního zákazníka.",
+        "search": "Vyhledat zákazníky",
+        "selected-customers": "Vybráno { count, plural, 1 {1 zákazníků} other {# zákazníků} }"
     },
     "datetime": {
         "date-from": "Datum od",
@@ -416,7 +471,7 @@
         "assign-to-customers-text": "Prosím vyberte zákazníky, kterým má být dashboard(y) přiřazen(y)",
         "unassign-from-customers": "Odebrat dashboard(y) zákazníkům",
         "unassign-from-customers-text": "Prosím vyberte zákazníky, kterým má být dashboard(y) odebrán(y)",
-        "no-dashboards-text": "Nebyly nalezeny žádné dashboardy",
+        "no-dashboards-text": "Žádné dashboardy nebyly nalezeny",
         "no-widgets": "Nejsou nastaveny žádné widgety",
         "add-widget": "Přidat nový widget",
         "title": "Název",
@@ -436,7 +491,7 @@
         "unassign-dashboards": "Odebrat dashboardy",
         "unassign-dashboards-action-title": "Odebrat { count, plural, 1 {1 dashboard} other {# dashboardů} } zákazníkovi",
         "delete-dashboard-title": "Jste si jisti, že chcete odstranit dashboard '{{dashboardTitle}}'?",
-        "delete-dashboard-text": "Buďte opatrní, protože po potvrzení nebude možné dashboard ani žádná soubisející data obnovit.",
+        "delete-dashboard-text": "Buďte opatrní, protože po potvrzení nebude možné dashboard ani žádná související data obnovit.",
         "delete-dashboards-title": "Jste si jisti, že chcete smazat { count, plural, 1 {1 dashboard} other {# dashboardů} }?",
         "delete-dashboards-action-title": "Smazat { count, plural, 1 {1 dashboard} other {# dashboardů} }",
         "delete-dashboards-text": "Buďte opatrní, protože po potvrzení budou všechny vybrané dashboardy smazány a žádná související data nebude možné obnovit.",
@@ -472,6 +527,9 @@
         "min-columns-count-message": "Minimální povolený počet sloupců je 10.",
         "max-columns-count-message": "Maximální povolený počet sloupců je 1000.",
         "widgets-margins": "Okraj mezi widgety",
+        "margin-required": "Hodnota okraje je povinná.",
+        "min-margin-message": "Pouze 0 je povolena jako minimální hodnota okraje.",
+        "max-margin-message": "Pouze 50 je povoleno jako maximální hodnota okraje.",
         "horizontal-margin": "Horizontální okraj",
         "horizontal-margin-required": "Hodnota horizontálního okraje je povinná.",
         "min-horizontal-margin-message": "Minimální povolená hodnota horizontálního okraje je 0.",
@@ -524,6 +582,7 @@
         "edit-state": "Editovat stav dashboardu",
         "delete-state": "Smazat stav dashboardu",
         "add-state": "Přidat stav dashboardu",
+        "no-states-text": "Žádné No states found",
         "state": "Stav dashboardu",
         "state-name": "Název",
         "state-name-required": "Název stavu dashboardu je povinný.",
@@ -536,12 +595,14 @@
         "show-details": "Zobrazit detaily",
         "hide-details": "Skrýt detaily",
         "select-state": "Vybrat cílový stav",
-        "state-controller": "Kontrolér stavu"
+        "state-controller": "Kontrolér stavu",
+        "search": "Vyhledat dashboardy",
+        "selected-dashboards": "Vybráno { count, plural, 1 {1 dashboardů} other {# dashboardů} }"
     },
     "datakey": {
         "settings": "Nastavení",
         "advanced": "Rozšířené",
-        "label": "Název",
+        "label": "Označení",
         "color": "Barva",
         "units": "Speciální symbol, který bude zobrazen vedle hodnoty",
         "decimals": "Počet číslic za desetinnou čárkou",
@@ -550,6 +611,7 @@
         "configuration": "Konfigurace datového klíče",
         "timeseries": "Časové řady",
         "attributes": "Atributy",
+        "entity-field": "Pole entity",
         "alarm": "Pole alarmu",
         "timeseries-required": "Časové řady entity jsou povinné.",
         "timeseries-or-attributes-required": "Časové řady / atributy entity jsou povinné.",
@@ -570,7 +632,9 @@
         "add-datasource-prompt": "Přidejte prosím datový zdroj"
     },
     "details": {
+        "details": "Detail",
         "edit-mode": "Režim editace",
+        "edit-json": "Editovat JSON",
         "toggle-edit-mode": "Přepnout do režimu editace"
     },
     "device": {
@@ -584,7 +648,7 @@
         "no-alias-matching": "'{{alias}}' nenalezen.",
         "no-aliases-found": "Žádné aliasy nebyly nalezeny.",
         "no-key-matching": "'{{key}}' nenalezen.",
-        "no-keys-found": "Žádné klíče nenalezeny.",
+        "no-keys-found": "Žádné klíče nebyly nalezeny.",
         "create-new-alias": "Vytvořit nový!",
         "create-new-key": "Vytvořit nový!",
         "duplicate-alias-error": "Byl nalezen duplicitní alias '{{alias}}'.<br>Aliasy zařízení musí být v rámci dashboardu unikátní.",
@@ -655,6 +719,7 @@
         "name": "Název",
         "name-required": "Název je povinný.",
         "description": "Popis",
+        "label": "Označení",
         "events": "Události",
         "details": "Detail",
         "copyId": "Kopírovat Id zařízení",
@@ -667,7 +732,11 @@
         "is-gateway": "Je bránou",
         "public": "Veřejné",
         "device-public": "Zařízení je veřejné",
-        "select-device": "vybrat zařízení"
+        "select-device": "Vybrat zařízení",
+        "import": "Importovat zařízení",
+        "device-file": "Soubor zařízení",
+        "search": "Vyhledat zařízení",
+        "selected-devices": "Vybráno { count, plural, 1 {1 zařízení} other {# zařízení} }"
     },
     "dialog": {
         "close": "Zavřít dialog"
@@ -740,7 +809,7 @@
         "type-plugin": "Zásuvný modul",
         "type-plugins": "Zásuvné moduly",
         "list-of-plugins": "{ count, plural, 1 {Jeden zásuvný modul} other {Seznam # zásuvných modulů} }",
-        "plugin-name-starts-with": "Závusné moduly, jejichž název začíná '{{prefix}}'",
+        "plugin-name-starts-with": "Zásuvné moduly, jejichž název začíná '{{prefix}}'",
         "type-tenant": "Tenant",
         "type-tenants": "Tenanti",
         "list-of-tenants": "{ count, plural, 1 {Jeden tenant} other {Seznam # tenantů} }",
@@ -770,13 +839,32 @@
         "list-of-rulenodes": "{ count, plural, 1 {Jeden uzel pravidla} other {Seznam # uzlů pravidel} }",
         "rulenode-name-starts-with": "Uzly pravidel, jejichž název začíná '{{prefix}}'",
         "type-current-customer": "Stávající zákazník",
+        "type-current-tenant": "Stávající tenant",
         "search": "Vyhledat entity",
         "selected-entities": "{ count, plural, 1 {1 entita} other {# entit} } zvoleno",
         "entity-name": "Název entity",
+        "entity-label": "Označení entity",
         "details": "Detail entity",
-        "no-entities-prompt": "Nebyly nalezeny žádné entity",
+        "no-entities-prompt": "Žádné entity nebyly nalezeny",
         "no-data": "Nelze zobrazit žádná data",
         "columns-to-display": "Zobrazit sloupce"
+    },
+    "entity-field": {
+        "created-time": "Datum vytvoření",
+        "name": "Název",
+        "type": "Typ",
+        "first-name": "Jméno",
+        "last-name": "Příjmení",
+        "email": "Email",
+        "title": "Titul",
+        "country": "Stát",
+        "state": "Region",
+        "city": "Město",
+        "address": "Adresa",
+        "address2": "Adresa 2",
+        "zip": "PSČ",
+        "phone": "Telefon",
+        "label": "Označení"
     },
     "entity-view": {
         "entity-view": "Entitní pohled",
@@ -789,12 +877,13 @@
         "no-alias-matching": "'{{alias}}' nenalezen.",
         "no-aliases-found": "Žádné aliasy nebyly nalezeny.",
         "no-key-matching": "'{{key}}' nenalezen.",
-        "no-keys-found": "Nebyly nalezeny žádné klíče.",
+        "no-keys-found": "Žádné klíče nebyly nalezeny.",
         "create-new-alias": "Vytvořit nový!",
         "create-new-key": "Vytvořit nový!",
         "duplicate-alias-error": "Byl nalezen duplicitní alias '{{alias}}'.<br>Aliasy entitních pohledů musí být v rámci dashboardu unikátní.",
         "configure-alias": "Konfigurovat '{{alias}}' alias",
         "no-entity-views-matching": "Žádné entitní pohledy odpovídající '{{entity}}' nebyly nalezeny.",
+        "public": "Veřejný",
         "alias": "Alias",
         "alias-required": "Alias entitního pohledu je povinný.",
         "remove-alias": "Odebrat alias entitního pohledu",
@@ -806,6 +895,7 @@
         "entity-view-name-filter-required": "Filtr názvu entitního pohledu je povinný.",
         "entity-view-name-filter-no-entity-view-matched": "Žádné entitní pohledy začínající '{{entityView}}' nebyly nalezeny.",
         "add": "Přidat entitní pohled",
+        "entity-view-public": "Entitní pohled je veřejný",
         "assign-to-customer": "Přiřadit zákazníkovi",
         "assign-entity-view-to-customer": "Přiřadit entitní pohled(y) zákazníkovi",
         "assign-entity-view-to-customer-text": "Vyberte prosím entitní pohledy, které mají být přiřazeny zákazníkovi",
@@ -839,12 +929,14 @@
         "no-entity-view-types-matching": "Žádné typy entitních pohledů odpovídající '{{entitySubtype}}' nebyly nalezeny.",
         "entity-view-type-list-empty": "Žádné typy entitních pohledů nebyly nalezeny.",
         "entity-view-types": "Typy entitních pohledů",
+        "created-time": "Datum vytvoření",
         "name": "Název",
         "name-required": "Název je povinný.",
         "description": "Popis",
         "events": "Události",
         "details": "Detail",
         "copyId": "Kopírovat Id entitního pohledu",
+        "idCopiedMessage": "Id entitního pohledu bylo zkopírováno do schránky",
         "assignedToCustomer": "Přiřazeno zákazníkovi",
         "unable-entity-view-device-alias-title": "Alias entitního typu nebylo možné smazat",
         "unable-entity-view-device-alias-text": "Alias zařízení '{{entityViewAlias}}' nelze smazat, protože je používán následujícími widgety:<br/>{{widgetsList}}",
@@ -872,7 +964,9 @@
         "make-public-entity-view-title": "Jste si jisti, že chcete entitní pohled '{{entityViewName}}' zveřejnit?",
         "make-public-entity-view-text": "Po potvrzení bude entitní pohled a všechna jeho data veřejné a dostupné pro ostatní.",
         "make-private-entity-view-title": "Jste si jisti, že chcete entitní pohled '{{entityViewName}}' učinit neveřejným?",
-        "make-private-entity-view-text": "Po potvrzení bude entitní pohled a všechna jeho data neveřejné a nebudou dostupné pro ostatní."
+        "make-private-entity-view-text": "Po potvrzení bude entitní pohled a všechna jeho data neveřejné a nebudou dostupné pro ostatní.",
+        "search": "Vyhledat entitní pohledy",
+        "selected-entity-views": "Vybráno { count, plural, 1 {1 entitních pohledů} other {# entitních pohledů} }"
     },
     "event": {
         "event-type": "Typ události",
@@ -881,7 +975,7 @@
         "type-stats": "Statistika",
         "type-debug-rule-node": "Ladění",
         "type-debug-rule-chain": "Ladění",
-        "no-events-prompt": "Nebyly nalezeny žádné události",
+        "no-events-prompt": "Žádné události nebyly nalezeny",
         "error": "Chyba",
         "alarm": "Alarm",
         "event-time": "Čas události",
@@ -1069,6 +1163,80 @@
     "function": {
         "function": "Funkce"
     },
+    "gateway": {
+        "add-entry": "Přidat konfiguraci",
+        "connector-add": "Přidat nový konektor",
+        "connector-enabled": "Povolit konektor",
+        "connector-name": "Název konektoru",
+        "connector-name-required": "Název konektoru je povinný.",
+        "connector-type": "Typ konektoru",
+        "connector-type-required": "Typ konektoru je povinný.",
+        "connectors": "Konfigurace konektoru",
+        "create-new-gateway": "Vytvořit novou bránu",
+        "create-new-gateway-text": "Jste si jisti, že chcete vytvořit novou bránu s názvem: '{{gatewayName}}'?",
+        "delete": "Smazat konfiguraci",
+        "download-tip": "Stáhnout soubor konfigurace",
+        "gateway": "Brána",
+        "gateway-exists": "Zařízení se shodným názvem již existuje.",
+        "gateway-name": "Název brány",
+        "gateway-name-required": "Název brány je povinný.",
+        "gateway-saved": "Konfigurace brány byla úspěšně uložena.",
+        "json-parse": "Neplatný JSON.",
+        "json-required": "Pole nemůže být prázdné.",
+        "no-connectors": "Žádné konektory",
+        "no-data": "Žádné konfigurace",
+        "no-gateway-found": "Žádné brány nebyly nalezeny.",
+        "no-gateway-matching": " '{{item}}' nenalezena.",
+        "path-logs": "Cesta k souborům logu",
+        "path-logs-required": "Cesta je povinná.",
+        "remote": "Vzdálená konfigurace",
+        "remote-logging-level": "Úroveň logování",
+        "remove-entry": "Odstranit konfiguraci",
+        "save-tip": "Uložit soubor konfigurace",
+        "security-type": "Typ zabezpečení",
+        "security-types": {
+            "access-token": "Přístupový token",
+            "tls": "TLS"
+        },
+        "storage": "Úložiště",
+        "storage-max-file-records": "Maximální počet záznamů v souboru",
+        "storage-max-files": "Maximální počet souborů",
+        "storage-max-files-min": "Minimální počet je 1.",
+        "storage-max-files-pattern": "Počet není platný.",
+        "storage-max-files-required": "Počet je povinný.",
+        "storage-max-records": "Maximální počet záznamů v úložišti",
+        "storage-max-records-min": "Minimální počet záznamů je 1.",
+        "storage-max-records-pattern": "Počet není platný.",
+        "storage-max-records-required": "Maximální počet záznamů je povinný.",
+        "storage-pack-size": "Maximální velikost souboru událostí",
+        "storage-pack-size-min": "Minimální počet je 1.",
+        "storage-pack-size-pattern": "Počet není platný.",
+        "storage-pack-size-required": "Maximální velikost souboru událostí je povinná.",
+        "storage-path": "Cesta k úložišti",
+        "storage-path-required": "Cesta k úložišti je povinná.",
+        "storage-type": "Typ úložiště",
+        "storage-types": {
+            "file-storage": "Soubor",
+            "memory-storage": "Paměť"
+        },
+        "thingsboard": "ThingsBoard",
+        "thingsboard-host": "Host ThingsBoard",
+        "thingsboard-host-required": "Host je povinný.",
+        "thingsboard-port": "Port ThingsBoard",
+        "thingsboard-port-max": "Maximální číslo portu je 65535.",
+        "thingsboard-port-min": "Minimální číslo portu je 1.",
+        "thingsboard-port-pattern": "Port není platný.",
+        "thingsboard-port-required": "Port je povinný.",
+        "tidy": "Uspořádat",
+        "tidy-tip": "Uspořádat JSON konfiguraci",
+        "title-connectors-json": "Konfigurace {{typeName}} konektoru",
+        "tls-path-ca-certificate": "Cesta k certifikátu CA brány",
+        "tls-path-client-certificate": "Cesta k certifikátu klienta brány",
+        "tls-path-private-key": "Cesta k privátnímu klíči brány",
+        "toggle-fullscreen": "Přepnout do režimu celé obrazovky",
+        "transformer-json-config": "JSON* konfigurace",
+        "update-config": "Přidat/editovat JSON konfiguraci"
+    },
     "grid": {
         "delete-item-title": "Jste si jisti, že chcete smazat tuto položku?",
         "delete-item-text": "Buďte opatrní, protože po potvrzení nebude možné tuto položku ani žádná související data obnovit.",
@@ -1095,7 +1263,43 @@
     },
     "import": {
         "no-file": "Nebyl vybrán žádný soubor",
-        "drop-file": "Přetáhněte sem JSON soubor nebo klikněte pro výběr souboru pro nahrání."
+        "drop-file": "Přetáhněte sem JSON soubor nebo klikněte pro výběr souboru pro nahrání.",
+        "drop-file-csv": "Přetáhněte sem CSV soubor nebo klikněte pro výběr souboru pro nahrání.",
+        "column-value": "Hodnota",
+        "column-title": "Název",
+        "column-example": "Příklad hodnoty",
+        "column-key": "Klíč atributu/telemetrie",
+        "csv-delimiter": "Oddělovač CSV",
+        "csv-first-line-header": "První řádek obsahuje názvy sloupců",
+        "csv-update-data": "Editovat atributy/telemetrii",
+        "import-csv-number-columns-error": "Soubor by měl obsahovat minimálně dva sloupce",
+        "import-csv-invalid-format-error": "Neplatný formát souboru. Řádek: '{{line}}'",
+        "column-type": {
+            "name": "Název",
+            "type": "Typ",
+            "label": "Označení",
+            "column-type": "Typ sloupce",
+            "client-attribute": "Atribut klienta",
+            "shared-attribute": "Sdílený atribut",
+            "server-attribute": "Atribut serveru",
+            "timeseries": "Časové řady",
+            "entity-field": "Pole entity",
+            "access-token": "Přístupový token",
+            "isgateway": "Je bránou",
+            "description": "Popis"
+        },
+        "stepper-text":{
+            "select-file": "Vybrat soubor",
+            "configuration": "Importovat konfiguraci",
+            "column-type": "Vybrat typ sloupců",
+            "creat-entities": "Vytvořím nové entity",
+            "done": "Hotovo"
+        },
+        "message": {
+            "create-entities": "{{count}} nových entit bylo úspěšně vytvořeno.",
+            "update-entities": "{{count}} entit bylo úspěšně aktualizováno.",
+            "error-entities": "Při vytvoření {{count}} entit došlo k chybě."
+        }
     },
     "item": {
         "selected": "Vybráno"
@@ -1103,7 +1307,8 @@
     "js-func": {
         "no-return-error": "Funkce musí vrátit hodnotu!",
         "return-type-mismatch": "Funkce musí vrátit hodnotu '{{type}}' typu!",
-        "tidy": "Tidy"
+        "tidy": "Tidy",
+        "mini": "Mini"
     },
     "key-val": {
         "key": "Klíč",
@@ -1132,10 +1337,16 @@
         "min": "min",
         "max": "max",
         "avg": "průměr",
-        "total": "celkem"
+        "total": "celkem",
+        "comparison-time-ago": {
+            "days": "(před dny)",
+            "weeks": "(před týdny)",
+            "months": "(před měsíci)",
+            "years": "(před roky)"
+        }
     },
     "login": {
-        "login": "Přihlásit",
+        "login": "Přihlásit se",
         "request-password-reset": "Vyžádat reset hesla",
         "reset-password": "Reset hesla",
         "create-password": "Vytvořit heslo",
@@ -1146,10 +1357,14 @@
         "remember-me": "Zapamatovat si mě",
         "forgot-password": "Zapomněli jste heslo?",
         "password-reset": "Reset hesla",
+        "expired-password-reset-message": "Platnost vašich přístupových údajů vypršela! Nastavte si prosím nové heslo.",
         "new-password": "Nové heslo",
         "new-password-again": "Nové heslo znovu",
         "password-link-sent-message": "Odkaz pro reset hesla byl úspěšně odeslán!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Přihlásit se přes {{name}}",
+        "or": "nebo",
+        "error": "Chyba přihlášení"
     },
     "position": {
         "top": "Nahoře",
@@ -1159,6 +1374,7 @@
     },
     "profile": {
         "profile": "Profil",
+        "last-login-time": "Poslední přihlášení",
         "change-password": "Změnit heslo",
         "current-password": "Stávající heslo"
     },
@@ -1202,7 +1418,8 @@
         "any-relation": "Všechny vztahy",
         "relation-filters": "Filtry vztahů",
         "additional-info": "Další info (JSON)",
-        "invalid-additional-info": "Další informace v JSON nebylo možné parsovat."
+        "invalid-additional-info": "Další informace v JSON nebylo možné parsovat.",
+        "no-relations-text": "Žádné vztahy nebyly nalezeny"
     },
     "rulechain": {
         "rulechain": "Řetěz pravidel",
@@ -1239,7 +1456,10 @@
         "no-rulechains-matching": "Žádné řetězy pravidel odpovídající '{{entity}}' nebyly nalezeny.",
         "rulechain-required": "Řetěz pravidel je povinný",
         "management": "Správa pravidel",
-        "debug-mode": "Režim ladění"
+        "debug-mode": "Režim ladění",
+        "search": "Vyhledat řetězy pravidel",
+        "selected-rulechains": "Vybráno { count, plural, 1 {1 řetězů pravidel} other {# řetězů pravidel} }",
+        "open-rulechain": "Otevřít řetěz pravidel"
     },
     "rulenode": {
         "details": "Detail",
@@ -1305,6 +1525,11 @@
         "help": "Nápověda",
         "reset-debug-mode": "Resetovat režim ladění na všech uzlech"
     },
+    "queue": {
+      "select_name": "Vybrat název fronty",
+      "name": "Název fronty",
+      "name_required": "Název fronty je povinný!"
+    },
     "tenant": {
         "tenant": "Tenant",
         "tenants": "Tenanti",
@@ -1320,7 +1545,7 @@
         "delete-tenant-text": "Buďte opatrní, protože po potvrzení nebude možné tenanta ani žádná související data obnovit.",
         "delete-tenants-title": "Jste si jisti, že chcete smazat { count, plural, 1 {1 tenanta} other {# tenantů} }?",
         "delete-tenants-action-title": "Smazat { count, plural, 1 {1 tenanta} other {# tenantů} }",
-        "delete-tenants-text": "Buďte opatrní, protože po potvrzení budou všichni vybraní tenanti odstranění a žádná související data nebude možné obnovit.",
+        "delete-tenants-text": "Buďte opatrní, protože po potvrzení budou všichni vybraní tenanti odstraněni a žádná související data nebude možné obnovit.",
         "title": "Název",
         "title-required": "Název je povinný.",
         "description": "Popis",
@@ -1330,7 +1555,13 @@
         "idCopiedMessage": "Id tenanta bylo zkopírováno do schránky",
         "select-tenant": "Vybrat tenanta",
         "no-tenants-matching": "Žádní tenanti odpovídající '{{entity}}' nebyli nalezeni.",
-        "tenant-required": "Tenant je povinný"
+        "tenant-required": "Tenant je povinný",
+        "search": "Vyhledat tenanty",
+        "selected-tenants": "Vybráno { count, plural, 1 {1 tenantů} other {# tenantů} }",
+        "isolated-tb-core": "Zpracování v izolovaném kontejneru ThingsBoard Core",
+        "isolated-tb-rule-engine": "Zpracování v izolovaném kontejneru ThingsBoard Rule Engine",
+        "isolated-tb-core-details": "Vyžaduje samostatnou mikroslužbu(y) pro každého izolovaného tenanta",
+        "isolated-tb-rule-engine-details": "Vyžaduje samostatnou mikroslužbu(y) pro každého izolovaného tenanta"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 vteřina} other {# vteřin} }",
@@ -1355,7 +1586,8 @@
         "edit": "Editovat časové okno",
         "date-range": "Rozsah data",
         "last": "Poslední",
-        "time-period": "Časový interval"
+        "time-period": "Časový interval",
+        "hide": "Skrýt"
     },
     "user": {
         "user": "Uživatel",
@@ -1398,22 +1630,35 @@
         "activation-link-copied-message": "Aktivační odkaz uživatele byl zkopírován do schránky",
         "details": "Detail",
         "login-as-tenant-admin": "Přihlásit se jako administrátor tenanta",
-        "login-as-customer-user": "Přihlásit se jako uživatel zákazníka"
+        "login-as-customer-user": "Přihlásit se jako uživatel zákazníka",
+        "search": "Vyhledat uživatele",
+        "selected-users": "Vybráno { count, plural, 1 {1 uživatelů} other {# uživatelů} }",
+        "disable-account": "Zakázat uživatelský účet",
+        "enable-account": "Povolit uživatelský účet",
+        "enable-account-message": "Uživatelský účet byl úspěšně povolen!",
+        "disable-account-message": "Uživatelský účet byl úspěšně zakázán!"
     },
     "value": {
         "type": "Typ hodnoty",
         "string": "Řetězec",
         "string-value": "Hodnota řetězce",
+        "string-value-required": "Hodnota řetězce je povinná",
         "integer": "Celé číslo",
         "integer-value": "Hodnota celého čísla",
+        "integer-value-required": "Hodnota celého čísla je povinná",
         "invalid-integer-value": "Neplatná hodnota celého čísla",
         "double": "Číslo s plovoucí řádovou s dvojitou přesností",
         "double-value": "Hodnota čísla s plovoucí řádovou řádkou",
+        "double-value-required": "Hodnota čísla s plovoucí řádovou čárkou je povinná",
         "boolean": "Pravdivostní hodnota",
         "boolean-value": "Hodnota pravdivostní hodnoty",
         "false": "Nepravda",
         "true": "Pravda",
-        "long": "Vysoké celé číslo"
+        "long": "Vysoké celé číslo",
+        "json": "JSON",
+        "json-value": "Hodnota JSON",
+        "json-value-invalid": "Hodnota JSON má neplatný formát",
+        "json-value-required": "Hodnota JSON je povinná."
     },
     "widget": {
         "widget-library": "Knihovna widgetů",
@@ -1457,6 +1702,7 @@
         "settings-schema": "Schéma nastavení",
         "datakey-settings-schema": "Schéma nastavení datového klíče",
         "javascript": "Javascript",
+        "js": "JS",
         "remove-widget-type-title": "Jste si jisti, že chcete odebrat typ widgetu '{{widgetName}}'?",
         "remove-widget-type-text": "Po potvrzení nebude možné typ widgetu ani žádná související data obnovit.",
         "remove-widget-type": "Odebrat typ widgetu",
@@ -1473,6 +1719,7 @@
         "update-dashboard-state": "Aktualizovat stávající stav dashboardu",
         "open-dashboard": "Přejít k jinému dashboardu",
         "custom": "Vlastní akce",
+        "custom-pretty": "Vlastní akce (s HTML šablonou)",
         "target-dashboard-state": "Cílový stav dashboardu",
         "target-dashboard-state-required": "Cílový stav dashboardu je povinný",
         "set-entity-from-widget": "Nastavit entitu z widgetu",
@@ -1504,13 +1751,17 @@
         "export-failed-error": "Kategorii widgetů nebylo možné exportovat: {{error}}",
         "create-new-widgets-bundle": "Vytvořit novou kategorii widgetů",
         "widgets-bundle-file": "Soubor kategorie widgetů",
-        "invalid-widgets-bundle-file-error": "Kategorii widgetů nebylo možné importovat: Neplatná datová struktura kategorie widgetů."
+        "invalid-widgets-bundle-file-error": "Kategorii widgetů nebylo možné importovat: Neplatná datová struktura kategorie widgetů.",
+        "search": "Vyhledat kategorie widgetů",
+        "selected-widgets-bundles": "Vybráno { count, plural, 1 {1 kategorií widgetů} other {# kategorií widgetů} }",
+        "open-widgets-bundle": "Otevřít kategorii widgetů"
     },
     "widget-config": {
         "data": "Data",
         "settings": "Nastavení",
         "advanced": "Rozšířené",
         "title": "Název",
+        "title-tooltip": "Popisek názvu",
         "general-settings": "Obecná nastavení",
         "display-title": "Zobrazovaný název",
         "drop-shadow": "Stín",
@@ -1528,6 +1779,7 @@
         "decimals": "Počet číslic za desetinnou čárkou",
         "timewindow": "Časové okno",
         "use-dashboard-timewindow": "Použít časové okno dashboardu",
+        "display-timewindow": "Zobrazit časové okno",
         "display-legend": "Zobrazit legendu",
         "datasources": "Datové zdroje",
         "maximum-datasources": "Maximum { count, plural, 1 {1 datový zdroj je povolen.} other {# datových zdrojů je povoleno} }",
@@ -1541,6 +1793,7 @@
         "action": "Akce",
         "add-action": "Přidat akci",
         "search-actions": "Vyhledat akce",
+        "no-actions-text": "Žádné akce nebyly nalezeny",
         "action-source": "Zdroj akce",
         "action-source-required": "Zdroj akce je povinný.",
         "action-name": "Název",
@@ -1552,7 +1805,10 @@
         "edit-action": "Editovat akci",
         "delete-action": "Smazat akci",
         "delete-action-title": "Smazat akci widgetu",
-        "delete-action-text": "Jste si jisti, že chcete smazat akci widgetu s názvem '{{actionName}}'?"
+        "delete-action-text": "Jste si jisti, že chcete smazat akci widgetu s názvem '{{actionName}}'?",
+        "display-icon": "Zobrazit název ikony",
+        "icon-color": "Barva ikony",
+        "icon-size": "Velikost ikony"
     },
     "widget-type": {
         "import": "Importovat typ widgetu",
@@ -1619,6 +1875,46 @@
                 "Step size": "Velikost kroku",
                 "Ok": "Ok"
             }
+        },
+        "input-widgets": {
+            "attribute-not-allowed": "Parametr atributu nelze v tomto widgetu použít",
+            "blocked-location": "Geolokace je ve vašem prohlížeči zakázána",
+            "claim-device": "Získat zařízení",
+            "claim-failed": "Nepodařilo se získat zařízení!",
+            "claim-not-found": "Zařízení nenalezeno!",
+            "claim-successful": "Zařízení bylo úspěšně získáno!",
+            "date": "Datum",
+            "device-name": "Název zařízení",
+            "device-name-required": "Název zařízení je povinný",
+            "discard-changes": "Zahodit změny",
+            "entity-attribute-required": "Atribut entity je povinný",
+            "entity-coordinate-required": "Obě pole, zeměpisná šířka i zeměpisná délka, jsou povinná",
+            "entity-timeseries-required": "Časové řady entity jsou povinné",
+            "get-location": "Získat aktuální polohu",
+            "latitude": "Zeměpisná šířka",
+            "longitude": "Zeměpisná délka",
+            "not-allowed-entity": "Vybraná entita nemůže mít sdílené atributy",
+            "no-attribute-selected": "Není vybrán žádný atribut",
+            "no-datakey-selected": "Není vybrán žádný datový klíč",
+            "no-coordinate-specified": "Datový klíč pro zeměpisnou šířku/délku nebyl specifikován",
+            "no-entity-selected": "Není vybrána žádná entita",
+            "no-image": "Žádný obrázek",
+            "no-support-geolocation": "Váš prohlížeč nepodporuje geolokaci",
+            "no-support-web-camera": "Žádná podporovaná webová kamera",
+            "no-timeseries-selected": "Nejsou vybrány žádné časové řady",
+            "secret-key": "Tajný klíč",
+            "secret-key-required": "Tajný klíč je povinný",
+            "switch-attribute-value": "Přepnout hodnotu atributu entity",
+            "switch-camera": "Přepnout kameru",
+            "switch-timeseries-value": "Přepnout hodnotu časové řady entity",
+            "take-photo": "Vyfotit",
+            "time": "Čas",
+            "timeseries-not-allowed": "Časové řady nelze v tomto widgetu použít",
+            "update-failed": "Aktualizace selhala",
+            "update-successful": "Aktualizace úspěšná",
+            "update-attribute": "Editovat atribut",
+            "update-timeseries": "Editovat časové řady",
+            "value": "Hodnota"
         }
     },
     "icon": {
@@ -1634,10 +1930,32 @@
             "polygon-click": "Při kliknutí na polygon",
             "marker-click": "Při kliknutí na značku",
             "tooltip-tag-action": "Akce štítku nápovědy",
-            "node-selected": "Při výběru uzlu"
+            "node-selected": "Při výběru uzlu",
+            "element-click": "Při kliknutí na prvek HTML",
+            "pie-slice-click": "Při kliknutí na oblast grafu",
+            "row-double-click": "Při dvoj kliknutí na řádek"
         }
     },
     "language": {
-        "language": "Jazyk"
+        "language": "Jazyk",
+        "locales": {
+            "de_DE": "Deutsch",
+            "fr_FR": "Français",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
+            "en_US": "English",
+            "it_IT": "Italiano",
+            "ko_KR": "한글",
+            "ru_RU": "Русский",
+            "es_ES": "Español",
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
+        }
     }
 }

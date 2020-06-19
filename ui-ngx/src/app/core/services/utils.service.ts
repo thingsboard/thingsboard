@@ -20,7 +20,15 @@
 import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { deepClone, deleteNullProperties, guid, isDefined, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import {
+  createLabelFromDatasource,
+  deepClone,
+  deleteNullProperties,
+  guid,
+  isDefined,
+  isDefinedAndNotNull,
+  isUndefined
+} from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
@@ -34,9 +42,7 @@ import jsonSchemaDefaults from 'json-schema-defaults';
 import materialIconsCodepoints from '!raw-loader!material-design-icons/iconfont/codepoints';
 import { Observable, of, ReplaySubject } from 'rxjs';
 
-const varsRegex = /\$\{([^}]*)\}/g;
-
-const predefinedFunctions: {[func: string]: string} = {
+const predefinedFunctions: { [func: string]: string } = {
   Sin: 'return Math.round(1000*Math.sin(time/5000));',
   Cos: 'return Math.round(1000*Math.cos(time/5000));',
   Random: 'var value = prevValue + Math.random() * 100 - 50;\n' +
@@ -63,12 +69,12 @@ const defaultAlarmFields: Array<string> = [
   alarmFields.status.keyName
 ];
 
-const commonMaterialIcons: Array<string> = [ 'more_horiz', 'more_vert', 'open_in_new',
+const commonMaterialIcons: Array<string> = ['more_horiz', 'more_vert', 'open_in_new',
   'visibility', 'play_arrow', 'arrow_back', 'arrow_downward',
   'arrow_forward', 'arrow_upwards', 'close', 'refresh', 'menu', 'show_chart', 'multiline_chart', 'pie_chart', 'insert_chart', 'people',
   'person', 'domain', 'devices_other', 'now_widgets', 'dashboards', 'map', 'pin_drop', 'my_location', 'extension', 'search',
   'settings', 'notifications', 'notifications_active', 'info', 'info_outline', 'warning', 'list', 'file_download', 'import_export',
-  'share', 'add', 'edit', 'done' ];
+  'share', 'add', 'edit', 'done'];
 
 // @dynamic
 @Injectable({
@@ -101,8 +107,8 @@ export class UtilsService {
   materialIcons: Array<string> = [];
 
   constructor(@Inject(WINDOW) private window: Window,
-              private zone: NgZone,
-              private translate: TranslateService) {
+    private zone: NgZone,
+    private translate: TranslateService) {
     let frame: Element = null;
     try {
       frame = window.frameElement;
@@ -163,32 +169,6 @@ export class UtilsService {
     return obj;
   }
 
-  public hashCode(str: string): number {
-    let hash = 0;
-    let i: number;
-    let char: number;
-    if (str.length === 0) {
-      return hash;
-    }
-    for (i = 0; i < str.length; i++) {
-      char = str.charCodeAt(i);
-      // tslint:disable-next-line:no-bitwise
-      hash = ((hash << 5) - hash) + char;
-      // tslint:disable-next-line:no-bitwise
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash;
-  }
-
-  public objectHashCode(obj: any): number {
-    let hash = 0;
-    if (obj) {
-      const str = JSON.stringify(obj);
-      hash = this.hashCode(str);
-    }
-    return hash;
-  }
-
   public processWidgetException(exception: any): ExceptionData {
     const data = this.parseException(exception, -6);
     if (this.widgetEditMode) {
@@ -241,27 +221,13 @@ export class UtilsService {
   }
 
   public customTranslation(translationValue: string, defaultValue: string): string {
-    let result = '';
+    let result: string;
     const translationId = customTranslationsPrefix + translationValue;
     const translation = this.translate.instant(translationId);
     if (translation !== translationId) {
       result = translation + '';
     } else {
       result = defaultValue;
-    }
-    return result;
-  }
-
-  public insertVariable(pattern: string, name: string, value: any): string {
-    let result = deepClone(pattern);
-    let match = varsRegex.exec(pattern);
-    while (match !== null) {
-      const variable = match[0];
-      const variableName = match[1];
-      if (variableName === name) {
-        result = result.split(variable).join(value);
-      }
-      match = varsRegex.exec(pattern);
     }
     return result;
   }
@@ -302,10 +268,10 @@ export class UtilsService {
           .split('\n')
           .filter((codepoint) => codepoint && codepoint.length);
         codepointsArray.forEach((codepoint) => {
-            const values = codepoint.split(' ');
-            if (values && values.length === 2) {
-              this.materialIcons.push(values[0]);
-            }
+          const values = codepoint.split(' ');
+          if (values && values.length === 2) {
+            this.materialIcons.push(values[0]);
+          }
         });
         materialIconsSubject.next(this.materialIcons);
       });
@@ -360,12 +326,12 @@ export class UtilsService {
   }
 
   public createAdditionalDataKey(dataKey: DataKey, datasource: Datasource, timeUnit: string,
-                                 datasources: Datasource[], additionalKeysNumber: number): DataKey {
+    datasources: Datasource[], additionalKeysNumber: number): DataKey {
     const additionalDataKey = deepClone(dataKey);
     if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
-      additionalDataKey.label = this.createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
+      additionalDataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
     } else {
-      additionalDataKey.label = dataKey.label + ' ' + this.translate.instant('legend.comparison-time-ago.'+timeUnit);
+      additionalDataKey.label = dataKey.label + ' ' + this.translate.instant('legend.comparison-time-ago.' + timeUnit);
     }
     additionalDataKey.pattern = additionalDataKey.label;
     if (dataKey.settings.comparisonSettings.color) {
@@ -379,31 +345,8 @@ export class UtilsService {
     return additionalDataKey;
   }
 
-  public createLabelFromDatasource(datasource: Datasource, pattern: string) {
-    let label = pattern;
-    if (!datasource) {
-      return label;
-    }
-    let match = varsRegex.exec(pattern);
-    while (match !== null) {
-      const variable = match[0];
-      const variableName = match[1];
-      if (variableName === 'dsName') {
-        label = label.split(variable).join(datasource.name);
-      } else if (variableName === 'entityName') {
-        label = label.split(variable).join(datasource.entityName);
-      } else if (variableName === 'deviceName') {
-        label = label.split(variable).join(datasource.entityName);
-      } else if (variableName === 'entityLabel') {
-        label = label.split(variable).join(datasource.entityLabel || datasource.entityName);
-      } else if (variableName === 'aliasName') {
-        label = label.split(variable).join(datasource.aliasName);
-      } else if (variableName === 'entityDescription') {
-        label = label.split(variable).join(datasource.entityDescription);
-      }
-      match = varsRegex.exec(pattern);
-    }
-    return label;
+  public createLabelFromDatasource(datasource: Datasource, pattern: string): string {
+    return createLabelFromDatasource(datasource, pattern);
   }
 
   public generateColors(datasources: Array<Datasource>) {
@@ -456,7 +399,7 @@ export class UtilsService {
         params = urlQueryString + '&' + newParam;
       }
     } else if (newParam) {
-        params = '?' + newParam;
+      params = '?' + newParam;
     }
     this.window.history.replaceState({}, '', baseUrl + params);
   }

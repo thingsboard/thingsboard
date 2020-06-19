@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="entity-state-controller" fxLayout="row" fxLayoutAlign="start center">
+<div class="entity-state-controller">
   <div *ngIf="!isMobile || stateObject.length === 1" fxLayout="row" fxLayoutAlign="start center">
         <span *ngFor="let state of stateObject; index as i; last as isLast" class="state-entry" [ngStyle]="{fontWeight: isLast ? 'bold' : 'normal',
                          cursor: isLast ? 'default' : 'pointer'}" (click)="navigatePrevState(i)">

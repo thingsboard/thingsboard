@@ -23,12 +23,12 @@
              fxLayoutAlign="start center"
              *ngFor="let resource of action.customResources; let i = index" >
           <mat-form-field fxFlex class="mat-block resource-field" floatLabel="never"
-                          style="margin: 10px 0px 0px 0px; max-height: 40px;">
+                          style="margin: 10px 0 0; max-height: 40px;">
             <input required matInput [(ngModel)]="resource.url"
                    (ngModelChange)="notifyActionUpdated()"
                    placeholder="{{ 'widget.resource-url' | translate }}"/>
           </mat-form-field>
-          <button mat-button mat-icon-button color="primary"
+          <button mat-icon-button color="primary"
                   [disabled]="isLoading$ | async"
                   type="button"
                   (click)="removeResource(i)"
@@ -94,7 +94,8 @@
       [(ngModel)]="action.customFunction"
       (ngModelChange)="notifyActionUpdated()"
       [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
-      [validationArgs]="[]">
+      [validationArgs]="[]"
+      [editorCompleter]="customPrettyActionEditorCompleter">
     </tb-js-func>
   </mat-tab>
 </mat-tab-group>

@@ -39,7 +39,9 @@
               "node_modules/rc-select/assets/index.less",
               "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
               "node_modules/leaflet/dist/leaflet.css",
-              "src/app/modules/home/components/widget/lib/maps/markers.scss"
+              "src/app/modules/home/components/widget/lib/maps/markers.scss",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
@@ -47,7 +49,6 @@
               ]
             },
             "scripts": [
-              "node_modules/javascript-detect-element-resize/detect-element-resize.js",
               "node_modules/jquery/dist/jquery.min.js",
               "node_modules/jquery.terminal/js/jquery.terminal.min.js",
               "node_modules/flot/lib/jquery.colorhelpers.js",

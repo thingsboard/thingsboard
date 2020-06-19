@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form #widgetActionForm="ngForm" [formGroup]="widgetActionFormGroup" (ngSubmit)="save()" style="min-width: 600px;">
-  <mat-toolbar fxLayout="row" color="primary">
+<form [formGroup]="widgetActionFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+  <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'widget-config.add-action' : 'widget-config.edit-action' ) | translate }}</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -32,7 +32,7 @@
     <fieldset [disabled]="isLoading$ | async">
       <mat-form-field class="mat-block">
         <mat-label translate>widget-config.action-source</mat-label>
-        <mat-select required matInput formControlName="actionSourceId">
+        <mat-select required formControlName="actionSourceId">
           <mat-option *ngFor="let actionSourceItem of data.actionsData.actionSources | keyvalue" [value]="actionSourceItem.key">
             {{ actionSourceName(actionSourceItem.value) }}
           </mat-option>
@@ -41,7 +41,7 @@
           {{ 'widget-config.action-source-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field class="mat-block" style="padding-bottom: 20px;">
+      <mat-form-field class="mat-block">
         <mat-label translate>widget-config.action-name</mat-label>
         <input required matInput formControlName="name">
         <mat-error *ngIf="widgetActionFormGroup.get('name').hasError('required')">
@@ -56,7 +56,7 @@
       </tb-material-icon-select>
       <mat-form-field class="mat-block">
         <mat-label translate>widget-config.action-type</mat-label>
-        <mat-select required matInput formControlName="type">
+        <mat-select required formControlName="type">
           <mat-option *ngFor="let actionType of widgetActionTypes" [value]="actionType">
             {{ widgetActionTypeTranslations.get(widgetActionType[actionType]) | translate }}
           </mat-option>
@@ -67,7 +67,7 @@
       </mat-form-field>
       <section fxLayout="column" [formGroup]="actionTypeFormGroup" [ngSwitch]="widgetActionFormGroup.get('type').value">
         <ng-template [ngSwitchCase]="widgetActionType.openDashboard">
-          <div fxLayout="column" style="padding-bottom: 20px;">
+          <div fxLayout="column">
             <div class="mat-caption tb-required"
                  style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>widget-action.target-dashboard</div>
             <tb-dashboard-autocomplete
@@ -89,7 +89,7 @@
                    [matAutocomplete]="targetDashboardStateAutocomplete">
             <button *ngIf="actionTypeFormGroup.get('targetDashboardStateId').value"
                     type="button"
-                    matSuffix mat-button mat-icon-button aria-label="Clear"
+                    matSuffix mat-icon-button aria-label="Clear"
                     (click)="clearTargetDashboardState()">
               <mat-icon class="material-icons">close</mat-icon>
             </button>
@@ -135,6 +135,7 @@
             formControlName="customFunction"
             [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
             [validationArgs]="[]"
+            [editorCompleter]="customActionEditorCompleter"
           ></tb-js-func>
         </ng-template>
         <ng-template [ngSwitchCase]="widgetActionType.customPretty">
@@ -145,15 +146,13 @@
       </section>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || widgetActionFormGroup.invalid || actionTypeFormGroup.invalid || (!widgetActionFormGroup.dirty && !actionTypeFormGroup.dirty)">
       {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

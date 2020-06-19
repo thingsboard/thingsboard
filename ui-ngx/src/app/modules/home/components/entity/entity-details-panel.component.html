@@ -16,7 +16,7 @@
 
 -->
 <tb-details-panel fxFlex
-                   [headerTitle]="entity?.name"
+                   [headerTitle]="entitiesTableConfig.entityTitle(entity)"
                    headerSubtitle="{{ translations.details | translate }}"
                    [isReadOnly]="entitiesTableConfig.detailsReadonly(entity)"
                    [isEdit]="isEditValue"
@@ -25,9 +25,9 @@
                    (applyDetails)="saveEntity()"
                    [theForm]="detailsForm">
   <div class="details-buttons">
-    <div [tb-help]="resources.helpLinkId"></div>
+    <div [tb-help]="helpLinkId()"></div>
   </div>
-  <mat-tab-group class="tb-absolute-fill" [ngClass]="{'tb-headless': isEditValue}" fxFlex [(selectedIndex)]="selectedTab">
+  <mat-tab-group class="tb-absolute-fill" [ngClass]="{'tb-headless': hideDetailsTabs()}" fxFlex [(selectedIndex)]="selectedTab">
     <mat-tab label="{{ 'details.details' | translate }}">
       <tb-anchor #entityDetailsForm></tb-anchor>
     </mat-tab>

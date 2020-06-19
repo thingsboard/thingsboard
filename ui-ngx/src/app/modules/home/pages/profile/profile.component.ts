@@ -14,24 +14,24 @@
 /// limitations under the License.
 ///
 
-import {Component, OnInit} from '@angular/core';
-import {UserService} from '@core/http/user.service';
-import {User} from '@shared/models/user.model';
-import {Authority} from '@shared/models/authority.enum';
-import {PageComponent} from '@shared/components/page.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {HasConfirmForm} from '@core/guards/confirm-on-exit.guard';
-import {ActionAuthUpdateUserDetails} from '@core/auth/auth.actions';
-import {environment as env} from '@env/environment';
-import {TranslateService} from '@ngx-translate/core';
-import {ActionSettingsChangeLanguage} from '@core/settings/settings.actions';
-import {ChangePasswordDialogComponent} from '@modules/home/pages/profile/change-password-dialog.component';
+import { Component, OnInit } from '@angular/core';
+import { UserService } from '@core/http/user.service';
+import { User } from '@shared/models/user.model';
+import { Authority } from '@shared/models/authority.enum';
+import { PageComponent } from '@shared/components/page.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
+import { ActionAuthUpdateUserDetails } from '@core/auth/auth.actions';
+import { environment as env } from '@env/environment';
+import { TranslateService } from '@ngx-translate/core';
+import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
+import { ChangePasswordDialogComponent } from '@modules/home/pages/profile/change-password-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import {DialogService} from '@core/services/dialog.service';
-import {AuthService} from '@core/auth/auth.service';
-import {ActivatedRoute} from '@angular/router';
+import { DialogService } from '@core/services/dialog.service';
+import { AuthService } from '@core/auth/auth.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'tb-profile',

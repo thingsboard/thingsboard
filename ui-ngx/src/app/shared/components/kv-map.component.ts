@@ -14,21 +14,19 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
-  ControlValueAccessor, FormArray,
-  FormBuilder, FormControl,
-  FormGroup, NG_VALIDATORS,
-  NG_VALUE_ACCESSOR, Validator,
-  ValidatorFn,
+  ControlValueAccessor,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  Validator,
   Validators
 } from '@angular/forms';
-import { AliasFilterType, aliasFilterTypeTranslationMap, EntityAliasFilter } from '@shared/models/alias.models';
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { TranslateService } from '@ngx-translate/core';
-import { EntityService } from '@core/http/entity.service';
-import { EntitySearchDirection, entitySearchDirectionTranslations, EntityTypeFilter } from '@shared/models/relation.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -119,6 +117,11 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
     this.valueChangeSubscription = this.kvListFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
+    if (this.disabled) {
+      this.kvListFormGroup.disable({emitEvent: false});
+    } else {
+      this.kvListFormGroup.enable({emitEvent: false});
+    }
   }
 
   public removeKeyVal(index: number) {

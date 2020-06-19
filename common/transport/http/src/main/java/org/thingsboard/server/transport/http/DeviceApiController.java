@@ -36,6 +36,7 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
@@ -61,7 +62,7 @@ import java.util.function.Consumer;
  * @author Andrew Shvayka
  */
 @RestController
-@ConditionalOnExpression("'${transport.type:null}'=='null' || ('${transport.type}'=='local' && '${transport.http.enabled}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.http.enabled}'=='true')")
 @RequestMapping("/api/v1")
 @Slf4j
 public class DeviceApiController {
@@ -102,6 +103,7 @@ public class DeviceApiController {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToAttributesProto(new JsonParser().parse(json)),
                             new HttpOkCallback(responseWriter));
+                    reportActivity(sessionInfo);
                 }));
         return responseWriter;
     }
@@ -115,6 +117,7 @@ public class DeviceApiController {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)),
                             new HttpOkCallback(responseWriter));
+                    reportActivity(sessionInfo);
                 }));
         return responseWriter;
     }
@@ -221,6 +224,8 @@ public class DeviceApiController {
                         .setDeviceIdLSB(deviceInfoProto.getDeviceIdLSB())
                         .setSessionIdMSB(sessionId.getMostSignificantBits())
                         .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                        .setDeviceName(msg.getDeviceInfo().getDeviceName())
+                        .setDeviceType(msg.getDeviceInfo().getDeviceType())
                         .build();
                 onSuccess.accept(sessionInfo);
             } else {
@@ -272,7 +277,6 @@ public class DeviceApiController {
         }
     }
 
-
     private static class HttpSessionListener implements SessionMsgListener {
 
         private final DeferredResult<ResponseEntity> responseWriter;
@@ -306,4 +310,13 @@ public class DeviceApiController {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
     }
+
+    private void reportActivity(SessionInfoProto sessionInfo) {
+        transportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
+                .setAttributeSubscription(false)
+                .setRpcSubscription(false)
+                .setLastActivityTime(System.currentTimeMillis())
+                .build(), TransportServiceCallback.EMPTY);
+    }
+
 }

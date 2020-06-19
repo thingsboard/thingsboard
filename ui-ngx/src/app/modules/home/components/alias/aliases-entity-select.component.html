@@ -16,16 +16,16 @@
 
 -->
 <section class="tb-aliases-entity-select" fxLayout="row" fxLayoutAlign="start center">
-  <button mat-button mat-icon-button
+  <button mat-icon-button
           cdkOverlayOrigin #aliasEntitySelectPanelOrigin="cdkOverlayOrigin"
           (click)="openEditMode()"
-          matTooltip="{{ 'entity.select-entities' | translate }}"
+          matTooltip="{{ hasSelectableAliasEntities ? ('entity.select-entities' | translate) : '' }}"
           [matTooltipPosition]="tooltipPosition">
     <mat-icon class="material-icons">devices_other</mat-icon>
   </button>
-  <span fxHide.xs fxHide.sm fxHide.md
+  <span fxHide.lt-lg
         (click)="openEditMode()"
-        matTooltip="{{ 'entity.select-entities' | translate }}"
+        matTooltip="{{ hasSelectableAliasEntities ? ('entity.select-entities' | translate) : '' }}"
         [matTooltipPosition]="tooltipPosition">
     {{displayValue}}
   </span>

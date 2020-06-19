@@ -16,23 +16,21 @@
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
-  Inject,
-  ComponentRef,
-  ElementRef,
-  ViewContainerRef,
-  ComponentFactory,
-  Injector,
-  ReflectiveInjector,
   Component,
-  OnDestroy
+  ComponentFactory,
+  ComponentRef, HostBinding,
+  Inject,
+  Injector,
+  OnDestroy,
+  ViewContainerRef
 } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import {
-  CustomDialogComponent,
   CUSTOM_DIALOG_DATA,
+  CustomDialogComponent,
   CustomDialogData
 } from '@home/components/widget/dialog/custom-dialog.component';
 
@@ -47,6 +45,8 @@ export interface CustomDialogContainerData {
   template: ''
 })
 export class CustomDialogContainerComponent extends DialogComponent<CustomDialogContainerComponent> implements OnDestroy {
+
+  @HostBinding('style.height') height = '0px';
 
   private readonly customComponentRef: ComponentRef<CustomDialogComponent>;
 

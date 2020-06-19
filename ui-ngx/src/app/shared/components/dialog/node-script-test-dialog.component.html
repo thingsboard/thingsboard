@@ -16,7 +16,7 @@
 
 -->
 <form class="tb-node-script-test-dialog"
-      #nodeScriptTestForm="ngForm" [formGroup]="nodeScriptTestFormGroup" (ngSubmit)="save()">
+      [formGroup]="nodeScriptTestFormGroup" (ngSubmit)="save()">
   <mat-toolbar fxLayout="row" color="primary">
     <h2>{{ 'rulenode.test-script-function' | translate }}</h2>
     <span fxFlex></span>
@@ -37,7 +37,7 @@
             <div formGroupName="payload" fxLayout="column" style="height: 100%;">
               <div fxLayout="row">
                 <tb-message-type-autocomplete
-                  style="margin-bottom: 0px; min-width: 300px;"
+                  style="margin-bottom: 0; min-width: 300px;"
                   formControlName="msgType"
                   required>
                 </tb-message-type-autocomplete>

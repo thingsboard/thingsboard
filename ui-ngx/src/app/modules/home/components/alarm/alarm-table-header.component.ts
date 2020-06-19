@@ -43,6 +43,6 @@ export class AlarmTableHeaderComponent extends EntityTableHeaderComponent<AlarmI
 
   searchStatusChanged(searchStatus: AlarmSearchStatus) {
     this.alarmTableConfig.searchStatus = searchStatus;
-    this.alarmTableConfig.table.updateData();
+    this.alarmTableConfig.table.resetSortAndFilter(true, true);
   }
 }

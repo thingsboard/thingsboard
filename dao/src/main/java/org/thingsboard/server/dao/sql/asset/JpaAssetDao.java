@@ -43,7 +43,6 @@ import java.util.UUID;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUIDs;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.

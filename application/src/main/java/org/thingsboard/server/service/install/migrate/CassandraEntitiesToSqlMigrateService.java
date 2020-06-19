@@ -62,11 +62,10 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
     @Value("${spring.datasource.password}")
     protected String dbPassword;
 
-
     @Override
     public void migrate() throws Exception {
         log.info("Performing migration of entities data from cassandra to SQL database ...");
-        entityDatabaseSchemaService.createDatabaseSchema();
+        entityDatabaseSchemaService.createDatabaseSchema(false);
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
             conn.setAutoCommit(false);
             for (CassandraToSqlTable table: tables) {
@@ -76,6 +75,7 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
             log.error("Unexpected error during ThingsBoard entities data migration!", e);
             throw e;
         }
+        entityDatabaseSchemaService.createDatabaseIndexes();
     }
 
     private static List<CassandraToSqlTable> tables = Arrays.asList(
@@ -135,7 +135,7 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
                 stringColumn("entity_type"),
                 stringColumn("attribute_type"),
                 stringColumn("attribute_key"),
-                booleanColumn("bool_v"),
+                booleanColumn("bool_v", true),
                 stringColumn("str_v"),
                 bigintColumn("long_v"),
                 doubleColumn("dbl_v"),
@@ -149,7 +149,19 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
                 stringColumn("search_text"),
                 stringColumn("clazz"),
                 stringColumn("configuration_descriptor"),
-                stringColumn("actions")),
+                stringColumn("actions")) {
+            @Override
+            protected boolean onConstraintViolation(List<CassandraToSqlColumnData[]> batchData,
+                                                    CassandraToSqlColumnData[] data, String constraint) {
+                if (constraint.equalsIgnoreCase("component_descriptor_clazz_key")) {
+                    String clazz = this.getColumnData(data, "clazz").getValue();
+                    log.warn("Found component_descriptor record with duplicate clazz [{}]. Record will be ignored!", clazz);
+                    this.ignoreRecord(batchData, data);
+                    return true;
+                }
+                return super.onConstraintViolation(batchData, data, constraint);
+            }
+        },
         new CassandraToSqlTable("customer",
                 idColumn("id"),
                 idColumn("tenant_id"),
@@ -203,7 +215,8 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
                 stringColumn("entity_type"),
                 stringColumn("event_type"),
                 stringColumn("event_uid"),
-                stringColumn("body")),
+                stringColumn("body"),
+                new CassandraToSqlEventTsColumn()),
         new CassandraToSqlTable("relation",
                 idColumn("from_id"),
                 stringColumn("from_type"),
@@ -245,7 +258,9 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
                 stringColumn("zip"),
                 stringColumn("phone"),
                 stringColumn("email"),
-                stringColumn("additional_info")),
+                stringColumn("additional_info"),
+                booleanColumn("isolated_tb_core"),
+                booleanColumn("isolated_tb_rule_engine")),
         new CassandraToSqlTable("user_credentials",
                 idColumn("id"),
                 idColumn("user_id"),

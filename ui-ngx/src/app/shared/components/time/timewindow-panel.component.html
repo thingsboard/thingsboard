@@ -39,11 +39,12 @@
               <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideInterval"
                             (ngModelChange)="onHideIntervalChanged()"></mat-checkbox>
             </section>
-            <section fxLayout="column" [fxShow]="isEdit || !timewindow.hideInterval">
+            <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideInterval">
               <div formGroupName="history" class="mat-content mat-padding" style="padding-top: 8px;">
                 <mat-radio-group formControlName="historyType">
                   <mat-radio-button [value]="historyTypes.LAST_INTERVAL" color="primary">
                     <section fxLayout="column">
+                      <span translate>timewindow.last</span>
                       <tb-timeinterval
                         formControlName="timewindowMs"
                         predefinedName="timewindow.last"
@@ -80,7 +81,7 @@
           <section fxFlex fxLayout="column" [fxShow]="isEdit || !timewindow.hideAggregation">
             <mat-form-field>
               <mat-label translate>aggregation.function</mat-label>
-              <mat-select matInput formControlName="type" style="min-width: 150px;">
+              <mat-select formControlName="type" style="min-width: 150px;">
                 <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
                   {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
                 </mat-option>
@@ -138,8 +139,7 @@
           predefinedName="aggregation.group-interval">
         </tb-timeinterval>
       </div>
-      <div fxLayout="row" class="tb-panel-actions">
-        <span fxFlex></span>
+      <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
         <button type="submit"
                 mat-raised-button
                 color="primary"

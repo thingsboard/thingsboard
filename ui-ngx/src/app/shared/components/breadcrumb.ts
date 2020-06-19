@@ -27,10 +27,10 @@ export interface BreadCrumb {
   queryParams: Params;
 }
 
-export type BreadCrumbLabelFunction = (route: ActivatedRouteSnapshot, translate: TranslateService, component: any) => string;
+export type BreadCrumbLabelFunction<C> = (route: ActivatedRouteSnapshot, translate: TranslateService, component: C, data?: any) => string;
 
-export interface BreadCrumbConfig {
-  labelFunction: BreadCrumbLabelFunction;
+export interface BreadCrumbConfig<C> {
+  labelFunction: BreadCrumbLabelFunction<C>;
   label: string;
   icon: string;
   skip: boolean;

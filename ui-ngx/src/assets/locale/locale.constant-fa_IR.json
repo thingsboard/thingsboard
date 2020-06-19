@@ -48,7 +48,7 @@
         "paste-reference": "رونوشت مرجع",
         "import": "وارد کردن",
         "export": "صدور",
-        "share-via": "{{provider}} اشتراک گذاري از طريق" 
+        "share-via": "{{provider}} اشتراک گذاري از طريق"
 	},
     "aggregation": {
         "aggregation": "تجميع",
@@ -336,7 +336,8 @@
         "password": "رمز عبور",
         "enter-username": "وارد کردن نام کاربري",
         "enter-password": "وارد کردن رمز عبور",
-        "enter-search": "وارد کردن جستجو"
+        "enter-search": "وارد کردن جستجو",
+        "created-time": "زمان ايجاد"
     },
     "content-type": {
         "json": "JSON",

@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -80,7 +80,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
 
     public AbstractAssetEntity(Asset asset) {
         if (asset.getId() != null) {
-            this.setId(asset.getId().getId());
+            this.setUuid(asset.getId().getId());
         }
         if (asset.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(asset.getTenantId().getId());
@@ -124,7 +124,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
 
     protected Asset toAsset() {
         Asset asset = new Asset(new AssetId(UUIDConverter.fromString(id)));
-        asset.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
+        asset.setCreatedTime(Uuids.unixTimestamp(UUIDConverter.fromString(id)));
         if (tenantId != null) {
             asset.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         }

@@ -371,7 +371,8 @@
         "password": "Пароль",
         "enter-username": "Введите имя пользователя",
         "enter-password": "Введите пароль",
-        "enter-search": "Введите условие поиска"
+        "enter-search": "Введите условие поиска",
+        "created-time": "Время создания"
     },
     "content-type": {
         "json": "Json",
@@ -809,6 +810,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Одно правило} other {Список из # правил} }",
         "rulenode-name-starts-with": "Правила, чьи названия начинаются с '{{prefix}}'",
         "type-current-customer": "Текущий клиент",
+        "type-current-tenant": "Текущий владелец",
         "search": "Поиск объектов",
         "selected-entities": "Выбран(ы) { count, plural, 1 {1 объект} few {# объекта} other {# объектов} }",
         "entity-name": "Название объекта",
@@ -1245,7 +1247,9 @@
         "new-password": "Новый пароль",
         "new-password-again": "Повторите новый пароль",
         "password-link-sent-message": "Ссылка для сброса пароля была успешно отправлена!",
-        "email": "Эл. адрес"
+        "email": "Эл. адрес",
+        "login-with": "Войти через {{name}}",
+        "or": "или"
     },
     "position": {
         "top": "Верх",
@@ -1401,6 +1405,11 @@
         "test": "Протестировать",
         "help": "Помощь",
         "reset-debug-mode": "Сбросить режим отладки во всех правилах"
+    },
+    "queue": {
+      "select_name": "Выберите имя для Queue",
+      "name": "Имя для Queue",
+      "name_required": "Поле 'Имя для Queue' обязательно к заполнению!"
     },
     "tenant": {
         "tenant": "Владелец",
@@ -1571,7 +1580,7 @@
     },
     "widget-action": {
         "header-button": "Кнопка заголовка виджета",
-        "open-dashboard-state": "Перейти к новомум состоянию дашборда",
+        "open-dashboard-state": "Перейти к новому состоянию дашборда",
         "update-dashboard-state": "Обновить текущее состояние дашборда",
         "open-dashboard": "Перейти к другому дашборду",
         "custom": "Пользовательское действие",

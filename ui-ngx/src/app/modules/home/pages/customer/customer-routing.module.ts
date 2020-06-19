@@ -14,16 +14,16 @@
 /// limitations under the License.
 ///
 
-import {NgModule} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
 
-import {EntitiesTableComponent} from '../../components/entity/entities-table.component';
-import {Authority} from '@shared/models/authority.enum';
-import {UsersTableConfigResolver} from '../user/users-table-config.resolver';
-import {CustomersTableConfigResolver} from './customers-table-config.resolver';
-import {DevicesTableConfigResolver} from '@modules/home/pages/device/devices-table-config.resolver';
-import {AssetsTableConfigResolver} from '../asset/assets-table-config.resolver';
-import {DashboardsTableConfigResolver} from '@modules/home/pages/dashboard/dashboards-table-config.resolver';
+import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
+import { Authority } from '@shared/models/authority.enum';
+import { UsersTableConfigResolver } from '../user/users-table-config.resolver';
+import { CustomersTableConfigResolver } from './customers-table-config.resolver';
+import { DevicesTableConfigResolver } from '@modules/home/pages/device/devices-table-config.resolver';
+import { AssetsTableConfigResolver } from '../asset/assets-table-config.resolver';
+import { DashboardsTableConfigResolver } from '@modules/home/pages/dashboard/dashboards-table-config.resolver';
 import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
@@ -124,7 +124,7 @@ const routes: Routes = [
               breadcrumb: {
                 labelFunction: dashboardBreadcumbLabelFunction,
                 icon: 'dashboard'
-              } as BreadCrumbConfig,
+              } as BreadCrumbConfig<DashboardPageComponent>,
               auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
               title: 'customer.dashboard',
               widgetEditMode: false

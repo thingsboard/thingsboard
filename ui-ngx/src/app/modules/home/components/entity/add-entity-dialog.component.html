@@ -16,11 +16,11 @@
 
 -->
 <form (ngSubmit)="add()" style="min-width: 400px;" [ngStyle]="entitiesTableConfig.addDialogStyle">
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar color="primary">
     <h2 translate>{{ translations.add }}</h2>
     <span fxFlex></span>
-    <div [tb-help]="resources.helpLinkId"></div>
-    <button mat-button mat-icon-button
+    <div [tb-help]="helpLinkId()"></div>
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -32,15 +32,13 @@
   <div mat-dialog-content>
     <tb-anchor #entityDetailsForm></tb-anchor>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty">
+            [disabled]="(isLoading$ | async) || detailsForm?.invalid || !detailsForm?.dirty">
       {{ 'action.add' | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             cdkFocusInitial
             [disabled]="(isLoading$ | async)"

@@ -16,36 +16,39 @@
 
 -->
 <div class="trip-animation-control-panel">
-    <div>
+    <div fxFlex fxLayout="row" fxFlexAlign="center">
         <button mat-icon-button class="mat-icon-button" aria-label="Start" (click)="moveStart()">
             <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">fast_rewind</mat-icon>
         </button>
         <button mat-icon-button class="mat-icon-button" aria-label="Previous" (click)="movePrev()">
             <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">skip_previous</mat-icon>
         </button>
-        <mat-slider [(ngModel)]="index" [min]="minTimeIndex" [max]="maxTimeIndex" (change)="changeIndex()">
-        </mat-slider>
+        <div fxLayout="column" fxFlex="100">
+            <mat-slider [(ngModel)]="index" [min]="minTimeIndex" [max]="maxTimeIndex" (change)="changeIndex()">
+            </mat-slider>
+            <div class="panel-timer">
+                <span *ngIf="this.currentTime">{{ this.currentTime | date:'medium'}}</span>
+                <span *ngIf="!this.currentTime">{{ "widget.no-data-found" | translate}}</span>
+            </div>
+        </div>
         <button mat-icon-button class="mat-icon-button" aria-label="Next" (click)="moveNext()">
             <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">skip_next</mat-icon>
         </button>
         <button mat-icon-button class="mat-icon-button" aria-label="End" (click)="moveEnd()">
             <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">fast_forward</mat-icon>
         </button>
-        <button mat-icon-button class="mat-icon-button" aria-label="Play">
-            <mat-icon (click)="play()" *ngIf="!playing" class="material-icons"
-                [ngStyle]="{'color': settings.buttonColor}">
+        <button mat-icon-button class="mat-icon-button" *ngIf="!playing" (click)="play()" aria-label="Play">
+            <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">
                 play_circle_outline
             </mat-icon>
-            <mat-icon (click)="pause()" *ngIf="playing" class="material-icons"
-                [ngStyle]="{'color': settings.buttonColor}">
+        </button>
+        <button mat-icon-button class="mat-icon-button" *ngIf="playing" (click)="pause()" aria-label="Stop">
+            <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">
                 pause_circle_outline
             </mat-icon>
         </button>
-        <mat-select matInput [(ngModel)]="speed" (selectionChange)="reeneble()" class="speed-select" aria-label="Speed selector">
-            <mat-option [value]="speedValue" flex="1" *ngFor="let speedValue of speeds">{{speedValue}} </mat-option>
+        <mat-select [(ngModel)]="speed" (selectionChange)="reeneble()" class="speed-select" aria-label="Speed selector">
+            <mat-option [value]="speedValue" *ngFor="let speedValue of speeds">{{speedValue}} </mat-option>
         </mat-select>
     </div>
-    <div class="panel-timer">
-        <span *ngIf="this.intervals[this.index]">{{ this.intervals[this.index] | date:'medium'}}</span>
-        <span *ngIf="!this.intervals[this.index]">{{ "widget.no-data-found" | translate}}</span>
-    </div>
+</div>

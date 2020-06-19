@@ -53,6 +53,7 @@ import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { SafeStyle } from '@angular/platform-browser';
 import { distinct } from 'rxjs/operators';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-dashboard',
@@ -121,7 +122,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   dashboardClass: string;
 
   @Input()
-  ignoreLoading: boolean;
+  ignoreLoading = true;
 
   @Input()
   dashboardTimewindow: Timewindow;
@@ -153,8 +154,6 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   widgetContextMenuEvent: MouseEvent;
 
-  dashboardLoading = true;
-
   dashboardWidgets = new DashboardWidgets(this,
     this.differs.find([]).create<Widget>((index, item) => {
       return item;
@@ -166,7 +165,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   private optionsChangeNotificationsPaused = false;
 
-  private gridsterResizeListener = null;
+  private gridsterResize$: ResizeObserver;
 
   constructor(protected store: Store<AppState>,
               private timeService: TimeService,
@@ -197,7 +196,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       maxItemRows: 1000,
       maxItemArea: 1000000,
       outerMargin: true,
-      margin: this.margin ? this.margin : 10,
+      margin: isDefined(this.margin) ? this.margin : 10,
       minItemCols: 1,
       minItemRows: 1,
       defaultItemCols: 8,
@@ -225,9 +224,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.gridsterResizeListener) {
-      // @ts-ignore
-      removeResizeListener(this.gridster.el, this.gridsterResizeListener);
+    if (this.gridsterResize$) {
+      this.gridsterResize$.disconnect();
     }
     if (this.breakpointObserverSubscription) {
       this.breakpointObserverSubscription.unsubscribe();
@@ -282,7 +280,6 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   private updateWidgets() {
     this.dashboardWidgets.setWidgets(this.widgets, this.widgetLayouts);
     this.dashboardWidgets.doCheck();
-    this.dashboardLoading = false;
   }
 
   private updateWidgetLayouts() {
@@ -290,9 +287,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   ngAfterViewInit(): void {
-    this.gridsterResizeListener = this.onGridsterParentResize.bind(this);
-    // @ts-ignore
-    addResizeListener(this.gridster.el, this.gridsterResizeListener);
+    this.gridsterResize$ = new ResizeObserver(() => {
+      this.onGridsterParentResize()
+    });
+    this.gridsterResize$.observe(this.gridster.el);
   }
 
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number, persist?: boolean): void {
@@ -491,13 +489,13 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     const parentHeight = this.gridster.el.offsetHeight;
     if (this.isMobileSize && this.mobileAutofillHeight && parentHeight) {
       this.updateMobileOpts(parentHeight);
-      this.notifyGridsterOptionsChanged();
     }
+    this.notifyGridsterOptionsChanged();
   }
 
   private updateLayoutOpts() {
     this.gridsterOpts.minCols = this.columns ? this.columns : 24;
-    this.gridsterOpts.margin = this.margin ? this.margin : 10;
+    this.gridsterOpts.margin = isDefined(this.margin) ? this.margin : 10;
   }
 
   private updateEditingOpts() {

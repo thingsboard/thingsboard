@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -56,7 +56,7 @@ public final class AdminSettingsEntity extends BaseSqlEntity<AdminSettings> impl
 
     public AdminSettingsEntity(AdminSettings adminSettings) {
         if (adminSettings.getId() != null) {
-            this.setId(adminSettings.getId().getId());
+            this.setUuid(adminSettings.getId().getId());
         }
         this.key = adminSettings.getKey();
         this.jsonValue = adminSettings.getJsonValue();
@@ -65,7 +65,7 @@ public final class AdminSettingsEntity extends BaseSqlEntity<AdminSettings> impl
     @Override
     public AdminSettings toData() {
         AdminSettings adminSettings = new AdminSettings(new AdminSettingsId(UUIDConverter.fromString(id)));
-        adminSettings.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
+        adminSettings.setCreatedTime(Uuids.unixTimestamp(UUIDConverter.fromString(id)));
         adminSettings.setKey(key);
         adminSettings.setJsonValue(jsonValue);
         return adminSettings;

@@ -23,31 +23,61 @@
                         'tb-dashboard-toolbar-closed': !toolbarOpened }">
     <tb-dashboard-toolbar [fxShow]="!widgetEditMode" [forceFullscreen]="forceFullscreen"
                           [toolbarOpened]="toolbarOpened" (triggerClick)="openToolbar()">
-      <div class="tb-dashboard-action-panels" fxLayout="column-reverse" fxLayout.gt-sm="row-reverse"
+      <div class="tb-dashboard-action-panels" fxLayout="column" fxLayout.gt-sm="row"
            fxLayoutAlign="center stretch" fxLayoutAlign.gt-sm="space-between center">
-        <div class="tb-dashboard-action-panel" fxFlex.md="30" fxLayout="row-reverse"
+        <div class="tb-dashboard-action-panel" fxFlex="auto" fxLayout="row-reverse"
+             fxLayoutAlign.gt-sm="end center" fxLayoutAlign="space-between center" fxLayoutGap="12px">
+          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.gt-sm displayUserInfo="true">
+          </tb-user-menu>
+          <div [fxShow]="isEdit"
+               fxFlex.lt-md fxLayout="row"
+               fxLayoutAlign.gt-sm="start center"
+               fxLayoutAlign="end center" fxLayoutGap="12px">
+            <button mat-icon-button
+                    matTooltip="{{'dashboard.manage-states' | translate}}"
+                    matTooltipPosition="below"
+                    (click)="manageDashboardStates($event)">
+              <mat-icon>layers</mat-icon>
+            </button>
+            <button mat-icon-button
+                    matTooltip="{{'layout.manage' | translate}}"
+                    matTooltipPosition="below"
+                    (click)="manageDashboardLayouts($event)">
+              <mat-icon>view_compact</mat-icon>
+            </button>
+          </div>
+          <tb-states-component fxFlex.lt-md
+                               [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
+                               [dashboardCtrl]="this"
+                               [dashboardId]="dashboard.id ? dashboard.id.id : ''"
+                               [isMobile]="isMobile"
+                               [state]="dashboardCtx.state"
+                               [states]="dashboardConfiguration.states">
+          </tb-states-component>
+        </div>
+        <div class="tb-dashboard-action-panel" fxFlex="1 0 auto" fxLayout="row-reverse"
              fxLayoutAlign.gt-sm="start center" fxLayoutAlign="space-between center" fxLayoutGap="12px">
-          <button [fxShow]="showCloseToolbar()" mat-button mat-icon-button class="close-action"
+          <button [fxShow]="showCloseToolbar()" mat-icon-button class="close-action"
                   matTooltip="{{ 'dashboard.close-toolbar' | translate }}"
                   matTooltipPosition="below"
                   (click)="closeToolbar()">
             <mat-icon>arrow_forward</mat-icon>
           </button>
-          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.xs fxHide.sm displayUserInfo="true">
+          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.lt-md displayUserInfo="true">
           </tb-user-menu>
-          <button [fxShow]="showRightLayoutSwitch()" mat-button mat-icon-button
+          <button [fxShow]="showRightLayoutSwitch()" mat-icon-button
                   matTooltip="{{ (isRightLayoutOpened ? 'dashboard.hide-details' : 'dashboard.show-details') | translate }}"
                   matTooltipPosition="below"
                   (click)="toggleLayouts()">
             <mat-icon>{{isRightLayoutOpened ? 'arrow_back' : 'menu'}}</mat-icon>
           </button>
-          <button [fxShow]="!hideFullscreenButton()" mat-button mat-icon-button
+          <button [fxShow]="!hideFullscreenButton()" mat-icon-button
                   matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
                   matTooltipPosition="below"
                   (click)="isFullscreen = !isFullscreen">
             <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
           </button>
-          <button [fxShow]="isEdit || displayExport()" mat-button mat-icon-button
+          <button [fxShow]="isEdit || displayExport()" mat-icon-button
                   matTooltip="{{'dashboard.export' | translate}}"
                   matTooltipPosition="below"
                   (click)="exportDashboard($event)">
@@ -65,13 +95,13 @@
                                     tooltipPosition="below"
                                     [aliasController]="dashboardCtx.aliasController">
           </tb-aliases-entity-select>
-          <button [fxShow]="isEdit" mat-button mat-icon-button
+          <button [fxShow]="isEdit" mat-icon-button
                   matTooltip="{{ 'entity.aliases' | translate }}"
                   matTooltipPosition="below"
                   (click)="openEntityAliases($event)">
             <mat-icon>devices_other</mat-icon>
           </button>
-          <button [fxShow]="isEdit" mat-button mat-icon-button
+          <button [fxShow]="isEdit" mat-icon-button
                   matTooltip="{{ 'dashboard.settings' | translate }}"
                   matTooltipPosition="below"
                   (click)="openDashboardSettings($event)">
@@ -83,36 +113,6 @@
                                [customerId]="currentCustomerId"
                                [dashboardsScope]="currentDashboardScope">
           </tb-dashboard-select>
-        </div>
-        <div class="tb-dashboard-action-panel" fxFlex.md="70" fxLayout="row-reverse"
-             fxLayoutAlign.gt-sm="end center" fxLayoutAlign="space-between center" fxLayoutGap="12px">
-          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.gt-sm displayUserInfo="true">
-          </tb-user-menu>
-          <div [fxShow]="isEdit"
-               fxFlex.xs fxFlex.sm fxLayout="row"
-               fxLayoutAlign.gt-sm="start center"
-               fxLayoutAlign="space-between center" fxLayoutGap="12px">
-            <button mat-button mat-icon-button
-                    matTooltip="{{'dashboard.manage-states' | translate}}"
-                    matTooltipPosition="below"
-                    (click)="manageDashboardStates($event)">
-              <mat-icon>layers</mat-icon>
-            </button>
-            <button mat-button mat-icon-button
-                    matTooltip="{{'layout.manage' | translate}}"
-                    matTooltipPosition="below"
-                    (click)="manageDashboardLayouts($event)">
-              <mat-icon>view_compact</mat-icon>
-            </button>
-          </div>
-          <tb-states-component fxFlex.xs fxFlex.sm
-                               [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
-                               [dashboardCtrl]="this"
-                               [dashboardId]="dashboard.id ? dashboard.id.id : ''"
-                               [isMobile]="isMobile"
-                               [state]="dashboardCtx.state"
-                               [states]="dashboardConfiguration.states">
-          </tb-states-component>
         </div>
       </div>
     </tb-dashboard-toolbar>
@@ -216,7 +216,7 @@
                           (closeDetails)="onEditWidgetClosed()"
                           (toggleDetailsEditMode)="onRevertWidgetEdit()"
                           (applyDetails)="saveWidget()"
-                          [theForm]="tbEditWidget.widgetForm">
+                          [theForm]="tbEditWidget.widgetFormGroup">
           <div class="details-buttons">
             <div [tb-help]="helpLinkIdForWidgetType()"></div>
           </div>

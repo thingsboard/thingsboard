@@ -224,6 +224,26 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     @Override
+    public List<ComponentDescriptor> getComponents(ComponentType type, RuleChainType ruleChainType) {
+        if (RuleChainType.SYSTEM.equals(ruleChainType)) {
+            if (systemComponentsMap.containsKey(type)) {
+                return Collections.unmodifiableList(systemComponentsMap.get(type));
+            } else {
+                return Collections.emptyList();
+            }
+        } else if (RuleChainType.EDGE.equals(ruleChainType)) {
+            if (edgeComponentsMap.containsKey(type)) {
+                return Collections.unmodifiableList(edgeComponentsMap.get(type));
+            } else {
+                return Collections.emptyList();
+            }
+        } else {
+            log.error("Unsupported rule chain type {}", ruleChainType);
+            throw new RuntimeException("Unsupported rule chain type " + ruleChainType);
+        }
+    }
+
+    @Override
     public List<ComponentDescriptor> getComponents(Set<ComponentType> types, RuleChainType ruleChainType) {
         if (RuleChainType.SYSTEM.equals(ruleChainType)) {
             return getComponents(types, systemComponentsMap);
@@ -233,6 +253,11 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             log.error("Unsupported rule chain type {}", ruleChainType);
             throw new RuntimeException("Unsupported rule chain type " + ruleChainType);
         }
+    }
+
+    @Override
+    public Optional<ComponentDescriptor> getComponent(String clazz) {
+        return Optional.ofNullable(components.get(clazz));
     }
 
     private List<ComponentDescriptor> getComponents(Set<ComponentType> types, Map<ComponentType, List<ComponentDescriptor>> componentsMap) {

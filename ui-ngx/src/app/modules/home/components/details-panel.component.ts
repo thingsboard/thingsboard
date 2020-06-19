@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { NgForm } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'tb-details-panel',
@@ -33,14 +33,14 @@ export class DetailsPanelComponent extends PageComponent {
   @Input() isReadOnly = false;
   @Input() isAlwaysEdit = false;
 
-  theFormValue: NgForm;
+  theFormValue: FormGroup;
 
   @Input()
-  set theForm(value: NgForm) {
+  set theForm(value: FormGroup) {
     this.theFormValue = value;
   }
 
-  get theForm(): NgForm {
+  get theForm(): FormGroup {
     return this.theFormValue;
   }
 

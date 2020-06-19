@@ -28,7 +28,8 @@ import {
   MissingTranslationHandler,
   TranslateCompiler,
   TranslateLoader,
-  TranslateModule
+  TranslateModule,
+  TranslateParser
 } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TbMissingTranslationHandler } from './translate/missing-translate-handler';
@@ -39,6 +40,7 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import { TranslateDefaultCompiler } from '@core/translate/translate-default-compiler';
 import { WINDOW_PROVIDERS } from '@core/services/window.service';
 import { HotkeyModule } from 'angular2-hotkeys';
+import { TranslateDefaultParser } from '@core/translate/translate-default-parser';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/locale/locale.constant-', '.json');
@@ -67,6 +69,10 @@ export function HttpLoaderFactory(http: HttpClient) {
       compiler: {
         provide: TranslateCompiler,
         useClass: TranslateDefaultCompiler
+      },
+      parser: {
+        provide: TranslateParser,
+        useClass: TranslateDefaultParser
       }
     }),
     HotkeyModule.forRoot(),

@@ -61,18 +61,29 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     }
   }
 
+  private lastChild(route: ActivatedRouteSnapshot) {
+    let child = route;
+    while (child.firstChild !== null) {
+      child = child.firstChild;
+    }
+    return child;
+  }
 
-  buildBreadCrumbs(route: ActivatedRouteSnapshot, breadcrumbs: Array<BreadCrumb> = []): Array<BreadCrumb> {
+  buildBreadCrumbs(route: ActivatedRouteSnapshot, breadcrumbs: Array<BreadCrumb> = [],
+                   lastChild?: ActivatedRouteSnapshot): Array<BreadCrumb> {
+    if (!lastChild) {
+      lastChild = this.lastChild(route);
+    }
     let newBreadcrumbs = breadcrumbs;
     if (route.routeConfig && route.routeConfig.data) {
-      const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig;
+      const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig<any>;
       if (breadcrumbConfig && !breadcrumbConfig.skip) {
         let label;
         let labelFunction;
         let ignoreTranslate;
         if (breadcrumbConfig.labelFunction) {
           labelFunction = () => {
-            return breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue);
+            return breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue, lastChild.data);
           };
           ignoreTranslate = true;
         } else {
@@ -82,7 +93,6 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
         const icon = breadcrumbConfig.icon || 'home';
         const isMdiIcon = icon.startsWith('mdi:');
         const link = [ route.pathFromRoot.map(v => v.url.map(segment => segment.toString()).join('/')).join('/') ];
-        const queryParams = route.queryParams;
         const breadcrumb = {
           label,
           labelFunction,
@@ -90,13 +100,13 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
           icon,
           isMdiIcon,
           link,
-          queryParams
+          queryParams: null
         };
         newBreadcrumbs = [...breadcrumbs, breadcrumb];
       }
     }
     if (route.firstChild) {
-      return this.buildBreadCrumbs(route.firstChild, newBreadcrumbs);
+      return this.buildBreadCrumbs(route.firstChild, newBreadcrumbs, lastChild);
     }
     return newBreadcrumbs;
   }

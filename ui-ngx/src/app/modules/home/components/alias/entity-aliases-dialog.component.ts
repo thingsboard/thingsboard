@@ -16,7 +16,7 @@
 
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
@@ -26,11 +26,11 @@ import {
   FormControl,
   FormGroup,
   FormGroupDirective,
-  NgForm, Validators
+  NgForm,
+  Validators
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { AttributeData } from '@shared/models/telemetry/telemetry.models';
 import { EntityAlias, EntityAliases, EntityAliasFilter } from '@shared/models/alias.models';
 import { DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -39,7 +39,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
 import { deepClone, isUndefined } from '@core/utils';
-import { MatDialog } from '@angular/material/dialog';
 import { EntityAliasDialogComponent, EntityAliasDialogData } from './entity-alias-dialog.component';
 
 export interface EntityAliasesDialogData {

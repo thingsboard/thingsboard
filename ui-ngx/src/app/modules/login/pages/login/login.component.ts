@@ -23,6 +23,7 @@ import { FormBuilder } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Constants } from '@shared/models/constants';
 import { Router } from '@angular/router';
+import { OAuth2Client } from '@shared/models/login.models';
 
 @Component({
   selector: 'tb-login',
@@ -35,6 +36,7 @@ export class LoginComponent extends PageComponent implements OnInit {
     username: '',
     password: ''
   });
+  oauth2Clients: Array<OAuth2Client> = null;
 
   constructor(protected store: Store<AppState>,
               private authService: AuthService,
@@ -44,6 +46,7 @@ export class LoginComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.oauth2Clients = this.authService.oauth2Clients;
   }
 
   login(): void {

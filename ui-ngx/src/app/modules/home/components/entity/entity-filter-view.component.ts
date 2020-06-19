@@ -102,14 +102,14 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
           }
           break;
         case AliasFilterType.entityViewType:
-          const entityViewType = this.filter.entityViewType;
+          const entityView = this.filter.entityViewType;
           prefix = this.filter.entityViewNameFilter;
           if (prefix && prefix.length) {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-entity-view-type-and-name-description',
-              {entityViewType, prefix});
+              {entityView, prefix});
           } else {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-entity-view-type-description',
-              {entityViewType});
+              {entityView});
           }
           break;
         case AliasFilterType.relationsQuery:

@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -106,6 +106,17 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId().toString(), Device.class);
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
+    }
+
+    @Test
+    public void testUpdateDeviceFromDifferentTenant() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        loginDifferentTenant();
+        doPost("/api/device", savedDevice, Device.class, status().isForbidden());
+        deleteDifferentTenant();
     }
     
     @Test
@@ -215,7 +226,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         
-        doPost("/api/customer/" + UUIDs.timeBased().toString()
+        doPost("/api/customer/" + Uuids.timeBased().toString()
                 + "/device/" + savedDevice.getId().getId().toString())
         .andExpect(status().isNotFound());
     }
@@ -333,7 +344,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-        DeviceCredentials newDeviceCredentials = new DeviceCredentials(new DeviceCredentialsId(UUIDs.timeBased()));
+        DeviceCredentials newDeviceCredentials = new DeviceCredentials(new DeviceCredentialsId(Uuids.timeBased()));
         newDeviceCredentials.setCreatedTime(deviceCredentials.getCreatedTime());
         newDeviceCredentials.setDeviceId(deviceCredentials.getDeviceId());
         newDeviceCredentials.setCredentialsType(deviceCredentials.getCredentialsType());
@@ -351,7 +362,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-        deviceCredentials.setDeviceId(new DeviceId(UUIDs.timeBased()));
+        deviceCredentials.setDeviceId(new DeviceId(Uuids.timeBased()));
         doPost("/api/device/credentials", deviceCredentials)
         .andExpect(status().isNotFound());
     }

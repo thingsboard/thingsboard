@@ -20,7 +20,7 @@ import { FooterComponent } from '@shared/components/footer.component';
 import { LogoComponent } from '@shared/components/logo.component';
 import { TbSnackBarComponent, ToastDirective } from '@shared/components/toast.directive';
 import { BreadcrumbComponent } from '@shared/components/breadcrumb.component';
-import { NgxFlowModule, FlowInjectionToken } from '@flowjs/ngx-flow';
+import { FlowInjectionToken, NgxFlowModule } from '@flowjs/ngx-flow';
 import { NgxFlowchartModule } from 'ngx-flowchart/dist/ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
@@ -94,8 +94,11 @@ import { EntityListSelectComponent } from '@shared/components/entity/entity-list
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { FooterFabButtonsComponent } from '@shared/components/footer-fab-buttons.component';
 import { CircularProgressDirective } from '@shared/components/circular-progress.directive';
-import { MatSpinner } from '@angular/material/progress-spinner';
-import { FabToolbarComponent, FabActionsDirective, FabTriggerDirective } from '@shared/components/fab-toolbar.component';
+import {
+  FabActionsDirective,
+  FabToolbarComponent,
+  FabTriggerDirective
+} from '@shared/components/fab-toolbar.component';
 import { DashboardSelectPanelComponent } from '@shared/components/dashboard-select-panel.component';
 import { DashboardSelectComponent } from '@shared/components/dashboard-select.component';
 import { WidgetsBundleSelectComponent } from '@shared/components/widgets-bundle-select.component';
@@ -128,7 +131,9 @@ import { LedLightComponent } from '@shared/components/led-light.component';
 import { TbJsonToStringDirective } from '@shared/components/directives/tb-json-to-string.directive';
 import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { HistorySelectorComponent } from './components/time/history-selector/history-selector.component';
-import { TbTemplatePipe } from '@shared/pipe/template.pipe';
+import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
+import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
+import { ContactComponent } from '@shared/components/contact.component';
 
 @NgModule({
   providers: [
@@ -179,6 +184,7 @@ import { TbTemplatePipe } from '@shared/pipe/template.pipe';
     EntityKeysListComponent,
     EntityListSelectComponent,
     EntityTypeListComponent,
+    QueueTypeListComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
@@ -209,11 +215,12 @@ import { TbTemplatePipe } from '@shared/pipe/template.pipe';
     HighlightPipe,
     TruncatePipe,
     TbJsonPipe,
-    TbTemplatePipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
-    HistorySelectorComponent
+    HistorySelectorComponent,
+    EntityGatewaySelectComponent,
+    ContactComponent
   ],
   imports: [
     CommonModule,
@@ -296,6 +303,7 @@ import { TbTemplatePipe } from '@shared/pipe/template.pipe';
     EntityKeysListComponent,
     EntityListSelectComponent,
     EntityTypeListComponent,
+    QueueTypeListComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
@@ -369,11 +377,12 @@ import { TbTemplatePipe } from '@shared/pipe/template.pipe';
     HighlightPipe,
     TruncatePipe,
     TbJsonPipe,
-    TbTemplatePipe,
     KeyboardShortcutPipe,
     TranslateModule,
     JsonObjectEditDialogComponent,
-    HistorySelectorComponent
+    HistorySelectorComponent,
+    EntityGatewaySelectComponent,
+    ContactComponent
   ]
 })
 export class SharedModule { }

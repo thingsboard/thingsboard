@@ -13,8 +13,6 @@
     <logger name="org.apache.cassandra" level="WARN"/>
     <logger name="org.cassandraunit" level="INFO"/>
 
-    <logger name="akka" level="INFO" />
-
     <root level="WARN">
         <appender-ref ref="console"/>
     </root>

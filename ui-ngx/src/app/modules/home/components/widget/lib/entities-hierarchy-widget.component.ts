@@ -37,7 +37,7 @@ import {
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { deepClone } from '@core/utils';
+import { deepClone, hashCode } from '@core/utils';
 import {
   defaultNodeIconFunction,
   defaultNodeOpenedFunction,
@@ -186,7 +186,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();
     cssParser.testMode = false;
-    const namespace = 'entities-hierarchy-' + this.utils.hashCode(cssString);
+    const namespace = 'entities-hierarchy-' + hashCode(cssString);
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);

@@ -15,9 +15,8 @@
     limitations under the License.
 
 -->
-<form #saveWidgetTypeAsForm="ngForm"
-      [formGroup]="saveWidgetTypeAsFormGroup"(ngSubmit)="saveAs()">
-  <mat-toolbar fxLayout="row" color="primary">
+<form [formGroup]="saveWidgetTypeAsFormGroup" (ngSubmit)="saveAs()">
+  <mat-toolbar color="primary">
     <h2 translate>widget.save-widget-type-as</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -46,16 +45,14 @@
       </tb-widgets-bundle-select>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || saveWidgetTypeAsForm.invalid
-            || !saveWidgetTypeAsForm.dirty">
+            [disabled]="(isLoading$ | async) || saveWidgetTypeAsFormGroup.invalid
+            || !saveWidgetTypeAsFormGroup.dirty">
       {{ 'action.saveAs' | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

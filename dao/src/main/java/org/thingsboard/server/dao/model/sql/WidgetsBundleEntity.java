@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.model.sql;
 
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.UUIDConverter;
@@ -55,7 +55,7 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
 
     public WidgetsBundleEntity(WidgetsBundle widgetsBundle) {
         if (widgetsBundle.getId() != null) {
-            this.setId(widgetsBundle.getId().getId());
+            this.setUuid(widgetsBundle.getId().getId());
         }
         if (widgetsBundle.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(widgetsBundle.getTenantId().getId());
@@ -77,7 +77,7 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
     @Override
     public WidgetsBundle toData() {
         WidgetsBundle widgetsBundle = new WidgetsBundle(new WidgetsBundleId(UUIDConverter.fromString(id)));
-        widgetsBundle.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
+        widgetsBundle.setCreatedTime(Uuids.unixTimestamp(UUIDConverter.fromString(id)));
         if (tenantId != null) {
             widgetsBundle.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         }

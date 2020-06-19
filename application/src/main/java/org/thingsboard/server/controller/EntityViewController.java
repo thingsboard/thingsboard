@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -64,6 +65,7 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
  * Created by Victor Basanets on 8/28/2017.
  */
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
 public class EntityViewController extends BaseController {
@@ -102,10 +104,7 @@ public class EntityViewController extends BaseController {
         try {
             entityView.setTenantId(getCurrentUser().getTenantId());
 
-            Operation operation = entityView.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation,
-                    entityView.getId(), entityView);
+            checkEntity(entityView.getId(), entityView, Resource.ENTITY_VIEW);
 
             EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
             List<ListenableFuture<List<Void>>> futures = new ArrayList<>();

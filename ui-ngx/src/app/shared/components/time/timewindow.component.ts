@@ -14,32 +14,19 @@
 /// limitations under the License.
 ///
 
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef, Inject,
-  Input,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-  ViewContainerRef
-} from '@angular/core';
+import { Component, forwardRef, Inject, Input, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import {
+  cloneSelectedTimewindow,
   HistoryWindowType,
+  initModelFromDefaultTimewindow,
   Timewindow,
-  TimewindowType,
-  initModelFromDefaultTimewindow, cloneSelectedTimewindow
+  TimewindowType
 } from '@shared/models/time/time.models';
-import { DatePipe } from '@angular/common';
-import {
-  Overlay,
-  CdkOverlayOrigin,
-  OverlayConfig,
-  OverlayPositionBuilder, ConnectedPosition, PositionStrategy, OverlayRef
-} from '@angular/cdk/overlay';
+import { DatePipe, DOCUMENT } from '@angular/common';
+import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import {
   TIMEWINDOW_PANEL_DATA,
   TimewindowPanelComponent,
@@ -48,7 +35,6 @@ import {
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
 import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/tooltip';
@@ -163,14 +149,14 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     if (this.timewindowDisabled) {
       return;
     }
-    const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
+    const isGtXs = this.breakpointObserver.isMatched(MediaBreakpoints['gt-xs']);
     const position = this.overlay.position();
     const config = new OverlayConfig({
       panelClass: 'tb-timewindow-panel',
       backdropClass: 'cdk-overlay-transparent-backdrop',
-      hasBackdrop: isGtSm,
+      hasBackdrop: isGtXs,
     });
-    if (isGtSm) {
+    if (isGtXs) {
       config.minWidth = '417px';
       config.maxHeight = '440px';
       const panelHeight = 375;

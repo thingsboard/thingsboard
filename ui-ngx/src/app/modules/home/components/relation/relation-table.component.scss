@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
+
 :host {
   width: 100%;
   height: 100%;
@@ -21,6 +23,14 @@
       width: 100%;
       height: 100%;
       background: #fff;
+
+      .mat-toolbar-tools{
+        min-height: auto;
+      }
+
+      .title-container{
+        overflow: hidden;
+      }
 
       .tb-entity-table-title {
         padding-right: 20px;
@@ -32,6 +42,24 @@
       .table-container {
         overflow: auto;
       }
+
+      .tb-entity-table-info{
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  @media #{$mat-xs} {
+    .mat-toolbar {
+      height: auto;
+      min-height: 100px;
+
+      .tb-entity-table-title{
+        padding-bottom: 5px;
+        width: 100%;
+      }
     }
   }
 }
@@ -42,6 +70,7 @@
   }
   mat-form-field.tb-relation-direction {
     font-size: 16px;
+    width: 200px;
 
     .mat-form-field-wrapper {
       padding-bottom: 0;
@@ -49,6 +78,14 @@
 
     .mat-form-field-underline {
       bottom: 0;
+    }
+
+    @media #{$mat-xs} {
+      width: 100%;
+
+      .mat-form-field-infix {
+        width: auto !important;
+      }
     }
   }
 }

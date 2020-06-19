@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,10 +26,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
@@ -42,6 +51,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -61,14 +71,13 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -78,6 +87,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -90,7 +100,11 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -99,7 +113,6 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Optional;
@@ -109,6 +122,7 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
+@TbCoreComponent
 public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
@@ -159,7 +173,7 @@ public abstract class BaseController {
     protected RuleChainService ruleChainService;
 
     @Autowired
-    protected ActorService actorService;
+    protected TbClusterService tbClusterService;
 
     @Autowired
     protected RelationService relationService;
@@ -174,6 +188,9 @@ public abstract class BaseController {
     protected EntityViewService entityViewService;
 
     @Autowired
+    protected EdgeService edgeService;
+
+    @Autowired
     protected TelemetrySubscriptionService tsSubService;
 
     @Autowired
@@ -183,7 +200,10 @@ public abstract class BaseController {
     protected ClaimDevicesService claimDevicesService;
 
     @Autowired
-    protected EdgeService edgeService;
+    protected PartitionService partitionService;
+
+    @Autowired
+    protected TbQueueProducerProvider producerProvider;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -328,11 +348,23 @@ public abstract class BaseController {
         }
     }
 
+    protected <I extends EntityId, T extends HasTenantId> void checkEntity(I entityId, T entity, Resource resource) throws ThingsboardException {
+        if (entityId == null) {
+            accessControlService
+                    .checkPermission(getCurrentUser(), resource, Operation.CREATE, null, entity);
+        } else {
+            checkEntityId(entityId, Operation.WRITE);
+        }
+    }
+
     protected void checkEntityId(EntityId entityId, Operation operation) throws ThingsboardException {
         try {
             checkNotNull(entityId);
             validateId(entityId.getId(), "Incorrect entityId " + entityId);
             switch (entityId.getEntityType()) {
+                case ALARM:
+                    checkAlarmId(new AlarmId(entityId.getId()), operation);
+                    return;
                 case DEVICE:
                     checkDeviceId(new DeviceId(entityId.getId()), operation);
                     return;
@@ -362,6 +394,12 @@ public abstract class BaseController {
                     return;
                 case EDGE:
                     checkEdgeId(new EdgeId(entityId.getId()), operation);
+                    return;
+                case WIDGETS_BUNDLE:
+                    checkWidgetsBundleId(new WidgetsBundleId(entityId.getId()), operation);
+                    return;
+                case WIDGET_TYPE:
+                    checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
@@ -527,6 +565,33 @@ public abstract class BaseController {
         }
     }
 
+    ComponentDescriptor checkComponentDescriptorByClazz(String clazz, RuleChainType ruleChainType) throws ThingsboardException {
+        try {
+            log.debug("[{}] Lookup component descriptor", clazz);
+            return checkNotNull(componentDescriptorService.getComponent(clazz));
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    ComponentDescriptor checkComponentDescriptorByClazz(String clazz) throws ThingsboardException {
+        try {
+            log.debug("[{}] Lookup component descriptor", clazz);
+            return checkNotNull(componentDescriptorService.getComponent(clazz));
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    List<ComponentDescriptor> checkComponentDescriptorsByType(ComponentType type, RuleChainType ruleChainType) throws ThingsboardException {
+        try {
+            log.debug("[{}] Lookup component descriptors", type);
+            return componentDescriptorService.getComponents(type, ruleChainType);
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     List<ComponentDescriptor> checkComponentDescriptorsByTypes(Set<ComponentType> types, RuleChainType ruleChainType) throws ThingsboardException {
         try {
             log.debug("[{}] Lookup component descriptors", types);
@@ -550,38 +615,6 @@ public abstract class BaseController {
         checkNotNull(ruleNode);
         checkRuleChain(ruleNode.getRuleChainId(), operation);
         return ruleNode;
-    }
-
-    protected String constructBaseUrl(HttpServletRequest request) {
-        String scheme = request.getScheme();
-
-        String forwardedProto = request.getHeader("x-forwarded-proto");
-        if (forwardedProto != null) {
-            scheme = forwardedProto;
-        }
-
-        int serverPort = request.getServerPort();
-        if (request.getHeader("x-forwarded-port") != null) {
-            try {
-                serverPort = request.getIntHeader("x-forwarded-port");
-            } catch (NumberFormatException e) {
-            }
-        } else if (forwardedProto != null) {
-            switch (forwardedProto) {
-                case "http":
-                    serverPort = 80;
-                    break;
-                case "https":
-                    serverPort = 443;
-                    break;
-            }
-        }
-
-        String baseUrl = String.format("%s://%s:%d",
-                scheme,
-                request.getServerName(),
-                serverPort);
-        return baseUrl;
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {
@@ -709,10 +742,14 @@ public abstract class BaseController {
                         }
                     }
                 }
-                TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, entityId, metaData, TbMsgDataType.JSON
-                        , json.writeValueAsString(entityNode)
-                        , null, null, 0L);
-                actorService.onMsg(new SendToClusterMsg(entityId, new ServiceToRuleEngineMsg(user.getTenantId(), tbMsg)));
+                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+                TenantId tenantId = user.getTenantId();
+                if (tenantId.isNullUid()) {
+                    if (entity instanceof HasTenantId) {
+                        tenantId = ((HasTenantId) entity).getTenantId();
+                    }
+                }
+                tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }

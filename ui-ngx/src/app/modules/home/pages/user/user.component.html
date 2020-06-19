@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons">
+<div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'disableAccount')"
@@ -55,7 +55,7 @@
   </button>
 </div>
 <div class="mat-padding" fxLayout="column">
-  <form #entityNgForm="ngForm" [formGroup]="entityForm">
+  <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>user.email</mat-label>

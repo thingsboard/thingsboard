@@ -45,7 +45,8 @@ import {
   isClientSideTelemetryType,
   LatestTelemetry,
   TelemetryType,
-  telemetryTypeTranslations, toTelemetryType
+  telemetryTypeTranslations,
+  toTelemetryType
 } from '@shared/models/telemetry/telemetry.models';
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
 import { AttributeService } from '@app/core/http/attribute.service';
@@ -296,6 +297,9 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   editAttribute($event: Event, attribute: AttributeData) {
     if ($event) {
       $event.stopPropagation();
+    }
+    if (this.isClientSideTelemetryTypeMap.get(this.attributeScope)) {
+      return;
     }
     const target = $event.target || $event.srcElement || $event.currentTarget;
     const config = new OverlayConfig();

@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -84,7 +84,7 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
 
     public AbstractEdgeEntity(Edge edge) {
         if (edge.getId() != null) {
-            this.setId(edge.getId().getId());
+            this.setUuid(edge.getId().getId());
         }
         if (edge.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(edge.getTenantId().getId());
@@ -134,8 +134,8 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
     }
 
     protected Edge toEdge() {
-        Edge edge = new Edge(new EdgeId(UUIDConverter.fromString(id)));
-        edge.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
+        Edge edge = new Edge(new EdgeId(getUuid()));
+        edge.setCreatedTime(Uuids.unixTimestamp(getUuid()));
         if (tenantId != null) {
             edge.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         }

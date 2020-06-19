@@ -19,15 +19,27 @@ import { Inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { IDynamicWidgetComponent, WidgetContext } from '@home/models/widget-component.models';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
 import {
   NotificationHorizontalPosition,
   NotificationType,
   NotificationVerticalPosition
 } from '@core/notification/notification.models';
 import { FormBuilder, Validators } from '@angular/forms';
+import { DeviceService } from '@core/http/device.service';
+import { AssetService } from '@core/http/asset.service';
+import { EntityViewService } from '@core/http/entity-view.service';
+import { CustomerService } from '@core/http/customer.service';
+import { DashboardService } from '@core/http/dashboard.service';
+import { UserService } from '@core/http/user.service';
+import { AttributeService } from '@core/http/attribute.service';
+import { EntityRelationService } from '@core/http/entity-relation.service';
+import { EntityService } from '@core/http/entity.service';
+import { DialogService } from '@core/services/dialog.service';
+import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
+import { DatePipe } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
 
 export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
@@ -48,6 +60,21 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
               @Inject('errorMessages') public readonly errorMessages: string[]) {
     super(store);
     this.ctx.$injector = $injector;
+    this.ctx.deviceService = $injector.get(DeviceService);
+    this.ctx.assetService = $injector.get(AssetService);
+    this.ctx.entityViewService = $injector.get(EntityViewService);
+    this.ctx.customerService = $injector.get(CustomerService);
+    this.ctx.dashboardService = $injector.get(DashboardService);
+    this.ctx.userService = $injector.get(UserService);
+    this.ctx.attributeService = $injector.get(AttributeService);
+    this.ctx.entityRelationService = $injector.get(EntityRelationService);
+    this.ctx.entityService = $injector.get(EntityService);
+    this.ctx.dialogs = $injector.get(DialogService);
+    this.ctx.customDialog = $injector.get(CustomDialogService);
+    this.ctx.date = $injector.get(DatePipe);
+    this.ctx.translate = $injector.get(TranslateService);
+    this.ctx.http = $injector.get(HttpClient);
+
     this.ctx.$scope = this;
     if (this.ctx.defaultSubscription) {
       this.executingRpcRequest = this.ctx.defaultSubscription.executingRpcRequest;

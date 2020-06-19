@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Injectable, Injector, NgModule } from '@angular/core';
+import { Injectable, NgModule } from '@angular/core';
 import { Observable } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,7 +36,6 @@ export class CustomDialogService {
     private translate: TranslateService,
     private authService: AuthService,
     private dynamicComponentFactoryService: DynamicComponentFactoryService,
-    private injector: Injector,
     public dialog: MatDialog
   ) {
   }

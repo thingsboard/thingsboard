@@ -61,7 +61,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <mat-table [dataSource]="alarmsDatasource"
+      <table mat-table [dataSource]="alarmsDatasource"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
@@ -84,7 +84,7 @@
                     [ngStyle]="cellStyle(alarm, column)">
           </mat-cell>
         </ng-container>
-        <ng-container matColumnDef="actions" stickyEnd>
+        <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
           <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
                                                                 maxWidth: (actionCellDescriptors.length * 40) + 'px',
                                                                 width: (actionCellDescriptors.length * 40) + 'px' }">
@@ -101,7 +101,7 @@
                 <mat-icon>{{actionDescriptor.icon}}</mat-icon>
               </button>
             </div>
-            <div fxHide fxShow.lt-lg>
+            <div fxHide fxShow.lt-lg *ngIf="actionCellDescriptors.length">
               <button mat-button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">
@@ -124,7 +124,7 @@
                              'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm)}"
                  *matRowDef="let alarm; columns: displayedColumns;"
                  (click)="onRowClick($event, alarm)"></mat-row>
-      </mat-table>
+      </table>
       <span [fxShow]="alarmsDatasource.isEmpty() | async"
             fxLayoutAlign="center center"
             class="no-data-found" translate>alarm.no-alarms-prompt</span>

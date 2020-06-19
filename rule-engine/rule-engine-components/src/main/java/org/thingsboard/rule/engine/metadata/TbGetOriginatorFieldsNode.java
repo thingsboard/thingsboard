@@ -57,10 +57,10 @@ public class TbGetOriginatorFieldsNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         try {
             withCallback(putEntityFields(ctx, msg.getOriginator(), msg),
-                    i -> ctx.tellNext(msg, SUCCESS), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                    i -> ctx.tellSuccess(msg), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
         } catch (Throwable th) {
             ctx.tellFailure(msg, th);
         }

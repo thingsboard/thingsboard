@@ -17,24 +17,19 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { fromEvent, Observable } from 'rxjs';
 import { select, Store } from '@ngrx/store';
-import { debounceTime, distinctUntilChanged, map, mergeMap, take, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { User } from '@shared/models/user.model';
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
-import { AuthService } from '@core/auth/auth.service';
-import { UserService } from '@core/http/user.service';
-import { MenuService } from '@core/services/menu.service';
 import { getCurrentAuthState, selectAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
 import { MediaBreakpoints } from '@shared/models/constants';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { Router } from '@angular/router';
 import * as _screenfull from 'screenfull';
 import { MatSidenav } from '@angular/material/sidenav';
 import { AuthState } from '@core/auth/auth.models';
 import { WINDOW } from '@core/services/window.service';
-import { ISearchableComponent, instanceOfSearchableComponent } from '@home/models/searchable-component.models';
+import { instanceOfSearchableComponent, ISearchableComponent } from '@home/models/searchable-component.models';
 
 const screenfull = _screenfull as _screenfull.Screenfull;
 
@@ -55,7 +50,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   sidenavMode: 'over' | 'push' | 'side' = 'side';
   sidenavOpened = true;
 
-  logo = require('../../../assets/logo_title_white.svg');
+  logo = require('../../../assets/logo_title_white.svg').default;
 
   @ViewChild('sidenav')
   sidenav: MatSidenav;
@@ -74,9 +69,6 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
-              private authService: AuthService,
-              private router: Router,
-              private userService: UserService, private menuService: MenuService,
               public breakpointObserver: BreakpointObserver) {
     super(store);
   }

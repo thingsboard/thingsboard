@@ -16,7 +16,7 @@
 
 -->
 <div class="mat-padding" fxLayout="column">
-  <form #ruleNodeForm="ngForm" [formGroup]="ruleNodeFormGroup">
+  <form [formGroup]="ruleNodeFormGroup">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit || isReadOnly">
       <section *ngIf="ruleNode.component.type !== ruleNodeType.RULE_CHAIN">
         <section fxLayout="column" fxLayout.gt-sm="row">

@@ -15,19 +15,21 @@
 ///
 
 import {
+  AfterViewInit,
   Component,
+  Directive,
   ElementRef,
+  Inject,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
-  Renderer2,
-  ViewEncapsulation,
   SimpleChanges,
-  Inject, AfterViewInit, AfterViewChecked, Directive, OnDestroy
+  ViewEncapsulation
 } from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
 import { WINDOW } from '@core/services/window.service';
-import { mixinColor, CanColorCtor } from '@angular/material/core';
+import { CanColorCtor, mixinColor } from '@angular/material/core';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 export declare type FabToolbarDirection = 'left' | 'right';
 
@@ -76,13 +78,13 @@ export class FabActionsDirective implements OnInit {
 })
 export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnInit, OnDestroy, AfterViewInit, OnChanges {
 
+  private fabToolbarResize$: ResizeObserver;
+
   @Input()
   isOpen: boolean;
 
   @Input()
   direction: FabToolbarDirection;
-
-  fabToolbarResizeListener = this.onFabToolbarResize.bind(this);
 
   constructor(private el: ElementRef<HTMLElement>,
               @Inject(WINDOW) private window: Window) {
@@ -95,13 +97,14 @@ export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnIni
     element.find('mat-fab-trigger').find('button')
       .prepend('<div class="mat-fab-toolbar-background"></div>');
     element.addClass(`mat-${this.direction}`);
-    // @ts-ignore
-    addResizeListener(this.el.nativeElement, this.fabToolbarResizeListener);
+    this.fabToolbarResize$ = new ResizeObserver(() => {
+      this.onFabToolbarResize();
+    });
+    this.fabToolbarResize$.observe(this.el.nativeElement);
   }
 
   ngOnDestroy(): void {
-    // @ts-ignore
-    removeResizeListener(this.el.nativeElement, this.fabToolbarResizeListener);
+    this.fabToolbarResize$.disconnect();
   }
 
   ngAfterViewInit(): void {
@@ -137,10 +140,9 @@ export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnIni
     const triggerElement: HTMLElement = el.querySelector('mat-fab-trigger button');
     const toolbarElement: HTMLElement = el.querySelector('mat-toolbar');
     const iconElement: HTMLElement = el.querySelector('mat-fab-trigger button mat-icon');
-    const actions = element.find('mat-fab-actions').children();
+    const actions = element.find<HTMLElement>('mat-fab-actions').children();
     if (triggerElement && backgroundElement) {
       const width = el.offsetWidth;
-      const height = el.offsetHeight;
       const scale = 2 * (width / triggerElement.offsetWidth);
 
       backgroundElement.style.borderRadius = width + 'px';

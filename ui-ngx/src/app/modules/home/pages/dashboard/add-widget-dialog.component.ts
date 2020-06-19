@@ -23,9 +23,6 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from 
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { Widget, widgetTypesData } from '@shared/models/widget.models';
-import { UtilsService } from '@core/services/utils.service';
-import { TranslateService } from '@ngx-translate/core';
-import { EntityService } from '@core/http/entity.service';
 import { Dashboard } from '@app/shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-component.models';
@@ -60,10 +57,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
               @Inject(MAT_DIALOG_DATA) public data: AddWidgetDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddWidgetDialogComponent, Widget>,
-              private fb: FormBuilder,
-              private utils: UtilsService,
-              private translate: TranslateService,
-              private entityService: EntityService) {
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
 
     this.dashboard = this.data.dashboard;

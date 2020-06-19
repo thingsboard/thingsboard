@@ -14,30 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DataKey, DatasourceType } from '@shared/models/widget.models';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-  Validator,
-  Validators
-} from '@angular/forms';
-import { UtilsService } from '@core/services/utils.service';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
-import { EntityService } from '@core/http/entity.service';
-import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { Observable, of } from 'rxjs';
-import { map, mergeMap, tap } from 'rxjs/operators';
-import { alarmFields } from '@shared/models/alarm.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DialogService } from '@core/services/dialog.service';
 

@@ -29,20 +29,6 @@ import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.mo
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
-import { RouterModule, Routes } from '@angular/router';
-
-const routes: Routes = [
-  { path: '**',
-    redirectTo: 'home'
-  }
-];
-
-@NgModule({
-  imports: [
-    RouterModule.forChild(routes)],
-  exports: [RouterModule]
-})
-export class PageNotFoundRoutingModule { }
 
 @NgModule({
   exports: [
@@ -58,8 +44,7 @@ export class PageNotFoundRoutingModule { }
     WidgetLibraryModule,
     DashboardModule,
     AuditLogModule,
-    UserModule,
-    PageNotFoundRoutingModule
+    UserModule
   ]
 })
 export class HomePagesModule { }

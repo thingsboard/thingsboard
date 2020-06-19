@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import {Pipe, PipeTransform} from '@angular/core';
-import {isObject, isNumber} from '@core/utils';
+import { Pipe, PipeTransform } from '@angular/core';
+import { isNumber, isObject } from '@core/utils';
 
 @Pipe({name: 'tbJson'})
 export class TbJsonPipe implements PipeTransform {

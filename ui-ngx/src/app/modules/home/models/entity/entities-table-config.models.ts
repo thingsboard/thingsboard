@@ -14,31 +14,34 @@
 /// limitations under the License.
 ///
 
-import {BaseData, HasId} from '@shared/models/base-data';
-import {EntitiesFetchFunction} from '@home/models/datasource/entity-datasource';
-import {Observable, of} from 'rxjs';
-import {emptyPageData} from '@shared/models/page/page-data';
-import {DatePipe} from '@angular/common';
-import {Direction, SortOrder} from '@shared/models/page/sort-order';
-import {EntityType, EntityTypeResource, EntityTypeTranslation} from '@shared/models/entity-type.models';
-import {EntityComponent} from '@home/components/entity/entity.component';
-import {Type} from '@angular/core';
-import {EntityAction} from './entity-component.models';
-import {HasUUID} from '@shared/models/id/has-uuid';
-import {PageLink} from '@shared/models/page/page-link';
-import {EntitiesTableComponent} from '@home/components/entity/entities-table.component';
-import {EntityTableHeaderComponent} from '@home/components/entity/entity-table-header.component';
-import {ActivatedRoute} from '@angular/router';
+import { BaseData, HasId } from '@shared/models/base-data';
+import { EntitiesDataSource, EntitiesFetchFunction } from '@home/models/datasource/entity-datasource';
+import { Observable, of } from 'rxjs';
+import { emptyPageData } from '@shared/models/page/page-data';
+import { DatePipe } from '@angular/common';
+import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { EntityType, EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
+import { EntityComponent } from '@home/components/entity/entity.component';
+import { Type } from '@angular/core';
+import { EntityAction } from './entity-component.models';
+import { HasUUID } from '@shared/models/id/has-uuid';
+import { PageLink } from '@shared/models/page/page-link';
+import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
+import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
+import { ActivatedRoute } from '@angular/router';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 
 export type EntityBooleanFunction<T extends BaseData<HasId>> = (entity: T) => boolean;
 export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => string;
+export type EntityVoidFunction<T extends BaseData<HasId>> = (entity: T) => void;
+export type EntityIdsVoidFunction<T extends BaseData<HasId>> = (ids: HasUUID[]) => void;
 export type EntityCountStringFunction = (count: number) => string;
 export type EntityTwoWayOperation<T extends BaseData<HasId>> = (entity: T) => Observable<T>;
 export type EntityByIdOperation<T extends BaseData<HasId>> = (id: HasUUID) => Observable<T>;
 export type EntityIdOneWayOperation = (id: HasUUID) => Observable<any>;
 export type EntityActionFunction<T extends BaseData<HasId>> = (action: EntityAction<T>) => boolean;
 export type CreateEntityOperation<T extends BaseData<HasId>> = () => Observable<T>;
+export type EntityRowClickFunction<T extends BaseData<HasId>> = (event: Event, entity: T) => boolean;
 
 export type CellContentFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string;
 export type CellTooltipFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string | undefined;
@@ -76,7 +79,9 @@ export class BaseEntityTableColumn<T extends BaseData<HasId>> {
               public key: string,
               public title: string,
               public width: string = '0px',
-              public sortable: boolean = true) {
+              public sortable: boolean = true,
+              public ignoreTranslate: boolean = false,
+              public mobileHide: boolean = false) {
   }
 }
 
@@ -120,7 +125,7 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
 
 export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T>;
 
-export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = PageLink> {
+export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = PageLink, L extends BaseData<HasId> = T> {
 
   constructor() {}
 
@@ -137,32 +142,44 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   addEnabled = true;
   entitiesDeleteEnabled = true;
   detailsPanelEnabled = true;
+  hideDetailsTabsOnEdit = true;
   actionsColumnTitle = null;
   entityTranslations: EntityTypeTranslation;
-  entityResources: EntityTypeResource;
-  entityComponent: Type<EntityComponent<T>>;
-  entityTabsComponent: Type<EntityTabsComponent<T>>;
+  entityResources: EntityTypeResource<T>;
+  entityComponent: Type<EntityComponent<T, P, L>>;
+  entityTabsComponent: Type<EntityTabsComponent<T, P, L>>;
   addDialogStyle = {};
-  defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.ASC};
-  columns: Array<EntityColumn<T>> = [];
-  cellActionDescriptors: Array<CellActionDescriptor<T>> = [];
-  groupActionDescriptors: Array<GroupActionDescriptor<T>> = [];
+  defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.DESC};
+  displayPagination = true;
+  defaultPageSize = 10;
+  columns: Array<EntityColumn<L>> = [];
+  cellActionDescriptors: Array<CellActionDescriptor<L>> = [];
+  groupActionDescriptors: Array<GroupActionDescriptor<L>> = [];
   headerActionDescriptors: Array<HeaderActionDescriptor> = [];
   addActionDescriptors: Array<HeaderActionDescriptor> = [];
-  headerComponent: Type<EntityTableHeaderComponent<T>>;
+  headerComponent: Type<EntityTableHeaderComponent<T, P, L>>;
   addEntity: CreateEntityOperation<T> = null;
+  dataSource: (dataLoadedFunction: (col?: number, row?: number) => void)
+    => EntitiesDataSource<L> = (dataLoadedFunction: (col?: number, row?: number) => void) => {
+    return new EntitiesDataSource(this.entitiesFetchFunction, this.entitySelectionEnabled, dataLoadedFunction);
+  };
   detailsReadonly: EntityBooleanFunction<T> = () => false;
-  entitySelectionEnabled: EntityBooleanFunction<T> = () => true;
-  deleteEnabled: EntityBooleanFunction<T> = () => true;
-  deleteEntityTitle: EntityStringFunction<T> = () => '';
-  deleteEntityContent: EntityStringFunction<T> = () => '';
+  entitySelectionEnabled: EntityBooleanFunction<L> = () => true;
+  deleteEnabled: EntityBooleanFunction<T | L> = () => true;
+  deleteEntityTitle: EntityStringFunction<L> = () => '';
+  deleteEntityContent: EntityStringFunction<L> = () => '';
   deleteEntitiesTitle: EntityCountStringFunction = () => '';
   deleteEntitiesContent: EntityCountStringFunction = () => '';
   loadEntity: EntityByIdOperation<T> = () => of();
   saveEntity: EntityTwoWayOperation<T> = (entity) => of(entity);
   deleteEntity: EntityIdOneWayOperation = () => of();
-  entitiesFetchFunction: EntitiesFetchFunction<T, P> = () => of(emptyPageData<T>());
+  entitiesFetchFunction: EntitiesFetchFunction<L, P> = () => of(emptyPageData<L>());
   onEntityAction: EntityActionFunction<T> = () => false;
+  handleRowClick: EntityRowClickFunction<L> = () => false;
+  entityTitle: EntityStringFunction<T> = (entity) => entity?.name;
+  entityAdded: EntityVoidFunction<T> = () => {};
+  entityUpdated: EntityVoidFunction<T> = () => {};
+  entitiesDeleted: EntityIdsVoidFunction<T> = () => {};
 }
 
 export function checkBoxCell(value: boolean): string {

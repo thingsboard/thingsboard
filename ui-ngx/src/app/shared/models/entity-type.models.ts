@@ -14,7 +14,8 @@
 /// limitations under the License.
 ///
 
-import {TenantId} from './id/tenant-id';
+import { TenantId } from './id/tenant-id';
+import { BaseData, HasId } from '@shared/models/base-data';
 
 ///
 /// Copyright © 2016-2019 The Thingsboard Authors
@@ -48,7 +49,8 @@ export enum EntityType {
 }
 
 export enum AliasEntityType {
-  CURRENT_CUSTOMER = 'CURRENT_CUSTOMER'
+  CURRENT_CUSTOMER = 'CURRENT_CUSTOMER',
+  CURRENT_TENANT = 'CURRENT_TENANT'
 }
 
 export interface EntityTypeTranslation {
@@ -63,8 +65,9 @@ export interface EntityTypeTranslation {
   search?: string;
 }
 
-export interface EntityTypeResource {
+export interface EntityTypeResource<T> {
   helpLinkId: string;
+  helpLinkIdForEntity?(entity: T): string;
 }
 
 export const entityTypeTranslations = new Map<EntityType | AliasEntityType, EntityTypeTranslation>(
@@ -216,14 +219,21 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       AliasEntityType.CURRENT_CUSTOMER,
       {
-        type: 'entity.type-entity-view',
+        type: 'entity.type-current-customer',
         list: 'entity.type-current-customer'
+      }
+    ],
+    [
+      AliasEntityType.CURRENT_TENANT,
+      {
+        type: 'entity.type-current-tenant',
+        list: 'entity.type-current-tenant'
       }
     ]
   ]
 );
 
-export const entityTypeResources = new Map<EntityType, EntityTypeResource>(
+export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseData<HasId>>>(
   [
     [
       EntityType.TENANT,

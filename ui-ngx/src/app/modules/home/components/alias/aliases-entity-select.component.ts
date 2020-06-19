@@ -14,23 +14,21 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, Input, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { TooltipPosition } from '@angular/material/tooltip';
-import { IAliasController } from '@core/api/widget-api.models';
+import { AliasInfo, IAliasController } from '@core/api/widget-api.models';
 import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { DOCUMENT } from '@angular/common';
-import { WINDOW } from '@core/services/window.service';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
 import {
   ALIASES_ENTITY_SELECT_PANEL_DATA,
   AliasesEntitySelectPanelComponent,
   AliasesEntitySelectPanelData
 } from './aliases-entity-select-panel.component';
+import { deepClone } from '@core/utils';
 
-// @dynamic
 @Component({
   selector: 'tb-aliases-entity-select',
   templateUrl: './aliases-entity-select.component.html',
@@ -38,8 +36,17 @@ import {
 })
 export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
 
+  aliasControllerValue: IAliasController;
+
   @Input()
-  aliasController: IAliasController;
+  set aliasController(aliasController: IAliasController) {
+    this.aliasControllerValue = aliasController;
+    this.setupAliasController(this.aliasControllerValue);
+  }
+
+  get aliasController(): IAliasController {
+    return this.aliasControllerValue;
+  }
 
   @Input()
   tooltipPosition: TooltipPosition = 'above';
@@ -49,28 +56,43 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
   @ViewChild('aliasEntitySelectPanelOrigin') aliasEntitySelectPanelOrigin: CdkOverlayOrigin;
 
   displayValue: string;
+  entityAliasesInfo: {[aliasId: string]: AliasInfo} = {};
+  hasSelectableAliasEntities = false;
 
   private rxSubscriptions = new Array<Subscription>();
 
   constructor(private translate: TranslateService,
               private overlay: Overlay,
               private breakpointObserver: BreakpointObserver,
-              private viewContainerRef: ViewContainerRef,
-              @Inject(DOCUMENT) private document: Document,
-              @Inject(WINDOW) private window: Window) {
+              private viewContainerRef: ViewContainerRef) {
+  }
+
+  private setupAliasController(aliasController: IAliasController) {
+    this.rxSubscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.rxSubscriptions.length = 0;
+    if (aliasController) {
+      this.rxSubscriptions.push(aliasController.entityAliasesChanged.subscribe(
+        () => {
+          setTimeout(() => {
+            this.updateDisplayValue();
+            this.updateEntityAliasesInfo();
+          }, 0);
+        }
+      ));
+      this.rxSubscriptions.push(aliasController.entityAliasResolved.subscribe(
+        () => {
+          setTimeout(() => {
+            this.updateDisplayValue();
+            this.updateEntityAliasesInfo();
+          }, 0);
+        }
+      ));
+    }
   }
 
   ngOnInit(): void {
-    this.rxSubscriptions.push(this.aliasController.entityAliasesChanged.subscribe(
-      () => {
-        this.updateDisplayValue();
-      }
-    ));
-    this.rxSubscriptions.push(this.aliasController.entityAliasResolved.subscribe(
-      () => {
-        this.updateDisplayValue();
-      }
-    ));
   }
 
   ngOnDestroy(): void {
@@ -81,48 +103,20 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
   }
 
   openEditMode() {
-    if (this.disabled) {
+    if (this.disabled || !this.hasSelectableAliasEntities) {
       return;
     }
-    const panelHeight = this.breakpointObserver.isMatched('min-height: 350px') ? 250 : 150;
-    const panelWidth = 300;
     const position = this.overlay.position();
     const config = new OverlayConfig({
       panelClass: 'tb-aliases-entity-select-panel',
       backdropClass: 'cdk-overlay-transparent-backdrop',
       hasBackdrop: true,
     });
-    const el = this.aliasEntitySelectPanelOrigin.elementRef.nativeElement;
-    const offset = el.getBoundingClientRect();
-    const scrollTop = this.window.pageYOffset || this.document.documentElement.scrollTop || this.document.body.scrollTop || 0;
-    const scrollLeft = this.window.pageXOffset || this.document.documentElement.scrollLeft || this.document.body.scrollLeft || 0;
-    const bottomY = offset.bottom - scrollTop;
-    const leftX = offset.left - scrollLeft;
-    let originX;
-    let originY;
-    let overlayX;
-    let overlayY;
-    const wHeight = this.document.documentElement.clientHeight;
-    const wWidth = this.document.documentElement.clientWidth;
-    if (bottomY + panelHeight > wHeight) {
-      originY = 'top';
-      overlayY = 'bottom';
-    } else {
-      originY = 'bottom';
-      overlayY = 'top';
-    }
-    if (leftX + panelWidth > wWidth) {
-      originX = 'end';
-      overlayX = 'end';
-    } else {
-      originX = 'start';
-      overlayX = 'start';
-    }
     const connectedPosition: ConnectedPosition = {
-      originX,
-      originY,
-      overlayX,
-      overlayY
+      originX: 'start',
+      originY: 'bottom',
+      overlayX: 'start',
+      overlayY: 'top'
     };
     config.positionStrategy = position.flexibleConnectedTo(this.aliasEntitySelectPanelOrigin.elementRef)
       .withPositions([connectedPosition]);
@@ -134,7 +128,8 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
     const injector = this._createAliasesEntitySelectPanelInjector(
       overlayRef,
       {
-        aliasController: this.aliasController
+        aliasController: this.aliasController,
+        entityAliasesInfo: this.entityAliasesInfo
       }
     );
     overlayRef.attach(new ComponentPortal(AliasesEntitySelectPanelComponent, this.viewContainerRef, injector));
@@ -174,6 +169,21 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
       displayValue = this.translate.instant('entity.entities');
     }
     this.displayValue = displayValue;
+  }
+
+  private updateEntityAliasesInfo() {
+    const allEntityAliases = this.aliasController.getEntityAliases();
+    this.entityAliasesInfo = {};
+    this.hasSelectableAliasEntities = false;
+    for (const aliasId of Object.keys(allEntityAliases)) {
+      const aliasInfo = this.aliasController.getInstantAliasInfo(aliasId);
+      if (aliasInfo && !aliasInfo.resolveMultiple && aliasInfo.currentEntity
+        && aliasInfo.resolvedEntities.length > 1) {
+        this.entityAliasesInfo[aliasId] = deepClone(aliasInfo);
+        this.entityAliasesInfo[aliasId].selectedId = aliasInfo.currentEntity.id;
+        this.hasSelectableAliasEntities = true;
+      }
+    }
   }
 
 }

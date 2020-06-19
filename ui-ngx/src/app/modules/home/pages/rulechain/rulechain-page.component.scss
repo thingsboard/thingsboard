@@ -114,7 +114,7 @@
       overflow-x: hidden;
       overflow-y: auto;
       .mat-expansion-panel {
-        border-radius: 0px;
+        border-radius: 0;
         &:last-child {
           margin-bottom: 5px;
         }
@@ -319,6 +319,7 @@
 
   .tb-context-menu-header {
     display: flex;
+    box-sizing: content-box;
     flex-direction: row;
     height: 36px;
     min-height: 36px;

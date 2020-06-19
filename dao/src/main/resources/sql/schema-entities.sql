@@ -42,7 +42,6 @@ CREATE TABLE IF NOT EXISTS asset (
     id varchar(31) NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
     additional_info varchar,
     customer_id varchar(31),
-    edge_id varchar(31),
     name varchar(255),
     label varchar(255),
     search_text varchar(255),
@@ -111,7 +110,6 @@ CREATE TABLE IF NOT EXISTS dashboard (
     id varchar(31) NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
     configuration varchar(10000000),
     assigned_customers varchar(1000000),
-    assigned_edges varchar(10000000),
     search_text varchar(255),
     tenant_id varchar(31),
     title varchar(255)
@@ -121,7 +119,6 @@ CREATE TABLE IF NOT EXISTS device (
     id varchar(31) NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
     additional_info varchar,
     customer_id varchar(31),
-    edge_id varchar(31),
     type varchar(255),
     name varchar(255),
     label varchar(255),
@@ -147,6 +144,7 @@ CREATE TABLE IF NOT EXISTS event (
     event_type varchar(255),
     event_uid varchar(255),
     tenant_id varchar(31),
+    ts bigint NOT NULL,
     CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
@@ -186,7 +184,9 @@ CREATE TABLE IF NOT EXISTS tenant (
     search_text varchar(255),
     state varchar(255),
     title varchar(255),
-    zip varchar(255)
+    zip varchar(255),
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
@@ -225,8 +225,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     root boolean,
     debug_mode boolean,
     search_text varchar(255),
-    tenant_id varchar(31),
-    assigned_edges varchar(10000000)
+    tenant_id varchar(31)
 );
 
 CREATE TABLE IF NOT EXISTS rule_node (
@@ -246,7 +245,6 @@ CREATE TABLE IF NOT EXISTS entity_view (
     entity_type varchar(255),
     tenant_id varchar(31),
     customer_id varchar(31),
-    edge_id varchar(31),
     type varchar(255),
     name varchar(255),
     keys varchar(10000000),
@@ -270,3 +268,28 @@ CREATE TABLE IF NOT EXISTS edge (
     search_text varchar(255),
     tenant_id varchar(31)
 );
+
+CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    ttl_ts bigint;
+    debug_ttl_ts bigint;
+    ttl_deleted_count bigint DEFAULT 0;
+    debug_ttl_deleted_count bigint DEFAULT 0;
+BEGIN
+    IF ttl > 0 THEN
+        ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint AND (event_type != %L::varchar AND event_type != %L::varchar) RETURNING *) SELECT count(*) FROM deleted', ttl_ts, 'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into ttl_deleted_count;
+    END IF;
+    IF debug_ttl > 0 THEN
+        debug_ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - debug_ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint AND (event_type = %L::varchar OR event_type = %L::varchar) RETURNING *) SELECT count(*) FROM deleted', debug_ttl_ts, 'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into debug_ttl_deleted_count;
+    END IF;
+    RAISE NOTICE 'Events removed by ttl: %', ttl_deleted_count;
+    RAISE NOTICE 'Debug Events removed by ttl: %', debug_ttl_deleted_count;
+    deleted := ttl_deleted_count + debug_ttl_deleted_count;
+END
+$$;

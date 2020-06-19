@@ -30,7 +30,10 @@
       "@core/*": ["src/app/core/*"],
       "@modules/*": ["src/app/modules/*"],
       "@shared/*": ["src/app/shared/*"],
-      "@home/*": ["src/app/modules/home/*"]
+      "@home/*": ["src/app/modules/home/*"],
+      "jszip": [
+        "node_modules/jszip/dist/jszip.min.js"
+      ]
     },
     "lib": [
       "es2018",

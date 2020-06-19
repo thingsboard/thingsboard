@@ -16,96 +16,175 @@
 
 -- call create_partition_ts_kv_table();
 
-CREATE OR REPLACE PROCEDURE create_partition_ts_kv_table() LANGUAGE plpgsql AS $$
+CREATE OR REPLACE PROCEDURE create_partition_ts_kv_table()
+    LANGUAGE plpgsql AS
+$$
 
 BEGIN
-  ALTER TABLE ts_kv
-    RENAME TO ts_kv_old;
-  CREATE TABLE IF NOT EXISTS ts_kv
-  (
-    LIKE ts_kv_old
-  )
-    PARTITION BY RANGE (ts);
-  ALTER TABLE ts_kv
-    DROP COLUMN entity_type;
-  ALTER TABLE ts_kv
-    ALTER COLUMN entity_id TYPE uuid USING entity_id::uuid;
-  ALTER TABLE ts_kv
-    ALTER COLUMN key TYPE integer USING key::integer;
+    ALTER TABLE ts_kv
+        DROP CONSTRAINT IF EXISTS ts_kv_unq_key;
+    ALTER TABLE ts_kv
+        DROP CONSTRAINT IF EXISTS ts_kv_pkey;
+    ALTER TABLE ts_kv
+        ADD CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_type, entity_id, key, ts);
+    ALTER TABLE ts_kv
+        RENAME TO ts_kv_old;
+    ALTER TABLE ts_kv_old
+        RENAME CONSTRAINT ts_kv_pkey TO ts_kv_pkey_old;
+    CREATE TABLE IF NOT EXISTS ts_kv
+    (
+        LIKE ts_kv_old
+    )
+        PARTITION BY RANGE (ts);
+    ALTER TABLE ts_kv
+        DROP COLUMN entity_type;
+    ALTER TABLE ts_kv
+        ALTER COLUMN entity_id TYPE uuid USING entity_id::uuid;
+    ALTER TABLE ts_kv
+        ALTER COLUMN key TYPE integer USING key::integer;
+    ALTER TABLE ts_kv
+        ADD CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts);
+    CREATE TABLE IF NOT EXISTS ts_kv_indefinite PARTITION OF ts_kv DEFAULT;
 END;
 $$;
 
 -- call create_new_ts_kv_latest_table();
 
-CREATE OR REPLACE PROCEDURE create_new_ts_kv_latest_table() LANGUAGE plpgsql AS $$
+CREATE OR REPLACE PROCEDURE create_new_ts_kv_latest_table()
+    LANGUAGE plpgsql AS
+$$
 
 BEGIN
-  ALTER TABLE ts_kv_latest
-    RENAME TO ts_kv_latest_old;
-  ALTER TABLE ts_kv_latest_old
-     RENAME CONSTRAINT ts_kv_latest_pkey TO ts_kv_latest_pkey_old;
-  CREATE TABLE IF NOT EXISTS ts_kv_latest
-  (
-    LIKE ts_kv_latest_old
-  );
-  ALTER TABLE ts_kv_latest
-    DROP COLUMN entity_type;
-  ALTER TABLE ts_kv_latest
-    ALTER COLUMN entity_id TYPE uuid USING entity_id::uuid;
-  ALTER TABLE ts_kv_latest
-    ALTER COLUMN key TYPE integer USING key::integer;
-  ALTER TABLE ts_kv_latest
-    ADD CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key);
+    IF NOT EXISTS(SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'ts_kv_latest_old') THEN
+        ALTER TABLE ts_kv_latest
+            DROP CONSTRAINT IF EXISTS ts_kv_latest_unq_key;
+        ALTER TABLE ts_kv_latest
+            DROP CONSTRAINT IF EXISTS ts_kv_latest_pkey;
+        ALTER TABLE ts_kv_latest
+            ADD CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_type, entity_id, key);
+        ALTER TABLE ts_kv_latest
+            RENAME TO ts_kv_latest_old;
+        ALTER TABLE ts_kv_latest_old
+            RENAME CONSTRAINT ts_kv_latest_pkey TO ts_kv_latest_pkey_old;
+        CREATE TABLE IF NOT EXISTS ts_kv_latest
+        (
+            LIKE ts_kv_latest_old
+        );
+        ALTER TABLE ts_kv_latest
+            DROP COLUMN entity_type;
+        ALTER TABLE ts_kv_latest
+            ALTER COLUMN entity_id TYPE uuid USING entity_id::uuid;
+        ALTER TABLE ts_kv_latest
+            ALTER COLUMN key TYPE integer USING key::integer;
+        ALTER TABLE ts_kv_latest
+            ADD CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key);
+    ELSE
+        RAISE NOTICE 'ts_kv_latest_old table already exists!';
+        IF NOT EXISTS(SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'ts_kv_latest') THEN
+            CREATE TABLE IF NOT EXISTS ts_kv_latest
+            (
+                entity_id uuid   NOT NULL,
+                key       int    NOT NULL,
+                ts        bigint NOT NULL,
+                bool_v    boolean,
+                str_v     varchar(10000000),
+                long_v    bigint,
+                dbl_v     double precision,
+                json_v    json,
+                CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
+            );
+        END IF;
+    END IF;
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION get_partitions_data(IN partition_type varchar)
+    RETURNS
+        TABLE
+        (
+            partition_date text,
+            from_ts        bigint,
+            to_ts          bigint
+        )
+AS
+$$
+BEGIN
+    CASE
+        WHEN partition_type = 'DAYS' THEN
+            RETURN QUERY SELECT day_date.day                                                   AS partition_date,
+                                (extract(epoch from (day_date.day)::timestamp) * 1000)::bigint AS from_ts,
+                                (extract(epoch from (day_date.day::date + INTERVAL '1 DAY')::timestamp) *
+                                 1000)::bigint                                                 AS to_ts
+                         FROM (SELECT DISTINCT TO_CHAR(TO_TIMESTAMP(ts / 1000), 'YYYY_MM_DD') AS day
+                               FROM ts_kv_old) AS day_date;
+        WHEN partition_type = 'MONTHS' THEN
+            RETURN QUERY SELECT SUBSTRING(month_date.first_date, 1, 7)                                  AS partition_date,
+                                (extract(epoch from (month_date.first_date)::timestamp) * 1000)::bigint AS from_ts,
+                                (extract(epoch from (month_date.first_date::date + INTERVAL '1 MONTH')::timestamp) *
+                                 1000)::bigint                                                          AS to_ts
+                         FROM (SELECT DISTINCT TO_CHAR(TO_TIMESTAMP(ts / 1000), 'YYYY_MM_01') AS first_date
+                               FROM ts_kv_old) AS month_date;
+        WHEN partition_type = 'YEARS' THEN
+            RETURN QUERY SELECT SUBSTRING(year_date.year, 1, 4)                                  AS partition_date,
+                                (extract(epoch from (year_date.year)::timestamp) * 1000)::bigint AS from_ts,
+                                (extract(epoch from (year_date.year::date + INTERVAL '1 YEAR')::timestamp) *
+                                 1000)::bigint                                                   AS to_ts
+                         FROM (SELECT DISTINCT TO_CHAR(TO_TIMESTAMP(ts / 1000), 'YYYY_01_01') AS year
+                               FROM ts_kv_old) AS year_date;
+        ELSE
+            RAISE EXCEPTION 'Failed to parse partitioning property: % !', partition_type;
+        END CASE;
+END;
+$$ LANGUAGE plpgsql;
 
 -- call create_partitions();
 
-CREATE OR REPLACE PROCEDURE create_partitions() LANGUAGE plpgsql AS $$
+CREATE OR REPLACE PROCEDURE create_partitions(IN partition_type varchar)
+    LANGUAGE plpgsql AS
+$$
 
 DECLARE
     partition_date varchar;
     from_ts        bigint;
     to_ts          bigint;
-    key_cursor CURSOR FOR select SUBSTRING(month_date.first_date, 1, 7)                        AS partition_date,
-                                 extract(epoch from (month_date.first_date)::timestamp) * 1000 as from_ts,
-                                 extract(epoch from (month_date.first_date::date + INTERVAL '1 MONTH')::timestamp) *
-                                 1000                                                          as to_ts
-                          FROM (SELECT DISTINCT TO_CHAR(TO_TIMESTAMP(ts / 1000), 'YYYY_MM_01') AS first_date
-                                FROM ts_kv_old) AS month_date;
+    partitions_cursor CURSOR FOR SELECT *
+                                 FROM get_partitions_data(partition_type);
 BEGIN
-    OPEN key_cursor;
+    OPEN partitions_cursor;
     LOOP
-        FETCH key_cursor INTO partition_date, from_ts, to_ts;
+        FETCH partitions_cursor INTO partition_date, from_ts, to_ts;
         EXIT WHEN NOT FOUND;
         EXECUTE 'CREATE TABLE IF NOT EXISTS ts_kv_' || partition_date ||
-                ' PARTITION OF ts_kv(PRIMARY KEY (entity_id, key, ts)) FOR VALUES FROM (' || from_ts ||
+                ' PARTITION OF ts_kv FOR VALUES FROM (' || from_ts ||
                 ') TO (' || to_ts || ');';
         RAISE NOTICE 'A partition % has been created!',CONCAT('ts_kv_', partition_date);
     END LOOP;
 
-    CLOSE key_cursor;
+    CLOSE partitions_cursor;
 END;
 $$;
 
 -- call create_ts_kv_dictionary_table();
 
-CREATE OR REPLACE PROCEDURE create_ts_kv_dictionary_table() LANGUAGE plpgsql AS $$
+CREATE OR REPLACE PROCEDURE create_ts_kv_dictionary_table()
+    LANGUAGE plpgsql AS
+$$
 
 BEGIN
-  CREATE TABLE IF NOT EXISTS ts_kv_dictionary
-  (
-    key    varchar(255) NOT NULL,
-    key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
-  );
+    CREATE TABLE IF NOT EXISTS ts_kv_dictionary
+    (
+        key    varchar(255) NOT NULL,
+        key_id serial UNIQUE,
+        CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+    );
 END;
 $$;
 
 -- call insert_into_dictionary();
 
-CREATE OR REPLACE PROCEDURE insert_into_dictionary() LANGUAGE plpgsql AS $$
+CREATE OR REPLACE PROCEDURE insert_into_dictionary()
+    LANGUAGE plpgsql AS
+$$
 
 DECLARE
     insert_record RECORD;
@@ -128,26 +207,84 @@ BEGIN
 END;
 $$;
 
--- call insert_into_ts_kv();
+CREATE OR REPLACE FUNCTION to_uuid(IN entity_id varchar, OUT uuid_id uuid) AS
+$$
+BEGIN
+    uuid_id := substring(entity_id, 8, 8) || '-' || substring(entity_id, 4, 4) || '-1' || substring(entity_id, 1, 3) ||
+               '-' || substring(entity_id, 16, 4) || '-' || substring(entity_id, 20, 12);
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE insert_into_ts_kv() LANGUAGE plpgsql AS $$
-DECLARE
-    insert_size CONSTANT integer := 10000;
-    insert_counter       integer DEFAULT 0;
-    insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(entity_id_uuid_first_part, '-', entity_id_uuid_second_part, '-1', entity_id_uuid_third_part, '-', entity_id_uuid_fourth_part, '-', entity_id_uuid_fifth_part)::uuid AS entity_id,
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv(IN path_to_file varchar)
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    EXECUTE format('COPY (SELECT to_uuid(entity_id)                                                          AS entity_id,
                                     ts_kv_records.key                                                         AS key,
                                     ts_kv_records.ts                                                          AS ts,
                                     ts_kv_records.bool_v                                                      AS bool_v,
                                     ts_kv_records.str_v                                                       AS str_v,
                                     ts_kv_records.long_v                                                      AS long_v,
                                     ts_kv_records.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS entity_id_uuid_first_part,
-                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_uuid_second_part,
-                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_uuid_third_part,
-                                          SUBSTRING(entity_id, 16, 4) AS entity_id_uuid_fourth_part,
-                                          SUBSTRING(entity_id, 20)    AS entity_id_uuid_fifth_part,
+                             FROM (SELECT entity_id                   AS entity_id,
                                           key_id                      AS key,
+                                          ts,
+                                          bool_v,
+                                          str_v,
+                                          long_v,
+                                          dbl_v
+                                   FROM ts_kv_old
+                                            INNER JOIN ts_kv_dictionary ON (ts_kv_old.key = ts_kv_dictionary.key)) AS ts_kv_records) TO %L;',
+                   path_to_file);
+    EXECUTE format('COPY ts_kv FROM %L', path_to_file);
+END
+$$;
+
+-- call insert_into_ts_kv_latest();
+
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest(IN path_to_file varchar)
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    EXECUTE format('COPY (SELECT to_uuid(entity_id)      	                                                     AS entity_id,
+                                    ts_kv_latest_records.key                                                         AS key,
+                                    ts_kv_latest_records.ts                                                          AS ts,
+                                    ts_kv_latest_records.bool_v                                                      AS bool_v,
+                                    ts_kv_latest_records.str_v                                                       AS str_v,
+                                    ts_kv_latest_records.long_v                                                      AS long_v,
+                                    ts_kv_latest_records.dbl_v                                                       AS dbl_v
+                             FROM (SELECT entity_id                   AS entity_id,
+                                          key_id                      AS key,
+                                          ts,
+                                          bool_v,
+                                          str_v,
+                                          long_v,
+                                          dbl_v
+                                   FROM ts_kv_latest_old
+                                            INNER JOIN ts_kv_dictionary ON (ts_kv_latest_old.key = ts_kv_dictionary.key)) AS ts_kv_latest_records) TO %L;',
+                   path_to_file);
+    EXECUTE format('COPY ts_kv_latest FROM %L', path_to_file);
+END;
+$$;
+
+-- call insert_into_ts_kv_cursor();
+
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_cursor()
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    insert_size CONSTANT integer := 10000;
+    insert_counter       integer DEFAULT 0;
+    insert_record        RECORD;
+    insert_cursor CURSOR FOR SELECT to_uuid(entity_id)   AS entity_id,
+                                    ts_kv_records.key    AS key,
+                                    ts_kv_records.ts     AS ts,
+                                    ts_kv_records.bool_v AS bool_v,
+                                    ts_kv_records.str_v  AS str_v,
+                                    ts_kv_records.long_v AS long_v,
+                                    ts_kv_records.dbl_v  AS dbl_v
+                             FROM (SELECT entity_id AS entity_id,
+                                          key_id    AS key,
                                           ts,
                                           bool_v,
                                           str_v,
@@ -175,26 +312,24 @@ BEGIN
 END;
 $$;
 
--- call insert_into_ts_kv_latest();
+-- call insert_into_ts_kv_latest_cursor();
 
-CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest() LANGUAGE plpgsql AS $$
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest_cursor()
+    LANGUAGE plpgsql AS
+$$
 DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
     insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(entity_id_uuid_first_part, '-', entity_id_uuid_second_part, '-1', entity_id_uuid_third_part, '-', entity_id_uuid_fourth_part, '-', entity_id_uuid_fifth_part)::uuid AS entity_id,
-                                    ts_kv_latest_records.key                                                         AS key,
-                                    ts_kv_latest_records.ts                                                          AS ts,
-                                    ts_kv_latest_records.bool_v                                                      AS bool_v,
-                                    ts_kv_latest_records.str_v                                                       AS str_v,
-                                    ts_kv_latest_records.long_v                                                      AS long_v,
-                                    ts_kv_latest_records.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS entity_id_uuid_first_part,
-                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_uuid_second_part,
-                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_uuid_third_part,
-                                          SUBSTRING(entity_id, 16, 4) AS entity_id_uuid_fourth_part,
-                                          SUBSTRING(entity_id, 20)    AS entity_id_uuid_fifth_part,
-                                          key_id                      AS key,
+    insert_cursor CURSOR FOR SELECT to_uuid(entity_id)          AS entity_id,
+                                    ts_kv_latest_records.key    AS key,
+                                    ts_kv_latest_records.ts     AS ts,
+                                    ts_kv_latest_records.bool_v AS bool_v,
+                                    ts_kv_latest_records.str_v  AS str_v,
+                                    ts_kv_latest_records.long_v AS long_v,
+                                    ts_kv_latest_records.dbl_v  AS dbl_v
+                             FROM (SELECT entity_id AS entity_id,
+                                          key_id    AS key,
                                           ts,
                                           bool_v,
                                           str_v,
@@ -221,5 +356,4 @@ BEGIN
     CLOSE insert_cursor;
 END;
 $$;
-
 

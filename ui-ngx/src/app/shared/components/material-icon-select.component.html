@@ -17,7 +17,7 @@
 -->
 <div fxLayout="row" [formGroup]="materialIconFormGroup">
   <mat-icon (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
-  <mat-form-field>
+  <mat-form-field fxFlex>
     <mat-label translate>icon.icon</mat-label>
     <input matInput formControlName="icon" (mousedown)="openIconDialog()">
   </mat-form-field>

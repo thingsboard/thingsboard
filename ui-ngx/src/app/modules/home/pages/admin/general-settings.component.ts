@@ -20,10 +20,8 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {AdminSettings, GeneralSettings} from '@shared/models/settings.models';
+import { AdminSettings, GeneralSettings } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { TranslateService } from '@ngx-translate/core';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 
 @Component({
@@ -39,7 +37,6 @@ export class GeneralSettingsComponent extends PageComponent implements OnInit, H
   constructor(protected store: Store<AppState>,
               private router: Router,
               private adminService: AdminService,
-              private translate: TranslateService,
               public fb: FormBuilder) {
     super(store);
   }

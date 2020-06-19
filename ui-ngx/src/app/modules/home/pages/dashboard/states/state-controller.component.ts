@@ -19,7 +19,7 @@ import { IDashboardController } from '../dashboard-page.models';
 import { DashboardState } from '@app/shared/models/dashboard.models';
 import { Subscription } from 'rxjs';
 import { NgZone, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { StateParams } from '@app/core/api/widget-api.models';

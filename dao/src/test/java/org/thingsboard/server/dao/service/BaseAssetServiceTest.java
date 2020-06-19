@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -104,7 +104,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         Asset asset = new Asset();
         asset.setName("My asset");
         asset.setType("default");
-        asset.setTenantId(new TenantId(UUIDs.timeBased()));
+        asset.setTenantId(new TenantId(Uuids.timeBased()));
         assetService.saveAsset(asset);
     }
 
@@ -116,7 +116,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         asset.setTenantId(tenantId);
         asset = assetService.saveAsset(asset);
         try {
-            assetService.assignAssetToCustomer(tenantId, asset.getId(), new CustomerId(UUIDs.timeBased()));
+            assetService.assignAssetToCustomer(tenantId, asset.getId(), new CustomerId(Uuids.timeBased()));
         } finally {
             assetService.deleteAsset(tenantId, asset.getId());
         }

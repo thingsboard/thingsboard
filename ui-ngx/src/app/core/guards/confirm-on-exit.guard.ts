@@ -15,11 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  CanDeactivate,
-  RouterStateSnapshot
-} from '@angular/router';
+import { ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot } from '@angular/router';
 import { FormGroup } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';

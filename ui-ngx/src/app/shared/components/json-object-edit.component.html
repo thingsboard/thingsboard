@@ -20,16 +20,16 @@
      [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center" class="tb-json-object-toolbar">
     <label class="tb-title no-padding"
-           ng-class="{'tb-required': required,
-                      'tb-readonly': readonly,
-                      'tb-error': !objectValid}">{{ label }}</label>
+           [ngClass]="{'tb-required': required,
+                       'tb-readonly': readonly,
+                       'tb-error': !objectValid}">{{ label }}</label>
     <span fxFlex></span>
     <button type="button"
-            mat-button *ngIf="!readonly" class="tidy" (click)="beautifyJSON()">
+            mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="beautifyJSON()">
       {{'js-func.tidy' | translate }}
     </button>
     <button type="button"
-            mat-button *ngIf="!readonly" class="tidy" (click)="minifyJSON()">
+            mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="minifyJSON()">
       {{'js-func.mini' | translate }}
     </button>
     <button mat-button mat-icon-button (click)="fullscreen = !fullscreen"
@@ -38,7 +38,7 @@
       <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
     </button>
   </div>
-  <div id="tb-json-panel" tb-toast toastTarget="jsonObjectEditor"
+  <div id="tb-json-panel" tb-toast toastTarget="{{toastTargetId}}"
        class="tb-json-object-panel" fxLayout="column">
     <div #jsonEditor id="tb-json-input" [ngStyle]="editorStyle" [ngClass]="{'fill-height': fillHeight}"></div>
   </div>

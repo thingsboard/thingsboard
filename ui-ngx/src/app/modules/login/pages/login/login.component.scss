@@ -17,14 +17,65 @@
 
 :host {
   display: flex;
-  flex: 1 1 0%;
+  flex: 1 1 0;
   .tb-login-content {
     margin-top: 36px;
     margin-bottom: 76px;
-    background-color: rgb(250,250,250);
+    background-color: rgb(250, 250, 250);
     .tb-login-form {
-      @media #{$mat-gt-sm} {
+      @media #{$mat-gt-xs} {
         width: 550px !important;
+      }
+
+      .tb-reset-password{
+        padding: 0 6px;
+      }
+
+      .tb-action-button{
+        padding: 20px 0 16px;
+      }
+    }
+
+    .oauth-container{
+      padding: 0;
+
+      .container-divider {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+
+        .line {
+          flex: 1;
+        }
+
+        .mat-divider-horizontal{
+          position: relative;
+        }
+
+        .text {
+          padding-right: 10px;
+          padding-left: 10px;
+        }
+      }
+
+      .material-icons{
+        width: 20px;
+        min-width: 20px;
+      }
+
+      a.centered {
+        &:hover {
+          border-bottom: 0px;
+        }
+      }
+
+      .centered ::ng-deep .mat-button-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-transform: uppercase;
       }
     }
   }

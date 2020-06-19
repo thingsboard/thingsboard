@@ -15,20 +15,11 @@
 ///
 
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { AuditLogService } from '@core/http/audit-log.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
-import { AuditLogMode } from '@shared/models/audit-log.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { UserId } from '@shared/models/id/user-id';
-import { CustomerId } from '@shared/models/id/customer-id';
-import { AuditLogTableConfig } from '@home/components/audit-log/audit-log-table-config';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { Authority } from '@shared/models/authority.enum';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { EventTableConfig } from './event-table-config';
 import { EventService } from '@core/http/event.service';
 import { DialogService } from '@core/services/dialog.service';
@@ -89,8 +80,7 @@ export class EventTableComponent implements OnInit {
               private dialogService: DialogService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private dialog: MatDialog,
-              private store: Store<AppState>) {
+              private dialog: MatDialog) {
   }
 
   ngOnInit() {

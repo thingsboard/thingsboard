@@ -23,13 +23,6 @@ message TbMsgMetaDataProto {
     map<string, string> data = 1;
 }
 
-message TbMsgTransactionDataProto {
-    string id = 1;
-    string entityType = 2;
-    int64 entityIdMSB = 3;
-    int64 entityIdLSB = 4;
-}
-
 message TbMsgProto {
     string id = 1;
     string type = 2;
@@ -46,9 +39,10 @@ message TbMsgProto {
 
     TbMsgMetaDataProto metaData = 11;
 
-    TbMsgTransactionDataProto transactionData = 12;
+    //Transaction Data (12) was removed in 2.5
 
     int32 dataType = 13;
     string data = 14;
 
+    int64 ts = 15;
 }

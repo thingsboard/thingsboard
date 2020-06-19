@@ -14,20 +14,19 @@
 /// limitations under the License.
 ///
 
-import {Component, ComponentFactoryResolver, Inject, OnInit, SkipSelf, ViewChild} from '@angular/core';
+import { Component, ComponentFactoryResolver, Inject, Injector, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import {PageComponent} from '@shared/components/page.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {FormControl, FormGroupDirective, NgForm} from '@angular/forms';
-import {EntityTypeResource, EntityTypeTranslation} from '@shared/models/entity-type.models';
-import {BaseData, HasId} from '@shared/models/base-data';
-import {EntityId} from '@shared/models/id/entity-id';
-import {TbAnchorComponent} from '@shared/components/tb-anchor.component';
-import {EntityComponent} from './entity.component';
-import {EntityTableConfig} from '@home/models/entity/entities-table-config.models';
-import {AddEntityDialogData} from '@home/models/entity/entity-component.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import { EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
+import { BaseData, HasId } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
+import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import { EntityComponent } from './entity.component';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { AddEntityDialogData } from '@home/models/entity/entity-component.models';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 
@@ -41,11 +40,11 @@ export class AddEntityDialogComponent extends
   DialogComponent<AddEntityDialogComponent, BaseData<HasId>> implements OnInit, ErrorStateMatcher {
 
   entityComponent: EntityComponent<BaseData<HasId>>;
-  detailsForm: NgForm;
+  detailsForm: FormGroup;
 
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
   translations: EntityTypeTranslation;
-  resources: EntityTypeResource;
+  resources: EntityTypeResource<BaseData<HasId>>;
   entity: BaseData<EntityId>;
 
   submitted = false;
@@ -57,6 +56,7 @@ export class AddEntityDialogComponent extends
               @Inject(MAT_DIALOG_DATA) public data: AddEntityDialogData<BaseData<HasId>>,
               public dialogRef: MatDialogRef<AddEntityDialogComponent, BaseData<HasId>>,
               private componentFactoryResolver: ComponentFactoryResolver,
+              private injector: Injector,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher) {
     super(store, router, dialogRef);
   }
@@ -69,12 +69,33 @@ export class AddEntityDialogComponent extends
     const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityComponent);
     const viewContainerRef = this.entityDetailsFormAnchor.viewContainerRef;
     viewContainerRef.clear();
-    const componentRef = viewContainerRef.createComponent(componentFactory);
+    const injector: Injector = Injector.create(
+      {
+        providers: [
+          {
+            provide: 'entity',
+            useValue: this.entity
+          },
+          {
+            provide: 'entitiesTableConfig',
+            useValue: this.entitiesTableConfig
+          }
+        ],
+        parent: this.injector
+      }
+    );
+    const componentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
     this.entityComponent = componentRef.instance;
     this.entityComponent.isEdit = true;
-    this.entityComponent.entitiesTableConfig = this.entitiesTableConfig;
-    this.entityComponent.entity = this.entity;
-    this.detailsForm = this.entityComponent.entityNgForm;
+    this.detailsForm = this.entityComponent.entityForm;
+  }
+
+  helpLinkId(): string {
+    if (this.resources.helpLinkIdForEntity && this.entityComponent.entityForm) {
+      return this.resources.helpLinkIdForEntity(this.entityComponent.entityForm.getRawValue());
+    } else {
+      return this.resources.helpLinkId;
+    }
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {

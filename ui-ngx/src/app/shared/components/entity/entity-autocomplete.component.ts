@@ -14,23 +14,23 @@
 /// limitations under the License.
 ///
 
-import {AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild} from '@angular/core';
-import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {Observable} from 'rxjs';
-import {map, mergeMap, startWith, tap, share} from 'rxjs/operators';
-import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
-import {TranslateService} from '@ngx-translate/core';
-import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
-import {BaseData} from '@shared/models/base-data';
-import {EntityId} from '@shared/models/id/entity-id';
-import {EntityService} from '@core/http/entity.service';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { map, mergeMap, share, tap } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import { AppState } from '@app/core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
+import { BaseData } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EntityService } from '@core/http/entity.service';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-entity-autocomplete',
   templateUrl: './entity-autocomplete.component.html',
-  styleUrls: [],
+  styleUrls: ['./entity-autocomplete.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => EntityAutocompleteComponent),
@@ -164,6 +164,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.entityRequiredText = 'rulechain.rulechain-required';
           break;
         case EntityType.TENANT:
+        case AliasEntityType.CURRENT_TENANT:
           this.entityText = 'tenant.tenant';
           this.noEntitiesMatchingText = 'tenant.no-tenants-matching';
           this.entityRequiredText = 'tenant.tenant-required';
@@ -226,22 +227,33 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     this.searchText = '';
     if (value != null) {
       if (typeof value === 'string') {
-        let targetEntityType = this.entityTypeValue;
-        if (targetEntityType === AliasEntityType.CURRENT_CUSTOMER) {
-          targetEntityType = EntityType.CUSTOMER;
-        }
-        this.entityService.getEntity(targetEntityType, value, {ignoreLoading: true}).subscribe(
+        const targetEntityType = this.checkEntityType(this.entityTypeValue);
+        this.entityService.getEntity(targetEntityType, value, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
             this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
+          },
+          () => {
+            this.modelValue = null;
+            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+            if (value !== null) {
+              this.propagateChange(this.modelValue);
+            }
           }
         );
       } else {
-        const targetEntityType = value.entityType as EntityType;
-        this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true}).subscribe(
+        const targetEntityType = this.checkEntityType(value.entityType);
+        this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
             this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
+          },
+          () => {
+            this.modelValue = null;
+            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+            if (value !== null) {
+              this.propagateChange(this.modelValue);
+            }
           }
         );
       }
@@ -276,10 +288,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
-    let targetEntityType = this.entityTypeValue;
-    if (targetEntityType === AliasEntityType.CURRENT_CUSTOMER) {
-      targetEntityType = EntityType.CUSTOMER;
-    }
+    const targetEntityType = this.checkEntityType(this.entityTypeValue);
     return this.entityService.getEntitiesByNameFilter(targetEntityType, searchText,
       50, this.entitySubtypeValue, {ignoreLoading: true}).pipe(
       map((data) => {
@@ -310,4 +319,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     }, 0);
   }
 
+  checkEntityType(entityType: EntityType | AliasEntityType): EntityType {
+    if (entityType === AliasEntityType.CURRENT_CUSTOMER) {
+      return EntityType.CUSTOMER;
+    } else if (entityType === AliasEntityType.CURRENT_TENANT) {
+      return EntityType.TENANT;
+    }
+    return entityType;
+  }
 }

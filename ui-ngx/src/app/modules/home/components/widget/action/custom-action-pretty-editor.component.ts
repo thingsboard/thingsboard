@@ -19,46 +19,23 @@
 
 import {
   AfterViewInit,
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   forwardRef,
   Input,
   OnDestroy,
   OnInit,
-  ViewChild, ViewEncapsulation, ViewChildren, QueryList, ComponentFactoryResolver
+  QueryList,
+  ViewChildren,
+  ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { MatDialog } from '@angular/material/dialog';
-import { DialogService } from '@core/services/dialog.service';
-import { PageLink } from '@shared/models/page/page-link';
-import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { combineLatest, fromEvent, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import {
-  WidgetActionDescriptorInfo,
-  WidgetActionsData,
-  WidgetActionsDatasource,
-  WidgetActionCallbacks, toWidgetActionDescriptor
-} from '@home/components/widget/action/manage-widget-actions.component.models';
-import { UtilsService } from '@core/services/utils.service';
-import { EntityRelation, EntitySearchDirection, RelationTypeGroup } from '@shared/models/relation.models';
-import { RelationDialogComponent, RelationDialogData } from '@home/components/relation/relation-dialog.component';
-import { CustomActionDescriptor, WidgetActionDescriptor, WidgetActionSource } from '@shared/models/widget.models';
-import {
-  WidgetActionDialogComponent,
-  WidgetActionDialogData
-} from '@home/components/widget/action/widget-action-dialog.component';
-import { deepClone } from '@core/utils';
-import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { CustomActionPrettyResourcesTabsComponent } from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
-import { MatTab, MatTabGroup } from '@angular/material/tabs';
+import { combineLatest } from 'rxjs';
+import { CustomActionDescriptor } from '@shared/models/widget.models';
+import { CustomPrettyActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
 
 @Component({
   selector: 'tb-custom-action-pretty-editor',
@@ -86,6 +63,8 @@ export class CustomActionPrettyEditorComponent extends PageComponent implements 
 
   @ViewChildren('rightPanel')
   rightPanelElmRef: QueryList<ElementRef<HTMLElement>>;
+
+  customPrettyActionEditorCompleter = CustomPrettyActionEditorCompleter;
 
   private propagateChange = (_: any) => {};
 

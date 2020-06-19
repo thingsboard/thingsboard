@@ -15,21 +15,16 @@
  */
 package org.thingsboard.server.actors.shared;
 
-import akka.actor.ActorContext;
-import akka.event.LoggingAdapter;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-
-import javax.annotation.Nullable;
-import java.util.function.Consumer;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
+import org.thingsboard.server.common.msg.queue.RuleNodeException;
 
 @Slf4j
 public abstract class ComponentMsgProcessor<T extends EntityId> extends AbstractContextAwareMsgProcessor {
@@ -46,46 +41,52 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     public abstract String getComponentName();
 
-    public abstract void start(ActorContext context) throws Exception;
+    public abstract void start(TbActorCtx context) throws Exception;
 
-    public abstract void stop(ActorContext context) throws Exception;
+    public abstract void stop(TbActorCtx context) throws Exception;
 
-    public abstract void onClusterEventMsg(ClusterEventMsg msg) throws Exception;
+    public abstract void onPartitionChangeMsg(PartitionChangeMsg msg) throws Exception;
 
-    public void onCreated(ActorContext context) throws Exception {
+    public void onCreated(TbActorCtx context) throws Exception {
         start(context);
     }
 
-    public void onUpdate(ActorContext context) throws Exception {
+    public void onUpdate(TbActorCtx context) throws Exception {
         restart(context);
     }
 
-    public void onActivate(ActorContext context) throws Exception {
+    public void onActivate(TbActorCtx context) throws Exception {
         restart(context);
     }
 
-    public void onSuspend(ActorContext context) throws Exception {
+    public void onSuspend(TbActorCtx context) throws Exception {
         stop(context);
     }
 
-    public void onStop(ActorContext context) throws Exception {
+    public void onStop(TbActorCtx context) throws Exception {
         stop(context);
     }
 
-    private void restart(ActorContext context) throws Exception {
+    private void restart(TbActorCtx context) throws Exception {
         stop(context);
         start(context);
     }
 
-    public void scheduleStatsPersistTick(ActorContext context, long statsPersistFrequency) {
+    public void scheduleStatsPersistTick(TbActorCtx context, long statsPersistFrequency) {
         schedulePeriodicMsgWithDelay(context, new StatsPersistTick(), statsPersistFrequency, statsPersistFrequency);
     }
 
-    protected void checkActive() {
+    protected void checkActive(TbMsg tbMsg) throws RuleNodeException {
         if (state != ComponentLifecycleState.ACTIVE) {
             log.debug("Component is not active. Current state [{}] for processor [{}][{}] tenant [{}]", state, entityId.getEntityType(), entityId, tenantId);
-            throw new IllegalStateException("Rule chain is not active! " + entityId + " - " + tenantId);
+            RuleNodeException ruleNodeException = getInactiveException();
+            if (tbMsg != null) {
+                tbMsg.getCallback().onFailure(ruleNodeException);
+            }
+            throw ruleNodeException;
         }
     }
+
+    abstract protected RuleNodeException getInactiveException();
 
 }

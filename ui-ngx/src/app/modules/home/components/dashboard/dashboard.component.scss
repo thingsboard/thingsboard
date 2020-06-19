@@ -76,6 +76,7 @@ div.tb-widget {
     tb-timewindow {
       font-size: 14px;
       opacity: .85;
+      margin: 0;
     }
 
     .title {
@@ -85,6 +86,13 @@ div.tb-widget {
       line-height: 24px;
       letter-spacing: .01em;
       margin: 0;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+
+      &.single-row{
+        -webkit-line-clamp: 1;
+      }
     }
   }
 

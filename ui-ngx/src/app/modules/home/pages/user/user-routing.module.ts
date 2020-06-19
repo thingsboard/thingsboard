@@ -15,7 +15,7 @@
 ///
 
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { UsersTableConfigResolver } from '@modules/home/pages/user/users-table-config.resolver';
 
 @NgModule({

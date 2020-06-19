@@ -24,15 +24,16 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { isDefined, isEqual, isUndefined } from '@core/utils';
+import { isDefined, isEqual, isUndefined, createLabelFromDatasource } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
-import { FormBuilder, FormGroup, NgForm, ValidatorFn, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { RequestConfig } from '@core/http/http-utils';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { forkJoin, Observable } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 type FieldAlignment = 'row' | 'column';
 
@@ -89,12 +90,11 @@ interface MultipleInputWidgetSource {
 export class MultipleInputWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
   @ViewChild('formContainer', {static: true}) formContainerRef: ElementRef<HTMLElement>;
-  @ViewChild('multipleInputForm', {static: true}) multipleInputForm: NgForm;
 
   @Input()
   ctx: WidgetContext;
 
-  private formResizeListener: any;
+  private formResize$: ResizeObserver;
   private settings: MultipleInputWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
@@ -135,15 +135,15 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     this.updateDatasources();
     this.buildForm();
     this.ctx.updateWidgetParams();
-    this.formResizeListener = this.resize.bind(this);
-    // @ts-ignore
-    addResizeListener(this.formContainerRef.nativeElement, this.formResizeListener);
+    this.formResize$ = new ResizeObserver(() => {
+      this.resize();
+    });
+    this.formResize$.observe(this.formContainerRef.nativeElement);
   }
 
   ngOnDestroy(): void {
-    if (this.formResizeListener) {
-      // @ts-ignore
-      removeResizeListener(this.formContainerRef.nativeElement, this.formResizeListener);
+    if (this.formResize$) {
+      this.formResize$.disconnect();
     }
   }
 
@@ -331,7 +331,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public getGroupTitle(datasource: Datasource): string {
-    return this.utils.createLabelFromDatasource(datasource, this.settings.groupTitle);
+    return createLabelFromDatasource(datasource, this.settings.groupTitle);
   }
 
   public visibleKeys(source: MultipleInputWidgetSource): MultipleInputWidgetDataKey[] {
@@ -452,7 +452,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     if (tasks.length) {
       forkJoin(tasks).subscribe(
         () => {
-          this.multipleInputForm.resetForm();
+          this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
           this.multipleInputFormGroup.markAsPristine();
           if (this.settings.showResultMessage) {
             this.ctx.showSuccessToast(this.translate.instant('widgets.input-widgets.update-successful'),
@@ -466,13 +466,13 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
           }
         });
     } else {
-      this.multipleInputForm.resetForm();
+      this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
       this.multipleInputFormGroup.markAsPristine();
     }
   }
 
   public discardAll() {
-    this.multipleInputForm.resetForm();
+    this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
     this.sources.forEach((source) => {
       for (const key of this.visibleKeys(source)) {
         this.multipleInputFormGroup.get(key.formId).patchValue(key.value, {emitEvent: false});

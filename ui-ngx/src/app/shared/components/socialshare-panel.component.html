@@ -16,7 +16,7 @@
 
 -->
 <div fxLayout="row" fxLayoutGap="12px" [fxHide]="isShareLinkLocal()">
-  <button mat-button mat-icon-button mat-raised-button class="mat-primary"
+  <button mat-icon-button mat-raised-button class="mat-primary"
           shareButton="facebook"
           title="{{ shareTitle }}"
           description="{{ shareText }}"
@@ -25,7 +25,7 @@
           matTooltip="{{ 'action.share-via' | translate:{provider:'Facebook'} }}">
     <mat-icon svgIcon="mdi:facebook"></mat-icon>
   </button>
-  <button mat-button mat-icon-button mat-raised-button class="mat-primary"
+  <button mat-icon-button mat-raised-button class="mat-primary"
           shareButton="twitter"
           title="{{ shareTitle }}"
           tags="{{ shareHashTags }}"
@@ -34,7 +34,7 @@
           matTooltip="{{ 'action.share-via' | translate:{provider:'Twitter'} }}">
     <mat-icon svgIcon="mdi:twitter"></mat-icon>
   </button>
-  <button mat-button mat-icon-button mat-raised-button class="mat-primary"
+  <button mat-icon-button mat-raised-button class="mat-primary"
           shareButton="linkedin"
           title="{{ shareTitle }}"
           url="{{ shareLink }}"
@@ -42,7 +42,7 @@
           matTooltip="{{ 'action.share-via' | translate:{provider:'Linkedin'} }}">
     <mat-icon svgIcon="mdi:linkedin"></mat-icon>
   </button>
-  <button mat-button mat-icon-button mat-raised-button class="mat-primary"
+  <button mat-icon-button mat-raised-button class="mat-primary"
           shareButton="reddit"
           title="{{ shareTitle }}"
           url="{{ shareLink }}"

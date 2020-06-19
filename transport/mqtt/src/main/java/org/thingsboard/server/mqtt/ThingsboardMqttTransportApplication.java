@@ -26,7 +26,7 @@ import java.util.Arrays;
 @SpringBootConfiguration
 @EnableAsync
 @EnableScheduling
-@ComponentScan({"org.thingsboard.server.mqtt", "org.thingsboard.server.common", "org.thingsboard.server.transport.mqtt", "org.thingsboard.server.kafka"})
+@ComponentScan({"org.thingsboard.server.mqtt", "org.thingsboard.server.common", "org.thingsboard.server.transport.mqtt", "org.thingsboard.server.queue"})
 public class ThingsboardMqttTransportApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";

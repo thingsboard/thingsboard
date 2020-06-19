@@ -38,7 +38,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <mat-table [dataSource]="entityDatasource"
+      <table mat-table [dataSource]="entityDatasource"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
           <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
@@ -64,7 +64,7 @@
                 <mat-icon>{{actionDescriptor.icon}}</mat-icon>
               </button>
             </div>
-            <div fxHide fxShow.lt-lg>
+            <div fxHide fxShow.lt-lg *ngIf="actionCellDescriptors.length">
               <button mat-button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">
@@ -85,7 +85,7 @@
         <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity)}"
                  *matRowDef="let entity; columns: displayedColumns;"
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
-      </mat-table>
+      </table>
       <span [fxShow]="entityDatasource.isEmpty() | async"
             fxLayoutAlign="center center"
             class="no-data-found" translate>entity.no-entities-prompt</span>

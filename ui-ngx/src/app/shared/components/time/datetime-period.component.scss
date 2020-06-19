@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../scss/constants';
+
 :host ::ng-deep {
   .mat-form-field-wrapper {
     padding-bottom: 8px;
@@ -22,5 +24,9 @@
   }
   .mat-form-field-infix {
     width: 150px;
+
+    @media #{$mat-xs} {
+      width: 100%;
+    }
   }
 }

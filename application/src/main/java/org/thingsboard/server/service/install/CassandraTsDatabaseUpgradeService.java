@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -47,6 +47,8 @@ public class CassandraTsDatabaseUpgradeService extends AbstractCassandraDatabase
                 } catch (InvalidQueryException e) {
                 }
                 log.info("Schema updated.");
+                break;
+            case "2.5.0":
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);

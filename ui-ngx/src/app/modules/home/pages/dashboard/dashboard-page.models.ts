@@ -14,17 +14,12 @@
 /// limitations under the License.
 ///
 
-import { DashboardLayoutId, GridSettings, WidgetLayout, Dashboard, WidgetLayouts } from '@app/shared/models/dashboard.models';
+import { Dashboard, DashboardLayoutId, GridSettings, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
 import { ILayoutController } from './layout/layout.models';
-import {
-  DashboardContextMenuItem,
-  WidgetContextMenuItem
-} from '@home/models/dashboard-component.models';
-import { Observable } from 'rxjs';
-import { ChangeDetectorRef } from '@angular/core';
+import { DashboardContextMenuItem, WidgetContextMenuItem } from '@home/models/dashboard-component.models';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
@@ -75,7 +70,6 @@ export declare type DashboardPageLayouts = {[key in DashboardLayoutId]: Dashboar
 export class LayoutWidgetsArray implements Iterable<Widget> {
 
   private widgetIds: string[] = [];
-  private pointer = 0;
 
   private loaded = false;
 

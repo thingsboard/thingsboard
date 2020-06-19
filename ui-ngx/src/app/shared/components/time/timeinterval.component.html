@@ -22,7 +22,7 @@
   </section>
   <section class="interval-section" fxLayout="column" fxFlex [fxShow]="advanced && (isEdit || !hideFlag)">
     <label class="tb-small interval-label" translate>{{ predefinedName }}</label>
-    <section fxLayout="row" fxLayoutAlign="start start" fxFlex fxLayoutGap="6px">
+    <section fxLayout="row wrap" fxLayoutAlign="start start" fxFlex fxLayoutGap="6px">
       <mat-form-field class="number-input">
         <mat-label translate>timeinterval.days</mat-label>
         <input matInput [disabled]="hideFlag || disabled" type="number" step="1" min="0" [(ngModel)]="days" (ngModelChange)="onTimeInputChange('days')"/>
@@ -44,7 +44,7 @@
   <section class="interval-section" fxLayout="row" fxFlex [fxShow]="!advanced && (isEdit || !hideFlag)">
     <mat-form-field fxFlex>
       <mat-label translate>{{ predefinedName }}</mat-label>
-      <mat-select matInput [disabled]="hideFlag || disabled" [(ngModel)]="intervalMs" (ngModelChange)="onIntervalMsChange()" style="min-width: 150px;">
+      <mat-select [disabled]="hideFlag || disabled" [(ngModel)]="intervalMs" (ngModelChange)="onIntervalMsChange()" style="min-width: 150px;">
         <mat-option *ngFor="let interval of intervals" [value]="interval.value">
           {{ interval.name | translate:interval.translateParams }}
         </mat-option>

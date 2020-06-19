@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form #addWidgetForm="ngForm" [formGroup]="addWidgetFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
-  <mat-toolbar fxLayout="row" color="primary">
+<form [formGroup]="addWidgetFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
+  <mat-toolbar color="primary">
     <h2 translate>attribute.add-widget-to-dashboard</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -55,19 +55,17 @@
       </mat-radio-group>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
+  <div mat-dialog-actions fxLayoutAlign="end center">
     <mat-checkbox formControlName="openDashboard"
-                  style="margin-bottom: 0px; padding-right: 20px;">
+                  style="margin-bottom: 0; padding-right: 20px;">
       {{ 'dashboard.open-dashboard' | translate }}
     </mat-checkbox>
-    <button mat-button mat-raised-button color="primary"
+    <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || addWidgetFormGroup.invalid || !addWidgetFormGroup.dirty">
       {{ 'action.add' | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

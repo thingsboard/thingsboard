@@ -275,7 +275,7 @@ export class DashboardUtilsService {
       layout.gridSettings.margin = layout.gridSettings.margins[0];
       delete layout.gridSettings.margins;
     }
-    layout.gridSettings.margin = layout.gridSettings.margin || 10;
+    layout.gridSettings.margin = isDefined(layout.gridSettings.margin) ? layout.gridSettings.margin : 10;
   }
 
   public setLayouts(dashboard: Dashboard, targetState: string, newLayouts: DashboardStateLayouts) {
@@ -331,7 +331,6 @@ export class DashboardUtilsService {
     const states = dashboardConfiguration.states;
     const state = states[targetState];
     if (state) {
-      const allWidgets = dashboardConfiguration.widgets;
       const result: DashboardLayoutsInfo = {};
       for (const l of Object.keys(state.layouts)) {
         const layout: DashboardLayout = state.layouts[l];

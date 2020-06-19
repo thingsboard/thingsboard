@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
+import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitySearchDirection, EntityTypeFilter } from '@shared/models/relation.models';
 import { EntityInfo } from './entity.models';

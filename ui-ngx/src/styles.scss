@@ -95,8 +95,10 @@ h3,
 h4,
 h5,
 h6 {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  &, &.mat-headline {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
 }
 
 h1 {
@@ -233,6 +235,14 @@ label {
 
 .tb-noselect {
   user-select: none;
+}
+
+.tb-readonly-label {
+  color: rgba(0, 0, 0, .54);
+}
+
+.tb-disabled-label {
+  color: rgba(0, 0, 0, .44);
 }
 
 div {
@@ -406,6 +416,58 @@ mat-label {
   }
 }
 
+.tb-ace-doc-tooltip {
+  code {
+    color: #444;
+    &.title {
+      font-size: 14px;
+    }
+  }
+  div.tb-function-info {
+    font-size: 14px;
+  }
+  div.tb-function-return {
+    font-size: 1rem;
+    letter-spacing: 0.03rem;
+    color: #444;
+    code {
+      font-size: 14px;
+      letter-spacing: normal;
+    }
+  }
+  div.tb-api-title {
+    font-weight: bold;
+    font-size: 16px;
+    color: #6e6e6e;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  table.tb-api-table {
+    width: 100%;
+    border-collapse: collapse;
+    tr {
+      border-bottom: 1px solid #a8a8a8;
+      &:last-child {
+        border-bottom: none;
+      }
+      td {
+        font-size: 14px;
+        line-height: 1.6rem;
+        &:first-child {
+          font-weight: 600;
+          padding-left: 16px;
+          width: 20%;
+        }
+        &.arg-description {
+          font-size: 1rem;
+          letter-spacing: .03rem;
+          color: #444;
+        }
+      }
+    }
+  }
+}
+
 .tb-default, .tb-dark {
 
   /*********************************
@@ -437,10 +499,10 @@ mat-label {
   }
 
   .layout-padding, .layout-padding > * {
-    @media #{$mat-lt-md} {
+    @media #{$mat-lt-sm} {
       padding: 4px;
     }
-    @media #{$mat-gt-sm} {
+    @media #{$mat-gt-xs} {
       padding: 8px;
     }
   }
@@ -465,10 +527,16 @@ mat-label {
     display: block;
   }
 
+  .mat-form-field{
+    .mat-icon {
+      margin-right: 4px;
+      margin-left: 4px;
+    }
+  }
+
   button.mat-menu-item {
     overflow: hidden;
     fill: #737373;
-    display: block;
     .tb-alt-text {
       float: right;
     }
@@ -511,11 +579,10 @@ mat-label {
   .mat-table {
     width: 100%;
     max-width: 100%;
-    margin-bottom: 1rem;
     display: table;
     table-layout: auto;
     border-collapse: separate;
-    margin: 0px;
+    margin: 0;
   }
 
   mat-footer-row::after, mat-header-row::after, mat-row::after {
@@ -600,7 +667,7 @@ mat-label {
     display: table-cell;
     box-sizing: content-box;
     line-break: unset;
-    width: 0px;
+    width: 0;
     overflow: hidden;
     vertical-align: middle;
     border-width: 0;
@@ -608,6 +675,7 @@ mat-label {
     border-bottom-color: rgba(0, 0, 0, 0.12);
     border-style: solid;
     text-overflow: ellipsis;
+    touch-action: auto !important;
     &:last-child {
       padding: 0 12px 0 0;
     }
@@ -627,6 +695,7 @@ mat-label {
   .mat-header-cell {
     white-space: nowrap;
     button.mat-sort-header-button {
+      display: block;
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
@@ -661,22 +730,22 @@ mat-label {
   }
 
   .mat-toolbar-tools {
-    font-size: 20px;
+    //font-size: 20px;
     letter-spacing: .005em;
-    box-sizing: border-box;
+    //box-sizing: border-box;
     font-weight: 400;
     display: flex;
     align-items: center;
     flex-direction: row;
     width: 100%;
     height: 64px;
-    max-height: 64px;
+    //max-height: 64px;
     padding: 0 16px;
-    margin: 0;
+    //margin: 0;
   }
 
   .mat-icon {
-    vertical-align: middle;
+    vertical-align: bottom;
     box-sizing: content-box;
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
@@ -764,6 +833,11 @@ mat-label {
 
   .mat-toolbar {
     line-height: normal;
+
+    h1, h2, h3, h4, h5, h6 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 
   mat-toolbar *, mat-toolbar :after, mat-toolbar :before {
@@ -790,7 +864,6 @@ mat-label {
         min-width: 100%;
         display: flex;
         flex-direction: column;
-        overflow: auto;
       }
       .mat-dialog-content {
         margin: 0;
@@ -799,6 +872,9 @@ mat-label {
       .mat-dialog-actions {
         margin-bottom: 0;
         padding: 8px 8px 8px 16px;
+        button:last-of-type{
+          margin-right: 20px;
+        }
       }
     }
   }
@@ -825,7 +901,7 @@ mat-label {
   }
 
   .tb-fullscreen-dialog {
-    @media #{$mat-lt-md} {
+    @media #{$mat-lt-sm} {
       min-height: 100%;
       min-width: 100%;
       max-width: none !important;
@@ -837,6 +913,7 @@ mat-label {
       .mat-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
+          height: 100%;
         }
         .mat-dialog-content {
           max-height: 100%;
@@ -886,6 +963,7 @@ mat-label {
     display: flex;
     height: calc(100% - 60px);
     text-transform: uppercase;
+    text-align: center;
   }
 
 

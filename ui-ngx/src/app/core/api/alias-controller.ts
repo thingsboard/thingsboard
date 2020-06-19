@@ -17,7 +17,7 @@
 import { AliasInfo, IAliasController, StateControllerHolder, StateEntityInfo } from '@core/api/widget-api.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { DataKey, Datasource, DatasourceType } from '@app/shared/models/widget.models';
-import { deepClone, isEqual } from '@core/utils';
+import { deepClone, isEqual, createLabelFromDatasource } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityAliases } from '@shared/models/alias.models';
@@ -123,7 +123,7 @@ export class AliasController implements IAliasController {
   }
 
   getAliasInfo(aliasId: string): Observable<AliasInfo> {
-    const aliasInfo = this.resolvedAliases[aliasId];
+    let aliasInfo = this.resolvedAliases[aliasId];
     if (aliasInfo) {
       return of(aliasInfo);
     } else if (this.resolvedAliasesObservable[aliasId]) {
@@ -159,7 +159,12 @@ export class AliasController implements IAliasController {
         delete this.resolvedAliasesObservable[aliasId];
         return res;
       }
-      return this.resolvedAliasesObservable[aliasId];
+      aliasInfo = this.resolvedAliases[aliasId];
+      if (aliasInfo) {
+        return of(aliasInfo);
+      } else {
+        return this.resolvedAliasesObservable[aliasId];
+      }
     }
   }
 
@@ -324,7 +329,7 @@ export class AliasController implements IAliasController {
     if (!dataKey.pattern) {
       dataKey.pattern = deepClone(dataKey.label);
     }
-    dataKey.label = this.utils.createLabelFromDatasource(datasource, dataKey.pattern);
+    dataKey.label = createLabelFromDatasource(datasource, dataKey.pattern);
   }
 
   getInstantAliasInfo(aliasId: string): AliasInfo {

@@ -16,10 +16,10 @@
 
 -->
 <form style="width: 800px;">
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar color="primary">
     <h2 translate>widget.select-widget-type</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -31,7 +31,7 @@
   <div mat-dialog-content>
     <fieldset [disabled]="(isLoading$ | async)">
       <div fxLayout="column" fxLayoutGap="16px" fxLayout.gt-sm="row" fxLayoutAlign="center center">
-        <button *ngFor="let type of allWidgetTypes;" class="tb-card-button" mat-button mat-raised-button color="primary"
+        <button *ngFor="let type of allWidgetTypes;" class="tb-card-button" mat-raised-button color="primary"
                 type="button"
                 (click)="typeSelected(widgetTypes[type])">
           <mat-icon *ngIf="!widgetTypesDataMap.get(widgetTypes[type]).isMdiIcon; else mdiIconBlock" class="tb-mat-96">
@@ -46,10 +46,8 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
+  <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

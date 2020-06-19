@@ -25,7 +25,7 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardSettings, GridSettings, StateControllerId } from '@app/shared/models/dashboard.models';
-import { isUndefined } from '@core/utils';
+import { isDefined, isUndefined } from '@core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { StatesControllerService } from './states/states-controller.service';
 
@@ -38,7 +38,7 @@ export interface DashboardSettingsDialogData {
   selector: 'tb-dashboard-settings-dialog',
   templateUrl: './dashboard-settings-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: DashboardSettingsDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./dashboard-settings-dialog.component.scss']
 })
 export class DashboardSettingsDialogComponent extends DialogComponent<DashboardSettingsDialogComponent, DashboardSettingsDialogData>
   implements OnInit, ErrorStateMatcher {
@@ -96,7 +96,8 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
       this.gridSettingsFormGroup = this.fb.group({
         color: [this.gridSettings.color || 'rgba(0,0,0,0.870588)', []],
         columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1000)]],
-        margin: [this.gridSettings.margin || 10, [Validators.required, Validators.min(0), Validators.max(50)]],
+        margin: [isDefined(this.gridSettings.margin) ? this.gridSettings.margin : 10,
+          [Validators.required, Validators.min(0), Validators.max(50)]],
         autoFillHeight: [isUndefined(this.gridSettings.autoFillHeight) ? false : this.gridSettings.autoFillHeight, []],
         backgroundColor: [this.gridSettings.backgroundColor || 'rgba(0,0,0,0)', []],
         backgroundImageUrl: [this.gridSettings.backgroundImageUrl, []],

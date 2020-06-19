@@ -16,13 +16,18 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapSettings, UnitedMapSettings } from '../map-models';
+import { UnitedMapSettings } from '../map-models';
+import { WidgetContext } from '@home/models/widget-component.models';
 
 export class OpenStreetMap extends LeafletMap {
-    constructor($container, options: UnitedMapSettings) {
-        super($container, options);
+    constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
+        super(ctx, $container, options);
         const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
-        const tileLayer = (L.tileLayer as any).provider('OpenStreetMap.Mapnik');
+        let tileLayer;
+        if (options.useCustomProvider)
+            tileLayer = L.tileLayer(options.customProviderTileUrl);
+        else
+            tileLayer = (L.tileLayer as any).provider(options.mapProvider || 'OpenStreetMap.Mapnik');
         tileLayer.addTo(map);
         super.setMap(map);
         super.initSettings(options);

@@ -53,7 +53,8 @@
         "export": "Export",
         "share-via": "Share via {{provider}}",
         "continue": "Continue",
-        "discard-changes": "Discard Changes"
+        "discard-changes": "Discard Changes",
+        "download": "Download"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -89,6 +90,14 @@
         "timeout-invalid": "That doesn't look like a valid timeout.",
         "enable-tls": "Enable TLS",
         "tls-version": "TLS version",
+        "enable-proxy": "Enable proxy",
+        "proxy-host": "Proxy host",
+        "proxy-host-required": "Proxy host is required.",
+        "proxy-port": "Proxy port",
+        "proxy-port-required": "Proxy port is required.",
+        "proxy-port-range": "Proxy port should be in a range from 1 to 65535.",
+        "proxy-user": "Proxy user",
+        "proxy-password": "Proxy password",
         "send-test-mail": "Send test mail",
         "security-settings": "Security settings",
         "password-policy": "Password policy",
@@ -246,7 +255,6 @@
         "no-asset-types-matching": "No asset types matching '{{entitySubtype}}' were found.",
         "asset-type-list-empty": "No asset types selected.",
         "asset-types": "Asset types",
-        "created-time": "Created time",
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
@@ -379,7 +387,9 @@
         "password": "Password",
         "enter-username": "Enter username",
         "enter-password": "Enter password",
-        "enter-search": "Enter search"
+        "enter-search": "Enter search",
+        "created-time": "Created time",
+        "loading": "Loading..."
     },
     "content-type": {
         "json": "Json",
@@ -420,7 +430,6 @@
         "manage-assets": "Manage assets",
         "manage-devices": "Manage devices",
         "manage-dashboards": "Manage dashboards",
-        "created-time": "Created time",
         "title": "Title",
         "title-required": "Title is required.",
         "description": "Description",
@@ -465,7 +474,6 @@
         "no-dashboards-text": "No dashboards found",
         "no-widgets": "No widgets configured",
         "add-widget": "Add new widget",
-        "created-time": "Created time",
         "title": "Title",
         "select-widget-title": "Select widget",
         "select-widget-subtitle": "List of available widget types",
@@ -708,7 +716,6 @@
         "no-device-types-matching": "No device types matching '{{entitySubtype}}' were found.",
         "device-type-list-empty": "No device types selected.",
         "device-types": "Device types",
-        "created-time": "Created time",
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
@@ -832,6 +839,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {One rule node} other {List of # rule nodes} }",
         "rulenode-name-starts-with": "Rule nodes whose names start with '{{prefix}}'",
         "type-current-customer": "Current Customer",
+        "type-current-tenant": "Current Tenant",
         "search": "Search entities",
         "selected-entities": "{ count, plural, 1 {1 entity} other {# entities} } selected",
         "entity-name": "Entity name",
@@ -1353,7 +1361,10 @@
         "new-password": "New password",
         "new-password-again": "New password again",
         "password-link-sent-message": "Password reset link was successfully sent!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Login with {{name}}",
+        "or": "or",
+        "error": "Login error"
     },
     "position": {
         "top": "Top",
@@ -1415,7 +1426,6 @@
         "rulechains": "Rule chains",
         "root": "Root",
         "delete": "Delete rule chain",
-        "created-time": "Created time",
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
@@ -1515,6 +1525,11 @@
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes"
     },
+    "queue": {
+      "select_name": "Select queue name",
+      "name": "Queue Name",
+      "name_required": "Queue name is required!"
+    },
     "tenant": {
         "tenant": "Tenant",
         "tenants": "Tenants",
@@ -1531,7 +1546,6 @@
         "delete-tenants-title": "Are you sure you want to delete { count, plural, 1 {1 tenant} other {# tenants} }?",
         "delete-tenants-action-title": "Delete { count, plural, 1 {1 tenant} other {# tenants} }",
         "delete-tenants-text": "Be careful, after the confirmation all selected tenants will be removed and all related data will become unrecoverable.",
-        "created-time": "Created time",
         "title": "Title",
         "title-required": "Title is required.",
         "description": "Description",
@@ -1543,7 +1557,11 @@
         "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
         "tenant-required": "Tenant is required",
         "search": "Search tenants",
-        "selected-tenants": "{ count, plural, 1 {1 tenant} other {# tenants} } selected"
+        "selected-tenants": "{ count, plural, 1 {1 tenant} other {# tenants} } selected",
+        "isolated-tb-core": "Processing in isolated ThingsBoard Core container",
+        "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
+        "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
+        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
@@ -1592,7 +1610,6 @@
         "delete-users-text": "Be careful, after the confirmation all selected users will be removed and all related data will become unrecoverable.",
         "activation-email-sent-message": "Activation email was successfully sent!",
         "resend-activation": "Resend activation",
-        "created-time": "Created time",
         "email": "Email",
         "email-required": "Email is required.",
         "invalid-email-format": "Invalid email format.",
@@ -1714,7 +1731,6 @@
         "widgets-bundles": "Widgets Bundles",
         "add": "Add Widgets Bundle",
         "delete": "Delete widgets bundle",
-        "created-time": "Created time",
         "title": "Title",
         "title-required": "Title is required.",
         "add-widgets-bundle-text": "Add new widgets bundle",

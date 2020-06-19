@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form #assignToCustomerForm="ngForm" [formGroup]="assignToCustomerFormGroup" (ngSubmit)="assign()">
-  <mat-toolbar fxLayout="row" color="primary">
+<form [formGroup]="assignToCustomerFormGroup" (ngSubmit)="assign()">
+  <mat-toolbar color="primary">
     <h2>{{ assignToCustomerTitle | translate }}</h2>
     <span fxFlex></span>
     <button mat-button mat-icon-button
@@ -30,7 +30,7 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <span>{{ assignToCustomerText | translate }}</span>
+      <div style="padding-bottom: 0.5em;">{{ assignToCustomerText | translate }}</div>
       <tb-entity-autocomplete
         formControlName="customerId"
         required
@@ -38,16 +38,14 @@
       </tb-entity-autocomplete>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
+  <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || assignToCustomerForm.invalid
-            || !assignToCustomerForm.dirty">
+            [disabled]="(isLoading$ | async) || assignToCustomerFormGroup.invalid
+            || !assignToCustomerFormGroup.dirty">
       {{ 'action.assign' | translate }}
     </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

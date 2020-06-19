@@ -17,41 +17,48 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapSettings, UnitedMapSettings } from '../map-models';
+import { UnitedMapSettings } from '../map-models';
 import 'leaflet.gridlayer.googlemutant';
+import { ResourcesService } from '@core/services/resources.service';
+import { Injector } from '@angular/core';
+import { WidgetContext } from '@home/models/widget-component.models';
 
-let googleLoaded = false;
+const gmGlobals: GmGlobal = {};
 
+interface GmGlobal {
+  [key: string]: boolean;
+}
 
 export class GoogleMap extends LeafletMap {
-    constructor($container, options: UnitedMapSettings) {
+  private resource: ResourcesService;
 
-        super($container, options);
-        this.loadGoogle(() => {
-            const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
-            const roads = (L.gridLayer as any).googleMutant({
-                type: options?.gmDefaultMapType || 'roadmap'
-            }).addTo(map);
-            super.setMap(map);
-        }, options.credentials.apiKey);
-        super.initSettings(options);
-    }
+  constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
+    super(ctx, $container, options);
+    this.resource = ctx.$injector.get(ResourcesService);
+    this.loadGoogle(() => {
+      const map = L.map($container, {attributionControl: false}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
+      (L.gridLayer as any).googleMutant({
+        type: options?.gmDefaultMapType || 'roadmap'
+      }).addTo(map);
+      super.setMap(map);
+    }, options.gmApiKey);
+    super.initSettings(options);
+  }
 
-    private loadGoogle(callback, apiKey = 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q') {
-        if (googleLoaded) {
-            callback()
+  private loadGoogle(callback, apiKey = 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q') {
+    if (gmGlobals[apiKey]) {
+      callback()
+    } else {
+      this.resource.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}`).subscribe(
+        () => {
+          gmGlobals[apiKey] = true;
+          callback();
+        },
+        (error) => {
+          gmGlobals[apiKey] = false;
+          console.error(`Google map api load failed!`, error);
         }
-        else {
-            googleLoaded = true;
-            const script = document.createElement('script');
-            script.onload = () => {
-                callback();
-            }
-            script.onerror = () => {
-                googleLoaded = false;
-            }
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
-            document.getElementsByTagName('head')[0].appendChild(script);
-        }
+      );
     }
+  }
 }
