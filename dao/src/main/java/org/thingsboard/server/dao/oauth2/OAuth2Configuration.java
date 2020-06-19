@@ -42,28 +42,4 @@ public class OAuth2Configuration {
     private boolean enabled;
     private String loginProcessingUrl;
     private Map<String, OAuth2Client> clients = new HashMap<>();
-
-    @Bean
-    public ClientRegistrationRepository clientRegistrationRepository() {
-        List<ClientRegistration> result = new ArrayList<>();
-        for (Map.Entry<String, OAuth2Client> entry : clients.entrySet()) {
-            OAuth2Client client = entry.getValue();
-            ClientRegistration registration = ClientRegistration.withRegistrationId(entry.getKey())
-                    .clientId(client.getClientId())
-                    .authorizationUri(client.getAuthorizationUri())
-                    .clientSecret(client.getClientSecret())
-                    .tokenUri(client.getAccessTokenUri())
-                    .redirectUriTemplate(client.getRedirectUriTemplate())
-                    .scope(client.getScope().split(","))
-                    .clientName(client.getClientName())
-                    .authorizationGrantType(new AuthorizationGrantType(client.getAuthorizationGrantType()))
-                    .userInfoUri(client.getUserInfoUri())
-                    .userNameAttributeName(client.getUserNameAttributeName())
-                    .jwkSetUri(client.getJwkSetUri())
-                    .clientAuthenticationMethod(new ClientAuthenticationMethod(client.getClientAuthenticationMethod()))
-                    .build();
-            result.add(registration);
-        }
-        return new InMemoryClientRegistrationRepository(result);
-    }
 }
