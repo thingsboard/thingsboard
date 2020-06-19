@@ -530,6 +530,24 @@ public abstract class BaseController {
         }
     }
 
+    ComponentDescriptor checkComponentDescriptorByClazz(String clazz) throws ThingsboardException {
+        try {
+            log.debug("[{}] Lookup component descriptor", clazz);
+            return checkNotNull(componentDescriptorService.getComponent(clazz));
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    List<ComponentDescriptor> checkComponentDescriptorsByType(ComponentType type, RuleChainType ruleChainType) throws ThingsboardException {
+        try {
+            log.debug("[{}] Lookup component descriptors", type);
+            return componentDescriptorService.getComponents(type, ruleChainType);
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     List<ComponentDescriptor> checkComponentDescriptorsByTypes(Set<ComponentType> types, RuleChainType ruleChainType) throws ThingsboardException {
         try {
             log.debug("[{}] Lookup component descriptors", types);

@@ -249,28 +249,8 @@ class DefaultTbContext implements TbContext {
     }
 
     public <E, I extends EntityId> TbMsg entityCreatedMsg(E entity, I id, RuleNodeId ruleNodeId) {
-        return entityCRUDMsg(entity, id, ruleNodeId, DataConstants.ENTITY_CREATED);
-    }
-
-    public <E, I extends EntityId> TbMsg entityCRUDMsg(E entity, I id, RuleNodeId ruleNodeId, String actionType) {
         try {
-            return TbMsg.newMsg(actionType, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + actionType + "  msg: " + e);
-        }
-    }
-
-    public TbMsg alarmUpdatedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
-        return entityCRUDMsg(alarm, alarm.getId(), ruleNodeId, DataConstants.ENTITY_UPDATED);
-    }
-
-    public TbMsg alarmClearedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
-        return entityCRUDMsg(alarm, alarm.getId(), ruleNodeId, DataConstants.ALARM_CLEAR);
-    }
-
-    public <E, I extends EntityId> TbMsg alarmMsg(E entity, I id, RuleNodeId ruleNodeId, String actionType) {
-        try {
-            return TbMsg.newMsg(actionType, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
+            return TbMsg.newMsg(DataConstants.ENTITY_CREATED, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " created msg: " + e);
         }

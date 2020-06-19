@@ -145,10 +145,6 @@ public interface TbContext {
     // TODO: Does this changes the message?
     TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
 
-    TbMsg alarmUpdatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
-
-    TbMsg alarmClearedMsg(Alarm alarm, RuleNodeId ruleNodeId);
-
     /*
      *
      *  METHODS TO PROCESS THE MESSAGES
