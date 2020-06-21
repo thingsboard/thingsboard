@@ -23,12 +23,15 @@ echo "${H0}====START========${RESET}"
 echo "${H1}Server Keystore : ${RESET}"
 echo "${H1}==================${RESET}"
 echo "${H2}Creating the trusted root CA key and certificate...${RESET}"
+# -keysize
+#    1024 (when using -genkeypair)
 keytool \
   -genkeypair \
   -alias rootca \
   -keyalg EC \
   -dname "CN=$ROOT_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
   -validity $VALIDITY \
+  -storetype $STORETYPE \
   -keypass $SERVER_STORE_PWD \
   -keystore $SERVER_STORE \
   -storepass $SERVER_STORE_PWD
@@ -41,6 +44,7 @@ keytool \
   -keyalg EC \
   -dname "CN=$SERVER_SELF_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
   -validity $VALIDITY \
+  -storetype $STORETYPE \
   -keypass $SERVER_STORE_PWD \
   -keystore $SERVER_STORE \
   -storepass $SERVER_STORE_PWD
@@ -69,6 +73,7 @@ keytool \
     -alias rootCA \
     -keystore $SERVER_STORE \
     -storepass $SERVER_STORE_PWD \
+    -storetype $STORETYPE \
     -validity $VALIDITY  | \
     keytool \
       -importcert \
@@ -86,6 +91,7 @@ keytool \
   -keyalg EC \
   -dname "CN=$CLIENT_SELF_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
   -validity $VALIDITY \
+  -storetype $STORETYPE \
   -keypass $CLIENT_STORE_PWD \
   -keystore $CLIENT_STORE \
   -storepass $CLIENT_STORE_PWD
@@ -128,6 +134,7 @@ keytool \
     -alias rootCA \
     -keystore $SERVER_STORE \
     -storepass $SERVER_STORE_PWD \
+    -storetype $STORETYPE \
     -validity $VALIDITY  | \
     keytool \
       -importcert \

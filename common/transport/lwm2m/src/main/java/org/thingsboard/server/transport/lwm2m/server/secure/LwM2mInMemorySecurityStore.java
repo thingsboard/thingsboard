@@ -23,19 +23,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportCtx;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContext;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityMode.DEFAULT_MODE;
+import static org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityMode.NO_SEC;
 
 @Slf4j
 @Component("LwM2mInMemorySecurityStore")
 public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
 
     @Autowired
-    public LwM2MTransportCtx context;
+    public LwM2MTransportContext context;
 
     @Autowired
     private LwM2MCredentials credentials;
@@ -59,17 +60,19 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     }
 
     private SecurityInfo addNew(String identityId) {
-        SecurityInfo info = setSecurityInfo(identityId).getSecurityInfo();
-        if (info != null) {
+        ReadResultSecurityStore store = setSecurityInfo(identityId);
+        if (store.getSecurityInfo() != null) {
             try {
-                add(info);
+                add(store.getSecurityInfo());
             } catch (NonUniqueSecurityInfoException e) {
                 log.error("[{}] FAILED registration endpointId: [{}]", identityId, e.getMessage());
             }
         }
-        return info;
+        else {
+            if (store.getSecurityMode() != NO_SEC.code) log.error("Registration failed: FORBIDDEN, endpointId: [{}]", identityId);
+        }
+        return store.getSecurityInfo();
     }
-
 
     private ReadResultSecurityStore setSecurityInfo(String identity) {
         CountDownLatch latch = new CountDownLatch(1);
@@ -89,7 +92,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
                     @Override
                     public void onError(Throwable e) {
                         log.trace("[{}] Failed to process credentials PSK: {}", identity, e);
-                        resultSecurityStore[0]  = null;
+                        resultSecurityStore[0]  = credentials.getSecurityInfo(identity, null);
                         latch.countDown();
                     }
                 });

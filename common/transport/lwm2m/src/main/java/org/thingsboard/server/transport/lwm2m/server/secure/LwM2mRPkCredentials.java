@@ -42,24 +42,6 @@ public class LwM2mRPkCredentials {
      */
     public LwM2mRPkCredentials(String publX, String publY, String privS) {
         generatePublicKeyRPK(publX, publY, privS);
-////        #2
-//        generatePublicKeyRPK2(
-//                "ThingsboardCommonTransportClient",
-//                "LightWeightM2M_Client_Public_Key",
-//                "ThingsboardLwM2mClientPrivateKey");
-//
-////        #3
-//        generatePublicKeyRPK2(
-//                "ThingsboardCommonTransportServer",
-//                "LightWeightM2M_Server_Public_Key",
-//                "ThingsboardLwM2mClientPrivateKey");
-//
-////        #4
-//        generatePublicKeyRPK2(
-//                "ThingsboardCommonTranspBootstrap",
-//                "LightWeightM2MBootstrapPublicKey",
-//                "ThingsboardLwM2mClientPrivateKey");
-//
     }
 
     private void generatePublicKeyRPK(String publX, String publY, String privS) {
@@ -92,46 +74,5 @@ public class LwM2mRPkCredentials {
         }
     }
 
-    private void generatePublicKeyRPK2(String publX, String publY, String privS) {
-        try {
-            // Get Elliptic Curve Parameter spec for secp256r1
-            byte [] xB = publX.getBytes();
-            byte [] yB = publY.getBytes();
-            byte [] sB = privS.getBytes();
-            System.out.println("x=" + Hex.encodeHexString(xB));
-            System.out.println("y=" + Hex.encodeHexString(yB));
-            System.out.println("s=" + Hex.encodeHexString(sB));
-            publX = Hex.encodeHexString(xB);
-            publY = Hex.encodeHexString(yB);
-            privS =  Hex.encodeHexString(sB);
-            AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
-            algoParameters.init(new ECGenParameterSpec("secp256r1"));
-            ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-             if (publX != null && !publX.isEmpty() && publY != null && !publY.isEmpty()) {
-                // Get point values
-                byte[] publicX = Hex.decodeHex(publX.toCharArray());
-                byte[] publicY = Hex.decodeHex(publY.toCharArray());
-                // Create key specs
-                KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
-                        parameterSpec);
-                // Get keys
-                this.serverPublicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
-                 System.out.println("public=" + Hex.encodeHexString(this.serverPublicKey.getEncoded()));
-            }
-            if (privS != null && !privS.isEmpty()) {
-                // Get point values
-                byte[] privateS = Hex.decodeHex(privS.toCharArray());
-                // Create key specs
-                KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
-                // Get keys
-                this.serverPrivateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
-                System.out.println("private=" + Hex.encodeHexString(this.serverPrivateKey.getEncoded()));
-                System.out.println();
-            }
-        } catch (GeneralSecurityException | IllegalArgumentException e) {
-            log.error("[{}] Failed generate Server KeyRPK", e.getMessage());
-            throw new RuntimeException(e);
-        }
-    }
 
 }

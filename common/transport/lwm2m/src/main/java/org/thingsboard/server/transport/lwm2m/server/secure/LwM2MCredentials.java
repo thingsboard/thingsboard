@@ -41,9 +41,8 @@ public class LwM2MCredentials {
 
     public ReadResultSecurityStore getSecurityInfo(String endpoint, String jsonStr) {
         ReadResultSecurityStore result = new ReadResultSecurityStore();
-        result.setSecurityMode(DEFAULT_MODE.code);
         JsonObject object = validateJson(jsonStr);
-        if (!object.isJsonNull()) {
+        if (object != null && !object.isJsonNull()) {
             if (!object.isJsonNull()) {
                 boolean isX509 = (object.has("x509") && !object.get("x509").isJsonNull() && object.get("x509").isJsonPrimitive()) ? object.get("x509").getAsBoolean() : false;
                 boolean isPsk = (object.has("psk") && !object.get("psk").isJsonNull()) ? true : false;
@@ -120,15 +119,17 @@ public class LwM2MCredentials {
 
     private JsonObject validateJson(String jsonStr) {
         JsonObject object = null;
-        String jsonValidFlesh = jsonStr.replaceAll("\\\\", "");
-        jsonValidFlesh = jsonValidFlesh.replaceAll("\n", "");
-        jsonValidFlesh = jsonValidFlesh.replaceAll("\t", "");
-        jsonValidFlesh = jsonValidFlesh.replaceAll(" ", "");
-        String jsonValid = (jsonValidFlesh.substring(0, 1).equals("\"") && jsonValidFlesh.substring(jsonValidFlesh.length() - 1).equals("\"")) ? jsonValidFlesh.substring(1, jsonValidFlesh.length() - 1) : jsonValidFlesh;
-        try {
-            object = new JsonParser().parse(jsonValid).getAsJsonObject();
-        } catch (JsonSyntaxException e) {
-            log.error("[{}] Fail validateJson [{}]", jsonStr, e.getMessage());
+        if (jsonStr != null && !jsonStr.isEmpty()) {
+            String jsonValidFlesh = jsonStr.replaceAll("\\\\", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll("\n", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll("\t", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll(" ", "");
+            String jsonValid = (jsonValidFlesh.substring(0, 1).equals("\"") && jsonValidFlesh.substring(jsonValidFlesh.length() - 1).equals("\"")) ? jsonValidFlesh.substring(1, jsonValidFlesh.length() - 1) : jsonValidFlesh;
+            try {
+                object = new JsonParser().parse(jsonValid).getAsJsonObject();
+            } catch (JsonSyntaxException e) {
+                log.error("[{}] Fail validateJson [{}]", jsonStr, e.getMessage());
+            }
         }
         return object;
     }
