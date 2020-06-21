@@ -25,7 +25,6 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         stDiffPromise = undefined;
     });
 
-
     var service = {
         assignDashboardToCustomer: assignDashboardToCustomer,
         getCustomerDashboards: getCustomerDashboards,
@@ -43,9 +42,6 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         makeDashboardPublic: makeDashboardPublic,
         makeDashboardPrivate: makeDashboardPrivate,
         getPublicDashboardLink: getPublicDashboardLink,
-        updateDashboardEdges: updateDashboardEdges,
-        addDashboardEdges: addDashboardEdges,
-        removeDashboardEdges: removeDashboardEdges,
         getEdgeDashboards: getEdgeDashboards,
         assignDashboardToEdge: assignDashboardToEdge,
         unassignDashboardFromEdge: unassignDashboardFromEdge
@@ -290,17 +286,10 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         }
         dashboard.assignedEdgesIds = [];
         if (dashboard.assignedEdges && dashboard.assignedEdges.length) {
-            // var assignedEdgesTitles = [];
             for (var j = 0; j < dashboard.assignedEdges.length; j++) {
                 var assignedEdge = dashboard.assignedEdges[j];
                 dashboard.assignedEdgesIds.push(assignedEdge.edgeId.id);
-                // if (assignedCustomer.public) {
-                //     dashboard.publicCustomerId = assignedCustomer.customerId.id;
-                // } else {
-                //     assignedCustomersTitles.push(assignedCustomer.title);
-                // }
             }
-            // dashboard.assignedCustomersText = assignedCustomersTitles.join(', ');
         }
         return dashboard;
     }
@@ -311,39 +300,6 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         delete dashboard.assignedCustomersIds;
         delete dashboard.assignedEdgesIds;
         return dashboard;
-    }
-
-    function updateDashboardEdges(dashboardId, edgeIds) {
-        var deferred = $q.defer();
-        var url = '/api/dashboard/' + dashboardId + '/edges';
-        $http.post(url, edgeIds).then(function success(response) {
-            deferred.resolve(prepareDashboard(response.data));
-        }, function fail() {
-            deferred.reject();
-        });
-        return deferred.promise;
-    }
-
-    function addDashboardEdges(dashboardId, edgeIds) {
-        var deferred = $q.defer();
-        var url = '/api/dashboard/' + dashboardId + '/edges/add';
-        $http.post(url, edgeIds).then(function success(response) {
-            deferred.resolve(prepareDashboard(response.data));
-        }, function fail() {
-            deferred.reject();
-        });
-        return deferred.promise;
-    }
-
-    function removeDashboardEdges(dashboardId, edgeIds) {
-        var deferred = $q.defer();
-        var url = '/api/dashboard/' + dashboardId + '/edges/remove';
-        $http.post(url, edgeIds).then(function success(response) {
-            deferred.resolve(prepareDashboard(response.data));
-        }, function fail() {
-            deferred.reject();
-        });
-        return deferred.promise;
     }
 
     function getEdgeDashboards(edgeId, pageLink, config) {
