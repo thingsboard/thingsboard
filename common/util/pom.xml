@@ -58,6 +58,10 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -67,6 +71,7 @@
             <artifactId>mockito-all</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
