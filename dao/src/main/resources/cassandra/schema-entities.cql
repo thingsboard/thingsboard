@@ -731,10 +731,11 @@ CREATE TABLE IF NOT EXISTS thingsboard.edge (
     tenant_id timeuuid,
     customer_id timeuuid,
     name text,
+    type text,
     search_text text,
     configuration text,
     additional_info text,
-    PRIMARY KEY (id, tenant_id)
+    PRIMARY KEY (id, tenant_id, customer_id, type)
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_tenant_and_name AS

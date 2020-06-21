@@ -145,7 +145,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         TextPageLink pageLink = new TextPageLink(16);
         TextPageData<RuleChain> pageData = null;
         do {
-            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
             loadedRuleChains.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -160,7 +160,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
 
         pageLink = new TextPageLink(31);
-        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
@@ -196,7 +196,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         TextPageLink pageLink = new TextPageLink(19, name1);
         TextPageData<RuleChain> pageData = null;
         do {
-            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
             loadedRuleChainsName1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -211,7 +211,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         List<RuleChain> loadedRuleChainsName2 = new ArrayList<>();
         pageLink = new TextPageLink(4, name2);
         do {
-            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
+            pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
             loadedRuleChainsName2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -228,7 +228,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new TextPageLink(4, name1);
-        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -237,7 +237,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new TextPageLink(4, name2);
-        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.SYSTEM, pageLink);
+        pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }

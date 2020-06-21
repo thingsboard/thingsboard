@@ -47,7 +47,7 @@ import java.util.Map;
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbMsgTimeseriesNode implements TbNode {
 

@@ -53,7 +53,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         nodeDetails = "If at least one relation exists - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckRelationConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbCheckRelationNode implements TbNode {
 

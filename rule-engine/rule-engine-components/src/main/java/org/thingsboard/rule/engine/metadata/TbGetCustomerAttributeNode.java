@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
                 "<code>metadata.temperature</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {
 

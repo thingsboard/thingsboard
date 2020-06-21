@@ -45,7 +45,7 @@ import java.util.List;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteRelationConfig",
         icon = "remove_circle",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
 

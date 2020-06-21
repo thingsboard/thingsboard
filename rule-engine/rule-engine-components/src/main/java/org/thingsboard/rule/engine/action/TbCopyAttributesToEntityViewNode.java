@@ -58,7 +58,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "content_copy",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbCopyAttributesToEntityViewNode implements TbNode {
 
@@ -138,7 +138,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
     }
 
     private void transformAndTellNext(TbContext ctx, TbMsg msg, EntityView entityView) {
-        ctx.enqueueForTellNext(ctx.newMsg(msg.getType(), entityView.getId(), msg.getMetaData(), msg.getData()), SUCCESS);
+        ctx.enqueueForTellNext(ctx.newMsg(msg.getQueueName(), msg.getType(), entityView.getId(), msg.getMetaData(), msg.getData()), SUCCESS);
     }
 
     private boolean attributeContainsInEntityView(String scope, String attrKey, EntityView entityView) {

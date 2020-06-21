@@ -38,7 +38,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAssignToCustomerConfig",
         icon = "add_circle",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssignToCustomerNodeConfiguration> {
 

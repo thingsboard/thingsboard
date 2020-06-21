@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
@@ -40,6 +41,13 @@ public class DashboardUpdateMsgConstructor {
                 .setTitle(dashboard.getTitle())
                 .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()));
         return builder.build();
+    }
+
+    public DashboardUpdateMsg constructDashboardDeleteMsg(DashboardId dashboardId) {
+        return DashboardUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(dashboardId.getId().getMostSignificantBits())
+                .setIdLSB(dashboardId.getId().getLeastSignificantBits()).build();
     }
 
 }

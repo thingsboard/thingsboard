@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.ServiceQueue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +47,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 
 public class TbMsgDelayNode implements TbNode {
@@ -72,7 +73,7 @@ public class TbMsgDelayNode implements TbNode {
         } else {
             if (pendingMsgs.size() < config.getMaxPendingMsgs()) {
                 pendingMsgs.put(msg.getId(), msg);
-                TbMsg tickMsg = ctx.newMsg(TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), msg.getId().toString());
+                TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), msg.getId().toString());
                 ctx.tellSelf(tickMsg, getDelay(msg));
                 ctx.ack(msg);
             } else {

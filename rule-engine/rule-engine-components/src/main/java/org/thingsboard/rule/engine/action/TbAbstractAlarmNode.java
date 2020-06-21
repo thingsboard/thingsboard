@@ -65,13 +65,9 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                                 () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Created"),
                                 throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
                     } else if (alarmResult.isUpdated) {
-                        ctx.enqueue(ctx.alarmUpdatedMsg(alarmResult.alarm, ctx.getSelfId()),
-                                () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated"),
-                                throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
+                        ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated");
                     } else if (alarmResult.isCleared) {
-                        ctx.enqueue(ctx.alarmClearedMsg(alarmResult.alarm, ctx.getSelfId()),
-                                () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared"),
-                                throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
+                        ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
                     } else {
                         ctx.tellSuccess(msg);
                     }

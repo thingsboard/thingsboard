@@ -52,7 +52,7 @@ import java.util.List;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateAlarmConfig",
         icon = "notifications_active",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 

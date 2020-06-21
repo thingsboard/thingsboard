@@ -281,6 +281,14 @@ sql:
 
 # Actor system parameters
 actors:
+  system:
+    throughput: "${ACTORS_SYSTEM_THROUGHPUT:5}"
+    scheduler_pool_size: "${ACTORS_SYSTEM_SCHEDULER_POOL_SIZE:1}"
+    max_actor_init_attempts: "${ACTORS_SYSTEM_MAX_ACTOR_INIT_ATTEMPTS:10}"
+    app_dispatcher_pool_size: "${ACTORS_SYSTEM_APP_DISPATCHER_POOL_SIZE:1}"
+    tenant_dispatcher_pool_size: "${ACTORS_SYSTEM_TENANT_DISPATCHER_POOL_SIZE:2}"
+    device_dispatcher_pool_size: "${ACTORS_SYSTEM_DEVICE_DISPATCHER_POOL_SIZE:4}"
+    rule_dispatcher_pool_size: "${ACTORS_SYSTEM_RULE_DISPATCHER_POOL_SIZE:4}"
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}"
   session:
@@ -318,11 +326,6 @@ actors:
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
     js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
-  queue:
-    # Enable/disable persistence of un-processed messages to the queue
-    enabled: "${ACTORS_QUEUE_ENABLED:true}"
-    # Maximum allowed timeout for persistence into the queue
-    timeout: "${ACTORS_QUEUE_PERSISTENCE_TIMEOUT:30000}"
 
 cache:
   # caffeine or redis

@@ -51,7 +51,7 @@ import java.util.concurrent.TimeoutException;
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeMqttConfig",
         icon = "call_split",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbMqttNode implements TbNode {
 

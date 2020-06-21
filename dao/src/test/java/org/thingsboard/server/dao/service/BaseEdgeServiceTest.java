@@ -37,7 +37,7 @@ import java.util.List;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-public abstract class EdgeServiceImplTest extends AbstractServiceTest {
+public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
 
     private IdComparator<Edge> idComparator = new IdComparator<>();
 

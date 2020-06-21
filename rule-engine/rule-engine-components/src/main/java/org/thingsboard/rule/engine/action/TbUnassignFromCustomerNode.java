@@ -35,7 +35,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeUnAssignToCustomerConfig",
         icon = "remove_circle",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbUnassignFromCustomerNodeConfiguration> {
 

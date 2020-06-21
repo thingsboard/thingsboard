@@ -1351,7 +1351,7 @@
   "rulechain": {
     "rulechain": "Regelkette",
     "rulechains": "Regelketten",
-    "system-rulechains": "Systemeregelketten",
+    "core-rulechains": "Kernregelketten",
     "edge-rulechains": "Randregelketten",
     "root": "Wurzel",
     "delete": "Regelkette löschen",

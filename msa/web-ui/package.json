@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-web-ui",
   "private": true,
-  "version": "2.5.1",
+  "version": "2.5.3",
   "description": "ThingsBoard Web UI Microservice",
   "main": "server.js",
   "bin": "server.js",

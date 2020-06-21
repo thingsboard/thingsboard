@@ -35,6 +35,7 @@ import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
@@ -131,7 +132,7 @@ public interface TbContext {
 
     void ack(TbMsg tbMsg);
 
-    TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data);
+    TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
     TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
@@ -143,10 +144,6 @@ public interface TbContext {
 
     // TODO: Does this changes the message?
     TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
-
-    TbMsg alarmUpdatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
-
-    TbMsg alarmClearedMsg(Alarm alarm, RuleNodeId ruleNodeId);
 
     /*
      *
@@ -189,6 +186,8 @@ public interface TbContext {
     EntityViewService getEntityViewService();
 
     EdgeService getEdgeService();
+
+    EdgeEventService getEdgeEventService();
 
     ListeningExecutor getJsExecutor();
 

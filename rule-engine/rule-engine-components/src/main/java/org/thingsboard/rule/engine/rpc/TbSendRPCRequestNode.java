@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcRequestConfig",
         icon = "call_made",
-        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
 )
 public class TbSendRPCRequestNode implements TbNode {
 
@@ -114,11 +114,11 @@ public class TbSendRPCRequestNode implements TbNode {
 
             ctx.getRpcService().sendRpcRequestToDevice(request, ruleEngineDeviceRpcResponse -> {
                 if (!ruleEngineDeviceRpcResponse.getError().isPresent()) {
-                    TbMsg next = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse("{}"));
+                    TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse("{}"));
                     ctx.enqueueForTellNext(next, TbRelationTypes.SUCCESS);
                 } else {
-                    TbMsg next = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));
-                    ctx.enqueueForTellFailure(next, ruleEngineDeviceRpcResponse.getError().get().name());
+                    TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));
+                    ctx.tellFailure(next, new RuntimeException(ruleEngineDeviceRpcResponse.getError().get().name()));
                 }
             });
             ctx.ack(msg);

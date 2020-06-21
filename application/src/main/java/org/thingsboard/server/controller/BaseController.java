@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -66,6 +67,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -83,6 +85,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -95,10 +98,12 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -108,6 +113,7 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
+import javax.management.relation.Relation;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Optional;
@@ -199,6 +205,12 @@ public abstract class BaseController {
 
     @Autowired
     protected EdgeService edgeService;
+
+    @Autowired
+    protected EdgeNotificationService edgeNotificationService;
+
+    @Autowired
+    protected EdgeEventService edgeEventService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -518,6 +530,24 @@ public abstract class BaseController {
         }
     }
 
+    ComponentDescriptor checkComponentDescriptorByClazz(String clazz) throws ThingsboardException {
+        try {
+            log.debug("[{}] Lookup component descriptor", clazz);
+            return checkNotNull(componentDescriptorService.getComponent(clazz));
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    List<ComponentDescriptor> checkComponentDescriptorsByType(ComponentType type, RuleChainType ruleChainType) throws ThingsboardException {
+        try {
+            log.debug("[{}] Lookup component descriptors", type);
+            return componentDescriptorService.getComponents(type, ruleChainType);
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     List<ComponentDescriptor> checkComponentDescriptorsByTypes(Set<ComponentType> types, RuleChainType ruleChainType) throws ThingsboardException {
         try {
             log.debug("[{}] Lookup component descriptors", types);
@@ -559,7 +589,6 @@ public abstract class BaseController {
         }
         if (e == null) {
             pushEntityActionToRuleEngine(entityId, entity, user, customerId, actionType, additionalInfo);
-            // TODO: voba - refactor to push events to edge queue directly, instead of the rule engine flow
         }
         auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }
@@ -605,10 +634,6 @@ public abstract class BaseController {
                 break;
             case UNASSIGNED_FROM_EDGE:
                 msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
-                break;
-            case CREDENTIALS_UPDATED:
-                //TODO: voba - this is not efficient way to do this. Refactor on later stages
-                msgType = DataConstants.ENTITY_UPDATED;
                 break;
         }
         if (!StringUtils.isEmpty(msgType)) {
@@ -698,5 +723,46 @@ public abstract class BaseController {
         return result;
     }
 
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType edgeEventAction) {
+        try {
+            sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation), EdgeEventType.RELATION, edgeEventAction);
+        } catch (Exception e) {
+            log.warn("Failed to push relation to core: {}", relation, e);
+        }
+    }
+
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, ActionType edgeEventAction) {
+        EdgeEventType edgeEventType = edgeEventService.getEdgeEventTypeByEntityType(entityId.getEntityType());
+        if (edgeEventType != null) {
+            sendNotificationMsgToEdgeService(tenantId, null, entityId, null, edgeEventType, edgeEventAction);
+        }
+    }
+
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventType edgeEventType, ActionType edgeEventAction) {
+        sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, null, edgeEventType, edgeEventAction);
+    }
+
+    private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String entityBody, EdgeEventType edgeEventType, ActionType edgeEventAction) {
+        TransportProtos.EdgeNotificationMsgProto.Builder builder = TransportProtos.EdgeNotificationMsgProto.newBuilder();
+        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+        builder.setEdgeEventType(edgeEventType.name());
+        builder.setEdgeEventAction(edgeEventAction.name());
+        if (entityId != null) {
+            builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
+            builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
+            builder.setEntityType(entityId.getEntityType().name());
+        }
+        if (edgeId != null) {
+            builder.setEdgeIdMSB(edgeId.getId().getMostSignificantBits());
+            builder.setEdgeIdLSB(edgeId.getId().getLeastSignificantBits());
+        }
+        if (entityBody != null) {
+            builder.setEntityBody(entityBody);
+        }
+        TransportProtos.EdgeNotificationMsgProto msg = builder.build();
+        tbClusterService.pushMsgToCore(tenantId, entityId != null ? entityId : tenantId,
+                TransportProtos.ToCoreMsg.newBuilder().setEdgeNotificationMsg(msg).build(), null);
+    }
 
 }

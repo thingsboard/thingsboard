@@ -404,6 +404,9 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     }
 
     function openAlarmDetails($event, alarm) {
+        if ($event) {
+            $event.stopPropagation();
+        }
         if (alarm && alarm.id) {
             var onShowingCallback = {
                 onShowing: function(){}

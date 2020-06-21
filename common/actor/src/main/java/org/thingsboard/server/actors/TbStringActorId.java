@@ -13,29 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.edge;
+package org.thingsboard.server.actors;
 
-import com.google.common.util.concurrent.FutureCallback;
-import lombok.Data;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.msg.TbMsg;
+import java.util.Objects;
 
-import javax.annotation.Nullable;
+public class TbStringActorId implements TbActorId {
 
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
+    private final String id;
 
-@Data
-class PushToEdgeNodeCallback implements FutureCallback<Void> {
-    private final TbContext ctx;
-    private final TbMsg msg;
-
-    @Override
-    public void onSuccess(@Nullable Void result) {
-        ctx.tellNext(msg, SUCCESS);
+    public TbStringActorId(String id) {
+        this.id = id;
     }
 
     @Override
-    public void onFailure(Throwable t) {
-        ctx.tellFailure(msg, t);
+    public String toString() {
+        return id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TbStringActorId that = (TbStringActorId) o;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

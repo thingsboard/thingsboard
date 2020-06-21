@@ -372,6 +372,16 @@ public class ModelConstants {
     public static final String EDGE_ROUTING_KEY_PROPERTY = "routing_key";
     public static final String EDGE_SECRET_PROPERTY = "secret";
 
+    /**
+     * Cassandra edge queue constants.
+     */
+    public static final String EDGE_EVENT_COLUMN_FAMILY_NAME = "edge_event";
+    public static final String EDGE_EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_EVENT_EDGE_ID_PROPERTY = "edge_id";
+    public static final String EDGE_EVENT_TYPE_PROPERTY = "edge_event_type";
+    public static final String EDGE_EVENT_ACTION_PROPERTY = "edge_event_action";
+    public static final String EDGE_EVENT_ENTITY_ID_PROPERTY = "entity_id";
+    public static final String EDGE_EVENT_ENTITY_BODY_PROPERTY = "entity_body";
 
     /**
      * Cassandra attributes and timeseries constants.

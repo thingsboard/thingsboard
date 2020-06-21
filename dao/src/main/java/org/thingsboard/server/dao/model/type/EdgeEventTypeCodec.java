@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.dao.model.type;
 
-public enum EdgeQueueEntityType {
-    DASHBOARD, ASSET, DEVICE, ENTITY_VIEW, ALARM, RULE_CHAIN, RULE_CHAIN_METADATA, EDGE, USER, CUSTOMER, RELATION
+import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+
+public class EdgeEventTypeCodec extends EnumNameCodec<EdgeEventType> {
+
+    public EdgeEventTypeCodec() {
+        super(EdgeEventType.class);
+    }
+
 }

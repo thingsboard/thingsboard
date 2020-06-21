@@ -40,7 +40,6 @@ import javax.annotation.PostConstruct;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,7 +64,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     private Map<String, ComponentDescriptor> components = new HashMap<>();
 
-    private Map<ComponentType, List<ComponentDescriptor>> systemComponentsMap = new HashMap<>();
+    private Map<ComponentType, List<ComponentDescriptor>> coreComponentsMap = new HashMap<>();
 
     private Map<ComponentType, List<ComponentDescriptor>> edgeComponentsMap = new HashMap<>();
 
@@ -116,8 +115,8 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     private void putComponentIntoMaps(ComponentType type, RuleNode ruleNodeAnnotation, ComponentDescriptor component) {
-        if (ruleChainTypeContainsArray(RuleChainType.SYSTEM, ruleNodeAnnotation.ruleChainTypes())) {
-            systemComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+        if (ruleChainTypeContainsArray(RuleChainType.CORE, ruleNodeAnnotation.ruleChainTypes())) {
+            coreComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
         }
         if (ruleChainTypeContainsArray(RuleChainType.EDGE, ruleNodeAnnotation.ruleChainTypes())) {
             edgeComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
@@ -224,15 +223,40 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     @Override
+    public List<ComponentDescriptor> getComponents(ComponentType type, RuleChainType ruleChainType) {
+        if (RuleChainType.CORE.equals(ruleChainType)) {
+            if (coreComponentsMap.containsKey(type)) {
+                return Collections.unmodifiableList(coreComponentsMap.get(type));
+            } else {
+                return Collections.emptyList();
+            }
+        } else if (RuleChainType.EDGE.equals(ruleChainType)) {
+            if (edgeComponentsMap.containsKey(type)) {
+                return Collections.unmodifiableList(edgeComponentsMap.get(type));
+            } else {
+                return Collections.emptyList();
+            }
+        } else {
+            log.error("Unsupported rule chain type {}", ruleChainType);
+            throw new RuntimeException("Unsupported rule chain type " + ruleChainType);
+        }
+    }
+
+    @Override
     public List<ComponentDescriptor> getComponents(Set<ComponentType> types, RuleChainType ruleChainType) {
-        if (RuleChainType.SYSTEM.equals(ruleChainType)) {
-            return getComponents(types, systemComponentsMap);
+        if (RuleChainType.CORE.equals(ruleChainType)) {
+            return getComponents(types, coreComponentsMap);
         } else if (RuleChainType.EDGE.equals(ruleChainType)) {
             return getComponents(types, edgeComponentsMap);
         } else {
             log.error("Unsupported rule chain type {}", ruleChainType);
             throw new RuntimeException("Unsupported rule chain type " + ruleChainType);
         }
+    }
+
+    @Override
+    public Optional<ComponentDescriptor> getComponent(String clazz) {
+        return Optional.ofNullable(components.get(clazz));
     }
 
     private List<ComponentDescriptor> getComponents(Set<ComponentType> types, Map<ComponentType, List<ComponentDescriptor>> componentsMap) {

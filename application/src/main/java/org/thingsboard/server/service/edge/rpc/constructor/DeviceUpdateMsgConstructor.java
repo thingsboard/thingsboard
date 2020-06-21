@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
@@ -57,5 +58,12 @@ public class DeviceUpdateMsgConstructor {
             }
         }
         return builder.build();
+    }
+
+    public DeviceUpdateMsg constructDeviceDeleteMsg(DeviceId deviceId) {
+        return DeviceUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(deviceId.getId().getMostSignificantBits())
+                .setIdLSB(deviceId.getId().getLeastSignificantBits()).build();
     }
 }

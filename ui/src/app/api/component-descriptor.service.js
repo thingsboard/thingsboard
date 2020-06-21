@@ -44,7 +44,7 @@ function ComponentDescriptorService($http, $q) {
         if (!componentTypes.length) {
             deferred.resolve(result);
         } else {
-            var url = '/api/components/' + ruleChainType + '?componentTypes=' + componentTypes.join(',');
+            var url = '/api/components?componentTypes=' + componentTypes.join(',') + '&ruleChainType=' + ruleChainType;
             $http.get(url, null).then(function success(response) {
                 var components = response.data;
                 for (var i = 0; i < components.length; i++) {

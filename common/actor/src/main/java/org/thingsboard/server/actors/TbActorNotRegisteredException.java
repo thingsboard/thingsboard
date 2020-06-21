@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.actors;
 
-import lombok.Data;
+import lombok.Getter;
 
-@Data
-public class EdgeQueueEntry {
-    private String type;
-    private EdgeQueueEntityType entityType;
-    private String data;
+public class TbActorNotRegisteredException extends RuntimeException {
+
+    @Getter
+    private TbActorId target;
+
+    public TbActorNotRegisteredException(TbActorId target, String message) {
+        super(message);
+        this.target = target;
+    }
 }
