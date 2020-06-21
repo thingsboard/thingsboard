@@ -25,16 +25,16 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service("LwM2MTransportServerInitializer")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-@Slf4j
 public class LwM2MTransportServerInitializer {
 
     @Autowired
     private LeshanServer lhServer;
 
     @Autowired
-    private LwM2MTransportCtx context;
+    private LwM2MTransportContext context;
 
     @PostConstruct
     public void init() {
@@ -44,11 +44,11 @@ public class LwM2MTransportServerInitializer {
 
     @PreDestroy
     public void shutdown() throws InterruptedException {
-        log.info("Stopping LwM2M transport!");
+        log.info("Stopping LwM2M transport Server!");
         try {
             lhServer.destroy();
         } finally {
         }
-        log.info("LwM2M transport stopped!");
+        log.info("LwM2M transport Server stopped!");
     }
 }

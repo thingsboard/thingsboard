@@ -46,14 +46,6 @@ public class LwM2MTransportHandler {
     private static final String EVENT_COAP_LOG = "COAPLOG";
     private static final String QUERY_PARAM_ENDPOINT = "ep";
 
-//    public static final int SECURITY_MODE_PSK = SecurityMode.PSK.code;
-//    public static final int SECURITY_MODE_RPK= SecurityMode.RPK.code;
-//    public static final int SECURITY_MODE_X509 = SecurityMode.X509.code;
-//    public static final int SECURITY_MODE_NO_SEC = SecurityMode.NO_SEC.code;
-//    public static final int SECURITY_MODE_X509_EST= 4;
-//    public static final int SECURITY_MODE_REDIS= 5;
-//    public static final int SECURITY_MODE_DEFAULT= 100;
-
     /**
      * The default modelFolderPath for reading ObjectModel from resource
      */

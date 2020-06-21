@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
@@ -50,7 +49,7 @@ public class LwM2MTransportRequest {
     private LeshanServer lwServer;
 
     @Autowired
-    private LwM2MTransportCtx context;
+    private LwM2MTransportContext context;
 
 
     @PostConstruct
