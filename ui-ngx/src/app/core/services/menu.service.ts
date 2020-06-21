@@ -180,9 +180,24 @@ export class MenuService {
       },
       {
         name: 'rulechain.rulechains',
-        type: 'link',
+        type: 'toggle',
         path: '/ruleChains',
-        icon: 'settings_ethernet'
+        height: '80px',
+        icon: 'settings_ethernet',
+        pages: [
+          {
+            name: 'rulechain.rulechains',
+            type: 'link',
+            path: '/ruleChains',
+            icon: 'settings_ethernet'
+          },
+          {
+            name: 'rulechain.edge-rulechains',
+            type: 'link',
+            path: '/edgesRuleChains',
+            icon: 'router'
+          }
+        ]
       },
       {
         name: 'customer.customers',
@@ -207,6 +222,12 @@ export class MenuService {
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
+      },
+      {
+        name: 'edge.edges',
+        type: 'link',
+        path: '/edges',
+        icon: 'router'
       },
       {
         name: 'widget.widget-library',
@@ -240,6 +261,11 @@ export class MenuService {
             name: 'rulechain.rulechains',
             icon: 'settings_ethernet',
             path: '/ruleChains'
+          },
+          {
+            name: 'rulechain.edge-rulechains',
+            icon: 'router',
+            path: '/edgesRuleChains'
           }
         ]
       },
@@ -280,6 +306,16 @@ export class MenuService {
             name: 'entity-view.entity-views',
             icon: 'view_quilt',
             path: '/entityViews'
+          }
+        ]
+      },
+      {
+        name: 'edge.management',
+        places: [
+          {
+            name: 'edge.edges',
+            icon: 'router',
+            path: '/edges'
           }
         ]
       },

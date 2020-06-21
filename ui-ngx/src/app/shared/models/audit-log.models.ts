@@ -49,7 +49,9 @@ export enum ActionType {
   ALARM_CLEAR = 'ALARM_CLEAR',
   LOGIN = 'LOGIN',
   LOGOUT = 'LOGOUT',
-  LOCKOUT = 'LOCKOUT'
+  LOCKOUT = 'LOCKOUT',
+  ASSIGNED_TO_EDGE = 'ASSIGNED_TO_EDGE',
+  UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE'
 }
 
 export enum ActionStatus {
@@ -79,7 +81,9 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.ALARM_CLEAR, 'audit-log.type-alarm-clear'],
     [ActionType.LOGIN, 'audit-log.type-login'],
     [ActionType.LOGOUT, 'audit-log.type-logout'],
-    [ActionType.LOCKOUT, 'audit-log.type-lockout']
+    [ActionType.LOCKOUT, 'audit-log.type-lockout'],
+    [ActionType.ASSIGNED_TO_EDGE, 'audit-log.type-assigned-to-edge'],
+    [ActionType.UNASSIGNED_FROM_EDGE, 'audit-log.type-unassigned-from-edge']
   ]
 );
 

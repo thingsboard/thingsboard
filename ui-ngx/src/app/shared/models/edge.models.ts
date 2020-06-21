@@ -15,27 +15,28 @@
 ///
 
 import { BaseData } from '@shared/models/base-data';
-import { AssetId } from './id/asset-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
+import { EdgeId } from '@shared/models/id/edge-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
-import { EdgeId } from "@shared/models/id/edge-id";
 
-export interface Asset extends BaseData<AssetId> {
+export interface Edge extends BaseData<EdgeId> {
   tenantId?: TenantId;
   customerId?: CustomerId;
-  edgeId?: EdgeId; //TODO: deaflynx: "edgeId?" ?
   name: string;
   type: string;
-  label: string;
+  secret: string;
+  routingKey: string;
+  label?: string;
   additionalInfo?: any;
 }
 
-export interface AssetInfo extends Asset {
+export interface EdgeInfo extends Edge {
   customerTitle: string;
   customerIsPublic: boolean;
+  // assignedCustomers?: Array<ShortCustomerInfo> //TODO: deaflynx check usage
 }
 
-export interface AssetSearchQuery extends EntitySearchQuery {
-  assetTypes: Array<string>;
+export interface EdgeSearchQuery extends EntitySearchQuery {
+  edgeTypes: Array<string>;
 }

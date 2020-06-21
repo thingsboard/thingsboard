@@ -143,4 +143,18 @@ export class DeviceService {
     return this.http.delete(`/api/customer/device/${deviceName}/claim`, defaultHttpOptionsFromConfig(config));
   }
 
+  public assignDeviceToEdge(edgeId: string, deviceId: string, config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>(`/api/edge/${edgeId}/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public unassignDeviceFromEdge(deviceId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/edge/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeDevices(edgeId: string, pageLink: PageLink, type: string = '',
+                        config?: RequestConfig): Observable<PageData<DeviceInfo>> {
+    return this.http.get<PageData<DeviceInfo>>(`/api/edge/${edgeId}/devices${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config))
+  }
+
 }

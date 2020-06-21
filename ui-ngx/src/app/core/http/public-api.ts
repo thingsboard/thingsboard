@@ -24,6 +24,7 @@ export * from './customer.service';
 export * from './dashboard.service';
 export * from './device.service';
 export * from './entity.service';
+export * from './edge.service';
 export * from './entity-relation.service';
 export * from './entity-view.service';
 export * from './event.service';

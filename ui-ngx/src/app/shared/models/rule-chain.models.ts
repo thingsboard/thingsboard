@@ -27,6 +27,7 @@ export interface RuleChain extends BaseData<RuleChainId> {
   firstRuleNodeId: RuleNodeId;
   root: boolean;
   debugMode: boolean;
+  type: string;
   configuration?: any;
   additionalInfo?: any;
 }
@@ -60,6 +61,11 @@ export interface RuleChainConnectionInfo {
   targetRuleChainId: RuleChainId;
   additionalInfo: any;
   type: string;
+}
+
+export interface RuleChainType {
+  core: string;
+  edge: string;
 }
 
 export const ruleNodeTypeComponentTypes: ComponentType[] =
@@ -110,3 +116,8 @@ export const inputNodeComponent: RuleNodeComponentDescriptor = {
   name: 'Input',
   clazz: 'tb.internal.Input'
 };
+
+export const ruleChainType: RuleChainType = {
+  core: 'CORE',
+  edge: 'EDGE'
+}

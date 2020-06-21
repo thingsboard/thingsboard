@@ -21,6 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
+import { EdgeService } from "@core/http/edge.service";
 import { EntityType } from '@shared/models/entity-type.models';
 import { forkJoin, Observable } from 'rxjs';
 import { AssetService } from '@core/http/asset.service';
@@ -28,70 +29,71 @@ import { EntityViewService } from '@core/http/entity-view.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { EdgeService } from "@core/http/edge.service";
+import { RuleChainService } from "@core/http/rule-chain.service";
 
-export interface AddEntitiesToCustomerDialogData {
-  customerId: string;
+export interface AddEntitiesToEdgeDialogData {
+  edgeId: string;
   entityType: EntityType;
 }
 
 @Component({
-  selector: 'tb-add-entities-to-customer-dialog',
-  templateUrl: './add-entities-to-customer-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddEntitiesToCustomerDialogComponent}],
+  selector: 'tb-add-entities-to-edge-dialog',
+  templateUrl: './add-entities-to-edge-dialog.component.html',
+  providers: [{provide: ErrorStateMatcher, useExisting: AddEntitiesToEdgeDialogComponent}],
   styleUrls: []
 })
-export class AddEntitiesToCustomerDialogComponent extends
-  DialogComponent<AddEntitiesToCustomerDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
+export class AddEntitiesToEdgeDialogComponent extends
+  DialogComponent<AddEntitiesToEdgeDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 
-  addEntitiesToCustomerFormGroup: FormGroup;
+  addEntitiesToEdgeFormGroup: FormGroup;
 
   submitted = false;
 
   entityType: EntityType;
 
-  assignToCustomerTitle: string;
-  assignToCustomerText: string;
+  assignToEdgeTitle: string;
+  assignToEdgeText: string;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: AddEntitiesToCustomerDialogData,
+              @Inject(MAT_DIALOG_DATA) public data: AddEntitiesToEdgeDialogData,
               private deviceService: DeviceService,
-              private assetService: AssetService,
               private edgeService: EdgeService,
+              private assetService: AssetService,
               private entityViewService: EntityViewService,
               private dashboardService: DashboardService,
+              private ruleChainService: RuleChainService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<AddEntitiesToCustomerDialogComponent, boolean>,
+              public dialogRef: MatDialogRef<AddEntitiesToEdgeDialogComponent, boolean>,
               public fb: FormBuilder) {
     super(store, router, dialogRef);
     this.entityType = data.entityType;
   }
 
   ngOnInit(): void {
-    this.addEntitiesToCustomerFormGroup = this.fb.group({
+    this.addEntitiesToEdgeFormGroup = this.fb.group({
       entityIds: [null, [Validators.required]]
     });
     switch (this.data.entityType) {
       case EntityType.DEVICE:
-        this.assignToCustomerTitle = 'device.assign-device-to-customer';
-        this.assignToCustomerText = 'device.assign-device-to-customer-text';
+        this.assignToEdgeTitle = 'device.assign-device-to-edge';
+        this.assignToEdgeText = 'device.assign-device-to-edge-text';
+        break;
+      case EntityType.RULE_CHAIN:
+        this.assignToEdgeTitle = 'rulechain.assign-rulechain-to-edge';
+        this.assignToEdgeText = 'rulechain.assign-rulechain-to-edge-text';
         break;
       case EntityType.ASSET:
-        this.assignToCustomerTitle = 'asset.assign-asset-to-customer';
-        this.assignToCustomerText = 'asset.assign-asset-to-customer-text';
-        break;
-      case EntityType.EDGE:
-        this.assignToCustomerTitle = 'edge.assign-edge-to-customer';
-        this.assignToCustomerText = 'edge.assign-edge-to-customer-text';
+        this.assignToEdgeTitle = 'asset.assign-asset-to-edge';
+        this.assignToEdgeText = 'asset.assign-asset-to-edge-text';
         break;
       case EntityType.ENTITY_VIEW:
-        this.assignToCustomerTitle = 'entity-view.assign-entity-view-to-customer';
-        this.assignToCustomerText = 'entity-view.assign-entity-view-to-customer-text';
+        this.assignToEdgeTitle = 'entity-view.assign-entity-view-to-edge';
+        this.assignToEdgeText = 'entity-view.assign-entity-view-to-edge-text';
         break;
       case EntityType.DASHBOARD:
-        this.assignToCustomerTitle = 'dashboard.assign-dashboard-to-customer';
-        this.assignToCustomerText = 'dashboard.assign-dashboard-to-customer-text';
+        this.assignToEdgeTitle = 'dashboard.assign-dashboard-to-edge';
+        this.assignToEdgeText = 'dashboard.assign-dashboard-to-edge-text';
         break;
     }
   }
@@ -108,11 +110,11 @@ export class AddEntitiesToCustomerDialogComponent extends
 
   assign(): void {
     this.submitted = true;
-    const entityIds: Array<string> = this.addEntitiesToCustomerFormGroup.get('entityIds').value;
+    const entityIds: Array<string> = this.addEntitiesToEdgeFormGroup.get('entityIds').value;
     const tasks: Observable<any>[] = [];
     entityIds.forEach(
       (entityId) => {
-        tasks.push(this.getAssignToCustomerTask(this.data.customerId, entityId));
+        tasks.push(this.getAssignToEdgeTask(this.data.edgeId, entityId));
       }
     );
     forkJoin(tasks).subscribe(
@@ -122,18 +124,18 @@ export class AddEntitiesToCustomerDialogComponent extends
     );
   }
 
-  private getAssignToCustomerTask(customerId: string, entityId: string): Observable<any> {
+  private getAssignToEdgeTask(edgeId: string, entityId: string): Observable<any> {
     switch (this.data.entityType) {
       case EntityType.DEVICE:
-        return this.deviceService.assignDeviceToCustomer(customerId, entityId);
+        return this.deviceService.assignDeviceToEdge(edgeId, entityId);
       case EntityType.ASSET:
-        return this.assetService.assignAssetToCustomer(customerId, entityId);
-      case EntityType.EDGE:
-        return this.edgeService.assignEdgeToCustomer(customerId, entityId);
+        return this.assetService.assignAssetToEdge(edgeId, entityId);
       case EntityType.ENTITY_VIEW:
-        return this.entityViewService.assignEntityViewToCustomer(customerId, entityId);
+        return this.entityViewService.assignEntityViewToEdge(edgeId, entityId);
       case EntityType.DASHBOARD:
-        return this.dashboardService.assignDashboardToCustomer(customerId, entityId);
+        return this.dashboardService.assignDashboardToEdge(edgeId, entityId);
+      case EntityType.RULE_CHAIN:
+        return this.ruleChainService.assignRuleChainToEdge(edgeId, entityId);
     }
   }
 

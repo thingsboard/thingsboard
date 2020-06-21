@@ -25,6 +25,7 @@ import { DeviceService } from '@core/http/device.service';
 import { EntitySubtype, EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
 import { AssetService } from '@core/http/asset.service';
+import { EdgeService } from "@core/http/edge.service";
 import { EntityViewService } from '@core/http/entity-view.service';
 
 @Component({
@@ -78,6 +79,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               public translate: TranslateService,
               private deviceService: DeviceService,
               private assetService: AssetService,
+              private edgeService: EdgeService,
               private entityViewService: EntityViewService,
               private fb: FormBuilder) {
     this.subTypeFormGroup = this.fb.group({
@@ -107,6 +109,14 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
         this.entitySubtypeTitle = 'device.device-type';
         this.entitySubtypeRequiredText = 'device.device-type-required';
         this.broadcastSubscription = this.broadcast.on('deviceSaved', () => {
+          this.subTypes = null;
+          this.subTypesOptionsSubject.next('');
+        });
+        break;
+      case EntityType.EDGE:
+        this.entitySubtypeTitle = 'edge.edge-type';
+        this.entitySubtypeRequiredText = 'edge.edge-type-required';
+        this.broadcastSubscription = this.broadcast.on('edgeSaved',() => {
           this.subTypes = null;
           this.subTypesOptionsSubject.next('');
         });
@@ -207,6 +217,9 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
           break;
         case EntityType.DEVICE:
           this.subTypes = this.deviceService.getDeviceTypes({ignoreLoading: true});
+          break;
+        case EntityType.EDGE:
+          this.subTypes = this.edgeService.getEdgeTypes({ignoreLoading: true});
           break;
         case EntityType.ENTITY_VIEW:
           this.subTypes = this.entityViewService.getEntityViewTypes({ignoreLoading: true});

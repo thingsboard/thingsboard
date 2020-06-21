@@ -57,6 +57,9 @@ import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType, DeviceSearchQuery } from '@shared/models/device.models';
 import { EntityViewSearchQuery } from '@shared/models/entity-view.models';
 import { AttributeService } from '@core/http/attribute.service';
+import { EdgeService } from "@core/http/edge.service";
+import {EdgeSearchQuery} from "@shared/models/edge.models";
+import {ruleChainType} from "@shared/models/rule-chain.models";
 
 @Injectable({
   providedIn: 'root'
@@ -67,6 +70,7 @@ export class EntityService {
     private http: HttpClient,
     private store: Store<AppState>,
     private deviceService: DeviceService,
+    private edgeService: EdgeService,
     private assetService: AssetService,
     private entityViewService: EntityViewService,
     private tenantService: TenantService,
@@ -89,6 +93,9 @@ export class EntityService {
         break;
       case EntityType.ASSET:
         observable = this.assetService.getAsset(entityId, config);
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdge(entityId, config);
         break;
       case EntityType.ENTITY_VIEW:
         observable = this.entityViewService.getEntityView(entityId, config);
@@ -156,6 +163,9 @@ export class EntityService {
         break;
       case EntityType.ASSET:
         observable = this.assetService.getAssets(entityIds, config);
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdges(entityIds, config);
         break;
       case EntityType.ENTITY_VIEW:
         observable = this.getEntitiesByIdsObservable(
@@ -265,6 +275,14 @@ export class EntityService {
           entitiesObservable = this.assetService.getTenantAssetInfos(pageLink, subType, config);
         }
         break;
+      case EntityType.EDGE:
+        pageLink.sortOrder.property = 'name';
+        if (authUser.authority === Authority.CUSTOMER_USER) {
+          entitiesObservable = this.edgeService.getCustomerEdges(customerId, pageLink, subType, config);
+        } else {
+          entitiesObservable = this.edgeService.getTenantEdgeInfos(pageLink, subType, config);
+        }
+        break;
       case EntityType.ENTITY_VIEW:
         pageLink.sortOrder.property = 'name';
         if (authUser.authority === Authority.CUSTOMER_USER) {
@@ -292,7 +310,12 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, config);
+        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.core, config);
+        // TODO: deaflynx: change solution
+        // console.log("route.routerState.snapshot.url", this.route.routerState.snapshot.url);
+        // if (this.route.url.includes('edges')) {
+        //   entitiesObservable = this.ruleChainService.getRuleChains(pageLink, edgeRuleChainType, config);
+        // } else { entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType, config); }
         break;
       case EntityType.DASHBOARD:
         pageLink.sortOrder.property = 'title';
@@ -390,6 +413,8 @@ export class EntityService {
           return entityTypes.indexOf(EntityType.ASSET)  > -1 ? true : false;
         case AliasFilterType.deviceType:
           return entityTypes.indexOf(EntityType.DEVICE)  > -1 ? true : false;
+        case AliasFilterType.edgeType:
+          return entityTypes.indexOf(EntityType.EDGE) > -1 ? true : false;
         case AliasFilterType.entityViewType:
           return entityTypes.indexOf(EntityType.ENTITY_VIEW)  > -1 ? true : false;
         case AliasFilterType.relationsQuery:
@@ -416,6 +441,8 @@ export class EntityService {
           return entityTypes.indexOf(EntityType.ASSET)  > -1 ? true : false;
         case AliasFilterType.deviceSearchQuery:
           return entityTypes.indexOf(EntityType.DEVICE)  > -1 ? true : false;
+        case AliasFilterType.edgeSearchQuery:
+          return entityTypes.indexOf(EntityType.EDGE) > -1 ? true : false;
         case AliasFilterType.entityViewSearchQuery:
           return entityTypes.indexOf(EntityType.ENTITY_VIEW)  > -1 ? true : false;
       }
@@ -449,6 +476,8 @@ export class EntityService {
         return entityType === EntityType.ASSET;
       case AliasFilterType.deviceType:
         return entityType === EntityType.DEVICE;
+      case AliasFilterType.edgeType:
+        return entityType === EntityType.EDGE;
       case AliasFilterType.entityViewType:
         return entityType === EntityType.ENTITY_VIEW;
       case AliasFilterType.relationsQuery:
@@ -457,6 +486,8 @@ export class EntityService {
         return entityType === EntityType.ASSET;
       case AliasFilterType.deviceSearchQuery:
         return entityType === EntityType.DEVICE;
+      case AliasFilterType.edgeSearchQuery:
+        return entityType === EntityType.EDGE;
       case AliasFilterType.entityViewSearchQuery:
         return entityType === EntityType.ENTITY_VIEW;
     }
@@ -474,6 +505,7 @@ export class EntityService {
       case Authority.TENANT_ADMIN:
         entityTypes.push(EntityType.DEVICE);
         entityTypes.push(EntityType.ASSET);
+        entityTypes.push(EntityType.EDGE);
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.TENANT);
         entityTypes.push(EntityType.CUSTOMER);
@@ -486,6 +518,7 @@ export class EntityService {
       case Authority.CUSTOMER_USER:
         entityTypes.push(EntityType.DEVICE);
         entityTypes.push(EntityType.ASSET);
+        entityTypes.push(EntityType.EDGE);
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.DASHBOARD);
@@ -531,6 +564,7 @@ export class EntityService {
         entityFieldKeys.push(entityFields.type.keyName);
         break;
       case EntityType.DEVICE:
+      case EntityType.EDGE:
       case EntityType.ASSET:
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
@@ -704,6 +738,19 @@ export class EntityService {
             }
           )
         );
+      case AliasFilterType.edgeType:
+        return this.getEntitiesByNameFilter(EntityType.EDGE, filter.edgeNameFilter, maxItems,
+          filter.edgeType, {ignoreLoading: true, ignoreErrors: true}).pipe(
+            map((entities) => {
+              if (entities && entities.length || !failOnEmpty) {
+                result.entities = this.entitiesToEntitiesInfo(entities);
+                return result;
+              } else {
+                throw new Error();
+              }
+            }
+            )
+        );
       case AliasFilterType.entityViewType:
         return this.getEntitiesByNameFilter(EntityType.ENTITY_VIEW, filter.entityViewNameFilter, maxItems,
           filter.entityViewType, {ignoreLoading: true, ignoreErrors: true}).pipe(
@@ -763,6 +810,7 @@ export class EntityService {
         }
       case AliasFilterType.assetSearchQuery:
       case AliasFilterType.deviceSearchQuery:
+      case AliasFilterType.edgeSearchQuery:
       case AliasFilterType.entityViewSearchQuery:
         result.stateEntity = filter.rootStateEntity;
         if (result.stateEntity && stateEntityId) {
@@ -793,6 +841,10 @@ export class EntityService {
             const deviceSearchQuery = searchQuery as DeviceSearchQuery;
             deviceSearchQuery.deviceTypes = filter.deviceTypes;
             findByQueryObservable = this.deviceService.findByQuery(deviceSearchQuery, {ignoreLoading: true, ignoreErrors: true});
+          } else if (filter.type === AliasFilterType.edgeSearchQuery) {
+            const edgeSearchQuery = searchQuery as EdgeSearchQuery;
+            edgeSearchQuery.edgeTypes = filter.edgeTypes;
+            findByQueryObservable = this.edgeService.findByQuery(edgeSearchQuery, {ignoreLoading: true, ignoreErrors: true});
           } else if (filter.type === AliasFilterType.entityViewSearchQuery) {
             const entityViewSearchQuery = searchQuery as EntityViewSearchQuery;
             entityViewSearchQuery.entityViewTypes = filter.entityViewTypes;

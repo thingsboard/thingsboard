@@ -157,4 +157,19 @@ export class DashboardService {
     return this.stDiffObservable;
   }
 
+  public getEdgeDashboards(edgeId: string, pageLink: PageLink, type: string = '',
+                           config?: RequestConfig): Observable<PageData<DashboardInfo>> {
+    return this.http.get<PageData<DashboardInfo>>(`/api/edge/${edgeId}/dashboards${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config))
+  }
+
+  public assignDashboardToEdge(edgeId: string, dashboardId: string, config?: RequestConfig): Observable<Dashboard> {
+    return this.http.post<Dashboard>(`/api/edge/${edgeId}/dashboard/${dashboardId}`, null,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public unassignDashboardFromEdge(edgeId: string, dashboardId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/edge/${edgeId}/dashboard/${dashboardId}`, defaultHttpOptionsFromConfig(config));
+  }
+
 }

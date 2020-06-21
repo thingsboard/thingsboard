@@ -27,6 +27,7 @@ import { BroadcastService } from '@app/core/services/broadcast.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
+import { EdgeService } from "@core/http/edge.service";
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',
@@ -82,6 +83,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
               public translate: TranslateService,
               private deviceService: DeviceService,
               private assetService: AssetService,
+              private edgeService: EdgeService,
               private entityViewService: EntityViewService,
               private fb: FormBuilder) {
     this.subTypeFormGroup = this.fb.group({
@@ -112,6 +114,14 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
         this.entitySubtypeText = 'device.device-type';
         this.entitySubtypeRequiredText = 'device.device-type-required';
         this.broadcastSubscription = this.broadcast.on('deviceSaved', () => {
+          this.subTypes = null;
+        });
+        break;
+      case EntityType.EDGE:
+        this.selectEntitySubtypeText = 'edge.select-edge-type';
+        this.entitySubtypeText = 'edge.edge-type';
+        this.entitySubtypeRequiredText = 'edge.edge-type-required';
+        this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
           this.subTypes = null;
         });
         break;
@@ -201,6 +211,9 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
           break;
         case EntityType.DEVICE:
           subTypesObservable = this.deviceService.getDeviceTypes({ignoreLoading: true});
+          break;
+        case EntityType.EDGE:
+          subTypesObservable = this.edgeService.getEdgeTypes({ignoreLoading: true});
           break;
         case EntityType.ENTITY_VIEW:
           subTypesObservable = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
