@@ -87,11 +87,11 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { DashboardService } from '@core/http/dashboard.service';
-import { DatasourceService } from '@core/api/datasource.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
 import { ServicesMap } from '@home/models/services.map';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { EntityDataService } from '@core/api/entity-data.service';
 
 @Component({
   selector: 'tb-widget',
@@ -161,7 +161,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private entityService: EntityService,
               private alarmService: AlarmService,
               private dashboardService: DashboardService,
-              private datasourceService: DatasourceService,
+              // private datasourceService: DatasourceService,
+              private entityDataService: EntityDataService,
               private utils: UtilsService,
               private raf: RafService,
               private ngZone: NgZone,
@@ -292,7 +293,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext.timeService = this.timeService;
     this.subscriptionContext.deviceService = this.deviceService;
     this.subscriptionContext.alarmService = this.alarmService;
-    this.subscriptionContext.datasourceService = this.datasourceService;
+    // this.subscriptionContext.datasourceService = this.datasourceService;
+    this.subscriptionContext.entityDataService = this.entityDataService;
     this.subscriptionContext.utils = this.utils;
     this.subscriptionContext.raf = this.raf;
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
@@ -618,9 +620,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.rxSubscriptions.push(this.widgetContext.dashboard.dashboardTimewindowChanged.subscribe(
       (dashboardTimewindow) => {
+        // TODO:
+        let subscriptionChanged = false;
         for (const id of Object.keys(this.widgetContext.subscriptions)) {
           const subscription = this.widgetContext.subscriptions[id];
-          subscription.onDashboardTimewindowChanged(dashboardTimewindow);
+          subscriptionChanged = subscriptionChanged || subscription.onDashboardTimewindowChanged(dashboardTimewindow);
+        }
+        if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
+          this.reInit();
         }
       }
     ));

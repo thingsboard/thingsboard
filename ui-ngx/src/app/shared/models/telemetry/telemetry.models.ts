@@ -21,6 +21,8 @@ import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
+import { EntityData, EntityDataQuery } from '@shared/models/query/query.models';
+import { PageData } from '@shared/models/page/page-data';
 
 export enum DataKeyType {
   timeseries = 'timeseries',
@@ -79,8 +81,11 @@ export interface AttributeData {
   value: any;
 }
 
-export interface TelemetryPluginCmd {
+export interface WebsocketCmd {
   cmdId: number;
+}
+
+export interface TelemetryPluginCmd extends WebsocketCmd {
   keys: string;
 }
 
@@ -124,27 +129,69 @@ export class GetHistoryCmd implements TelemetryPluginCmd {
   agg: AggregationType;
 }
 
+export interface EntityHistoryCmd {
+  keys: Array<string>;
+  startTs: number;
+  endTs: number;
+  interval: number;
+  limit: number;
+  agg: AggregationType;
+}
+
+export interface LatestValueCmd {
+  keys: Array<string>;
+}
+
+export interface TimeSeriesCmd {
+  keys: Array<string>;
+  startTs: number;
+  timeWindow: number;
+  interval: number;
+  limit: number;
+  agg: AggregationType;
+}
+
+export class EntityDataCmd implements WebsocketCmd {
+  cmdId: number;
+  query: EntityDataQuery;
+  historyCmd?: EntityHistoryCmd;
+  latestCmd?: LatestValueCmd;
+  tsCmd?: TimeSeriesCmd;
+}
+
+export class EntityDataUnsubscribeCmd implements WebsocketCmd {
+  cmdId: number;
+}
+
 export class TelemetryPluginCmdsWrapper {
   attrSubCmds: Array<AttributesSubscriptionCmd>;
   tsSubCmds: Array<TimeseriesSubscriptionCmd>;
   historyCmds: Array<GetHistoryCmd>;
+  entityDataCmds: Array<EntityDataCmd>;
+  entityDataUnsubscribeCmds: Array<EntityDataUnsubscribeCmd>;
 
   constructor() {
     this.attrSubCmds = [];
     this.tsSubCmds = [];
     this.historyCmds = [];
+    this.entityDataCmds = [];
+    this.entityDataUnsubscribeCmds = [];
   }
 
   public hasCommands(): boolean {
     return this.tsSubCmds.length > 0 ||
       this.historyCmds.length > 0 ||
-      this.attrSubCmds.length > 0;
+      this.attrSubCmds.length > 0 ||
+      this.entityDataCmds.length > 0 ||
+      this.entityDataUnsubscribeCmds.length > 0;
   }
 
   public clear() {
     this.attrSubCmds.length = 0;
     this.tsSubCmds.length = 0;
     this.historyCmds.length = 0;
+    this.entityDataCmds.length = 0;
+    this.entityDataUnsubscribeCmds.length = 0;
   }
 
   public preparePublishCommands(maxCommands: number): TelemetryPluginCmdsWrapper {
@@ -155,10 +202,14 @@ export class TelemetryPluginCmdsWrapper {
     preparedWrapper.historyCmds = this.popCmds(this.historyCmds, leftCount);
     leftCount -= preparedWrapper.historyCmds.length;
     preparedWrapper.attrSubCmds = this.popCmds(this.attrSubCmds, leftCount);
+    leftCount -= preparedWrapper.attrSubCmds.length;
+    preparedWrapper.entityDataCmds = this.popCmds(this.entityDataCmds, leftCount);
+    leftCount -= preparedWrapper.entityDataCmds.length;
+    preparedWrapper.entityDataUnsubscribeCmds = this.popCmds(this.entityDataUnsubscribeCmds, leftCount);
     return preparedWrapper;
   }
 
-  private popCmds<T extends TelemetryPluginCmd>(cmds: Array<T>, leftCount: number): Array<T> {
+  private popCmds<T>(cmds: Array<T>, leftCount: number): Array<T> {
     const toPublish = Math.min(cmds.length, leftCount);
     if (toPublish > 0) {
       return cmds.splice(0, toPublish);
@@ -180,6 +231,20 @@ export interface SubscriptionUpdateMsg extends SubscriptionDataHolder {
   subscriptionId: number;
   errorCode: number;
   errorMsg: string;
+}
+
+export interface EntityDataUpdateMsg {
+  cmdId: number;
+  data?: PageData<EntityData>;
+  update?: Array<EntityData>;
+  errorCode: number;
+  errorMsg: string;
+}
+
+export type WebsocketDataMsg = EntityDataUpdateMsg | SubscriptionUpdateMsg;
+
+export function isEntityDataUpdateMsg(message: WebsocketDataMsg): message is EntityDataUpdateMsg {
+  return (message as EntityDataUpdateMsg).cmdId !== undefined;
 }
 
 export class SubscriptionUpdate implements SubscriptionUpdateMsg {
@@ -231,6 +296,22 @@ export class SubscriptionUpdate implements SubscriptionUpdateMsg {
   }
 }
 
+export class EntityDataUpdate implements EntityDataUpdateMsg {
+  cmdId: number;
+  errorCode: number;
+  errorMsg: string;
+  data?: PageData<EntityData>;
+  update?: Array<EntityData>;
+
+  constructor(msg: EntityDataUpdateMsg) {
+    this.cmdId = msg.cmdId;
+    this.errorCode = msg.errorCode;
+    this.errorMsg = msg.errorMsg;
+    this.data = msg.data;
+    this.update = msg.update;
+  }
+}
+
 export interface TelemetryService {
   subscribe(subscriber: TelemetrySubscriber);
   unsubscribe(subscriber: TelemetrySubscriber);
@@ -239,13 +320,15 @@ export interface TelemetryService {
 export class TelemetrySubscriber {
 
   private dataSubject = new ReplaySubject<SubscriptionUpdate>(1);
+  private entityDataSubject = new ReplaySubject<EntityDataUpdate>(1);
   private reconnectSubject = new Subject();
 
   private zone: NgZone;
 
-  public subscriptionCommands: Array<TelemetryPluginCmd>;
+  public subscriptionCommands: Array<WebsocketCmd>;
 
   public data$ = this.dataSubject.asObservable();
+  public entityData$ = this.entityDataSubject.asObservable();
   public reconnect$ = this.reconnectSubject.asObservable();
 
   public static createEntityAttributesSubscription(telemetryService: TelemetryService,
@@ -284,6 +367,7 @@ export class TelemetrySubscriber {
 
   public complete() {
     this.dataSubject.complete();
+    this.entityDataSubject.complete();
     this.reconnectSubject.complete();
   }
 
@@ -292,8 +376,9 @@ export class TelemetrySubscriber {
     let keys: string[];
     const cmd = this.subscriptionCommands.find((command) => command.cmdId === cmdId);
     if (cmd) {
-      if (cmd.keys && cmd.keys.length) {
-        keys = cmd.keys.split(',');
+      const telemetryPluginCmd = cmd as TelemetryPluginCmd;
+      if (telemetryPluginCmd.keys && telemetryPluginCmd.keys.length) {
+        keys = telemetryPluginCmd.keys.split(',');
       }
     }
     message.prepareData(keys);
@@ -305,6 +390,18 @@ export class TelemetrySubscriber {
      );
     } else {
       this.dataSubject.next(message);
+    }
+  }
+
+  public onEntityData(message: EntityDataUpdate) {
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.entityDataSubject.next(message);
+        }
+      );
+    } else {
+      this.entityDataSubject.next(message);
     }
   }
 

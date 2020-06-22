@@ -23,6 +23,7 @@ import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import * as moment_ from 'moment';
+import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -263,6 +264,10 @@ export interface Datasource {
   entityDescription?: string;
   generated?: boolean;
   isAdditional?: boolean;
+  pageLink?: EntityDataPageLink;
+  keyFilters?: Array<KeyFilter>;
+  entityFilter?: EntityFilter;
+  dataKeyStartIndex?: number;
   [key: string]: any;
 }
 
