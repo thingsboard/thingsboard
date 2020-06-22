@@ -468,6 +468,8 @@
         "add": "Add Dashboard",
         "assign-dashboard-to-customer": "Assign Dashboard(s) To Customer",
         "assign-dashboard-to-customer-text": "Please select the dashboards to assign to the customer",
+        "assign-dashboard-to-edge-title": "Assign Dashboard(s) To Edge",
+        "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
         "assign-to-customer-text": "Please select the customer to assign the dashboard(s)",
         "assign-to-customer": "Assign to customer",
         "unassign-from-customer": "Unassign from customer",
