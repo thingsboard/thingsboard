@@ -252,37 +252,3 @@ CREATE TABLE IF NOT EXISTS entity_view (
     search_text varchar(255),
     additional_info varchar
 );
-
-CREATE TABLE IF NOT EXISTS oauth2_client_registration (
-    id                                  varchar(31) NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
-    registration_id                     varchar(255),
-    client_id                           varchar(255),
-    client_secret                       varchar(255),
-    authorization_uri                   varchar(255),
-    token_uri                           varchar(255),
-    redirect_uri_template               varchar(255),
-    scope                               varchar(255),
-    authorization_grant_type            varchar(255),
-    user_info_uri                       varchar(255),
-    user_name_attribute_name            varchar(255),
-    jwk_set_uri                         varchar(255),
-    client_authentication_method        varchar(255),
-    client_name                         varchar(255),
-    login_button_label                  varchar(255),
-    login_button_icon                   varchar(255),
-    allow_user_creation                 boolean,
-    activate_user                       boolean,
-    type                                varchar(31),
-    basic_email_attribute_key           varchar(31),
-    basic_first_name_attribute_key      varchar(31),
-    basic_last_name_attribute_key       varchar(31),
-    basic_tenant_name_strategy          varchar(31),
-    basic_tenant_name_pattern           varchar(255),
-    basic_customer_name_pattern         varchar(255),
-    basic_default_dashboard_name        varchar(255),
-    basic_always_full_screen            boolean,
-    custom_url                          varchar(255),
-    custom_username                     varchar(255),
-    custom_password                     varchar(255),
-    CONSTRAINT oauth2_registration_id_unq_key UNIQUE (registration_id)
-);

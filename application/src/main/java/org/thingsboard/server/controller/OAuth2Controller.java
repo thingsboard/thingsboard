@@ -21,7 +21,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
-import org.thingsboard.server.dao.oauth2.OAuth2ClientRegistrationService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -34,8 +33,6 @@ public class OAuth2Controller extends BaseController {
 
     @Autowired
     private OAuth2Service oauth2Service;
-    @Autowired
-    private OAuth2ClientRegistrationService oAuth2ClientRegistrationService;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config/{" + REGISTRATION_ID + "}", method = RequestMethod.GET)
@@ -43,17 +40,6 @@ public class OAuth2Controller extends BaseController {
     public OAuth2ClientRegistration getClientRegistrationById(@PathVariable(REGISTRATION_ID) String registrationId) throws ThingsboardException {
         try {
             return oauth2Service.getClientRegistrationByRegistrationId(registrationId);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/config", method = RequestMethod.POST)
-    @ResponseBody
-    public OAuth2ClientRegistration saveClientRegistration(@RequestBody OAuth2ClientRegistration clientRegistration) throws ThingsboardException {
-        try {
-            return oAuth2ClientRegistrationService.saveClientRegistration(clientRegistration);
         } catch (Exception e) {
             throw handleException(e);
         }

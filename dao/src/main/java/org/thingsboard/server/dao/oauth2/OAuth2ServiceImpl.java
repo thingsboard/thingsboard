@@ -15,15 +15,13 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.id.OAuth2IntegrationId;
 import org.thingsboard.server.common.data.oauth2.*;
 
-import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,24 +33,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Autowired(required = false)
     OAuth2Configuration oauth2Configuration;
-
-    @Autowired
-    private OAuth2ClientRegistrationService clientRegistrationService;
-
-    @PostConstruct
-    public void init() {
-        if (oauth2Configuration == null || !oauth2Configuration.isEnabled()) {
-            return;
-        }
-        Set<String> dbClientRegistration = clientRegistrationService.findClientRegistrations().stream()
-                .map(OAuth2ClientRegistration::getRegistrationId)
-                .collect(Collectors.toSet());
-        // TODO decide what to do with same registrationIds in DB
-        Sets.SetView<String> intersection = Sets.intersection(dbClientRegistration, oauth2Configuration.getClients().keySet());
-        if (!intersection.isEmpty()) {
-            throw new RuntimeException("OAuth2 configurations " + intersection + " are already stored in DB.");
-        }
-    }
 
     @Override
     public List<OAuth2ClientInfo> getOAuth2Clients() {
@@ -69,17 +49,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                     return client;
                 });
 
-        Stream<OAuth2ClientInfo> dbConfiguration = clientRegistrationService.findClientRegistrations().stream()
-                .map(clientRegistration -> {
-                    OAuth2ClientInfo client = new OAuth2ClientInfo();
-                    client.setName(clientRegistration.getLoginButtonLabel());
-                    client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
-                    client.setIcon(clientRegistration.getLoginButtonIcon());
-                    return client;
-                });
-
-        return Stream.concat(startUpConfiguration, dbConfiguration)
-                .collect(Collectors.toList());
+        return startUpConfiguration.collect(Collectors.toList());
     }
 
     @Override
@@ -88,9 +58,9 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         OAuth2Client oAuth2Client = oauth2Configuration.getClients() == null ? null : oauth2Configuration.getClients().get(registrationId);
         if (oAuth2Client != null){
             return toClientRegistration(registrationId, oAuth2Client);
+        } else {
+            return null;
         }
-
-        return clientRegistrationService.findClientRegistrationsByRegistrationId(registrationId);
     }
 
     private OAuth2ClientRegistration toClientRegistration(String registrationId, OAuth2Client oAuth2Client) {
