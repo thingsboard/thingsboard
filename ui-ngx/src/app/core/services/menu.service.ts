@@ -186,15 +186,15 @@ export class MenuService {
         icon: 'settings_ethernet',
         pages: [
           {
-            name: 'rulechain.rulechains',
+            name: 'rulechain.core-rulechains',
             type: 'link',
-            path: '/ruleChains',
+            path: '/ruleChains/core',
             icon: 'settings_ethernet'
           },
           {
             name: 'rulechain.edge-rulechains',
             type: 'link',
-            path: '/edgesRuleChains',
+            path: '/ruleChains/edge',
             icon: 'router'
           }
         ]

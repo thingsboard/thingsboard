@@ -310,12 +310,7 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.core, config);
-        // TODO: deaflynx: change solution
-        // console.log("route.routerState.snapshot.url", this.route.routerState.snapshot.url);
-        // if (this.route.url.includes('edges')) {
-        //   entitiesObservable = this.ruleChainService.getRuleChains(pageLink, edgeRuleChainType, config);
-        // } else { entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType, config); }
+        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType, config);
         break;
       case EntityType.DASHBOARD:
         pageLink.sortOrder.property = 'title';

@@ -1513,7 +1513,11 @@
         "no-relations-text": "No relations found"
     },
     "rulechain": {
+        "assign-new-rulechain": "Assign new rulechain",
+        "assign-rulechain-to-edge-title": "Assign Rule Chain(s) To Edge",
+        "assign-rulechain-to-edge-text": "Please select the rulechains to assign to the edge",
         "edge-rulechains": "Edge Rule chains",
+        "core-rulechains": "Core Rule chains",
         "rulechain": "Rule chain",
         "rulechains": "Rule chains",
         "root": "Root",

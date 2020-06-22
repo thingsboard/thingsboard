@@ -40,7 +40,6 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'edge.edges',
           edgeScope: 'tenant'
         },
         resolve: {
@@ -52,7 +51,6 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'edge.rulechains',
           ruleChainScope: 'edge',
           breadcrumb: {
             label: 'edge.rulechains',
@@ -68,7 +66,6 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'edge.assets',
           assetsType: 'edge',
           breadcrumb: {
             label: 'edge.assets',
@@ -84,7 +81,6 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'edge.devices',
           devicesType: 'edge',
           breadcrumb: {
             label: 'edge.devices',
@@ -100,7 +96,6 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'edge.entity-views',
           entityViewsType: 'edge',
           breadcrumb: {
             label: 'edge.entity-views',
@@ -116,7 +111,6 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'edge.dashboards',
           dashboardsType: 'edge',
           breadcrumb: {
             label: 'edge.dashboards',
