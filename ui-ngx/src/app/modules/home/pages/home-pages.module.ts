@@ -29,6 +29,7 @@ import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.mo
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
+import { EdgeModule } from "@home/pages/edge/edge.module";
 
 @NgModule({
   exports: [
@@ -38,6 +39,7 @@ import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module'
     TenantModule,
     DeviceModule,
     AssetModule,
+    EdgeModule,
     EntityViewModule,
     CustomerModule,
     RuleChainModule,
