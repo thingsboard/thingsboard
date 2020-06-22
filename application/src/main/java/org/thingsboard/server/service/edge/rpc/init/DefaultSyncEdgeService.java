@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.service.edge.rpc.init;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Dashboard;
@@ -131,10 +133,16 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         futures.add(syncAssets(ctx, edge, pushedEntityIds, outputStream));
         futures.add(syncEntityViews(ctx, edge, pushedEntityIds, outputStream));
         futures.add(syncDashboards(ctx, edge, pushedEntityIds, outputStream));
-        ListenableFuture<List<Void>> joinFuture = Futures.allAsList(futures);
-        Futures.transform(joinFuture, result -> {
-            syncRelations(ctx, edge, pushedEntityIds, outputStream);
-            return null;
+        Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Void>>() {
+            @Override
+            public void onSuccess(@Nullable List<Void> result) {
+                syncRelations(ctx, edge, pushedEntityIds, outputStream);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("Exception during sync entities", t);
+            }
         }, MoreExecutors.directExecutor());
     }
 
