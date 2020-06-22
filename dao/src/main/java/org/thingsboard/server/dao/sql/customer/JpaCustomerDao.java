@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -48,21 +47,21 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
     }
 
     @Override
-    protected CrudRepository<CustomerEntity, String> getCrudRepository() {
+    protected CrudRepository<CustomerEntity, UUID> getCrudRepository() {
         return customerRepository;
     }
 
     @Override
     public PageData<Customer> findCustomersByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(customerRepository.findByTenantId(
-                UUIDConverter.fromTimeUUID(tenantId),
+                tenantId,
                 Objects.toString(pageLink.getTextSearch(), ""),
                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title) {
-        Customer customer = DaoUtil.getData(customerRepository.findByTenantIdAndTitle(UUIDConverter.fromTimeUUID(tenantId), title));
+        Customer customer = DaoUtil.getData(customerRepository.findByTenantIdAndTitle(tenantId, title));
         return Optional.ofNullable(customer);
     }
 }

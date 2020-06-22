@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.model;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.UUIDConverter;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -31,28 +30,30 @@ import java.util.UUID;
 public abstract class BaseSqlEntity<D> implements BaseEntity<D> {
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    protected String id;
+    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "uuid")
+    protected UUID id;
+
+    @Column(name = ModelConstants.CREATED_TIME_PROPERTY)
+    protected long createdTime;
 
     @Override
     public UUID getUuid() {
-        if (id == null) {
-            return null;
-        }
-        return UUIDConverter.fromString(id);
+        return id;
     }
 
     @Override
     public void setUuid(UUID id) {
-        this.id = UUIDConverter.fromTimeUUID(id);
+        this.id = id;
     }
 
-    protected UUID toUUID(String src){
-        return UUIDConverter.fromString(src);
+    @Override
+    public long getCreatedTime() {
+        return createdTime;
     }
 
-    protected String toString(UUID timeUUID){
-        return UUIDConverter.fromTimeUUID(timeUUID);
+    public void setCreatedTime(long createdTime) {
+        if (createdTime > 0) {
+            this.createdTime = createdTime;
+        }
     }
-
 }

@@ -20,9 +20,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
-import java.util.List;
-import java.util.UUID;
-
 public abstract class PaginatedRemover<I, D extends IdBased<?>> {
 
     private static final int DEFAULT_LIMIT = 100;

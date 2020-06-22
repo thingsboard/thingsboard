@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface UserDao extends Dao<User> {

@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd;
+package org.thingsboard.server.common.data.query;
 
-/**
- * @author Andrew Shvayka
- */
-public interface TelemetryPluginCmd {
+import lombok.Data;
 
-    int getCmdId();
+@Data
+public class KeyFilter {
 
-    void setCmdId(int cmdId);
-
-    String getKeys();
+    private EntityKey key;
+    private KeyFilterPredicate predicate;
 
 }

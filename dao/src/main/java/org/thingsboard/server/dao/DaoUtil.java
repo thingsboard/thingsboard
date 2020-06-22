@@ -27,7 +27,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.model.ToData;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 public abstract class DaoUtil {
 
@@ -76,9 +82,6 @@ public abstract class DaoUtil {
             String property = sortOrder.getProperty();
             if (columnMap.containsKey(property)) {
                 property = columnMap.get(property);
-            }
-            if (property.equals("createdTime")) {
-                property = "id";
             }
             return Sort.by(Sort.Direction.fromString(sortOrder.getDirection().name()), property);
         }

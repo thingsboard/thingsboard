@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd;
+package org.thingsboard.server.common.data.query;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.service.telemetry.TelemetryFeature;
 
-/**
- * @author Andrew Shvayka
- */
-@NoArgsConstructor
-@AllArgsConstructor
+import java.util.List;
+
 @Data
-public class TimeseriesSubscriptionCmd extends SubscriptionCmd {
-
-    private long startTs;
-    private long timeWindow;
-    private long interval;
-    private int limit;
-    private String agg;
+public class AssetSearchQueryFilter extends EntitySearchQueryFilter {
 
     @Override
-    public TelemetryFeature getType() {
-        return TelemetryFeature.TIMESERIES;
+    public EntityFilterType getType() {
+        return EntityFilterType.ASSET_SEARCH_QUERY;
     }
+
+    private List<String> assetTypes;
+
 }

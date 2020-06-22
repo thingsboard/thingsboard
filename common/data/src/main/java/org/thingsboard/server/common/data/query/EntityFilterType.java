@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd;
+package org.thingsboard.server.common.data.query;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public enum EntityFilterType {
+    SINGLE_ENTITY("singleEntity"),
+    ENTITY_LIST("entityList"),
+    ENTITY_NAME("entityName"),
+    ASSET_TYPE("assetType"),
+    DEVICE_TYPE("deviceType"),
+    ENTITY_VIEW_TYPE("entityViewType"),
+    RELATIONS_QUERY("relationsQuery"),
+    ASSET_SEARCH_QUERY("assetSearchQuery"),
+    DEVICE_SEARCH_QUERY("deviceSearchQuery"),
+    ENTITY_VIEW_SEARCH_QUERY("entityViewSearchQuery");
 
-/**
- * @author Andrew Shvayka
- */
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class GetHistoryCmd implements TelemetryPluginCmd {
+    private final String label;
 
-    private int cmdId;
-    private String entityType;
-    private String entityId;
-    private String keys;
-    private long startTs;
-    private long endTs;
-    private long interval;
-    private int limit;
-    private String agg;
-
+    EntityFilterType(String label) {
+        this.label = label;
+    }
 }

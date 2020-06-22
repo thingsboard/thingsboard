@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -58,14 +56,15 @@ public final class AdminSettingsEntity extends BaseSqlEntity<AdminSettings> impl
         if (adminSettings.getId() != null) {
             this.setUuid(adminSettings.getId().getId());
         }
+        this.setCreatedTime(adminSettings.getCreatedTime());
         this.key = adminSettings.getKey();
         this.jsonValue = adminSettings.getJsonValue();
     }
 
     @Override
     public AdminSettings toData() {
-        AdminSettings adminSettings = new AdminSettings(new AdminSettingsId(UUIDConverter.fromString(id)));
-        adminSettings.setCreatedTime(Uuids.unixTimestamp(UUIDConverter.fromString(id)));
+        AdminSettings adminSettings = new AdminSettings(new AdminSettingsId(id));
+        adminSettings.setCreatedTime(createdTime);
         adminSettings.setKey(key);
         adminSettings.setJsonValue(jsonValue);
         return adminSettings;

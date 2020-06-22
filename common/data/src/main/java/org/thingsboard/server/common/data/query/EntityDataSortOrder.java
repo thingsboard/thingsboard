@@ -13,20 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd;
+package org.thingsboard.server.common.data.query;
 
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.service.telemetry.TelemetryFeature;
+import lombok.Data;
 
-/**
- * @author Andrew Shvayka
- */
-@NoArgsConstructor
-public class AttributesSubscriptionCmd extends SubscriptionCmd {
+@Data
+public class EntityDataSortOrder {
 
-    @Override
-    public TelemetryFeature getType() {
-        return TelemetryFeature.ATTRIBUTES;
+    private EntityKey key;
+    private Direction direction;
+
+    public EntityDataSortOrder() {}
+
+    public EntityDataSortOrder(EntityKey key) {
+        this(key, Direction.ASC);
+    }
+
+    public EntityDataSortOrder(EntityKey key, Direction direction) {
+        this.key = key;
+        this.direction = direction;
+    }
+
+    public enum Direction {
+        ASC, DESC
     }
 
 }

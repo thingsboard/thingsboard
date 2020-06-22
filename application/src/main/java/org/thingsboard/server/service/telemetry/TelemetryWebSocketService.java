@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.telemetry;
 
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 
 /**
@@ -27,4 +28,7 @@ public interface TelemetryWebSocketService {
     void handleWebSocketMsg(TelemetryWebSocketSessionRef sessionRef, String msg);
 
     void sendWsMsg(String sessionId, SubscriptionUpdate update);
+
+    void sendWsMsg(String sessionId, EntityDataUpdate update);
+
 }
