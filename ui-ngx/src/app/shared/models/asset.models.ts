@@ -24,7 +24,6 @@ import { EdgeId } from "@shared/models/id/edge-id";
 export interface Asset extends BaseData<AssetId> {
   tenantId?: TenantId;
   customerId?: CustomerId;
-  edgeId?: EdgeId; //TODO: deaflynx: "edgeId?" ?
   name: string;
   type: string;
   label: string;

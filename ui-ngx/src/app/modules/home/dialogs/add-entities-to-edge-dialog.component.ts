@@ -76,23 +76,23 @@ export class AddEntitiesToEdgeDialogComponent extends
     });
     switch (this.data.entityType) {
       case EntityType.DEVICE:
-        this.assignToEdgeTitle = 'device.assign-device-to-edge';
+        this.assignToEdgeTitle = 'device.assign-device-to-edge-title';
         this.assignToEdgeText = 'device.assign-device-to-edge-text';
         break;
       case EntityType.RULE_CHAIN:
-        this.assignToEdgeTitle = 'rulechain.assign-rulechain-to-edge';
+        this.assignToEdgeTitle = 'rulechain.assign-rulechain-to-edge-title';
         this.assignToEdgeText = 'rulechain.assign-rulechain-to-edge-text';
         break;
       case EntityType.ASSET:
-        this.assignToEdgeTitle = 'asset.assign-asset-to-edge';
+        this.assignToEdgeTitle = 'asset.assign-asset-to-edge-title';
         this.assignToEdgeText = 'asset.assign-asset-to-edge-text';
         break;
       case EntityType.ENTITY_VIEW:
-        this.assignToEdgeTitle = 'entity-view.assign-entity-view-to-edge';
+        this.assignToEdgeTitle = 'entity-view.assign-entity-view-to-edge-title';
         this.assignToEdgeText = 'entity-view.assign-entity-view-to-edge-text';
         break;
       case EntityType.DASHBOARD:
-        this.assignToEdgeTitle = 'dashboard.assign-dashboard-to-edge';
+        this.assignToEdgeTitle = 'dashboard.assign-dashboard-to-edge-title';
         this.assignToEdgeText = 'dashboard.assign-dashboard-to-edge-text';
         break;
     }
