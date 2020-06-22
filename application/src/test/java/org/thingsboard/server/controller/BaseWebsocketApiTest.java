@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.FutureCallback;
+import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,6 +41,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
@@ -46,10 +50,13 @@ import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 public class BaseWebsocketApiTest extends AbstractWebsocketTest {
 
     private Tenant savedTenant;
@@ -57,7 +64,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
     private TbTestWebSocketClient wsClient;
 
     @Autowired
-    private TimeseriesService tsService;
+    private TelemetrySubscriptionService tsService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -129,7 +136,10 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
         TsKvEntry dataPoint2 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(2), new LongDataEntry("temperature", 42L));
         TsKvEntry dataPoint3 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(3), new LongDataEntry("temperature", 42L));
-        tsService.save(device.getTenantId(), device.getId(), Arrays.asList(dataPoint1, dataPoint2, dataPoint3), 0).get();
+        List<TsKvEntry> tsData = Arrays.asList(dataPoint1, dataPoint2, dataPoint3);
+
+        sendTelemetry(device, tsData);
+        Thread.sleep(1000);
 
         wsClient.send(mapper.writeValueAsString(wrapper));
         msg = wsClient.waitForReply();
@@ -144,6 +154,22 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsArray[0]);
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsArray[1]);
         Assert.assertEquals(new TsValue(dataPoint3.getTs(), dataPoint3.getValueAsString()), tsArray[2]);
+    }
+
+    private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        tsService.saveAndNotify(device.getTenantId(), device.getId(), tsData, 0, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                latch.countDown();
+            }
+        });
+        latch.await(3, TimeUnit.SECONDS);
     }
 
     @Test
@@ -177,12 +203,15 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
         Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
-        Assert.assertNull(pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature"));
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
 
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
-        tsService.save(device.getTenantId(), device.getId(), Arrays.asList(dataPoint1), 0).get();
+        List<TsKvEntry> tsData = Arrays.asList(dataPoint1);
+        sendTelemetry(device, tsData);
 
-        cmd = new EntityDataCmd(2, edq, null, latestCmd, null);
+        cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
 
         wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
@@ -190,7 +219,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         wsClient.send(mapper.writeValueAsString(wrapper));
         msg = wsClient.waitForReply();
         update = mapper.readValue(msg, EntityDataUpdate.class);
-        Assert.assertEquals(2, update.getCmdId());
+        Assert.assertEquals(1, update.getCmdId());
         pageData = update.getData();
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
@@ -198,6 +227,22 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES));
         TsValue tsValue = pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsValue);
+
+        log.error("GOING TO LISTEN FOR UPDATES");
+        msg = wsClient.waitForUpdate();
+        now = System.currentTimeMillis();
+        TsKvEntry dataPoint2 = new BasicTsKvEntry(now, new LongDataEntry("temperature", 52L));
+        sendTelemetry(device, Arrays.asList(dataPoint2));
+
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
+        Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsValue);
     }
 
 }

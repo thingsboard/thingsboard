@@ -49,6 +49,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
@@ -106,18 +107,28 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private SubscriptionManagerService subscriptionManagerService;
 
     @Autowired
+    @Lazy
+    private TbLocalSubscriptionService localSubscriptionService;
+
+    @Autowired
     private TimeseriesService tsService;
+
+    @Autowired
+    private TbServiceInfoProvider serviceInfoProvider;
 
     @Value("${database.ts.type}")
     private String databaseTsType;
 
     private ExecutorService wsCallBackExecutor;
     private boolean tsInSqlDB;
+    private String serviceId;
 
     @PostConstruct
     public void initExecutor() {
+        serviceId = serviceInfoProvider.getServiceId();
         wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ws-entity-sub-callback"));
         tsInSqlDB = databaseTsType.equalsIgnoreCase("sql") || databaseTsType.equalsIgnoreCase("timescale");
+
     }
 
     @PreDestroy
@@ -158,6 +169,9 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         TbEntityDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
+            if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null) {
+                ctx.clearSubscriptions();
+            }
             //TODO: cleanup old subscription;
         } else {
             log.debug("[{}][{}] Creating new subscription using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
@@ -209,7 +223,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private TbEntityDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
         Map<Integer, TbEntityDataSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
-        TbEntityDataSubCtx ctx = new TbEntityDataSubCtx(sessionRef, cmd.getCmdId());
+        TbEntityDataSubCtx ctx = new TbEntityDataSubCtx(serviceId, wsService, sessionRef, cmd.getCmdId());
         ctx.setQuery(cmd.getQuery());
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
@@ -266,7 +280,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
                     }
                     wsService.sendWsMsg(ctx.getSessionId(), update);
-                    //TODO: create context for this (session, cmdId) that contains query, latestCmd and update. Subscribe + periodic updates.
+                    createLatestSubscriptions(ctx, latestCmd);
                 }
 
                 @Override
@@ -281,8 +295,14 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
                 wsService.sendWsMsg(ctx.getSessionId(), update);
             }
-            //TODO: create context for this (session, cmdId) that contains query, latestCmd and update. Subscribe + periodic updates.
+            createLatestSubscriptions(ctx, latestCmd);
         }
+    }
+
+    private void createLatestSubscriptions(TbEntityDataSubCtx ctx, LatestValueCmd latestCmd) {
+        //TODO: create context for this (session, cmdId) that contains query, latestCmd and update. Subscribe + periodic updates.
+        List<TbSubscription> tbSubs = ctx.createSubscriptions(latestCmd.getKeys());
+        tbSubs.forEach(sub -> localSubscriptionService.addSubscription(sub));
     }
 
     private Map<String, TsValue> toTsValue(List<TsKvEntry> data) {

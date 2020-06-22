@@ -86,6 +86,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -128,6 +129,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     @Autowired
     private TbServiceInfoProvider serviceInfoProvider;
+
 
     @Value("${server.ws.limits.max_subscriptions_per_tenant:0}")
     private int maxSubscriptionsPerTenant;
@@ -398,7 +400,9 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .entityId(entityId)
                         .allKeys(false)
                         .keyStates(subState)
-                        .scope(scope).build();
+                        .scope(scope)
+                        .updateConsumer(DefaultTelemetryWebSocketService.this::sendWsMsg)
+                        .build();
                 oldSubService.addSubscription(sub);
             }
 
@@ -495,6 +499,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .entityId(entityId)
                         .allKeys(true)
                         .keyStates(subState)
+                        .updateConsumer(DefaultTelemetryWebSocketService.this::sendWsMsg)
                         .scope(scope).build();
                 oldSubService.addSubscription(sub);
             }
@@ -575,6 +580,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
+                        .updateConsumer(DefaultTelemetryWebSocketService.this::sendWsMsg)
                         .allKeys(true)
                         .keyStates(subState).build();
                 oldSubService.addSubscription(sub);
@@ -612,6 +618,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
+                        .updateConsumer(DefaultTelemetryWebSocketService.this::sendWsMsg)
                         .allKeys(false)
                         .keyStates(subState).build();
                 oldSubService.addSubscription(sub);

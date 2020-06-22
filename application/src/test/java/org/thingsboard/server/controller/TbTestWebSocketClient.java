@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,9 +27,11 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbTestWebSocketClient extends WebSocketClient {
 
-    private volatile String lastMsg;
+    private volatile String lastReply;
+    private volatile String lastUpdate;
     private volatile boolean replyReceived;
     private CountDownLatch reply;
+    private CountDownLatch update;
 
     public TbTestWebSocketClient(URI serverUri) {
         super(serverUri);
@@ -42,11 +44,22 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     @Override
     public void onMessage(String s) {
-        if (!replyReceived) {
-            replyReceived = true;
-            lastMsg = s;
-            if (reply != null) {
-                reply.countDown();
+        log.error("RECEIVED: {}", s);
+        synchronized (this) {
+            if (!replyReceived) {
+                replyReceived = true;
+                lastReply = s;
+                log.error("LAST REPLY: {}", s);
+                if (reply != null) {
+                    reply.countDown();
+                }
+            } else {
+                lastUpdate = s;
+                log.error("LAST UPDATE: {}", s);
+                if (update == null) {
+                    update = new CountDownLatch(1);
+                }
+                update.countDown();
             }
         }
     }
@@ -63,9 +76,23 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     @Override
     public void send(String text) throws NotYetConnectedException {
-        reply = new CountDownLatch(1);
-        replyReceived = false;
+        synchronized (this) {
+            reply = new CountDownLatch(1);
+            replyReceived = false;
+        }
         super.send(text);
+    }
+
+    public String waitForUpdate() {
+        synchronized (this) {
+            update = new CountDownLatch(1);
+        }
+        try {
+            update.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            log.warn("Failed to await reply", e);
+        }
+        return lastUpdate;
     }
 
     public String waitForReply() {
@@ -74,6 +101,6 @@ public class TbTestWebSocketClient extends WebSocketClient {
         } catch (InterruptedException e) {
             log.warn("Failed to await reply", e);
         }
-        return lastMsg;
+        return lastReply;
     }
 }

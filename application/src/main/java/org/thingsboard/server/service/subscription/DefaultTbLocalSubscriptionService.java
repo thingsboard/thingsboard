@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,9 +57,6 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
     private final Map<String, Map<Integer, TbSubscription>> subscriptionsBySessionId = new ConcurrentHashMap<>();
-
-    @Autowired
-    private TelemetryWebSocketService wsService;
 
     @Autowired
     private EntityViewService entityViewService;
@@ -155,7 +152,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     update.getLatestValues().forEach((key, value) -> attrSub.getKeyStates().put(key, value));
                     break;
             }
-            wsService.sendWsMsg(sessionId, update);
+            subscription.getUpdateConsumer().accept(sessionId, update);
         }
         callback.onSuccess();
     }
