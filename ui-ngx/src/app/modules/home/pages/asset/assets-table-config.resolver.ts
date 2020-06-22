@@ -182,7 +182,6 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     } else if (assetScope === 'edge') {
       this.config.entitiesFetchFunction = pageLink =>
         this.assetService.getEdgeAssets(this.edgeId, pageLink, this.config.componentsData.assetType);
-      this.config.deleteEntity = id => this.assetService.deleteAsset(id.id);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
         this.assetService.getCustomerAssetInfos(this.customerId, pageLink, this.config.componentsData.assetType);

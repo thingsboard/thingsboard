@@ -191,7 +191,6 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     } else if (deviceScope === 'edge') {
       this.config.entitiesFetchFunction = pageLink =>
         this.deviceService.getEdgeDevices(this.edgeId, pageLink, this.config.componentsData.edgeType);
-      this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
         this.deviceService.getCustomerDeviceInfos(this.customerId, pageLink, this.config.componentsData.deviceType);
@@ -552,7 +551,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       true
     ).subscribe((res) => {
         if (res) {
-          this.deviceService.unassignDeviceFromEdge(device.id.id).subscribe(
+          this.deviceService.unassignDeviceFromEdge(this.edgeId, device.id.id).subscribe(
             () => {
               this.config.table.updateData();
             }
@@ -577,7 +576,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           const tasks: Observable<any>[] = [];
           devices.forEach(
             (device) => {
-              tasks.push(this.deviceService.unassignDeviceFromEdge(device.id.id));
+              tasks.push(this.deviceService.unassignDeviceFromEdge(this.edgeId, device.id.id));
             }
           );
           forkJoin(tasks).subscribe(

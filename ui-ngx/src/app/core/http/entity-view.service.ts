@@ -88,8 +88,9 @@ export class EntityViewService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public unassignEntityViewFromEdge(entityViewId: string, config?: RequestConfig) {
-    return this.http.delete(`/api/edge/entityView/${entityViewId}`, defaultHttpOptionsFromConfig(config));
+  public unassignEntityViewFromEdge(edgeId: string, entityViewId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/edge/${edgeId}/entityView/${entityViewId}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getEdgeEntityViews(edgeId: string, pageLink: PageLink, type: string = '',
