@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,6 +33,7 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -44,7 +43,7 @@ import javax.persistence.Table;
 public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchTextEntity<RuleChain> {
 
     @Column(name = ModelConstants.RULE_CHAIN_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = ModelConstants.RULE_CHAIN_NAME_PROPERTY)
     private String name;
@@ -53,7 +52,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
     private String searchText;
 
     @Column(name = ModelConstants.RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY)
-    private String firstRuleNodeId;
+    private UUID firstRuleNodeId;
 
     @Column(name = ModelConstants.RULE_CHAIN_ROOT_PROPERTY)
     private boolean root;
@@ -76,11 +75,12 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
         if (ruleChain.getId() != null) {
             this.setUuid(ruleChain.getUuidId());
         }
-        this.tenantId = toString(DaoUtil.getId(ruleChain.getTenantId()));
+        this.setCreatedTime(ruleChain.getCreatedTime());
+        this.tenantId = DaoUtil.getId(ruleChain.getTenantId());
         this.name = ruleChain.getName();
         this.searchText = ruleChain.getName();
         if (ruleChain.getFirstRuleNodeId() != null) {
-            this.firstRuleNodeId = UUIDConverter.fromTimeUUID(ruleChain.getFirstRuleNodeId().getId());
+            this.firstRuleNodeId = ruleChain.getFirstRuleNodeId().getId();
         }
         this.root = ruleChain.isRoot();
         this.debugMode = ruleChain.isDebugMode();
@@ -101,11 +101,11 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
     @Override
     public RuleChain toData() {
         RuleChain ruleChain = new RuleChain(new RuleChainId(this.getUuid()));
-        ruleChain.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
-        ruleChain.setTenantId(new TenantId(toUUID(tenantId)));
+        ruleChain.setCreatedTime(createdTime);
+        ruleChain.setTenantId(new TenantId(tenantId));
         ruleChain.setName(name);
         if (firstRuleNodeId != null) {
-            ruleChain.setFirstRuleNodeId(new RuleNodeId(UUIDConverter.fromString(firstRuleNodeId)));
+            ruleChain.setFirstRuleNodeId(new RuleNodeId(firstRuleNodeId));
         }
         ruleChain.setRoot(root);
         ruleChain.setDebugMode(debugMode);

@@ -23,7 +23,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 
 import javax.persistence.EntityManager;
@@ -69,7 +68,8 @@ public abstract class AbstractComponentDescriptorInsertRepository implements Com
 
     protected Query getQuery(ComponentDescriptorEntity entity, String query) {
         return entityManager.createNativeQuery(query, ComponentDescriptorEntity.class)
-                .setParameter("id", UUIDConverter.fromTimeUUID(entity.getUuid()))
+                .setParameter("id", entity.getUuid())
+                .setParameter("created_time", entity.getCreatedTime())
                 .setParameter("actions", entity.getActions())
                 .setParameter("clazz", entity.getClazz())
                 .setParameter("configuration_descriptor", entity.getConfigurationDescriptor().toString())

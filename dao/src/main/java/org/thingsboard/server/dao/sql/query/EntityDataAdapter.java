@@ -26,9 +26,11 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class EntityDataAdapter {
@@ -49,9 +51,10 @@ public class EntityDataAdapter {
     }
 
     private static EntityData toEntityData(Object[] row, List<EntityKeyMapping> selectionMapping) {
-        String id = (String)row[0];
+        ByteBuffer bb = ByteBuffer.wrap((byte[])row[0]);
+        UUID id = new UUID(bb.getLong(), bb.getLong());
         EntityType entityType = EntityType.valueOf((String)row[1]);
-        EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, UUIDConverter.fromString(id));
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, id);
         Map<EntityKeyType, Map<String, TsValue>> latest = new HashMap<>();
         Map<String, TsValue[]> timeseries = new HashMap<>();
         EntityData entityData = new EntityData(entityId, latest, timeseries);

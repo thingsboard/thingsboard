@@ -32,8 +32,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * @author Valerii Sosliuk
@@ -51,7 +50,7 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
-    protected CrudRepository<UserEntity, String> getCrudRepository() {
+    protected CrudRepository<UserEntity, UUID> getCrudRepository() {
         return userRepository;
     }
 
@@ -65,8 +64,8 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
         return DaoUtil.toPageData(
                 userRepository
                         .findUsersByAuthority(
-                                fromTimeUUID(tenantId),
-                                NULL_UUID_STR,
+                                tenantId,
+                                NULL_UUID,
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.TENANT_ADMIN,
                                 DaoUtil.toPageable(pageLink)));
@@ -77,8 +76,8 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
         return DaoUtil.toPageData(
                 userRepository
                         .findUsersByAuthority(
-                                fromTimeUUID(tenantId),
-                                fromTimeUUID(customerId),
+                                tenantId,
+                                customerId,
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.CUSTOMER_USER,
                                 DaoUtil.toPageable(pageLink)));

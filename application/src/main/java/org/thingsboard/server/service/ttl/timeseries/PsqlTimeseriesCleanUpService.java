@@ -35,7 +35,7 @@ public class PsqlTimeseriesCleanUpService extends AbstractTimeseriesCleanUpServi
     protected void doCleanUp(Connection connection) {
             long totalPartitionsRemoved = executeQuery(connection, "call drop_partitions_by_max_ttl('" + partitionType + "'," + systemTtl + ", 0);");
             log.info("Total partitions removed by TTL: [{}]", totalPartitionsRemoved);
-            long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
+            long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID + "'," + systemTtl + ", 0);");
             log.info("Total telemetry removed stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
     }
 }

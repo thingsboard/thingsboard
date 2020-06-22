@@ -19,7 +19,6 @@ import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.dao.util.SqlTsDao;
 
 @SqlDao
 @PsqlDao
@@ -49,10 +48,10 @@ public class PsqlComponentDescriptorInsertRepository extends AbstractComponentDe
     }
 
     private static String getInsertOrUpdateStatement(String conflictKeyStatement, String updateKeyStatement) {
-        return "INSERT INTO component_descriptor (id, actions, clazz, configuration_descriptor, name, scope, search_text, type) VALUES (:id, :actions, :clazz, :configuration_descriptor, :name, :scope, :search_text, :type) ON CONFLICT " + conflictKeyStatement + " DO UPDATE SET " + updateKeyStatement + " returning *";
+        return "INSERT INTO component_descriptor (id, created_time, actions, clazz, configuration_descriptor, name, scope, search_text, type) VALUES (:id, :created_time, :actions, :clazz, :configuration_descriptor, :name, :scope, :search_text, :type) ON CONFLICT " + conflictKeyStatement + " DO UPDATE SET " + updateKeyStatement + " returning *";
     }
 
     private static String getUpdateStatement(String id) {
-        return "actions = :actions, " + id + ", configuration_descriptor = :configuration_descriptor, name = :name, scope = :scope, search_text = :search_text, type = :type";
+        return "actions = :actions, " + id + ",created_time = :created_time, configuration_descriptor = :configuration_descriptor, name = :name, scope = :scope, search_text = :search_text, type = :type";
     }
 }

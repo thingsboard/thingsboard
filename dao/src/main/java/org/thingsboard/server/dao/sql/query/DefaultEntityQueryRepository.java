@@ -19,8 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.UUIDConverter;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -205,14 +203,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case RELATIONS_QUERY:
             case DEVICE_SEARCH_QUERY:
             case ASSET_SEARCH_QUERY:
-                return String.format("e.tenant_id='%s' and e.customer_id='%s'", UUIDConverter.fromTimeUUID(tenantId.getId()), UUIDConverter.fromTimeUUID(customerId.getId()));
+                return String.format("e.tenant_id='%s' and e.customer_id='%s'", tenantId.getId(), customerId.getId());
             default:
                 if (entityType == EntityType.TENANT) {
-                    return String.format("e.id='%s'", UUIDConverter.fromTimeUUID(tenantId.getId()));
+                    return String.format("e.id='%s'", tenantId.getId());
                 } else if (entityType == EntityType.CUSTOMER) {
-                    return String.format("e.tenant_id='%s' and e.id='%s'", UUIDConverter.fromTimeUUID(tenantId.getId()), UUIDConverter.fromTimeUUID(customerId.getId()));
+                    return String.format("e.tenant_id='%s' and e.id='%s'", tenantId.getId(), customerId.getId());
                 } else {
-                    return String.format("e.tenant_id='%s' and e.customer_id='%s'", UUIDConverter.fromTimeUUID(tenantId.getId()), UUIDConverter.fromTimeUUID(customerId.getId()));
+                    return String.format("e.tenant_id='%s' and e.customer_id='%s'", tenantId.getId(), customerId.getId());
                 }
         }
     }
@@ -256,13 +254,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private String entitySearchQuery(EntitySearchQueryFilter entityFilter, EntityType entityType, List<String> types) {
         EntityId rootId = entityFilter.getRootEntity();
         //TODO: fetch last level only.
+        //TODO: fetch distinct records.
         String lvlFilter = getLvlFilter(entityFilter.getMaxLevel());
         String selectFields = "SELECT tenant_id, customer_id, id, type, name, label FROM " + entityType.name() + " WHERE id in ( SELECT entity_id";
         String from = getQueryTemplate(entityFilter.getDirection());
 
         String whereFilter = " WHERE " + " re.relation_type = '" + entityFilter.getRelationType() + "'" +
                 " AND re.to_type = '" + entityType.name() + "'";
-        from = String.format(from, UUIDConverter.fromTimeUUID(rootId.getId()), rootId.getEntityType().name(), lvlFilter, whereFilter);
+        from = String.format(from, rootId.getId(), rootId.getEntityType().name(), lvlFilter, whereFilter);
         String query = "( " + selectFields + from + ")";
         if (types != null && !types.isEmpty()) {
             query += " and type in (" + types.stream().map(type -> "'" + type + "'").collect(Collectors.joining(", ")) + ")";
@@ -305,7 +304,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         } else {
             whereFilter = new StringBuilder();
         }
-        from = String.format(from, UUIDConverter.fromTimeUUID(rootId.getId()), rootId.getEntityType().name(), lvlFilter, whereFilter);
+        from = String.format(from, rootId.getId(), rootId.getEntityType().name(), lvlFilter, whereFilter);
         return "( " + selectFields + from + ")";
     }
 
@@ -344,7 +343,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private String getSelectCustomerId() {
         return "CASE" +
                 " WHEN entity.entity_type = 'TENANT'" +
-                " THEN '" + UUIDConverter.fromTimeUUID(TenantId.NULL_UUID) + "'" +
+                " THEN UUID('" + TenantId.NULL_UUID + "')" +
                 " WHEN entity.entity_type = 'CUSTOMER' THEN entity_id" +
                 " WHEN entity.entity_type = 'USER'" +
                 " THEN (select customer_id from tb_user where id = entity_id)" +
@@ -442,12 +441,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     private String singleEntityQuery(SingleEntityFilter filter) {
-        return String.format("e.id='%s'", UUIDConverter.fromTimeUUID(filter.getSingleEntity().getId()));
+        return String.format("e.id='%s'", filter.getSingleEntity().getId());
     }
 
     private String entityListQuery(EntityListFilter filter) {
         return String.format("e.id in (%s)",
-                filter.getEntityList().stream().map(UUID::fromString).map(UUIDConverter::fromTimeUUID)
+                filter.getEntityList().stream().map(UUID::fromString)
                         .map(s -> String.format("'%s'", s)).collect(Collectors.joining(",")));
     }
 

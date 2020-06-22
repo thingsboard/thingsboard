@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.SQLType;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +93,7 @@ public abstract class AttributeKvInsertRepository {
 
                         ps.setLong(6, kvEntity.getLastUpdateTs());
                         ps.setString(7, kvEntity.getId().getEntityType().name());
-                        ps.setString(8, kvEntity.getId().getEntityId());
+                        ps.setObject(8, kvEntity.getId().getEntityId());
                         ps.setString(9, kvEntity.getId().getAttributeType());
                         ps.setString(10, kvEntity.getId().getAttributeKey());
                     }
@@ -122,7 +123,7 @@ public abstract class AttributeKvInsertRepository {
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
                         AttributeKvEntity kvEntity = insertEntities.get(i);
                         ps.setString(1, kvEntity.getId().getEntityType().name());
-                        ps.setString(2, kvEntity.getId().getEntityId());
+                        ps.setObject(2, kvEntity.getId().getEntityId());
                         ps.setString(3, kvEntity.getId().getAttributeType());
                         ps.setString(4, kvEntity.getId().getAttributeKey());
 

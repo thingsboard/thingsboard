@@ -46,7 +46,7 @@ public class HsqlAttributesInsertRepository extends AttributeKvInsertRepository 
         entities.forEach(entity -> {
             jdbcTemplate.update(INSERT_OR_UPDATE, ps -> {
                 ps.setString(1, entity.getId().getEntityType().name());
-                ps.setString(2, entity.getId().getEntityId());
+                ps.setObject(2, entity.getId().getEntityId());
                 ps.setString(3, entity.getId().getAttributeType());
                 ps.setString(4, entity.getId().getAttributeKey());
                 ps.setString(5, entity.getStrValue());

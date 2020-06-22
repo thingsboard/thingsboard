@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.nosql;
 
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;

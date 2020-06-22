@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
 import java.util.Optional;
 
 /**

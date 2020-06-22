@@ -21,8 +21,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 14.07.17.
@@ -35,6 +38,18 @@ public class UUIDConverterTest {
         UUID original = UUID.fromString("58e0a7d7-eebc-11d8-9669-0800200c9a66");
         String result = UUIDConverter.fromTimeUUID(original);
         Assert.assertEquals("1d8eebc58e0a7d796690800200c9a66", result);
+    }
+
+
+    @Test
+    public void basicUuid() {
+        System.out.println(UUIDConverter.fromString("1e746126eaaefa6a91992ebcb67fe33"));
+    }
+
+    @Test
+    public void basicUuidConversion() {
+        UUID original = UUID.fromString("3dd11790-abf2-11ea-b151-83a091b9d4cc");
+        Assert.assertEquals(Uuids.unixTimestamp(original), 1591886749577L);
     }
 
     @Test
