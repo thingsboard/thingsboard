@@ -134,7 +134,7 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
                 this.alwaysFullScreen = basicConfig.isAlwaysFullScreen();
             }
             OAuth2CustomMapperConfig customConfig = mapperConfig.getCustomConfig();
-            if (customConfig != null){
+            if (customConfig != null) {
                 this.url = customConfig.getUrl();
                 this.username = customConfig.getUsername();
                 this.password = customConfig.getPassword();
@@ -152,23 +152,27 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
                         .activateUser(activateUser)
                         .type(type)
                         .basicConfig(
-                                OAuth2BasicMapperConfig.builder()
-                                        .emailAttributeKey(emailAttributeKey)
-                                        .firstNameAttributeKey(firstNameAttributeKey)
-                                        .lastNameAttributeKey(lastNameAttributeKey)
-                                        .tenantNameStrategy(tenantNameStrategy)
-                                        .tenantNamePattern(tenantNamePattern)
-                                        .customerNamePattern(customerNamePattern)
-                                        .defaultDashboardName(defaultDashboardName)
-                                        .alwaysFullScreen(alwaysFullScreen)
-                                        .build()
+                                type == MapperType.BASIC ?
+                                        OAuth2BasicMapperConfig.builder()
+                                                .emailAttributeKey(emailAttributeKey)
+                                                .firstNameAttributeKey(firstNameAttributeKey)
+                                                .lastNameAttributeKey(lastNameAttributeKey)
+                                                .tenantNameStrategy(tenantNameStrategy)
+                                                .tenantNamePattern(tenantNamePattern)
+                                                .customerNamePattern(customerNamePattern)
+                                                .defaultDashboardName(defaultDashboardName)
+                                                .alwaysFullScreen(alwaysFullScreen)
+                                                .build()
+                                        : null
                         )
                         .customConfig(
-                                OAuth2CustomMapperConfig.builder()
-                                        .url(url)
-                                        .username(username)
-                                        .password(password)
-                                        .build()
+                                type == MapperType.CUSTOM ?
+                                        OAuth2CustomMapperConfig.builder()
+                                                .url(url)
+                                                .username(username)
+                                                .password(password)
+                                                .build()
+                                        : null
                         )
                         .build())
                 .clientId(clientId)

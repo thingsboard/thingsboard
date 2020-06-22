@@ -39,7 +39,8 @@ public class OAuth2ClientRegistrationServiceImpl implements OAuth2ClientRegistra
     @Override
     public OAuth2ClientRegistration saveClientRegistration(OAuth2ClientRegistration clientRegistration) {
         log.trace("Executing saveClientRegistration [{}]", clientRegistration);
-        return null;
+        // TODO add checking for duplicates and other validations
+        return clientRegistrationDao.save(clientRegistration);
     }
 
     @Override

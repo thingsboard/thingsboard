@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.oauth2;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,9 @@ public class JpaOAuth2ClientRegistrationDao implements OAuth2ClientRegistrationD
             throw new IllegalArgumentException("Can't create entity for domain object {" + clientRegistration + "}", e);
         }
         log.debug("Saving entity {}", entity);
+        if (entity.getUuid() == null) {
+            entity.setUuid(Uuids.timeBased());
+        }
         entity = repository.save(entity);
         return DaoUtil.getData(entity);
     }
