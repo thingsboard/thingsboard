@@ -25,8 +25,9 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogEntity, String> {
+public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogEntity, UUID> {
 
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
             "a.tenantId = :tenantId " +
@@ -40,7 +41,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "OR LOWER(a.actionStatus) LIKE LOWER(CONCAT(:textSearch, '%')))"
     )
     Page<AuditLogEntity> findByTenantId(
-                                 @Param("tenantId") String tenantId,
+                                 @Param("tenantId") UUID tenantId,
                                  @Param("textSearch") String textSearch,
                                  @Param("startId") String startId,
                                  @Param("endId") String endId,
@@ -58,9 +59,9 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "OR LOWER(a.actionType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.actionStatus) LIKE LOWER(CONCAT(:textSearch, '%')))"
     )
-    Page<AuditLogEntity> findAuditLogsByTenantIdAndEntityId(@Param("tenantId") String tenantId,
+    Page<AuditLogEntity> findAuditLogsByTenantIdAndEntityId(@Param("tenantId") UUID tenantId,
                                                             @Param("entityType") EntityType entityType,
-                                                            @Param("entityId") String entityId,
+                                                            @Param("entityId") UUID entityId,
                                                             @Param("textSearch") String textSearch,
                                                             @Param("startId") String startId,
                                                             @Param("endId") String endId,
@@ -79,8 +80,8 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "OR LOWER(a.actionType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.actionStatus) LIKE LOWER(CONCAT(:textSearch, '%')))"
     )
-    Page<AuditLogEntity> findAuditLogsByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
-                                                              @Param("customerId") String customerId,
+    Page<AuditLogEntity> findAuditLogsByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                              @Param("customerId") UUID customerId,
                                                               @Param("textSearch") String textSearch,
                                                               @Param("startId") String startId,
                                                               @Param("endId") String endId,
@@ -98,8 +99,8 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "OR LOWER(a.actionType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.actionStatus) LIKE LOWER(CONCAT(:textSearch, '%')))"
     )
-    Page<AuditLogEntity> findAuditLogsByTenantIdAndUserId(@Param("tenantId") String tenantId,
-                                                          @Param("userId") String userId,
+    Page<AuditLogEntity> findAuditLogsByTenantIdAndUserId(@Param("tenantId") UUID tenantId,
+                                                          @Param("userId") UUID userId,
                                                           @Param("textSearch") String textSearch,
                                                           @Param("startId") String startId,
                                                           @Param("endId") String endId,

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller.sql;
 
-import org.thingsboard.server.controller.BaseEntityQueryControllerTest;
 import org.thingsboard.server.controller.BaseWebsocketApiTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 

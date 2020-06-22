@@ -15,18 +15,30 @@
  */
 package org.thingsboard.server.service.telemetry.cmd.v2;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 
 import java.util.List;
 
 @Data
+@AllArgsConstructor
 public class EntityDataUpdate {
 
     private final int cmdId;
     private final PageData<EntityData> data;
     private final List<EntityData> update;
-    private int errorCode;
-    private String errorMsg;
+    private final int errorCode;
+    private final String errorMsg;
+
+    public EntityDataUpdate(int cmdId, PageData<EntityData> data, List<EntityData> update) {
+        this(cmdId, data, update, SubscriptionErrorCode.NO_ERROR.getCode(), null);
+    }
+
+    public EntityDataUpdate(int cmdId, int errorCode, String errorMsg) {
+        this(cmdId, null, null, errorCode, errorMsg);
+    }
+
 }

@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
@@ -299,6 +300,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             loadedEntities.addAll(data.getData());
         }
         Assert.assertEquals(25, loadedEntities.size());
+        loadedEntities.forEach(entity -> Assert.assertTrue(devices.stream().map(Device::getId).collect(Collectors.toSet()).contains(entity.getEntityId())));
         List<String> loadedTemperatures = loadedEntities.stream().map(entityData ->
                 entityData.getLatest().get(EntityKeyType.ATTRIBUTE).get("temperature").getValue()).collect(Collectors.toList());
         List<String> deviceTemperatures = temperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());

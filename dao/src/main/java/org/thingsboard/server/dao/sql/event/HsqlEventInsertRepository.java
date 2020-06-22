@@ -16,10 +16,11 @@
 package org.thingsboard.server.dao.sql.event;
 
 import org.springframework.stereotype.Repository;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.util.HsqlDao;
 import org.thingsboard.server.dao.util.SqlDao;
+
+import javax.persistence.Query;
 
 @SqlDao
 @HsqlDao
@@ -40,11 +41,25 @@ public class HsqlEventInsertRepository extends AbstractEventInsertRepository {
     @Override
     protected EventEntity doProcessSaveOrUpdate(EventEntity entity, String query) {
         getQuery(entity, query).executeUpdate();
-        return entityManager.find(EventEntity.class, UUIDConverter.fromTimeUUID(entity.getUuid()));
+        return entityManager.find(EventEntity.class, entity.getUuid());
+    }
+
+    protected Query getQuery(EventEntity entity, String query) {
+        return entityManager.createNativeQuery(query, EventEntity.class)
+                .setParameter("id", entity.getUuid().toString())
+                .setParameter("created_time", entity.getCreatedTime())
+                .setParameter("body", entity.getBody().toString())
+                .setParameter("entity_id", entity.getEntityId().toString())
+                .setParameter("entity_type", entity.getEntityType().name())
+                .setParameter("event_type", entity.getEventType())
+                .setParameter("event_uid", entity.getEventUid())
+                .setParameter("tenant_id", entity.getTenantId().toString())
+                .setParameter("ts", entity.getTs());
     }
 
     private static String getInsertString(String conflictStatement) {
-        return "MERGE INTO event USING (VALUES :id, :body, :entity_id, :entity_type, :event_type, :event_uid, :tenant_id, :ts) I (id, body, entity_id, entity_type, event_type, event_uid, tenant_id, ts) ON " + conflictStatement + " WHEN MATCHED THEN UPDATE SET event.id = I.id, event.body = I.body, event.entity_id = I.entity_id, event.entity_type = I.entity_type, event.event_type = I.event_type, event.event_uid = I.event_uid, event.tenant_id = I.tenant_id, event.ts = I.ts" +
-                " WHEN NOT MATCHED THEN INSERT (id, body, entity_id, entity_type, event_type, event_uid, tenant_id, ts) VALUES (I.id, I.body, I.entity_id, I.entity_type, I.event_type, I.event_uid, I.tenant_id, I.ts)";
+        return "MERGE INTO event USING (VALUES UUID(:id), :created_time, :body, UUID(:entity_id), :entity_type, :event_type, :event_uid, UUID(:tenant_id), :ts) I (id, created_time, body, entity_id, entity_type, event_type, event_uid, tenant_id, ts) ON " + conflictStatement
+                + " WHEN MATCHED THEN UPDATE SET event.id = I.id, event.created_time = I.created_time, event.body = I.body, event.entity_id = I.entity_id, event.entity_type = I.entity_type, event.event_type = I.event_type, event.event_uid = I.event_uid, event.tenant_id = I.tenant_id, event.ts = I.ts" +
+                " WHEN NOT MATCHED THEN INSERT (id, created_time, body, entity_id, entity_type, event_type, event_uid, tenant_id, ts) VALUES (I.id, I.created_time, I.body, I.entity_id, I.entity_type, I.event_type, I.event_uid, I.tenant_id, I.ts)";
     }
 }

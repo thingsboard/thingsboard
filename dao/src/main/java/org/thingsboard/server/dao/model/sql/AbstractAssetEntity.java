@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -33,6 +31,7 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_LABEL_PROPERTY;
@@ -48,10 +47,10 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
 
     @Column(name = ASSET_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = ASSET_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    private UUID customerId;
 
     @Column(name = ASSET_NAME_PROPERTY)
     private String name;
@@ -77,11 +76,12 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         if (asset.getId() != null) {
             this.setUuid(asset.getId().getId());
         }
+        this.setCreatedTime(asset.getCreatedTime());
         if (asset.getTenantId() != null) {
-            this.tenantId = UUIDConverter.fromTimeUUID(asset.getTenantId().getId());
+            this.tenantId = asset.getTenantId().getId();
         }
         if (asset.getCustomerId() != null) {
-            this.customerId = UUIDConverter.fromTimeUUID(asset.getCustomerId().getId());
+            this.customerId = asset.getCustomerId().getId();
         }
         this.name = asset.getName();
         this.type = asset.getType();
@@ -91,6 +91,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
 
     public AbstractAssetEntity(AssetEntity assetEntity) {
         this.setId(assetEntity.getId());
+        this.setCreatedTime(assetEntity.getCreatedTime());
         this.tenantId = assetEntity.getTenantId();
         this.customerId = assetEntity.getCustomerId();
         this.type = assetEntity.getType();
@@ -115,13 +116,13 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
     }
 
     protected Asset toAsset() {
-        Asset asset = new Asset(new AssetId(UUIDConverter.fromString(id)));
-        asset.setCreatedTime(Uuids.unixTimestamp(UUIDConverter.fromString(id)));
+        Asset asset = new Asset(new AssetId(id));
+        asset.setCreatedTime(createdTime);
         if (tenantId != null) {
-            asset.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
+            asset.setTenantId(new TenantId(tenantId));
         }
         if (customerId != null) {
-            asset.setCustomerId(new CustomerId(UUIDConverter.fromString(customerId)));
+            asset.setCustomerId(new CustomerId(customerId));
         }
         asset.setName(name);
         asset.setType(type);

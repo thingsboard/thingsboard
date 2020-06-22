@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -36,6 +35,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -57,16 +57,18 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     }
 
     @Override
-    protected CrudRepository<ComponentDescriptorEntity, String> getCrudRepository() {
+    protected CrudRepository<ComponentDescriptorEntity, UUID> getCrudRepository() {
         return componentDescriptorRepository;
     }
 
     @Override
     public Optional<ComponentDescriptor> saveIfNotExist(TenantId tenantId, ComponentDescriptor component) {
         if (component.getId() == null) {
-            component.setId(new ComponentDescriptorId(Uuids.timeBased()));
+            UUID uuid = Uuids.timeBased();
+            component.setId(new ComponentDescriptorId(uuid));
+            component.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
-        if (!componentDescriptorRepository.existsById(UUIDConverter.fromTimeUUID(component.getId().getId()))) {
+        if (!componentDescriptorRepository.existsById(component.getId().getId())) {
             ComponentDescriptorEntity componentDescriptorEntity = new ComponentDescriptorEntity(component);
             ComponentDescriptorEntity savedEntity = componentDescriptorInsertRepository.saveOrUpdate(componentDescriptorEntity);
             return Optional.of(savedEntity.toData());

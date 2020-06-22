@@ -73,6 +73,7 @@ public class EntityKeyMapping {
     private boolean ignore = false;
     private List<KeyFilter> keyFilters;
     private EntityKey entityKey;
+    private int paramIdx = 0;
 
     public boolean hasFilter() {
         return keyFilters != null && !keyFilters.isEmpty();
@@ -95,23 +96,23 @@ public class EntityKeyMapping {
             String column = entityFieldColumnMap.get(entityKey.getKey());
             return String.format("e.%s as %s", column, getValueAlias());
         } else if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
-            return buildTimeseriesSelection();
+            return buildTimeSeriesSelection();
         } else {
             return buildAttributeSelection();
         }
     }
 
-    public Stream<String> toQueries() {
+    public Stream<String> toQueries(EntityQueryContext ctx) {
         if (hasFilter()) {
             String keyAlias = entityKey.getType().equals(EntityKeyType.ENTITY_FIELD) ? "e" : alias;
             return keyFilters.stream().map(keyFilter ->
-                    this.buildKeyQuery(keyAlias, keyFilter));
+                    this.buildKeyQuery(ctx, keyAlias, keyFilter));
         } else {
             return null;
         }
     }
 
-    public String toLatestJoin(EntityFilter entityFilter, EntityType entityType) {
+    public String toLatestJoin(EntityQueryContext ctx, EntityFilter entityFilter, EntityType entityType) {
         String entityTypeStr;
         if (entityFilter.getType().equals(EntityFilterType.RELATIONS_QUERY)) {
             entityTypeStr = "entities.entity_type";
@@ -119,12 +120,13 @@ public class EntityKeyMapping {
             entityTypeStr = "'" + entityType.name() + "'";
         }
         String join = hasFilter() ? "left join" : "left outer join";
+        ctx.addStringParameter(alias + "_key_id", entityKey.getKey());
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
-            // TODO:
-            throw new RuntimeException("Not implemented!");
+            return String.format("%s ts_kv_latest %s ON %s.entity_id=to_uuid(entities.id) AND %s.key = (select key_id from ts_kv_dictionary where key = :%s_key_id)",
+                    join, alias, alias, alias, alias);
         } else {
-            String query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key='%s'",
-                    join, alias, alias, alias, entityTypeStr, alias, entityKey.getKey());
+            String query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id",
+                    join, alias, alias, alias, entityTypeStr, alias, alias);
             if (!entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
                 String scope;
                 if (entityKey.getType().equals(EntityKeyType.CLIENT_ATTRIBUTE)) {
@@ -145,13 +147,13 @@ public class EntityKeyMapping {
                 Collectors.joining(", "));
     }
 
-    public static String buildLatestJoins(EntityFilter entityFilter, EntityType entityType, List<EntityKeyMapping> latestMappings) {
-        return latestMappings.stream().map(mapping -> mapping.toLatestJoin(entityFilter, entityType)).collect(
+    public static String buildLatestJoins(EntityQueryContext ctx, EntityFilter entityFilter, EntityType entityType, List<EntityKeyMapping> latestMappings) {
+        return latestMappings.stream().map(mapping -> mapping.toLatestJoin(ctx, entityFilter, entityType)).collect(
                 Collectors.joining(" "));
     }
 
-    public static String buildQuery(List<EntityKeyMapping> mappings) {
-        return mappings.stream().flatMap(EntityKeyMapping::toQueries).collect(
+    public static String buildQuery(EntityQueryContext ctx, List<EntityKeyMapping> mappings) {
+        return mappings.stream().flatMap(mapping -> mapping.toQueries(ctx)).collect(
                 Collectors.joining(" AND "));
     }
 
@@ -250,40 +252,46 @@ public class EntityKeyMapping {
         return String.join(", ", attrValSelection, attrTsSelection);
     }
 
-    private String buildTimeseriesSelection() {
-        // TODO:
+    private String buildTimeSeriesSelection() {
         String attrValAlias = getValueAlias();
         String attrTsAlias = getTsAlias();
-        return String.format("(select '') as %s, (select 1) as %s", attrValAlias, attrTsAlias);
+        String attrValSelection =
+                String.format("(coalesce(cast(%s.bool_v as varchar), '') || " +
+                        "coalesce(%s.str_v, '') || " +
+                        "coalesce(cast(%s.long_v as varchar), '') || " +
+                        "coalesce(cast(%s.dbl_v as varchar), '') || " +
+                        "coalesce(cast(%s.json_v as varchar), '')) as %s", alias, alias, alias, alias, alias, attrValAlias);
+        String attrTsSelection = String.format("%s.ts as %s", alias, attrTsAlias);
+        return String.join(", ", attrValSelection, attrTsSelection);
     }
 
-    private String buildKeyQuery(String alias, KeyFilter keyFilter) {
-        return this.buildPredicateQuery(alias, keyFilter.getKey(), keyFilter.getPredicate());
+    private String buildKeyQuery(EntityQueryContext ctx, String alias, KeyFilter keyFilter) {
+        return this.buildPredicateQuery(ctx, alias, keyFilter.getKey(), keyFilter.getPredicate());
     }
 
-    private String buildPredicateQuery(String alias, EntityKey key, KeyFilterPredicate predicate) {
+    private String buildPredicateQuery(EntityQueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
         if (predicate.getType().equals(FilterPredicateType.COMPLEX)) {
-            return this.buildComplexPredicateQuery(alias, key, (ComplexFilterPredicate) predicate);
+            return this.buildComplexPredicateQuery(ctx, alias, key, (ComplexFilterPredicate) predicate);
         } else {
-            return this.buildSimplePredicateQuery(alias, key, predicate);
+            return this.buildSimplePredicateQuery(ctx, alias, key, predicate);
         }
     }
 
-    private String buildComplexPredicateQuery(String alias, EntityKey key, ComplexFilterPredicate predicate) {
+    private String buildComplexPredicateQuery(EntityQueryContext ctx, String alias, EntityKey key, ComplexFilterPredicate predicate) {
         return predicate.getPredicates().stream()
-                .map(keyFilterPredicate -> this.buildPredicateQuery(alias, key, keyFilterPredicate)).collect(Collectors.joining(
+                .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate)).collect(Collectors.joining(
                         " " + predicate.getOperation().name() + " "
                 ));
     }
 
-    private String buildSimplePredicateQuery(String alias, EntityKey key, KeyFilterPredicate predicate) {
+    private String buildSimplePredicateQuery(EntityQueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
         if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
             if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
                 String column = entityFieldColumnMap.get(key.getKey());
-                return this.buildNumericPredicateQuery(alias + "." + column, (NumericFilterPredicate) predicate);
+                return this.buildNumericPredicateQuery(ctx, alias + "." + column, (NumericFilterPredicate) predicate);
             } else {
-                String longQuery = this.buildNumericPredicateQuery(alias + ".long_v", (NumericFilterPredicate) predicate);
-                String doubleQuery = this.buildNumericPredicateQuery(alias + ".dbl_v", (NumericFilterPredicate) predicate);
+                String longQuery = this.buildNumericPredicateQuery(ctx, alias + ".long_v", (NumericFilterPredicate) predicate);
+                String doubleQuery = this.buildNumericPredicateQuery(ctx, alias + ".dbl_v", (NumericFilterPredicate) predicate);
                 return String.format("(%s or %s)", longQuery, doubleQuery);
             }
         } else {
@@ -295,15 +303,16 @@ public class EntityKeyMapping {
             }
             String field = alias + "." + column;
             if (predicate.getType().equals(FilterPredicateType.STRING)) {
-                return this.buildStringPredicateQuery(field, (StringFilterPredicate) predicate);
+                return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate);
             } else {
-                return this.buildBooleanPredicateQuery(field, (BooleanFilterPredicate) predicate);
+                return this.buildBooleanPredicateQuery(ctx, field, (BooleanFilterPredicate) predicate);
             }
         }
     }
 
-    private String buildStringPredicateQuery(String field, StringFilterPredicate stringFilterPredicate) {
+    private String buildStringPredicateQuery(EntityQueryContext ctx, String field, StringFilterPredicate stringFilterPredicate) {
         String operationField = field;
+        String paramName = getNextParameterName(field);
         String value = stringFilterPredicate.getValue();
         String stringOperationQuery = "";
         if (stringFilterPredicate.isIgnoreCase()) {
@@ -312,65 +321,77 @@ public class EntityKeyMapping {
         }
         switch (stringFilterPredicate.getOperation()) {
             case EQUAL:
-                stringOperationQuery = String.format("%s = '%s'", operationField, value);
+                stringOperationQuery = String.format("%s = :%s", operationField, paramName);
                 break;
             case NOT_EQUAL:
-                stringOperationQuery = String.format("%s != '%s'", operationField, value);
+                stringOperationQuery = String.format("%s != :%s", operationField, paramName);
                 break;
             case STARTS_WITH:
-                stringOperationQuery = String.format("%s like '%s%%'", operationField, value);
+                value += "%";
+                stringOperationQuery = String.format("%s like :%s", operationField, paramName);
                 break;
             case ENDS_WITH:
-                stringOperationQuery = String.format("%s like '%%%s'", operationField, value);
+                value = "%" + value;
+                stringOperationQuery = String.format("%s like :%s", operationField, paramName);
                 break;
             case CONTAINS:
-                stringOperationQuery = String.format("%s like '%%%s%%'", operationField, value);
+                value = "%" + value + "%";
+                stringOperationQuery = String.format("%s like :%s", operationField, paramName);
                 break;
             case NOT_CONTAINS:
-                stringOperationQuery = String.format("%s not like '%%%s%%'", operationField, value);
+                value = "%" + value + "%";
+                stringOperationQuery = String.format("%s not like :%s", operationField, paramName);
                 break;
         }
+        ctx.addStringParameter(paramName, value);
         return String.format("(%s is not null and %s)", field, stringOperationQuery);
     }
 
-    private String buildNumericPredicateQuery(String field, NumericFilterPredicate numericFilterPredicate) {
-        double value = numericFilterPredicate.getValue();
+    private String buildNumericPredicateQuery(EntityQueryContext ctx, String field, NumericFilterPredicate numericFilterPredicate) {
+        String paramName = getNextParameterName(field);
+        ctx.addDoubleParameter(paramName, numericFilterPredicate.getValue());
         String numericOperationQuery = "";
         switch (numericFilterPredicate.getOperation()) {
             case EQUAL:
-                numericOperationQuery = String.format("%s = %s", field, value);
+                numericOperationQuery = String.format("%s = :%s", field, paramName);
                 break;
             case NOT_EQUAL:
-                numericOperationQuery = String.format("%s != '%s'", field, value);
+                numericOperationQuery = String.format("%s != :%s", field, paramName);
                 break;
             case GREATER:
-                numericOperationQuery = String.format("%s > %s", field, value);
+                numericOperationQuery = String.format("%s > :%s", field, paramName);
                 break;
             case GREATER_OR_EQUAL:
-                numericOperationQuery = String.format("%s >= %s", field, value);
+                numericOperationQuery = String.format("%s >= :%s", field, paramName);
                 break;
             case LESS:
-                numericOperationQuery = String.format("%s < %s", field, value);
+                numericOperationQuery = String.format("%s < :%s", field, paramName);
                 break;
             case LESS_OR_EQUAL:
-                numericOperationQuery = String.format("%s <= %s", field, value);
+                numericOperationQuery = String.format("%s <= :%s", field, paramName);
                 break;
         }
         return String.format("(%s is not null and %s)", field, numericOperationQuery);
     }
 
-    private String buildBooleanPredicateQuery(String field,
+    private String buildBooleanPredicateQuery(EntityQueryContext ctx, String field,
                                               BooleanFilterPredicate booleanFilterPredicate) {
-        boolean value = booleanFilterPredicate.isValue();
+        String paramName = getNextParameterName(field);
+        ctx.addBooleanParameter(paramName, booleanFilterPredicate.isValue());
         String booleanOperationQuery = "";
         switch (booleanFilterPredicate.getOperation()) {
             case EQUAL:
-                booleanOperationQuery = String.format("%s = %s", field, value);
+                booleanOperationQuery = String.format("%s = :%s", field, paramName);
                 break;
             case NOT_EQUAL:
-                booleanOperationQuery = String.format("%s != %s", field, value);
+                booleanOperationQuery = String.format("%s != :%s", field, paramName);
                 break;
         }
         return String.format("(%s is not null and %s)", field, booleanOperationQuery);
+    }
+
+    private String getNextParameterName(String field) {
+        paramIdx++;
+        return field.replace(".", "_") + "_" + paramIdx;
     }
 }

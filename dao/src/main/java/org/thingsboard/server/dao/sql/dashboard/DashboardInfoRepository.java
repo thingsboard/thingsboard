@@ -18,23 +18,22 @@ package org.thingsboard.server.dao.sql.dashboard;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
 @SqlDao
-public interface DashboardInfoRepository extends PagingAndSortingRepository<DashboardInfoEntity, String> {
+public interface DashboardInfoRepository extends PagingAndSortingRepository<DashboardInfoEntity, UUID> {
 
     @Query("SELECT di FROM DashboardInfoEntity di WHERE di.tenantId = :tenantId " +
             "AND LOWER(di.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<DashboardInfoEntity> findByTenantId(@Param("tenantId") String tenantId,
+    Page<DashboardInfoEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                              @Param("searchText") String searchText,
                                              Pageable pageable);
 
@@ -42,8 +41,8 @@ public interface DashboardInfoRepository extends PagingAndSortingRepository<Dash
             "AND di.id = re.toId AND re.toType = 'DASHBOARD' AND re.relationTypeGroup = 'DASHBOARD' " +
             "AND re.relationType = 'Contains' AND re.fromId = :customerId AND re.fromType = 'CUSTOMER' " +
             "AND LOWER(di.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<DashboardInfoEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
-                                                          @Param("customerId") String customerId,
+    Page<DashboardInfoEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                          @Param("customerId") UUID customerId,
                                                           @Param("searchText") String searchText,
                                                           Pageable pageable);
 

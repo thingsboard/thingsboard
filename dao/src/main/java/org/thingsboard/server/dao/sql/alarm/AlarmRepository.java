@@ -20,21 +20,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/21/2017.
  */
 @SqlDao
-public interface AlarmRepository extends CrudRepository<AlarmEntity, String> {
+public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
 
     @Query("SELECT a FROM AlarmEntity a WHERE a.originatorId = :originatorId AND a.type = :alarmType ORDER BY a.startTs DESC")
-    List<AlarmEntity> findLatestByOriginatorAndType(@Param("originatorId") String originatorId,
+    List<AlarmEntity> findLatestByOriginatorAndType(@Param("originatorId") UUID originatorId,
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
 
@@ -46,9 +46,8 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, String> {
             "AND re.relationType = :relationType " +
             "AND re.fromId = :affectedEntityId " +
             "AND re.fromType = :affectedEntityType " +
-            "AND (:startId IS NULL OR a.id >= :startId) " +
-            "AND (:endId IS NULL OR a.id <= :endId) " +
-            "AND (:idOffset IS NULL OR a.id < :idOffset) " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))",
@@ -60,19 +59,17 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, String> {
                     "AND re.relationType = :relationType " +
                     "AND re.fromId = :affectedEntityId " +
                     "AND re.fromType = :affectedEntityType " +
-                    "AND (:startId IS NULL OR a.id >= :startId) " +
-                    "AND (:endId IS NULL OR a.id <= :endId) " +
-                    "AND (:idOffset IS NULL OR a.id < :idOffset) " +
+                    "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+                    "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
                     "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
                     "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))")
-    Page<AlarmInfoEntity> findAlarms(@Param("tenantId") String tenantId,
-                                     @Param("affectedEntityId") String affectedEntityId,
+    Page<AlarmInfoEntity> findAlarms(@Param("tenantId") UUID tenantId,
+                                     @Param("affectedEntityId") UUID affectedEntityId,
                                      @Param("affectedEntityType") String affectedEntityType,
                                      @Param("relationType") String relationType,
-                                     @Param("startId") String startId,
-                                     @Param("endId") String endId,
-                                     @Param("idOffset") String idOffset,
+                                     @Param("startTime") Long startTime,
+                                     @Param("endTime") Long endTime,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 }

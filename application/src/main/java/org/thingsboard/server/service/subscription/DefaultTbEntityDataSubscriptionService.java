@@ -15,10 +15,14 @@
  */
 package org.thingsboard.server.service.subscription;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,8 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -53,6 +59,7 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
+import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
@@ -60,6 +67,7 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,7 +75,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -101,11 +108,16 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     @Autowired
     private TimeseriesService tsService;
 
+    @Value("${database.ts.type}")
+    private String databaseTsType;
+
     private ExecutorService wsCallBackExecutor;
+    private boolean tsInSqlDB;
 
     @PostConstruct
     public void initExecutor() {
         wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ws-entity-sub-callback"));
+        tsInSqlDB = databaseTsType.equalsIgnoreCase("sql") || databaseTsType.equalsIgnoreCase("timescale");
     }
 
     @PreDestroy
@@ -156,7 +168,70 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private void handleLatestCmd(TelemetryWebSocketSessionRef session, int cmdId, EntityDataQuery query, LatestValueCmd latestCmd) {
+        TenantId tenantId = session.getSecurityCtx().getTenantId();
+        CustomerId customerId = session.getSecurityCtx().getCustomerId();
+        //Step 1. Update existing query with the contents of LatestValueCmd
+        latestCmd.getKeys().forEach(key -> {
+            if (!query.getLatestValues().contains(key)) {
+                query.getLatestValues().add(key);
+            }
+        });
 
+        //Step 2. Fetch the initial data
+        PageData<EntityData> data = entityService.findEntityDataByQuery(tenantId, customerId, query);
+
+        //Step 3. Fetch the latest values for telemetry keys (in case they are not copied from NoSQL to SQL DB in hybrid mode.
+        if (!tsInSqlDB) {
+            List<String> allTsKeys = latestCmd.getKeys().stream()
+                    .filter(key -> key.getType().equals(EntityKeyType.TIME_SERIES))
+                    .map(EntityKey::getKey).collect(Collectors.toList());
+
+            Map<EntityData, ListenableFuture<Map<String, TsValue>>> missingTelemetryFurutes = new HashMap<>();
+            for (EntityData entityData : data.getData()) {
+                Map<EntityKeyType, Map<String, TsValue>> latestEntityData = entityData.getLatest();
+                Map<String, TsValue> tsEntityData = latestEntityData.get(EntityKeyType.TIME_SERIES);
+                Set<String> missingTsKeys = new LinkedHashSet<>(allTsKeys);
+                if (tsEntityData != null) {
+                    missingTsKeys.removeAll(tsEntityData.keySet());
+                } else {
+                    tsEntityData = new HashMap<>();
+                    latestEntityData.put(EntityKeyType.TIME_SERIES, tsEntityData);
+                }
+
+                ListenableFuture<List<TsKvEntry>> missingTsData = tsService.findLatest(tenantId, entityData.getEntityId(), missingTsKeys);
+                missingTelemetryFurutes.put(entityData, Futures.transform(missingTsData, this::toTsValue, MoreExecutors.directExecutor()));
+            }
+            Futures.addCallback(Futures.allAsList(missingTelemetryFurutes.values()), new FutureCallback<List<Map<String, TsValue>>>() {
+                @Override
+                public void onSuccess(@Nullable List<Map<String, TsValue>> result) {
+                    missingTelemetryFurutes.forEach((key, value) -> {
+                        try {
+                            key.getLatest().get(EntityKeyType.TIME_SERIES).putAll(value.get());
+                        } catch (InterruptedException | ExecutionException e) {
+                            log.warn("[{}][{}] Failed to lookup latest telemetry: {}:{}", session.getSessionId(), cmdId, key.getEntityId(), allTsKeys, e);
+                        }
+                    });
+                    EntityDataUpdate update = new EntityDataUpdate(cmdId, data, null);
+                    wsService.sendWsMsg(session.getSessionId(), update);
+                    //TODO: create context for this (session, cmdId) that contains query, latestCmd and update. Subscribe + periodic updates.
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.warn("[{}][{}] Failed to process websocket command: {}:{}", session.getSessionId(), cmdId, query, latestCmd, t);
+                    wsService.sendWsMsg(session.getSessionId(),
+                            new EntityDataUpdate(cmdId, SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to process websocket command!"));
+                }
+            }, wsCallBackExecutor);
+        } else {
+            EntityDataUpdate update = new EntityDataUpdate(cmdId, data, null);
+            wsService.sendWsMsg(session.getSessionId(), update);
+            //TODO: create context for this (session, cmdId) that contains query, latestCmd and update. Subscribe + periodic updates.
+        }
+    }
+
+    private Map<String, TsValue> toTsValue(List<TsKvEntry> data) {
+        return data.stream().collect(Collectors.toMap(TsKvEntry::getKey, value -> new TsValue(value.getTs(), value.getValueAsString())));
     }
 
     private void handleHistoryCmd(TelemetryWebSocketSessionRef session, int cmdId, EntityDataQuery query, EntityHistoryCmd historyCmd) {
@@ -181,6 +256,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     keyData.forEach((k, v) -> entityData.getTimeseries().put(k, v.toArray(new TsValue[v.size()])));
                 } catch (InterruptedException | ExecutionException e) {
                     log.warn("[{}][{}][{}] Failed to fetch historical data", session.getSessionId(), cmdId, entityData.getEntityId(), e);
+                    wsService.sendWsMsg(session.getSessionId(),
+                            new EntityDataUpdate(cmdId, SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to fetch historical data!"));
                 }
             });
             EntityDataUpdate update = new EntityDataUpdate(cmdId, data, null);

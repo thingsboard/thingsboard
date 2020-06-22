@@ -16,10 +16,8 @@
 package org.thingsboard.server.dao.model.sql;
 
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -30,6 +28,7 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -38,7 +37,7 @@ import javax.persistence.Table;
 public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> implements SearchTextEntity<WidgetsBundle> {
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_ALIAS_PROPERTY)
     private String alias;
@@ -57,8 +56,9 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
         if (widgetsBundle.getId() != null) {
             this.setUuid(widgetsBundle.getId().getId());
         }
+        this.setCreatedTime(widgetsBundle.getCreatedTime());
         if (widgetsBundle.getTenantId() != null) {
-            this.tenantId = UUIDConverter.fromTimeUUID(widgetsBundle.getTenantId().getId());
+            this.tenantId = widgetsBundle.getTenantId().getId();
         }
         this.alias = widgetsBundle.getAlias();
         this.title = widgetsBundle.getTitle();
@@ -76,10 +76,10 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
 
     @Override
     public WidgetsBundle toData() {
-        WidgetsBundle widgetsBundle = new WidgetsBundle(new WidgetsBundleId(UUIDConverter.fromString(id)));
-        widgetsBundle.setCreatedTime(Uuids.unixTimestamp(UUIDConverter.fromString(id)));
+        WidgetsBundle widgetsBundle = new WidgetsBundle(new WidgetsBundleId(id));
+        widgetsBundle.setCreatedTime(createdTime);
         if (tenantId != null) {
-            widgetsBundle.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
+            widgetsBundle.setTenantId(new TenantId(tenantId));
         }
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);
