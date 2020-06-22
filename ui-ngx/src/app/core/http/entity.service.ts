@@ -54,9 +54,15 @@ import {
 import { EntityRelationService } from '@core/http/entity-relation.service';
 import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
-import { Device, DeviceCredentialsType, DeviceSearchQuery } from '@shared/models/device.models';
+import { ClaimResult, Device, DeviceCredentialsType, DeviceSearchQuery } from '@shared/models/device.models';
 import { EntityViewSearchQuery } from '@shared/models/entity-view.models';
 import { AttributeService } from '@core/http/attribute.service';
+import {
+  createDefaultEntityDataPageLink,
+  EntityData,
+  EntityDataQuery,
+  EntityFilter, EntityKeyType
+} from '@shared/models/query/query.models';
 
 @Injectable({
   providedIn: 'root'
@@ -360,6 +366,54 @@ export class EntityService {
     }
   }
 
+  public findEntityDataByQuery(query: EntityDataQuery, config?: RequestConfig): Observable<PageData<EntityData>> {
+    return this.http.post<PageData<EntityData>>('/api/entitiesQuery/find', query, defaultHttpOptionsFromConfig(config));
+  }
+
+  private entityDataToEntityInfo(entityData: EntityData): EntityInfo {
+    const entityInfo: EntityInfo = {
+      id: entityData.entityId.id,
+      entityType: entityData.entityId.entityType as EntityType
+    };
+    if (entityData.latest && entityData.latest[EntityKeyType.ENTITY_FIELD]) {
+      const fields = entityData.latest[EntityKeyType.ENTITY_FIELD];
+      if (fields.name) {
+        entityInfo.name = fields.name.value;
+      }
+      if (fields.label) {
+        entityInfo.label = fields.label.value;
+      }
+    }
+    return entityInfo;
+  }
+
+  public findSingleEntityInfoByEntityFilter(filter: EntityFilter, config?: RequestConfig): Observable<EntityInfo> {
+    const query: EntityDataQuery = {
+      entityFilter: filter,
+      pageLink: createDefaultEntityDataPageLink(1),
+      entityFields: [
+        {
+          type: EntityKeyType.ENTITY_FIELD,
+          key: 'name'
+        },
+        {
+          type: EntityKeyType.ENTITY_FIELD,
+          key: 'label'
+        }
+      ]
+    };
+    return this.findEntityDataByQuery(query, config).pipe(
+      map((data) => {
+        if (data.data.length) {
+          const entityData = data.data[0];
+          return this.entityDataToEntityInfo(entityData);
+        } else {
+          return null;
+        }
+      })
+    );
+  }
+
   public getAliasFilterTypesByEntityTypes(entityTypes: Array<EntityType | AliasEntityType>): Array<AliasFilterType> {
     const allAliasFilterTypes: Array<AliasFilterType> = Object.keys(AliasFilterType).map((key) => AliasFilterType[key]);
     if (!entityTypes || !entityTypes.length) {
@@ -605,7 +659,7 @@ export class EntityService {
   public resolveAlias(entityAlias: EntityAlias, stateParams: StateParams): Observable<AliasInfo> {
     const filter = entityAlias.filter;
     return this.resolveAliasFilter(filter, stateParams).pipe(
-      map((result) => {
+      mergeMap((result) => {
         const aliasInfo: AliasInfo = {
           alias: entityAlias.alias,
           entityFilter: result.entityFilter,
@@ -615,30 +669,19 @@ export class EntityService {
         };
         aliasInfo.resolvedEntities = result.entities;
         aliasInfo.currentEntity = null;
-        if (aliasInfo.resolvedEntities.length) {
-          aliasInfo.currentEntity = aliasInfo.resolvedEntities[0];
+        if (!aliasInfo.resolveMultiple && aliasInfo.entityFilter) {
+          return this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
+            {ignoreLoading: true, ignoreErrors: true}).pipe(
+            map((entity) => {
+              aliasInfo.currentEntity = entity;
+              return aliasInfo;
+            })
+          );
         }
-        return aliasInfo;
+        return of(aliasInfo);
       })
     );
   }
-/*
-  public resolveEntityFilter(filter: EntityAliasFilter, stateParams: StateParams): EntityFilter {
-    const stateEntityInfo = this.getStateEntityInfo(filter, stateParams);
-    let result: EntityFilter = filter;
-    const stateEntityId = stateEntityInfo.entityId;
-    if (filter.type === AliasFilterType.stateEntity) {
-      result = {
-        singleEntity: stateEntityId,
-        type: AliasFilterType.singleEntity
-      };
-    } else if (filter.rootStateEntity) {
-      let rootEntityType;
-      let rootEntityId;
-
-    }
-    return result;
-  }*/
 
   public resolveAliasFilter(filter: EntityAliasFilter, stateParams: StateParams): Observable<EntityAliasFilterResult> {
     const result: EntityAliasFilterResult = {

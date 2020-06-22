@@ -19,6 +19,7 @@ import { DataKey, WidgetConfig } from '@shared/models/widget.models';
 import { getDescendantProp, isDefined } from '@core/utils';
 import { alarmFields, AlarmInfo } from '@shared/models/alarm.models';
 import * as tinycolor_ from 'tinycolor2';
+import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
 
 const tinycolor = tinycolor_;
 
@@ -49,6 +50,7 @@ export interface EntityData {
 export interface EntityColumn extends DataKey {
   def: string;
   title: string;
+  entityKey?: EntityKey;
 }
 
 export interface DisplayColumn {
@@ -73,6 +75,58 @@ export interface CellStyleInfo {
   cellStyleFunction?: CellStyleFunction;
 }
 
+
+export function entityDataSortOrderFromString(strSortOrder: string, columns: EntityColumn[]): EntityDataSortOrder {
+  if (!strSortOrder && !strSortOrder.length) {
+    return null;
+  }
+  let property: string;
+  let direction = Direction.ASC;
+  if (strSortOrder.startsWith('-')) {
+    direction = Direction.DESC;
+    property = strSortOrder.substring(1);
+  } else {
+    if (strSortOrder.startsWith('+')) {
+      property = strSortOrder.substring(1);
+    } else {
+      property = strSortOrder;
+    }
+  }
+  if (!property && !property.length) {
+    return null;
+  }
+  const column = findColumnByLabel(property, columns);
+  if (column && column.entityKey) {
+    return {key: column.entityKey, direction};
+  }
+  return null;
+}
+
+export function findColumnByEntityKey(key: EntityKey, columns: EntityColumn[]): EntityColumn {
+  if (key) {
+    return columns.find(theColumn => theColumn.entityKey &&
+      theColumn.entityKey.type === key.type && theColumn.entityKey.key === key.key);
+  } else {
+    return null;
+  }
+}
+
+export function findEntityKeyByColumnDef(def: string, columns: EntityColumn[]): EntityKey {
+  return findColumnByDef(def, columns).entityKey;
+}
+
+export function findColumn(searchProperty: string, searchValue: string, columns: EntityColumn[]): EntityColumn {
+  return columns.find(theColumn => theColumn[searchProperty] === searchValue);
+}
+
+export function findColumnByLabel(label: string, columns: EntityColumn[]): EntityColumn {
+  return findColumn('label', label, columns);
+}
+
+export function findColumnByDef(def: string, columns: EntityColumn[]): EntityColumn {
+  return findColumn('def', def, columns);
+}
+
 export function findColumnProperty(searchProperty: string, searchValue: string, columnProperty: string, columns: EntityColumn[]): string {
   let res = searchValue;
   const column = columns.find(theColumn => theColumn[searchProperty] === searchValue);
@@ -80,6 +134,10 @@ export function findColumnProperty(searchProperty: string, searchValue: string, 
     res = column[columnProperty];
   }
   return res;
+}
+
+export function toEntityKey(def: string, columns: EntityColumn[]): string {
+  return findColumnProperty('def', def, 'label', columns);
 }
 
 export function toEntityColumnDef(label: string, columns: EntityColumn[]): string {

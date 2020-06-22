@@ -24,17 +24,24 @@ import { UtilsService } from '@core/services/utils.service';
 import { SubscriptionDataKey } from '@core/api/datasource-subcription';
 import { deepClone, objectHashCode } from '@core/utils';
 import { EntityDataSubscription, EntityDataSubscriptionOptions } from '@core/api/entity-data-subscription';
+import { Observable, of } from 'rxjs';
 
 export interface EntityDataListener {
   subscriptionType: widgetType;
-  subscriptionTimewindow: SubscriptionTimewindow;
+  subscriptionTimewindow?: SubscriptionTimewindow;
   configDatasource: Datasource;
   configDatasourceIndex: number;
   dataLoaded: (pageData: PageData<EntityData>, data: Array<Array<DataSetHolder>>, datasourceIndex: number) => void;
   dataUpdated: (data: DataSetHolder, datasourceIndex: number, dataIndex: number, dataKeyIndex: number, detectChanges: boolean) => void;
-  updateRealtimeSubscription: () => SubscriptionTimewindow;
-  setRealtimeSubscription: (subscriptionTimewindow: SubscriptionTimewindow) => void;
-  entityDataSubscriptionKey?: number;
+  updateRealtimeSubscription?: () => SubscriptionTimewindow;
+  setRealtimeSubscription?: (subscriptionTimewindow: SubscriptionTimewindow) => void;
+  subscription?: EntityDataSubscription;
+}
+
+export interface EntityDataLoadResult {
+  pageData: PageData<EntityData>;
+  data: Array<Array<DataSetHolder>>;
+  datasourceIndex: number;
 }
 
 @Injectable({
@@ -42,16 +49,48 @@ export interface EntityDataListener {
 })
 export class EntityDataService {
 
-  private subscriptions: {[entityDataSubscriptionKey: string]: EntityDataSubscription} = {};
-
   constructor(private telemetryService: TelemetryWebsocketService,
               private utils: UtilsService) {}
 
-  public subscribeToEntityData(listener: EntityDataListener) {
+  public prepareSubscription(listener: EntityDataListener): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !datasource.pageLink)) {
+      return of(null);
+    }
+    listener.subscription = this.createSubscription(listener,
+      datasource.pageLink, datasource.keyFilters,
+      false);
+    return listener.subscription.subscribe();
+  }
+
+  public startSubscription(listener: EntityDataListener) {
+    if (listener.subscriptionType === widgetType.timeseries) {
+      listener.subscription.entityDataSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+    }
+    listener.subscription.start();
+  }
+
+  public subscribeForLatestData(listener: EntityDataListener,
+                                pageLink: EntityDataPageLink,
+                                keyFilters: KeyFilter[]) {
+    const datasource = listener.configDatasource;
+    if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
       return;
     }
+    listener.subscription = this.createSubscription(listener,
+      pageLink, keyFilters,  true);
+    listener.subscription.subscribe();
+  }
+
+  public stopSubscription(listener: EntityDataListener) {
+    listener.subscription.unsubscribe();
+  }
+
+  private createSubscription(listener: EntityDataListener,
+                             pageLink: EntityDataPageLink,
+                             keyFilters: KeyFilter[],
+                             isLatestDataSubscription: boolean): EntityDataSubscription {
+    const datasource = listener.configDatasource;
     const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
     datasource.dataKeys.forEach((dataKey) => {
       const subscriptionDataKey: SubscriptionDataKey = {
@@ -62,47 +101,19 @@ export class EntityDataService {
       };
       subscriptionDataKeys.push(subscriptionDataKey);
     });
-
     const entityDataSubscriptionOptions: EntityDataSubscriptionOptions = {
       datasourceType: datasource.type,
       dataKeys: subscriptionDataKeys,
       type: listener.subscriptionType
     };
-
-    if (listener.subscriptionType === widgetType.timeseries) {
-      entityDataSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
-    }
     if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {
       entityDataSubscriptionOptions.entityFilter = datasource.entityFilter;
-      entityDataSubscriptionOptions.pageLink = datasource.pageLink;
-      entityDataSubscriptionOptions.keyFilters = datasource.keyFilters;
+      entityDataSubscriptionOptions.pageLink = pageLink;
+      entityDataSubscriptionOptions.keyFilters = keyFilters;
     }
-    listener.entityDataSubscriptionKey = objectHashCode(entityDataSubscriptionOptions);
-    let subscription: EntityDataSubscription;
-    if (this.subscriptions[listener.entityDataSubscriptionKey]) {
-      subscription = this.subscriptions[listener.entityDataSubscriptionKey];
-      subscription.syncListener(listener);
-    } else {
-      subscription = new EntityDataSubscription(entityDataSubscriptionOptions,
-        this.telemetryService, this.utils);
-      this.subscriptions[listener.entityDataSubscriptionKey] = subscription;
-      subscription.addListener(listener);
-      subscription.start();
-    }
-  }
-
-  public unsubscribeFromDatasource(listener: EntityDataListener) {
-    if (listener.entityDataSubscriptionKey) {
-      const subscription = this.subscriptions[listener.entityDataSubscriptionKey];
-      if (subscription) {
-        subscription.removeListener(listener);
-        if (!subscription.hasListeners()) {
-          subscription.unsubscribe();
-          delete this.subscriptions[listener.entityDataSubscriptionKey];
-        }
-      }
-      listener.entityDataSubscriptionKey = null;
-    }
+    entityDataSubscriptionOptions.isLatestDataSubscription = isLatestDataSubscription;
+    return new EntityDataSubscription(entityDataSubscriptionOptions,
+      listener, this.telemetryService, this.utils);
   }
 
 }

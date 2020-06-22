@@ -21,7 +21,7 @@ import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
-import { EntityData, EntityDataQuery } from '@shared/models/query/query.models';
+import { EntityData, EntityDataQuery, EntityKey } from '@shared/models/query/query.models';
 import { PageData } from '@shared/models/page/page-data';
 
 export enum DataKeyType {
@@ -139,7 +139,7 @@ export interface EntityHistoryCmd {
 }
 
 export interface LatestValueCmd {
-  keys: Array<string>;
+  keys: Array<EntityKey>;
 }
 
 export interface TimeSeriesCmd {
@@ -153,7 +153,7 @@ export interface TimeSeriesCmd {
 
 export class EntityDataCmd implements WebsocketCmd {
   cmdId: number;
-  query: EntityDataQuery;
+  query?: EntityDataQuery;
   historyCmd?: EntityHistoryCmd;
   latestCmd?: LatestValueCmd;
   tsCmd?: TimeSeriesCmd;
@@ -314,6 +314,7 @@ export class EntityDataUpdate implements EntityDataUpdateMsg {
 
 export interface TelemetryService {
   subscribe(subscriber: TelemetrySubscriber);
+  update(subscriber: TelemetrySubscriber);
   unsubscribe(subscriber: TelemetrySubscriber);
 }
 
@@ -358,6 +359,10 @@ export class TelemetrySubscriber {
 
   public subscribe() {
     this.telemetryService.subscribe(this);
+  }
+
+  public update() {
+    this.telemetryService.update(this);
   }
 
   public unsubscribe() {

@@ -150,6 +150,8 @@ export interface WidgetTypeParameters {
   maxDataKeys?: number;
   dataKeysOptional?: boolean;
   stateData?: boolean;
+  hasDataPageLink?: boolean;
+  singleEntity?: boolean;
 }
 
 export interface WidgetControllerDescriptor {

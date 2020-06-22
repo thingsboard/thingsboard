@@ -48,6 +48,7 @@ public class EntityKeyMapping {
 
     static {
         entityFieldColumnMap.put("createdTime", "id");
+        entityFieldColumnMap.put("entityType", "entity_type");
         entityFieldColumnMap.put("name", "name");
         entityFieldColumnMap.put("type", "type");
         entityFieldColumnMap.put("label", "label");

@@ -620,14 +620,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.rxSubscriptions.push(this.widgetContext.dashboard.dashboardTimewindowChanged.subscribe(
       (dashboardTimewindow) => {
-        // TODO:
-        let subscriptionChanged = false;
         for (const id of Object.keys(this.widgetContext.subscriptions)) {
           const subscription = this.widgetContext.subscriptions[id];
-          subscriptionChanged = subscriptionChanged || subscription.onDashboardTimewindowChanged(dashboardTimewindow);
-        }
-        if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
-          this.reInit();
+          subscription.onDashboardTimewindowChanged(dashboardTimewindow);
         }
       }
     ));
@@ -845,6 +840,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       options = {
         type: this.widget.type,
         stateData: this.typeParameters.stateData,
+        hasDataPageLink: this.typeParameters.hasDataPageLink,
+        singleEntity: this.typeParameters.singleEntity,
         comparisonEnabled: comparisonSettings.comparisonEnabled,
         timeForComparison: comparisonSettings.timeForComparison
       };

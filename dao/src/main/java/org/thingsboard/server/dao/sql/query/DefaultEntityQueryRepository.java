@@ -452,7 +452,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     private String entityNameQuery(EntityNameFilter filter) {
-        return String.format("lower(e.search_text) like lower(concat(%s, '%%'))", filter.getEntityNameFilter());
+        return String.format("lower(e.search_text) like lower(concat('%s', '%%'))", filter.getEntityNameFilter());
     }
 
     private String typeQuery(EntityFilter filter) {

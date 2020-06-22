@@ -32,26 +32,23 @@ import {
   DataKey,
   Datasource,
   DatasourceData,
-  DatasourceType,
   WidgetActionDescriptor,
   WidgetConfig
 } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, isDefined, isNumber, createLabelFromDatasource, hashCode } from '@core/utils';
+import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber } from '@core/utils';
 import cssjs from '@core/css/css';
-import { PageLink } from '@shared/models/page/page-link';
-import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
-import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   CellContentInfo,
@@ -59,15 +56,13 @@ import {
   constructTableCssString,
   DisplayColumn,
   EntityColumn,
-  EntityData,
-  fromEntityColumnDef,
+  EntityData, entityDataSortOrderFromString, findColumnByEntityKey, findEntityKeyByColumnDef,
   getCellContentInfo,
   getCellStyleInfo,
   getColumnWidth,
   getEntityValue,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
-  toEntityColumnDef,
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -77,6 +72,13 @@ import {
   DisplayColumnsPanelComponent,
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
+import {
+  Direction,
+  EntityDataPageLink,
+  entityDataPageLinkSortDirection,
+  EntityKeyType,
+  KeyFilter
+} from '@shared/models/query/query.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -103,7 +105,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public displayPagination = true;
   public pageSizeOptions;
-  public pageLink: PageLink;
+  public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
   public columns: Array<EntityColumn> = [];
@@ -150,8 +152,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
               private domSanitizer: DomSanitizer) {
     super(store);
 
-    const sortOrder: SortOrder = sortOrderFromString(this.defaultSortOrder);
-    this.pageLink = new PageLink(this.defaultPageSize, 0, null, sortOrder);
+    // const sortOrder: EntityDataSortOrder = sortOrderFromString(this.defaultSortOrder);
+    this.pageLink = {
+      page: 0,
+      pageSize: this.defaultPageSize,
+      textSearch: null
+    };
+      // new PageLink(this.defaultPageSize, 0, null, sortOrder);
   }
 
   ngOnInit(): void {
@@ -191,9 +198,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public onDataUpdated() {
     this.ngZone.run(() => {
-      this.entityDatasource.updateEntitiesData(this.subscription.data);
+      this.entityDatasource.dataUpdated(); // .updateEntitiesData(this.subscription.data);
       this.ctx.detectChanges();
     });
+  }
+
+  public pageLinkSortDirection(): SortDirection {
+    return entityDataPageLinkSortDirection(this.pageLink);
   }
 
   private initializeConfig() {
@@ -256,7 +267,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           name: 'entityName',
           label: 'entityName',
           def: 'entityName',
-          title: entityNameColumnTitle
+          title: entityNameColumnTitle,
+          entityKey: {
+            key: 'name',
+            type: EntityKeyType.ENTITY_FIELD
+          }
         } as EntityColumn
       );
       this.contentsInfo.entityName = {
@@ -273,7 +288,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           name: 'entityLabel',
           label: 'entityLabel',
           def: 'entityLabel',
-          title: entityLabelColumnTitle
+          title: entityLabelColumnTitle,
+          entityKey: {
+            key: 'label',
+            type: EntityKeyType.ENTITY_FIELD
+          }
         } as EntityColumn
       );
       this.contentsInfo.entityLabel = {
@@ -291,6 +310,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           label: 'entityType',
           def: 'entityType',
           title: this.translate.instant('entity.entity-type'),
+          entityKey: {
+            key: 'entityType',
+            type: EntityKeyType.ENTITY_FIELD
+          }
         } as EntityColumn
       );
       this.contentsInfo.entityType = {
@@ -309,8 +332,19 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (datasource) {
       datasource.dataKeys.forEach((entityDataKey) => {
         const dataKey: EntityColumn = deepClone(entityDataKey) as EntityColumn;
+        dataKey.entityKey = {
+          key: dataKey.name,
+          type: null
+        };
         if (dataKey.type === DataKeyType.function) {
           dataKey.name = dataKey.label;
+          dataKey.entityKey.type = EntityKeyType.ENTITY_FIELD;
+        } else if (dataKey.type === DataKeyType.entityField) {
+          dataKey.entityKey.type = EntityKeyType.ENTITY_FIELD;
+        } else if (dataKey.type === DataKeyType.attribute) {
+          dataKey.entityKey.type = EntityKeyType.ATTRIBUTE;
+        } else if (dataKey.type === DataKeyType.timeseries) {
+          dataKey.entityKey.type = EntityKeyType.TIME_SERIES;
         }
         dataKeys.push(dataKey);
 
@@ -331,14 +365,19 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
       this.defaultSortOrder = this.settings.defaultSortOrder;
     }
-    this.pageLink.sortOrder = sortOrderFromString(this.defaultSortOrder);
-    this.sortOrderProperty = toEntityColumnDef(this.pageLink.sortOrder.property, this.columns);
+
+    this.pageLink.sortOrder = entityDataSortOrderFromString(this.defaultSortOrder, this.columns);
+    let sortColumn: EntityColumn;
+    if (this.pageLink.sortOrder) {
+      sortColumn = findColumnByEntityKey(this.pageLink.sortOrder.key, this.columns);
+    }
+    this.sortOrderProperty = sortColumn ? sortColumn.def : null;
 
     if (this.actionCellDescriptors.length) {
       this.displayedColumns.push('actions');
     }
     this.entityDatasource = new EntityDatasource(
-      this.translate, dataKeys, this.subscription.datasources);
+      this.translate, dataKeys, this.subscription);
   }
 
   private editColumnsToDisplay($event: Event) {
@@ -416,9 +455,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     } else {
       this.pageLink.page = 0;
     }
-    this.pageLink.sortOrder.property = fromEntityColumnDef(this.sort.active, this.columns);
-    this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
-    this.entityDatasource.loadEntities(this.pageLink);
+    this.pageLink.sortOrder = {
+      key: findEntityKeyByColumnDef(this.sort.active, this.columns),
+      direction: Direction[this.sort.direction.toUpperCase()]
+    };
+    const keyFilters: KeyFilter[] = null; // TODO:
+    this.entityDatasource.loadEntities(this.pageLink, keyFilters);
     this.ctx.detectChanges();
   }
 
@@ -523,18 +565,19 @@ class EntityDatasource implements DataSource<EntityData> {
   private entitiesSubject = new BehaviorSubject<EntityData[]>([]);
   private pageDataSubject = new BehaviorSubject<PageData<EntityData>>(emptyPageData<EntityData>());
 
-  private allEntities: Array<EntityData> = [];
-  private allEntitiesSubject = new BehaviorSubject<EntityData[]>([]);
-  private allEntities$: Observable<Array<EntityData>> = this.allEntitiesSubject.asObservable();
+//  private allEntities: Array<EntityData> = [];
+//  private allEntitiesSubject = new BehaviorSubject<EntityData[]>([]);
+//  private allEntities$: Observable<Array<EntityData>> = this.allEntitiesSubject.asObservable();
 
   private currentEntity: EntityData = null;
 
   constructor(
        private translate: TranslateService,
        private dataKeys: Array<DataKey>,
-       datasources: Array<Datasource>
+       private subscription: IWidgetSubscription
+       // datasources: Array<Datasource>
     ) {
-
+/*
     for (const datasource of datasources) {
       if (datasource.type === DatasourceType.entity && !datasource.entityId) {
         continue;
@@ -558,7 +601,7 @@ class EntityDatasource implements DataSource<EntityData> {
       });
       this.allEntities.push(entity);
     }
-    this.allEntitiesSubject.next(this.allEntities);
+    this.allEntitiesSubject.next(this.allEntities);*/
   }
 
   connect(collectionViewer: CollectionViewer): Observable<EntityData[] | ReadonlyArray<EntityData>> {
@@ -570,18 +613,63 @@ class EntityDatasource implements DataSource<EntityData> {
     this.pageDataSubject.complete();
   }
 
-  loadEntities(pageLink: PageLink) {
-    this.fetchEntities(pageLink).pipe(
+  loadEntities(pageLink: EntityDataPageLink, keyFilters: KeyFilter[]) {
+    this.subscription.subscribeForLatestData(0, pageLink, keyFilters);
+/*    this.fetchEntities(pageLink).pipe(
       catchError(() => of(emptyPageData<EntityData>())),
     ).subscribe(
       (pageData) => {
         this.entitiesSubject.next(pageData.data);
         this.pageDataSubject.next(pageData);
       }
-    );
+    );*/
   }
 
-  updateEntitiesData(data: DatasourceData[]) {
+  dataUpdated() {
+    const datasourcesPageData = this.subscription.datasourcePages[0];
+    const dataPageData = this.subscription.dataPages[0];
+    const entities = new Array<EntityData>();
+    datasourcesPageData.data.forEach((datasource, index) => {
+      entities.push(this.datasourceToEntityData(datasource, dataPageData.data[index]));
+    });
+    const entitiesPageData: PageData<EntityData> = {
+      data: entities,
+      totalPages: datasourcesPageData.totalPages,
+      totalElements: datasourcesPageData.totalElements,
+      hasNext: datasourcesPageData.hasNext
+    };
+    this.entitiesSubject.next(entities);
+    this.pageDataSubject.next(entitiesPageData);
+  }
+
+  private datasourceToEntityData(datasource: Datasource, data: DatasourceData[]): EntityData {
+    const entity: EntityData = {
+      id: {} as EntityId,
+      entityName: datasource.entityName,
+      entityLabel: datasource.entityLabel ? datasource.entityLabel : datasource.entityName
+    };
+    if (datasource.entityId) {
+      entity.id.id = datasource.entityId;
+    }
+    if (datasource.entityType) {
+      entity.id.entityType = datasource.entityType;
+      entity.entityType = this.translate.instant(entityTypeTranslations.get(datasource.entityType).type);
+    } else {
+      entity.entityType = '';
+    }
+    this.dataKeys.forEach((dataKey, index) => {
+      const keyData = data[index].data;
+      if (keyData && keyData.length && keyData[0].length > 1) {
+        const value = keyData[0][1];
+        entity[dataKey.label] = value;
+      } else {
+        entity[dataKey.label] = '';
+      }
+    });
+    return entity;
+  }
+
+/*  updateEntitiesData(data: DatasourceData[]) {
     for (let i = 0; i < this.allEntities.length; i++) {
       const entity = this.allEntities[i];
       for (let a = 0; a < this.dataKeys.length; a++) {
@@ -597,7 +685,7 @@ class EntityDatasource implements DataSource<EntityData> {
       }
     }
     this.allEntitiesSubject.next(this.allEntities);
-  }
+  }*/
 
   isEmpty(): Observable<boolean> {
     return this.entitiesSubject.pipe(
@@ -625,9 +713,9 @@ class EntityDatasource implements DataSource<EntityData> {
       (this.currentEntity.id.id === entity.id.id);
   }
 
-  private fetchEntities(pageLink: PageLink): Observable<PageData<EntityData>> {
+ /* private fetchEntities(pageLink: PageLink): Observable<PageData<EntityData>> {
     return this.allEntities$.pipe(
       map((data) => pageLink.filterData(data))
     );
-  }
+  }*/
 }
