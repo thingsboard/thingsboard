@@ -18,7 +18,7 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        OAuth2ClientRegistration localClientRegistration = oAuth2Service.getClientRegistrationByRegistrationId(registrationId);
+        OAuth2ClientRegistration localClientRegistration = oAuth2Service.getClientRegistration(registrationId);
         return localClientRegistration == null ?
                 null : toSpringClientRegistration(localClientRegistration);
     }

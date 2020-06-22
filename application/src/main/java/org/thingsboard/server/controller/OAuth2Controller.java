@@ -39,7 +39,7 @@ public class OAuth2Controller extends BaseController {
     @ResponseBody
     public OAuth2ClientRegistration getClientRegistrationById(@PathVariable(REGISTRATION_ID) String registrationId) throws ThingsboardException {
         try {
-            return oauth2Service.getClientRegistrationByRegistrationId(registrationId);
+            return oauth2Service.getClientRegistration(registrationId);
         } catch (Exception e) {
             throw handleException(e);
         }

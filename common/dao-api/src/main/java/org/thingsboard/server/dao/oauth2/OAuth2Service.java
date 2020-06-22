@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 import java.util.List;
 
 public interface OAuth2Service {
-    OAuth2ClientRegistration getClientRegistrationByRegistrationId(String registrationId);
+    OAuth2ClientRegistration getClientRegistration(String registrationId);
 
     List<OAuth2ClientInfo> getOAuth2Clients();
 }

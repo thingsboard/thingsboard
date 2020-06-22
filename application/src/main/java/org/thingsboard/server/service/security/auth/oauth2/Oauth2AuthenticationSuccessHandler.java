@@ -64,7 +64,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
-            OAuth2ClientRegistration clientRegistration = oAuth2Service.getClientRegistrationByRegistrationId(token.getAuthorizedClientRegistrationId());
+            OAuth2ClientRegistration clientRegistration = oAuth2Service.getClientRegistration(token.getAuthorizedClientRegistrationId());
             OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(clientRegistration.getMapperConfig().getType());
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, clientRegistration.getMapperConfig());
 

@@ -53,7 +53,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     @Override
-    public OAuth2ClientRegistration getClientRegistrationByRegistrationId(String registrationId) {
+    public OAuth2ClientRegistration getClientRegistration(String registrationId) {
         if (oauth2Configuration == null || !oauth2Configuration.isEnabled()) return null;
         OAuth2Client oAuth2Client = oauth2Configuration.getClients() == null ? null : oauth2Configuration.getClients().get(registrationId);
         if (oAuth2Client != null){
