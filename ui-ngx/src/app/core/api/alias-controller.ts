@@ -22,8 +22,8 @@ import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
-import { map } from 'rxjs/operators';
-import { defaultEntityDataPageLink } from '@shared/models/query/query.models';
+import { map, mergeMap } from 'rxjs/operators';
+import { createDefaultEntityDataPageLink, defaultEntityDataPageLink } from '@shared/models/query/query.models';
 
 export class AliasController implements IAliasController {
 
@@ -169,7 +169,24 @@ export class AliasController implements IAliasController {
     }
   }
 
-  private resolveDatasource(datasource: Datasource, isSingle?: boolean): Observable<Array<Datasource>> {
+  resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo> {
+    return this.getAliasInfo(aliasId).pipe(
+      mergeMap((aliasInfo) => {
+        if (aliasInfo.resolveMultiple) {
+          if (aliasInfo.entityFilter) {
+            return this.entityService.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
+              {ignoreLoading: true, ignoreErrors: true});
+          } else {
+            return of(null);
+          }
+        } else {
+          return of(aliasInfo.currentEntity);
+        }
+      })
+    );
+  }
+
+  private resolveDatasource(datasource: Datasource, isSingle?: boolean): Observable<Datasource> {
     if (datasource.type === DatasourceType.entity) {
       if (datasource.entityAliasId) {
         return this.getAliasInfo(datasource.entityAliasId).pipe(
@@ -200,14 +217,14 @@ export class AliasController implements IAliasController {
                   datasources.push(newDatasource);
                 }
                 return datasources;*/
-                return [newDatasource];
+                return newDatasource;
               } else {
                 if (aliasInfo.stateEntity) {
                   newDatasource = deepClone(datasource);
                   newDatasource.unresolvedStateEntity = true;
-                  return [newDatasource];
+                  return newDatasource;
                 } else {
-                  return [];
+                  return null;
                   // throw new Error('Unable to resolve datasource.');
                 }
               }
@@ -232,13 +249,13 @@ export class AliasController implements IAliasController {
                     entityType: entity.entityType
                   }
                 };
-                return [datasource];
+                return datasource;
               } else {
                 if (aliasInfo.stateEntity) {
                   datasource.unresolvedStateEntity = true;
-                  return [datasource];
+                  return datasource;
                 } else {
-                  return [];
+                  return null;
                   // throw new Error('Unable to resolve datasource.');
                 }
               }
@@ -248,10 +265,10 @@ export class AliasController implements IAliasController {
       } else {
         datasource.aliasName = datasource.entityName;
         datasource.name = datasource.entityName;
-        return of([datasource]);
+        return of(datasource);
       }
     } else {
-      return of([datasource]);
+      return of(datasource);
     }
   }
 
@@ -354,18 +371,14 @@ export class AliasController implements IAliasController {
     );
   }
 
-  resolveDatasources(datasources: Array<Datasource>): Observable<Array<Datasource>> {
-    const newDatasources = deepClone(datasources);
-    const observables = new Array<Observable<Array<Datasource>>>();
+  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>> {
+    const newDatasources = deepClone(singleEntity ? [datasources[0]] : datasources);
+    const observables = new Array<Observable<Datasource>>();
     newDatasources.forEach((datasource) => {
       observables.push(this.resolveDatasource(datasource));
     });
     return forkJoin(observables).pipe(
-      map((arrayOfDatasources) => {
-        const result = new Array<Datasource>();
-        arrayOfDatasources.forEach((datasourcesArray) => {
-          result.push(...datasourcesArray);
-        });
+      map((result) => {
         let functionIndex = 0;
         result.forEach((datasource) => {
           if (datasource.type === DatasourceType.function) {
@@ -386,6 +399,9 @@ export class AliasController implements IAliasController {
             datasource.name = 'Unresolved';
             datasource.entityName = 'Unresolved';
           } else if (datasource.type === DatasourceType.entity) {
+            if (singleEntity) {
+              datasource.pageLink = createDefaultEntityDataPageLink(1);
+            }
             if (!datasource.pageLink) {
               datasource.pageLink = deepClone(defaultEntityDataPageLink);
             }

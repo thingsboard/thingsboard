@@ -22,7 +22,6 @@ import {
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import {
-  DataKey,
   DataSet,
   DataSetHolder,
   Datasource,
@@ -43,20 +42,18 @@ import {
   toHistoryTimewindow,
   WidgetTimewindow
 } from '@app/shared/models/time/time.models';
-import { Observable, ReplaySubject, Subject, throwError } from 'rxjs';
+import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { createLabelFromDatasource, deepClone, isDefined, isEqual } from '@core/utils';
 import { AlarmSourceListener } from '@core/http/alarm.service';
-import { DatasourceListener } from '@core/api/datasource.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { entityFields } from '@shared/models/entity.models';
 import * as moment_ from 'moment';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityDataListener } from '@core/api/entity-data.service';
-import { EntityData, EntityDataPageLink, EntityKeyType } from '@shared/models/query/query.models';
+import { EntityData, EntityDataPageLink, EntityKeyType, KeyFilter } from '@shared/models/query/query.models';
+import { map } from 'rxjs/operators';
 
 const moment = moment_;
 
@@ -73,12 +70,14 @@ export class WidgetSubscription implements IWidgetSubscription {
   subscriptionTimewindow: SubscriptionTimewindow;
   useDashboardTimewindow: boolean;
 
+  hasDataPageLink: boolean;
+  singleEntity: boolean;
+
   datasourcePages: PageData<Datasource>[];
   dataPages: PageData<Array<DatasourceData>>[];
   entityDataListeners: Array<EntityDataListener>;
   configuredDatasources: Array<Datasource>;
 
-  initDataSubscriptionSubject: Subject<void>;
   data: Array<DatasourceData>;
   datasources: Array<Datasource>;
   // datasourceListeners: Array<DatasourceListener>;
@@ -211,6 +210,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       // this.datasources = this.ctx.utils.validateDatasources(options.datasources);
       this.configuredDatasources = this.ctx.utils.validateDatasources(options.datasources);
       this.entityDataListeners = [];
+      this.hasDataPageLink = options.hasDataPageLink;
+      this.singleEntity = options.singleEntity;
       // this.datasourceListeners = [];
       this.datasourcePages = [];
       this.datasources = [];
@@ -271,11 +272,11 @@ export class WidgetSubscription implements IWidgetSubscription {
     const initRpcSubject = new ReplaySubject();
     if (this.targetDeviceAliasIds && this.targetDeviceAliasIds.length > 0) {
       this.targetDeviceAliasId = this.targetDeviceAliasIds[0];
-      this.ctx.aliasController.getAliasInfo(this.targetDeviceAliasId).subscribe(
-        (aliasInfo) => {
-          if (aliasInfo.currentEntity && aliasInfo.currentEntity.entityType === EntityType.DEVICE) {
-            this.targetDeviceId = aliasInfo.currentEntity.id;
-            this.targetDeviceName = aliasInfo.currentEntity.name;
+      this.ctx.aliasController.resolveSingleEntityInfo(this.targetDeviceAliasId).subscribe(
+        (entityInfo) => {
+          if (entityInfo && entityInfo.entityType === EntityType.DEVICE) {
+            this.targetDeviceId = entityInfo.id;
+            this.targetDeviceName = entityInfo.name;
             if (this.targetDeviceId) {
               this.rpcEnabled = true;
             } else {
@@ -348,34 +349,72 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private initDataSubscription(): Observable<any> {
-    this.initDataSubscriptionSubject = new ReplaySubject(1);
+    const initDataSubscriptionSubject = new ReplaySubject(1);
     this.loadStDiff().subscribe(() => {
       if (!this.ctx.aliasController) {
         this.hasResolvedData = true;
-        // this.configureData();
-        // initDataSubscriptionSubject.next();
-        // initDataSubscriptionSubject.complete();
-        this.subscribe();
+        this.prepareDataSubscriptions().subscribe(
+          () => {
+            initDataSubscriptionSubject.next();
+            initDataSubscriptionSubject.complete();
+          }
+        );
       } else {
-        this.ctx.aliasController.resolveDatasources(this.configuredDatasources).subscribe(
+        this.ctx.aliasController.resolveDatasources(this.configuredDatasources, this.singleEntity).subscribe(
           (datasources) => {
             this.configuredDatasources = datasources;
-            /* if (datasources && datasources.length) {
-              this.hasResolvedData = true;
-            }*/
-            this.subscribe();
-            // this.configureData();
-            // initDataSubscriptionSubject.next();
-            // initDataSubscriptionSubject.complete();
+            this.prepareDataSubscriptions().subscribe(
+              () => {
+                initDataSubscriptionSubject.next();
+                initDataSubscriptionSubject.complete();
+              }
+            );
           },
           (err) => {
             this.notifyDataLoaded();
-            this.initDataSubscriptionSubject.error(err);
+            initDataSubscriptionSubject.error(err);
           }
         );
       }
     });
-    return this.initDataSubscriptionSubject.asObservable();
+    return initDataSubscriptionSubject.asObservable();
+  }
+
+  private prepareDataSubscriptions(): Observable<any> {
+    if (this.hasDataPageLink) {
+      this.hasResolvedData = true;
+      return of(null);
+    }
+    const resolveResultObservables = this.configuredDatasources.map((datasource, index) => {
+      const listener: EntityDataListener = {
+        subscriptionType: this.type,
+        configDatasource: datasource,
+        configDatasourceIndex: index,
+        dataLoaded: (pageData, data1, datasourceIndex) => {
+          this.dataLoaded(pageData, data1, datasourceIndex, true)
+        },
+        dataUpdated: this.dataUpdated.bind(this),
+        updateRealtimeSubscription: () => {
+          this.subscriptionTimewindow = this.updateRealtimeSubscription();
+          return this.subscriptionTimewindow;
+        },
+        setRealtimeSubscription: (subscriptionTimewindow) => {
+          this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
+        }
+      };
+      this.entityDataListeners.push(listener);
+      return this.ctx.entityDataService.prepareSubscription(listener);
+    });
+    return forkJoin(resolveResultObservables).pipe(
+      map((resolveResults) => {
+        resolveResults.forEach((resolveResult) => {
+          this.dataLoaded(resolveResult.pageData, resolveResult.data, resolveResult.datasourceIndex, false);
+        });
+        this.configureLoadedData();
+        this.hasResolvedData = true;
+        this.notifyDataLoaded();
+      })
+    );
   }
 
 /*  private initDataSubscriptionOld(): Observable<any> {
@@ -592,13 +631,12 @@ export class WidgetSubscription implements IWidgetSubscription {
     });
   }
 
-  onDashboardTimewindowChanged(newDashboardTimewindow: Timewindow): boolean {
+  onDashboardTimewindowChanged(newDashboardTimewindow: Timewindow) {
     if (this.type === widgetType.timeseries || this.type === widgetType.alarm) {
       if (this.useDashboardTimewindow) {
         if (!isEqual(this.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
-          // this.timeWindowConfig = deepClone(newDashboardTimewindow);
-          // this.update();
-          // TODO:
+          this.timeWindowConfig = deepClone(newDashboardTimewindow);
+          this.update();
           return true;
         }
       }
@@ -785,8 +823,12 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   update() {
-    this.unsubscribe();
-    this.subscribe();
+    if (this.type === widgetType.rpc || this.type === widgetType.alarm) {
+      this.unsubscribe();
+      this.subscribe();
+    } else {
+      this.dataSubscribe();
+    }
   }
 
   subscribe(): void {
@@ -802,6 +844,29 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
+  subscribeForLatestData(datasourceIndex: number,
+                         pageLink: EntityDataPageLink,
+                         keyFilters: KeyFilter[]): void {
+    let entityDataListener = this.entityDataListeners[datasourceIndex];
+    if (entityDataListener) {
+      this.ctx.entityDataService.stopSubscription(entityDataListener);
+    }
+    const datasource = this.configuredDatasources[datasourceIndex];
+    if (datasource) {
+      entityDataListener = {
+        subscriptionType: this.type,
+        configDatasource: datasource,
+        configDatasourceIndex: datasourceIndex,
+        dataLoaded: (pageData, data1, datasourceIndex1) => {
+          this.dataLoaded(pageData, data1, datasourceIndex1, true)
+        },
+        dataUpdated: this.dataUpdated.bind(this)
+      };
+      this.entityDataListeners[datasourceIndex] = entityDataListener;
+      this.ctx.entityDataService.subscribeForLatestData(entityDataListener, pageLink, keyFilters);
+    }
+  }
+
   private doSubscribe() {
     if (this.type === widgetType.rpc) {
       return;
@@ -809,6 +874,12 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (this.type === widgetType.alarm) {
       this.alarmsSubscribe();
     } else {
+      this.dataSubscribe();
+    }
+  }
+
+  private dataSubscribe() {
+    if (!this.hasDataPageLink) {
       this.notifyDataLoading();
       if (this.type === widgetType.timeseries && this.timeWindowConfig) {
         this.updateRealtimeSubscription();
@@ -819,62 +890,10 @@ export class WidgetSubscription implements IWidgetSubscription {
           this.onDataUpdated();
         }
       }
-      // let index = 0;
       const forceUpdate = !this.datasources.length;
-      this.configuredDatasources.forEach((datasource, index) => {
-        const listener: EntityDataListener = {
-          subscriptionType: this.type,
-          subscriptionTimewindow: this.subscriptionTimewindow,
-          configDatasource: datasource,
-          configDatasourceIndex: index,
-          dataLoaded: this.dataLoaded.bind(this),
-          dataUpdated: this.dataUpdated.bind(this),
-          updateRealtimeSubscription: () => {
-            this.subscriptionTimewindow = this.updateRealtimeSubscription();
-            return this.subscriptionTimewindow;
-          },
-          setRealtimeSubscription: (subscriptionTimewindow) => {
-            this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
-          }
-        };
-
-        /*if (this.comparisonEnabled && datasource.isAdditional) {
-          listener.subscriptionTimewindow = this.timewindowForComparison;
-          listener.updateRealtimeSubscription = () => {
-            this.subscriptionTimewindow = this.updateSubscriptionForComparison();
-            return this.subscriptionTimewindow;
-          };
-          listener.setRealtimeSubscription = () => {
-            this.updateSubscriptionForComparison();
-          };
-        }*/
-
-/*        let entityFieldKey = false;
-
-        for (let a = 0; a < datasource.dataKeys.length; a++) {
-          if (datasource.dataKeys[a].type !== DataKeyType.entityField) {
-            this.data[index + a].data = [];
-          } else {
-            entityFieldKey = true;
-          }
-        }
-        index += datasource.dataKeys.length;*/
-
-        this.entityDataListeners.push(listener);
-        // this.datasourceListeners.push(listener);
-
-        // if (datasource.dataKeys.length) {
-        //  this.ctx.datasourceService.subscribeToDatasource(listener);
-        // }
-
-        this.ctx.entityDataService.subscribeToEntityData(listener);
-
-       /* if (datasource.unresolvedStateEntity || entityFieldKey ||
-          !datasource.dataKeys.length ||
-          (datasource.type === DatasourceType.entity && !datasource.entityId)
-        ) {
-          forceUpdate = true;
-        }*/
+      this.entityDataListeners.forEach((listener) => {
+        listener.subscriptionTimewindow = this.subscriptionTimewindow;
+        this.ctx.entityDataService.startSubscription(listener);
       });
       if (forceUpdate) {
         this.notifyDataLoaded();
@@ -1000,7 +1019,9 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.alarmsUnsubscribe();
       } else {
         this.entityDataListeners.forEach((listener) => {
-          this.ctx.entityDataService.unsubscribeFromDatasource(listener);
+          if (listener != null) {
+            this.ctx.entityDataService.stopSubscription(listener);
+          }
         });
         this.entityDataListeners.length = 0;
         this.resetData();
@@ -1129,7 +1150,9 @@ export class WidgetSubscription implements IWidgetSubscription {
     return this.timewindowForComparison;
   }
 
-  private dataLoaded(pageData: PageData<EntityData>, data: Array<Array<DataSetHolder>>, datasourceIndex: number) {
+  private dataLoaded(pageData: PageData<EntityData>,
+                     data: Array<Array<DataSetHolder>>,
+                     datasourceIndex: number, isUpdate: boolean) {
     const datasource = this.configuredDatasources[datasourceIndex];
     datasource.dataReceived = true;
     const datasources = pageData.data.map((entityData, index) =>
@@ -1152,14 +1175,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       totalPages: pageData.totalPages
     };
     this.dataPages[datasourceIndex] = datasourceDataPage;
-    this.configureLoadedData();
-    const readyCount = this.configuredDatasources.filter(d => d.dataReceived).length;
-    if (this.configuredDatasources.length === readyCount) {
-      this.hasResolvedData = true;
-      this.initDataSubscriptionSubject.next();
-      this.initDataSubscriptionSubject.complete();
+    if (isUpdate) {
       this.configureLoadedData();
-      this.notifyDataLoaded();
       this.onDataUpdated(true);
     }
   }
@@ -1238,6 +1255,9 @@ export class WidgetSubscription implements IWidgetSubscription {
         dataKey,
         data: []
       };
+      if (data && data[keyIndex] && data[keyIndex].data) {
+        datasourceData.data = data[keyIndex].data;
+      }
       return datasourceData;
     });
   }
@@ -1275,6 +1295,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     const startIndex = configuredDatasource.dataKeyStartIndex;
     const dataKeysCount = configuredDatasource.dataKeys.length;
     const index = startIndex + dataIndex*dataKeysCount + dataKeyIndex;
+    this.notifyDataLoaded();
     let update = true;
     let currentData: DataSetHolder;
     if (this.displayLegend && this.legendData.keys[index].dataKey.hidden) {

@@ -98,7 +98,8 @@ export interface IAliasController {
   getAliasInfo(aliasId: string): Observable<AliasInfo>;
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
-  resolveDatasources(datasources: Array<Datasource>): Observable<Array<Datasource>>;
+  resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo>;
+  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>>;
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
@@ -202,8 +203,8 @@ export interface WidgetSubscriptionOptions {
   alarmsMaxCountLoad?: number;
   alarmsFetchSize?: number;
   datasources?: Array<Datasource>;
-  keyFilters?: Array<KeyFilter>;
-  pageLink?: EntityDataPageLink;
+  hasDataPageLink?: boolean;
+  singleEntity?: boolean;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
   useDashboardTimewindow?: boolean;
@@ -264,7 +265,7 @@ export interface IWidgetSubscription {
 
   onAliasesChanged(aliasIds: Array<string>): boolean;
 
-  onDashboardTimewindowChanged(dashboardTimewindow: Timewindow): boolean;
+  onDashboardTimewindowChanged(dashboardTimewindow: Timewindow): void;
 
   updateDataVisibility(index: number): void;
 
@@ -277,6 +278,10 @@ export interface IWidgetSubscription {
   clearRpcError(): void;
 
   subscribe(): void;
+
+  subscribeForLatestData(datasourceIndex: number,
+                         pageLink: EntityDataPageLink,
+                         keyFilters: KeyFilter[]): void;
 
   isDataResolved(): boolean;
 

@@ -346,11 +346,18 @@ export class WidgetComponentService {
       } else {
         result.typeParameters.useCustomDatasources = false;
       }
+      if (isUndefined(result.typeParameters.hasDataPageLink)) {
+        result.typeParameters.hasDataPageLink = false;
+      }
       if (isUndefined(result.typeParameters.maxDatasources)) {
         result.typeParameters.maxDatasources = -1;
       }
       if (isUndefined(result.typeParameters.maxDataKeys)) {
         result.typeParameters.maxDataKeys = -1;
+      }
+      if (isUndefined(result.typeParameters.singleEntity)) {
+        result.typeParameters.singleEntity = result.typeParameters.maxDatasources === 1 &&
+          result.typeParameters.maxDataKeys === 1;
       }
       if (isUndefined(result.typeParameters.dataKeysOptional)) {
         result.typeParameters.dataKeysOptional = false;

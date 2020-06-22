@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -213,13 +213,16 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
 
         cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
 
+
         wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
         wsClient.send(mapper.writeValueAsString(wrapper));
         msg = wsClient.waitForReply();
         update = mapper.readValue(msg, EntityDataUpdate.class);
+
         Assert.assertEquals(1, update.getCmdId());
+
         pageData = update.getData();
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
@@ -243,6 +246,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
         tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsValue);
+
     }
 
 }

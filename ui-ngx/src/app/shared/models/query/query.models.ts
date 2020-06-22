@@ -16,6 +16,7 @@
 
 import { AliasFilterType, EntityFilters } from '@shared/models/alias.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { SortDirection } from '@angular/material/sort';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -122,17 +123,29 @@ export interface EntityDataPageLink {
   sortOrder?: EntityDataSortOrder;
 }
 
-export const defaultEntityDataPageLink: EntityDataPageLink = {
-  pageSize: 1024,
-  page: 0,
-  sortOrder: {
-    key: {
-      type: EntityKeyType.ENTITY_FIELD,
-      key: 'createdTime'
-    },
-    direction: Direction.DESC
+export function entityDataPageLinkSortDirection(pageLink: EntityDataPageLink): SortDirection {
+  if (pageLink.sortOrder) {
+    return (pageLink.sortOrder.direction + '').toLowerCase() as SortDirection;
+  } else {
+    return '' as SortDirection;
   }
 }
+
+export function createDefaultEntityDataPageLink(pageSize: number): EntityDataPageLink {
+  return {
+    pageSize,
+    page: 0,
+    sortOrder: {
+      key: {
+        type: EntityKeyType.ENTITY_FIELD,
+        key: 'createdTime'
+      },
+      direction: Direction.DESC
+    }
+  }
+}
+
+export const defaultEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1024);
 
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
