@@ -18,6 +18,9 @@ package org.thingsboard.server.dao.oauth2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
 
 import java.util.Collections;
@@ -50,6 +53,51 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 });
 
         return startUpConfiguration.collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OAuth2ClientRegistration> getSystemOAuth2ClientRegistrations(TenantId tenantId) {
+        return null;
+    }
+
+    @Override
+    public List<OAuth2ClientRegistration> getTenantOAuth2ClientRegistrations(TenantId tenantId) {
+        return null;
+    }
+
+    @Override
+    public List<OAuth2ClientRegistration> getCustomerOAuth2ClientRegistrations(TenantId tenantId, CustomerId customerId) {
+        return null;
+    }
+
+    @Override
+    public OAuth2ClientRegistration saveSystemOAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration) {
+        return null;
+    }
+
+    @Override
+    public OAuth2ClientRegistration saveTenantOAuth2ClientRegistration(TenantId tenantId, OAuth2ClientRegistration clientRegistration) {
+        return null;
+    }
+
+    @Override
+    public OAuth2ClientRegistration saveCustomerOAuth2ClientRegistration(TenantId tenantId, CustomerId customerId, OAuth2ClientRegistration clientRegistration) {
+        return null;
+    }
+
+    @Override
+    public void deleteDomainOAuth2ClientRegistrationByEntityId(TenantId tenantId, EntityId entityId) {
+
+    }
+
+    @Override
+    public boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId, EntityId entityId) {
+        return false;
+    }
+
+    @Override
+    public boolean isCustomerOAuth2ClientRegistrationAllowed(TenantId tenantId) {
+        return false;
     }
 
     @Override
