@@ -34,6 +34,7 @@ import java.util.UUID;
  */
 public abstract class JpaAbstractSearchTimeDao<E extends BaseEntity<D>, D> extends JpaAbstractDao<E, D> {
 
+    //TODO 3.1: refactoring to createdTime column
     public static <T> Specification<T> getTimeSearchPageSpec(TimePageLink pageLink, String idColumn) {
         return new Specification<T>() {
             @Override

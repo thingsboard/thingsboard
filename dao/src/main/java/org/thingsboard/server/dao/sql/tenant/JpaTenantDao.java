@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
+import java.util.UUID;
 
 
 /**
@@ -47,7 +48,7 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    protected CrudRepository<TenantEntity, String> getCrudRepository() {
+    protected CrudRepository<TenantEntity, UUID> getCrudRepository() {
         return tenantRepository;
     }
 

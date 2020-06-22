@@ -94,7 +94,7 @@ public class EntityKeyMapping {
             String column = entityFieldColumnMap.get(entityKey.getKey());
             return String.format("e.%s as %s", column, getValueAlias());
         } else if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
-            return buildTimeseriesSelection();
+            return buildTimeSeriesSelection();
         } else {
             return buildAttributeSelection();
         }
@@ -119,8 +119,8 @@ public class EntityKeyMapping {
         }
         String join = hasFilter() ? "left join" : "left outer join";
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
-            // TODO:
-            throw new RuntimeException("Not implemented!");
+            return String.format("%s ts_kv_latest %s ON %s.entity_id=to_uuid(entities.id) AND %s.key = (select key_id from ts_kv_dictionary where key = '%s')",
+                    join, alias, alias, alias, entityKey.getKey());
         } else {
             String query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key='%s'",
                     join, alias, alias, alias, entityTypeStr, alias, entityKey.getKey());
@@ -249,11 +249,17 @@ public class EntityKeyMapping {
         return String.join(", ", attrValSelection, attrTsSelection);
     }
 
-    private String buildTimeseriesSelection() {
-        // TODO:
+    private String buildTimeSeriesSelection() {
         String attrValAlias = getValueAlias();
         String attrTsAlias = getTsAlias();
-        return String.format("(select '') as %s, (select 1) as %s", attrValAlias, attrTsAlias);
+        String attrValSelection =
+                String.format("(coalesce(cast(%s.bool_v as varchar), '') || " +
+                        "coalesce(%s.str_v, '') || " +
+                        "coalesce(cast(%s.long_v as varchar), '') || " +
+                        "coalesce(cast(%s.dbl_v as varchar), '') || " +
+                        "coalesce(cast(%s.json_v as varchar), '')) as %s", alias, alias, alias, alias, alias, attrValAlias);
+        String attrTsSelection = String.format("%s.ts as %s", alias, attrTsAlias);
+        return String.join(", ", attrValSelection, attrTsSelection);
     }
 
     private String buildKeyQuery(String alias, KeyFilter keyFilter) {

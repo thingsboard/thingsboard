@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
 import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
 
@@ -65,7 +64,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    protected CrudRepository<AlarmEntity, String> getCrudRepository() {
+    protected CrudRepository<AlarmEntity, UUID> getCrudRepository() {
         return alarmRepository;
     }
 
@@ -78,7 +77,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return service.submit(() -> {
             List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
-                    UUIDConverter.fromTimeUUID(originator.getId()),
+                    originator.getId(),
                     type,
                     PageRequest.of(0, 1));
             return latest.isEmpty() ? null : DaoUtil.getData(latest.get(0));
@@ -106,13 +105,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
         return DaoUtil.toPageData(
             alarmRepository.findAlarms(
-                    fromTimeUUID(tenantId.getId()),
-                    fromTimeUUID(affectedEntity.getId()),
+                    tenantId.getId(),
+                    affectedEntity.getId(),
                     affectedEntity.getEntityType().name(),
                     relationType,
-                    startTimeToId(query.getPageLink().getStartTime()),
-                    endTimeToId(query.getPageLink().getEndTime()),
-                    query.getIdOffset() != null ? UUIDConverter.fromTimeUUID(query.getIdOffset()) : null,
+                    query.getPageLink().getStartTime(),
+                    query.getPageLink().getEndTime(),
                     Objects.toString(query.getPageLink().getTextSearch(), ""),
                     DaoUtil.toPageable(query.getPageLink())
             )

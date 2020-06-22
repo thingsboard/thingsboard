@@ -46,7 +46,6 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;

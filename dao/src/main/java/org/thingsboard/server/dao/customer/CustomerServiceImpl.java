@@ -42,7 +42,6 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;

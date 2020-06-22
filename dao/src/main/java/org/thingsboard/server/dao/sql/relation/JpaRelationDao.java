@@ -44,8 +44,6 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-
 /**
  * Created by Valerii Sosliuk on 5/29/2017.
  */
@@ -64,7 +62,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     public ListenableFuture<List<EntityRelation>> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
         return service.submit(() -> DaoUtil.convertDataList(
                 relationRepository.findAllByFromIdAndFromTypeAndRelationTypeGroup(
-                        UUIDConverter.fromTimeUUID(from.getId()),
+                        from.getId(),
                         from.getEntityType().name(),
                         typeGroup.name())));
     }
@@ -73,7 +71,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     public ListenableFuture<List<EntityRelation>> findAllByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup) {
         return service.submit(() -> DaoUtil.convertDataList(
                 relationRepository.findAllByFromIdAndFromTypeAndRelationTypeAndRelationTypeGroup(
-                        UUIDConverter.fromTimeUUID(from.getId()),
+                        from.getId(),
                         from.getEntityType().name(),
                         relationType,
                         typeGroup.name())));
@@ -83,7 +81,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     public ListenableFuture<List<EntityRelation>> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
         return service.submit(() -> DaoUtil.convertDataList(
                 relationRepository.findAllByToIdAndToTypeAndRelationTypeGroup(
-                        UUIDConverter.fromTimeUUID(to.getId()),
+                        to.getId(),
                         to.getEntityType().name(),
                         typeGroup.name())));
     }
@@ -92,7 +90,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     public ListenableFuture<List<EntityRelation>> findAllByToAndType(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         return service.submit(() -> DaoUtil.convertDataList(
                 relationRepository.findAllByToIdAndToTypeAndRelationTypeAndRelationTypeGroup(
-                        UUIDConverter.fromTimeUUID(to.getId()),
+                        to.getId(),
                         to.getEntityType().name(),
                         relationType,
                         typeGroup.name())));
@@ -111,9 +109,9 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     private RelationCompositeKey getRelationCompositeKey(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
-        return new RelationCompositeKey(fromTimeUUID(from.getId()),
+        return new RelationCompositeKey(from.getId(),
                 from.getEntityType().name(),
-                fromTimeUUID(to.getId()),
+                to.getId(),
                 to.getEntityType().name(),
                 relationType,
                 typeGroup.name());
@@ -166,10 +164,10 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     @Override
     public boolean deleteOutboundRelations(TenantId tenantId, EntityId entity) {
         boolean relationExistsBeforeDelete = relationRepository
-                .findAllByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name())
+                .findAllByFromIdAndFromType(entity.getId(), entity.getEntityType().name())
                 .size() > 0;
         if (relationExistsBeforeDelete) {
-            relationRepository.deleteByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name());
+            relationRepository.deleteByFromIdAndFromType(entity.getId(), entity.getEntityType().name());
         }
         return relationExistsBeforeDelete;
     }
@@ -179,33 +177,20 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
         return service.submit(
                 () -> {
                     boolean relationExistsBeforeDelete = relationRepository
-                            .findAllByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name())
+                            .findAllByFromIdAndFromType(entity.getId(), entity.getEntityType().name())
                             .size() > 0;
                     if (relationExistsBeforeDelete) {
-                        relationRepository.deleteByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name());
+                        relationRepository.deleteByFromIdAndFromType(entity.getId(), entity.getEntityType().name());
                     }
                     return relationExistsBeforeDelete;
                 });
-    }
-
-    @Override
-    public ListenableFuture<PageData<EntityRelation>> findRelations(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
-        Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "toId");
-        Specification<RelationEntity> fieldsSpec = getEntityFieldsSpec(from, relationType, typeGroup, childType);
-        Sort.Direction sortDirection = Sort.Direction.DESC;
-        if (pageLink.getSortOrder() != null) {
-            sortDirection = pageLink.getSortOrder().getDirection() == SortOrder.Direction.ASC ? Sort.Direction.ASC : Sort.Direction.DESC;
-        }
-        Pageable pageable = PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), sortDirection, "toId");
-        return service.submit(() ->
-                DaoUtil.toPageData(relationRepository.findAll(Specification.where(timeSearchSpec).and(fieldsSpec), pageable)));
     }
 
     private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (from != null) {
-                Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"),  UUIDConverter.fromTimeUUID(from.getId()));
+                Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"),  from.getId());
                 predicates.add(fromIdPredicate);
                 Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get("fromType"), from.getEntityType().name());
                 predicates.add(fromEntityTypePredicate);

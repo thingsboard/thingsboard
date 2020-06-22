@@ -18,13 +18,9 @@ package org.thingsboard.server.dao.model.sqlts.ts;
 import lombok.Data;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
-
-import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 
 @Data
 @Entity

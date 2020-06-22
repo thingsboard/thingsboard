@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.widget;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.WidgetTypeEntity;
@@ -45,17 +44,17 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeEntity, WidgetTyp
     }
 
     @Override
-    protected CrudRepository<WidgetTypeEntity, String> getCrudRepository() {
+    protected CrudRepository<WidgetTypeEntity, UUID> getCrudRepository() {
         return widgetTypeRepository;
     }
 
     @Override
     public List<WidgetType> findWidgetTypesByTenantIdAndBundleAlias(UUID tenantId, String bundleAlias) {
-        return DaoUtil.convertDataList(widgetTypeRepository.findByTenantIdAndBundleAlias(UUIDConverter.fromTimeUUID(tenantId), bundleAlias));
+        return DaoUtil.convertDataList(widgetTypeRepository.findByTenantIdAndBundleAlias(tenantId, bundleAlias));
     }
 
     @Override
     public WidgetType findByTenantIdBundleAliasAndAlias(UUID tenantId, String bundleAlias, String alias) {
-        return DaoUtil.getData(widgetTypeRepository.findByTenantIdAndBundleAliasAndAlias(UUIDConverter.fromTimeUUID(tenantId), bundleAlias, alias));
+        return DaoUtil.getData(widgetTypeRepository.findByTenantIdAndBundleAliasAndAlias(tenantId, bundleAlias, alias));
     }
 }
