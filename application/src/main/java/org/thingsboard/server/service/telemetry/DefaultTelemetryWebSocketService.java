@@ -657,11 +657,6 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                     "Query is empty!");
             sendWsMsg(sessionRef, update);
             return false;
-        } else if (cmd.getHistoryCmd() == null && cmd.getLatestCmd() == null && cmd.getTsCmd() == null) {
-            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
-                    "No history, latest or timeseries command present!");
-            sendWsMsg(sessionRef, update);
-            return false;
         }
         return true;
     }
@@ -823,7 +818,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
 
-    private static Aggregation getAggregation(String agg) {
+    public static Aggregation getAggregation(String agg) {
         return StringUtils.isEmpty(agg) ? DEFAULT_AGGREGATION : Aggregation.valueOf(agg);
     }
 

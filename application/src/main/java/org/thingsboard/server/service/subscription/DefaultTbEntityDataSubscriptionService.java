@@ -52,6 +52,8 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.telemetry.DefaultTelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
@@ -211,21 +213,25 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         } else {
             historyFuture = Futures.immediateFuture(ctx);
         }
-        if (cmd.getLatestCmd() != null) {
-            Futures.addCallback(historyFuture, new FutureCallback<TbEntityDataSubCtx>() {
-                @Override
-                public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
+        Futures.addCallback(historyFuture, new FutureCallback<TbEntityDataSubCtx>() {
+            @Override
+            public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
+                if (cmd.getLatestCmd() != null) {
                     handleLatestCmd(theCtx, cmd.getLatestCmd());
+                } else if (cmd.getTsCmd() != null) {
+                    handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                } else if (!theCtx.isInitialDataSent()) {
+                    EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null);
+                    wsService.sendWsMsg(theCtx.getSessionId(), update);
+                    theCtx.setInitialDataSent(true);
                 }
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    log.warn("[{}][{}] Failed to process command", session.getSessionId(), cmd.getCmdId());
-                }
-            }, wsCallBackExecutor);
-        } else if (cmd.getTsCmd() != null) {
-            handleTimeseriesCmd(ctx, cmd.getTsCmd());
-        }
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}][{}] Failed to process command", session.getSessionId(), cmd.getCmdId());
+            }
+        }, wsCallBackExecutor);
     }
 
     private TbEntityDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
@@ -245,7 +251,47 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
-    private void handleTimeseriesCmd(TbEntityDataSubCtx ctx, TimeSeriesCmd tsCmd) {
+    private void handleTimeSeriesCmd(TbEntityDataSubCtx ctx, TimeSeriesCmd cmd) {
+        List<String> keys = cmd.getKeys();
+        log.debug("[{}][{}] Fetching time-series data for last {} ms for keys: ({})", ctx.getSessionId(), ctx.getCmdId(), cmd.getTimeWindow(), cmd.getKeys());
+        long startTs = cmd.getStartTs();
+        long endTs = cmd.getStartTs() + cmd.getTimeWindow();
+
+        Map<EntityData, ListenableFuture<Map<String, List<TsValue>>>> tsFutures = new HashMap<>();
+        for (EntityData entityData : ctx.getData().getData()) {
+            List<ReadTsKvQuery> queries = keys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, cmd.getInterval(),
+                    getLimit(cmd.getLimit()), DefaultTelemetryWebSocketService.getAggregation(cmd.getAgg()))).collect(Collectors.toList());
+            ListenableFuture<List<TsKvEntry>> tsDataFutures = tsService.findAll(ctx.getTenantId(), entityData.getEntityId(), queries);
+            tsFutures.put(entityData, Futures.transform(tsDataFutures, this::toTsValues, MoreExecutors.directExecutor()));
+        }
+        Futures.addCallback(Futures.allAsList(tsFutures.values()), new FutureCallback<List<Map<String, List<TsValue>>>>() {
+            @Override
+            public void onSuccess(@Nullable List<Map<String, List<TsValue>>> result) {
+                tsFutures.forEach((key, value) -> {
+                    try {
+                        value.get().forEach((k, v) -> key.getTimeseries().put(k, v.toArray(new TsValue[v.size()])));
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.warn("[{}][{}] Failed to lookup time-series data: {}:{}", ctx.getSessionId(), ctx.getCmdId(), key.getEntityId(), keys, e);
+                    }
+                });
+                EntityDataUpdate update;
+                if (!ctx.isInitialDataSent()) {
+                    update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
+                    ctx.setInitialDataSent(true);
+                } else {
+                    update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
+                }
+                wsService.sendWsMsg(ctx.getSessionId(), update);
+                createSubscriptions(ctx, keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()));
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}][{}] Failed to process websocket command: {}:{}", ctx.getSessionId(), ctx.getCmdId(), ctx.getQuery(), cmd, t);
+                wsService.sendWsMsg(ctx.getSessionId(),
+                        new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to process websocket command!"));
+            }
+        }, wsCallBackExecutor);
     }
 
     private void handleLatestCmd(TbEntityDataSubCtx ctx, LatestValueCmd latestCmd) {
@@ -257,7 +303,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     .filter(key -> key.getType().equals(EntityKeyType.TIME_SERIES))
                     .map(EntityKey::getKey).collect(Collectors.toList());
 
-            Map<EntityData, ListenableFuture<Map<String, TsValue>>> missingTelemetryFurutes = new HashMap<>();
+            Map<EntityData, ListenableFuture<Map<String, TsValue>>> missingTelemetryFutures = new HashMap<>();
             for (EntityData entityData : ctx.getData().getData()) {
                 Map<EntityKeyType, Map<String, TsValue>> latestEntityData = entityData.getLatest();
                 Map<String, TsValue> tsEntityData = latestEntityData.get(EntityKeyType.TIME_SERIES);
@@ -270,12 +316,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 }
 
                 ListenableFuture<List<TsKvEntry>> missingTsData = tsService.findLatest(ctx.getTenantId(), entityData.getEntityId(), missingTsKeys);
-                missingTelemetryFurutes.put(entityData, Futures.transform(missingTsData, this::toTsValue, MoreExecutors.directExecutor()));
+                missingTelemetryFutures.put(entityData, Futures.transform(missingTsData, this::toTsValue, MoreExecutors.directExecutor()));
             }
-            Futures.addCallback(Futures.allAsList(missingTelemetryFurutes.values()), new FutureCallback<List<Map<String, TsValue>>>() {
+            Futures.addCallback(Futures.allAsList(missingTelemetryFutures.values()), new FutureCallback<List<Map<String, TsValue>>>() {
                 @Override
                 public void onSuccess(@Nullable List<Map<String, TsValue>> result) {
-                    missingTelemetryFurutes.forEach((key, value) -> {
+                    missingTelemetryFutures.forEach((key, value) -> {
                         try {
                             key.getLatest().get(EntityKeyType.TIME_SERIES).putAll(value.get());
                         } catch (InterruptedException | ExecutionException e) {
@@ -285,11 +331,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     EntityDataUpdate update;
                     if (!ctx.isInitialDataSent()) {
                         update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
+                        ctx.setInitialDataSent(true);
                     } else {
                         update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
                     }
                     wsService.sendWsMsg(ctx.getSessionId(), update);
-                    createLatestSubscriptions(ctx, latestCmd);
+                    createSubscriptions(ctx, latestCmd.getKeys());
                 }
 
                 @Override
@@ -303,19 +350,28 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             if (!ctx.isInitialDataSent()) {
                 EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
                 wsService.sendWsMsg(ctx.getSessionId(), update);
+                ctx.setInitialDataSent(true);
             }
-            createLatestSubscriptions(ctx, latestCmd);
+            createSubscriptions(ctx, latestCmd.getKeys());
         }
     }
 
-    private void createLatestSubscriptions(TbEntityDataSubCtx ctx, LatestValueCmd latestCmd) {
+    private void createSubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys) {
         //TODO: create context for this (session, cmdId) that contains query, latestCmd and update. Subscribe + periodic updates.
-        List<TbSubscription> tbSubs = ctx.createSubscriptions(latestCmd.getKeys());
+        List<TbSubscription> tbSubs = ctx.createSubscriptions(keys);
         tbSubs.forEach(sub -> localSubscriptionService.addSubscription(sub));
     }
 
     private Map<String, TsValue> toTsValue(List<TsKvEntry> data) {
         return data.stream().collect(Collectors.toMap(TsKvEntry::getKey, value -> new TsValue(value.getTs(), value.getValueAsString())));
+    }
+
+    private Map<String, List<TsValue>> toTsValues(List<TsKvEntry> data) {
+        Map<String, List<TsValue>> results = new HashMap<>();
+        for (TsKvEntry tsKvEntry : data) {
+            results.computeIfAbsent(tsKvEntry.getKey(), k -> new ArrayList<>()).add(new TsValue(tsKvEntry.getTs(), tsKvEntry.getValueAsString()));
+        }
+        return results;
     }
 
     private ListenableFuture<TbEntityDataSubCtx> handleHistoryCmd(TbEntityDataSubCtx ctx, EntityHistoryCmd historyCmd) {
