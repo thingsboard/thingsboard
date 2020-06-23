@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -41,6 +43,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
@@ -48,6 +51,7 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -139,7 +143,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         List<TsKvEntry> tsData = Arrays.asList(dataPoint1, dataPoint2, dataPoint3);
 
         sendTelemetry(device, tsData);
-        Thread.sleep(1000);
+        Thread.sleep(100);
 
         wsClient.send(mapper.writeValueAsString(wrapper));
         msg = wsClient.waitForReply();
@@ -156,24 +160,8 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertEquals(new TsValue(dataPoint3.getTs(), dataPoint3.getValueAsString()), tsArray[2]);
     }
 
-    private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(device.getTenantId(), device.getId(), tsData, 0, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                latch.countDown();
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                latch.countDown();
-            }
-        });
-        latch.await(3, TimeUnit.SECONDS);
-    }
-
     @Test
-    public void testEntityDataLatestWsCmd() throws Exception {
+    public void testEntityDataLatestTsWsCmd() throws Exception {
         Device device = new Device();
         device.setName("Device");
         device.setType("default");
@@ -209,6 +197,8 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
         List<TsKvEntry> tsData = Arrays.asList(dataPoint1);
         sendTelemetry(device, tsData);
+
+        Thread.sleep(100);
 
         cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
         wrapper = new TelemetryPluginCmdsWrapper();
@@ -258,4 +248,267 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertNull(msg);
     }
 
+    @Test
+    public void testEntityDataLatestAttrWsCmd() throws Exception {
+        Device device = new Device();
+        device.setName("Device");
+        device.setType("default");
+        device.setLabel("testLabel" + (int) (Math.random() * 1000));
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+
+        DeviceTypeFilter dtf = new DeviceTypeFilter();
+        dtf.setDeviceNameFilter("D");
+        dtf.setDeviceType("default");
+        EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey")));
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        String msg = wsClient.waitForReply();
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        PageData<EntityData> pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getValue());
+
+        AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
+        List<AttributeKvEntry> tsData = Arrays.asList(dataPoint1);
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
+
+        Thread.sleep(100);
+
+        cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+        wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        msg = wsClient.waitForReply();
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+
+        Assert.assertEquals(1, update.getCmdId());
+
+        pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
+        TsValue tsValue = pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint1.getLastUpdateTs(), dataPoint1.getValueAsString()), tsValue);
+
+        now = System.currentTimeMillis();
+        AttributeKvEntry dataPoint2 = new BaseAttributeKvEntry(now, new LongDataEntry("serverAttributeKey", 52L));
+
+        wsClient.registerWaitForUpdate();
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint2));
+        msg = wsClient.waitForUpdate();
+
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
+        tsValue = eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint2.getLastUpdateTs(), dataPoint2.getValueAsString()), tsValue);
+
+        //Sending update from the past, while latest value has new timestamp;
+        wsClient.registerWaitForUpdate();
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint1));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
+
+        //Sending duplicate update again
+        wsClient.registerWaitForUpdate();
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint2));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
+    }
+
+    @Test
+    public void testEntityDataLatestAttrTypesWsCmd() throws Exception {
+        Device device = new Device();
+        device.setName("Device");
+        device.setType("default");
+        device.setLabel("testLabel" + (int) (Math.random() * 1000));
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+
+        DeviceTypeFilter dtf = new DeviceTypeFilter();
+        dtf.setDeviceNameFilter("D");
+        dtf.setDeviceType("default");
+        EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        List<EntityKey> keys = new ArrayList<>();
+        keys.add(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey"));
+        keys.add(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "clientAttributeKey"));
+        keys.add(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, "sharedAttributeKey"));
+        keys.add(new EntityKey(EntityKeyType.ATTRIBUTE, "anyAttributeKey"));
+        latestCmd.setKeys(keys);
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        String msg = wsClient.waitForReply();
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        PageData<EntityData> pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getValue());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey").getValue());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey").getValue());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey").getValue());
+
+
+        wsClient.registerWaitForUpdate();
+        AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
+        List<AttributeKvEntry> tsData = Arrays.asList(dataPoint1);
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
+
+        Thread.sleep(100);
+
+        cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+        wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        msg = wsClient.waitForUpdate();
+
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
+        TsValue attrValue = eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint1.getLastUpdateTs(), dataPoint1.getValueAsString()), attrValue);
+
+        //Sending update from the past, while latest value has new timestamp;
+        wsClient.registerWaitForUpdate();
+        sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, Arrays.asList(dataPoint1));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
+
+        //Sending duplicate update again
+        wsClient.registerWaitForUpdate();
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(dataPoint1));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
+
+        //Sending update from the past, while latest value has new timestamp;
+        wsClient.registerWaitForUpdate();
+        AttributeKvEntry dataPoint2 = new BaseAttributeKvEntry(now, new LongDataEntry("sharedAttributeKey", 42L));
+        sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, Arrays.asList(dataPoint2));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE));
+        attrValue = eData.get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint2.getLastUpdateTs(), dataPoint2.getValueAsString()), attrValue);
+
+        wsClient.registerWaitForUpdate();
+        AttributeKvEntry dataPoint3 = new BaseAttributeKvEntry(now, new LongDataEntry("clientAttributeKey", 42L));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(dataPoint3));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE));
+        attrValue = eData.get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint3.getLastUpdateTs(), dataPoint3.getValueAsString()), attrValue);
+
+        wsClient.registerWaitForUpdate();
+        AttributeKvEntry dataPoint4 = new BaseAttributeKvEntry(now, new LongDataEntry("anyAttributeKey", 42L));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(dataPoint4));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE));
+        attrValue = eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint4.getLastUpdateTs(), dataPoint4.getValueAsString()), attrValue);
+
+        wsClient.registerWaitForUpdate();
+        AttributeKvEntry dataPoint5 = new BaseAttributeKvEntry(now, new LongDataEntry("anyAttributeKey", 43L));
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint5));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE));
+        attrValue = eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint5.getLastUpdateTs(), dataPoint5.getValueAsString()), attrValue);
+    }
+
+    private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        tsService.saveAndNotify(device.getTenantId(), device.getId(), tsData, 0, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                latch.countDown();
+            }
+        });
+        latch.await(3, TimeUnit.SECONDS);
+    }
+
+    private void sendAttributes(Device device, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        tsService.saveAndNotify(device.getTenantId(), device.getId(), scope.name(), attrData, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                latch.countDown();
+            }
+        });
+        latch.await(3, TimeUnit.SECONDS);
+    }
 }

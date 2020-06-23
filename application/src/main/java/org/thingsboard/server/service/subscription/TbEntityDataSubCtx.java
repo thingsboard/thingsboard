@@ -84,42 +84,52 @@ public class TbEntityDataSubCtx {
     public List<TbSubscription> createSubscriptions(List<EntityKey> keys) {
         this.subToEntityIdMap = new HashMap<>();
         tbSubs = new ArrayList<>();
-        List<EntityKey> attrSubKeys = new ArrayList<>();
-        List<EntityKey> tsSubKeys = new ArrayList<>();
-        for (EntityKey key : keys) {
-            switch (key.getType()) {
-                case TIME_SERIES:
-                    tsSubKeys.add(key);
-                    break;
-                case ATTRIBUTE:
-                case CLIENT_ATTRIBUTE:
-                case SHARED_ATTRIBUTE:
-                case SERVER_ATTRIBUTE:
-                    attrSubKeys.add(key);
-            }
-        }
+        Map<EntityKeyType, List<EntityKey>> keysByType = new HashMap<>();
+        keys.forEach(key -> keysByType.computeIfAbsent(key.getType(), k -> new ArrayList<>()).add(key));
         for (EntityData entityData : data.getData()) {
-            if (!tsSubKeys.isEmpty()) {
-                tbSubs.add(createTsSub(entityData, tsSubKeys));
-            }
+            keysByType.forEach((keysType, keysList) -> {
+                int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
+                subToEntityIdMap.put(subIdx, entityData.getEntityId());
+                switch (keysType) {
+                    case TIME_SERIES:
+                        tbSubs.add(createTsSub(entityData, subIdx, keysList));
+                        break;
+                    case CLIENT_ATTRIBUTE:
+                        tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.CLIENT_SCOPE, keysList));
+                        break;
+                    case SHARED_ATTRIBUTE:
+                        tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SHARED_SCOPE, keysList));
+                        break;
+                    case SERVER_ATTRIBUTE:
+                        tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SERVER_SCOPE, keysList));
+                        break;
+                    case ATTRIBUTE:
+                        tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.ANY_SCOPE, keysList));
+                        break;
+                }
+            });
         }
         return tbSubs;
     }
 
-    private TbSubscription createTsSub(EntityData entityData, List<EntityKey> tsSubKeys) {
-        int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
-        subToEntityIdMap.put(subIdx, entityData.getEntityId());
-        Map<String, Long> keyStates = new HashMap<>();
-        tsSubKeys.forEach(key -> keyStates.put(key.getKey(), 0L));
-        if (entityData.getLatest() != null) {
-            Map<String, TsValue> currentValues = entityData.getLatest().get(EntityKeyType.TIME_SERIES);
-            if (currentValues != null) {
-                currentValues.forEach((k, v) -> {
-                    log.trace("[{}][{}] Updating key: {} with ts: {}", serviceId, cmdId, k, v.getTs());
-                    keyStates.put(k, v.getTs());
-                });
-            }
-        }
+    private TbSubscription createAttrSub(EntityData entityData, int subIdx, EntityKeyType keysType, TbAttributeSubscriptionScope scope, List<EntityKey> subKeys) {
+        Map<String, Long> keyStates = buildKeyStats(entityData, keysType, subKeys);
+        log.trace("[{}][{}][{}] Creating attributes subscription with keys: {}", serviceId, cmdId, subIdx, keyStates);
+        return TbAttributeSubscription.builder()
+                .serviceId(serviceId)
+                .sessionId(sessionRef.getSessionId())
+                .subscriptionId(subIdx)
+                .tenantId(sessionRef.getSecurityCtx().getTenantId())
+                .entityId(entityData.getEntityId())
+                .updateConsumer((s, subscriptionUpdate) -> sendWsMsg(s, subscriptionUpdate, keysType))
+                .allKeys(false)
+                .keyStates(keyStates)
+                .scope(scope)
+                .build();
+    }
+
+    private TbSubscription createTsSub(EntityData entityData, int subIdx, List<EntityKey> subKeys) {
+        Map<String, Long> keyStates = buildKeyStats(entityData, EntityKeyType.TIME_SERIES, subKeys);
         if (entityData.getTimeseries() != null) {
             entityData.getTimeseries().forEach((k, v) -> {
                 long ts = Arrays.stream(v).map(TsValue::getTs).max(Long::compareTo).orElse(0L);
@@ -127,8 +137,7 @@ public class TbEntityDataSubCtx {
                 keyStates.put(k, ts);
             });
         }
-
-        log.trace("[{}][{}][{}] Creating subscription with keys: {}", serviceId, cmdId, subIdx, keyStates);
+        log.trace("[{}][{}][{}] Creating time-series subscription with keys: {}", serviceId, cmdId, subIdx, keyStates);
         return TbTimeseriesSubscription.builder()
                 .serviceId(serviceId)
                 .sessionId(sessionRef.getSessionId())
@@ -137,14 +146,33 @@ public class TbEntityDataSubCtx {
                 .entityId(entityData.getEntityId())
                 .updateConsumer(this::sendTsWsMsg)
                 .allKeys(false)
-                .keyStates(keyStates).build();
+                .keyStates(keyStates)
+                .build();
     }
 
+    private Map<String, Long> buildKeyStats(EntityData entityData, EntityKeyType keysType, List<EntityKey> subKeys) {
+        Map<String, Long> keyStates = new HashMap<>();
+        subKeys.forEach(key -> keyStates.put(key.getKey(), 0L));
+        if (entityData.getLatest() != null) {
+            Map<String, TsValue> currentValues = entityData.getLatest().get(keysType);
+            if (currentValues != null) {
+                currentValues.forEach((k, v) -> {
+                    log.trace("[{}][{}] Updating key: {} with ts: {}", serviceId, cmdId, k, v.getTs());
+                    keyStates.put(k, v.getTs());
+                });
+            }
+        }
+        return keyStates;
+    }
 
     private void sendTsWsMsg(String sessionId, SubscriptionUpdate subscriptionUpdate) {
+        sendWsMsg(sessionId, subscriptionUpdate, EntityKeyType.TIME_SERIES);
+    }
+
+    private void sendWsMsg(String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         EntityId entityId = subToEntityIdMap.get(subscriptionUpdate.getSubscriptionId());
         if (entityId != null) {
-            log.trace("[{}][{}][{}] Received subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), subscriptionUpdate);
+            log.trace("[{}][{}][{}][{}] Received subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
             Map<String, TsValue> latestUpdate = new HashMap<>();
             subscriptionUpdate.getData().forEach((k, v) -> {
                 Object[] data = (Object[]) v.get(0);
@@ -152,7 +180,7 @@ public class TbEntityDataSubCtx {
             });
             EntityData entityData = getDataForEntity(entityId);
             if (entityData != null && entityData.getLatest() != null) {
-                Map<String, TsValue> latestCtxValues = entityData.getLatest().get(EntityKeyType.TIME_SERIES);
+                Map<String, TsValue> latestCtxValues = entityData.getLatest().get(keyType);
                 log.trace("[{}][{}][{}] Going to compare update with {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), latestCtxValues);
                 if (latestCtxValues != null) {
                     latestCtxValues.forEach((k, v) -> {
@@ -170,12 +198,12 @@ public class TbEntityDataSubCtx {
                 }
             }
             if (!latestUpdate.isEmpty()) {
-                Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(EntityKeyType.TIME_SERIES, latestUpdate);
+                Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
                 entityData = new EntityData(entityId, latestMap, null);
                 wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData)));
             }
         } else {
-            log.trace("[{}][{}][{}] Received stale subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), subscriptionUpdate);
+            log.trace("[{}][{}][{}][{}] Received stale subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
         }
     }
 

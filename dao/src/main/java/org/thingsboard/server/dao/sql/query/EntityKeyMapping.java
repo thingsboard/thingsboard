@@ -136,7 +136,7 @@ public class EntityKeyMapping {
                 } else {
                     scope = DataConstants.SERVER_SCOPE;
                 }
-                query = String.format("%s AND %s.attribute_type=%s", query, alias, scope);
+                query = String.format("%s AND %s.attribute_type='%s'", query, alias, scope);
             }
             return query;
         }
