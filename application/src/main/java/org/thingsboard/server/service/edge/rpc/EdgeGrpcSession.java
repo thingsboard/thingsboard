@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -55,7 +54,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -70,14 +68,18 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
+import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
+import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityUpdateMsg;
+import org.thingsboard.server.gen.edge.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
@@ -86,6 +88,7 @@ import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
+import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
@@ -115,7 +118,7 @@ public final class EdgeGrpcSession implements Closeable {
     private final UUID sessionId;
     private final BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
     private final Consumer<EdgeId> sessionCloseListener;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper mapper;
 
     private EdgeContextComponent ctx;
     private Edge edge;
@@ -124,13 +127,13 @@ public final class EdgeGrpcSession implements Closeable {
     private boolean connected;
 
     EdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream, BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener,
-                    Consumer<EdgeId> sessionCloseListener, ObjectMapper objectMapper) {
+                    Consumer<EdgeId> sessionCloseListener, ObjectMapper mapper) {
         this.sessionId = UUID.randomUUID();
         this.ctx = ctx;
         this.outputStream = outputStream;
         this.sessionOpenListener = sessionOpenListener;
         this.sessionCloseListener = sessionCloseListener;
-        this.objectMapper = objectMapper;
+        this.mapper = mapper;
         initInputStream();
     }
 
@@ -147,7 +150,7 @@ public final class EdgeGrpcSession implements Closeable {
                         outputStream.onError(new RuntimeException(responseMsg.getErrorMsg()));
                     }
                     if (ConnectResponseCode.ACCEPTED == responseMsg.getResponseCode()) {
-                        ctx.getSyncEdgeService().sync(ctx, edge, outputStream);
+                        ctx.getSyncEdgeService().sync(edge, outputStream);
                     }
                 }
                 if (connected) {
@@ -189,9 +192,6 @@ public final class EdgeGrpcSession implements Closeable {
                             processTelemetryMessage(edgeEvent);
                         } else {
                             processEntityCRUDMessage(edgeEvent, msgType);
-                            if (ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
-                                pushEntityAttributesToEdge(edgeEvent);
-                            }
                         }
                     } catch (Exception e) {
                         log.error("Exception during processing records from queue", e);
@@ -239,58 +239,6 @@ public final class EdgeGrpcSession implements Closeable {
         ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 
-    private void pushEntityAttributesToEdge(EdgeEvent edgeEvent) throws IOException {
-        EntityId entityId = null;
-        switch (edgeEvent.getEdgeEventType()) {
-            case EDGE:
-                entityId = edge.getId();
-                break;
-            case DEVICE:
-                entityId = new DeviceId(edgeEvent.getEntityId());
-                break;
-            case ASSET:
-                entityId = new AssetId(edgeEvent.getEntityId());
-                break;
-            case ENTITY_VIEW:
-                entityId = new EntityViewId(edgeEvent.getEntityId());
-                break;
-            case DASHBOARD:
-                entityId = new DashboardId(edgeEvent.getEntityId());
-                break;
-        }
-        if (entityId != null) {
-            final EntityId finalEntityId = entityId;
-            ListenableFuture<List<AttributeKvEntry>> ssAttrFuture = ctx.getAttributesService().findAll(edge.getTenantId(), entityId, DataConstants.SERVER_SCOPE);
-            Futures.transform(ssAttrFuture, ssAttributes -> {
-                if (ssAttributes != null && !ssAttributes.isEmpty()) {
-                    try {
-                        ObjectNode entityNode = objectMapper.createObjectNode();
-                        for (AttributeKvEntry attr : ssAttributes) {
-                            if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
-                                entityNode.put(attr.getKey(), attr.getBooleanValue().get());
-                            } else if (attr.getDataType() == DataType.DOUBLE && attr.getDoubleValue().isPresent()) {
-                                entityNode.put(attr.getKey(), attr.getDoubleValue().get());
-                            } else if (attr.getDataType() == DataType.LONG && attr.getLongValue().isPresent()) {
-                                entityNode.put(attr.getKey(), attr.getLongValue().get());
-                            } else {
-                                entityNode.put(attr.getKey(), attr.getValueAsString());
-                            }
-                        }
-                        log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", finalEntityId, entityNode);
-                        DownlinkMsg value = constructEntityDataProtoMsg(finalEntityId, ActionType.ATTRIBUTES_UPDATED, JsonUtils.parse(objectMapper.writeValueAsString(entityNode)));
-                        outputStream.onNext(ResponseMsg.newBuilder()
-                                .setDownlinkMsg(value).build());
-                    } catch (Exception e) {
-                        log.error("[{}] Failed to send attribute updates to the edge", edge.getName(), e);
-                    }
-                }
-                return null;
-            }, MoreExecutors.directExecutor());
-            ListenableFuture<List<AttributeKvEntry>> shAttrFuture = ctx.getAttributesService().findAll(edge.getTenantId(), entityId, DataConstants.SHARED_SCOPE);
-            ListenableFuture<List<AttributeKvEntry>> clAttrFuture = ctx.getAttributesService().findAll(edge.getTenantId(), entityId, DataConstants.CLIENT_SCOPE);
-        }
-    }
-
     private void processTelemetryMessage(EdgeEvent edgeEvent) throws IOException {
         log.trace("Executing processTelemetryMessage, edgeEvent [{}]", edgeEvent);
         EntityId entityId = null;
@@ -311,7 +259,7 @@ public final class EdgeGrpcSession implements Closeable {
             DownlinkMsg downlinkMsg;
             try {
                 ActionType actionType = ActionType.valueOf(edgeEvent.getEdgeEventAction());
-                downlinkMsg = constructEntityDataProtoMsg(entityId, actionType, JsonUtils.parse(objectMapper.writeValueAsString(edgeEvent.getEntityBody())));
+                downlinkMsg = constructEntityDataProtoMsg(entityId, actionType, JsonUtils.parse(mapper.writeValueAsString(edgeEvent.getEntityBody())));
                 outputStream.onNext(ResponseMsg.newBuilder()
                         .setDownlinkMsg(downlinkMsg)
                         .build());
@@ -617,7 +565,7 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void processRelationCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
-        EntityRelation entityRelation = objectMapper.convertValue(edgeEvent.getEntityBody(), EntityRelation.class);
+        EntityRelation entityRelation = mapper.convertValue(edgeEvent.getEntityBody(), EntityRelation.class);
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
                 .setRelationUpdateMsg(ctx.getRelationUpdateMsgConstructor().constructRelationUpdatedMsg(msgType, entityRelation))
                 .build();
@@ -666,7 +614,7 @@ public final class EdgeGrpcSession implements Closeable {
                 return UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
             case ATTRIBUTES_UPDATED:
             case ATTRIBUTES_DELETED:
-            case TIMESERIES_DELETED:
+            case TIMESERIES_UPDATED:
                 return null;
             default:
                 throw new RuntimeException("Unsupported actionType [" + actionType + "]");
@@ -702,9 +650,15 @@ public final class EdgeGrpcSession implements Closeable {
                     }
                 }
             }
+
             if (uplinkMsg.getDeviceUpdateMsgList() != null && !uplinkMsg.getDeviceUpdateMsgList().isEmpty()) {
                 for (DeviceUpdateMsg deviceUpdateMsg : uplinkMsg.getDeviceUpdateMsgList()) {
                     onDeviceUpdate(deviceUpdateMsg);
+                }
+            }
+            if (uplinkMsg.getDeviceCredentialsUpdateMsgList() != null && !uplinkMsg.getDeviceCredentialsUpdateMsgList().isEmpty()) {
+                for (DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg : uplinkMsg.getDeviceCredentialsUpdateMsgList()) {
+                    onDeviceCredentialsUpdate(deviceCredentialsUpdateMsg);
                 }
             }
             if (uplinkMsg.getAlarmUpdateMsgList() != null && !uplinkMsg.getAlarmUpdateMsgList().isEmpty()) {
@@ -714,7 +668,27 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgList() != null && !uplinkMsg.getRuleChainMetadataRequestMsgList().isEmpty()) {
                 for (RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg : uplinkMsg.getRuleChainMetadataRequestMsgList()) {
-                    ctx.getSyncEdgeService().syncRuleChainMetadata(edge, ruleChainMetadataRequestMsg, outputStream);
+                    ctx.getSyncEdgeService().processRuleChainMetadata(edge, ruleChainMetadataRequestMsg, outputStream);
+                }
+            }
+            if (uplinkMsg.getAttributesRequestMsgList() != null && !uplinkMsg.getAttributesRequestMsgList().isEmpty()) {
+                for (AttributesRequestMsg attributesRequestMsg : uplinkMsg.getAttributesRequestMsgList()) {
+                    ctx.getSyncEdgeService().processAttributesRequestMsg(edge, attributesRequestMsg, outputStream);
+                }
+            }
+            if (uplinkMsg.getRelationRequestMsgList() != null && !uplinkMsg.getRelationRequestMsgList().isEmpty()) {
+                for (RelationRequestMsg relationRequestMsg : uplinkMsg.getRelationRequestMsgList()) {
+                    ctx.getSyncEdgeService().processRelationRequestMsg(edge, relationRequestMsg, outputStream);
+                }
+            }
+            if (uplinkMsg.getUserCredentialsRequestMsgList() != null && !uplinkMsg.getUserCredentialsRequestMsgList().isEmpty()) {
+                for (UserCredentialsRequestMsg userCredentialsRequestMsg : uplinkMsg.getUserCredentialsRequestMsgList()) {
+                    ctx.getSyncEdgeService().processUserCredentialsRequestMsg(edge, userCredentialsRequestMsg, outputStream);
+                }
+            }
+            if (uplinkMsg.getDeviceCredentialsRequestMsgList() != null && !uplinkMsg.getDeviceCredentialsRequestMsgList().isEmpty()) {
+                for (DeviceCredentialsRequestMsg deviceCredentialsRequestMsg : uplinkMsg.getDeviceCredentialsRequestMsgList()) {
+                    ctx.getSyncEdgeService().processDeviceCredentialsRequestMsg(edge, deviceCredentialsRequestMsg, outputStream);
                 }
             }
         } catch (Exception e) {
@@ -850,21 +824,59 @@ public final class EdgeGrpcSession implements Closeable {
         device.setType(deviceUpdateMsg.getType());
         device.setLabel(deviceUpdateMsg.getLabel());
         device = ctx.getDeviceService().saveDevice(device);
-        updateDeviceCredentials(deviceUpdateMsg, device);
+
+        requestDeviceCredentialsFromEdge(device);
     }
 
-    private void updateDeviceCredentials(DeviceUpdateMsg deviceUpdateMsg, Device device) {
-        log.debug("Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
-                device.getName(), deviceUpdateMsg.getCredentialsId(), deviceUpdateMsg.getCredentialsValue());
+    private void onDeviceCredentialsUpdate(DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
+        log.debug("Executing onDeviceCredentialsUpdate, deviceCredentialsUpdateMsg [{}]", deviceCredentialsUpdateMsg);
+        DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsUpdateMsg.getDeviceIdMSB(), deviceCredentialsUpdateMsg.getDeviceIdLSB()));
+        ListenableFuture<Device> deviceFuture = ctx.getDeviceService().findDeviceByIdAsync(edge.getTenantId(), deviceId);
 
-        DeviceCredentials deviceCredentials = ctx.getDeviceCredentialsService().findDeviceCredentialsByDeviceId(edge.getTenantId(), device.getId());
-        deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceUpdateMsg.getCredentialsType()));
-        deviceCredentials.setCredentialsId(deviceUpdateMsg.getCredentialsId());
-        deviceCredentials.setCredentialsValue(deviceUpdateMsg.getCredentialsValue());
-        ctx.getDeviceCredentialsService().updateDeviceCredentials(edge.getTenantId(), deviceCredentials);
-        log.debug("Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
-                device.getName(), deviceUpdateMsg.getCredentialsId(), deviceUpdateMsg.getCredentialsValue());
+        Futures.addCallback(deviceFuture, new FutureCallback<Device>() {
+            @Override
+            public void onSuccess(@Nullable Device device) {
+                if (device != null) {
+                    log.debug("Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
+                            device.getName(), deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsValue());
+                    try {
+                        DeviceCredentials deviceCredentials = ctx.getDeviceCredentialsService().findDeviceCredentialsByDeviceId(edge.getTenantId(), device.getId());
+                        deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
+                        deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
+                        deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.getCredentialsValue());
+                        ctx.getDeviceCredentialsService().updateDeviceCredentials(edge.getTenantId(), deviceCredentials);
+                    } catch (Exception e) {
+                        log.error("Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]", device.getName(), deviceCredentialsUpdateMsg, e);
+                    }
+                    log.debug("Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
+                            device.getName(), deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsValue());
+                }
+            }
 
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Can't update device credentials for deviceCredentialsUpdateMsg [{}]", deviceCredentialsUpdateMsg, t);
+            }
+        }, ctx.getDbCallbackExecutor());
+    }
+
+    private void requestDeviceCredentialsFromEdge(Device device) {
+        log.debug("Executing requestDeviceCredentialsFromEdge device [{}]", device);
+
+        DownlinkMsg downlinkMsg = constructDeviceCredentialsRequestMsg(device.getId());
+        outputStream.onNext(ResponseMsg.newBuilder()
+                .setDownlinkMsg(downlinkMsg)
+                .build());
+    }
+
+    private DownlinkMsg constructDeviceCredentialsRequestMsg(DeviceId deviceId) {
+        DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = DeviceCredentialsRequestMsg.newBuilder()
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .build();
+        DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
+                .addAllDeviceCredentialsRequestMsg(Collections.singletonList(deviceCredentialsRequestMsg));
+        return builder.build();
     }
 
     private Device createDevice(DeviceUpdateMsg deviceUpdateMsg) {
@@ -884,7 +896,8 @@ public final class EdgeGrpcSession implements Closeable {
             createRelationFromEdge(device.getId());
             ctx.getRelationService().saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(edge.getId(), device.getId(), "Created"));
             ctx.getDeviceStateService().onDeviceAdded(device);
-            updateDeviceCredentials(deviceUpdateMsg, device);
+
+            requestDeviceCredentialsFromEdge(device);
         } finally {
             deviceCreationLock.unlock();
         }
@@ -925,7 +938,7 @@ public final class EdgeGrpcSession implements Closeable {
                             existentAlarm.setPropagate(alarmUpdateMsg.getPropagate());
                         }
                         existentAlarm.setEndTs(alarmUpdateMsg.getEndTs());
-                        existentAlarm.setDetails(objectMapper.readTree(alarmUpdateMsg.getDetails()));
+                        existentAlarm.setDetails(mapper.readTree(alarmUpdateMsg.getDetails()));
                         ctx.getAlarmService().createOrUpdateAlarm(existentAlarm);
                         break;
                     case ALARM_ACK_RPC_MESSAGE:
@@ -935,7 +948,7 @@ public final class EdgeGrpcSession implements Closeable {
                         break;
                     case ALARM_CLEAR_RPC_MESSAGE:
                         if (existentAlarm != null) {
-                            ctx.getAlarmService().clearAlarm(edge.getTenantId(), existentAlarm.getId(), objectMapper.readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
+                            ctx.getAlarmService().clearAlarm(edge.getTenantId(), existentAlarm.getId(), mapper.readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
                         }
                         break;
                     case ENTITY_DELETED_RPC_MESSAGE:

@@ -16,11 +16,9 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
@@ -29,11 +27,7 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 @Slf4j
 public class DashboardUpdateMsgConstructor {
 
-    @Autowired
-    private DashboardService dashboardService;
-
     public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
-        dashboard = dashboardService.findDashboardById(dashboard.getTenantId(), dashboard.getId());
         DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
