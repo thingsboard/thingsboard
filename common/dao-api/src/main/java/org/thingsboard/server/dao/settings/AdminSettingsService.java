@@ -24,7 +24,9 @@ public interface AdminSettingsService {
     AdminSettings findAdminSettingsById(TenantId tenantId, AdminSettingsId adminSettingsId);
 
     AdminSettings findAdminSettingsByKey(TenantId tenantId, String key);
-    
+
+    void deleteAdminSettingsByKey(TenantId tenantId, String key);
+
     AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings);
     
 }
