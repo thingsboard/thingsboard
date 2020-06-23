@@ -47,5 +47,7 @@ public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity,
                 @Param("entityId") String entityId,
                 @Param("attributeType") String attributeType,
                 @Param("attributeKey") String attributeKey);
+
+    List<AttributeKvEntity> findAllByAttributeKey(String attributeKey);
 }
 

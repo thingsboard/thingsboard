@@ -120,6 +120,12 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
+    public ListenableFuture<List<AttributeKvEntry>> findAllByAttributeKey(String attributeKey) {
+        return Futures.immediateFuture(
+                DaoUtil.convertDataList(attributeKvRepository.findAllByAttributeKey(attributeKey)));
+    }
+
+    @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute) {
         AttributeKvEntity entity = new AttributeKvEntity();
         entity.setId(new AttributeKvCompositeKey(entityId.getEntityType(), fromTimeUUID(entityId.getId()), attributeType, attribute.getKey()));
