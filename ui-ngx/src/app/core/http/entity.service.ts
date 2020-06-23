@@ -45,23 +45,18 @@ import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.m
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
 import { entityFields, EntityInfo, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
-import {
-  EntityRelationInfo,
-  EntityRelationsQuery,
-  EntitySearchDirection,
-  EntitySearchQuery
-} from '@shared/models/relation.models';
+import { EntityRelationInfo, EntitySearchDirection } from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
-import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
-import { ClaimResult, Device, DeviceCredentialsType, DeviceSearchQuery } from '@shared/models/device.models';
-import { EntityViewSearchQuery } from '@shared/models/entity-view.models';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { Asset } from '@shared/models/asset.models';
+import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
 import {
   createDefaultEntityDataPageLink,
   EntityData,
   EntityDataQuery,
-  EntityFilter, EntityKeyType
+  EntityFilter,
+  EntityKeyType
 } from '@shared/models/query/query.models';
 
 @Injectable({
@@ -1259,6 +1254,14 @@ export class EntityService {
         name: entity.name,
         entityType: subscriptionInfo.entityType,
         entityId: entity.id.id,
+        pageLink: {
+          pageSize: 1,
+          page: 0
+        },
+        entityFilter: {
+          type: AliasFilterType.singleEntity,
+          singleEntity: entity.id
+        },
         dataKeys: []
       };
     } else if (subscriptionInfo.type === DatasourceType.function) {

@@ -383,6 +383,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   private prepareDataSubscriptions(): Observable<any> {
     if (this.hasDataPageLink) {
       this.hasResolvedData = true;
+      this.notifyDataLoaded();
       return of(null);
     }
     const resolveResultObservables = this.configuredDatasources.map((datasource, index) => {
