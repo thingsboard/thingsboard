@@ -19,18 +19,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.ListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.*;
-import org.thingsboard.server.common.data.id.AdminSettingsId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -41,10 +40,13 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -71,9 +73,30 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     @Autowired
     private TenantService tenantService;
 
+    private final Map<String, OAuth2ClientRegistration> clientRegistrationsByRegistrationId = new ConcurrentHashMap<>();
+
+    @PostConstruct
+    public void init(){
+
+    }
+
+    @Override
+    public OAuth2ClientRegistration getClientRegistration(String registrationId) {
+        return null;
+    }
+
     @Override
     public List<OAuth2ClientInfo> getOAuth2Clients(String domainName) {
-        return Collections.emptyList();
+        OAuth2ClientsParams oAuth2ClientsParams = getMergedOAuth2ClientsParams(domainName);
+        return oAuth2ClientsParams.getClientRegistrations().stream()
+                .map(clientRegistration -> {
+                    OAuth2ClientInfo client = new OAuth2ClientInfo();
+                    client.setName(clientRegistration.getLoginButtonLabel());
+                    client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
+                    client.setIcon(clientRegistration.getLoginButtonIcon());
+                    return client;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -209,11 +232,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }
     }
 
-    @Override
-    public OAuth2ClientRegistration getClientRegistration(String registrationId) {
-        return null;
-    }
-
     private ListenableFuture<String> getOAuth2ClientsParamsAttribute(TenantId tenantId) {
         ListenableFuture<List<AttributeKvEntry>> attributeKvEntriesFuture;
         try {
@@ -265,6 +283,27 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }
         if (result == null) {
             result = new OAuth2ClientsParams();
+        }
+        return result;
+    }
+
+    private OAuth2ClientsParams getMergedOAuth2ClientsParams(String domainName) {
+        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructClientRegistrationsKey(domainName));
+        OAuth2ClientsParams result;
+        if (oauth2ClientsSettings != null) {
+            String strEntityType = oauth2ClientsSettings.getJsonValue().get("entityType").asText();
+            String strEntityId = oauth2ClientsSettings.getJsonValue().get("entityId").asText();
+            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+            if (!entityId.getEntityType().equals(EntityType.TENANT)) {
+                log.error("Only tenant can configure OAuth2 for certain domain!");
+                throw new IllegalStateException("Only tenant can configure OAuth2 for certain domain!");
+            }
+            TenantId tenantId = (TenantId) entityId;
+            result = getTenantOAuth2ClientsParams(tenantId);
+            OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+            result.getClientRegistrations().addAll(systemOAuth2ClientsParams.getClientRegistrations());
+        } else {
+            result = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
         }
         return result;
     }
