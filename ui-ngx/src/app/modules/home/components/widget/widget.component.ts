@@ -138,6 +138,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   subscriptionInited = false;
   destroyed = false;
   widgetSizeDetected = false;
+  widgetInstanceInited = false;
+  dataUpdatePending = false;
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
 
@@ -363,6 +365,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         subscription.destroy();
       }
       this.subscriptionInited = false;
+      this.dataUpdatePending = false;
       this.widgetContext.subscriptions = {};
       if (this.widgetContext.inited) {
         this.widgetContext.inited = false;
@@ -375,6 +378,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         try {
           if (shouldDestroyWidgetInstance) {
             this.widgetTypeInstance.onDestroy();
+            this.widgetInstanceInited = false;
           }
         } catch (e) {
           this.handleWidgetException(e);
@@ -479,6 +483,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         try {
           if (this.displayWidgetInstance()) {
             this.widgetTypeInstance.onInit();
+            this.widgetInstanceInited = true;
+            if (this.dataUpdatePending) {
+              this.widgetTypeInstance.onDataUpdated();
+              this.dataUpdatePending = false;
+            }
           } else {
             this.loadingData = false;
           }
@@ -798,7 +807,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       onDataUpdated: () => {
         try {
           if (this.displayWidgetInstance()) {
-            this.widgetTypeInstance.onDataUpdated();
+            if (this.widgetInstanceInited) {
+              this.widgetTypeInstance.onDataUpdated();
+            } else {
+              this.dataUpdatePending = true;
+            }
           }
         } catch (e){}
       },

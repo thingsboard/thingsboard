@@ -17,6 +17,9 @@
 import { AliasFilterType, EntityFilters } from '@shared/models/alias.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { SortDirection } from '@angular/material/sort';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { EntityInfo } from '@shared/models/entity.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -25,6 +28,20 @@ export enum EntityKeyType {
   SERVER_ATTRIBUTE = 'SERVER_ATTRIBUTE',
   TIME_SERIES = 'TIME_SERIES',
   ENTITY_FIELD = 'ENTITY_FIELD'
+}
+
+export function entityKeyTypeToDataKeyType(entityKeyType: EntityKeyType): DataKeyType {
+  switch (entityKeyType) {
+    case EntityKeyType.ATTRIBUTE:
+    case EntityKeyType.CLIENT_ATTRIBUTE:
+    case EntityKeyType.SHARED_ATTRIBUTE:
+    case EntityKeyType.SERVER_ATTRIBUTE:
+      return DataKeyType.attribute
+    case EntityKeyType.TIME_SERIES:
+      return DataKeyType.timeseries;
+    case EntityKeyType.ENTITY_FIELD:
+      return DataKeyType.entityField;
+  }
 }
 
 export interface EntityKey {
@@ -167,4 +184,26 @@ export interface EntityData {
   entityId: EntityId;
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
   timeseries: {[key: string]: Array<TsValue>};
+}
+
+export function entityDataToEntityInfo(entityData: EntityData): EntityInfo {
+  const entityInfo: EntityInfo = {
+    id: entityData.entityId.id,
+    entityType: entityData.entityId.entityType as EntityType
+  };
+  if (entityData.latest && entityData.latest[EntityKeyType.ENTITY_FIELD]) {
+    const fields = entityData.latest[EntityKeyType.ENTITY_FIELD];
+    if (fields.name) {
+      entityInfo.name = fields.name.value;
+    } else {
+      entityInfo.name = '';
+    }
+    if (fields.label) {
+      entityInfo.label = fields.label.value;
+    } else {
+      entityInfo.label = '';
+    }
+    entityInfo.entityDescription = 'TODO: Not implemented';
+  }
+  return entityInfo;
 }

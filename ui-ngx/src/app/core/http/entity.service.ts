@@ -54,7 +54,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import {
   createDefaultEntityDataPageLink,
   EntityData,
-  EntityDataQuery,
+  EntityDataQuery, entityDataToEntityInfo,
   EntityFilter,
   EntityKeyType
 } from '@shared/models/query/query.models';
@@ -365,23 +365,6 @@ export class EntityService {
     return this.http.post<PageData<EntityData>>('/api/entitiesQuery/find', query, defaultHttpOptionsFromConfig(config));
   }
 
-  private entityDataToEntityInfo(entityData: EntityData): EntityInfo {
-    const entityInfo: EntityInfo = {
-      id: entityData.entityId.id,
-      entityType: entityData.entityId.entityType as EntityType
-    };
-    if (entityData.latest && entityData.latest[EntityKeyType.ENTITY_FIELD]) {
-      const fields = entityData.latest[EntityKeyType.ENTITY_FIELD];
-      if (fields.name) {
-        entityInfo.name = fields.name.value;
-      }
-      if (fields.label) {
-        entityInfo.label = fields.label.value;
-      }
-    }
-    return entityInfo;
-  }
-
   public findSingleEntityInfoByEntityFilter(filter: EntityFilter, config?: RequestConfig): Observable<EntityInfo> {
     const query: EntityDataQuery = {
       entityFilter: filter,
@@ -401,7 +384,7 @@ export class EntityService {
       map((data) => {
         if (data.data.length) {
           const entityData = data.data[0];
-          return this.entityDataToEntityInfo(entityData);
+          return entityDataToEntityInfo(entityData);
         } else {
           return null;
         }

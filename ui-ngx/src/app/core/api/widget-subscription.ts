@@ -52,7 +52,13 @@ import { EntityId } from '@app/shared/models/id/entity-id';
 import * as moment_ from 'moment';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityDataListener } from '@core/api/entity-data.service';
-import { EntityData, EntityDataPageLink, EntityKeyType, KeyFilter } from '@shared/models/query/query.models';
+import {
+  EntityData,
+  EntityDataPageLink,
+  entityDataToEntityInfo,
+  EntityKeyType,
+  KeyFilter
+} from '@shared/models/query/query.models';
 import { map } from 'rxjs/operators';
 
 const moment = moment_;
@@ -414,6 +420,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.configureLoadedData();
         this.hasResolvedData = true;
         this.notifyDataLoaded();
+        this.onDataUpdated(true);
       })
     );
   }
@@ -881,7 +888,6 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private dataSubscribe() {
     if (!this.hasDataPageLink) {
-      this.notifyDataLoading();
       if (this.type === widgetType.timeseries && this.timeWindowConfig) {
         this.updateRealtimeSubscription();
         if (this.comparisonEnabled) {
@@ -897,7 +903,6 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.ctx.entityDataService.startSubscription(listener);
       });
       if (forceUpdate) {
-        this.notifyDataLoaded();
         this.onDataUpdated();
       }
     }
@@ -1269,23 +1274,11 @@ export class WidgetSubscription implements IWidgetSubscription {
     newDatasource.entityId = entityData.entityId.id;
     newDatasource.entityType = entityData.entityId.entityType as EntityType;
     if (configDatasource.type === DatasourceType.entity) {
-      let name;
-      let label;
-      if (entityData.latest && entityData.latest[EntityKeyType.ENTITY_FIELD]) {
-        const fields = entityData.latest[EntityKeyType.ENTITY_FIELD];
-        if (fields.name) {
-          name = fields.name.value;
-        }
-        if (fields.label) {
-          label = fields.label.value;
-        }
-      }
-      name = name || 'TODO';
-      label = label || 'TODO';
-      newDatasource.name = name;
-      newDatasource.entityName = name;
-      newDatasource.entityLabel = label;
-      newDatasource.entityDescription = 'TODO';
+      const entityInfo = entityDataToEntityInfo(entityData);
+      newDatasource.name = entityInfo.name;
+      newDatasource.entityName = entityInfo.name;
+      newDatasource.entityLabel = entityInfo.label;
+      newDatasource.entityDescription = entityInfo.entityDescription;
     }
     newDatasource.generated = index > 0 ? true : false;
     return newDatasource;
@@ -1296,7 +1289,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     const startIndex = configuredDatasource.dataKeyStartIndex;
     const dataKeysCount = configuredDatasource.dataKeys.length;
     const index = startIndex + dataIndex*dataKeysCount + dataKeyIndex;
-    this.notifyDataLoaded();
     let update = true;
     let currentData: DataSetHolder;
     if (this.displayLegend && this.legendData.keys[index].dataKey.hidden) {

@@ -23,6 +23,7 @@ import {
   EntityFilter,
   EntityKey,
   EntityKeyType,
+  entityKeyTypeToDataKeyType,
   KeyFilter,
   TsValue
 } from '@shared/models/query/query.models';
@@ -41,8 +42,8 @@ import { PageData } from '@shared/models/page/page-data';
 import { DataAggregator } from '@core/api/data-aggregator';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
-import Timeout = NodeJS.Timeout;
 import { Observable, of, ReplaySubject, Subject } from 'rxjs';
+import Timeout = NodeJS.Timeout;
 
 export interface EntityDataSubscriptionOptions {
   datasourceType: DatasourceType;
@@ -473,7 +474,8 @@ export class EntityDataSubscription {
     if (this.entityDataSubscriptionOptions.type === widgetType.latest && entityData.latest) {
       for (const type of Object.keys(entityData.latest)) {
         const subscriptionData = this.toSubscriptionData(entityData.latest[type], false);
-        this.onData(subscriptionData, type, dataIndex, true, dataUpdatedCb);
+        const dataKeyType = entityKeyTypeToDataKeyType(EntityKeyType[type]);
+        this.onData(subscriptionData, dataKeyType, dataIndex, true, dataUpdatedCb);
       }
     }
     if (this.entityDataSubscriptionOptions.type === widgetType.timeseries && entityData.timeseries) {
@@ -486,7 +488,7 @@ export class EntityDataSubscription {
     }
   }
 
-  private onData(sourceData: SubscriptionData, type: string, dataIndex: number, detectChanges: boolean,
+  private onData(sourceData: SubscriptionData, type: DataKeyType, dataIndex: number, detectChanges: boolean,
                  dataUpdatedCb: DataUpdatedCb) {
     for (const keyName of Object.keys(sourceData)) {
       const keyData = sourceData[keyName];
