@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.ListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.*;
@@ -47,6 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -65,6 +67,9 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     private static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
 
     @Autowired
+    private Environment environment;
+
+    @Autowired
     private AdminSettingsService adminSettingsService;
 
     @Autowired
@@ -76,11 +81,25 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     private final Map<String, OAuth2ClientRegistration> clientRegistrationsByRegistrationId = new ConcurrentHashMap<>();
 
 
+    private boolean isInstall() {
+        return environment.acceptsProfiles("install");
+    }
+
     // TODO add field that invalidates cache in case write to cache fails after successful saving in DB
     @PostConstruct
-    public void init(){
+    public void init() {
+        if (isInstall()) return;
+
         OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
-        // TODO get all attributes with key OAUTH2_CLIENT_REGISTRATIONS_PARAMS and put into the map
+        OAuth2ClientsParams tenantsOAuth2ClientsParams = getAllOAuth2ClientsParams();
+
+        Stream.concat(
+                systemOAuth2ClientsParams.getClientRegistrations().stream(),
+                tenantsOAuth2ClientsParams.getClientRegistrations().stream()
+        )
+                .forEach(clientRegistration -> {
+                    clientRegistrationsByRegistrationId.put(clientRegistration.getRegistrationId(), clientRegistration);
+                });
     }
 
     @Override
@@ -91,15 +110,18 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     @Override
     public List<OAuth2ClientInfo> getOAuth2Clients(String domainName) {
         OAuth2ClientsParams oAuth2ClientsParams = getMergedOAuth2ClientsParams(domainName);
-        return oAuth2ClientsParams.getClientRegistrations().stream()
-                .map(clientRegistration -> {
-                    OAuth2ClientInfo client = new OAuth2ClientInfo();
-                    client.setName(clientRegistration.getLoginButtonLabel());
-                    client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
-                    client.setIcon(clientRegistration.getLoginButtonIcon());
-                    return client;
-                })
-                .collect(Collectors.toList());
+        return oAuth2ClientsParams != null && oAuth2ClientsParams.getClientRegistrations() != null ?
+                oAuth2ClientsParams.getClientRegistrations().stream()
+                        .map(clientRegistration -> {
+                            OAuth2ClientInfo client = new OAuth2ClientInfo();
+                            client.setName(clientRegistration.getLoginButtonLabel());
+                            client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
+                            client.setIcon(clientRegistration.getLoginButtonIcon());
+                            return client;
+                        })
+                        .collect(Collectors.toList())
+                : Collections.emptyList()
+                ;
     }
 
     @Override
@@ -168,6 +190,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 }
             }
         }
+        // TODO refactor
         String json;
         try {
             json = mapper.writeValueAsString(oAuth2ClientsParams);
@@ -214,6 +237,16 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }
     }
 
+    private OAuth2ClientsParams getAllOAuth2ClientsParams() {
+        ListenableFuture<String> jsonFuture = getOAuth2ClientsParamsAttribute();
+        try {
+            return Futures.transform(jsonFuture, this::constructOAuth2ClientsParams, MoreExecutors.directExecutor()).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Failed to read OAuth2 Clients Params from attributes!", e);
+            throw new RuntimeException("Failed to read OAuth2 Clients Params from attributes!", e);
+        }
+    }
+
     @Override
     public void deleteDomainOAuth2ClientRegistrationByTenant(TenantId tenantId) {
         OAuth2ClientsParams params = getTenantOAuth2ClientsParams(tenantId);
@@ -240,6 +273,24 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         try {
             attributeKvEntriesFuture = attributesService.find(tenantId, tenantId, DataConstants.SERVER_SCOPE,
                     Collections.singletonList(OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
+        } catch (Exception e) {
+            log.error("Unable to read OAuth2 Clients Params from attributes!", e);
+            throw new IncorrectParameterException("Unable to read OAuth2 Clients Params from attributes!");
+        }
+        return Futures.transform(attributeKvEntriesFuture, attributeKvEntries -> {
+            if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
+                AttributeKvEntry kvEntry = attributeKvEntries.get(0);
+                return kvEntry.getValueAsString();
+            } else {
+                return "";
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<String> getOAuth2ClientsParamsAttribute() {
+        ListenableFuture<List<AttributeKvEntry>> attributeKvEntriesFuture;
+        try {
+            attributeKvEntriesFuture = attributesService.findAllByAttributeKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
         } catch (Exception e) {
             log.error("Unable to read OAuth2 Clients Params from attributes!", e);
             throw new IncorrectParameterException("Unable to read OAuth2 Clients Params from attributes!");
