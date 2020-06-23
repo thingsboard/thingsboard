@@ -212,8 +212,12 @@ public class TbEntityDataSubCtx {
     }
 
     public Collection<Integer> clearSubscriptions() {
-        List<Integer> oldSubIds = new ArrayList<>(subToEntityIdMap.keySet());
-        subToEntityIdMap.clear();
-        return oldSubIds;
+        if (subToEntityIdMap != null) {
+            List<Integer> oldSubIds = new ArrayList<>(subToEntityIdMap.keySet());
+            subToEntityIdMap.clear();
+            return oldSubIds;
+        } else {
+            return Collections.emptyList();
+        }
     }
 }
