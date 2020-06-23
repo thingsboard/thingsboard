@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
 
 import java.util.List;
 
@@ -28,13 +29,13 @@ public interface OAuth2Service {
 
     List<OAuth2ClientInfo> getOAuth2Clients(String domainName);
 
-    List<OAuth2ClientRegistration> getSystemOAuth2ClientRegistrations(TenantId tenantId);
+    OAuth2ClientsParams saveSystemOAuth2ClientsParams(OAuth2ClientsParams oAuth2ClientsParams);
 
-    List<OAuth2ClientRegistration> getTenantOAuth2ClientRegistrations(TenantId tenantId);
+    OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams);
 
-    OAuth2ClientRegistration saveSystemOAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration);
+    OAuth2ClientsParams getSystemOAuth2ClientsParams(TenantId tenantId);
 
-    OAuth2ClientRegistration saveTenantOAuth2ClientRegistration(TenantId tenantId, String domainName, OAuth2ClientRegistration clientRegistration);
+    OAuth2ClientsParams getTenantOAuth2ClientsParams(TenantId tenantId);
 
     void deleteDomainOAuth2ClientRegistrationByTenant(TenantId tenantId);
 
