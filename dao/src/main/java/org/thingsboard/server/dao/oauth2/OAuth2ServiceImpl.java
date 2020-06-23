@@ -15,13 +15,20 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,10 +39,14 @@ import java.util.stream.Stream;
 @Service
 public class OAuth2ServiceImpl implements OAuth2Service {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    private static final String OAUTH2_CLIENT_REGISTRATIONS_PARAMS = "oauth2ClientRegistrationsParams";
+
     private static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
 
-    @Autowired(required = false)
-    OAuth2Configuration oauth2Configuration;
+    @Autowired
+    private AdminSettingsService adminSettingsService;
 
     @Override
     public List<OAuth2ClientInfo> getOAuth2Clients() {
@@ -59,11 +70,31 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientRegistration saveSystemOAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration) {
-        return null;
+        // TODO check by registration ID in entities
+        AdminSettings clientRegistrationParamsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+        if (clientRegistrationParamsSettings == null) {
+            clientRegistrationParamsSettings = new AdminSettings();
+            clientRegistrationParamsSettings.setKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+            ObjectNode node = mapper.createObjectNode();
+            clientRegistrationParamsSettings.setJsonValue(node);
+        }
+        String json;
+        try {
+            json = mapper.writeValueAsString(clientRegistration);
+        } catch (JsonProcessingException e) {
+            log.error("Unable to convert OAuth2 Client Registration Params to JSON!", e);
+            throw new IncorrectParameterException("Unable to convert OAuth2 Client Registration Params to JSON!");
+        }
+        ObjectNode oldClientRegistrations = (ObjectNode) clientRegistrationParamsSettings.getJsonValue();
+        oldClientRegistrations.put(clientRegistration.getRegistrationId(), json);
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, clientRegistrationParamsSettings);
+        // TODO ask if that's worth it
+        return getClientRegistration(clientRegistration.getRegistrationId());
     }
 
     @Override
     public OAuth2ClientRegistration saveTenantOAuth2ClientRegistration(TenantId tenantId, OAuth2ClientRegistration clientRegistration) {
+        // TODO check by registration ID in system
         return null;
     }
 
