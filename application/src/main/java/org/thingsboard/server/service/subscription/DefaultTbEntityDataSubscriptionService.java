@@ -66,6 +66,7 @@ import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -169,7 +170,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
             if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null) {
-                ctx.clearSubscriptions();
+                Collection<Integer> oldSubIds = ctx.clearSubscriptions();
+                oldSubIds.forEach(subId -> localSubscriptionService.cancelSubscription(serviceId, subId));
             }
             //TODO: cleanup old subscription;
         } else {
@@ -195,10 +197,16 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 });
             }
             PageData<EntityData> data = entityService.findEntityDataByQuery(tenantId, customerId, ctx.getQuery());
+            if (log.isTraceEnabled()) {
+                data.getData().forEach(ed -> {
+                    log.trace("[{}][{}] EntityData: {}", session.getSessionId(), cmd.getCmdId(), ed);
+                });
+            }
             ctx.setData(data);
         }
         ListenableFuture<TbEntityDataSubCtx> historyFuture;
         if (cmd.getHistoryCmd() != null) {
+            log.trace("[{}][{}] Going to process history command: {}", session.getSessionId(), cmd.getCmdId(), cmd.getHistoryCmd());
             historyFuture = handleHistoryCmd(ctx, cmd.getHistoryCmd());
         } else {
             historyFuture = Futures.immediateFuture(ctx);
@@ -241,8 +249,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private void handleLatestCmd(TbEntityDataSubCtx ctx, LatestValueCmd latestCmd) {
+        log.trace("[{}][{}] Going to process latest command: {}", ctx.getSessionId(), ctx.getCmdId(), latestCmd);
         //Fetch the latest values for telemetry keys (in case they are not copied from NoSQL to SQL DB in hybrid mode.
         if (!tsInSqlDB) {
+            log.trace("[{}][{}] Going to fetch missing latest values: {}", ctx.getSessionId(), ctx.getCmdId(), latestCmd);
             List<String> allTsKeys = latestCmd.getKeys().stream()
                     .filter(key -> key.getType().equals(EntityKeyType.TIME_SERIES))
                     .map(EntityKey::getKey).collect(Collectors.toList());

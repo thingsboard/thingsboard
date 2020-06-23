@@ -27,9 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbTestWebSocketClient extends WebSocketClient {
 
-    private volatile String lastReply;
-    private volatile String lastUpdate;
-    private volatile boolean replyReceived;
+    private volatile String lastMsg;
     private CountDownLatch reply;
     private CountDownLatch update;
 
@@ -44,23 +42,13 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     @Override
     public void onMessage(String s) {
-        log.error("RECEIVED: {}", s);
-        synchronized (this) {
-            if (!replyReceived) {
-                replyReceived = true;
-                lastReply = s;
-                log.error("LAST REPLY: {}", s);
-                if (reply != null) {
-                    reply.countDown();
-                }
-            } else {
-                lastUpdate = s;
-                log.error("LAST UPDATE: {}", s);
-                if (update == null) {
-                    update = new CountDownLatch(1);
-                }
-                update.countDown();
-            }
+        log.info("RECEIVED: {}", s);
+        lastMsg = s;
+        if (reply != null) {
+            reply.countDown();
+        }
+        if (update != null) {
+            update.countDown();
         }
     }
 
@@ -74,25 +62,28 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     }
 
+    public void registerWaitForUpdate() {
+        lastMsg = null;
+        update = new CountDownLatch(1);
+    }
+
     @Override
     public void send(String text) throws NotYetConnectedException {
-        synchronized (this) {
-            reply = new CountDownLatch(1);
-            replyReceived = false;
-        }
+        reply = new CountDownLatch(1);
         super.send(text);
     }
 
     public String waitForUpdate() {
-        synchronized (this) {
-            update = new CountDownLatch(1);
-        }
+        return waitForUpdate(TimeUnit.SECONDS.toMillis(3));
+    }
+
+    public String waitForUpdate(long ms) {
         try {
-            update.await(3, TimeUnit.SECONDS);
+            update.await(ms, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.warn("Failed to await reply", e);
         }
-        return lastUpdate;
+        return lastMsg;
     }
 
     public String waitForReply() {
@@ -101,6 +92,6 @@ public class TbTestWebSocketClient extends WebSocketClient {
         } catch (InterruptedException e) {
             log.warn("Failed to await reply", e);
         }
-        return lastReply;
+        return lastMsg;
     }
 }
