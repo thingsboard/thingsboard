@@ -157,6 +157,10 @@ export class EntityDataCmd implements WebsocketCmd {
   historyCmd?: EntityHistoryCmd;
   latestCmd?: LatestValueCmd;
   tsCmd?: TimeSeriesCmd;
+
+  public isEmpty(): boolean {
+    return !this.query && !this.historyCmd && !this.latestCmd && !this.tsCmd;
+  }
 }
 
 export class EntityDataUnsubscribeCmd implements WebsocketCmd {

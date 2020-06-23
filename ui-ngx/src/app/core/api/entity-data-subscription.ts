@@ -222,21 +222,26 @@ export class EntityDataSubscription {
       );
 
       this.subscriber.reconnect$.subscribe(() => {
-        const newSubsTw: SubscriptionTimewindow = this.listener.updateRealtimeSubscription();
-        this.listener.setRealtimeSubscription(newSubsTw);
-        this.subsTw = newSubsTw;
         if (this.started && !this.entityDataSubscriptionOptions.isLatestDataSubscription) {
-          this.subsCommand.tsCmd.startTs = this.subsTw.startTs;
-          this.subsCommand.tsCmd.timeWindow = this.subsTw.aggregation.timeWindow;
-          this.subsCommand.tsCmd.interval = this.subsTw.aggregation.interval;
-          this.subsCommand.tsCmd.limit = this.subsTw.aggregation.limit;
-          this.subsCommand.tsCmd.agg = this.subsTw.aggregation.type;
-          if (this.subsTw.aggregation.stateData) {
-            this.subsCommand.historyCmd.startTs = this.subsTw.startTs - YEAR;
-            this.subsCommand.historyCmd.endTs = this.subsTw.startTs;
-            this.subsCommand.historyCmd.interval = this.subsTw.aggregation.interval;
-            this.subsCommand.historyCmd.limit = this.subsTw.aggregation.limit;
-            this.subsCommand.historyCmd.agg = this.subsTw.aggregation.type;
+          if (this.entityDataSubscriptionOptions.type === widgetType.timeseries &&
+              !this.history && this.tsFields.length) {
+            const newSubsTw: SubscriptionTimewindow = this.listener.updateRealtimeSubscription();
+            this.subsTw = newSubsTw;
+            this.subsCommand.tsCmd.startTs = this.subsTw.startTs;
+            this.subsCommand.tsCmd.timeWindow = this.subsTw.aggregation.timeWindow;
+            this.subsCommand.tsCmd.interval = this.subsTw.aggregation.interval;
+            this.subsCommand.tsCmd.limit = this.subsTw.aggregation.limit;
+            this.subsCommand.tsCmd.agg = this.subsTw.aggregation.type;
+            if (this.subsTw.aggregation.stateData) {
+              this.subsCommand.historyCmd.startTs = this.subsTw.startTs - YEAR;
+              this.subsCommand.historyCmd.endTs = this.subsTw.startTs;
+              this.subsCommand.historyCmd.interval = this.subsTw.aggregation.interval;
+              this.subsCommand.historyCmd.limit = this.subsTw.aggregation.limit;
+              this.subsCommand.historyCmd.agg = this.subsTw.aggregation.type;
+            }
+            this.dataAggregators.forEach((dataAggregator) => {
+              dataAggregator.reset(newSubsTw.startTs,  newSubsTw.aggregation.timeWindow, newSubsTw.aggregation.interval);
+            });
           }
           this.subsCommand.query = this.dataCommand.query;
           this.subscriber.subscriptionCommands = [this.subsCommand];
@@ -370,8 +375,10 @@ export class EntityDataSubscription {
           };
         }
       }
-      this.subscriber.subscriptionCommands = [this.subsCommand];
-      this.subscriber.update();
+      if (!this.subsCommand.isEmpty()) {
+        this.subscriber.subscriptionCommands = [this.subsCommand];
+        this.subscriber.update();
+      }
     } else if (this.datasourceType === DatasourceType.function) {
       this.frequency = 1000;
       if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
@@ -480,7 +487,7 @@ export class EntityDataSubscription {
     }
     if (this.entityDataSubscriptionOptions.type === widgetType.timeseries && entityData.timeseries) {
       const subscriptionData = this.toSubscriptionData(entityData.timeseries, true);
-      if (aggregate) {
+      if (!this.history && aggregate) {
         this.dataAggregators[dataIndex].onData({data: subscriptionData}, false, false, true);
       } else {
         this.onData(subscriptionData, DataKeyType.timeseries, dataIndex, true, dataUpdatedCb);

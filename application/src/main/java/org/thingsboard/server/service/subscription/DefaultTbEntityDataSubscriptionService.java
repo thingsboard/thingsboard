@@ -401,9 +401,14 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                             new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to fetch historical data!"));
                 }
             });
-            EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
+            EntityDataUpdate update;
+            if (!ctx.isInitialDataSent()) {
+                update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
+                ctx.setInitialDataSent(true);
+            } else {
+                update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
+            }
             wsService.sendWsMsg(ctx.getSessionId(), update);
-            ctx.setInitialDataSent(true);
             return ctx;
         }, wsCallBackExecutor);
     }

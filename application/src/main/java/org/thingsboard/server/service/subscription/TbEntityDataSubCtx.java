@@ -191,12 +191,14 @@ public class TbEntityDataSubCtx {
                 if (latestCtxValues != null) {
                     latestCtxValues.forEach((k, v) -> {
                         TsValue update = latestUpdate.get(k);
-                        if (update.getTs() < v.getTs()) {
-                            log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                            latestUpdate.remove(k);
-                        } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
-                            log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                            latestUpdate.remove(k);
+                        if (update != null) {
+                            if (update.getTs() < v.getTs()) {
+                                log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                                latestUpdate.remove(k);
+                            } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
+                                log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                                latestUpdate.remove(k);
+                            }
                         }
                     });
                     //Setting new values
@@ -204,8 +206,16 @@ public class TbEntityDataSubCtx {
                 }
             }
             if (!latestUpdate.isEmpty()) {
-                Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
-                entityData = new EntityData(entityId, latestMap, null);
+                if (resultToLatestValues) {
+                    Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
+                    entityData = new EntityData(entityId, latestMap, null);
+                } else {
+                    Map<String, TsValue[]> tsMap = new HashMap<>();
+                    latestUpdate.forEach((key, tsValue) -> {
+                        tsMap.put(key, new TsValue[]{tsValue});
+                    });
+                    entityData = new EntityData(entityId, null, tsMap);
+                }
                 wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData)));
             }
         } else {

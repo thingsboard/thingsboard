@@ -206,22 +206,28 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case RELATIONS_QUERY:
             case DEVICE_SEARCH_QUERY:
             case ASSET_SEARCH_QUERY:
-                ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
-                ctx.addUuidParameter("permissions_customer_id", customerId.getId());
-                return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
+                return this.defaultPermissionQuery(ctx, tenantId, customerId, entityType);
             default:
                 if (entityType == EntityType.TENANT) {
                     ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
                     return "e.id=:permissions_tenant_id";
-                } else if (entityType == EntityType.CUSTOMER) {
-                    ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
-                    ctx.addUuidParameter("permissions_customer_id", customerId.getId());
-                    return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
                 } else {
-                    ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
-                    ctx.addUuidParameter("permissions_customer_id", customerId.getId());
-                    return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
+                    return this.defaultPermissionQuery(ctx, tenantId, customerId, entityType);
                 }
+        }
+    }
+
+    private String defaultPermissionQuery(EntityQueryContext ctx, TenantId tenantId, CustomerId customerId, EntityType entityType) {
+        ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
+        if (customerId != null && !customerId.isNullUid()) {
+            ctx.addUuidParameter("permissions_customer_id", customerId.getId());
+            if (entityType == EntityType.CUSTOMER) {
+                return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
+            } else {
+                return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
+            }
+        } else {
+            return "e.tenant_id=:permissions_tenant_id";
         }
     }
 
