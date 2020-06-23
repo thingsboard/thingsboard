@@ -173,7 +173,6 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
     }
 
     @Test
-    @Ignore
     public void testEntityDataLatestWsCmd() throws Exception {
         Device device = new Device();
         device.setName("Device");
@@ -212,8 +211,6 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         sendTelemetry(device, tsData);
 
         cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
-
-
         wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
@@ -231,11 +228,12 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         TsValue tsValue = pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsValue);
 
-        log.error("GOING TO LISTEN FOR UPDATES");
-        msg = wsClient.waitForUpdate();
         now = System.currentTimeMillis();
         TsKvEntry dataPoint2 = new BasicTsKvEntry(now, new LongDataEntry("temperature", 52L));
+
+        wsClient.registerWaitForUpdate();
         sendTelemetry(device, Arrays.asList(dataPoint2));
+        msg = wsClient.waitForUpdate();
 
         update = mapper.readValue(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
@@ -247,6 +245,17 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsValue);
 
+        //Sending update from the past, while latest value has new timestamp;
+        wsClient.registerWaitForUpdate();
+        sendTelemetry(device, Arrays.asList(dataPoint1));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
+
+        //Sending duplicate update again
+        wsClient.registerWaitForUpdate();
+        sendTelemetry(device, Arrays.asList(dataPoint2));
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
     }
 
 }
