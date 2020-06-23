@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.permission;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
@@ -22,12 +23,16 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.HashMap;
 
 @Component(value="tenantAdminPermissions")
 public class TenantAdminPermissions extends AbstractPermissions {
+
+    @Autowired
+    private OAuth2Service oAuth2Service;
 
     public TenantAdminPermissions() {
         super();
@@ -42,6 +47,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, widgetsPermissionChecker);
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
+        put(Resource.OAUTH2_CONFIGURATION, tenantOAuth2ConfigPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
@@ -100,5 +106,12 @@ public class TenantAdminPermissions extends AbstractPermissions {
             return true;
         }
 
+    };
+
+    private final PermissionChecker tenantOAuth2ConfigPermissionChecker = new PermissionChecker() {
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation) {
+            return oAuth2Service.isOAuth2ClientRegistrationAllowed(user.getTenantId());
+        }
     };
 }
