@@ -33,6 +33,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -78,6 +79,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     @Autowired
     private RuleChainService ruleChainService;
 
+    @Autowired
+    private OAuth2Service oAuth2Service;
+
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
@@ -104,6 +108,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        oAuth2Service.deleteDomainOAuth2ClientRegistrationByTenant(tenantId);
         customerService.deleteCustomersByTenantId(tenantId);
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
         dashboardService.deleteDashboardsByTenantId(tenantId);

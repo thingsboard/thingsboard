@@ -337,11 +337,12 @@ public class AuthController extends BaseController {
         }
     }
 
+    // TODO ask why POST
     @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
     @ResponseBody
-    public List<OAuth2ClientInfo> getOAuth2Clients() throws ThingsboardException {
+    public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request) throws ThingsboardException {
         try {
-            return oauth2Service.getOAuth2Clients();
+            return oauth2Service.getOAuth2Clients(request.getServerName());
         } catch (Exception e) {
             throw handleException(e);
         }

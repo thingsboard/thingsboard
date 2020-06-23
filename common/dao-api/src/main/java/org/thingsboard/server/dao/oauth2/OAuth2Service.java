@@ -26,25 +26,18 @@ import java.util.List;
 public interface OAuth2Service {
     OAuth2ClientRegistration getClientRegistration(String registrationId);
 
-    List<OAuth2ClientInfo> getOAuth2Clients();
+    List<OAuth2ClientInfo> getOAuth2Clients(String domainName);
 
     List<OAuth2ClientRegistration> getSystemOAuth2ClientRegistrations(TenantId tenantId);
 
     List<OAuth2ClientRegistration> getTenantOAuth2ClientRegistrations(TenantId tenantId);
 
-    List<OAuth2ClientRegistration> getCustomerOAuth2ClientRegistrations(TenantId tenantId, CustomerId customerId);
-
     OAuth2ClientRegistration saveSystemOAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration);
 
-    OAuth2ClientRegistration saveTenantOAuth2ClientRegistration(TenantId tenantId, OAuth2ClientRegistration clientRegistration);
+    OAuth2ClientRegistration saveTenantOAuth2ClientRegistration(TenantId tenantId, String domainName, OAuth2ClientRegistration clientRegistration);
 
-    OAuth2ClientRegistration saveCustomerOAuth2ClientRegistration(TenantId tenantId, CustomerId customerId, OAuth2ClientRegistration clientRegistration);
+    void deleteDomainOAuth2ClientRegistrationByTenant(TenantId tenantId);
 
-    void deleteDomainOAuth2ClientRegistrationByEntityId(TenantId tenantId, EntityId entityId);
-
-    boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId, EntityId entityId);
-
-    boolean isCustomerOAuth2ClientRegistrationAllowed(TenantId tenantId);
-
+    boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId);
 
 }

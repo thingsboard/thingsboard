@@ -17,12 +17,13 @@ package org.thingsboard.server.dao.oauth2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,8 +33,7 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -42,6 +42,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final String OAUTH2_CLIENT_REGISTRATIONS_PARAMS = "oauth2ClientRegistrationsParams";
+    private static final String OAUTH2_CLIENT_REGISTRATIONS_DOMAIN_NAME_PREFIX = "oauth2ClientRegistrationsDomainNamePrefix";
 
     private static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
 
@@ -49,7 +50,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     private AdminSettingsService adminSettingsService;
 
     @Override
-    public List<OAuth2ClientInfo> getOAuth2Clients() {
+    public List<OAuth2ClientInfo> getOAuth2Clients(String domainName) {
         return Collections.emptyList();
     }
 
@@ -60,11 +61,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public List<OAuth2ClientRegistration> getTenantOAuth2ClientRegistrations(TenantId tenantId) {
-        return null;
-    }
-
-    @Override
-    public List<OAuth2ClientRegistration> getCustomerOAuth2ClientRegistrations(TenantId tenantId, CustomerId customerId) {
         return null;
     }
 
@@ -93,33 +89,34 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     @Override
-    public OAuth2ClientRegistration saveTenantOAuth2ClientRegistration(TenantId tenantId, OAuth2ClientRegistration clientRegistration) {
+    public OAuth2ClientRegistration saveTenantOAuth2ClientRegistration(TenantId tenantId, String domainName, OAuth2ClientRegistration clientRegistration) {
+        // TODO ask what if tenant saves config for several different domain names, do we need to check it
         // TODO check by registration ID in system
         return null;
     }
 
     @Override
-    public OAuth2ClientRegistration saveCustomerOAuth2ClientRegistration(TenantId tenantId, CustomerId customerId, OAuth2ClientRegistration clientRegistration) {
-        return null;
-    }
-
-    @Override
-    public void deleteDomainOAuth2ClientRegistrationByEntityId(TenantId tenantId, EntityId entityId) {
+    public void deleteDomainOAuth2ClientRegistrationByTenant(TenantId tenantId) {
 
     }
 
     @Override
-    public boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId, EntityId entityId) {
-        return false;
-    }
-
-    @Override
-    public boolean isCustomerOAuth2ClientRegistrationAllowed(TenantId tenantId) {
+    public boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId) {
         return false;
     }
 
     @Override
     public OAuth2ClientRegistration getClientRegistration(String registrationId) {
         return null;
+    }
+
+    private String constructClientRegistrationsKey(String domainName) {
+        String clientRegistrationsKey;
+        if (StringUtils.isEmpty(domainName)) {
+            clientRegistrationsKey = OAUTH2_CLIENT_REGISTRATIONS_PARAMS;
+        } else {
+            clientRegistrationsKey = OAUTH2_CLIENT_REGISTRATIONS_DOMAIN_NAME_PREFIX + "_" + domainName;
+        }
+        return clientRegistrationsKey;
     }
 }

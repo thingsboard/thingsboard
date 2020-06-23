@@ -4,10 +4,13 @@ import lombok.*;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.OAuth2IntegrationId;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Data
 @ToString(exclude = {"clientSecret"})
-public class OAuth2ClientRegistration extends BaseData<OAuth2IntegrationId> {
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class OAuth2ClientRegistration {
 
     private String registrationId;
     private OAuth2MapperConfig mapperConfig;
@@ -25,33 +28,4 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2IntegrationId> {
     private String clientName;
     private String loginButtonLabel;
     private String loginButtonIcon;
-
-    public OAuth2ClientRegistration() {
-        super();
-    }
-
-    public OAuth2ClientRegistration(OAuth2IntegrationId id) {
-        super(id);
-    }
-
-    @Builder(toBuilder = true)
-    public OAuth2ClientRegistration(OAuth2IntegrationId id, String registrationId, String clientId, String clientSecret, String authorizationUri, String tokenUri, String redirectUriTemplate, String scope, String authorizationGrantType, String userInfoUri, String userNameAttributeName, String jwkSetUri, String clientAuthenticationMethod, String clientName, String loginButtonLabel, String loginButtonIcon, OAuth2MapperConfig mapperConfig) {
-        super(id);
-        this.registrationId = registrationId;
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
-        this.authorizationUri = authorizationUri;
-        this.tokenUri = tokenUri;
-        this.redirectUriTemplate = redirectUriTemplate;
-        this.scope = scope;
-        this.authorizationGrantType = authorizationGrantType;
-        this.userInfoUri = userInfoUri;
-        this.userNameAttributeName = userNameAttributeName;
-        this.jwkSetUri = jwkSetUri;
-        this.clientAuthenticationMethod = clientAuthenticationMethod;
-        this.clientName = clientName;
-        this.loginButtonLabel = loginButtonLabel;
-        this.loginButtonIcon = loginButtonIcon;
-        this.mapperConfig = mapperConfig;
-    }
 }
