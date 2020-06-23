@@ -75,14 +75,17 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     private final Map<String, OAuth2ClientRegistration> clientRegistrationsByRegistrationId = new ConcurrentHashMap<>();
 
+
+    // TODO add field that invalidates cache in case write to cache fails after successful saving in DB
     @PostConstruct
     public void init(){
-
+        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+        // TODO get all attributes with key OAUTH2_CLIENT_REGISTRATIONS_PARAMS and put into the map
     }
 
     @Override
     public OAuth2ClientRegistration getClientRegistration(String registrationId) {
-        return null;
+        return clientRegistrationsByRegistrationId.get(registrationId);
     }
 
     @Override

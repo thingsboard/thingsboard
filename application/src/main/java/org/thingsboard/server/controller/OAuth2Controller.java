@@ -17,12 +17,23 @@ package org.thingsboard.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @RestController
 @TbCoreComponent
@@ -34,14 +45,68 @@ public class OAuth2Controller extends BaseController {
     @Autowired
     private OAuth2Service oauth2Service;
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/config/{" + REGISTRATION_ID + "}", method = RequestMethod.GET)
+    // TODO ask why POST
+    @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
     @ResponseBody
-    public OAuth2ClientRegistration getClientRegistrationById(@PathVariable(REGISTRATION_ID) String registrationId) throws ThingsboardException {
+    public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request) throws ThingsboardException {
         try {
-            return oauth2Service.getClientRegistration(registrationId);
+            return oauth2Service.getOAuth2Clients(request.getServerName());
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/oauth2/currentOAuth2Configuration", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public OAuth2ClientsParams getCurrentOAuth2ClientsParams() throws ThingsboardException {
+        try {
+            Authority authority = getCurrentUser().getAuthority();
+            checkOAuth2ConfigPermissions(Operation.READ);
+            OAuth2ClientsParams oAuth2ClientsParams = null;
+            if (Authority.SYS_ADMIN.equals(authority)) {
+                oAuth2ClientsParams = oauth2Service.getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+            } else if (Authority.TENANT_ADMIN.equals(authority)) {
+                oAuth2ClientsParams = oauth2Service.getTenantOAuth2ClientsParams(getCurrentUser().getTenantId());
+            }
+            return oAuth2ClientsParams;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/oauth2/oAuth2Configuration", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public OAuth2ClientsParams saveLoginWhiteLabelParams(@RequestBody OAuth2ClientsParams oAuth2ClientsParams) throws ThingsboardException {
+        try {
+            Authority authority = getCurrentUser().getAuthority();
+            checkOAuth2ConfigPermissions(Operation.WRITE);
+            OAuth2ClientsParams savedOAuth2ClientsParams = null;
+            if (Authority.SYS_ADMIN.equals(authority)) {
+                savedOAuth2ClientsParams = oauth2Service.saveSystemOAuth2ClientsParams(oAuth2ClientsParams);
+            } else if (Authority.TENANT_ADMIN.equals(authority)) {
+                savedOAuth2ClientsParams = oauth2Service.saveTenantOAuth2ClientsParams(getCurrentUser().getTenantId(), oAuth2ClientsParams);
+            }
+            return savedOAuth2ClientsParams;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/oauth2/isOAuth2ConfigurationAllowed", method = RequestMethod.GET)
+    @ResponseBody
+    public Boolean isOAuth2ConfigurationAllowed() throws ThingsboardException {
+        try {
+            return oauth2Service.isOAuth2ClientRegistrationAllowed(getTenantId());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+
+    private void checkOAuth2ConfigPermissions(Operation operation) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION, operation);
     }
 }

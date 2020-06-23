@@ -84,9 +84,6 @@ public class AuthController extends BaseController {
     @Autowired
     private AuditLogService auditLogService;
 
-    @Autowired
-    private OAuth2Service oauth2Service;
-
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
     public @ResponseBody User getUser() throws ThingsboardException {
@@ -332,17 +329,6 @@ public class AuthController extends BaseController {
                     user.getTenantId(), user.getCustomerId(), user.getId(),
                     user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
 
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    // TODO ask why POST
-    @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
-    @ResponseBody
-    public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request) throws ThingsboardException {
-        try {
-            return oauth2Service.getOAuth2Clients(request.getServerName());
         } catch (Exception e) {
             throw handleException(e);
         }

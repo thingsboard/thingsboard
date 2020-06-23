@@ -31,7 +31,9 @@ public enum Resource {
     RULE_CHAIN(EntityType.RULE_CHAIN),
     USER(EntityType.USER),
     WIDGETS_BUNDLE(EntityType.WIDGETS_BUNDLE),
-    WIDGET_TYPE(EntityType.WIDGET_TYPE);
+    WIDGET_TYPE(EntityType.WIDGET_TYPE),
+    OAUTH2_CONFIGURATION(),
+    ;
 
     private final EntityType entityType;
 
