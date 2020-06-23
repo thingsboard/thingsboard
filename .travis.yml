@@ -4,7 +4,7 @@ before_install:
   - export MAVEN_OPTS="-Dmaven.repo.local=$HOME/.m2/repository -Xms1024m -Xmx3072m"
   - export HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE=false
 jdk:
- - openjdk8
+ - openjdk14
 language: java
 sudo: required
 services:
