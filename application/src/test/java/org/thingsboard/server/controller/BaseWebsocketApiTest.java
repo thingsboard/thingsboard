@@ -48,6 +48,7 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -156,6 +157,87 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsArray[0]);
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsArray[1]);
         Assert.assertEquals(new TsValue(dataPoint3.getTs(), dataPoint3.getValueAsString()), tsArray[2]);
+    }
+
+    @Test
+    public void testEntityDataTimeSeriesWsCmd() throws Exception {
+        Device device = new Device();
+        device.setName("Device");
+        device.setType("default");
+        device.setLabel("testLabel" + (int) (Math.random() * 1000));
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+
+        DeviceTypeFilter dtf = new DeviceTypeFilter();
+        dtf.setDeviceNameFilter("D");
+        dtf.setDeviceType("default");
+        EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, null, null);
+
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        String msg = wsClient.waitForReply();
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        PageData<EntityData> pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+
+        TimeSeriesCmd tsCmd = new TimeSeriesCmd();
+        tsCmd.setKeys(Arrays.asList("temperature"));
+        tsCmd.setAgg(Aggregation.NONE.name());
+        tsCmd.setLimit(1000);
+        tsCmd.setStartTs(now - TimeUnit.HOURS.toMillis(1));
+        tsCmd.setTimeWindow(TimeUnit.HOURS.toMillis(1));
+
+        TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
+        TsKvEntry dataPoint2 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(2), new LongDataEntry("temperature", 43L));
+        TsKvEntry dataPoint3 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(3), new LongDataEntry("temperature", 44L));
+        List<TsKvEntry> tsData = Arrays.asList(dataPoint1, dataPoint2, dataPoint3);
+
+        sendTelemetry(device, tsData);
+        Thread.sleep(100);
+
+        cmd = new EntityDataCmd(1, null, null, null, tsCmd);
+        wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        msg = wsClient.waitForReply();
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> listData = update.getUpdate();
+        Assert.assertNotNull(listData);
+        Assert.assertEquals(1, listData.size());
+        Assert.assertEquals(device.getId(), listData.get(0).getEntityId());
+        TsValue[] tsArray = listData.get(0).getTimeseries().get("temperature");
+        Assert.assertEquals(3, tsArray.length);
+        Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsArray[0]);
+        Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsArray[1]);
+        Assert.assertEquals(new TsValue(dataPoint3.getTs(), dataPoint3.getValueAsString()), tsArray[2]);
+
+        now = System.currentTimeMillis();
+        TsKvEntry dataPoint4 = new BasicTsKvEntry(now, new LongDataEntry("temperature", 45L));
+
+        wsClient.registerWaitForUpdate();
+        sendTelemetry(device, Arrays.asList(dataPoint4));
+        msg = wsClient.waitForUpdate();
+
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getTimeseries());
+        TsValue[] tsValues = eData.get(0).getTimeseries().get("temperature");
+        Assert.assertNotNull(tsValues);
+        Assert.assertEquals(new TsValue(dataPoint4.getTs(), dataPoint4.getValueAsString()), tsValues[0]);
     }
 
     @Test

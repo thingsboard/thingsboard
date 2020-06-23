@@ -282,7 +282,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
                 }
                 wsService.sendWsMsg(ctx.getSessionId(), update);
-                createSubscriptions(ctx, keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()));
+                createSubscriptions(ctx, keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), false);
             }
 
             @Override
@@ -357,8 +357,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private void createSubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys) {
+        createSubscriptions(ctx, keys, true);
+    }
+
+    private void createSubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys, boolean latest) {
         //TODO: create context for this (session, cmdId) that contains query, latestCmd and update. Subscribe + periodic updates.
-        List<TbSubscription> tbSubs = ctx.createSubscriptions(keys);
+        List<TbSubscription> tbSubs = ctx.createSubscriptions(keys, latest);
         tbSubs.forEach(sub -> localSubscriptionService.addSubscription(sub));
     }
 

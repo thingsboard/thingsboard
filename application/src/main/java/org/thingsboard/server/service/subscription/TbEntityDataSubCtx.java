@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 @Slf4j
 @Data
@@ -81,7 +82,7 @@ public class TbEntityDataSubCtx {
         this.data = data;
     }
 
-    public List<TbSubscription> createSubscriptions(List<EntityKey> keys) {
+    public List<TbSubscription> createSubscriptions(List<EntityKey> keys, boolean resultToLatestValues) {
         this.subToEntityIdMap = new HashMap<>();
         tbSubs = new ArrayList<>();
         Map<EntityKeyType, List<EntityKey>> keysByType = new HashMap<>();
@@ -92,7 +93,7 @@ public class TbEntityDataSubCtx {
                 subToEntityIdMap.put(subIdx, entityData.getEntityId());
                 switch (keysType) {
                     case TIME_SERIES:
-                        tbSubs.add(createTsSub(entityData, subIdx, keysList));
+                        tbSubs.add(createTsSub(entityData, subIdx, keysList, resultToLatestValues));
                         break;
                     case CLIENT_ATTRIBUTE:
                         tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.CLIENT_SCOPE, keysList));
@@ -128,7 +129,7 @@ public class TbEntityDataSubCtx {
                 .build();
     }
 
-    private TbSubscription createTsSub(EntityData entityData, int subIdx, List<EntityKey> subKeys) {
+    private TbSubscription createTsSub(EntityData entityData, int subIdx, List<EntityKey> subKeys, boolean resultToLatestValues) {
         Map<String, Long> keyStates = buildKeyStats(entityData, EntityKeyType.TIME_SERIES, subKeys);
         if (entityData.getTimeseries() != null) {
             entityData.getTimeseries().forEach((k, v) -> {
@@ -144,7 +145,12 @@ public class TbEntityDataSubCtx {
                 .subscriptionId(subIdx)
                 .tenantId(sessionRef.getSecurityCtx().getTenantId())
                 .entityId(entityData.getEntityId())
-                .updateConsumer(this::sendTsWsMsg)
+                .updateConsumer(new BiConsumer<String, SubscriptionUpdate>() {
+                    @Override
+                    public void accept(String sessionId, SubscriptionUpdate subscriptionUpdate) {
+                        sendWsMsg(sessionId, subscriptionUpdate, EntityKeyType.TIME_SERIES, resultToLatestValues);
+                    }
+                })
                 .allKeys(false)
                 .keyStates(keyStates)
                 .build();
@@ -165,11 +171,11 @@ public class TbEntityDataSubCtx {
         return keyStates;
     }
 
-    private void sendTsWsMsg(String sessionId, SubscriptionUpdate subscriptionUpdate) {
-        sendWsMsg(sessionId, subscriptionUpdate, EntityKeyType.TIME_SERIES);
+    private void sendWsMsg(String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
+        sendWsMsg(sessionId, subscriptionUpdate, keyType, true);
     }
 
-    private void sendWsMsg(String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
+    private void sendWsMsg(String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType, boolean resultToLatestValues) {
         EntityId entityId = subToEntityIdMap.get(subscriptionUpdate.getSubscriptionId());
         if (entityId != null) {
             log.trace("[{}][{}][{}][{}] Received subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);

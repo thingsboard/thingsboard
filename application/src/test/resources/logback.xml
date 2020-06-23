@@ -7,7 +7,7 @@
         </encoder>
     </appender>
 
-<!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
+    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>
     <logger name="org.thingsboard.server.controller.TbTestWebSocketClient" level="INFO"/>
     <logger name="org.thingsboard.server" level="WARN"/>
     <logger name="org.springframework" level="WARN"/>
