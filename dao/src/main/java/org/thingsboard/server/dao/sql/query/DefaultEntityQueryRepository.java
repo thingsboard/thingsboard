@@ -46,7 +46,6 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.EntityTypeFilter;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -132,7 +131,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         String latestJoins = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings);
         String whereClause = this.buildWhere(ctx, latestFiltersMapping);
         String textSearchQuery = this.buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
-        String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping);
+        String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
         String entityTypeStr;
         if (query.getEntityFilter().getType().equals(EntityFilterType.RELATIONS_QUERY)) {
             entityTypeStr = "e.entity_type";
@@ -144,7 +143,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         } else {
             entityFieldsSelection = String.format("e.id id, %s entity_type", entityTypeStr);
         }
-        String latestSelection = EntityKeyMapping.buildSelections(latestSelectionMapping);
+        String latestSelection = EntityKeyMapping.buildSelections(latestSelectionMapping, query.getEntityFilter().getType(), entityType);
         String topSelection = "entities.*";
         if (!StringUtils.isEmpty(latestSelection)) {
             topSelection = topSelection + ", " + latestSelection;
@@ -294,7 +293,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private String relationQuery(EntityQueryContext ctx, RelationsQueryFilter entityFilter) {
         EntityId rootId = entityFilter.getRootEntity();
         String lvlFilter = getLvlFilter(entityFilter.getMaxLevel());
-        String selectFields = getSelectTenantId() + ", " + getSelectCustomerId() + ", " +
+        String selectFields = getSelectCreatedTime() + ", " + getSelectTenantId() + ", " + getSelectCustomerId() + ", " +
                 " entity.entity_id as id," + getSelectType() + ", " + getSelectName() + ", " +
                 getSelectLabel() + ", entity.entity_type as entity_type";
         String from = getQueryTemplate(entityFilter.getDirection());
@@ -346,6 +345,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             from = HIERARCHICAL_TO_QUERY_TEMPLATE;
         }
         return from;
+    }
+
+    private String getSelectCreatedTime() {
+        return "created_time";
     }
 
     private String getSelectTenantId() {

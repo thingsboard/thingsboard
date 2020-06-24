@@ -346,9 +346,7 @@ public class TbEntityDataSubCtx {
                     newSubsList.forEach(
                             entity -> {
                                 log.trace("[{}][{}] Found new subscription for entity: {}", sessionRef.getSessionId(), cmdId, entity.getEntityId());
-                                if (curTsCmd != null) {
-                                    addSubscription(entity, keysByType, resultToLatestValues);
-                                }
+                                addSubscription(entity, keysByType, resultToLatestValues);
                             }
                     );
                 }
