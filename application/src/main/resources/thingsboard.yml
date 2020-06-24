@@ -567,12 +567,15 @@ transport:
     support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:true}"
     secure:
       # Only Certificate_x509:
+      # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
+      # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
       key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
-#      key_store_type: "${LWM2M_KEYSTORE_TYPE:PKCS12}"
+      # key_store_type: "${LWM2M_KEYSTORE_TYPE:PKCS12}"
       key_store_path_file: "${KEY_STORE_PATH_FILE:}"
       key_store_path_resource: "credentials/serverKeyStore.jks"
       key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
+      enable_gen_psk_rpk: "${ENABLE_GEN_PSK_RPK:true}"
     server:
       bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
       bind_port: "${LWM2M_BIND_PORT:5685}"
@@ -585,7 +588,7 @@ transport:
         #3: NoSec mode  *
         #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
         #4: Certificate mode X509 with EST
-        dtls_mode: "${LWM2M_SECURITY_MODE:2}"
+        dtls_mode: "${LWM2M_SECURITY_MODE:3}"
         bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
         bind_port: "${LWM2M_BIND_PORT:5686}"
         # Only RPK: Public & Private Key
@@ -596,7 +599,7 @@ transport:
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
     bootstrap:
-      enable: "${BOOTSTRAP:false}"
+      enable: "${BOOTSTRAP:true}"
       bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
       bind_port: "${LWM2M_BIND_PORT:5687}"
       secure:
@@ -608,7 +611,7 @@ transport:
         public_y: "${LWM2M_SERVER_PUBLIC_Y:55bbeb93fe136d36131043ed607e0ea4de1af05973f6bf9c0a11a4129f2f7519}"
         private_s: "${LWM2M_SERVER_PRIVATE_S:da94b0f94a64c1101ca2c0703de9a23f4deab833d10974e7d92c8cf479c700c3}"
         # Only Certificate_x509:
-        alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:server_bootstrap}"
+        alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
       # Redis
     redis_url: "${LWM2M_REDIS_URL:''}"
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.secure;
+package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

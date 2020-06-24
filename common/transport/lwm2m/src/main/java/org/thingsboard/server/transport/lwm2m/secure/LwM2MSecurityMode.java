@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.secure;
+package org.thingsboard.server.transport.lwm2m.secure;
 
 public enum LwM2MSecurityMode {
 
@@ -22,8 +22,8 @@ public enum LwM2MSecurityMode {
     X509(2, "x509"),
     NO_SEC(3, "no_sec"),
     X509_EST(4, "x509_est"),
-    REDIS(5, "redis"),
-    DEFAULT_MODE(100, "default_mode");
+    REDIS(7, "redis"),
+    DEFAULT_MODE(255, "default_mode");
 
     public int code;
     public String  subEndpoint;

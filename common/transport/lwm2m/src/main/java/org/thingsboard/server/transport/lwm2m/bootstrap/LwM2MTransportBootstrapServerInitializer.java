@@ -13,44 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.bootstrap;
+
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.server.californium.LeshanServer;
+import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@Service("LwM2MTransportServerInitializer")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class LwM2MTransportServerInitializer {
+@Service("LwM2MTransportBootstrapServerInitializer")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true' && '${transport.lwm2m.bootstrap.enable}'=='true')")
+public class LwM2MTransportBootstrapServerInitializer {
 
     @Autowired
-    private LeshanServer lhServer;
+    private LeshanBootstrapServer lhBServer;
 
     @Autowired
     private LwM2MTransportContextServer context;
 
     @PostConstruct
     public void init() {
-        if (context.getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
-        this.context.setSessions(new ConcurrentHashMap<>());
-        this.lhServer.start();
+//        this.context.setSessions(new ConcurrentHashMap<>());
+        this.lhBServer.start();
     }
 
     @PreDestroy
     public void shutdown() throws InterruptedException {
-        log.info("Stopping LwM2M transport Server!");
+        log.info("Stopping LwM2M transport Bootstrap Server!");
         try {
-            lhServer.destroy();
+            lhBServer.destroy();
         } finally {
         }
-        log.info("LwM2M transport Server stopped!");
+        log.info("LwM2M transport Bootstrap Server stopped!");
     }
+
 }

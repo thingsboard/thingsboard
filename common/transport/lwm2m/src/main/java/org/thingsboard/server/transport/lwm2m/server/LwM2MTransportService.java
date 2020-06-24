@@ -69,7 +69,7 @@ public class LwM2MTransportService {
     private LeshanServer lwServer;
 
     @Autowired
-    private LwM2MTransportContext context;
+    private LwM2MTransportContextServer context;
 
     @Autowired
     private LwM2MTransportRequest lwM2MTransportRequest;

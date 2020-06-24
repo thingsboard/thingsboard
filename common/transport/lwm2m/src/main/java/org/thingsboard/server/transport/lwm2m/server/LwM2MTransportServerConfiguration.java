@@ -32,8 +32,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSetSecurityStoreServer;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 
@@ -50,7 +50,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 public class LwM2MTransportServerConfiguration {
 
     @Autowired
-    private LwM2MTransportContext context;
+    private LwM2MTransportContextServer context;
 
     @Autowired
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
@@ -97,7 +97,7 @@ public class LwM2MTransportServerConfiguration {
         /**  Create DTLS security mode
          * There can be only one DTLS security mode
          */
-        new LwM2MSecurityStore(builder, context, lwM2mInMemorySecurityStore);
+        new LwM2MSetSecurityStoreServer(builder, context, lwM2mInMemorySecurityStore);
 
         /** Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));

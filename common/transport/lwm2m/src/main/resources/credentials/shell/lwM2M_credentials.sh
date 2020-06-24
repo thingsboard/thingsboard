@@ -27,7 +27,7 @@ echo "${H2}Creating the trusted root CA key and certificate...${RESET}"
 #    1024 (when using -genkeypair)
 keytool \
   -genkeypair \
-  -alias rootca \
+  -alias $ROOT_KEY_ALIAS \
   -keyalg EC \
   -dname "CN=$ROOT_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
   -validity $VALIDITY \
@@ -40,7 +40,7 @@ echo
 echo "${H2}Creating server key and self-signed  certificate ...${RESET}"
 keytool \
   -genkeypair \
-  -alias server \
+  -alias $SERVER_ALIAS \
   -keyalg EC \
   -dname "CN=$SERVER_SELF_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
   -validity $VALIDITY \
@@ -50,12 +50,12 @@ keytool \
   -storepass $SERVER_STORE_PWD
 keytool \
   -exportcert \
-  -alias server \
+  -alias $SERVER_ALIAS \
   -keystore $SERVER_STORE \
   -storepass $SERVER_STORE_PWD | \
   keytool \
     -importcert \
-    -alias server_self_signed \
+    -alias $SERVER_SELF_ALIAS \
     -keystore $SERVER_STORE \
     -storepass $SERVER_STORE_PWD \
     -noprompt
@@ -64,22 +64,68 @@ echo
 echo "${H2}Creating server certificate signed by root CA...${RESET}"
 keytool \
   -certreq \
-  -alias server \
+  -alias $SERVER_ALIAS \
   -dname "CN=$SERVER_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
   -keystore $SERVER_STORE \
   -storepass $SERVER_STORE_PWD | \
   keytool \
     -gencert \
-    -alias rootCA \
+    -alias $ROOT_KEY_ALIAS \
     -keystore $SERVER_STORE \
     -storepass $SERVER_STORE_PWD \
     -storetype $STORETYPE \
     -validity $VALIDITY  | \
     keytool \
       -importcert \
-      -alias server \
+      -alias $SERVER_ALIAS \
       -keystore $SERVER_STORE \
       -storepass $SERVER_STORE_PWD
+
+echo
+echo "${H2}Creating server key and self-signed  certificate ...${RESET}"
+keytool \
+  -genkeypair \
+  -alias $BOOTSTRAP_ALIAS \
+  -keyalg EC \
+  -dname "CN=$BOOTSTRAP_SELF_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
+  -validity $VALIDITY \
+  -storetype $STORETYPE \
+  -keypass $SERVER_STORE_PWD \
+  -keystore $SERVER_STORE \
+  -storepass $SERVER_STORE_PWD
+keytool \
+  -exportcert \
+  -alias $BOOTSTRAP_ALIAS \
+  -keystore $SERVER_STORE \
+  -storepass $SERVER_STORE_PWD | \
+  keytool \
+    -importcert \
+    -alias $BOOTSTRAP_SELF_ALIAS \
+    -keystore $SERVER_STORE \
+    -storepass $SERVER_STORE_PWD \
+    -noprompt
+
+echo
+echo "${H2}Creating bootstrap certificate signed by root CA...${RESET}"
+keytool \
+  -certreq \
+  -alias $BOOTSTRAP_ALIAS \
+  -dname "CN=$BOOTSTRAP_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
+  -keystore $SERVER_STORE \
+  -storepass $SERVER_STORE_PWD | \
+  keytool \
+    -gencert \
+    -alias $ROOT_KEY_ALIAS \
+    -keystore $SERVER_STORE \
+    -storepass $SERVER_STORE_PWD \
+    -storetype $STORETYPE \
+    -validity $VALIDITY  | \
+    keytool \
+      -importcert \
+      -alias $BOOTSTRAP_ALIAS \
+      -keystore $SERVER_STORE \
+      -storepass $SERVER_STORE_PWD
+
 
 echo
 echo "${H1}Client Keystore : ${RESET}"
@@ -87,7 +133,7 @@ echo "${H1}==================${RESET}"
 echo "${H2}Creating client key and self-signed certificate with expected CN...${RESET}"
 keytool \
   -genkeypair \
-  -alias client \
+  -alias $CLIENT_ALIAS \
   -keyalg EC \
   -dname "CN=$CLIENT_SELF_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
   -validity $VALIDITY \
@@ -97,12 +143,12 @@ keytool \
   -storepass $CLIENT_STORE_PWD
 keytool \
   -exportcert \
-  -alias client \
+  -alias $CLIENT_ALIAS \
   -keystore $CLIENT_STORE \
   -storepass $CLIENT_STORE_PWD | \
   keytool \
     -importcert \
-    -alias client_self_signed \
+    -alias $CLIENT_SELF_ALIAS \
     -keystore $CLIENT_STORE \
     -storepass $CLIENT_STORE_PWD \
     -noprompt
@@ -111,12 +157,12 @@ echo
 echo "${H2}Import root certificate just to be able to import  ned by root CA with expected CN...${RESET}"
 keytool \
   -exportcert \
-  -alias rootCA \
+  -alias $ROOT_KEY_ALIAS \
   -keystore $SERVER_STORE \
   -storepass $SERVER_STORE_PWD | \
   keytool \
     -importcert \
-    -alias rootCA \
+    -alias $ROOT_KEY_ALIAS \
     -keystore $CLIENT_STORE \
     -storepass $CLIENT_STORE_PWD \
     -noprompt
@@ -125,20 +171,20 @@ echo
 echo "${H2}Creating client certificate signed by root CA with expected CN...${RESET}"
 keytool \
   -certreq \
-  -alias client \
+  -alias $CLIENT_ALIAS \
   -dname "CN=$CLIENT_CN, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
   -keystore $CLIENT_STORE \
   -storepass $CLIENT_STORE_PWD | \
   keytool \
     -gencert \
-    -alias rootCA \
+    -alias $ROOT_KEY_ALIAS \
     -keystore $SERVER_STORE \
     -storepass $SERVER_STORE_PWD \
     -storetype $STORETYPE \
     -validity $VALIDITY  | \
     keytool \
       -importcert \
-      -alias client \
+      -alias $CLIENT_ALIAS \
       -keystore $CLIENT_STORE \
       -storepass $CLIENT_STORE_PWD \
       -noprompt

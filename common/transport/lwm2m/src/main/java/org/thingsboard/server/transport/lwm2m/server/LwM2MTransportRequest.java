@@ -32,10 +32,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.util.*;
 
-
+@Slf4j
 @Service("LwM2MTransportRequest")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-@Slf4j
 public class LwM2MTransportRequest {
 
 //    private ObjectModelSerDes serializer;
@@ -49,7 +48,7 @@ public class LwM2MTransportRequest {
     private LeshanServer lwServer;
 
     @Autowired
-    private LwM2MTransportContext context;
+    private LwM2MTransportContextServer context;
 
 
     @PostConstruct
