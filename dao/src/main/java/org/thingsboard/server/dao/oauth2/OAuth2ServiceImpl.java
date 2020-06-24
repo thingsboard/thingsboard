@@ -54,13 +54,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     private static final String OAUTH2_CLIENT_REGISTRATIONS_PARAMS = "oauth2ClientRegistrationsParams";
     private static final String OAUTH2_CLIENT_REGISTRATIONS_DOMAIN_NAME_PREFIX = "oauth2ClientRegistrationsDomainNamePrefix";
-
     private static final String ALLOW_OAUTH2_CONFIGURATION = "allowOAuth2Configuration";
-
-
     private static final String SYSTEM_SETTINGS_OAUTH2_VALUE = "value";
-
     private static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
+
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
 
     @Autowired
     private Environment environment;
@@ -74,16 +73,11 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     @Autowired
     private TenantService tenantService;
 
-    private final ReentrantLock lock = new ReentrantLock();
-
-    private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
-
-
     private boolean isInstall() {
         return environment.acceptsProfiles("install");
     }
 
-    // TODO add field that invalidates cache in case write to cache fails after successful saving in DB
+    // TODO do I need to add a field that invalidates cache in case write to cache fails after successful saving in DB?
     @PostConstruct
     public void init() {
         if (isInstall()) return;
@@ -95,7 +89,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientRegistration getClientRegistration(String registrationId) {
-       return clientsParams.values().stream()
+        return clientsParams.values().stream()
                 .flatMap(oAuth2ClientsParams -> oAuth2ClientsParams.getClientRegistrations().stream())
                 .filter(clientRegistration -> registrationId.equals(clientRegistration.getRegistrationId()))
                 .findFirst()
@@ -111,14 +105,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                         .collect(Collectors.toList())
                 : Collections.emptyList()
                 ;
-    }
-
-    private OAuth2ClientInfo toClientInfo(OAuth2ClientRegistration clientRegistration) {
-        OAuth2ClientInfo client = new OAuth2ClientInfo();
-        client.setName(clientRegistration.getLoginButtonLabel());
-        client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
-        client.setIcon(clientRegistration.getLoginButtonIcon());
-        return client;
     }
 
     @Override
@@ -286,11 +272,13 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         try {
             return Futures.transform(jsonFuture,
                     clientsParamsByKvEntryKey -> {
-                        Map<TenantId, OAuth2ClientsParams> tenantClientParams = clientsParamsByKvEntryKey.entrySet().stream()
-                                .collect(Collectors.toMap(
-                                        entry -> new TenantId(UUIDConverter.fromString(entry.getKey())),
-                                        entry -> constructOAuth2ClientsParams(entry.getValue())
-                                ));
+                        Map<TenantId, OAuth2ClientsParams> tenantClientParams = clientsParamsByKvEntryKey != null ?
+                                clientsParamsByKvEntryKey.entrySet().stream()
+                                        .collect(Collectors.toMap(
+                                                entry -> new TenantId(UUIDConverter.fromString(entry.getKey())),
+                                                entry -> constructOAuth2ClientsParams(entry.getValue())
+                                        ))
+                                : new HashMap<>();
                         tenantClientParams.put(TenantId.SYS_TENANT_ID, systemOAuth2ClientsParams);
                         return tenantClientParams;
                     },
@@ -341,6 +329,29 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }, MoreExecutors.directExecutor());
     }
 
+    private OAuth2ClientsParams getMergedOAuth2ClientsParams(String domainName) {
+        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructAdminSettingsDomainKey(domainName));
+        OAuth2ClientsParams result;
+        if (oauth2ClientsSettings != null) {
+            String strEntityType = oauth2ClientsSettings.getJsonValue().get("entityType").asText();
+            String strEntityId = oauth2ClientsSettings.getJsonValue().get("entityId").asText();
+            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+            if (!entityId.getEntityType().equals(EntityType.TENANT)) {
+                log.error("Only tenant can configure OAuth2 for certain domain!");
+                throw new IllegalStateException("Only tenant can configure OAuth2 for certain domain!");
+            }
+            TenantId tenantId = (TenantId) entityId;
+            result = getTenantOAuth2ClientsParams(tenantId);
+            OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+            if (systemOAuth2ClientsParams != null) {
+                result.getClientRegistrations().addAll(systemOAuth2ClientsParams.getClientRegistrations());
+            }
+        } else {
+            result = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+        }
+        return result;
+    }
+
     private String constructAdminSettingsDomainKey(String domainName) {
         String clientRegistrationsKey;
         if (StringUtils.isEmpty(domainName)) {
@@ -367,27 +378,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return result;
     }
 
-    private OAuth2ClientsParams getMergedOAuth2ClientsParams(String domainName) {
-        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructAdminSettingsDomainKey(domainName));
-        OAuth2ClientsParams result;
-        if (oauth2ClientsSettings != null) {
-            String strEntityType = oauth2ClientsSettings.getJsonValue().get("entityType").asText();
-            String strEntityId = oauth2ClientsSettings.getJsonValue().get("entityId").asText();
-            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-            if (!entityId.getEntityType().equals(EntityType.TENANT)) {
-                log.error("Only tenant can configure OAuth2 for certain domain!");
-                throw new IllegalStateException("Only tenant can configure OAuth2 for certain domain!");
-            }
-            TenantId tenantId = (TenantId) entityId;
-            result = getTenantOAuth2ClientsParams(tenantId);
-            OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
-            result.getClientRegistrations().addAll(systemOAuth2ClientsParams.getClientRegistrations());
-        } else {
-            result = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
-        }
-        return result;
-    }
-
     private String toJson(OAuth2ClientsParams oAuth2ClientsParams) {
         String json;
         try {
@@ -397,6 +387,14 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             throw new IncorrectParameterException("Unable to convert OAuth2 Client Registration Params to JSON!");
         }
         return json;
+    }
+
+    private OAuth2ClientInfo toClientInfo(OAuth2ClientRegistration clientRegistration) {
+        OAuth2ClientInfo client = new OAuth2ClientInfo();
+        client.setName(clientRegistration.getLoginButtonLabel());
+        client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
+        client.setIcon(clientRegistration.getLoginButtonIcon());
+        return client;
     }
 
     private final Consumer<OAuth2ClientRegistration> validator = clientRegistration -> {
