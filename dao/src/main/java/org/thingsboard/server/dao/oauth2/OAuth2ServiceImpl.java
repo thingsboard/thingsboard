@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -74,6 +75,8 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Autowired
     private TenantService tenantService;
+
+    private final ReentrantLock lock = new ReentrantLock();
 
     private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
 
@@ -122,15 +125,43 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientsParams saveSystemOAuth2ClientsParams(OAuth2ClientsParams oAuth2ClientsParams) {
-        // TODO check by registration ID in entities
         validate(oAuth2ClientsParams);
 
+        validateUniqueRegistrationId(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
+        lock.lock();
+        try {
+            validateUniqueRegistrationId(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
+            AdminSettings clientRegistrationParamsSettings = createSystemOAuth2Settings(oAuth2ClientsParams);
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, clientRegistrationParamsSettings);
+            clientsParams.put(TenantId.SYS_TENANT_ID, oAuth2ClientsParams);
+        } finally {
+            lock.unlock();
+        }
 
+        return getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+    }
+
+    private void validateUniqueRegistrationId(OAuth2ClientsParams inputOAuth2ClientsParams, TenantId tenantId) {
+        inputOAuth2ClientsParams.getClientRegistrations().stream()
+                .map(OAuth2ClientRegistration::getRegistrationId)
+                .forEach(registrationId -> {
+                    clientsParams.forEach((paramsTenantId, oAuth2ClientsParams) -> {
+                        boolean registrationExists = oAuth2ClientsParams.getClientRegistrations().stream()
+                                .map(OAuth2ClientRegistration::getRegistrationId)
+                                .anyMatch(registrationId::equals);
+                        if (registrationExists && !tenantId.equals(paramsTenantId)) {
+                            log.error("Current registrationId [{}] already registered in the system!", registrationId);
+                            throw new IncorrectParameterException("Current registrationId [" + registrationId + "] already registered in the system!");
+                        }
+                    });
+                });
+    }
+
+    private AdminSettings createSystemOAuth2Settings(OAuth2ClientsParams oAuth2ClientsParams) {
         AdminSettings clientRegistrationParamsSettings = new AdminSettings();
         clientRegistrationParamsSettings.setKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
         ObjectNode clientRegistrationsNode = mapper.createObjectNode();
 
-        oAuth2ClientsParams.setDomainName("");
         String json;
         try {
             json = mapper.writeValueAsString(oAuth2ClientsParams);
@@ -139,12 +170,9 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             throw new IncorrectParameterException("Unable to convert OAuth2 Client Registration Params to JSON!");
         }
         clientRegistrationsNode.put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
-
         clientRegistrationParamsSettings.setJsonValue(clientRegistrationsNode);
 
-        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, clientRegistrationParamsSettings);
-
-        return getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+        return clientRegistrationParamsSettings;
     }
 
     @Override
