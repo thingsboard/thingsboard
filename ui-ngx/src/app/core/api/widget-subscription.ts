@@ -209,6 +209,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     } else {
       this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || (() => {});
       this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || (() => {});
+      this.callbacks.onInitialPageDataChanged = this.callbacks.onInitialPageDataChanged || (() => {});
       this.callbacks.dataLoading = this.callbacks.dataLoading || (() => {});
       this.callbacks.legendDataUpdated = this.callbacks.legendDataUpdated || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
@@ -400,6 +401,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         dataLoaded: (pageData, data1, datasourceIndex) => {
           this.dataLoaded(pageData, data1, datasourceIndex, true)
         },
+        initialPageDataChanged: this.initialPageDataChanged.bind(this),
         dataUpdated: this.dataUpdated.bind(this),
         updateRealtimeSubscription: () => {
           this.subscriptionTimewindow = this.updateRealtimeSubscription();
@@ -852,9 +854,9 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-  subscribeForLatestData(datasourceIndex: number,
-                         pageLink: EntityDataPageLink,
-                         keyFilters: KeyFilter[]): void {
+  subscribeForPaginatedData(datasourceIndex: number,
+                            pageLink: EntityDataPageLink,
+                            keyFilters: KeyFilter[]): void {
     let entityDataListener = this.entityDataListeners[datasourceIndex];
     if (entityDataListener) {
       this.ctx.entityDataService.stopSubscription(entityDataListener);
@@ -871,7 +873,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         dataUpdated: this.dataUpdated.bind(this)
       };
       this.entityDataListeners[datasourceIndex] = entityDataListener;
-      this.ctx.entityDataService.subscribeForLatestData(entityDataListener, pageLink, keyFilters);
+      this.ctx.entityDataService.subscribeForPaginatedData(entityDataListener, pageLink, keyFilters);
     }
   }
 
@@ -1154,6 +1156,10 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.timewindowForComparison = createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison);
     this.updateComparisonTimewindow();
     return this.timewindowForComparison;
+  }
+
+  private initialPageDataChanged(nextPageData: PageData<EntityData>) {
+    this.callbacks.onInitialPageDataChanged(this, nextPageData);
   }
 
   private dataLoaded(pageData: PageData<EntityData>,

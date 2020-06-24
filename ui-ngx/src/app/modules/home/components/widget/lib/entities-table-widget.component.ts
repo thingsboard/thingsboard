@@ -614,7 +614,7 @@ class EntityDatasource implements DataSource<EntityData> {
   }
 
   loadEntities(pageLink: EntityDataPageLink, keyFilters: KeyFilter[]) {
-    this.subscription.subscribeForLatestData(0, pageLink, keyFilters);
+    this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);
 /*    this.fetchEntities(pageLink).pipe(
       catchError(() => of(emptyPageData<EntityData>())),
     ).subscribe(
