@@ -19,21 +19,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.ListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.*;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -47,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,7 +75,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     @Autowired
     private TenantService tenantService;
 
-    private final Map<String, OAuth2ClientRegistration> clientRegistrationsByRegistrationId = new ConcurrentHashMap<>();
+    private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
 
 
     private boolean isInstall() {
@@ -90,21 +87,18 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     public void init() {
         if (isInstall()) return;
 
-        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
-        OAuth2ClientsParams tenantsOAuth2ClientsParams = getAllOAuth2ClientsParams();
+        Map<TenantId, OAuth2ClientsParams> allOAuth2ClientsParams = getAllOAuth2ClientsParams();
 
-        Stream.concat(
-                systemOAuth2ClientsParams.getClientRegistrations().stream(),
-                tenantsOAuth2ClientsParams.getClientRegistrations().stream()
-        )
-                .forEach(clientRegistration -> {
-                    clientRegistrationsByRegistrationId.put(clientRegistration.getRegistrationId(), clientRegistration);
-                });
+        allOAuth2ClientsParams.forEach(clientsParams::put);
     }
 
     @Override
     public OAuth2ClientRegistration getClientRegistration(String registrationId) {
-        return clientRegistrationsByRegistrationId.get(registrationId);
+       return clientsParams.values().stream()
+                .flatMap(oAuth2ClientsParams -> oAuth2ClientsParams.getClientRegistrations().stream())
+                .filter(clientRegistration -> registrationId.equals(clientRegistration.getRegistrationId()))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
@@ -112,24 +106,26 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         OAuth2ClientsParams oAuth2ClientsParams = getMergedOAuth2ClientsParams(domainName);
         return oAuth2ClientsParams != null && oAuth2ClientsParams.getClientRegistrations() != null ?
                 oAuth2ClientsParams.getClientRegistrations().stream()
-                        .map(clientRegistration -> {
-                            OAuth2ClientInfo client = new OAuth2ClientInfo();
-                            client.setName(clientRegistration.getLoginButtonLabel());
-                            client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
-                            client.setIcon(clientRegistration.getLoginButtonIcon());
-                            return client;
-                        })
+                        .map(this::toClientInfo)
                         .collect(Collectors.toList())
                 : Collections.emptyList()
                 ;
     }
 
+    private OAuth2ClientInfo toClientInfo(OAuth2ClientRegistration clientRegistration) {
+        OAuth2ClientInfo client = new OAuth2ClientInfo();
+        client.setName(clientRegistration.getLoginButtonLabel());
+        client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
+        client.setIcon(clientRegistration.getLoginButtonIcon());
+        return client;
+    }
+
     @Override
     public OAuth2ClientsParams saveSystemOAuth2ClientsParams(OAuth2ClientsParams oAuth2ClientsParams) {
         // TODO check by registration ID in entities
-        for (OAuth2ClientRegistration clientRegistration : oAuth2ClientsParams.getClientRegistrations()) {
-            validator.accept(clientRegistration);
-        }
+        validate(oAuth2ClientsParams);
+
+
         AdminSettings clientRegistrationParamsSettings = new AdminSettings();
         clientRegistrationParamsSettings.setKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
         ObjectNode clientRegistrationsNode = mapper.createObjectNode();
@@ -155,9 +151,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     public OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams) {
         // TODO ask what if tenant saves config for several different domain names, do we need to check it
         // TODO check by registration ID in system
-        for (OAuth2ClientRegistration clientRegistration : oAuth2ClientsParams.getClientRegistrations()) {
-            validator.accept(clientRegistration);
-        }
+        validate(oAuth2ClientsParams);
         String clientRegistrationsKey = constructClientRegistrationsKey(oAuth2ClientsParams.getDomainName());
         AdminSettings existentAdminSettingsByKey = adminSettingsService.findAdminSettingsByKey(tenantId, clientRegistrationsKey);
         if (StringUtils.isEmpty(oAuth2ClientsParams.getAdminSettingsId())) {
@@ -211,6 +205,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return getTenantOAuth2ClientsParams(tenantId);
     }
 
+    private void validate(OAuth2ClientsParams oAuth2ClientsParams) {
+        for (OAuth2ClientRegistration clientRegistration : oAuth2ClientsParams.getClientRegistrations()) {
+            validator.accept(clientRegistration);
+        }
+    }
+
     @Override
     public OAuth2ClientsParams getSystemOAuth2ClientsParams(TenantId tenantId) {
         AdminSettings oauth2ClientsParamsSettings = adminSettingsService.findAdminSettingsByKey(tenantId, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
@@ -237,10 +237,22 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }
     }
 
-    private OAuth2ClientsParams getAllOAuth2ClientsParams() {
-        ListenableFuture<String> jsonFuture = getOAuth2ClientsParamsAttribute();
+    private Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
+        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+        ListenableFuture<Map<String, String>> jsonFuture = getAllOAuth2ClientsParamsAttribute();
         try {
-            return Futures.transform(jsonFuture, this::constructOAuth2ClientsParams, MoreExecutors.directExecutor()).get();
+            return Futures.transform(jsonFuture,
+                    clientsParamsByKvEntryKey -> {
+                        Map<TenantId, OAuth2ClientsParams> tenantClientParams = clientsParamsByKvEntryKey.entrySet().stream()
+                                .collect(Collectors.toMap(
+                                        entry -> new TenantId(UUIDConverter.fromString(entry.getKey())),
+                                        entry -> constructOAuth2ClientsParams(entry.getValue())
+                                ));
+                        tenantClientParams.put(TenantId.SYS_TENANT_ID, systemOAuth2ClientsParams);
+                        return tenantClientParams;
+                    },
+                    MoreExecutors.directExecutor()
+            ).get();
         } catch (InterruptedException | ExecutionException e) {
             log.error("Failed to read OAuth2 Clients Params from attributes!", e);
             throw new RuntimeException("Failed to read OAuth2 Clients Params from attributes!", e);
@@ -287,20 +299,20 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<String> getOAuth2ClientsParamsAttribute() {
-        ListenableFuture<List<AttributeKvEntry>> attributeKvEntriesFuture;
+    private ListenableFuture<Map<String, String>> getAllOAuth2ClientsParamsAttribute() {
+        ListenableFuture<List<EntityAttributeKvEntry>> entityAttributeKvEntriesFuture;
         try {
-            attributeKvEntriesFuture = attributesService.findAllByAttributeKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+            entityAttributeKvEntriesFuture = attributesService.findAllByAttributeKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
         } catch (Exception e) {
             log.error("Unable to read OAuth2 Clients Params from attributes!", e);
             throw new IncorrectParameterException("Unable to read OAuth2 Clients Params from attributes!");
         }
-        return Futures.transform(attributeKvEntriesFuture, attributeKvEntries -> {
+        return Futures.transform(entityAttributeKvEntriesFuture, attributeKvEntries -> {
             if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
-                AttributeKvEntry kvEntry = attributeKvEntries.get(0);
-                return kvEntry.getValueAsString();
+                return attributeKvEntries.stream()
+                        .collect(Collectors.toMap(EntityAttributeKvEntry::getEntityId, EntityAttributeKvEntry::getValueAsString));
             } else {
-                return "";
+                return Collections.emptyMap();
             }
         }, MoreExecutors.directExecutor());
     }
