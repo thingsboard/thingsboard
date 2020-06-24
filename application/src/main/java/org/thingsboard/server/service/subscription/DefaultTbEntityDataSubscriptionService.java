@@ -292,7 +292,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         )).collect(Collectors.toList());
         if (cmd.isFetchLatestPreviousPoint()) {
             finalTsKvQueryList = new ArrayList<>(tsKvQueryList);
-            tsKvQueryList.addAll(cmd.getKeys().stream().map(key -> new BaseReadTsKvQuery(
+            finalTsKvQueryList.addAll(cmd.getKeys().stream().map(key -> new BaseReadTsKvQuery(
                     key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg()
             )).collect(Collectors.toList()));
         } else {
