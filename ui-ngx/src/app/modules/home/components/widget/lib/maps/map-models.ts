@@ -24,6 +24,8 @@ import {
     googleMapSettingsSchema, hereMapSettingsSchema, imageMapSettingsSchema
 } from './schemes';
 
+export const DEFAULT_MAP_PAGE_SIZE = 1024;
+
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type GetTooltip = (point: FormattedData, setTooltip?: boolean) => string;

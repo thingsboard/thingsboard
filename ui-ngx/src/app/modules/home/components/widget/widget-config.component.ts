@@ -714,9 +714,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   private fetchEntityKeys(entityAliasId: string, query: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
-    return this.aliasController.getAliasInfo(entityAliasId).pipe(
-      mergeMap((aliasInfo) => {
-        const entity = aliasInfo.currentEntity;
+    return this.aliasController.resolveSingleEntityInfo(entityAliasId).pipe(
+      mergeMap((entity) => {
         if (entity) {
           const fetchEntityTasks: Array<Observable<Array<DataKey>>> = [];
           for (const dataKeyType of dataKeyTypes) {

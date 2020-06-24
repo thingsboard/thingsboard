@@ -161,14 +161,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.calcLabel();
     this.calcTooltip(currentPosition.find(position => position.entityName === this.activeTrip.entityName));
     if (this.mapWidget) {
-      this.mapWidget.map.updatePolylines(this.interpolatedTimeData.map(ds => _.values(ds)), this.activeTrip);
+      this.mapWidget.map.updatePolylines(this.interpolatedTimeData.map(ds => _.values(ds)), true, this.activeTrip);
       if (this.settings.showPolygon) {
         this.mapWidget.map.updatePolygons(this.interpolatedTimeData);
       }
       if (this.settings.showPoints) {
         this.mapWidget.map.updatePoints(_.values(_.union(this.interpolatedTimeData)[0]), this.calcTooltip);
       }
-      this.mapWidget.map.updateMarkers(currentPosition, (trip) => {
+      this.mapWidget.map.updateMarkers(currentPosition, true, (trip) => {
         this.activeTrip = trip;
         this.timeUpdated(this.currentTime)
       });

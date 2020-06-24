@@ -884,6 +884,13 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
+  subscribeAllForPaginatedData(pageLink: EntityDataPageLink,
+                               keyFilters: KeyFilter[]): void {
+    this.configuredDatasources.forEach((datasource, datasourceIndex) => {
+      this.subscribeForPaginatedData(datasourceIndex, pageLink, keyFilters);
+    });
+  }
+
   subscribeForPaginatedData(datasourceIndex: number,
                             pageLink: EntityDataPageLink,
                             keyFilters: KeyFilter[]): void {
