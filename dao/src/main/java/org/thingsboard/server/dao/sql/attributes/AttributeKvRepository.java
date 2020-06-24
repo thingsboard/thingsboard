@@ -37,6 +37,10 @@ public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity,
                                                                            @Param("entityId") String entityId,
                                                                            @Param("attributeType") String attributeType);
 
+
+    @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.attributeKey = :attributeKey")
+    List<AttributeKvEntity> findAllByAttributeKey(@Param("attributeKey") String attributeKey);
+
     @Transactional
     @Modifying
     @Query("DELETE FROM AttributeKvEntity a WHERE a.id.entityType = :entityType " +
@@ -47,7 +51,5 @@ public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity,
                 @Param("entityId") String entityId,
                 @Param("attributeType") String attributeType,
                 @Param("attributeKey") String attributeKey);
-
-    List<AttributeKvEntity> findAllByAttributeKey(String attributeKey);
 }
 

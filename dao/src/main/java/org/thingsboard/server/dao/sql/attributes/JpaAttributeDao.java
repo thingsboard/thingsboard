@@ -25,9 +25,10 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
+import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
@@ -120,9 +121,15 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAllByAttributeKey(String attributeKey) {
+    public ListenableFuture<List<EntityAttributeKvEntry>> findAllByAttributeKey(String attributeKey) {
         return Futures.immediateFuture(
-                DaoUtil.convertDataList(attributeKvRepository.findAllByAttributeKey(attributeKey)));
+                DaoUtil.convertDataList(
+                        attributeKvRepository.findAllByAttributeKey(attributeKey).stream()
+                                .map(attributeKvEntity -> attributeKvEntity.toEntityAttributeKvEntry)
+                                .collect(Collectors.toList())
+                )
+
+        );
     }
 
     @Override

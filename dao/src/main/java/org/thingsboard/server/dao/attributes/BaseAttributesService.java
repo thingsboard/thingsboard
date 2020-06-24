@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.EntityAttributeKvEntry;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -60,7 +61,7 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAllByAttributeKey(String attributeKey) {
+    public ListenableFuture<List<EntityAttributeKvEntry>> findAllByAttributeKey(String attributeKey) {
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
         return attributesDao.findAllByAttributeKey(attributeKey);
     }
