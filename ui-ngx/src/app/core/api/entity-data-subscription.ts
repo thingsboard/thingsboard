@@ -37,7 +37,7 @@ import {
 } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataListener, EntityDataLoadResult } from '@core/api/entity-data.service';
-import { deepClone, isDefinedAndNotNull, isObject, objectHashCode } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEqual, isObject, objectHashCode } from '@core/utils';
 import { PageData } from '@shared/models/page/page-data';
 import { DataAggregator } from '@core/api/data-aggregator';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -50,7 +50,7 @@ export interface EntityDataSubscriptionOptions {
   dataKeys: Array<SubscriptionDataKey>;
   type: widgetType;
   entityFilter?: EntityFilter;
-  isLatestDataSubscription?: boolean;
+  isPaginatedDataSubscription?: boolean;
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
   subscriptionTimewindow?: SubscriptionTimewindow;
@@ -154,7 +154,7 @@ export class EntityDataSubscription {
   }
 
   public subscribe(): Observable<EntityDataLoadResult> {
-    if (!this.entityDataSubscriptionOptions.isLatestDataSubscription) {
+    if (!this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
       this.entityDataResolveSubject = new ReplaySubject(1);
     } else {
       this.started = true;
@@ -199,7 +199,7 @@ export class EntityDataSubscription {
         latestValues: this.latestValues
       };
 
-      if (this.entityDataSubscriptionOptions.isLatestDataSubscription) {
+      if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
         if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
           if (this.latestValues.length > 0) {
             this.dataCommand.latestCmd = {
@@ -222,7 +222,7 @@ export class EntityDataSubscription {
       );
 
       this.subscriber.reconnect$.subscribe(() => {
-        if (this.started && !this.entityDataSubscriptionOptions.isLatestDataSubscription) {
+        if (this.started && !this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
           if (this.entityDataSubscriptionOptions.type === widgetType.timeseries &&
               !this.history && this.tsFields.length) {
             const newSubsTw: SubscriptionTimewindow = this.listener.updateRealtimeSubscription();
@@ -271,14 +271,14 @@ export class EntityDataSubscription {
         totalPages: 1
       };
       this.onPageData(pageData);
-      if (this.entityDataSubscriptionOptions.isLatestDataSubscription) {
+      if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
         if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
           this.frequency = 1000;
           this.timer = setTimeout(this.onTick.bind(this, true), 0);
         }
       }
     }
-    if (this.entityDataSubscriptionOptions.isLatestDataSubscription) {
+    if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
       return of(null);
     } else {
       return this.entityDataResolveSubject.asObservable();
@@ -286,7 +286,7 @@ export class EntityDataSubscription {
   }
 
   public start() {
-    if (this.entityDataSubscriptionOptions.isLatestDataSubscription) {
+    if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
       return;
     }
     this.subsTw = this.entityDataSubscriptionOptions.subscriptionTimewindow;
@@ -432,9 +432,26 @@ export class EntityDataSubscription {
     }
   }
 
+  private pageDataChanged(prevPageData: PageData<EntityData>, nextPageData: PageData<EntityData>) {
+    const prevIds = prevPageData.data.map((entityData) => entityData.entityId.id);
+    const nextIds = nextPageData.data.map((entityData) => entityData.entityId.id);
+    return !isEqual(prevIds, nextIds);
+  }
+
   private onPageData(pageData: PageData<EntityData>) {
+    const isInitialData = !this.pageData;
+    if (!isInitialData && !this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
+      if (this.pageDataChanged(this.pageData, pageData)) {
+        if (this.listener.initialPageDataChanged) {
+          this.listener.initialPageDataChanged(pageData);
+        }
+        return;
+      }
+    }
     this.pageData = pageData;
-    this.resetData();
+    if (isInitialData || this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
+      this.resetData();
+    }
     const data: Array<Array<DataSetHolder>> = [];
     for (let dataIndex = 0; dataIndex < pageData.data.length; dataIndex++) {
       const entityData = pageData.data[dataIndex];
@@ -458,8 +475,10 @@ export class EntityDataSubscription {
       );
       this.entityDataResolveSubject.complete();
     } else {
-      this.listener.dataLoaded(pageData, data,
-        this.listener.configDatasourceIndex);
+      if (isInitialData || this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
+        this.listener.dataLoaded(pageData, data,
+          this.listener.configDatasourceIndex);
+      }
     }
   }
 
@@ -487,8 +506,13 @@ export class EntityDataSubscription {
     }
     if (this.entityDataSubscriptionOptions.type === widgetType.timeseries && entityData.timeseries) {
       const subscriptionData = this.toSubscriptionData(entityData.timeseries, true);
-      if (!this.history && aggregate) {
-        this.dataAggregators[dataIndex].onData({data: subscriptionData}, false, false, true);
+      if (!this.history) {
+        if (this.dataAggregators && this.dataAggregators[dataIndex]) {
+          this.dataAggregators[dataIndex].onData({data: subscriptionData}, false, false, true);
+        }
+        if (!aggregate) {
+          this.onData(subscriptionData, DataKeyType.timeseries, dataIndex, true, dataUpdatedCb);
+        }
       } else {
         this.onData(subscriptionData, DataKeyType.timeseries, dataIndex, true, dataUpdatedCb);
       }

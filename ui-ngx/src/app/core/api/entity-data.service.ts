@@ -33,6 +33,7 @@ export interface EntityDataListener {
   configDatasourceIndex: number;
   dataLoaded: (pageData: PageData<EntityData>, data: Array<Array<DataSetHolder>>, datasourceIndex: number) => void;
   dataUpdated: (data: DataSetHolder, datasourceIndex: number, dataIndex: number, dataKeyIndex: number, detectChanges: boolean) => void;
+  initialPageDataChanged?: (nextPageData: PageData<EntityData>) => void;
   updateRealtimeSubscription?: () => SubscriptionTimewindow;
   setRealtimeSubscription?: (subscriptionTimewindow: SubscriptionTimewindow) => void;
   subscription?: EntityDataSubscription;
@@ -70,9 +71,9 @@ export class EntityDataService {
     listener.subscription.start();
   }
 
-  public subscribeForLatestData(listener: EntityDataListener,
-                                pageLink: EntityDataPageLink,
-                                keyFilters: KeyFilter[]) {
+  public subscribeForPaginatedData(listener: EntityDataListener,
+                                   pageLink: EntityDataPageLink,
+                                   keyFilters: KeyFilter[]) {
     const datasource = listener.configDatasource;
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
       return;
@@ -89,7 +90,7 @@ export class EntityDataService {
   private createSubscription(listener: EntityDataListener,
                              pageLink: EntityDataPageLink,
                              keyFilters: KeyFilter[],
-                             isLatestDataSubscription: boolean): EntityDataSubscription {
+                             isPaginatedDataSubscription: boolean): EntityDataSubscription {
     const datasource = listener.configDatasource;
     const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
     datasource.dataKeys.forEach((dataKey) => {
@@ -111,7 +112,7 @@ export class EntityDataService {
       entityDataSubscriptionOptions.pageLink = pageLink;
       entityDataSubscriptionOptions.keyFilters = keyFilters;
     }
-    entityDataSubscriptionOptions.isLatestDataSubscription = isLatestDataSubscription;
+    entityDataSubscriptionOptions.isPaginatedDataSubscription = isPaginatedDataSubscription;
     return new EntityDataSubscription(entityDataSubscriptionOptions,
       listener, this.telemetryService, this.utils);
   }

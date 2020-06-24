@@ -41,7 +41,7 @@ import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import * as moment_ from 'moment';
-import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
+import { EntityData, EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
 import { EntityDataService } from '@core/api/entity-data.service';
 import { PageData } from '@shared/models/page/page-data';
 
@@ -185,6 +185,7 @@ export class WidgetSubscriptionContext {
 export interface WidgetSubscriptionCallbacks {
   onDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   onDataUpdateError?: (subscription: IWidgetSubscription, e: any) => void;
+  onInitialPageDataChanged?: (subscription: IWidgetSubscription, nextPageData: PageData<EntityData>) => void;
   dataLoading?: (subscription: IWidgetSubscription) => void;
   legendDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   timeWindowUpdated?: (subscription: IWidgetSubscription, timeWindowConfig: Timewindow) => void;
@@ -279,9 +280,9 @@ export interface IWidgetSubscription {
 
   subscribe(): void;
 
-  subscribeForLatestData(datasourceIndex: number,
-                         pageLink: EntityDataPageLink,
-                         keyFilters: KeyFilter[]): void;
+  subscribeForPaginatedData(datasourceIndex: number,
+                            pageLink: EntityDataPageLink,
+                            keyFilters: KeyFilter[]): void;
 
   isDataResolved(): boolean;
 
