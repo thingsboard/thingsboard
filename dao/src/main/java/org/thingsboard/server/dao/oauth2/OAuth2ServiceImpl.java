@@ -143,19 +143,27 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     public OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams) {
         // TODO what if tenant saves config for several different domain names, do we need to check it
         validate(oAuth2ClientsParams);
-        // TODO check by registration ID in system
 
-        String adminSettingsId = processTenantAdminSettings(tenantId, oAuth2ClientsParams.getDomainName(), oAuth2ClientsParams.getAdminSettingsId());
-        oAuth2ClientsParams.setAdminSettingsId(adminSettingsId);
-
-        List<AttributeKvEntry> attributes = createOAuth2ClientsParamsAttributes(oAuth2ClientsParams);
+        validateUniqueRegistrationId(oAuth2ClientsParams, tenantId);
+        lock.lock();
         try {
-            // TODO ask if I need .get() here
-            attributesService.save(tenantId, tenantId, DataConstants.SERVER_SCOPE, attributes).get();
-        } catch (Exception e) {
-            log.error("Unable to save OAuth2 Client Registration Params to attributes!", e);
-            throw new IncorrectParameterException("Unable to save OAuth2 Client Registration Params to attributes!");
+            String adminSettingsId = processTenantAdminSettings(tenantId, oAuth2ClientsParams.getDomainName(), oAuth2ClientsParams.getAdminSettingsId());
+            oAuth2ClientsParams.setAdminSettingsId(adminSettingsId);
+
+            List<AttributeKvEntry> attributes = createOAuth2ClientsParamsAttributes(oAuth2ClientsParams);
+            try {
+                // TODO ask if I need .get() here
+                attributesService.save(tenantId, tenantId, DataConstants.SERVER_SCOPE, attributes).get();
+            } catch (Exception e) {
+                log.error("Unable to save OAuth2 Client Registration Params to attributes!", e);
+                throw new IncorrectParameterException("Unable to save OAuth2 Client Registration Params to attributes!");
+            }
+
+            clientsParams.put(tenantId, oAuth2ClientsParams);
+        } finally {
+            lock.unlock();
         }
+
         return getTenantOAuth2ClientsParams(tenantId);
     }
 
