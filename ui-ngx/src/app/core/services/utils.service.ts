@@ -325,7 +325,7 @@ export class UtilsService {
     return dataKey;
   }
 
-  public createAdditionalDataKey(dataKey: DataKey, datasource: Datasource, timeUnit: string,
+  /* public createAdditionalDataKey(dataKey: DataKey, datasource: Datasource, timeUnit: string,
     datasources: Datasource[], additionalKeysNumber: number): DataKey {
     const additionalDataKey = deepClone(dataKey);
     if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
@@ -343,7 +343,7 @@ export class UtilsService {
     }
     additionalDataKey._hash = Math.random();
     return additionalDataKey;
-  }
+  }*/
 
   public createLabelFromDatasource(datasource: Datasource, pattern: string): string {
     return createLabelFromDatasource(datasource, pattern);

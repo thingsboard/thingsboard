@@ -235,6 +235,8 @@ export interface DataKey extends KeyInfo {
   usePostProcessing?: boolean;
   hidden?: boolean;
   inLegend?: boolean;
+  isAdditional?: boolean;
+  origDataKeyIndex?: number;
   _hash?: number;
 }
 
@@ -266,6 +268,7 @@ export interface Datasource {
   entityDescription?: string;
   generated?: boolean;
   isAdditional?: boolean;
+  origDatasourceIndex?: number;
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
   entityFilter?: EntityFilter;

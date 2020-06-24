@@ -22,6 +22,7 @@ import {
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import {
+  DataKey,
   DataSet,
   DataSetHolder,
   Datasource,
@@ -393,6 +394,28 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.notifyDataLoaded();
       return of(null);
     }
+    if (this.comparisonEnabled) {
+      const additionalDatasources: Datasource[] = [];
+      this.configuredDatasources.forEach((datasource, datasourceIndex) => {
+        const additionalDataKeys: DataKey[] = [];
+        datasource.dataKeys.forEach((dataKey, dataKeyIndex) => {
+          if (dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+            const additionalDataKey = deepClone(dataKey);
+            additionalDataKey.isAdditional = true;
+            additionalDataKey.origDataKeyIndex = dataKeyIndex;
+            additionalDataKeys.push(additionalDataKey);
+          }
+        });
+        if (additionalDataKeys.length) {
+          const additionalDatasource: Datasource = deepClone(datasource);
+          additionalDatasource.dataKeys = additionalDataKeys;
+          additionalDatasource.isAdditional = true;
+          additionalDatasource.origDatasourceIndex = datasourceIndex;
+          additionalDatasources.push(additionalDatasource);
+        }
+      });
+      this.configuredDatasources = this.configuredDatasources.concat(additionalDatasources);
+    }
     const resolveResultObservables = this.configuredDatasources.map((datasource, index) => {
       const listener: EntityDataListener = {
         subscriptionType: this.type,
@@ -404,11 +427,18 @@ export class WidgetSubscription implements IWidgetSubscription {
         initialPageDataChanged: this.initialPageDataChanged.bind(this),
         dataUpdated: this.dataUpdated.bind(this),
         updateRealtimeSubscription: () => {
-          this.subscriptionTimewindow = this.updateRealtimeSubscription();
-          return this.subscriptionTimewindow;
+          if (this.comparisonEnabled && datasource.isAdditional) {
+            return this.updateSubscriptionForComparison();
+          } else {
+            return this.updateRealtimeSubscription();
+          }
         },
         setRealtimeSubscription: (subscriptionTimewindow) => {
-          this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
+          if (this.comparisonEnabled && datasource.isAdditional) {
+            this.updateSubscriptionForComparison(subscriptionTimewindow);
+          } else {
+            this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
+          }
         }
       };
       this.entityDataListeners.push(listener);
@@ -901,7 +931,11 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
       const forceUpdate = !this.datasources.length;
       this.entityDataListeners.forEach((listener) => {
-        listener.subscriptionTimewindow = this.subscriptionTimewindow;
+        if (this.comparisonEnabled && listener.configDatasource.isAdditional) {
+          listener.subscriptionTimewindow = this.timewindowForComparison;
+        } else {
+          listener.subscriptionTimewindow = this.subscriptionTimewindow;
+        }
         this.ctx.entityDataService.startSubscription(listener);
       });
       if (forceUpdate) {
@@ -1088,7 +1122,48 @@ export class WidgetSubscription implements IWidgetSubscription {
         }
       }
     }
+    if (subscriptionsChanged && this.hasDataPageLink) {
+      subscriptionsChanged = false;
+      this.updateDataSubscriptions();
+    }
     return subscriptionsChanged;
+  }
+
+  private updateDataSubscriptions() {
+    this.configuredDatasources = this.ctx.utils.validateDatasources(this.options.datasources);
+    if (!this.ctx.aliasController) {
+      this.hasResolvedData = true;
+      this.prepareDataSubscriptions().subscribe(
+        () => {
+          this.updatePaginatedDataSubscriptions();
+        }
+      );
+    } else {
+      this.ctx.aliasController.resolveDatasources(this.configuredDatasources, this.singleEntity).subscribe(
+        (datasources) => {
+          this.configuredDatasources = datasources;
+          this.prepareDataSubscriptions().subscribe(
+            () => {
+              this.updatePaginatedDataSubscriptions();
+            }
+          );
+        },
+        (err) => {
+          this.notifyDataLoaded();
+        }
+      );
+    }
+  }
+
+  private updatePaginatedDataSubscriptions() {
+    for (let datasourceIndex = 0; datasourceIndex < this.entityDataListeners.length; datasourceIndex++) {
+      const entityDataListener = this.entityDataListeners[datasourceIndex];
+      if (entityDataListener) {
+        const pageLink = entityDataListener.subscription.entityDataSubscriptionOptions.pageLink;
+        const keyFilters = entityDataListener.subscription.entityDataSubscriptionOptions.keyFilters;
+        this.subscribeForPaginatedData(datasourceIndex, pageLink, keyFilters);
+      }
+    }
   }
 
   isDataResolved(): boolean {
@@ -1126,7 +1201,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-  private updateRealtimeSubscription(subscriptionTimewindow?: SubscriptionTimewindow) {
+  private updateRealtimeSubscription(subscriptionTimewindow?: SubscriptionTimewindow): SubscriptionTimewindow {
     if (subscriptionTimewindow) {
       this.subscriptionTimewindow = subscriptionTimewindow;
     } else {
@@ -1149,11 +1224,15 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-  private updateSubscriptionForComparison() {
-    if (!this.subscriptionTimewindow) {
-      this.subscriptionTimewindow = this.updateRealtimeSubscription();
+  private updateSubscriptionForComparison(subscriptionTimewindow?: SubscriptionTimewindow): SubscriptionTimewindow {
+    if (subscriptionTimewindow) {
+      this.timewindowForComparison = subscriptionTimewindow;
+    } else {
+      if (!this.subscriptionTimewindow) {
+        this.subscriptionTimewindow = this.updateRealtimeSubscription();
+      }
+      this.timewindowForComparison = createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison);
     }
-    this.timewindowForComparison = createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison);
     this.updateComparisonTimewindow();
     return this.timewindowForComparison;
   }
@@ -1238,13 +1317,29 @@ export class WidgetSubscription implements IWidgetSubscription {
     let index = 0;
     this.datasources.forEach((datasource) => {
       datasource.dataKeys.forEach((dataKey) => {
-        if (datasource.generated) {
+        if (datasource.generated || datasource.isAdditional) {
           dataKey._hash = Math.random();
           dataKey.color = this.ctx.utils.getMaterialColor(index);
         }
         index++;
       });
     });
+    if (this.comparisonEnabled) {
+      this.datasourcePages.forEach(datasourcePage => {
+        datasourcePage.data.forEach((datasource, dIndex) => {
+          if (datasource.isAdditional) {
+            const origDatasource = this.datasourcePages[datasource.origDatasourceIndex].data[dIndex];
+            datasource.dataKeys.forEach((dataKey) => {
+              if (dataKey.settings.comparisonSettings.color) {
+                dataKey.color = dataKey.settings.comparisonSettings.color;
+              }
+              const origDataKey = origDatasource.dataKeys[dataKey.origDataKeyIndex];
+              origDataKey.settings.comparisonSettings.color = dataKey.color;
+            });
+          }
+        });
+      });
+    }
     if (this.displayLegend) {
       this.legendData.keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
     }
@@ -1260,8 +1355,17 @@ export class WidgetSubscription implements IWidgetSubscription {
     return datasource.dataKeys.map((dataKey, keyIndex) => {
       dataKey.hidden = dataKey.settings.hideDataByDefault ? true : false;
       dataKey.inLegend = dataKey.settings.removeFromLegend ? false : true;
-      dataKey.pattern = dataKey.label;
-      dataKey.label = createLabelFromDatasource(datasource, dataKey.pattern);
+      if (this.comparisonEnabled && dataKey.isAdditional) {
+        if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+          dataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
+        } else {
+          dataKey.label = dataKey.label + ' ' + this.ctx.translate.instant('legend.comparison-time-ago.' + this.timeForComparison);
+        }
+        dataKey.pattern = dataKey.label;
+      } else {
+        dataKey.pattern = dataKey.label;
+        dataKey.label = createLabelFromDatasource(datasource, dataKey.pattern);
+      }
       const datasourceData: DatasourceData = {
         datasource,
         dataKey,

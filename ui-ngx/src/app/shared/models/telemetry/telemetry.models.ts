@@ -136,6 +136,7 @@ export interface EntityHistoryCmd {
   interval: number;
   limit: number;
   agg: AggregationType;
+  fetchLatestPreviousPoint?: boolean;
 }
 
 export interface LatestValueCmd {
@@ -149,6 +150,7 @@ export interface TimeSeriesCmd {
   interval: number;
   limit: number;
   agg: AggregationType;
+  fetchLatestPreviousPoint?: boolean;
 }
 
 export class EntityDataCmd implements WebsocketCmd {
