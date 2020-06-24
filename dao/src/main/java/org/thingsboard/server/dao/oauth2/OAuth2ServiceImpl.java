@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +60,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     private static final String SYSTEM_SETTINGS_OAUTH2_VALUE = "value";
     private static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock cacheWriteLock = new ReentrantLock();
     private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
 
     @Autowired
@@ -130,14 +129,14 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         validate(oAuth2ClientsParams);
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
-        lock.lock();
+        cacheWriteLock.lock();
         try {
             validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
             AdminSettings clientRegistrationParamsSettings = createSystemAdminSettings(oAuth2ClientsParams);
             adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, clientRegistrationParamsSettings);
             clientsParams.put(TenantId.SYS_TENANT_ID, oAuth2ClientsParams);
         } finally {
-            lock.unlock();
+            cacheWriteLock.unlock();
         }
 
         return getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
@@ -149,7 +148,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         validate(oAuth2ClientsParams);
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
-        lock.lock();
+        cacheWriteLock.lock();
         try {
             String adminSettingsId = processTenantAdminSettings(tenantId, oAuth2ClientsParams.getDomainName(), oAuth2ClientsParams.getAdminSettingsId());
             oAuth2ClientsParams.setAdminSettingsId(adminSettingsId);
@@ -165,7 +164,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
             clientsParams.put(tenantId, oAuth2ClientsParams);
         } finally {
-            lock.unlock();
+            cacheWriteLock.unlock();
         }
 
         return getTenantOAuth2ClientsParams(tenantId);
