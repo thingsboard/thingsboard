@@ -291,12 +291,13 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     @Override
-    public void deleteDomainOAuth2ClientRegistrationByTenant(TenantId tenantId) {
+    public void deleteTenantOAuth2ClientsParams(TenantId tenantId) {
         OAuth2ClientsParams params = getTenantOAuth2ClientsParams(tenantId);
         if (!StringUtils.isEmpty(params.getDomainName())) {
-            // TODO don't we need to delete from attributes?
             String settingsKey = constructAdminSettingsDomainKey(params.getDomainName());
             adminSettingsService.deleteAdminSettingsByKey(tenantId, settingsKey);
+            attributesService.removeAll(tenantId, tenantId, DataConstants.SERVER_SCOPE, Collections.singletonList(OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
+            clientsParams.remove(tenantId);
         }
     }
 
