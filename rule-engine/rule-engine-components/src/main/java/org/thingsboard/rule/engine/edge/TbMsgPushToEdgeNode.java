@@ -80,7 +80,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
                 ListenableFuture<EdgeId> getEdgeIdFuture = getEdgeIdByOriginatorId(ctx, ctx.getTenantId(), msg.getOriginator());
                 Futures.addCallback(getEdgeIdFuture, new FutureCallback<EdgeId>() {
                     @Override
-                    public void onSuccess(@org.checkerframework.checker.nullness.qual.Nullable EdgeId edgeId) {
+                    public void onSuccess(@Nullable EdgeId edgeId) {
                         EdgeEventType edgeEventTypeByEntityType = ctx.getEdgeEventService().getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
                         if (edgeEventTypeByEntityType == null) {
                             log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
@@ -97,16 +97,19 @@ public class TbMsgPushToEdgeNode implements TbNode {
                             @Override
                             public void onSuccess(@Nullable EdgeEvent event) {
                                 ctx.tellNext(msg, SUCCESS);
-                            }                            @Override
+                            }
+                            @Override
                             public void onFailure(Throwable th) {
                                 log.error("Could not save edge event", th);
                                 ctx.tellFailure(msg, th);
                             }
                         }, ctx.getDbCallbackExecutor());
-                    }                    @Override
+                    }
+                    @Override
                     public void onFailure(Throwable t) {
                         ctx.tellFailure(msg, t);
                     }
+
                 }, ctx.getDbCallbackExecutor());
             } else {
                 log.debug("Unsupported msg type {}", msg.getType());
