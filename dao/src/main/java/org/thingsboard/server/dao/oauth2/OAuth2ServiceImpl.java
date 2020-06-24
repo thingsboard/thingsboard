@@ -213,28 +213,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientsParams getSystemOAuth2ClientsParams(TenantId tenantId) {
-        AdminSettings oauth2ClientsParamsSettings = adminSettingsService.findAdminSettingsByKey(tenantId, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
-        String json = null;
-        if (oauth2ClientsParamsSettings != null) {
-            json = oauth2ClientsParamsSettings.getJsonValue().get(SYSTEM_SETTINGS_OAUTH2_VALUE).asText();
-        }
-        return constructOAuth2ClientsParams(json);
+        return clientsParams.get(tenantId);
     }
 
     @Override
     public OAuth2ClientsParams getTenantOAuth2ClientsParams(TenantId tenantId) {
-        ListenableFuture<String> jsonFuture;
-        if (isOAuth2ClientRegistrationAllowed(tenantId)) {
-            jsonFuture = getOAuth2ClientsParamsAttribute(tenantId);
-        } else {
-            jsonFuture = Futures.immediateFuture("");
-        }
-        try {
-            return Futures.transform(jsonFuture, this::constructOAuth2ClientsParams, MoreExecutors.directExecutor()).get();
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("Failed to read OAuth2 Clients Params from attributes!", e);
-            throw new RuntimeException("Failed to read OAuth2 Clients Params from attributes!", e);
-        }
+        return clientsParams.get(tenantId);
     }
 
     private Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
@@ -278,25 +262,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         } else {
             return allowOAuth2ConfigurationJsonNode.asBoolean();
         }
-    }
-
-    private ListenableFuture<String> getOAuth2ClientsParamsAttribute(TenantId tenantId) {
-        ListenableFuture<List<AttributeKvEntry>> attributeKvEntriesFuture;
-        try {
-            attributeKvEntriesFuture = attributesService.find(tenantId, tenantId, DataConstants.SERVER_SCOPE,
-                    Collections.singletonList(OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
-        } catch (Exception e) {
-            log.error("Unable to read OAuth2 Clients Params from attributes!", e);
-            throw new IncorrectParameterException("Unable to read OAuth2 Clients Params from attributes!");
-        }
-        return Futures.transform(attributeKvEntriesFuture, attributeKvEntries -> {
-            if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
-                AttributeKvEntry kvEntry = attributeKvEntries.get(0);
-                return kvEntry.getValueAsString();
-            } else {
-                return "";
-            }
-        }, MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<Map<String, String>> getAllOAuth2ClientsParamsAttribute() {
