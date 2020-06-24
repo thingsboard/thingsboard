@@ -451,7 +451,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             List<String> searchPredicates = selectionMapping.stream().map(mapping -> {
                         String paramName = mapping.getValueAlias() + "_lowerSearchText";
                         ctx.addStringParameter(paramName, lowerSearchText);
-                        return String.format("LOWER(%s) LIKE :%s", mapping.getValueAlias(), paramName);
+                        return String.format("LOWER(%s) LIKE concat('%%', :%s, '%%')", mapping.getValueAlias(), paramName);
                     }
             ).collect(Collectors.toList());
             return String.format(" WHERE %s", String.join(" or ", searchPredicates));
