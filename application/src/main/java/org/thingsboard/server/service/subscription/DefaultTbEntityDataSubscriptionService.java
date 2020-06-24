@@ -19,17 +19,16 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -40,19 +39,12 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
-import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
-import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.queue.TbClusterService;
-import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.telemetry.DefaultTelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
@@ -63,12 +55,14 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -79,6 +73,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -87,27 +87,13 @@ import java.util.stream.Collectors;
 public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubscriptionService {
 
     private static final int DEFAULT_LIMIT = 100;
-    private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
     private final Map<String, Map<Integer, TbEntityDataSubCtx>> subscriptionsBySessionId = new ConcurrentHashMap<>();
 
     @Autowired
     private TelemetryWebSocketService wsService;
 
     @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
     private EntityService entityService;
-
-    @Autowired
-    private PartitionService partitionService;
-
-    @Autowired
-    private TbClusterService clusterService;
-
-    @Autowired
-    @Lazy
-    private SubscriptionManagerService subscriptionManagerService;
 
     @Autowired
     @Lazy
@@ -119,18 +105,38 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     @Autowired
     private TbServiceInfoProvider serviceInfoProvider;
 
+    @Autowired
+    @Getter
+    private DbCallbackExecutorService dbCallbackExecutor;
+
+    private ScheduledExecutorService scheduler;
+
     @Value("${database.ts.type}")
     private String databaseTsType;
+    @Value("${server.ws.dynamic_page_link_refresh_interval:6}")
+    private long dynamicPageLinkRefreshInterval;
+    @Value("${server.ws.dynamic_page_link_refresh_pool_size:1}")
+    private int dynamicPageLinkRefreshPoolSize;
 
     private ExecutorService wsCallBackExecutor;
     private boolean tsInSqlDB;
     private String serviceId;
+    private AtomicInteger regularQueryInvocationCnt = new AtomicInteger();
+    private AtomicInteger dynamicQueryInvocationCnt = new AtomicInteger();
+    private AtomicLong regularQueryTimeSpent = new AtomicLong();
+    private AtomicLong dynamicQueryTimeSpent = new AtomicLong();
 
     @PostConstruct
     public void initExecutor() {
         serviceId = serviceInfoProvider.getServiceId();
         wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ws-entity-sub-callback"));
         tsInSqlDB = databaseTsType.equalsIgnoreCase("sql") || databaseTsType.equalsIgnoreCase("timescale");
+        ThreadFactory tbThreadFactory = ThingsBoardThreadFactory.forName("ws-entity-sub-scheduler");
+        if (dynamicPageLinkRefreshPoolSize == 1) {
+            scheduler = Executors.newSingleThreadScheduledExecutor(tbThreadFactory);
+        } else {
+            scheduler = Executors.newScheduledThreadPool(dynamicPageLinkRefreshPoolSize, tbThreadFactory);
+        }
     }
 
     @PreDestroy
@@ -141,44 +147,18 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     @Override
-    @EventListener(PartitionChangeEvent.class)
-    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            currentPartitions.clear();
-            currentPartitions.addAll(partitionChangeEvent.getPartitions());
-        }
-    }
-
-    @Override
-    @EventListener(ClusterTopologyChangeEvent.class)
-    public void onApplicationEvent(ClusterTopologyChangeEvent event) {
-        if (event.getServiceQueueKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getServiceType()))) {
-            /*
-             * If the cluster topology has changed, we need to push all current subscriptions to SubscriptionManagerService again.
-             * Otherwise, the SubscriptionManagerService may "forget" those subscriptions in case of restart.
-             * Although this is resource consuming operation, it is cheaper than sending ping/pong commands periodically
-             * It is also cheaper then caching the subscriptions by entity id and then lookup of those caches every time we have new telemetry in SubscriptionManagerService.
-             * Even if we cache locally the list of active subscriptions by entity id, it is still time consuming operation to get them from cache
-             * Since number of subscriptions is usually much less then number of devices that are pushing data.
-//             */
-//            subscriptionsBySessionId.values().forEach(map -> map.values()
-//                    .forEach(sub -> pushSubscriptionToManagerService(sub, false)));
-        }
-    }
-
-    @Override
     public void handleCmd(TelemetryWebSocketSessionRef session, EntityDataCmd cmd) {
         TbEntityDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
             if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null || cmd.getHistoryCmd() != null) {
-                Collection<Integer> oldSubIds = ctx.clearSubscriptions();
-                oldSubIds.forEach(subId -> localSubscriptionService.cancelSubscription(serviceId, subId));
+                clearSubs(ctx);
             }
         } else {
             log.debug("[{}][{}] Creating new subscription using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
             ctx = createSubCtx(session, cmd);
         }
+        ctx.setCurrentCmd(cmd);
         if (cmd.getQuery() != null) {
             if (ctx.getQuery() == null) {
                 log.debug("[{}][{}] Initializing data using query: {}", session.getSessionId(), cmd.getCmdId(), cmd.getQuery());
@@ -197,13 +177,26 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     }
                 });
             }
+            long start = System.currentTimeMillis();
             PageData<EntityData> data = entityService.findEntityDataByQuery(tenantId, customerId, ctx.getQuery());
+            long end = System.currentTimeMillis();
+            regularQueryInvocationCnt.incrementAndGet();
+            regularQueryTimeSpent.addAndGet(end - start);
+
             if (log.isTraceEnabled()) {
                 data.getData().forEach(ed -> {
                     log.trace("[{}][{}] EntityData: {}", session.getSessionId(), cmd.getCmdId(), ed);
                 });
             }
             ctx.setData(data);
+            ctx.cancelRefreshTask();
+            if (ctx.getQuery().getPageLink().isDynamic()) {
+                TbEntityDataSubCtx finalCtx = ctx;
+                ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
+                        () -> refreshDynamicQuery(tenantId, customerId, finalCtx),
+                        dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+                finalCtx.setRefreshTask(task);
+            }
         }
         ListenableFuture<TbEntityDataSubCtx> historyFuture;
         if (cmd.getHistoryCmd() != null) {
@@ -231,6 +224,35 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 log.warn("[{}][{}] Failed to process command", session.getSessionId(), cmd.getCmdId());
             }
         }, wsCallBackExecutor);
+    }
+
+    private void refreshDynamicQuery(TenantId tenantId, CustomerId customerId, TbEntityDataSubCtx finalCtx) {
+        try {
+            long start = System.currentTimeMillis();
+            Collection<Integer> oldSubIds = finalCtx.update(entityService.findEntityDataByQuery(tenantId, customerId, finalCtx.getQuery()));
+            long end = System.currentTimeMillis();
+            dynamicQueryInvocationCnt.incrementAndGet();
+            dynamicQueryTimeSpent.addAndGet(end - start);
+            oldSubIds.forEach(subId -> localSubscriptionService.cancelSubscription(serviceId, subId));
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to refresh query", finalCtx.getSessionId(), finalCtx.getCmdId(), e);
+        }
+    }
+
+    @Scheduled(fixedDelayString = "${server.ws.dynamic_page_link_stats:10000}")
+    public void printStats() {
+        int regularQueryInvocationCntValue = regularQueryInvocationCnt.getAndSet(0);
+        long regularQueryInvocationTimeValue = regularQueryTimeSpent.getAndSet(0);
+        int dynamicQueryInvocationCntValue = dynamicQueryInvocationCnt.getAndSet(0);
+        long dynamicQueryInvocationTimeValue = dynamicQueryTimeSpent.getAndSet(0);
+        long dynamicQueryCnt = subscriptionsBySessionId.values().stream().map(Map::values).count();
+        log.info("Stats: regularQueryInvocationCnt = [{}], regularQueryInvocationTime = [{}], dynamicQueryCnt = [{}] dynamicQueryInvocationCnt = [{}], dynamicQueryInvocationTime = [{}]",
+                regularQueryInvocationCntValue, regularQueryInvocationTimeValue, dynamicQueryCnt, dynamicQueryInvocationCntValue, dynamicQueryInvocationTimeValue);
+    }
+
+    private void clearSubs(TbEntityDataSubCtx ctx) {
+        Collection<Integer> oldSubIds = ctx.clearSubscriptions();
+        oldSubIds.forEach(subId -> localSubscriptionService.cancelSubscription(serviceId, subId));
     }
 
     private TbEntityDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
@@ -282,6 +304,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 }
                 wsService.sendWsMsg(ctx.getSessionId(), update);
                 createSubscriptions(ctx, keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), false);
+                ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             }
 
             @Override
@@ -378,12 +401,21 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private ListenableFuture<TbEntityDataSubCtx> handleHistoryCmd(TbEntityDataSubCtx ctx, EntityHistoryCmd historyCmd) {
+        List<ReadTsKvQuery> finalTsKvQueryList;
         List<ReadTsKvQuery> tsKvQueryList = historyCmd.getKeys().stream().map(key -> new BaseReadTsKvQuery(
                 key, historyCmd.getStartTs(), historyCmd.getEndTs(), historyCmd.getInterval(), getLimit(historyCmd.getLimit()), historyCmd.getAgg()
         )).collect(Collectors.toList());
+        if (historyCmd.isFetchLatestPreviousPoint()) {
+            finalTsKvQueryList = new ArrayList<>(tsKvQueryList);
+            tsKvQueryList.addAll(historyCmd.getKeys().stream().map(key -> new BaseReadTsKvQuery(
+                    key, historyCmd.getStartTs() - TimeUnit.DAYS.toMillis(365), historyCmd.getStartTs(), historyCmd.getInterval(), 1, historyCmd.getAgg()
+            )).collect(Collectors.toList()));
+        } else {
+            finalTsKvQueryList = tsKvQueryList;
+        }
         Map<EntityData, ListenableFuture<List<TsKvEntry>>> fetchResultMap = new HashMap<>();
         ctx.getData().getData().forEach(entityData -> fetchResultMap.put(entityData,
-                tsService.findAll(ctx.getTenantId(), entityData.getEntityId(), tsKvQueryList)));
+                tsService.findAll(ctx.getTenantId(), entityData.getEntityId(), finalTsKvQueryList)));
         return Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
             fetchResultMap.forEach((entityData, future) -> {
                 Map<String, List<TsValue>> keyData = new LinkedHashMap<>();
@@ -394,6 +426,11 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         entityTsData.forEach(entry -> keyData.get(entry.getKey()).add(new TsValue(entry.getTs(), entry.getValueAsString())));
                     }
                     keyData.forEach((k, v) -> entityData.getTimeseries().put(k, v.toArray(new TsValue[v.size()])));
+                    if (historyCmd.isFetchLatestPreviousPoint()) {
+                        entityData.getTimeseries().values().forEach(dataArray -> {
+                            Arrays.sort(dataArray, (o1, o2) -> Long.compare(o2.getTs(), o1.getTs()));
+                        });
+                    }
                 } catch (InterruptedException | ExecutionException e) {
                     log.warn("[{}][{}][{}] Failed to fetch historical data", ctx.getSessionId(), ctx.getCmdId(), entityData.getEntityId(), e);
                     wsService.sendWsMsg(ctx.getSessionId(),
@@ -408,119 +445,29 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
             }
             wsService.sendWsMsg(ctx.getSessionId(), update);
+            ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;
         }, wsCallBackExecutor);
     }
 
     @Override
     public void cancelSubscription(String sessionId, EntityDataUnsubscribeCmd cmd) {
-        TbEntityDataSubCtx ctx = getSubCtx(sessionId, cmd.getCmdId());
+        cleanupAndCancel(getSubCtx(sessionId, cmd.getCmdId()));
     }
 
-//    //TODO 3.1: replace null callbacks with callbacks from websocket service.
-//    @Override
-//    public void addSubscription(TbSubscription subscription) {
-//        EntityId entityId = subscription.getEntityId();
-//        // Telemetry subscription on Entity Views are handled differently, because we need to allow only certain keys and time ranges;
-//        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW) && TbSubscriptionType.TIMESERIES.equals(subscription.getType())) {
-//            subscription = resolveEntityViewSubscription((TbTimeseriesSubscription) subscription);
-//        }
-//        pushSubscriptionToManagerService(subscription, true);
-//        registerSubscription(subscription);
-//    }
-
-//    private void pushSubscriptionToManagerService(TbSubscription subscription, boolean pushToLocalService) {
-//        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, subscription.getTenantId(), subscription.getEntityId());
-//        if (currentPartitions.contains(tpi)) {
-//            // Subscription is managed on the same server;
-//            if (pushToLocalService) {
-//                subscriptionManagerService.addSubscription(subscription, TbCallback.EMPTY);
-//            }
-//        } else {
-//            // Push to the queue;
-//            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toNewSubscriptionProto(subscription);
-//            clusterService.pushMsgToCore(tpi, subscription.getEntityId().getId(), toCoreMsg, null);
-//        }
-//    }
-
-    @Override
-    public void onSubscriptionUpdate(String sessionId, SubscriptionUpdate update, TbCallback callback) {
-//        TbSubscription subscription = subscriptionsBySessionId
-//                .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
-//        if (subscription != null) {
-//            switch (subscription.getType()) {
-//                case TIMESERIES:
-//                    TbTimeseriesSubscription tsSub = (TbTimeseriesSubscription) subscription;
-//                    update.getLatestValues().forEach((key, value) -> tsSub.getKeyStates().put(key, value));
-//                    break;
-//                case ATTRIBUTES:
-//                    TbAttributeSubscription attrSub = (TbAttributeSubscription) subscription;
-//                    update.getLatestValues().forEach((key, value) -> attrSub.getKeyStates().put(key, value));
-//                    break;
-//            }
-//            wsService.sendWsMsg(sessionId, update);
-//        }
-//        callback.onSuccess();
+    private void cleanupAndCancel(TbEntityDataSubCtx ctx) {
+        if (ctx != null) {
+            ctx.cancelRefreshTask();
+            clearSubs(ctx);
+        }
     }
-
-//    @Override
-//    public void cancelSubscription(String sessionId, int subscriptionId) {
-//        log.debug("[{}][{}] Going to remove subscription.", sessionId, subscriptionId);
-//        Map<Integer, TbSubscription> sessionSubscriptions = subscriptionsBySessionId.get(sessionId);
-//        if (sessionSubscriptions != null) {
-//            TbSubscription subscription = sessionSubscriptions.remove(subscriptionId);
-//            if (subscription != null) {
-//                if (sessionSubscriptions.isEmpty()) {
-//                    subscriptionsBySessionId.remove(sessionId);
-//                }
-//                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, subscription.getTenantId(), subscription.getEntityId());
-//                if (currentPartitions.contains(tpi)) {
-//                    // Subscription is managed on the same server;
-//                    subscriptionManagerService.cancelSubscription(sessionId, subscriptionId, TbCallback.EMPTY);
-//                } else {
-//                    // Push to the queue;
-//                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toCloseSubscriptionProto(subscription);
-//                    clusterService.pushMsgToCore(tpi, subscription.getEntityId().getId(), toCoreMsg, null);
-//                }
-//            } else {
-//                log.debug("[{}][{}] Subscription not found!", sessionId, subscriptionId);
-//            }
-//        } else {
-//            log.debug("[{}] No session subscriptions found!", sessionId);
-//        }
-//    }
 
     @Override
     public void cancelAllSessionSubscriptions(String sessionId) {
-//        Map<Integer, TbSubscription> subscriptions = subscriptionsBySessionId.get(sessionId);
-//        if (subscriptions != null) {
-//            Set<Integer> toRemove = new HashSet<>(subscriptions.keySet());
-//            toRemove.forEach(id -> cancelSubscription(sessionId, id));
-//        }
-    }
-
-    private TbSubscription resolveEntityViewSubscription(TbTimeseriesSubscription subscription) {
-        EntityView entityView = entityViewService.findEntityViewById(TenantId.SYS_TENANT_ID, new EntityViewId(subscription.getEntityId().getId()));
-
-        Map<String, Long> keyStates;
-        if (subscription.isAllKeys()) {
-            keyStates = entityView.getKeys().getTimeseries().stream().collect(Collectors.toMap(k -> k, k -> 0L));
-        } else {
-            keyStates = subscription.getKeyStates().entrySet()
-                    .stream().filter(entry -> entityView.getKeys().getTimeseries().contains(entry.getKey()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<Integer, TbEntityDataSubCtx> sessionSubs = subscriptionsBySessionId.remove(sessionId);
+        if (sessionSubs != null) {
+            sessionSubs.values().forEach(this::cleanupAndCancel);
         }
-
-        return TbTimeseriesSubscription.builder()
-                .serviceId(subscription.getServiceId())
-                .sessionId(subscription.getSessionId())
-                .subscriptionId(subscription.getSubscriptionId())
-                .tenantId(subscription.getTenantId())
-                .entityId(entityView.getEntityId())
-                .startTime(entityView.getStartTimeMs())
-                .endTime(entityView.getEndTimeMs())
-                .allKeys(false)
-                .keyStates(keyStates).build();
     }
 
     private int getLimit(int limit) {

@@ -29,5 +29,6 @@ public class EntityHistoryCmd {
     private long interval;
     private int limit;
     private Aggregation agg;
+    private boolean fetchLatestPreviousPoint;
 
 }
