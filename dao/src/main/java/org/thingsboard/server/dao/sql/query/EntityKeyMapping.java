@@ -31,38 +31,85 @@ import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Data
 public class EntityKeyMapping {
 
-    public static final Map<String, String> entityFieldColumnMap = new HashMap<>();
+    private static final Map<EntityType, Set<String>> allowedEntityFieldMap = new HashMap<>();
+    private static final Map<String, String> entityFieldColumnMap = new HashMap<>();
+
+    private static final String CREATED_TIME = "createdTime";
+    private static final String ENTITY_TYPE = "entityType";
+    private static final String NAME = "name";
+    private static final String TYPE = "type";
+    private static final String LABEL = "label";
+    private static final String FIRST_NAME = "firstName";
+    private static final String LAST_NAME = "lastName";
+    private static final String EMAIL = "email";
+    private static final String TITLE = "title";
+    private static final String REGION = "region";
+    private static final String COUNTRY = "country";
+    private static final String STATE = "state";
+    private static final String CITY = "city";
+    private static final String ADDRESS = "address";
+    private static final String ADDRESS_2 = "address2";
+    private static final String ZIP = "zip";
+    private static final String PHONE = "phone";
+
+    public static final List<String> commonEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME);
+    public static final List<String> labeledEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL);
+    public static final List<String> contactBasedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, EMAIL, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE);
+
+    public static final Set<String> commonEntityFieldsSet = new HashSet<>(commonEntityFields);
+    public static final Set<String> relationQueryEntityFieldsSet = new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL));
 
     static {
-        entityFieldColumnMap.put("createdTime", "id");
-        entityFieldColumnMap.put("entityType", "entity_type");
-        entityFieldColumnMap.put("name", "name");
-        entityFieldColumnMap.put("type", "type");
-        entityFieldColumnMap.put("label", "label");
-        entityFieldColumnMap.put("firstName", "first_name");
-        entityFieldColumnMap.put("lastName", "last_name");
-        entityFieldColumnMap.put("email", "email");
-        entityFieldColumnMap.put("title", "title");
-        entityFieldColumnMap.put("country", "country");
-        entityFieldColumnMap.put("state", "state");
-        entityFieldColumnMap.put("city", "city");
-        entityFieldColumnMap.put("address", "address");
-        entityFieldColumnMap.put("address2", "address2");
-        entityFieldColumnMap.put("zip", "zip");
-        entityFieldColumnMap.put("phone", "phone");
+        allowedEntityFieldMap.put(EntityType.DEVICE, new HashSet<>(labeledEntityFields));
+        allowedEntityFieldMap.put(EntityType.ASSET, new HashSet<>(labeledEntityFields));
+        allowedEntityFieldMap.put(EntityType.ENTITY_VIEW, new HashSet<>(labeledEntityFields));
+
+        allowedEntityFieldMap.put(EntityType.TENANT, new HashSet<>(contactBasedEntityFields));
+        allowedEntityFieldMap.get(EntityType.TENANT).add(REGION);
+        allowedEntityFieldMap.put(EntityType.CUSTOMER, new HashSet<>(contactBasedEntityFields));
+
+        allowedEntityFieldMap.put(EntityType.USER, new HashSet<>(Arrays.asList(FIRST_NAME, LAST_NAME, EMAIL)));
+
+        allowedEntityFieldMap.put(EntityType.DASHBOARD, new HashSet<>(commonEntityFields));
+        allowedEntityFieldMap.put(EntityType.RULE_CHAIN, new HashSet<>(commonEntityFields));
+        allowedEntityFieldMap.put(EntityType.RULE_NODE, new HashSet<>(commonEntityFields));
+        allowedEntityFieldMap.put(EntityType.WIDGET_TYPE, new HashSet<>(commonEntityFields));
+        allowedEntityFieldMap.put(EntityType.WIDGETS_BUNDLE, new HashSet<>(commonEntityFields));
+
+        entityFieldColumnMap.put(CREATED_TIME, ModelConstants.CREATED_TIME_PROPERTY);
+        entityFieldColumnMap.put(ENTITY_TYPE, ModelConstants.ENTITY_TYPE_PROPERTY);
+        entityFieldColumnMap.put(REGION, ModelConstants.TENANT_REGION_PROPERTY);
+        entityFieldColumnMap.put(NAME, "name");
+        entityFieldColumnMap.put(TYPE, "type");
+        entityFieldColumnMap.put(LABEL, "label");
+        entityFieldColumnMap.put(FIRST_NAME, ModelConstants.USER_FIRST_NAME_PROPERTY);
+        entityFieldColumnMap.put(LAST_NAME, ModelConstants.USER_LAST_NAME_PROPERTY);
+        entityFieldColumnMap.put(EMAIL, ModelConstants.EMAIL_PROPERTY);
+        entityFieldColumnMap.put(TITLE, ModelConstants.TITLE_PROPERTY);
+        entityFieldColumnMap.put(COUNTRY, ModelConstants.COUNTRY_PROPERTY);
+        entityFieldColumnMap.put(STATE, ModelConstants.STATE_PROPERTY);
+        entityFieldColumnMap.put(CITY, ModelConstants.CITY_PROPERTY);
+        entityFieldColumnMap.put(ADDRESS, ModelConstants.ADDRESS_PROPERTY);
+        entityFieldColumnMap.put(ADDRESS_2, ModelConstants.ADDRESS2_PROPERTY);
+        entityFieldColumnMap.put(ZIP, ModelConstants.ZIP_PROPERTY);
+        entityFieldColumnMap.put(PHONE, ModelConstants.PHONE_PROPERTY);
     }
 
     private int index;
@@ -91,10 +138,23 @@ public class EntityKeyMapping {
         return alias + "_ts";
     }
 
-    public String toSelection() {
+    public String toSelection(EntityFilterType filterType, EntityType entityType) {
         if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-            String column = entityFieldColumnMap.get(entityKey.getKey());
-            return String.format("e.%s as %s", column, getValueAlias());
+            Set<String> existingEntityFields;
+            if (filterType.equals(EntityFilterType.RELATIONS_QUERY)) {
+                existingEntityFields = relationQueryEntityFieldsSet;
+            } else {
+                existingEntityFields = allowedEntityFieldMap.get(entityType);
+                if (existingEntityFields == null) {
+                    existingEntityFields = commonEntityFieldsSet;
+                }
+            }
+            if (existingEntityFields.contains(entityKey.getKey())) {
+                String column = entityFieldColumnMap.get(entityKey.getKey());
+                return String.format("e.%s as %s", column, getValueAlias());
+            } else {
+                return String.format("'' as %s", getValueAlias());
+            }
         } else if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
             return buildTimeSeriesSelection();
         } else {
@@ -142,8 +202,8 @@ public class EntityKeyMapping {
         }
     }
 
-    public static String buildSelections(List<EntityKeyMapping> mappings) {
-        return mappings.stream().map(EntityKeyMapping::toSelection).collect(
+    public static String buildSelections(List<EntityKeyMapping> mappings, EntityFilterType filterType, EntityType entityType) {
+        return mappings.stream().map(mapping -> mapping.toSelection(filterType, entityType)).collect(
                 Collectors.joining(", "));
     }
 

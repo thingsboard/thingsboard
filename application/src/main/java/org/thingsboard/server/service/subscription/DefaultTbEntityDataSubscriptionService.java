@@ -247,8 +247,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         int dynamicQueryInvocationCntValue = dynamicQueryInvocationCnt.getAndSet(0);
         long dynamicQueryInvocationTimeValue = dynamicQueryTimeSpent.getAndSet(0);
         long dynamicQueryCnt = subscriptionsBySessionId.values().stream().map(Map::values).count();
-        log.info("Stats: regularQueryInvocationCnt = [{}], regularQueryInvocationTime = [{}], dynamicQueryCnt = [{}] dynamicQueryInvocationCnt = [{}], dynamicQueryInvocationTime = [{}]",
-                regularQueryInvocationCntValue, regularQueryInvocationTimeValue, dynamicQueryCnt, dynamicQueryInvocationCntValue, dynamicQueryInvocationTimeValue);
+        if (regularQueryInvocationCntValue > 0 || dynamicQueryInvocationCntValue > 0 || dynamicQueryCnt > 0) {
+            log.info("Stats: regularQueryInvocationCnt = [{}], regularQueryInvocationTime = [{}], dynamicQueryCnt = [{}] dynamicQueryInvocationCnt = [{}], dynamicQueryInvocationTime = [{}]",
+                    regularQueryInvocationCntValue, regularQueryInvocationTimeValue, dynamicQueryCnt, dynamicQueryInvocationCntValue, dynamicQueryInvocationTimeValue);
+        }
     }
 
     private void clearSubs(TbEntityDataSubCtx ctx) {
