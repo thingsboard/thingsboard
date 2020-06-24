@@ -67,7 +67,7 @@ public class TbCheckAlarmStatusNode implements TbNode {
                     if (result != null) {
                         boolean isPresent = false;
                         for (AlarmStatus alarmStatus : config.getAlarmStatusList()) {
-                            if (alarm.getStatus() == alarmStatus) {
+                            if (result.getStatus() == alarmStatus) {
                                 isPresent = true;
                                 break;
                             }
