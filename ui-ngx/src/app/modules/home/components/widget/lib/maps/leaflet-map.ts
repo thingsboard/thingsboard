@@ -307,11 +307,11 @@ export default abstract class LeafletMap {
             keys.push(data.entityName);
           });
           const toDelete: string[] = [];
-          for (const mKey in this.markers.keys()) {
+          this.markers.forEach((v, mKey) => {
             if (!keys.includes(mKey)) {
               toDelete.push(mKey);
             }
-          }
+          });
           toDelete.forEach((key) => {
             this.deleteMarker(key);
           });
@@ -408,11 +408,11 @@ export default abstract class LeafletMap {
             }
         });
         const toDelete: string[] = [];
-        for (const mKey in this.polylines.keys()) {
+        this.polylines.forEach((v, mKey) => {
           if (!keys.includes(mKey)) {
             toDelete.push(mKey);
           }
-        }
+        });
         toDelete.forEach((key) => {
           this.removePolyline(key);
         });
@@ -471,11 +471,11 @@ export default abstract class LeafletMap {
             }
         });
         const toDelete: string[] = [];
-        for (const mKey in this.polygons.keys()) {
+        this.polygons.forEach((v, mKey) => {
           if (!keys.includes(mKey)) {
             toDelete.push(mKey);
           }
-        }
+        });
         toDelete.forEach((key) => {
           this.removePolygon(key);
         });
