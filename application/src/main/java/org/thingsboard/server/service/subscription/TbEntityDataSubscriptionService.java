@@ -15,13 +15,9 @@
  */
 package org.thingsboard.server.service.subscription;
 
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
-import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 
 public interface TbEntityDataSubscriptionService {
 
@@ -31,9 +27,4 @@ public interface TbEntityDataSubscriptionService {
 
     void cancelAllSessionSubscriptions(String sessionId);
 
-    void onSubscriptionUpdate(String sessionId, SubscriptionUpdate update, TbCallback callback);
-
-    void onApplicationEvent(PartitionChangeEvent event);
-
-    void onApplicationEvent(ClusterTopologyChangeEvent event);
 }

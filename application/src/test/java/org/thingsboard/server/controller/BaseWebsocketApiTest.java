@@ -194,7 +194,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
 
         TimeSeriesCmd tsCmd = new TimeSeriesCmd();
         tsCmd.setKeys(Arrays.asList("temperature"));
-        tsCmd.setAgg(Aggregation.NONE.name());
+        tsCmd.setAgg(Aggregation.NONE);
         tsCmd.setLimit(1000);
         tsCmd.setStartTs(now - TimeUnit.HOURS.toMillis(1));
         tsCmd.setTimeWindow(TimeUnit.HOURS.toMillis(1));
@@ -561,16 +561,12 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         wsClient.registerWaitForUpdate();
         AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
         List<AttributeKvEntry> tsData = Arrays.asList(dataPoint1);
-        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
-
         Thread.sleep(100);
 
-        cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
-        wrapper = new TelemetryPluginCmdsWrapper();
-        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
 
         msg = wsClient.waitForUpdate();
-
+        Assert.assertNotNull(msg);
         update = mapper.readValue(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();

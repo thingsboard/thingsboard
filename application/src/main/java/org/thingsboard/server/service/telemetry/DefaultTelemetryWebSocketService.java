@@ -697,15 +697,18 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, int cmdId, Object update) {
-        executor.submit(() -> {
-            try {
-                msgEndpoint.send(sessionRef, cmdId, jsonMapper.writeValueAsString(update));
-            } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
-            } catch (IOException e) {
-                log.warn("[{}] Failed to send reply: {}", sessionRef.getSessionId(), update, e);
-            }
-        });
+        try {
+            String msg = jsonMapper.writeValueAsString(update);
+            executor.submit(() -> {
+                try {
+                    msgEndpoint.send(sessionRef, cmdId, msg);
+                } catch (IOException e) {
+                    log.warn("[{}] Failed to send reply: {}", sessionRef.getSessionId(), update, e);
+                }
+            });
+        } catch (JsonProcessingException e) {
+            log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
+        }
     }
 
 

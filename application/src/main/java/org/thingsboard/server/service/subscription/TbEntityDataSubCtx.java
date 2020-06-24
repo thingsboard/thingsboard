@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
@@ -39,9 +40,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Data
@@ -53,12 +59,14 @@ public class TbEntityDataSubCtx {
     private final TelemetryWebSocketSessionRef sessionRef;
     private final int cmdId;
     private EntityDataQuery query;
-    private LatestValueCmd latestCmd;
     private TimeSeriesCmd tsCmd;
     private PageData<EntityData> data;
     private boolean initialDataSent;
     private List<TbSubscription> tbSubs;
     private Map<Integer, EntityId> subToEntityIdMap;
+    private volatile ScheduledFuture<?> refreshTask;
+    private TimeSeriesCmd curTsCmd;
+    private LatestValueCmd latestValueCmd;
 
     public TbEntityDataSubCtx(String serviceId, TelemetryWebSocketService wsService, TelemetryWebSocketSessionRef sessionRef, int cmdId) {
         this.serviceId = serviceId;
@@ -86,32 +94,41 @@ public class TbEntityDataSubCtx {
     public List<TbSubscription> createSubscriptions(List<EntityKey> keys, boolean resultToLatestValues) {
         this.subToEntityIdMap = new HashMap<>();
         tbSubs = new ArrayList<>();
-        Map<EntityKeyType, List<EntityKey>> keysByType = new HashMap<>();
-        keys.forEach(key -> keysByType.computeIfAbsent(key.getType(), k -> new ArrayList<>()).add(key));
+        Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
         for (EntityData entityData : data.getData()) {
-            keysByType.forEach((keysType, keysList) -> {
-                int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
-                subToEntityIdMap.put(subIdx, entityData.getEntityId());
-                switch (keysType) {
-                    case TIME_SERIES:
-                        tbSubs.add(createTsSub(entityData, subIdx, keysList, resultToLatestValues));
-                        break;
-                    case CLIENT_ATTRIBUTE:
-                        tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.CLIENT_SCOPE, keysList));
-                        break;
-                    case SHARED_ATTRIBUTE:
-                        tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SHARED_SCOPE, keysList));
-                        break;
-                    case SERVER_ATTRIBUTE:
-                        tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SERVER_SCOPE, keysList));
-                        break;
-                    case ATTRIBUTE:
-                        tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.ANY_SCOPE, keysList));
-                        break;
-                }
-            });
+            addSubscription(entityData, keysByType, resultToLatestValues);
         }
         return tbSubs;
+    }
+
+    private Map<EntityKeyType, List<EntityKey>> getEntityKeyByTypeMap(List<EntityKey> keys) {
+        Map<EntityKeyType, List<EntityKey>> keysByType = new HashMap<>();
+        keys.forEach(key -> keysByType.computeIfAbsent(key.getType(), k -> new ArrayList<>()).add(key));
+        return keysByType;
+    }
+
+    private void addSubscription(EntityData entityData, Map<EntityKeyType, List<EntityKey>> keysByType, boolean resultToLatestValues) {
+        keysByType.forEach((keysType, keysList) -> {
+            int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
+            subToEntityIdMap.put(subIdx, entityData.getEntityId());
+            switch (keysType) {
+                case TIME_SERIES:
+                    tbSubs.add(createTsSub(entityData, subIdx, keysList, resultToLatestValues));
+                    break;
+                case CLIENT_ATTRIBUTE:
+                    tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.CLIENT_SCOPE, keysList));
+                    break;
+                case SHARED_ATTRIBUTE:
+                    tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SHARED_SCOPE, keysList));
+                    break;
+                case SERVER_ATTRIBUTE:
+                    tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SERVER_SCOPE, keysList));
+                    break;
+                case ATTRIBUTE:
+                    tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.ANY_SCOPE, keysList));
+                    break;
+            }
+        });
     }
 
     private TbSubscription createAttrSub(EntityData entityData, int subIdx, EntityKeyType keysType, TbAttributeSubscriptionScope scope, List<EntityKey> subKeys) {
@@ -274,5 +291,75 @@ public class TbEntityDataSubCtx {
         } else {
             return Collections.emptyList();
         }
+    }
+
+    public void setRefreshTask(ScheduledFuture<?> task) {
+        this.refreshTask = task;
+    }
+
+    public void cancelRefreshTask() {
+        if (this.refreshTask != null) {
+            log.trace("[{}][{}] Canceling old refresh task", sessionRef.getSessionId(), cmdId);
+            this.refreshTask.cancel(true);
+        }
+    }
+
+    public Collection<Integer> update(PageData<EntityData> newData) {
+        Map<EntityId, EntityData> oldDataMap;
+        if (data != null && !data.getData().isEmpty()) {
+            oldDataMap = data.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
+        } else {
+            oldDataMap = Collections.emptyMap();
+        }
+        Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
+        if (oldDataMap.size() == newDataMap.size() && oldDataMap.keySet().equals(newDataMap.keySet())) {
+            log.trace("[{}][{}] No updates to entity data found", sessionRef.getSessionId(), cmdId);
+            return Collections.emptyList();
+        } else {
+            this.data = newData;
+            List<Integer> subIdsToRemove = new ArrayList<>();
+            Set<EntityId> currentSubs = new HashSet<>();
+            subToEntityIdMap.forEach((subId, entityId) -> {
+                if (!newDataMap.containsKey(entityId)) {
+                    subIdsToRemove.add(subId);
+                } else {
+                    currentSubs.add(entityId);
+                }
+            });
+            log.trace("[{}][{}] Subscriptions that are invalid: {}", sessionRef.getSessionId(), cmdId, subIdsToRemove);
+            subIdsToRemove.forEach(subToEntityIdMap::remove);
+            List<EntityData> newSubsList = newDataMap.entrySet().stream().filter(entry -> !currentSubs.contains(entry.getKey())).map(Map.Entry::getValue).collect(Collectors.toList());
+            if (!newSubsList.isEmpty()) {
+                boolean resultToLatestValues;
+                List<EntityKey> keys = null;
+                if (curTsCmd != null) {
+                    resultToLatestValues = false;
+                    keys = curTsCmd.getKeys().stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList());
+                } else if (latestValueCmd != null) {
+                    resultToLatestValues = true;
+                    keys = latestValueCmd.getKeys();
+                } else {
+                    resultToLatestValues = true;
+                }
+                if (keys != null && !keys.isEmpty()) {
+                    Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
+                    newSubsList.forEach(
+                            entity -> {
+                                log.trace("[{}][{}] Found new subscription for entity: {}", sessionRef.getSessionId(), cmdId, entity.getEntityId());
+                                if (curTsCmd != null) {
+                                    addSubscription(entity, keysByType, resultToLatestValues);
+                                }
+                            }
+                    );
+                }
+            }
+            wsService.sendWsMsg(sessionRef.getSessionId(), new EntityDataUpdate(cmdId, data, null));
+            return subIdsToRemove;
+        }
+    }
+
+    public void setCurrentCmd(EntityDataCmd cmd) {
+        curTsCmd = cmd.getTsCmd();
+        latestValueCmd = cmd.getLatestCmd();
     }
 }
