@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +50,7 @@ public class EntityKeyMapping {
 
     private static final Map<EntityType, Set<String>> allowedEntityFieldMap = new HashMap<>();
     private static final Map<String, String> entityFieldColumnMap = new HashMap<>();
+    private static final Map<EntityType, Map<String, String>> aliases = new HashMap<>();
 
     private static final String CREATED_TIME = "createdTime";
     private static final String ENTITY_TYPE = "entityType";
@@ -71,10 +72,10 @@ public class EntityKeyMapping {
 
     public static final List<String> commonEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME);
     public static final List<String> labeledEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL);
-    public static final List<String> contactBasedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, EMAIL, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE);
+    public static final List<String> contactBasedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, EMAIL, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE);
 
     public static final Set<String> commonEntityFieldsSet = new HashSet<>(commonEntityFields);
-    public static final Set<String> relationQueryEntityFieldsSet = new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL));
+    public static final Set<String> relationQueryEntityFieldsSet = new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, FIRST_NAME, LAST_NAME, EMAIL, REGION, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE));
 
     static {
         allowedEntityFieldMap.put(EntityType.DEVICE, new HashSet<>(labeledEntityFields));
@@ -110,6 +111,25 @@ public class EntityKeyMapping {
         entityFieldColumnMap.put(ADDRESS_2, ModelConstants.ADDRESS2_PROPERTY);
         entityFieldColumnMap.put(ZIP, ModelConstants.ZIP_PROPERTY);
         entityFieldColumnMap.put(PHONE, ModelConstants.PHONE_PROPERTY);
+
+        Map<String, String> contactBasedAliases = new HashMap<>();
+        contactBasedAliases.put(NAME, TITLE);
+        contactBasedAliases.put(LABEL, TITLE);
+        aliases.put(EntityType.TENANT, contactBasedAliases);
+        aliases.put(EntityType.CUSTOMER, contactBasedAliases);
+        Map<String, String> commonEntityAliases = new HashMap<>();
+        commonEntityAliases.put(TITLE, NAME);
+        aliases.put(EntityType.DEVICE, commonEntityAliases);
+        aliases.put(EntityType.ASSET, commonEntityAliases);
+        aliases.put(EntityType.ENTITY_VIEW, commonEntityAliases);
+        aliases.put(EntityType.DASHBOARD, commonEntityAliases);
+        aliases.put(EntityType.WIDGETS_BUNDLE, commonEntityAliases);
+
+        Map<String, String> userEntityAliases = new HashMap<>();
+        userEntityAliases.put(TITLE, EMAIL);
+        userEntityAliases.put(LABEL, EMAIL);
+        userEntityAliases.put(NAME, EMAIL);
+        aliases.put(EntityType.USER, userEntityAliases);
     }
 
     private int index;
@@ -141,16 +161,28 @@ public class EntityKeyMapping {
     public String toSelection(EntityFilterType filterType, EntityType entityType) {
         if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
             Set<String> existingEntityFields;
+            String alias;
             if (filterType.equals(EntityFilterType.RELATIONS_QUERY)) {
                 existingEntityFields = relationQueryEntityFieldsSet;
+                alias = entityKey.getKey();
             } else {
                 existingEntityFields = allowedEntityFieldMap.get(entityType);
                 if (existingEntityFields == null) {
                     existingEntityFields = commonEntityFieldsSet;
                 }
+
+                Map<String, String> entityAliases = aliases.get(entityType);
+                if (entityAliases != null) {
+                    alias = entityAliases.get(entityKey.getKey());
+                } else {
+                    alias = null;
+                }
+                if (alias == null) {
+                    alias = entityKey.getKey();
+                }
             }
-            if (existingEntityFields.contains(entityKey.getKey())) {
-                String column = entityFieldColumnMap.get(entityKey.getKey());
+            if (existingEntityFields.contains(alias)) {
+                String column = entityFieldColumnMap.get(alias);
                 return String.format("e.%s as %s", column, getValueAlias());
             } else {
                 return String.format("'' as %s", getValueAlias());

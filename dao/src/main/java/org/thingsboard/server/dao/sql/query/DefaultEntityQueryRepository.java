@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -60,6 +60,131 @@ import java.util.stream.Collectors;
 public class DefaultEntityQueryRepository implements EntityQueryRepository {
     //TODO: rafactoring to protect from SQL injections;
     private static final Map<EntityType, String> entityTableMap = new HashMap<>();
+    public static final String SELECT_PHONE = " CASE WHEN entity.entity_type = 'TENANT' THEN (select phone from tenant where id = entity_id)" +
+            " WHEN entity.entity_type = 'CUSTOMER' THEN (select phone from customer where id = entity_id) END as phone";
+    public static final String SELECT_ZIP = " CASE WHEN entity.entity_type = 'TENANT' THEN (select zip from tenant where id = entity_id)" +
+            " WHEN entity.entity_type = 'CUSTOMER' THEN (select zip from customer where id = entity_id) END as zip";
+    public static final String SELECT_ADDRESS_2 = " CASE WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select address2 from tenant where id = entity_id) WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select address2 from customer where id = entity_id) END as address2";
+    public static final String SELECT_ADDRESS = " CASE WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select address from tenant where id = entity_id) WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select address from customer where id = entity_id) END as address";
+    public static final String SELECT_CITY = " CASE WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select city from tenant where id = entity_id) WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select city from customer where id = entity_id) END as city";
+    public static final String SELECT_STATE = " CASE WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select state from tenant where id = entity_id) WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select state from customer where id = entity_id) END as state";
+    public static final String SELECT_COUNTRY = " CASE WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select country from tenant where id = entity_id) WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select country from customer where id = entity_id) END as country";
+    public static final String SELECT_TITLE = " CASE WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select title from tenant where id = entity_id) WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select title from customer where id = entity_id) END as title";
+    public static final String SELECT_LAST_NAME = " CASE WHEN entity.entity_type = 'USER'" +
+            " THEN (select last_name from tb_user where id = entity_id) END as last_name";
+    public static final String SELECT_FIRST_NAME = " CASE WHEN entity.entity_type = 'USER'" +
+            " THEN (select first_name from tb_user where id = entity_id) END as first_name";
+    public static final String SELECT_REGION = " CASE WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select region from tenant where id = entity_id) END as region";
+    public static final String SELECT_EMAIL = " CASE" +
+            " WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select email from tenant where id = entity_id)" +
+            " WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select email from customer where id = entity_id)" +
+            " WHEN entity.entity_type = 'USER'" +
+            " THEN (select email from tb_user where id = entity_id)" +
+            " END as email";
+    public static final String SELECT_CUSTOMER_ID = "CASE" +
+            " WHEN entity.entity_type = 'TENANT'" +
+            " THEN UUID('" + TenantId.NULL_UUID + "')" +
+            " WHEN entity.entity_type = 'CUSTOMER' THEN entity_id" +
+            " WHEN entity.entity_type = 'USER'" +
+            " THEN (select customer_id from tb_user where id = entity_id)" +
+            " WHEN entity.entity_type = 'DASHBOARD'" +
+            //TODO: parse assigned customers or use contains?
+            " THEN NULL" +
+            " WHEN entity.entity_type = 'ASSET'" +
+            " THEN (select customer_id from asset where id = entity_id)" +
+            " WHEN entity.entity_type = 'DEVICE'" +
+            " THEN (select customer_id from device where id = entity_id)" +
+            " WHEN entity.entity_type = 'ENTITY_VIEW'" +
+            " THEN (select customer_id from entity_view where id = entity_id)" +
+            " END as customer_id";
+    public static final String SELECT_TENANT_ID = "SELECT CASE" +
+            " WHEN entity.entity_type = 'TENANT' THEN entity_id" +
+            " WHEN entity.entity_type = 'CUSTOMER'" +
+            " THEN (select tenant_id from customer where id = entity_id)" +
+            " WHEN entity.entity_type = 'USER'" +
+            " THEN (select tenant_id from tb_user where id = entity_id)" +
+            " WHEN entity.entity_type = 'DASHBOARD'" +
+            " THEN (select tenant_id from dashboard where id = entity_id)" +
+            " WHEN entity.entity_type = 'ASSET'" +
+            " THEN (select tenant_id from asset where id = entity_id)" +
+            " WHEN entity.entity_type = 'DEVICE'" +
+            " THEN (select tenant_id from device where id = entity_id)" +
+            " WHEN entity.entity_type = 'ENTITY_VIEW'" +
+            " THEN (select tenant_id from entity_view where id = entity_id)" +
+            " END as tenant_id";
+    public static final String SELECT_CREATED_TIME = " CASE" +
+            " WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select created_time from tenant where id = entity_id)" +
+            " WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select created_time from customer where id = entity_id)" +
+            " WHEN entity.entity_type = 'USER'" +
+            " THEN (select created_time from tb_user where id = entity_id)" +
+            " WHEN entity.entity_type = 'DASHBOARD'" +
+            " THEN (select created_time from dashboard where id = entity_id)" +
+            " WHEN entity.entity_type = 'ASSET'" +
+            " THEN (select created_time from asset where id = entity_id)" +
+            " WHEN entity.entity_type = 'DEVICE'" +
+            " THEN (select created_time from device where id = entity_id)" +
+            " WHEN entity.entity_type = 'ENTITY_VIEW'" +
+            " THEN (select created_time from entity_view where id = entity_id)" +
+            " END as created_time";
+    public static final String SELECT_NAME = " CASE" +
+            " WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select title from tenant where id = entity_id)" +
+            " WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select title from customer where id = entity_id)" +
+            " WHEN entity.entity_type = 'USER'" +
+            " THEN (select CONCAT (first_name, ' ', last_name) from tb_user where id = entity_id)" +
+            " WHEN entity.entity_type = 'DASHBOARD'" +
+            " THEN (select title from dashboard where id = entity_id)" +
+            " WHEN entity.entity_type = 'ASSET'" +
+            " THEN (select name from asset where id = entity_id)" +
+            " WHEN entity.entity_type = 'DEVICE'" +
+            " THEN (select name from device where id = entity_id)" +
+            " WHEN entity.entity_type = 'ENTITY_VIEW'" +
+            " THEN (select name from entity_view where id = entity_id)" +
+            " END as name";
+    public static final String SELECT_TYPE = " CASE" +
+            " WHEN entity.entity_type = 'USER'" +
+            " THEN (select authority from tb_user where id = entity_id)" +
+            " WHEN entity.entity_type = 'ASSET'" +
+            " THEN (select type from asset where id = entity_id)" +
+            " WHEN entity.entity_type = 'DEVICE'" +
+            " THEN (select type from device where id = entity_id)" +
+            " WHEN entity.entity_type = 'ENTITY_VIEW'" +
+            " THEN (select type from entity_view where id = entity_id)" +
+            " ELSE entity.entity_type END as type";
+    public static final String SELECT_LABEL = " CASE" +
+            " WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select title from tenant where id = entity_id)" +
+            " WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select title from customer where id = entity_id)" +
+            " WHEN entity.entity_type = 'USER'" +
+            " THEN (select CONCAT (first_name, ' ', last_name) from tb_user where id = entity_id)" +
+            " WHEN entity.entity_type = 'DASHBOARD'" +
+            " THEN (select title from dashboard where id = entity_id)" +
+            " WHEN entity.entity_type = 'ASSET'" +
+            " THEN (select label from asset where id = entity_id)" +
+            " WHEN entity.entity_type = 'DEVICE'" +
+            " THEN (select label from device where id = entity_id)" +
+            " WHEN entity.entity_type = 'ENTITY_VIEW'" +
+            " THEN (select name from entity_view where id = entity_id)" +
+            " END as label";
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -293,9 +418,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private String relationQuery(EntityQueryContext ctx, RelationsQueryFilter entityFilter) {
         EntityId rootId = entityFilter.getRootEntity();
         String lvlFilter = getLvlFilter(entityFilter.getMaxLevel());
-        String selectFields = getSelectCreatedTime() + ", " + getSelectTenantId() + ", " + getSelectCustomerId() + ", " +
-                " entity.entity_id as id," + getSelectType() + ", " + getSelectName() + ", " +
-                getSelectLabel() + ", entity.entity_type as entity_type";
+        String selectFields = SELECT_TENANT_ID + ", " + SELECT_CUSTOMER_ID
+                + ", " + SELECT_CREATED_TIME + ", " +
+                " entity.entity_id as id,"
+                + SELECT_TYPE + ", " + SELECT_NAME + ", " + SELECT_LABEL + ", " +
+                SELECT_FIRST_NAME + ", " + SELECT_LAST_NAME + ", " + SELECT_EMAIL + ", " + SELECT_REGION + ", " +
+                SELECT_TITLE + ", " + SELECT_COUNTRY + ", " + SELECT_STATE + ", " + SELECT_CITY + ", " +
+                SELECT_ADDRESS + ", " + SELECT_ADDRESS_2 + ", " + SELECT_ZIP + ", " + SELECT_PHONE +
+                ", entity.entity_type as entity_type";
         String from = getQueryTemplate(entityFilter.getDirection());
         ctx.addUuidParameter("relation_root_id", rootId.getId());
         ctx.addStringParameter("relation_root_type", rootId.getEntityType().name());
@@ -345,98 +475,6 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             from = HIERARCHICAL_TO_QUERY_TEMPLATE;
         }
         return from;
-    }
-
-    private String getSelectCreatedTime() {
-        return "created_time";
-    }
-
-    private String getSelectTenantId() {
-        return "SELECT CASE" +
-                " WHEN entity.entity_type = 'TENANT' THEN entity_id" +
-                " WHEN entity.entity_type = 'CUSTOMER'" +
-                " THEN (select tenant_id from customer where id = entity_id)" +
-                " WHEN entity.entity_type = 'USER'" +
-                " THEN (select tenant_id from tb_user where id = entity_id)" +
-                " WHEN entity.entity_type = 'DASHBOARD'" +
-                " THEN (select tenant_id from dashboard where id = entity_id)" +
-                " WHEN entity.entity_type = 'ASSET'" +
-                " THEN (select tenant_id from asset where id = entity_id)" +
-                " WHEN entity.entity_type = 'DEVICE'" +
-                " THEN (select tenant_id from device where id = entity_id)" +
-                " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-                " THEN (select tenant_id from entity_view where id = entity_id)" +
-                " END as tenant_id";
-    }
-
-    private String getSelectCustomerId() {
-        return "CASE" +
-                " WHEN entity.entity_type = 'TENANT'" +
-                " THEN UUID('" + TenantId.NULL_UUID + "')" +
-                " WHEN entity.entity_type = 'CUSTOMER' THEN entity_id" +
-                " WHEN entity.entity_type = 'USER'" +
-                " THEN (select customer_id from tb_user where id = entity_id)" +
-                " WHEN entity.entity_type = 'DASHBOARD'" +
-                //TODO: parse assigned customers or use contains?
-                " THEN NULL" +
-                " WHEN entity.entity_type = 'ASSET'" +
-                " THEN (select customer_id from asset where id = entity_id)" +
-                " WHEN entity.entity_type = 'DEVICE'" +
-                " THEN (select customer_id from device where id = entity_id)" +
-                " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-                " THEN (select customer_id from entity_view where id = entity_id)" +
-                " END as customer_id";
-    }
-
-    private String getSelectName() {
-        return " CASE" +
-                " WHEN entity.entity_type = 'TENANT'" +
-                " THEN (select title from tenant where id = entity_id)" +
-                " WHEN entity.entity_type = 'CUSTOMER' " +
-                " THEN (select title from customer where id = entity_id)" +
-                " WHEN entity.entity_type = 'USER'" +
-                " THEN (select CONCAT (first_name, ' ', last_name) from tb_user where id = entity_id)" +
-                " WHEN entity.entity_type = 'DASHBOARD'" +
-                " THEN (select title from dashboard where id = entity_id)" +
-                " WHEN entity.entity_type = 'ASSET'" +
-                " THEN (select name from asset where id = entity_id)" +
-                " WHEN entity.entity_type = 'DEVICE'" +
-                " THEN (select name from device where id = entity_id)" +
-                " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-                " THEN (select name from entity_view where id = entity_id)" +
-                " END as name";
-    }
-
-    private String getSelectType() {
-        return " CASE" +
-                " WHEN entity.entity_type = 'USER'" +
-                " THEN (select authority from tb_user where id = entity_id)" +
-                " WHEN entity.entity_type = 'ASSET'" +
-                " THEN (select type from asset where id = entity_id)" +
-                " WHEN entity.entity_type = 'DEVICE'" +
-                " THEN (select type from device where id = entity_id)" +
-                " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-                " THEN (select type from entity_view where id = entity_id)" +
-                " ELSE entity.entity_type END as type";
-    }
-
-    private String getSelectLabel() {
-        return " CASE" +
-                " WHEN entity.entity_type = 'TENANT'" +
-                " THEN (select title from tenant where id = entity_id)" +
-                " WHEN entity.entity_type = 'CUSTOMER' " +
-                " THEN (select title from customer where id = entity_id)" +
-                " WHEN entity.entity_type = 'USER'" +
-                " THEN (select CONCAT (first_name, ' ', last_name) from tb_user where id = entity_id)" +
-                " WHEN entity.entity_type = 'DASHBOARD'" +
-                " THEN (select title from dashboard where id = entity_id)" +
-                " WHEN entity.entity_type = 'ASSET'" +
-                " THEN (select label from asset where id = entity_id)" +
-                " WHEN entity.entity_type = 'DEVICE'" +
-                " THEN (select label from device where id = entity_id)" +
-                " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-                " THEN (select name from entity_view where id = entity_id)" +
-                " END as label";
     }
 
     private String buildWhere(EntityQueryContext ctx, List<EntityKeyMapping> latestFiltersMapping) {
