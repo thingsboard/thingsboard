@@ -138,6 +138,7 @@ export interface EntityDataPageLink {
   page: number;
   textSearch?: string;
   sortOrder?: EntityDataSortOrder;
+  dynamic?: boolean;
 }
 
 export function entityDataPageLinkSortDirection(pageLink: EntityDataPageLink): SortDirection {

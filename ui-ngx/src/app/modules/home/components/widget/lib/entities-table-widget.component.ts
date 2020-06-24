@@ -156,7 +156,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.pageLink = {
       page: 0,
       pageSize: this.defaultPageSize,
-      textSearch: null
+      textSearch: null,
+      dynamic: true
     };
       // new PageLink(this.defaultPageSize, 0, null, sortOrder);
   }

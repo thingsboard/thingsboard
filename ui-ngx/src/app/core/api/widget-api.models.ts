@@ -44,6 +44,7 @@ import * as moment_ from 'moment';
 import { EntityData, EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
 import { EntityDataService } from '@core/api/entity-data.service';
 import { PageData } from '@shared/models/page/page-data';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -174,6 +175,7 @@ export class WidgetSubscriptionContext {
   timeService: TimeService;
   deviceService: DeviceService;
   alarmService: AlarmService;
+  translate: TranslateService;
   // datasourceService: DatasourceService;
   entityDataService: EntityDataService;
   utils: UtilsService;

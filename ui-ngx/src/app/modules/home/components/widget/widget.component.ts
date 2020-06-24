@@ -92,6 +92,7 @@ import { EntityService } from '@core/http/entity.service';
 import { ServicesMap } from '@home/models/services.map';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { EntityDataService } from '@core/api/entity-data.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-widget',
@@ -165,6 +166,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private dashboardService: DashboardService,
               // private datasourceService: DatasourceService,
               private entityDataService: EntityDataService,
+              private translate: TranslateService,
               private utils: UtilsService,
               private raf: RafService,
               private ngZone: NgZone,
@@ -295,6 +297,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext.timeService = this.timeService;
     this.subscriptionContext.deviceService = this.deviceService;
     this.subscriptionContext.alarmService = this.alarmService;
+    this.subscriptionContext.translate = this.translate;
     // this.subscriptionContext.datasourceService = this.datasourceService;
     this.subscriptionContext.entityDataService = this.entityDataService;
     this.subscriptionContext.utils = this.utils;

@@ -232,13 +232,7 @@ export class EntityDataSubscription {
             this.subsCommand.tsCmd.interval = this.subsTw.aggregation.interval;
             this.subsCommand.tsCmd.limit = this.subsTw.aggregation.limit;
             this.subsCommand.tsCmd.agg = this.subsTw.aggregation.type;
-            if (this.subsTw.aggregation.stateData) {
-              this.subsCommand.historyCmd.startTs = this.subsTw.startTs - YEAR;
-              this.subsCommand.historyCmd.endTs = this.subsTw.startTs;
-              this.subsCommand.historyCmd.interval = this.subsTw.aggregation.interval;
-              this.subsCommand.historyCmd.limit = this.subsTw.aggregation.limit;
-              this.subsCommand.historyCmd.agg = this.subsTw.aggregation.type;
-            }
+            this.subsCommand.tsCmd.fetchLatestPreviousPoint = this.subsTw.aggregation.stateData;
             this.dataAggregators.forEach((dataAggregator) => {
               dataAggregator.reset(newSubsTw.startTs,  newSubsTw.aggregation.timeWindow, newSubsTw.aggregation.interval);
             });
@@ -324,7 +318,7 @@ export class EntityDataSubscription {
         if (this.datasourceType === DatasourceType.function) {
           this.dataAggregators[dataIndex] = this.createRealtimeDataAggregator(this.subsTw, tsKeyNames,
             DataKeyType.function, dataIndex, this.notifyListener.bind(this));
-        } else if (!this.history && tsKeyNames.length) {
+        } else if (tsKeyNames.length) {
           this.dataAggregators[dataIndex] = this.createRealtimeDataAggregator(this.subsTw, tsKeyNames,
             DataKeyType.timeseries, dataIndex, this.notifyListener.bind(this));
         }
@@ -342,11 +336,9 @@ export class EntityDataSubscription {
               endTs: this.subsTw.fixedWindow.endTimeMs,
               interval: this.subsTw.aggregation.interval,
               limit: this.subsTw.aggregation.limit,
-              agg: this.subsTw.aggregation.type
+              agg: this.subsTw.aggregation.type,
+              fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
             };
-            if (this.subsTw.aggregation.stateData) {
-              this.subsCommand.historyCmd.startTs -= YEAR;
-            }
           } else {
             this.subsCommand.tsCmd = {
               keys: this.tsFields.map(key => key.key),
@@ -354,17 +346,8 @@ export class EntityDataSubscription {
               timeWindow: this.subsTw.aggregation.timeWindow,
               interval: this.subsTw.aggregation.interval,
               limit: this.subsTw.aggregation.limit,
-              agg: this.subsTw.aggregation.type
-            }
-            if (this.subsTw.aggregation.stateData) {
-              this.subsCommand.historyCmd = {
-                keys: this.tsFields.map(key => key.key),
-                startTs: this.subsTw.startTs - YEAR,
-                endTs: this.subsTw.startTs,
-                interval: this.subsTw.aggregation.interval,
-                limit: this.subsTw.aggregation.limit,
-                agg: this.subsTw.aggregation.type
-              };
+              agg: this.subsTw.aggregation.type,
+              fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
             }
           }
         }
@@ -506,14 +489,10 @@ export class EntityDataSubscription {
     }
     if (this.entityDataSubscriptionOptions.type === widgetType.timeseries && entityData.timeseries) {
       const subscriptionData = this.toSubscriptionData(entityData.timeseries, true);
-      if (!this.history) {
-        if (this.dataAggregators && this.dataAggregators[dataIndex]) {
-          this.dataAggregators[dataIndex].onData({data: subscriptionData}, false, false, true);
-        }
-        if (!aggregate) {
-          this.onData(subscriptionData, DataKeyType.timeseries, dataIndex, true, dataUpdatedCb);
-        }
-      } else {
+      if (this.dataAggregators && this.dataAggregators[dataIndex]) {
+        this.dataAggregators[dataIndex].onData({data: subscriptionData}, false, this.history, true);
+      }
+      if (!this.history && !aggregate) {
         this.onData(subscriptionData, DataKeyType.timeseries, dataIndex, true, dataUpdatedCb);
       }
     }
