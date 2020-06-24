@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -25,6 +26,8 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
 import java.util.List;
 
 public interface OAuth2Service {
+    Pair<TenantId, OAuth2ClientRegistration> getClientRegistrationWithTenant(String registrationId);
+
     OAuth2ClientRegistration getClientRegistration(String registrationId);
 
     List<OAuth2ClientInfo> getOAuth2Clients(String domainName);

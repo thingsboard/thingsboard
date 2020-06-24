@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2020 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -89,12 +91,27 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     @Override
-    public OAuth2ClientRegistration getClientRegistration(String registrationId) {
-        return clientsParams.values().stream()
-                .flatMap(oAuth2ClientsParams -> oAuth2ClientsParams.getClientRegistrations().stream())
-                .filter(clientRegistration -> registrationId.equals(clientRegistration.getRegistrationId()))
+    public Pair<TenantId, OAuth2ClientRegistration> getClientRegistrationWithTenant(String registrationId) {
+        return clientsParams.entrySet().stream()
+                .map(entry -> {
+                    TenantId tenantId = entry.getKey();
+                    OAuth2ClientRegistration clientRegistration = entry.getValue().getClientRegistrations().stream()
+                            .filter(registration -> registrationId.equals(registration.getRegistrationId()))
+                            .findFirst()
+                            .orElse(null);
+                    return clientRegistration != null ?
+                            ImmutablePair.of(tenantId, clientRegistration) : null;
+                })
+                .filter(Objects::nonNull)
                 .findFirst()
-                .orElse(null);
+                .orElse(null)
+                ;
+    }
+
+    @Override
+    public OAuth2ClientRegistration getClientRegistration(String registrationId) {
+        Pair<TenantId, OAuth2ClientRegistration> clientRegistrationPair = getClientRegistrationWithTenant(registrationId);
+        return clientRegistrationPair != null ? clientRegistrationPair.getRight() : null;
     }
 
     @Override
