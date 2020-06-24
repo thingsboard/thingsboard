@@ -30,6 +30,7 @@ export interface RuleChain extends BaseData<RuleChainId> {
   type: string;
   configuration?: any;
   additionalInfo?: any;
+  isDefault?: boolean;
 }
 
 export interface RuleChainMetaData {

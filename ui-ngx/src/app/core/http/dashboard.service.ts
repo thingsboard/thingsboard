@@ -163,7 +163,8 @@ export class DashboardService {
       defaultHttpOptionsFromConfig(config))
   }
 
-  public assignDashboardToEdge(edgeId: string, dashboardId: string, config?: RequestConfig): Observable<Dashboard> {
+  public assignDashboardToEdge(edgeId: string, dashboardId: string,
+                               config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>(`/api/edge/${edgeId}/dashboard/${dashboardId}`,
       null, defaultHttpOptionsFromConfig(config));
   }

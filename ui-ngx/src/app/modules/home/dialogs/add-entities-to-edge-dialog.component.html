@@ -34,8 +34,7 @@
       <tb-entity-list
         formControlName="entityIds"
         required
-        [entityType]="entityType"
-      >
+        [entityType]="entityType">
       </tb-entity-list>
     </fieldset>
   </div>
@@ -50,7 +49,7 @@
             style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
+            (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
   </div>

@@ -1555,7 +1555,13 @@
         "debug-mode": "Debug mode",
         "search": "Search rule chains",
         "selected-rulechains": "{ count, plural, 1 {1 rule chain} other {# rule chains} } selected",
-        "open-rulechain": "Open rule chain"
+        "open-rulechain": "Open rule chain",
+        "set-default-edge": "Make edge rule chain default",
+        "set-default-edge-title": "Are you sure you want to make the edge rule chain '{{ruleChainName}}' default?",
+        "set-default-edge-text": "After the confirmation the edge rule chain will be added to default list and assigned to newly created edge(s).",
+        "remove-default-edge": "Remove edge rule chain from defaults",
+        "remove-default-edge-title": "Are you sure you want to remove the edge rule chain '{{ruleChainName}}' from default list?",
+        "remove-default-edge-text": "After the confirmation the edge rule chain will not be assigned for a newly created edges."
     },
     "rulenode": {
         "details": "Details",

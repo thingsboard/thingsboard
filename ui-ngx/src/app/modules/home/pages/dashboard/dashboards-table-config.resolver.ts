@@ -74,7 +74,6 @@ import {
 export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<DashboardInfo | Dashboard>> {
 
   private readonly config: EntityTableConfig<DashboardInfo | Dashboard> = new EntityTableConfig<DashboardInfo | Dashboard>();
-  private edgeId: string;
 
   constructor(private store: Store<AppState>,
               private dashboardService: DashboardService,
@@ -111,9 +110,9 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     const routeParams = route.params;
     this.config.componentsData = {
       dashboardScope: route.data.dashboardsType,
-      customerId: routeParams.customerId
+      customerId: routeParams.customerId,
+      edgeId: routeParams.edgeId
     };
-    this.edgeId = routeParams.edgeId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
       tap((authUser) => {
         if (authUser.authority === Authority.CUSTOMER_USER) {
@@ -133,7 +132,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
             this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('dashboard.dashboards');
           }
         } else if (this.config.componentsData.dashboardScope === 'edge') {
-          this.edgeService.getEdge(this.edgeId).pipe(map(edge =>
+          this.edgeService.getEdge(this.config.componentsData.edgeId).pipe(map(edge =>
             this.config.tableTitle = edge.name + ': ' + this.translate.instant('dashboard.dashboards'))).subscribe();
         } else {
           this.config.tableTitle = this.translate.instant('dashboard.dashboards');
@@ -178,7 +177,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       this.config.deleteEntity = id => this.dashboardService.deleteDashboard(id.id);
     } else if (dashboardScope === 'edge') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.dashboardService.getEdgeDashboards(this.edgeId, pageLink, this.config.componentsData.dashboardsType);
+        this.dashboardService.getEdgeDashboards(this.config.componentsData.edgeId, pageLink, this.config.componentsData.dashboardsType);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
         this.dashboardService.getCustomerDashboards(this.config.componentsData.customerId, pageLink);
@@ -556,7 +555,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        edgeId: this.edgeId,
+        edgeId: this.config.componentsData.edgeId,
         entityType: EntityType.DASHBOARD
       }
     }).afterClosed()
@@ -579,7 +578,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       true
     ).subscribe((res) => {
         if (res) {
-          this.dashboardService.unassignDashboardFromEdge(this.edgeId, dashboard.id.id).subscribe(
+          this.dashboardService.unassignDashboardFromEdge(this.config.componentsData.edgeId, dashboard.id.id).subscribe(
             () => {
               this.config.table.updateData();
             }
@@ -604,7 +603,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
           const tasks: Observable<any>[] = [];
           dashboards.forEach(
             (dashboard) => {
-              tasks.push(this.dashboardService.unassignDashboardFromEdge(this.edgeId, dashboard.id.id));
+              tasks.push(this.dashboardService.unassignDashboardFromEdge(this.config.componentsData.edgeId, dashboard.id.id));
             }
           );
           forkJoin(tasks).subscribe(

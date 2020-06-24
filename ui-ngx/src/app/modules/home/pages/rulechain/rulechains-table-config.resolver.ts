@@ -29,7 +29,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { RuleChain, ruleChainType } from '@shared/models/rule-chain.models';
+import {RuleChain, RuleChainType, ruleChainType} from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.component';
 import { DialogService } from '@core/services/dialog.service';
@@ -44,7 +44,8 @@ import {
   AddEntitiesToEdgeDialogData
 } from "@home/dialogs/add-entities-to-edge-dialog.component";
 import { MatDialog } from "@angular/material/dialog";
-import {isUndefined} from "@core/utils";
+import { isDefined, isUndefined } from "@core/utils";
+import { PageLink } from "@shared/models/page/page-link";
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -178,10 +179,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   configureEntityFunctions(ruleChainScope: string): void {
     if (ruleChainScope === 'tenant') {
       this.config.tableTitle = this.translate.instant('rulechain.core-rulechains');
-      this.config.entitiesFetchFunction = pageLink => this.ruleChainService.getRuleChains(pageLink, ruleChainType.core);
+      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink, ruleChainType.core, ruleChainScope);
     } else if (ruleChainScope === 'edges') {
       this.config.tableTitle = this.translate.instant('rulechain.edge-rulechains');
-      this.config.entitiesFetchFunction = pageLink => this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge);
+      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink, ruleChainType.edge, ruleChainScope);
     } else if (ruleChainScope === 'edge') {
       if (this.edgeId) {
         this.edgeService.getEdge(this.edgeId)
@@ -235,10 +236,16 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if (ruleChainScope === 'edges') {
       actions.push(
         {
-          name: this.translate.instant('rulechain.make-default!!!'),
-          icon: 'flag',
+          name: this.translate.instant('rulechain.set-default-edge'),
+          icon: 'bookmark_outline',
           isEnabled: () => true,
-          onAction: ($event, entity) => this.setDefaultRootEdgeRuleChain($event, entity)
+          onAction: ($event, entity) => this.setDefaultEdgeRuleChain($event, entity)
+        },
+        {
+          name: this.translate.instant('rulechain.remove-default-edge'),
+          icon: 'bookmark',
+          isEnabled: () => true,
+          onAction: ($event, entity) => this.removeDefaultEdgeRuleChain($event, entity)
         }
       )
     }
@@ -368,7 +375,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         if (res) {
           this.config.table.updateData();
         }
-      });
+      }
+    )
   }
 
   unassignFromEdge($event: Event, ruleChain: RuleChain) {
@@ -419,6 +427,67 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         }
       }
     );
+  }
+
+  setDefaultEdgeRuleChain($event: Event, ruleChain: RuleChain) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('rulechain.set-default-edge-title', {ruleChainName: ruleChain.name}),
+      this.translate.instant('rulechain.set-default-edge-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((res) => {
+      if (res) {
+        this.ruleChainService.addDefaultEdgeRuleChain(ruleChain.id.id).subscribe(
+          () => {
+            this.config.table.updateData();
+          }
+        )
+      }
+      }
+    );
+  }
+
+  removeDefaultEdgeRuleChain($event: Event, ruleChain: RuleChain) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('rulechain.remove-default-edge-title', {ruleChainName: ruleChain.name}),
+      this.translate.instant('rulechain.remove-default-edge-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((res) => {
+        if (res) {
+          this.ruleChainService.removeDefaultEdgeRuleChain(ruleChain.id.id).subscribe(
+            () => {
+              this.config.table.updateData();
+            }
+          )
+        }
+      }
+    );
+  }
+
+  isRootRuleChain(ruleChain: RuleChain) {
+    return (isDefined(ruleChain)) && !ruleChain.root && ruleChain.isDefault;
+  }
+
+  isNonRootRuleChain(ruleChain: RuleChain) {
+    return (isDefined(ruleChain)) && !ruleChain.root && !ruleChain.isDefault;
+  }
+
+  fetchRuleChains(pageLink: PageLink, type: string, ruleChainScope: string) {
+    if (ruleChainScope === 'tenant') {
+      return this.ruleChainService.getRuleChains(pageLink, type);
+    }
+    else if (ruleChainScope === 'edges') {
+      this.ruleChainService.getRuleChains(pageLink, type)
+    }
   }
 
 }
