@@ -115,14 +115,16 @@ export class TelemetryWebsocketService implements TelemetryService {
   }
 
   public update(subscriber: TelemetrySubscriber) {
-    subscriber.subscriptionCommands.forEach(
-      (subscriptionCommand) => {
-        if (subscriptionCommand.cmdId && subscriptionCommand instanceof EntityDataCmd) {
-          this.cmdsWrapper.entityDataCmds.push(subscriptionCommand);
+    if (!this.isReconnect) {
+      subscriber.subscriptionCommands.forEach(
+        (subscriptionCommand) => {
+          if (subscriptionCommand.cmdId && subscriptionCommand instanceof EntityDataCmd) {
+            this.cmdsWrapper.entityDataCmds.push(subscriptionCommand);
+          }
         }
-      }
-    );
-    this.publishCommands();
+      );
+      this.publishCommands();
+    }
   }
 
   public unsubscribe(subscriber: TelemetrySubscriber) {
