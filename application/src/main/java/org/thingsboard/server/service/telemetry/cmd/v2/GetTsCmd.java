@@ -15,26 +15,24 @@
  */
 package org.thingsboard.server.service.telemetry.cmd.v2;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
 import org.thingsboard.server.common.data.kv.Aggregation;
 
 import java.util.List;
 
-@Data
-public class TimeSeriesCmd implements GetTsCmd {
+public interface GetTsCmd {
 
-    private List<String> keys;
-    private long startTs;
-    private long timeWindow;
-    private long interval;
-    private int limit;
-    private Aggregation agg;
-    private boolean fetchLatestPreviousPoint;
+    long getStartTs();
 
-    @JsonIgnore
-    @Override
-    public long getEndTs() {
-        return startTs + timeWindow;
-    }
+    long getEndTs();
+
+    List<String> getKeys();
+
+    long getInterval();
+
+    int getLimit();
+
+    Aggregation getAgg();
+
+    boolean isFetchLatestPreviousPoint();
+
 }

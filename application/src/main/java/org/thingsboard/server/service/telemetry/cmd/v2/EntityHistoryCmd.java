@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import java.util.List;
 
 @Data
-public class EntityHistoryCmd {
+public class EntityHistoryCmd implements GetTsCmd {
 
     private List<String> keys;
     private long startTs;
