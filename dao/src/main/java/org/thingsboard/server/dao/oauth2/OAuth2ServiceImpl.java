@@ -44,9 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -131,7 +129,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         lock.lock();
         try {
             validateUniqueRegistrationId(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
-            AdminSettings clientRegistrationParamsSettings = createSystemOAuth2Settings(oAuth2ClientsParams);
+            AdminSettings clientRegistrationParamsSettings = createSystemAdminSettings(oAuth2ClientsParams);
             adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, clientRegistrationParamsSettings);
             clientsParams.put(TenantId.SYS_TENANT_ID, oAuth2ClientsParams);
         } finally {
@@ -139,6 +137,98 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }
 
         return getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+    }
+
+    @Override
+    public OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams) {
+        // TODO what if tenant saves config for several different domain names, do we need to check it
+        validate(oAuth2ClientsParams);
+        // TODO check by registration ID in system
+
+        String adminSettingsId = processTenantAdminSettings(tenantId, oAuth2ClientsParams.getDomainName(), oAuth2ClientsParams.getAdminSettingsId());
+        oAuth2ClientsParams.setAdminSettingsId(adminSettingsId);
+
+        List<AttributeKvEntry> attributes = createOAuth2ClientsParamsAttributes(oAuth2ClientsParams);
+        try {
+            // TODO ask if I need .get() here
+            attributesService.save(tenantId, tenantId, DataConstants.SERVER_SCOPE, attributes).get();
+        } catch (Exception e) {
+            log.error("Unable to save OAuth2 Client Registration Params to attributes!", e);
+            throw new IncorrectParameterException("Unable to save OAuth2 Client Registration Params to attributes!");
+        }
+        return getTenantOAuth2ClientsParams(tenantId);
+    }
+
+    private List<AttributeKvEntry> createOAuth2ClientsParamsAttributes(OAuth2ClientsParams oAuth2ClientsParams) {
+        String json = toJson(oAuth2ClientsParams);
+        List<AttributeKvEntry> attributes = new ArrayList<>();
+        long ts = System.currentTimeMillis();
+        attributes.add(new BaseAttributeKvEntry(new StringDataEntry(OAUTH2_CLIENT_REGISTRATIONS_PARAMS, json), ts));
+        return attributes;
+    }
+
+    private String processTenantAdminSettings(TenantId tenantId, String domainName, String prevAdminSettingsId) {
+        String selectedDomainSettingsKey = constructAdminSettingsDomainKey(domainName);
+        AdminSettings existentAdminSettingsByKey = adminSettingsService.findAdminSettingsByKey(tenantId, selectedDomainSettingsKey);
+        if (StringUtils.isEmpty(prevAdminSettingsId)) {
+            if (existentAdminSettingsByKey == null) {
+                AdminSettings tenantAdminSettings = createTenantAdminSettings(tenantId, selectedDomainSettingsKey);
+                existentAdminSettingsByKey = adminSettingsService.saveAdminSettings(tenantId, tenantAdminSettings);
+                return existentAdminSettingsByKey.getId().getId().toString();
+            } else {
+                log.error("Current domain name [{}] already registered in the system!", domainName);
+                throw new IncorrectParameterException("Current domain name [" + domainName + "] already registered in the system!");
+            }
+        } else {
+            AdminSettings existentOAuth2ClientsSettingsById = adminSettingsService.findAdminSettingsById(
+                    tenantId,
+                    new AdminSettingsId(UUID.fromString(prevAdminSettingsId))
+            );
+
+            if (existentOAuth2ClientsSettingsById == null) {
+                log.error("Admin setting ID is already set in login white labeling object, but doesn't exist in the database");
+                throw new IllegalStateException("Admin setting ID is already set in login white labeling object, but doesn't exist in the database");
+            }
+
+            if (!existentOAuth2ClientsSettingsById.getKey().equals(selectedDomainSettingsKey)) {
+                if (existentAdminSettingsByKey == null) {
+                    AdminSettings newOAuth2ClientsSettings = replaceExistentAdminSettings(tenantId, selectedDomainSettingsKey, existentOAuth2ClientsSettingsById.getKey());
+                    return newOAuth2ClientsSettings.getId().getId().toString();
+                } else {
+                    log.error("Current domain name [{}] already registered in the system!", domainName);
+                    throw new IncorrectParameterException("Current domain name [" + domainName + "] already registered in the system!");
+                }
+            }
+            return prevAdminSettingsId;
+        }
+    }
+
+    private AdminSettings replaceExistentAdminSettings(TenantId tenantId, String newKey, String oldKey) {
+        adminSettingsService.deleteAdminSettingsByKey(tenantId, oldKey);
+        AdminSettings tenantAdminSettings = createTenantAdminSettings(tenantId, newKey);
+        return adminSettingsService.saveAdminSettings(tenantId, tenantAdminSettings);
+    }
+
+    private AdminSettings createTenantAdminSettings(TenantId tenantId, String clientRegistrationsKey) {
+        AdminSettings clientRegistrationParamsSettings = new AdminSettings();
+        clientRegistrationParamsSettings.setKey(clientRegistrationsKey);
+        ObjectNode node = mapper.createObjectNode();
+        node.put("entityType", EntityType.TENANT.name());
+        node.put("entityId", tenantId.toString());
+        clientRegistrationParamsSettings.setJsonValue(node);
+        return clientRegistrationParamsSettings;
+    }
+
+    private AdminSettings createSystemAdminSettings(OAuth2ClientsParams oAuth2ClientsParams) {
+        AdminSettings clientRegistrationParamsSettings = new AdminSettings();
+        clientRegistrationParamsSettings.setKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+        ObjectNode clientRegistrationsNode = mapper.createObjectNode();
+
+        String json = toJson(oAuth2ClientsParams);
+        clientRegistrationsNode.put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
+        clientRegistrationParamsSettings.setJsonValue(clientRegistrationsNode);
+
+        return clientRegistrationParamsSettings;
     }
 
     private void validateUniqueRegistrationId(OAuth2ClientsParams inputOAuth2ClientsParams, TenantId tenantId) {
@@ -155,82 +245,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                         }
                     });
                 });
-    }
-
-    private AdminSettings createSystemOAuth2Settings(OAuth2ClientsParams oAuth2ClientsParams) {
-        AdminSettings clientRegistrationParamsSettings = new AdminSettings();
-        clientRegistrationParamsSettings.setKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
-        ObjectNode clientRegistrationsNode = mapper.createObjectNode();
-
-        String json;
-        try {
-            json = mapper.writeValueAsString(oAuth2ClientsParams);
-        } catch (JsonProcessingException e) {
-            log.error("Unable to convert OAuth2 Client Registration Params to JSON!", e);
-            throw new IncorrectParameterException("Unable to convert OAuth2 Client Registration Params to JSON!");
-        }
-        clientRegistrationsNode.put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
-        clientRegistrationParamsSettings.setJsonValue(clientRegistrationsNode);
-
-        return clientRegistrationParamsSettings;
-    }
-
-    @Override
-    public OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams) {
-        // TODO ask what if tenant saves config for several different domain names, do we need to check it
-        // TODO check by registration ID in system
-        validate(oAuth2ClientsParams);
-        String clientRegistrationsKey = constructClientRegistrationsKey(oAuth2ClientsParams.getDomainName());
-        AdminSettings existentAdminSettingsByKey = adminSettingsService.findAdminSettingsByKey(tenantId, clientRegistrationsKey);
-        if (StringUtils.isEmpty(oAuth2ClientsParams.getAdminSettingsId())) {
-            if (existentAdminSettingsByKey == null) {
-                existentAdminSettingsByKey = saveOAuth2ClientSettings(tenantId, clientRegistrationsKey);
-                oAuth2ClientsParams.setAdminSettingsId(existentAdminSettingsByKey.getId().getId().toString());
-            } else {
-                log.error("Current domain name [{}] already registered in the system!", oAuth2ClientsParams.getDomainName());
-                throw new IncorrectParameterException("Current domain name [" + oAuth2ClientsParams.getDomainName() + "] already registered in the system!");
-            }
-        } else {
-            AdminSettings existentOAuth2ClientsSettingsById = adminSettingsService.findAdminSettingsById(
-                    tenantId,
-                    new AdminSettingsId(UUID.fromString(oAuth2ClientsParams.getAdminSettingsId()))
-            );
-
-            if (existentOAuth2ClientsSettingsById == null) {
-                log.error("Admin setting ID is already set in login white labeling object, but doesn't exist in the database");
-                throw new IllegalStateException("Admin setting ID is already set in login white labeling object, but doesn't exist in the database");
-            }
-
-            if (!existentOAuth2ClientsSettingsById.getKey().equals(clientRegistrationsKey)) {
-                if (existentAdminSettingsByKey == null) {
-                    adminSettingsService.deleteAdminSettingsByKey(tenantId, existentOAuth2ClientsSettingsById.getKey());
-                    AdminSettings newOAuth2ClientsSettings = saveOAuth2ClientSettings(tenantId, clientRegistrationsKey);
-                    oAuth2ClientsParams.setAdminSettingsId(newOAuth2ClientsSettings.getId().getId().toString());
-                } else {
-                    log.error("Current domain name [{}] already registered in the system!", oAuth2ClientsParams.getDomainName());
-                    throw new IncorrectParameterException("Current domain name [" + oAuth2ClientsParams.getDomainName() + "] already registered in the system!");
-                }
-            }
-        }
-        // TODO refactor
-        String json;
-        try {
-            json = mapper.writeValueAsString(oAuth2ClientsParams);
-        } catch (JsonProcessingException e) {
-            log.error("Unable to convert OAuth2 Client Registration Params to JSON!", e);
-            throw new IncorrectParameterException("Unable to convert OAuth2 Client Registration Params to JSON!");
-        }
-        List<AttributeKvEntry> attributes = new ArrayList<>();
-        long ts = System.currentTimeMillis();
-        attributes.add(new BaseAttributeKvEntry(new StringDataEntry(OAUTH2_CLIENT_REGISTRATIONS_PARAMS, json), ts));
-        try {
-            // TODO ask if I need here .get()
-            attributesService.save(tenantId, tenantId, DataConstants.SERVER_SCOPE, attributes).get();
-        } catch (Exception e) {
-            log.error("Unable to save OAuth2 Client Registration Params to attributes!", e);
-            throw new IncorrectParameterException("Unable to save OAuth2 Client Registration Params to attributes!");
-        }
-        return getTenantOAuth2ClientsParams(tenantId);
     }
 
     private void validate(OAuth2ClientsParams oAuth2ClientsParams) {
@@ -276,8 +290,8 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         OAuth2ClientsParams params = getTenantOAuth2ClientsParams(tenantId);
         if (!StringUtils.isEmpty(params.getDomainName())) {
             // TODO don't we need to delete from attributes?
-            String oauth2ClientsParamsKey = constructClientRegistrationsKey(params.getDomainName());
-            adminSettingsService.deleteAdminSettingsByKey(tenantId, oauth2ClientsParamsKey);
+            String settingsKey = constructAdminSettingsDomainKey(params.getDomainName());
+            adminSettingsService.deleteAdminSettingsByKey(tenantId, settingsKey);
         }
     }
 
@@ -310,17 +324,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }, MoreExecutors.directExecutor());
     }
 
-    private AdminSettings saveOAuth2ClientSettings(TenantId tenantId, String clientRegistrationsKey) {
-        AdminSettings oauth2ClientsSettings = new AdminSettings();
-        oauth2ClientsSettings.setKey(clientRegistrationsKey);
-        ObjectNode node = mapper.createObjectNode();
-        node.put("entityType", EntityType.TENANT.name());
-        node.put("entityId", tenantId.toString());
-        oauth2ClientsSettings.setJsonValue(node);
-        return adminSettingsService.saveAdminSettings(tenantId, oauth2ClientsSettings);
-    }
-
-    private String constructClientRegistrationsKey(String domainName) {
+    private String constructAdminSettingsDomainKey(String domainName) {
         String clientRegistrationsKey;
         if (StringUtils.isEmpty(domainName)) {
             clientRegistrationsKey = OAUTH2_CLIENT_REGISTRATIONS_PARAMS;
@@ -347,7 +351,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     private OAuth2ClientsParams getMergedOAuth2ClientsParams(String domainName) {
-        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructClientRegistrationsKey(domainName));
+        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructAdminSettingsDomainKey(domainName));
         OAuth2ClientsParams result;
         if (oauth2ClientsSettings != null) {
             String strEntityType = oauth2ClientsSettings.getJsonValue().get("entityType").asText();
@@ -365,6 +369,17 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             result = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
         }
         return result;
+    }
+
+    private String toJson(OAuth2ClientsParams oAuth2ClientsParams) {
+        String json;
+        try {
+            json = mapper.writeValueAsString(oAuth2ClientsParams);
+        } catch (JsonProcessingException e) {
+            log.error("Unable to convert OAuth2 Client Registration Params to JSON!", e);
+            throw new IncorrectParameterException("Unable to convert OAuth2 Client Registration Params to JSON!");
+        }
+        return json;
     }
 
     private final Consumer<OAuth2ClientRegistration> validator = clientRegistration -> {
