@@ -37,10 +37,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
+import java.util.Optional;
 
 @Slf4j
 @Data
@@ -145,12 +146,7 @@ public class TbEntityDataSubCtx {
                 .subscriptionId(subIdx)
                 .tenantId(sessionRef.getSecurityCtx().getTenantId())
                 .entityId(entityData.getEntityId())
-                .updateConsumer(new BiConsumer<String, SubscriptionUpdate>() {
-                    @Override
-                    public void accept(String sessionId, SubscriptionUpdate subscriptionUpdate) {
-                        sendWsMsg(sessionId, subscriptionUpdate, EntityKeyType.TIME_SERIES, resultToLatestValues);
-                    }
-                })
+                .updateConsumer((sessionId, subscriptionUpdate) -> sendWsMsg(sessionId, subscriptionUpdate, EntityKeyType.TIME_SERIES, resultToLatestValues))
                 .allKeys(false)
                 .keyStates(keyStates)
                 .build();
@@ -179,47 +175,90 @@ public class TbEntityDataSubCtx {
         EntityId entityId = subToEntityIdMap.get(subscriptionUpdate.getSubscriptionId());
         if (entityId != null) {
             log.trace("[{}][{}][{}][{}] Received subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
-            Map<String, TsValue> latestUpdate = new HashMap<>();
-            subscriptionUpdate.getData().forEach((k, v) -> {
-                Object[] data = (Object[]) v.get(0);
-                latestUpdate.put(k, new TsValue((Long) data[0], (String) data[1]));
-            });
-            EntityData entityData = getDataForEntity(entityId);
-            if (entityData != null && entityData.getLatest() != null) {
-                Map<String, TsValue> latestCtxValues = entityData.getLatest().get(keyType);
-                log.trace("[{}][{}][{}] Going to compare update with {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), latestCtxValues);
-                if (latestCtxValues != null) {
-                    latestCtxValues.forEach((k, v) -> {
-                        TsValue update = latestUpdate.get(k);
-                        if (update != null) {
-                            if (update.getTs() < v.getTs()) {
-                                log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                                latestUpdate.remove(k);
-                            } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
-                                log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                                latestUpdate.remove(k);
-                            }
-                        }
-                    });
-                    //Setting new values
-                    latestUpdate.forEach(latestCtxValues::put);
-                }
-            }
-            if (!latestUpdate.isEmpty()) {
-                if (resultToLatestValues) {
-                    Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
-                    entityData = new EntityData(entityId, latestMap, null);
-                } else {
-                    Map<String, TsValue[]> tsMap = new HashMap<>();
-                    latestUpdate.forEach((key, tsValue) -> {
-                        tsMap.put(key, new TsValue[]{tsValue});
-                    });
-                    entityData = new EntityData(entityId, null, tsMap);
-                }
-                wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData)));
+            if (resultToLatestValues) {
+                sendLatestWsMsg(entityId, sessionId, subscriptionUpdate, keyType);
+            } else {
+                sendTsWsMsg(entityId, sessionId, subscriptionUpdate, keyType);
             }
         } else {
             log.trace("[{}][{}][{}][{}] Received stale subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
+        }
+    }
+
+    private void sendLatestWsMsg(EntityId entityId, String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
+        Map<String, TsValue> latestUpdate = new HashMap<>();
+        subscriptionUpdate.getData().forEach((k, v) -> {
+            Object[] data = (Object[]) v.get(0);
+            latestUpdate.put(k, new TsValue((Long) data[0], (String) data[1]));
+        });
+        EntityData entityData = getDataForEntity(entityId);
+        if (entityData != null && entityData.getLatest() != null) {
+            Map<String, TsValue> latestCtxValues = entityData.getLatest().get(keyType);
+            log.trace("[{}][{}][{}] Going to compare update with {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), latestCtxValues);
+            if (latestCtxValues != null) {
+                latestCtxValues.forEach((k, v) -> {
+                    TsValue update = latestUpdate.get(k);
+                    if (update != null) {
+                        if (update.getTs() < v.getTs()) {
+                            log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                            latestUpdate.remove(k);
+                        } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
+                            log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                            latestUpdate.remove(k);
+                        }
+                    }
+                });
+                //Setting new values
+                latestUpdate.forEach(latestCtxValues::put);
+            }
+        }
+        if (!latestUpdate.isEmpty()) {
+            Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
+            entityData = new EntityData(entityId, latestMap, null);
+            wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData)));
+        }
+    }
+
+    private void sendTsWsMsg(EntityId entityId, String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
+        Map<String, List<TsValue>> tsUpdate = new HashMap<>();
+        subscriptionUpdate.getData().forEach((k, v) -> {
+            Object[] data = (Object[]) v.get(0);
+            tsUpdate.computeIfAbsent(k, key -> new ArrayList<>()).add(new TsValue((Long) data[0], (String) data[1]));
+        });
+        EntityData entityData = getDataForEntity(entityId);
+        if (entityData != null && entityData.getLatest() != null) {
+            Map<String, TsValue> latestCtxValues = entityData.getLatest().get(keyType);
+            log.trace("[{}][{}][{}] Going to compare update with {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), latestCtxValues);
+            if (latestCtxValues != null) {
+                latestCtxValues.forEach((k, v) -> {
+                    List<TsValue> updateList = tsUpdate.get(k);
+                    if (updateList != null) {
+                        for (TsValue update : new ArrayList<>(updateList)) {
+                            if (update.getTs() < v.getTs()) {
+                                log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                                updateList.remove(update);
+                            } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
+                                log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                                updateList.remove(update);
+                            }
+                            if (updateList.isEmpty()) {
+                                tsUpdate.remove(k);
+                            }
+                        }
+                    }
+                });
+                //Setting new values
+                tsUpdate.forEach((k, v) -> {
+                    Optional<TsValue> maxValue = v.stream().max(Comparator.comparingLong(TsValue::getTs));
+                    maxValue.ifPresent(max -> latestCtxValues.put(k, max));
+                });
+            }
+        }
+        if (!tsUpdate.isEmpty()) {
+            Map<String, TsValue[]> tsMap = new HashMap<>();
+            tsUpdate.forEach((key, tsValue) -> tsMap.put(key, tsValue.toArray(new TsValue[tsValue.size()])));
+            entityData = new EntityData(entityId, null, tsMap);
+            wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData)));
         }
     }
 
