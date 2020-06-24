@@ -266,13 +266,22 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return clientsParams.get(tenantId);
     }
 
+    private OAuth2ClientsParams getSystemOAuth2ClientsParamsFromDb(TenantId tenantId) {
+        AdminSettings oauth2ClientsParamsSettings = adminSettingsService.findAdminSettingsByKey(tenantId, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+        String json = null;
+        if (oauth2ClientsParamsSettings != null) {
+            json = oauth2ClientsParamsSettings.getJsonValue().get(SYSTEM_SETTINGS_OAUTH2_VALUE).asText();
+        }
+        return constructOAuth2ClientsParams(json);
+    }
+
     @Override
     public OAuth2ClientsParams getTenantOAuth2ClientsParams(TenantId tenantId) {
         return clientsParams.get(tenantId);
     }
 
     private Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
-        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParamsFromDb(TenantId.SYS_TENANT_ID);
         ListenableFuture<Map<String, String>> jsonFuture = getAllOAuth2ClientsParamsAttribute();
         try {
             return Futures.transform(jsonFuture,
