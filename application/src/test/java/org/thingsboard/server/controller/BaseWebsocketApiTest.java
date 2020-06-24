@@ -21,6 +21,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Device;
@@ -113,7 +114,9 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         DeviceTypeFilter dtf = new DeviceTypeFilter();
         dtf.setDeviceNameFilter("D");
         dtf.setDeviceType("default");
-        EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        EntityDataQuery edq = new EntityDataQuery(dtf,
+                new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         EntityHistoryCmd historyCmd = new EntityHistoryCmd();
         historyCmd.setKeys(Arrays.asList("temperature"));
@@ -148,11 +151,11 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         msg = wsClient.waitForReply();
         update = mapper.readValue(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
-        pageData = update.getData();
-        Assert.assertNotNull(pageData);
-        Assert.assertEquals(1, pageData.getData().size());
-        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
-        TsValue[] tsArray = pageData.getData().get(0).getTimeseries().get("temperature");
+        List<EntityData> dataList = update.getUpdate();
+        Assert.assertNotNull(dataList);
+        Assert.assertEquals(1, dataList.size());
+        Assert.assertEquals(device.getId(), dataList.get(0).getEntityId());
+        TsValue[] tsArray = dataList.get(0).getTimeseries().get("temperature");
         Assert.assertEquals(3, tsArray.length);
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsArray[0]);
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsArray[1]);
@@ -223,8 +226,8 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
 
         now = System.currentTimeMillis();
         TsKvEntry dataPoint4 = new BasicTsKvEntry(now, new LongDataEntry("temperature", 45L));
-
         wsClient.registerWaitForUpdate();
+        Thread.sleep(100);
         sendTelemetry(device, Arrays.asList(dataPoint4));
         msg = wsClient.waitForUpdate();
 

@@ -171,11 +171,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         TbEntityDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
-            if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null) {
+            if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null || cmd.getHistoryCmd() != null) {
                 Collection<Integer> oldSubIds = ctx.clearSubscriptions();
                 oldSubIds.forEach(subId -> localSubscriptionService.cancelSubscription(serviceId, subId));
             }
-            //TODO: cleanup old subscription;
         } else {
             log.debug("[{}][{}] Creating new subscription using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
             ctx = createSubCtx(session, cmd);
