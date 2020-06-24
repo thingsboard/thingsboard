@@ -282,6 +282,9 @@ export interface IWidgetSubscription {
 
   subscribe(): void;
 
+  subscribeAllForPaginatedData(pageLink: EntityDataPageLink,
+                               keyFilters: KeyFilter[]): void;
+
   subscribeForPaginatedData(datasourceIndex: number,
                             pageLink: EntityDataPageLink,
                             keyFilters: KeyFilter[]): void;

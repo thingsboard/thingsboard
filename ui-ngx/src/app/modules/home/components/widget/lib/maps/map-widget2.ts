@@ -14,7 +14,14 @@
 /// limitations under the License.
 ///
 
-import { defaultSettings, hereProviders, MapProviders, providerSets, UnitedMapSettings } from './map-models';
+import {
+  DEFAULT_MAP_PAGE_SIZE,
+  defaultSettings,
+  hereProviders,
+  MapProviders,
+  providerSets,
+  UnitedMapSettings
+} from './map-models';
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
@@ -35,6 +42,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import _ from 'lodash';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
@@ -73,6 +81,13 @@ export class MapWidgetController implements MapWidgetInterface {
         if (this.settings.draggableMarker) {
             this.map.setDataSources(parseData(this.data));
         }
+        this.pageLink = {
+          page: 0,
+          pageSize: DEFAULT_MAP_PAGE_SIZE,
+          textSearch: null,
+          dynamic: true
+        };
+        this.ctx.defaultSubscription.subscribeAllForPaginatedData(this.pageLink, null);
     }
 
     map: LeafletMap;
@@ -80,6 +95,7 @@ export class MapWidgetController implements MapWidgetInterface {
     schema: JsonSettingsSchema;
     data: DatasourceData[];
     settings: UnitedMapSettings;
+    pageLink: EntityDataPageLink;
 
     public static dataKeySettingsSchema(): object {
         return {};
@@ -241,12 +257,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     update() {
-        if (this.drawRoutes)
-            this.map.updatePolylines(parseArray(this.data));
-        if (this.settings.showPolygon) {
-            this.map.updatePolygons(parseData(this.data));
-        }
-        this.map.updateMarkers(parseData(this.data));
+        this.map.updateData(this.data, this.drawRoutes, this.settings.showPolygon);
     }
 
     resize() {
