@@ -130,7 +130,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
         String entityWhereClause = this.buildEntityWhere(ctx, tenantId, customerId, query.getEntityFilter(), entityFieldsFiltersMapping, entityType);
         String latestJoins = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings);
-        String whereClause = this.buildWhere(ctx, selectionMapping, latestFiltersMapping, pageLink.getTextSearch());
+        String whereClause = this.buildWhere(ctx, latestFiltersMapping);
+        String textSearchQuery = this.buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
         String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping);
         String entityTypeStr;
         if (query.getEntityFilter().getType().equals(EntityFilterType.RELATIONS_QUERY)) {
@@ -149,14 +150,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             topSelection = topSelection + ", " + latestSelection;
         }
 
-        String fromClause = String.format("from (select %s from (select %s from %s e where %s) entities %s %s) result",
+        String fromClause = String.format("from (select %s from (select %s from %s e where %s) entities %s %s) result %s",
                 topSelection,
                 entityFieldsSelection,
                 addEntityTableQuery(ctx, query.getEntityFilter(), entityType),
                 entityWhereClause,
                 latestJoins,
-                whereClause);
-
+                whereClause,
+                textSearchQuery);
 
         int totalElements = jdbcTemplate.queryForObject(String.format("select count(*) %s", fromClause), ctx, Integer.class);
 
@@ -435,19 +436,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 " END as label";
     }
 
-    private String buildWhere(EntityQueryContext ctx, List<EntityKeyMapping> selectionMapping, List<EntityKeyMapping> latestFiltersMapping, String searchText) {
+    private String buildWhere(EntityQueryContext ctx, List<EntityKeyMapping> latestFiltersMapping) {
         String latestFilters = EntityKeyMapping.buildQuery(ctx, latestFiltersMapping);
-        String textSearchQuery = this.buildTextSearchQuery(ctx, selectionMapping, searchText);
-        String query;
-        if (!StringUtils.isEmpty(latestFilters) && !StringUtils.isEmpty(textSearchQuery)) {
-            query = String.join(" AND ", latestFilters, textSearchQuery);
-        } else if (!StringUtils.isEmpty(latestFilters)) {
-            query = latestFilters;
-        } else {
-            query = textSearchQuery;
-        }
-        if (!StringUtils.isEmpty(query)) {
-            return String.format("where %s", query);
+        if (!StringUtils.isEmpty(latestFilters)) {
+            return String.format("where %s", latestFilters);
         } else {
             return "";
         }
@@ -462,11 +454,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                         return String.format("LOWER(%s) LIKE :%s", mapping.getValueAlias(), paramName);
                     }
             ).collect(Collectors.toList());
-            return String.format("(%s)", String.join(" or ", searchPredicates));
+            return String.format(" WHERE %s", String.join(" or ", searchPredicates));
         } else {
-            return null;
+            return "";
         }
-
     }
 
     private String singleEntityQuery(EntityQueryContext ctx, SingleEntityFilter filter) {
