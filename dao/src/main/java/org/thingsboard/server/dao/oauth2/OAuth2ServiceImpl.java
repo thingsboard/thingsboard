@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.ListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -111,10 +112,10 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     public OAuth2ClientsParams saveSystemOAuth2ClientsParams(OAuth2ClientsParams oAuth2ClientsParams) {
         validate(oAuth2ClientsParams);
 
-        validateUniqueRegistrationId(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
+        validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
         lock.lock();
         try {
-            validateUniqueRegistrationId(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
+            validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
             AdminSettings clientRegistrationParamsSettings = createSystemAdminSettings(oAuth2ClientsParams);
             adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, clientRegistrationParamsSettings);
             clientsParams.put(TenantId.SYS_TENANT_ID, oAuth2ClientsParams);
@@ -130,7 +131,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         // TODO what if tenant saves config for several different domain names, do we need to check it
         validate(oAuth2ClientsParams);
 
-        validateUniqueRegistrationId(oAuth2ClientsParams, tenantId);
+        validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
         lock.lock();
         try {
             String adminSettingsId = processTenantAdminSettings(tenantId, oAuth2ClientsParams.getDomainName(), oAuth2ClientsParams.getAdminSettingsId());
@@ -225,7 +226,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return clientRegistrationParamsSettings;
     }
 
-    private void validateUniqueRegistrationId(OAuth2ClientsParams inputOAuth2ClientsParams, TenantId tenantId) {
+    private void validateRegistrationIdUniqueness(OAuth2ClientsParams inputOAuth2ClientsParams, TenantId tenantId) {
         inputOAuth2ClientsParams.getClientRegistrations().stream()
                 .map(OAuth2ClientRegistration::getRegistrationId)
                 .forEach(registrationId -> {
@@ -345,7 +346,11 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             result = getTenantOAuth2ClientsParams(tenantId);
             OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
             if (systemOAuth2ClientsParams != null) {
-                result.getClientRegistrations().addAll(systemOAuth2ClientsParams.getClientRegistrations());
+                ArrayList<OAuth2ClientRegistration> tenantClientRegistrations = new ArrayList<>(result.getClientRegistrations());
+                tenantClientRegistrations.addAll(systemOAuth2ClientsParams.getClientRegistrations());
+                result = result.toBuilder()
+                        .clientRegistrations(tenantClientRegistrations)
+                        .build();
             }
         } else {
             result = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
