@@ -350,7 +350,6 @@ public final class EdgeGrpcSession implements Closeable {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-            case DEVICE_CONFLICT_RPC_MESSAGE:
                 ListenableFuture<Asset> assetFuture = ctx.getAssetService().findAssetByIdAsync(edgeEvent.getTenantId(), assetId);
                 Futures.addCallback(assetFuture,
                         new FutureCallback<Asset>() {
@@ -388,7 +387,6 @@ public final class EdgeGrpcSession implements Closeable {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-            case DEVICE_CONFLICT_RPC_MESSAGE:
                 ListenableFuture<EntityView> entityViewFuture = ctx.getEntityViewService().findEntityViewByIdAsync(edgeEvent.getTenantId(), entityViewId);
                 Futures.addCallback(entityViewFuture,
                         new FutureCallback<EntityView>() {
@@ -426,7 +424,6 @@ public final class EdgeGrpcSession implements Closeable {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-            case DEVICE_CONFLICT_RPC_MESSAGE:
                 ListenableFuture<Dashboard> dashboardFuture = ctx.getDashboardService().findDashboardByIdAsync(edgeEvent.getTenantId(), dashboardId);
                 Futures.addCallback(dashboardFuture,
                         new FutureCallback<Dashboard>() {
