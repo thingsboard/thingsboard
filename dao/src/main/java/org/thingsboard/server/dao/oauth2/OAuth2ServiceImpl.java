@@ -156,6 +156,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
         cacheWriteLock.lock();
         try {
+            validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
             String adminSettingsId = processTenantAdminSettings(tenantId, oAuth2ClientsParams.getDomainName(), oAuth2ClientsParams.getAdminSettingsId());
             oAuth2ClientsParams.setAdminSettingsId(adminSettingsId);
 
