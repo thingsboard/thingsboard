@@ -236,32 +236,35 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     private void processRelation(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        EntityRelation entityRelation = mapper.convertValue(edgeNotificationMsg.getEntityBody(), EntityRelation.class);
-        List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
-        futures.add(findRelatedEdgeIdsByEntityId(tenantId, entityRelation.getTo()));
-        futures.add(findRelatedEdgeIdsByEntityId(tenantId, entityRelation.getFrom()));
-        ListenableFuture<List<List<EdgeId>>> combinedFuture = Futures.allAsList(futures);
-        Futures.transform(combinedFuture, listOfListsEdgeIds -> {
-            Set<EdgeId> uniqueEdgeIds = new HashSet<>();
-            if (listOfListsEdgeIds != null && !listOfListsEdgeIds.isEmpty()) {
-                for (List<EdgeId> listOfListsEdgeId : listOfListsEdgeIds) {
-                    if (listOfListsEdgeId != null) {
-                        uniqueEdgeIds.addAll(listOfListsEdgeId);
+        EntityRelation relation = mapper.convertValue(edgeNotificationMsg.getEntityBody(), EntityRelation.class);
+        if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+            List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
+            futures.add(findRelatedEdgeIdsByEntityId(tenantId, relation.getTo()));
+            futures.add(findRelatedEdgeIdsByEntityId(tenantId, relation.getFrom()));
+            ListenableFuture<List<List<EdgeId>>> combinedFuture = Futures.allAsList(futures);
+            Futures.transform(combinedFuture, listOfListsEdgeIds -> {
+                Set<EdgeId> uniqueEdgeIds = new HashSet<>();
+                if (listOfListsEdgeIds != null && !listOfListsEdgeIds.isEmpty()) {
+                    for (List<EdgeId> listOfListsEdgeId : listOfListsEdgeIds) {
+                        if (listOfListsEdgeId != null) {
+                            uniqueEdgeIds.addAll(listOfListsEdgeId);
+                        }
                     }
                 }
-            }
-            if (!uniqueEdgeIds.isEmpty()) {
-                for (EdgeId edgeId : uniqueEdgeIds) {
-                    saveEdgeEvent(tenantId,
-                            edgeId,
-                            EdgeEventType.RELATION,
-                            ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction()),
-                            null,
-                            mapper.valueToTree(entityRelation));
+                if (!uniqueEdgeIds.isEmpty()) {
+                    for (EdgeId edgeId : uniqueEdgeIds) {
+                        saveEdgeEvent(tenantId,
+                                edgeId,
+                                EdgeEventType.RELATION,
+                                ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction()),
+                                null,
+                                mapper.valueToTree(relation));
+                    }
                 }
-            }
-            return null;
-        }, dbCallbackExecutorService);
+                return null;
+            }, dbCallbackExecutorService);
+        }
     }
 
     private ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {

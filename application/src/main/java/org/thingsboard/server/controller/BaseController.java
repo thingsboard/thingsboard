@@ -725,7 +725,10 @@ public abstract class BaseController {
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType edgeEventAction) {
         try {
-            sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation), EdgeEventType.RELATION, edgeEventAction);
+            if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                    !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+                sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation), EdgeEventType.RELATION, edgeEventAction);
+            }
         } catch (Exception e) {
             log.warn("Failed to push relation to core: {}", relation, e);
         }

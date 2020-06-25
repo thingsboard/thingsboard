@@ -358,12 +358,15 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
                             log.trace("[{}] [{}] [{}] relation(s) are going to be pushed to edge.", edge.getId(), entityId, entityRelations.size());
                             for (EntityRelation relation : entityRelations) {
                                 try {
-                                    saveEdgeEvent(edge.getTenantId(),
-                                            edge.getId(),
-                                            EdgeEventType.RELATION,
-                                            ActionType.ADDED,
-                                            null,
-                                            mapper.valueToTree(relation));
+                                    if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                                            !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+                                        saveEdgeEvent(edge.getTenantId(),
+                                                edge.getId(),
+                                                EdgeEventType.RELATION,
+                                                ActionType.ADDED,
+                                                null,
+                                                mapper.valueToTree(relation));
+                                    }
                                 } catch (Exception e) {
                                     log.error("Exception during loading relation [{}] to edge on sync!", relation, e);
                                 }
