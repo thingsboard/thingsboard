@@ -147,7 +147,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 case ENTITY_VIEW:
                 case DASHBOARD:
                 case RULE_CHAIN:
-                    processEntities(tenantId, edgeNotificationMsg);
+                    processEntity(tenantId, edgeNotificationMsg);
                     break;
                 case ALARM:
                     processAlarm(tenantId, edgeNotificationMsg);
@@ -166,7 +166,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         }
     }
 
-    private void processEntities(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+    private void processEntity(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         ActionType edgeEventActionType = ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction());
         EdgeEventType edgeEventType = EdgeEventType.valueOf(edgeNotificationMsg.getEdgeEventType());
         EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
