@@ -28,6 +28,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
@@ -37,6 +38,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTopics;
 
 import java.nio.charset.StandardCharsets;
@@ -55,45 +57,19 @@ import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public abstract class AbstractMqttAttributesRequestIntegrationTest extends AbstractControllerTest {
-
-    private static final String MQTT_URL = "tcp://localhost:1883";
-    protected static final String POST_ATTRIBUTES_PAYLOAD = "{\"attribute1\": \"value1\", \"attribute2\": true, \"attribute3\": 42.0, \"attribute4\": 73," +
-            " \"attribute5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
-
-    private Tenant savedTenant;
-    private User tenantAdmin;
-
-    private static final AtomicInteger atomicInteger = new AtomicInteger(2);
-
+public abstract class AbstractMqttAttributesRequestIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant" + atomicInteger.getAndIncrement() + "@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-
-        createUserAndLogin(tenantAdmin, "testPassword1");
+        processBeforeTest();
     }
 
     @After
     public void afterTest() throws Exception {
-        loginSysAdmin();
-        if (savedTenant != null) {
-            doDelete("/api/tenant/" + savedTenant.getId().getId().toString()).andExpect(status().isOk());
-        }
+        processAfterTest();
     }
 
+//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV1Json() throws Exception {
         processTestRequestAttributesValuesFromTheServer(
@@ -103,6 +79,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
                 MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V1_JSON);
     }
 
+//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV2Json() throws Exception {
         processTestRequestAttributesValuesFromTheServer(
@@ -112,6 +89,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
                 MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_JSON);
     }
 
+//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV2Proto() throws Exception {
         processTestRequestAttributesValuesFromTheServer(
@@ -121,6 +99,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
                 MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_PROTO);
     }
 
+//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV1GatewayJson() throws Exception {
         processTestGatewayRequestAttributesValuesFromTheServer(
@@ -131,6 +110,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
                 MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V1_JSON);
     }
 
+//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV2GatewayJson() throws Exception {
         processTestGatewayRequestAttributesValuesFromTheServer(
@@ -141,6 +121,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
                 MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V2_JSON);
     }
 
+//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV2GatewayProto() throws Exception {
         processTestGatewayRequestAttributesValuesFromTheServer(
@@ -223,21 +204,6 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         client.setCallback(sharedDeletedAttributesCallback);
         validateSharedResponseGateway(client, sharedDeletedAttributesCallback, deviceName, topicToRequestAttributesValues, true);
 
-    }
-
-    private TestMqttCallback getTestMqttCallback() {
-        CountDownLatch latch = new CountDownLatch(1);
-        return new TestMqttCallback(latch);
-    }
-
-    private MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
-        String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(accessToken);
-        client.connect(options).waitForCompletion();
-        return client;
     }
 
     private void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client, String topicToPost, String topicToSubscribe) throws Exception {
@@ -414,28 +380,6 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         return gatewayAttributeResponseMsg.build();
     }
 
-    private List<TransportProtos.TsKvProto> getTsKvProtoList() {
-        TransportProtos.TsKvProto tsKvProtoAttribute1 = getTsKvProto("attribute1", "value1", TransportProtos.KeyValueType.STRING_V);
-        TransportProtos.TsKvProto tsKvProtoAttribute2 = getTsKvProto("attribute2", "true", TransportProtos.KeyValueType.BOOLEAN_V);
-        TransportProtos.TsKvProto tsKvProtoAttribute3 = getTsKvProto("attribute3", "42.0", TransportProtos.KeyValueType.DOUBLE_V);
-        TransportProtos.TsKvProto tsKvProtoAttribute4 = getTsKvProto("attribute4", "73", TransportProtos.KeyValueType.LONG_V);
-        TransportProtos.TsKvProto tsKvProtoAttribute5 = getTsKvProto("attribute5", "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", TransportProtos.KeyValueType.JSON_V);
-        List<TransportProtos.TsKvProto> tsKvProtoList = new ArrayList<>();
-        tsKvProtoList.add(tsKvProtoAttribute1);
-        tsKvProtoList.add(tsKvProtoAttribute2);
-        tsKvProtoList.add(tsKvProtoAttribute3);
-        tsKvProtoList.add(tsKvProtoAttribute4);
-        tsKvProtoList.add(tsKvProtoAttribute5);
-        return tsKvProtoList;
-    }
-
-    private TransportProtos.TsKvProto getTsKvProto(String key, String value, TransportProtos.KeyValueType keyValueType) {
-        TransportProtos.TsKvProto.Builder tsKvProtoBuilder = TransportProtos.TsKvProto.newBuilder();
-        TransportProtos.KeyValueProto keyValueProto = getKeyValueProto(key, value, keyValueType);
-        tsKvProtoBuilder.setKv(keyValueProto);
-        return tsKvProtoBuilder.build();
-    }
-
     private TransportProtos.PostAttributeMsg getPostAttributeMsg() {
         List<TransportProtos.KeyValueProto> kvProtos = getKvProtos();
         TransportProtos.PostAttributeMsg.Builder builder = TransportProtos.PostAttributeMsg.newBuilder();
@@ -459,37 +403,9 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         return keyValueProtos;
     }
 
-    private TransportProtos.KeyValueProto getKeyValueProto(String key, String strValue, TransportProtos.KeyValueType type) {
-        TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
-        keyValueProtoBuilder.setKey(key);
-        keyValueProtoBuilder.setType(type);
-        switch (type) {
-            case BOOLEAN_V:
-                keyValueProtoBuilder.setBoolV(Boolean.parseBoolean(strValue));
-                break;
-            case LONG_V:
-                keyValueProtoBuilder.setLongV(Long.parseLong(strValue));
-                break;
-            case DOUBLE_V:
-                keyValueProtoBuilder.setDoubleV(Double.parseDouble(strValue));
-                break;
-            case STRING_V:
-                keyValueProtoBuilder.setStringV(strValue);
-                break;
-            case JSON_V:
-                keyValueProtoBuilder.setJsonV(strValue);
-                break;
-        }
-        return keyValueProtoBuilder.build();
-    }
-
-
-    private Device getSavedDevice(Device device) throws Exception {
-        return doPost("/api/device", device, Device.class);
-    }
-
-    private DeviceCredentials getDeviceCredentials(Device savedDevice) throws Exception {
-        return doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+    private TestMqttCallback getTestMqttCallback() {
+        CountDownLatch latch = new CountDownLatch(1);
+        return new TestMqttCallback(latch);
     }
 
     private static class TestMqttCallback implements MqttCallback {
