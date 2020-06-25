@@ -315,7 +315,9 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return clientsParams.get(tenantId);
     }
 
-    private Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
+    // TODO this is just for test, maybe there's a better way to test it without exporting to interface
+    @Override
+    public Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
         OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParamsFromDb();
         ListenableFuture<Map<String, String>> jsonFuture = getAllOAuth2ClientsParamsAttribute();
         try {

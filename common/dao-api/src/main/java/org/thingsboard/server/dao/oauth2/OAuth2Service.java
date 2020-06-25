@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
 
 import java.util.List;
+import java.util.Map;
 
 public interface OAuth2Service {
     Pair<TenantId, OAuth2ClientRegistration> getClientRegistrationWithTenant(String registrationId);
@@ -45,5 +46,7 @@ public interface OAuth2Service {
     void deleteSystemOAuth2ClientsParams();
 
     boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId);
+
+    Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams();
 
 }
