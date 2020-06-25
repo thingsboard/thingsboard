@@ -64,7 +64,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
         return actualData.getId() != null && existentData.getId().equals(actualData.getId());
     }
 
-    protected static void validateEmail(String email) {
+    public static void validateEmail(String email) {
         if (!doValidateEmail(email)) {
             throw new DataValidationException("Invalid email address format '" + email + "'!");
         }
