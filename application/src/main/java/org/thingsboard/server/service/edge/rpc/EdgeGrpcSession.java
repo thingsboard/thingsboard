@@ -28,9 +28,8 @@ import com.google.gson.JsonObject;
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang.RandomStringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -871,6 +870,7 @@ public final class EdgeGrpcSession implements Closeable {
             device.setType(deviceUpdateMsg.getType());
             device.setLabel(deviceUpdateMsg.getLabel());
             device = ctx.getDeviceService().saveDevice(device);
+            createDeviceCredentials(device);
             device = ctx.getDeviceService().assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
             createRelationFromEdge(device.getId());
             ctx.getRelationService().saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(edge.getId(), device.getId(), "Created"));
@@ -881,6 +881,14 @@ public final class EdgeGrpcSession implements Closeable {
             deviceCreationLock.unlock();
         }
         return device;
+    }
+
+    private void createDeviceCredentials(Device device) {
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setDeviceId(device.getId());
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(RandomStringUtils.randomAlphanumeric(20));
+        ctx.getDeviceCredentialsService().createDeviceCredentials(device.getTenantId(), deviceCredentials);
     }
 
     private EntityId getAlarmOriginator(String entityName, org.thingsboard.server.common.data.EntityType entityType) {
