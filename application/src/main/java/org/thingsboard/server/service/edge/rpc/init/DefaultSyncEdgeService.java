@@ -21,12 +21,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -56,51 +54,23 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.AttributesRequestMsg;
-import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
-import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
-import org.thingsboard.server.gen.edge.DownlinkMsg;
-import org.thingsboard.server.gen.edge.EntityDataProto;
-import org.thingsboard.server.gen.edge.EntityUpdateMsg;
-import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RelationRequestMsg;
-import org.thingsboard.server.gen.edge.RelationUpdateMsg;
-import org.thingsboard.server.gen.edge.ResponseMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
-import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
-import org.thingsboard.server.gen.edge.UserUpdateMsg;
-import org.thingsboard.server.service.edge.EdgeNotificationService;
-import org.thingsboard.server.service.edge.rpc.constructor.AssetUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DashboardUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DeviceUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.EntityViewUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RelationUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RuleChainUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.UserUpdateMsgConstructor;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -126,9 +96,6 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private DeviceService deviceService;
 
     @Autowired
-    private DeviceCredentialsService deviceCredentialsService;
-
-    @Autowired
     private AssetService assetService;
 
     @Autowired
@@ -139,18 +106,6 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private DeviceUpdateMsgConstructor deviceUpdateMsgConstructor;
-
-    @Autowired
-    private UserUpdateMsgConstructor userUpdateMsgConstructor;
-
-    @Autowired
-    private RelationUpdateMsgConstructor relationUpdateMsgConstructor;
-
-    @Autowired
-    private EntityDataMsgConstructor entityDataMsgConstructor;
 
     @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
