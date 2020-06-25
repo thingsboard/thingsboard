@@ -42,6 +42,8 @@ public interface OAuth2Service {
 
     void deleteTenantOAuth2ClientsParams(TenantId tenantId);
 
+    void deleteSystemOAuth2ClientsParams();
+
     boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId);
 
 }

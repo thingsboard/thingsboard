@@ -353,6 +353,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     @Override
+    public void deleteSystemOAuth2ClientsParams() {
+        adminSettingsService.deleteAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAuth2Utils.OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+        clientsParams.remove(TenantId.SYS_TENANT_ID);
+    }
+
+    @Override
     public boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId) {
         Tenant tenant = tenantService.findTenantById(tenantId);
         JsonNode allowOAuth2ConfigurationJsonNode = tenant.getAdditionalInfo() != null ? tenant.getAdditionalInfo().get(ALLOW_OAUTH2_CONFIGURATION) : null;
