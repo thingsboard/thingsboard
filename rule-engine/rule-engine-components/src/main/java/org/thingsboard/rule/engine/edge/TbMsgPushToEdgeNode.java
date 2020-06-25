@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -81,7 +82,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
                 Futures.addCallback(getEdgeIdFuture, new FutureCallback<EdgeId>() {
                     @Override
                     public void onSuccess(@Nullable EdgeId edgeId) {
-                        EdgeEventType edgeEventTypeByEntityType = ctx.getEdgeEventService().getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
+                        EdgeEventType edgeEventTypeByEntityType = EdgeUtils.getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
                         if (edgeEventTypeByEntityType == null) {
                             log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
                             ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
