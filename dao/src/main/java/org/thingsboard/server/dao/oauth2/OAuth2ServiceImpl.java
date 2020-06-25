@@ -129,11 +129,17 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         validate(oAuth2ClientsParams);
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
+
         cacheWriteLock.lock();
         try {
             validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
-            AdminSettings clientRegistrationParamsSettings = createSystemAdminSettings(oAuth2ClientsParams);
-            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, clientRegistrationParamsSettings);
+            AdminSettings oauth2SystemAdminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+            if (oauth2SystemAdminSettings == null) {
+                oauth2SystemAdminSettings = createSystemAdminSettings();
+            }
+            String json = toJson(oAuth2ClientsParams);
+            ((ObjectNode) oauth2SystemAdminSettings.getJsonValue()).put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, oauth2SystemAdminSettings);
             clientsParams.put(TenantId.SYS_TENANT_ID, oAuth2ClientsParams);
         } finally {
             cacheWriteLock.unlock();
@@ -155,7 +161,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
             List<AttributeKvEntry> attributes = createOAuth2ClientsParamsAttributes(oAuth2ClientsParams);
             try {
-                // TODO ask if I need .get() here
                 attributesService.save(tenantId, tenantId, DataConstants.SERVER_SCOPE, attributes).get();
             } catch (Exception e) {
                 log.error("Unable to save OAuth2 Client Registration Params to attributes!", e);
@@ -230,13 +235,11 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return clientRegistrationParamsSettings;
     }
 
-    private AdminSettings createSystemAdminSettings(OAuth2ClientsParams oAuth2ClientsParams) {
+    private AdminSettings createSystemAdminSettings() {
         AdminSettings clientRegistrationParamsSettings = new AdminSettings();
         clientRegistrationParamsSettings.setKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
         ObjectNode clientRegistrationsNode = mapper.createObjectNode();
 
-        String json = toJson(oAuth2ClientsParams);
-        clientRegistrationsNode.put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
         clientRegistrationParamsSettings.setJsonValue(clientRegistrationsNode);
 
         return clientRegistrationParamsSettings;
