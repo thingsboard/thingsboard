@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.subscription;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -62,7 +63,6 @@ public class TbEntityDataSubCtx {
     private TimeSeriesCmd tsCmd;
     private PageData<EntityData> data;
     private boolean initialDataSent;
-    private List<TbSubscription> tbSubs;
     private Map<Integer, EntityId> subToEntityIdMap;
     private volatile ScheduledFuture<?> refreshTask;
     private TimeSeriesCmd curTsCmd;
@@ -93,10 +93,10 @@ public class TbEntityDataSubCtx {
 
     public List<TbSubscription> createSubscriptions(List<EntityKey> keys, boolean resultToLatestValues) {
         this.subToEntityIdMap = new HashMap<>();
-        tbSubs = new ArrayList<>();
+        List<TbSubscription> tbSubs = new ArrayList<>();
         Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
         for (EntityData entityData : data.getData()) {
-            addSubscription(entityData, keysByType, resultToLatestValues);
+            tbSubs.addAll(addSubscriptions(entityData, keysByType, resultToLatestValues));
         }
         return tbSubs;
     }
@@ -107,33 +107,35 @@ public class TbEntityDataSubCtx {
         return keysByType;
     }
 
-    private void addSubscription(EntityData entityData, Map<EntityKeyType, List<EntityKey>> keysByType, boolean resultToLatestValues) {
+    private List<TbSubscription> addSubscriptions(EntityData entityData, Map<EntityKeyType, List<EntityKey>> keysByType, boolean resultToLatestValues) {
+        List<TbSubscription> subscriptionList = new ArrayList<>();
         keysByType.forEach((keysType, keysList) -> {
             int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
             subToEntityIdMap.put(subIdx, entityData.getEntityId());
             switch (keysType) {
                 case TIME_SERIES:
-                    tbSubs.add(createTsSub(entityData, subIdx, keysList, resultToLatestValues));
+                    subscriptionList.add(createTsSub(entityData, subIdx, keysList, resultToLatestValues));
                     break;
                 case CLIENT_ATTRIBUTE:
-                    tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.CLIENT_SCOPE, keysList));
+                    subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.CLIENT_SCOPE, keysList));
                     break;
                 case SHARED_ATTRIBUTE:
-                    tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SHARED_SCOPE, keysList));
+                    subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SHARED_SCOPE, keysList));
                     break;
                 case SERVER_ATTRIBUTE:
-                    tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SERVER_SCOPE, keysList));
+                    subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SERVER_SCOPE, keysList));
                     break;
                 case ATTRIBUTE:
-                    tbSubs.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.ANY_SCOPE, keysList));
+                    subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.ANY_SCOPE, keysList));
                     break;
             }
         });
+        return subscriptionList;
     }
 
     private TbSubscription createAttrSub(EntityData entityData, int subIdx, EntityKeyType keysType, TbAttributeSubscriptionScope scope, List<EntityKey> subKeys) {
         Map<String, Long> keyStates = buildKeyStats(entityData, keysType, subKeys);
-        log.trace("[{}][{}][{}] Creating attributes subscription with keys: {}", serviceId, cmdId, subIdx, keyStates);
+        log.trace("[{}][{}][{}] Creating attributes subscription for [{}] with keys: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), keyStates);
         return TbAttributeSubscription.builder()
                 .serviceId(serviceId)
                 .sessionId(sessionRef.getSessionId())
@@ -156,7 +158,7 @@ public class TbEntityDataSubCtx {
                 keyStates.put(k, ts);
             });
         }
-        log.trace("[{}][{}][{}] Creating time-series subscription with keys: {}", serviceId, cmdId, subIdx, keyStates);
+        log.trace("[{}][{}][{}] Creating time-series subscription for [{}] with keys: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), keyStates);
         return TbTimeseriesSubscription.builder()
                 .serviceId(serviceId)
                 .sessionId(sessionRef.getSessionId())
@@ -304,7 +306,7 @@ public class TbEntityDataSubCtx {
         }
     }
 
-    public Collection<Integer> update(PageData<EntityData> newData) {
+    public TbEntityDataSubCtxUpdateResult update(PageData<EntityData> newData) {
         Map<EntityId, EntityData> oldDataMap;
         if (data != null && !data.getData().isEmpty()) {
             oldDataMap = data.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
@@ -314,20 +316,21 @@ public class TbEntityDataSubCtx {
         Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
         if (oldDataMap.size() == newDataMap.size() && oldDataMap.keySet().equals(newDataMap.keySet())) {
             log.trace("[{}][{}] No updates to entity data found", sessionRef.getSessionId(), cmdId);
-            return Collections.emptyList();
+            return TbEntityDataSubCtxUpdateResult.EMPTY;
         } else {
             this.data = newData;
-            List<Integer> subIdsToRemove = new ArrayList<>();
+            List<Integer> subIdsToCancel = new ArrayList<>();
+            List<TbSubscription> subsToAdd = new ArrayList<>();
             Set<EntityId> currentSubs = new HashSet<>();
             subToEntityIdMap.forEach((subId, entityId) -> {
                 if (!newDataMap.containsKey(entityId)) {
-                    subIdsToRemove.add(subId);
+                    subIdsToCancel.add(subId);
                 } else {
                     currentSubs.add(entityId);
                 }
             });
-            log.trace("[{}][{}] Subscriptions that are invalid: {}", sessionRef.getSessionId(), cmdId, subIdsToRemove);
-            subIdsToRemove.forEach(subToEntityIdMap::remove);
+            log.trace("[{}][{}] Subscriptions that are invalid: {}", sessionRef.getSessionId(), cmdId, subIdsToCancel);
+            subIdsToCancel.forEach(subToEntityIdMap::remove);
             List<EntityData> newSubsList = newDataMap.entrySet().stream().filter(entry -> !currentSubs.contains(entry.getKey())).map(Map.Entry::getValue).collect(Collectors.toList());
             if (!newSubsList.isEmpty()) {
                 boolean resultToLatestValues;
@@ -346,18 +349,28 @@ public class TbEntityDataSubCtx {
                     newSubsList.forEach(
                             entity -> {
                                 log.trace("[{}][{}] Found new subscription for entity: {}", sessionRef.getSessionId(), cmdId, entity.getEntityId());
-                                addSubscription(entity, keysByType, resultToLatestValues);
+                                subsToAdd.addAll(addSubscriptions(entity, keysByType, resultToLatestValues));
                             }
                     );
                 }
             }
             wsService.sendWsMsg(sessionRef.getSessionId(), new EntityDataUpdate(cmdId, data, null));
-            return subIdsToRemove;
+            return new TbEntityDataSubCtxUpdateResult(subIdsToCancel, subsToAdd);
         }
     }
 
     public void setCurrentCmd(EntityDataCmd cmd) {
         curTsCmd = cmd.getTsCmd();
         latestValueCmd = cmd.getLatestCmd();
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class TbEntityDataSubCtxUpdateResult {
+
+        private static TbEntityDataSubCtxUpdateResult EMPTY = new TbEntityDataSubCtxUpdateResult(Collections.emptyList(), Collections.emptyList());
+
+        private List<Integer> subsToCancel;
+        private List<TbSubscription> subsToAdd;
     }
 }
