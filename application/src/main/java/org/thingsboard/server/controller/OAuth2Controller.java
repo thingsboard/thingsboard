@@ -65,7 +65,7 @@ public class OAuth2Controller extends BaseController {
             checkOAuth2ConfigPermissions(Operation.READ);
             OAuth2ClientsParams oAuth2ClientsParams = null;
             if (Authority.SYS_ADMIN.equals(authority)) {
-                oAuth2ClientsParams = oauth2Service.getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+                oAuth2ClientsParams = oauth2Service.getSystemOAuth2ClientsParams();
             } else if (Authority.TENANT_ADMIN.equals(authority)) {
                 oAuth2ClientsParams = oauth2Service.getTenantOAuth2ClientsParams(getCurrentUser().getTenantId());
             }

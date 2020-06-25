@@ -36,7 +36,7 @@ public interface OAuth2Service {
 
     OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams);
 
-    OAuth2ClientsParams getSystemOAuth2ClientsParams(TenantId tenantId);
+    OAuth2ClientsParams getSystemOAuth2ClientsParams();
 
     OAuth2ClientsParams getTenantOAuth2ClientsParams(TenantId tenantId);
 

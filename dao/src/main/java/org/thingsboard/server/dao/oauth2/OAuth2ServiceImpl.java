@@ -145,7 +145,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             cacheWriteLock.unlock();
         }
 
-        return getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+        return getSystemOAuth2ClientsParams();
     }
 
     @Override
@@ -301,12 +301,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     @Override
-    public OAuth2ClientsParams getSystemOAuth2ClientsParams(TenantId tenantId) {
-        return clientsParams.get(tenantId);
+    public OAuth2ClientsParams getSystemOAuth2ClientsParams() {
+        return clientsParams.get(TenantId.SYS_TENANT_ID);
     }
 
-    private OAuth2ClientsParams getSystemOAuth2ClientsParamsFromDb(TenantId tenantId) {
-        AdminSettings oauth2ClientsParamsSettings = adminSettingsService.findAdminSettingsByKey(tenantId, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+    private OAuth2ClientsParams getSystemOAuth2ClientsParamsFromDb() {
+        AdminSettings oauth2ClientsParamsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
         String json = null;
         if (oauth2ClientsParamsSettings != null) {
             json = oauth2ClientsParamsSettings.getJsonValue().get(SYSTEM_SETTINGS_OAUTH2_VALUE).asText();
@@ -320,7 +320,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     private Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
-        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParamsFromDb(TenantId.SYS_TENANT_ID);
+        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParamsFromDb();
         ListenableFuture<Map<String, String>> jsonFuture = getAllOAuth2ClientsParamsAttribute();
         try {
             return Futures.transform(jsonFuture,
@@ -389,7 +389,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructAdminSettingsDomainKey(domainName));
         OAuth2ClientsDomainParams result;
 
-        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams(TenantId.SYS_TENANT_ID);
+        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams();
         OAuth2ClientsDomainParams systemOAuth2ClientsDomainParams = systemOAuth2ClientsParams != null ?
                 systemOAuth2ClientsParams.getClientsDomainsParams().stream()
                         .filter(oAuth2ClientsDomainParams -> domainName.equals(oAuth2ClientsDomainParams.getDomainName()))
