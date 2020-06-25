@@ -35,17 +35,14 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.page.TimePageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -59,8 +56,6 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
-
-import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
 @TbCoreComponent
@@ -167,6 +162,8 @@ public class UserController extends BaseController {
                     savedUser.getCustomerId(),
                     user.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
+            sendNotificationMsgToEdgeService(getTenantId(), null, user.getId(), EdgeEventType.USER, user.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+
             return savedUser;
         } catch (Exception e) {
 
@@ -241,6 +238,8 @@ public class UserController extends BaseController {
             logEntityAction(userId, user,
                     user.getCustomerId(),
                     ActionType.DELETED, null, strUserId);
+
+            sendNotificationMsgToEdgeService(getTenantId(), null, user.getId(), EdgeEventType.USER, ActionType.DELETED);
 
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.USER),

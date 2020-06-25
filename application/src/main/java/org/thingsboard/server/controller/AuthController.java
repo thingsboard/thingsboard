@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -124,6 +125,9 @@ public class AuthController extends BaseController {
             }
             userCredentials.setPassword(passwordEncoder.encode(newPassword));
             userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
+
+            sendNotificationMsgToEdgeService(getTenantId(), null, userCredentials.getUserId(), EdgeEventType.USER, ActionType.CREDENTIALS_UPDATED);
+
         } catch (Exception e) {
             throw handleException(e);
         }

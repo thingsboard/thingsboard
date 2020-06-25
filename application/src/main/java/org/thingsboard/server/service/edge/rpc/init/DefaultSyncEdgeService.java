@@ -395,7 +395,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     public void processDeviceCredentialsRequestMsg(Edge edge, DeviceCredentialsRequestMsg deviceCredentialsRequestMsg) {
         if (deviceCredentialsRequestMsg.getDeviceIdMSB() != 0 && deviceCredentialsRequestMsg.getDeviceIdLSB() != 0) {
             DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsRequestMsg.getDeviceIdMSB(), deviceCredentialsRequestMsg.getDeviceIdLSB()));
-            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DEVICE_CREDENTIALS, ActionType.ADDED, deviceId, null);
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_UPDATED, deviceId, null);
         }
     }
 
@@ -403,7 +403,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     public void processUserCredentialsRequestMsg(Edge edge, UserCredentialsRequestMsg userCredentialsRequestMsg) {
         if (userCredentialsRequestMsg.getUserIdMSB() != 0 && userCredentialsRequestMsg.getUserIdLSB() != 0) {
             UserId userId = new UserId(new UUID(userCredentialsRequestMsg.getUserIdMSB(), userCredentialsRequestMsg.getUserIdLSB()));
-            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER_CREDENTIALS, ActionType.ADDED, userId, null);
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, ActionType.CREDENTIALS_UPDATED, userId, null);
         }
     }
 

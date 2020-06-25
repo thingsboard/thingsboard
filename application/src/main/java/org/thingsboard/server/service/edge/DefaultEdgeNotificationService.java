@@ -174,6 +174,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             // TODO: voba - ADDED is not required for CE version ?
             // case ADDED:
             case UPDATED:
+            case CREDENTIALS_UPDATED:
                 ListenableFuture<List<EdgeId>> edgeIdsFuture = findRelatedEdgeIdsByEntityId(tenantId, entityId);
                 Futures.transform(edgeIdsFuture, edgeIds -> {
                     if (edgeIds != null && !edgeIds.isEmpty()) {

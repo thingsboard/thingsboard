@@ -19,14 +19,12 @@ public enum EdgeEventType {
     DASHBOARD,
     ASSET,
     DEVICE,
-    DEVICE_CREDENTIALS,
     ENTITY_VIEW,
     ALARM,
     RULE_CHAIN,
     RULE_CHAIN_METADATA,
     EDGE,
     USER,
-    USER_CREDENTIALS,
     CUSTOMER,
     RELATION
 }
