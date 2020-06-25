@@ -145,6 +145,9 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         if (wsCallBackExecutor != null) {
             wsCallBackExecutor.shutdownNow();
         }
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
     }
 
     @Override
@@ -230,11 +233,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private void refreshDynamicQuery(TenantId tenantId, CustomerId customerId, TbEntityDataSubCtx finalCtx) {
         try {
             long start = System.currentTimeMillis();
-            Collection<Integer> oldSubIds = finalCtx.update(entityService.findEntityDataByQuery(tenantId, customerId, finalCtx.getQuery()));
+            TbEntityDataSubCtx.TbEntityDataSubCtxUpdateResult result = finalCtx.update(entityService.findEntityDataByQuery(tenantId, customerId, finalCtx.getQuery()));
             long end = System.currentTimeMillis();
             dynamicQueryInvocationCnt.incrementAndGet();
             dynamicQueryTimeSpent.addAndGet(end - start);
-            oldSubIds.forEach(subId -> localSubscriptionService.cancelSubscription(serviceId, subId));
+            result.getSubsToCancel().forEach(subId -> localSubscriptionService.cancelSubscription(finalCtx.getSessionId(), subId));
+            result.getSubsToAdd().forEach(localSubscriptionService::addSubscription);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to refresh query", finalCtx.getSessionId(), finalCtx.getCmdId(), e);
         }
@@ -338,21 +342,6 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;
         }, wsCallBackExecutor);
-    }
-
-    private List<ReadTsKvQuery> getReadTsKvQueries(GetTsCmd cmd) {
-        List<ReadTsKvQuery> finalTsKvQueryList;
-        List<ReadTsKvQuery> queries = cmd.getKeys().stream().map(key -> new BaseReadTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(),
-                getLimit(cmd.getLimit()), cmd.getAgg())).collect(Collectors.toList());
-        if (cmd.isFetchLatestPreviousPoint()) {
-            finalTsKvQueryList = new ArrayList<>(queries);
-            finalTsKvQueryList.addAll(cmd.getKeys().stream().map(key -> new BaseReadTsKvQuery(
-                    key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg()
-            )).collect(Collectors.toList()));
-        } else {
-            finalTsKvQueryList = queries;
-        }
-        return finalTsKvQueryList;
     }
 
     private void handleLatestCmd(TbEntityDataSubCtx ctx, LatestValueCmd latestCmd) {

@@ -124,7 +124,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
 
     @Override
     public void addSubscription(TbSubscription subscription, TbCallback callback) {
-        log.trace("[{}][{}][{}] Registering remote subscription for entity [{}]",
+        log.trace("[{}][{}][{}] Registering subscription for entity [{}]",
                 subscription.getServiceId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, subscription.getTenantId(), subscription.getEntityId());
         if (currentPartitions.contains(tpi)) {
