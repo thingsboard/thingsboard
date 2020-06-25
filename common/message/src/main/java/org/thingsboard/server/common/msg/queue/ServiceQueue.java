@@ -34,7 +34,7 @@ public class ServiceQueue {
 
     public ServiceQueue(ServiceType type, String queue) {
         this.type = type;
-        this.queue = queue;
+        this.queue = queue != null ? queue : MAIN;
     }
 
     public ServiceType getType() {

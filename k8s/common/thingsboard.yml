@@ -1,0 +1,361 @@
+#
+# Copyright © 2016-2020 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tb-js-executor
+  namespace: thingsboard
+spec:
+  replicas: 20
+  selector:
+    matchLabels:
+      app: tb-js-executor
+  template:
+    metadata:
+      labels:
+        app: tb-js-executor
+    spec:
+      containers:
+      - name: server
+        imagePullPolicy: Always
+        image: thingsboard/tb-js-executor:latest
+        env:
+        - name: REMOTE_JS_EVAL_REQUEST_TOPIC
+          value: "js_eval.requests"
+        - name: TB_KAFKA_SERVERS
+          value: "tb-kafka:9092"
+        - name: LOGGER_LEVEL
+          value: "info"
+        - name: LOG_FOLDER
+          value: "logs"
+        - name: LOGGER_FILENAME
+          value: "tb-js-executor-%DATE%.log"
+        - name: DOCKER_MODE
+          value: "true"
+        - name: SCRIPT_BODY_TRACE_FREQUENCY
+          value: "1000"
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tb-mqtt-transport
+  namespace: thingsboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tb-mqtt-transport
+  template:
+    metadata:
+      labels:
+        app: tb-mqtt-transport
+    spec:
+      volumes:
+        - name: tb-mqtt-transport-config
+          configMap:
+            name: tb-mqtt-transport-config
+            items:
+            - key: conf
+              path:  tb-mqtt-transport.conf
+            - key: logback
+              path:  logback.xml
+      containers:
+      - name: server
+        imagePullPolicy: Always
+        image: thingsboard/tb-mqtt-transport:latest
+        ports:
+        - containerPort: 1883
+          name: mqtt
+        env:
+        - name: TB_SERVICE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: TB_QUEUE_TYPE
+          value: "kafka"
+        - name: MQTT_BIND_ADDRESS
+          value: "0.0.0.0"
+        - name: MQTT_BIND_PORT
+          value: "1883"
+        - name: MQTT_TIMEOUT
+          value: "10000"
+        - name: TB_KAFKA_SERVERS
+          value: "tb-kafka:9092"
+        volumeMounts:
+          - mountPath: /config
+            name: tb-mqtt-transport-config
+        readinessProbe:
+          periodSeconds: 20
+          tcpSocket:
+            port: 1883
+        livenessProbe:
+          initialDelaySeconds: 120
+          periodSeconds: 20
+          tcpSocket:
+            port: 1883
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tb-mqtt-transport
+  namespace: thingsboard
+spec:
+  type: LoadBalancer
+  selector:
+    app: tb-mqtt-transport
+  ports:
+  - port: 1883
+    targetPort: 1883
+    name: mqtt
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tb-http-transport
+  namespace: thingsboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tb-http-transport
+  template:
+    metadata:
+      labels:
+        app: tb-http-transport
+    spec:
+      volumes:
+        - name: tb-http-transport-config
+          configMap:
+            name: tb-http-transport-config
+            items:
+            - key: conf
+              path:  tb-http-transport.conf
+            - key: logback
+              path:  logback.xml
+      containers:
+      - name: server
+        imagePullPolicy: Always
+        image: thingsboard/tb-http-transport:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: TB_SERVICE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: TB_QUEUE_TYPE
+          value: "kafka"
+        - name: HTTP_BIND_ADDRESS
+          value: "0.0.0.0"
+        - name: HTTP_BIND_PORT
+          value: "8080"
+        - name: HTTP_REQUEST_TIMEOUT
+          value: "60000"
+        - name: TB_KAFKA_SERVERS
+          value: "tb-kafka:9092"
+        volumeMounts:
+          - mountPath: /config
+            name: tb-http-transport-config
+        readinessProbe:
+          periodSeconds: 20
+          tcpSocket:
+            port: 8080
+        livenessProbe:
+          initialDelaySeconds: 120
+          periodSeconds: 20
+          tcpSocket:
+            port: 8080
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tb-http-transport
+  namespace: thingsboard
+spec:
+  type: ClusterIP
+  selector:
+    app: tb-http-transport
+  ports:
+  - port: 8080
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tb-coap-transport
+  namespace: thingsboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tb-coap-transport
+  template:
+    metadata:
+      labels:
+        app: tb-coap-transport
+    spec:
+      volumes:
+        - name: tb-coap-transport-config
+          configMap:
+            name: tb-coap-transport-config
+            items:
+            - key: conf
+              path:  tb-coap-transport.conf
+            - key: logback
+              path:  logback.xml
+      containers:
+      - name: server
+        imagePullPolicy: Always
+        image: thingsboard/tb-coap-transport:latest
+        ports:
+        - containerPort: 5683
+          name: coap
+          protocol: UDP
+        env:
+        - name: TB_SERVICE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: TB_QUEUE_TYPE
+          value: "kafka"
+        - name: COAP_BIND_ADDRESS
+          value: "0.0.0.0"
+        - name: COAP_BIND_PORT
+          value: "5683"
+        - name: COAP_TIMEOUT
+          value: "10000"
+        - name: TB_KAFKA_SERVERS
+          value: "tb-kafka:9092"
+        volumeMounts:
+          - mountPath: /config
+            name: tb-coap-transport-config
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tb-coap-transport
+  namespace: thingsboard
+spec:
+  type: LoadBalancer
+  selector:
+    app: tb-coap-transport
+  ports:
+  - port: 5683
+    name: coap
+    protocol: UDP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tb-web-ui
+  namespace: thingsboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tb-web-ui
+  template:
+    metadata:
+      labels:
+        app: tb-web-ui
+    spec:
+      containers:
+      - name: server
+        imagePullPolicy: Always
+        image: thingsboard/tb-web-ui:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: HTTP_BIND_ADDRESS
+          value: "0.0.0.0"
+        - name: HTTP_BIND_PORT
+          value: "8080"
+        - name: TB_ENABLE_PROXY
+          value: "false"
+        - name: LOGGER_LEVEL
+          value: "info"
+        - name: LOG_FOLDER
+          value: "logs"
+        - name: LOGGER_FILENAME
+          value: "tb-web-ui-%DATE%.log"
+        - name: DOCKER_MODE
+          value: "true"
+        livenessProbe:
+          httpGet:
+            path: /index.html
+            port: http
+          initialDelaySeconds: 120
+          timeoutSeconds: 10
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tb-web-ui
+  namespace: thingsboard
+spec:
+  type: ClusterIP
+  selector:
+    app: tb-web-ui
+  ports:
+  - port: 8080
+    name: http
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: tb-ingress
+  namespace: thingsboard
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api/v1/.*
+        backend:
+          serviceName: tb-http-transport
+          servicePort: 8080
+      - path: /static/rulenode/.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
+      - path: /static/.*
+        backend:
+          serviceName: tb-web-ui
+          servicePort: 8080
+      - path: /index.html.*
+        backend:
+          serviceName: tb-web-ui
+          servicePort: 8080
+      - path: /
+        backend:
+          serviceName: tb-web-ui
+          servicePort: 8080
+      - path: /.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
+---

@@ -54,6 +54,13 @@ server:
       customer:
         enabled: "${TB_SERVER_REST_LIMITS_CUSTOMER_ENABLED:false}"
         configuration: "${TB_SERVER_REST_LIMITS_CUSTOMER_CONFIGURATION:50:1,1000:60}"
+    server_side_rpc:
+      # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
+      # Since 2.5 migration to queues, the RPC delay depends on the size of the pending messages in the queue,
+      # so default UI parameter of 500ms may not be sufficient for loaded environments.
+      min_timeout:  "${MIN_SERVER_SIDE_RPC_TIMEOUT:5000}"
+      # Default value of the server side RPC timeout.
+      default_timeout:  "${DEFAULT_SERVER_SIDE_RPC_TIMEOUT:10000}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:
@@ -148,6 +155,10 @@ security:
             # If this field is not empty, user will be created as a user under defined Customer
             # %{attribute_key} as placeholder for attribute value of attributes of external user object
             customerNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_CUSTOMER_NAME_PATTERN:}"
+            # If this field is not empty, user will be created with default defined Dashboard
+            defaultDashboardName: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_DEFAULT_DASHBOARD_NAME:}"
+            # If this field is set 'true' along with non-empty 'defaultDashboardName', user will start from the defined Dashboard in fullscreen mode
+            alwaysFullScreen: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_ALWAYS_FULL_SCREEN:false}"
           custom:
             url: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_URL:}"
             username: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_USERNAME:}"
@@ -270,6 +281,14 @@ sql:
 
 # Actor system parameters
 actors:
+  system:
+    throughput: "${ACTORS_SYSTEM_THROUGHPUT:5}"
+    scheduler_pool_size: "${ACTORS_SYSTEM_SCHEDULER_POOL_SIZE:1}"
+    max_actor_init_attempts: "${ACTORS_SYSTEM_MAX_ACTOR_INIT_ATTEMPTS:10}"
+    app_dispatcher_pool_size: "${ACTORS_SYSTEM_APP_DISPATCHER_POOL_SIZE:1}"
+    tenant_dispatcher_pool_size: "${ACTORS_SYSTEM_TENANT_DISPATCHER_POOL_SIZE:2}"
+    device_dispatcher_pool_size: "${ACTORS_SYSTEM_DEVICE_DISPATCHER_POOL_SIZE:4}"
+    rule_dispatcher_pool_size: "${ACTORS_SYSTEM_RULE_DISPATCHER_POOL_SIZE:4}"
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}"
   session:
@@ -307,11 +326,6 @@ actors:
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
     js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
-  queue:
-    # Enable/disable persistence of un-processed messages to the queue
-    enabled: "${ACTORS_QUEUE_ENABLED:true}"
-    # Maximum allowed timeout for persistence into the queue
-    timeout: "${ACTORS_QUEUE_PERSISTENCE_TIMEOUT:30000}"
 
 cache:
   # caffeine or redis
@@ -657,7 +671,7 @@ queue:
     topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
-    pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
@@ -679,7 +693,7 @@ queue:
   rule-engine:
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
     poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
-    pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:2000}"
     stats:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
@@ -688,7 +702,7 @@ queue:
         topic: "${TB_QUEUE_RE_MAIN_TOPIC:tb_rule_engine.main}"
         poll-interval: "${TB_QUEUE_RE_MAIN_POLL_INTERVAL_MS:25}"
         partitions: "${TB_QUEUE_RE_MAIN_PARTITIONS:10}"
-        pack-processing-timeout: "${TB_QUEUE_RE_MAIN_PACK_PROCESSING_TIMEOUT_MS:60000}"
+        pack-processing-timeout: "${TB_QUEUE_RE_MAIN_PACK_PROCESSING_TIMEOUT_MS:2000}"
         submit-strategy:
           type: "${TB_QUEUE_RE_MAIN_SUBMIT_STRATEGY_TYPE:BURST}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
           # For BATCH only
@@ -703,7 +717,7 @@ queue:
         topic: "${TB_QUEUE_RE_HP_TOPIC:tb_rule_engine.hp}"
         poll-interval: "${TB_QUEUE_RE_HP_POLL_INTERVAL_MS:25}"
         partitions: "${TB_QUEUE_RE_HP_PARTITIONS:10}"
-        pack-processing-timeout: "${TB_QUEUE_RE_HP_PACK_PROCESSING_TIMEOUT_MS:60000}"
+        pack-processing-timeout: "${TB_QUEUE_RE_HP_PACK_PROCESSING_TIMEOUT_MS:2000}"
         submit-strategy:
           type: "${TB_QUEUE_RE_HP_SUBMIT_STRATEGY_TYPE:BURST}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
           # For BATCH only
@@ -718,7 +732,7 @@ queue:
         topic: "${TB_QUEUE_RE_SQ_TOPIC:tb_rule_engine.sq}"
         poll-interval: "${TB_QUEUE_RE_SQ_POLL_INTERVAL_MS:25}"
         partitions: "${TB_QUEUE_RE_SQ_PARTITIONS:10}"
-        pack-processing-timeout: "${TB_QUEUE_RE_SQ_PACK_PROCESSING_TIMEOUT_MS:60000}"
+        pack-processing-timeout: "${TB_QUEUE_RE_SQ_PACK_PROCESSING_TIMEOUT_MS:2000}"
         submit-strategy:
           type: "${TB_QUEUE_RE_SQ_SUBMIT_STRATEGY_TYPE:SEQUENTIAL_BY_ORIGINATOR}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
           # For BATCH only

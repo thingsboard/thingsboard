@@ -397,7 +397,7 @@ export default class TbCanvasDigitalGauge {
                 }
                 var value = tvPair[1];
                 if(value !== this.gauge.value) {
-                    if (!this.ctx.settings.animation) {
+                    if (!this.ctx.settings.animation || this.ctx.isMobile) {
                         this.gauge._value = value;
                     }
                     this.gauge.value = value;

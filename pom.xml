@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>2.5.1-SNAPSHOT</version>
+    <version>2.5.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -29,7 +29,13 @@
 
     <properties>
         <main.dir>${basedir}</main.dir>
+        <pkg.disabled>true</pkg.disabled>
+        <pkg.process-resources.phase>none</pkg.process-resources.phase>
+        <pkg.package.phase>none</pkg.package.phase>
         <pkg.user>thingsboard</pkg.user>
+        <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
+        <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
+        <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <spring-boot.version>2.2.6.RELEASE</spring-boot.version>
         <spring-oauth2.version>2.1.2.RELEASE</spring-oauth2.version>
         <spring.version>5.2.6.RELEASE</spring.version>
@@ -56,8 +62,6 @@
         <jackson-annotations.version>2.10.2</jackson-annotations.version>
         <jackson-core.version>2.10.2</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
-        <scala.version>2.13</scala.version>
-        <akka.version>2.6.3</akka.version>
         <californium.version>1.0.2</californium.version>
         <gson.version>2.6.2</gson.version>
         <velocity.version>1.7</velocity.version>
@@ -133,6 +137,394 @@
                 <downloadJavadocs>true</downloadJavadocs>
             </properties>
         </profile>
+
+        <profile>
+            <id>packaging</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-resources-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>copy-conf</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}/conf</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>src/main/resources</directory>
+                                                <excludes>
+                                                    <exclude>logback.xml</exclude>
+                                                </excludes>
+                                                <filtering>false</filtering>
+                                            </resource>
+                                        </resources>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-service-conf</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}/conf</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>src/main/conf</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-linux-conf</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${pkg.linux.dist}/conf</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>config</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-linux-init</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${pkg.linux.dist}/init</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/init</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-win-conf</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${pkg.win.dist}/conf</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>src/main/resources</directory>
+                                                <excludes>
+                                                    <exclude>logback.xml</exclude>
+                                                </excludes>
+                                                <filtering>false</filtering>
+                                            </resource>
+                                            <resource>
+                                                <directory>src/main/conf</directory>
+                                                <excludes>
+                                                    <exclude>${pkg.name}.conf</exclude>
+                                                </excludes>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-control</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}/control</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/control</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-install</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}/bin/install</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/install</directory>
+                                                <includes>
+                                                    <include>**/*.sh</include>
+                                                    <include>**/*.xml</include>
+                                                </includes>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-windows-control</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${pkg.win.dist}</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/windows</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-windows-install</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${pkg.win.dist}/install</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/install</directory>
+                                                <includes>
+                                                    <include>logback.xml</include>
+                                                </includes>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-data</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>src/main/data</directory>
+                                            </resource>
+                                            <resource>
+                                                <directory>../dao/src/main/resources</directory>
+                                                <includes>
+                                                    <include>**/*.cql</include>
+                                                    <include>**/*.sql</include>
+                                                </includes>
+                                                <filtering>false</filtering>
+                                            </resource>
+                                        </resources>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>copy-docker-config</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>docker</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-dependency-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>copy-winsw-service</id>
+                                    <phase>${pkg.package.phase}</phase>
+                                    <goals>
+                                        <goal>copy</goal>
+                                    </goals>
+                                    <configuration>
+                                        <artifactItems>
+                                            <artifactItem>
+                                                <groupId>com.sun.winsw</groupId>
+                                                <artifactId>winsw</artifactId>
+                                                <classifier>bin</classifier>
+                                                <type>exe</type>
+                                                <destFileName>service.exe</destFileName>
+                                            </artifactItem>
+                                        </artifactItems>
+                                        <outputDirectory>${pkg.win.dist}</outputDirectory>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-jar-plugin</artifactId>
+                            <configuration>
+                                <excludes>
+                                    <exclude>**/logback.xml</exclude>
+                                </excludes>
+                                <archive>
+                                    <manifestEntries>
+                                        <Implementation-Title>${pkg.implementationTitle}</Implementation-Title>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                    </manifestEntries>
+                                </archive>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-maven-plugin</artifactId>
+                            <configuration>
+                                <skip>${pkg.disabled}</skip>
+                                <mainClass>${pkg.mainClass}</mainClass>
+                                <classifier>boot</classifier>
+                                <layout>ZIP</layout>
+                                <executable>true</executable>
+                                <excludeDevtools>true</excludeDevtools>
+                                <embeddedLaunchScriptProperties>
+                                    <confFolder>${pkg.installFolder}/conf</confFolder>
+                                    <logFolder>${pkg.unixLogFolder}</logFolder>
+                                    <logFilename>${pkg.name}.out</logFilename>
+                                    <initInfoProvides>${pkg.name}</initInfoProvides>
+                                </embeddedLaunchScriptProperties>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <goals>
+                                        <goal>repackage</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.thingsboard</groupId>
+                            <artifactId>gradle-maven-plugin</artifactId>
+                            <configuration>
+                                <gradleProjectDirectory>${main.dir}/packaging/${pkg.type}</gradleProjectDirectory>
+                                <tasks>
+                                    <task>build</task>
+                                    <task>buildDeb</task>
+                                    <task>buildRpm</task>
+                                    <task>renameDeb</task>
+                                    <task>renameRpm</task>
+                                </tasks>
+                                <args>
+                                    <arg>-PpackagingDir=${main.dir}/packaging</arg>
+                                    <arg>-PprojectBuildDir=${basedir}/target</arg>
+                                    <arg>-PprojectVersion=${project.version}</arg>
+                                    <arg>
+                                        -PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}
+                                    </arg>
+                                    <arg>-PpkgName=${pkg.name}</arg>
+                                    <arg>-PpkgUser=${pkg.user}</arg>
+                                    <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
+                                    <arg>-PpkgCopyInstallScripts=${pkg.copyInstallScripts}</arg>
+                                    <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
+                                    <arg>--warning-mode</arg>
+                                    <arg>all</arg>
+                                </args>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <phase>${pkg.package.phase}</phase>
+                                    <goals>
+                                        <goal>invoke</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-assembly-plugin</artifactId>
+                            <configuration>
+                                <finalName>${pkg.name}</finalName>
+                                <descriptors>
+                                    <descriptor>${main.dir}/packaging/${pkg.type}/assembly/windows.xml</descriptor>
+                                </descriptors>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <id>assembly</id>
+                                    <phase>${pkg.package.phase}</phase>
+                                    <goals>
+                                        <goal>single</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-install-plugin</artifactId>
+                            <configuration>
+                                <file>${project.build.directory}/${pkg.name}.deb</file>
+                                <artifactId>${project.artifactId}</artifactId>
+                                <groupId>${project.groupId}</groupId>
+                                <version>${project.version}</version>
+                                <classifier>deb</classifier>
+                                <packaging>deb</packaging>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <id>install-deb</id>
+                                    <phase>${pkg.package.phase}</phase>
+                                    <goals>
+                                        <goal>install-file</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
     </profiles>
 
     <build>
@@ -182,7 +574,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.9</version>
+                    <version>1.0.10</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -321,6 +713,12 @@
                             <exclude>src/vendor/**</exclude>
                             <exclude>src/font/**</exclude>
                             <exclude>src/sh/**</exclude>
+                            <exclude>packaging/*/scripts/control/**</exclude>
+                            <exclude>packaging/*/scripts/windows/**</exclude>
+                            <exclude>packaging/*/scripts/init/**</exclude>
+                            <exclude>**/*.log</exclude>
+                            <exclude>**/*.current</exclude>
+                            <exclude>.instance_id</exclude>
                             <exclude>src/main/scripts/control/**</exclude>
                             <exclude>src/main/scripts/windows/**</exclude>
                             <exclude>src/main/resources/public/static/rulenode/**</exclude>
@@ -378,6 +776,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>actor</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -714,16 +1117,6 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>com.typesafe.akka</groupId>
-                <artifactId>akka-actor_${scala.version}</artifactId>
-                <version>${akka.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.typesafe.akka</groupId>
-                <artifactId>akka-slf4j_${scala.version}</artifactId>
-                <version>${akka.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.eclipse.californium</groupId>
                 <artifactId>californium-core</artifactId>
                 <version>${californium.version}</version>
@@ -970,11 +1363,6 @@
                 <version>${commons-collections.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.struts</groupId>
                 <artifactId>struts-core</artifactId>
                 <version>${struts.version}</version>
@@ -989,7 +1377,6 @@
                 <artifactId>struts-tiles</artifactId>
                 <version>${struts.version}</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
@@ -1032,5 +1419,4 @@
             <url>https://oss.sonatype.org/content/groups/public</url>
         </repository>
     </repositories>
-
 </project>

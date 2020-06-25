@@ -130,7 +130,7 @@ public interface TbContext {
 
     void ack(TbMsg tbMsg);
 
-    TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data);
+    TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
     TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
 

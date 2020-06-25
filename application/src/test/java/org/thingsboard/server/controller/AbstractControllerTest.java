@@ -121,6 +121,7 @@ public abstract class AbstractControllerTest {
     protected String username;
 
     private TenantId tenantId;
+    private Tenant savedDifferentTenant;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -222,6 +223,26 @@ public abstract class AbstractControllerTest {
 
     protected void loginUser(String userName, String password) throws Exception {
         login(userName, password);
+    }
+
+    protected void loginDifferentTenant() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Different tenant");
+        savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Assert.assertNotNull(savedDifferentTenant);
+        User differentTenantAdmin = new User();
+        differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
+        differentTenantAdmin.setEmail("different_tenant@thingsboard.org");
+
+        createUserAndLogin(differentTenantAdmin, "testPassword");
+    }
+
+    protected void deleteDifferentTenant() throws Exception {
+        loginSysAdmin();
+        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     protected User createUserAndLogin(User user, String password) throws Exception {

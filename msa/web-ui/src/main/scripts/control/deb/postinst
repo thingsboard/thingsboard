@@ -1,6 +1,0 @@
-#!/bin/sh
-
-chown -R ${pkg.user}: ${pkg.logFolder}
-chown -R ${pkg.user}: ${pkg.installFolder}
-update-rc.d ${pkg.name} defaults
-
