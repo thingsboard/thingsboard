@@ -49,17 +49,13 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.thingsboard.server.dao.oauth2.OAuth2Utils.*;
+
 @Slf4j
 @Service
 public class OAuth2ServiceImpl implements OAuth2Service {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-
-    private static final String OAUTH2_CLIENT_REGISTRATIONS_PARAMS = "oauth2ClientRegistrationsParams";
-    private static final String OAUTH2_CLIENT_REGISTRATIONS_DOMAIN_NAME_PREFIX = "oauth2ClientRegistrationsDomainNamePrefix";
-    private static final String ALLOW_OAUTH2_CONFIGURATION = "allowOAuth2Configuration";
-    private static final String SYSTEM_SETTINGS_OAUTH2_VALUE = "value";
-    private static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
 
     private final ReentrantLock cacheWriteLock = new ReentrantLock();
     private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
@@ -118,7 +114,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         OAuth2ClientsDomainParams oAuth2ClientsDomainParams = getMergedOAuth2ClientsParams(domainName);
         return oAuth2ClientsDomainParams != null && oAuth2ClientsDomainParams.getClientRegistrations() != null ?
                 oAuth2ClientsDomainParams.getClientRegistrations().stream()
-                        .map(this::toClientInfo)
+                        .map(OAuth2Utils::toClientInfo)
                         .collect(Collectors.toList())
                 : Collections.emptyList()
                 ;
@@ -419,16 +415,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return result;
     }
 
-    private String constructAdminSettingsDomainKey(String domainName) {
-        String clientRegistrationsKey;
-        if (StringUtils.isEmpty(domainName)) {
-            clientRegistrationsKey = OAUTH2_CLIENT_REGISTRATIONS_PARAMS;
-        } else {
-            clientRegistrationsKey = OAUTH2_CLIENT_REGISTRATIONS_DOMAIN_NAME_PREFIX + "_" + domainName;
-        }
-        return clientRegistrationsKey;
-    }
-
     private OAuth2ClientsParams constructOAuth2ClientsParams(String json) {
         OAuth2ClientsParams result = null;
         if (!StringUtils.isEmpty(json)) {
@@ -454,19 +440,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             throw new IncorrectParameterException("Unable to convert OAuth2 Client Registration Params to JSON!");
         }
         return json;
-    }
-
-    private OAuth2ClientInfo toClientInfo(OAuth2ClientRegistration clientRegistration) {
-        OAuth2ClientInfo client = new OAuth2ClientInfo();
-        client.setName(clientRegistration.getLoginButtonLabel());
-        client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
-        client.setIcon(clientRegistration.getLoginButtonIcon());
-        return client;
-    }
-
-    private Stream<OAuth2ClientRegistration> toClientRegistrationStream(OAuth2ClientsParams oAuth2ClientsParams) {
-        return oAuth2ClientsParams.getClientsDomainsParams().stream()
-                .flatMap(oAuth2ClientsDomainParams -> oAuth2ClientsDomainParams.getClientRegistrations().stream());
     }
 
     private final Consumer<OAuth2ClientRegistration> validator = clientRegistration -> {
