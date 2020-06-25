@@ -77,9 +77,6 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private EdgeService edgeService;
 
     @Autowired
-    private RuleChainService ruleChainService;
-
-    @Autowired
     private AlarmService alarmService;
 
     @Autowired
@@ -185,10 +182,6 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         for (EdgeId edgeId : edgeIds) {
                             try {
                                 saveEdgeEvent(tenantId, edgeId, edgeEventType, edgeEventActionType, entityId, null);
-                                if (edgeEventType.equals(EdgeEventType.RULE_CHAIN)) {
-                                    RuleChainMetaData ruleChainMetaData = ruleChainService.loadRuleChainMetaData(tenantId, new RuleChainId(entityId.getId()));
-                                    saveEdgeEvent(tenantId, edgeId, EdgeEventType.RULE_CHAIN_METADATA, edgeEventActionType, ruleChainMetaData.getRuleChainId(), null);
-                                }
                             } catch (Exception e) {
                                 log.error("[{}] Failed to push event to edge, edgeId [{}], edgeEventType [{}], edgeEventActionType [{}], entityId [{}]",
                                         tenantId, edgeId, edgeEventType, edgeEventActionType, entityId, e);
@@ -278,7 +271,8 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             case DEVICE:
             case ASSET:
             case ENTITY_VIEW:
-                ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture = relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+                ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture =
+                        relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
                 return Futures.transform(originatorEdgeRelationsFuture, originatorEdgeRelations -> {
                     if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0) {
                         return Collections.singletonList(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
@@ -314,7 +308,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             case ENTITY_VIEW:
                 return EdgeEventType.ENTITY_VIEW;
             default:
-                log.info("Unsupported entity type: [{}]", entityType);
+                log.debug("Unsupported entity type: [{}]", entityType);
                 return null;
         }
     }

@@ -16,5 +16,17 @@
 package org.thingsboard.server.common.data.edge;
 
 public enum EdgeEventType {
-    DASHBOARD, ASSET, DEVICE, ENTITY_VIEW, ALARM, RULE_CHAIN, RULE_CHAIN_METADATA, EDGE, USER, CUSTOMER, RELATION
+    DASHBOARD,
+    ASSET,
+    DEVICE,
+    DEVICE_CREDENTIALS,
+    ENTITY_VIEW,
+    ALARM,
+    RULE_CHAIN,
+    RULE_CHAIN_METADATA,
+    EDGE,
+    USER,
+    USER_CREDENTIALS,
+    CUSTOMER,
+    RELATION
 }

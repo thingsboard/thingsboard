@@ -63,15 +63,18 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
+import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
@@ -79,16 +82,19 @@ import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityUpdateMsg;
+import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
+import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
+import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
@@ -150,7 +156,7 @@ public final class EdgeGrpcSession implements Closeable {
                         outputStream.onError(new RuntimeException(responseMsg.getErrorMsg()));
                     }
                     if (ConnectResponseCode.ACCEPTED == responseMsg.getResponseCode()) {
-                        ctx.getSyncEdgeService().sync(edge, outputStream);
+                        ctx.getSyncEdgeService().sync(edge);
                     }
                 }
                 if (connected) {
@@ -279,6 +285,9 @@ public final class EdgeGrpcSession implements Closeable {
             case DEVICE:
                 processDeviceCRUD(edgeEvent, msgType);
                 break;
+            case DEVICE_CREDENTIALS:
+                processDeviceCredentialsCRUD(edgeEvent, msgType);
+                break;
             case ASSET:
                 processAssetCRUD(edgeEvent, msgType);
                 break;
@@ -300,6 +309,9 @@ public final class EdgeGrpcSession implements Closeable {
             case USER:
                 processUserCRUD(edgeEvent, msgType);
                 break;
+            case USER_CREDENTIALS:
+                processUserCredentialsCRUD(edgeEvent, msgType);
+                break;
             case RELATION:
                 processRelationCRUD(edgeEvent, msgType);
                 break;
@@ -312,37 +324,48 @@ public final class EdgeGrpcSession implements Closeable {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
             case DEVICE_CONFLICT_RPC_MESSAGE:
-                ListenableFuture<Device> deviceFuture = ctx.getDeviceService().findDeviceByIdAsync(edgeEvent.getTenantId(), deviceId);
-                Futures.addCallback(deviceFuture,
-                        new FutureCallback<Device>() {
-                            @Override
-                            public void onSuccess(@Nullable Device device) {
-                                if (device != null) {
-                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                            .setDeviceUpdateMsg(ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(msgType, device))
-                                            .build();
-                                    outputStream.onNext(ResponseMsg.newBuilder()
-                                            .setEntityUpdateMsg(entityUpdateMsg)
-                                            .build());
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.warn("Can't processDeviceCRUD, edgeEvent [{}]", edgeEvent, t);
-                            }
-                        }, ctx.getDbCallbackExecutor());
+                Device device = ctx.getDeviceService().findDeviceById(edgeEvent.getTenantId(), deviceId);
+                if (device != null) {
+                    DeviceUpdateMsg deviceUpdateMsg =
+                            ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(msgType, device);
+                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setDeviceUpdateMsg(deviceUpdateMsg)
+                            .build();
+                    outputStream.onNext(ResponseMsg.newBuilder()
+                            .setEntityUpdateMsg(entityUpdateMsg)
+                            .build());
+                }
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
+                DeviceUpdateMsg deviceUpdateMsg =
+                        ctx.getDeviceUpdateMsgConstructor().constructDeviceDeleteMsg(deviceId);
                 EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                        .setDeviceUpdateMsg(ctx.getDeviceUpdateMsgConstructor().constructDeviceDeleteMsg(deviceId))
+                        .setDeviceUpdateMsg(deviceUpdateMsg)
                         .build();
                 outputStream.onNext(ResponseMsg.newBuilder()
                         .setEntityUpdateMsg(entityUpdateMsg)
                         .build());
         }
+    }
 
-
+    private void processDeviceCredentialsCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
+        DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
+        switch (msgType) {
+            case ENTITY_CREATED_RPC_MESSAGE:
+            case ENTITY_UPDATED_RPC_MESSAGE:
+                DeviceCredentials deviceCredentials = ctx.getDeviceCredentialsService().findDeviceCredentialsByDeviceId(edge.getTenantId(), deviceId);
+                if (deviceCredentials != null) {
+                    DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg =
+                            ctx.getDeviceUpdateMsgConstructor().constructDeviceCredentialsUpdatedMsg(deviceCredentials);
+                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setDeviceCredentialsUpdateMsg(deviceCredentialsUpdateMsg)
+                            .build();
+                    outputStream.onNext(ResponseMsg.newBuilder()
+                            .setEntityUpdateMsg(entityUpdateMsg)
+                            .build());
+                }
+                break;
+        }
     }
 
     private void processAssetCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
@@ -350,30 +373,23 @@ public final class EdgeGrpcSession implements Closeable {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-                ListenableFuture<Asset> assetFuture = ctx.getAssetService().findAssetByIdAsync(edgeEvent.getTenantId(), assetId);
-                Futures.addCallback(assetFuture,
-                        new FutureCallback<Asset>() {
-                            @Override
-                            public void onSuccess(@Nullable Asset asset) {
-                                if (asset != null) {
-                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                            .setAssetUpdateMsg(ctx.getAssetUpdateMsgConstructor().constructAssetUpdatedMsg(msgType, asset))
-                                            .build();
-                                    outputStream.onNext(ResponseMsg.newBuilder()
-                                            .setEntityUpdateMsg(entityUpdateMsg)
-                                            .build());
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.warn("Can't processAssetCRUD, edgeEvent [{}]", edgeEvent, t);
-                            }
-                        }, ctx.getDbCallbackExecutor());
+                Asset asset = ctx.getAssetService().findAssetById(edgeEvent.getTenantId(), assetId);
+                if (asset != null) {
+                    AssetUpdateMsg assetUpdateMsg =
+                            ctx.getAssetUpdateMsgConstructor().constructAssetUpdatedMsg(msgType, asset);
+                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setAssetUpdateMsg(assetUpdateMsg)
+                            .build();
+                    outputStream.onNext(ResponseMsg.newBuilder()
+                            .setEntityUpdateMsg(entityUpdateMsg)
+                            .build());
+                }
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
+                AssetUpdateMsg assetUpdateMsg =
+                        ctx.getAssetUpdateMsgConstructor().constructAssetDeleteMsg(assetId);
                 EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                        .setAssetUpdateMsg(ctx.getAssetUpdateMsgConstructor().constructAssetDeleteMsg(assetId))
+                        .setAssetUpdateMsg(assetUpdateMsg)
                         .build();
                 outputStream.onNext(ResponseMsg.newBuilder()
                         .setEntityUpdateMsg(entityUpdateMsg)
@@ -387,30 +403,23 @@ public final class EdgeGrpcSession implements Closeable {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-                ListenableFuture<EntityView> entityViewFuture = ctx.getEntityViewService().findEntityViewByIdAsync(edgeEvent.getTenantId(), entityViewId);
-                Futures.addCallback(entityViewFuture,
-                        new FutureCallback<EntityView>() {
-                            @Override
-                            public void onSuccess(@Nullable EntityView entityView) {
-                                if (entityView != null) {
-                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                            .setEntityViewUpdateMsg(ctx.getEntityViewUpdateMsgConstructor().constructEntityViewUpdatedMsg(msgType, entityView))
-                                            .build();
-                                    outputStream.onNext(ResponseMsg.newBuilder()
-                                            .setEntityUpdateMsg(entityUpdateMsg)
-                                            .build());
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.warn("Can't processEntityViewCRUD, edgeEvent [{}]", edgeEvent, t);
-                            }
-                        }, ctx.getDbCallbackExecutor());
+                EntityView entityView = ctx.getEntityViewService().findEntityViewById(edgeEvent.getTenantId(), entityViewId);
+                if (entityView != null) {
+                    EntityViewUpdateMsg entityViewUpdateMsg =
+                            ctx.getEntityViewUpdateMsgConstructor().constructEntityViewUpdatedMsg(msgType, entityView);
+                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setEntityViewUpdateMsg(entityViewUpdateMsg)
+                            .build();
+                    outputStream.onNext(ResponseMsg.newBuilder()
+                            .setEntityUpdateMsg(entityUpdateMsg)
+                            .build());
+                }
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
+                EntityViewUpdateMsg entityViewUpdateMsg =
+                        ctx.getEntityViewUpdateMsgConstructor().constructEntityViewDeleteMsg(entityViewId);
                 EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                        .setEntityViewUpdateMsg(ctx.getEntityViewUpdateMsgConstructor().constructEntityViewDeleteMsg(entityViewId))
+                        .setEntityViewUpdateMsg(entityViewUpdateMsg)
                         .build();
                 outputStream.onNext(ResponseMsg.newBuilder()
                         .setEntityUpdateMsg(entityUpdateMsg)
@@ -424,30 +433,23 @@ public final class EdgeGrpcSession implements Closeable {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-                ListenableFuture<Dashboard> dashboardFuture = ctx.getDashboardService().findDashboardByIdAsync(edgeEvent.getTenantId(), dashboardId);
-                Futures.addCallback(dashboardFuture,
-                        new FutureCallback<Dashboard>() {
-                            @Override
-                            public void onSuccess(@Nullable Dashboard dashboard) {
-                                if (dashboard != null) {
-                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                            .setDashboardUpdateMsg(ctx.getDashboardUpdateMsgConstructor().constructDashboardUpdatedMsg(msgType, dashboard))
-                                            .build();
-                                    outputStream.onNext(ResponseMsg.newBuilder()
-                                            .setEntityUpdateMsg(entityUpdateMsg)
-                                            .build());
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.warn("Can't processDashboardCRUD, edgeEvent [{}]", edgeEvent, t);
-                            }
-                        }, ctx.getDbCallbackExecutor());
+                Dashboard dashboard = ctx.getDashboardService().findDashboardById(edgeEvent.getTenantId(), dashboardId);
+                if (dashboard != null) {
+                    DashboardUpdateMsg dashboardUpdateMsg =
+                            ctx.getDashboardUpdateMsgConstructor().constructDashboardUpdatedMsg(msgType, dashboard);
+                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setDashboardUpdateMsg(dashboardUpdateMsg)
+                            .build();
+                    outputStream.onNext(ResponseMsg.newBuilder()
+                            .setEntityUpdateMsg(entityUpdateMsg)
+                            .build());
+                }
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
+                DashboardUpdateMsg dashboardUpdateMsg =
+                        ctx.getDashboardUpdateMsgConstructor().constructDashboardDeleteMsg(dashboardId);
                 EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                        .setDashboardUpdateMsg(ctx.getDashboardUpdateMsgConstructor().constructDashboardDeleteMsg(dashboardId))
+                        .setDashboardUpdateMsg(dashboardUpdateMsg)
                         .build();
                 outputStream.onNext(ResponseMsg.newBuilder()
                         .setEntityUpdateMsg(entityUpdateMsg)
@@ -461,27 +463,17 @@ public final class EdgeGrpcSession implements Closeable {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-            case DEVICE_CONFLICT_RPC_MESSAGE:
-                ListenableFuture<RuleChain> ruleChainFuture = ctx.getRuleChainService().findRuleChainByIdAsync(edgeEvent.getTenantId(), ruleChainId);
-                Futures.addCallback(ruleChainFuture,
-                        new FutureCallback<RuleChain>() {
-                            @Override
-                            public void onSuccess(@Nullable RuleChain ruleChain) {
-                                if (ruleChain != null) {
-                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                            .setRuleChainUpdateMsg(ctx.getRuleChainUpdateMsgConstructor().constructRuleChainUpdatedMsg(edge.getRootRuleChainId(), msgType, ruleChain))
-                                            .build();
-                                    outputStream.onNext(ResponseMsg.newBuilder()
-                                            .setEntityUpdateMsg(entityUpdateMsg)
-                                            .build());
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.warn("Can't processRuleChainCRUD, edgeEvent [{}]", edgeEvent, t);
-                            }
-                        }, ctx.getDbCallbackExecutor());
+                RuleChain ruleChain = ctx.getRuleChainService().findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
+                if (ruleChain != null) {
+                    RuleChainUpdateMsg ruleChainUpdateMsg =
+                            ctx.getRuleChainUpdateMsgConstructor().constructRuleChainUpdatedMsg(edge.getRootRuleChainId(), msgType, ruleChain);
+                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setRuleChainUpdateMsg(ruleChainUpdateMsg)
+                            .build();
+                    outputStream.onNext(ResponseMsg.newBuilder()
+                            .setEntityUpdateMsg(entityUpdateMsg)
+                            .build());
+                }
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
                 EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
@@ -496,31 +488,20 @@ public final class EdgeGrpcSession implements Closeable {
 
     private void processRuleChainMetadataCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
-        ListenableFuture<RuleChain> ruleChainFuture = ctx.getRuleChainService().findRuleChainByIdAsync(edgeEvent.getTenantId(), ruleChainId);
-        Futures.addCallback(ruleChainFuture,
-                new FutureCallback<RuleChain>() {
-                    @Override
-                    public void onSuccess(@Nullable RuleChain ruleChain) {
-                        if (ruleChain != null) {
-                            RuleChainMetaData ruleChainMetaData = ctx.getRuleChainService().loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
-                            RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                                    ctx.getRuleChainUpdateMsgConstructor().constructRuleChainMetadataUpdatedMsg(msgType, ruleChainMetaData);
-                            if (ruleChainMetadataUpdateMsg != null) {
-                                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                        .setRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg)
-                                        .build();
-                                outputStream.onNext(ResponseMsg.newBuilder()
-                                        .setEntityUpdateMsg(entityUpdateMsg)
-                                        .build());
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("Can't processRuleChainMetadataCRUD, edgeEvent [{}]", edgeEvent, t);
-                    }
-                }, ctx.getDbCallbackExecutor());
+        RuleChain ruleChain = ctx.getRuleChainService().findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
+        if (ruleChain != null) {
+            RuleChainMetaData ruleChainMetaData = ctx.getRuleChainService().loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
+            RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
+                    ctx.getRuleChainUpdateMsgConstructor().constructRuleChainMetadataUpdatedMsg(msgType, ruleChainMetaData);
+            if (ruleChainMetadataUpdateMsg != null) {
+                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg)
+                        .build();
+                outputStream.onNext(ResponseMsg.newBuilder()
+                        .setEntityUpdateMsg(entityUpdateMsg)
+                        .build());
+            }
+        }
     }
 
     private void processUserCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
@@ -528,27 +509,15 @@ public final class EdgeGrpcSession implements Closeable {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-            case DEVICE_CONFLICT_RPC_MESSAGE:
-                ListenableFuture<User> userFuture = ctx.getUserService().findUserByIdAsync(edgeEvent.getTenantId(), userId);
-                Futures.addCallback(userFuture,
-                        new FutureCallback<User>() {
-                            @Override
-                            public void onSuccess(@Nullable User user) {
-                                if (user != null) {
-                                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                            .setUserUpdateMsg(ctx.getUserUpdateMsgConstructor().constructUserUpdatedMsg(msgType, user))
-                                            .build();
-                                    outputStream.onNext(ResponseMsg.newBuilder()
-                                            .setEntityUpdateMsg(entityUpdateMsg)
-                                            .build());
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.warn("Can't processUserCRUD, edgeEvent [{}]", edgeEvent, t);
-                            }
-                        }, ctx.getDbCallbackExecutor());
+                User user = ctx.getUserService().findUserById(edgeEvent.getTenantId(), userId);
+                if (user != null) {
+                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setUserUpdateMsg(ctx.getUserUpdateMsgConstructor().constructUserUpdatedMsg(msgType, user))
+                            .build();
+                    outputStream.onNext(ResponseMsg.newBuilder()
+                            .setEntityUpdateMsg(entityUpdateMsg)
+                            .build());
+                }
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
                 EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
@@ -557,6 +526,26 @@ public final class EdgeGrpcSession implements Closeable {
                 outputStream.onNext(ResponseMsg.newBuilder()
                         .setEntityUpdateMsg(entityUpdateMsg)
                         .build());
+                break;
+        }
+    }
+
+    private void processUserCredentialsCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
+        UserId userId = new UserId(edgeEvent.getEntityId());
+        switch (msgType) {
+            case ENTITY_CREATED_RPC_MESSAGE:
+            case ENTITY_UPDATED_RPC_MESSAGE:
+                UserCredentials userCredentialsByUserId = ctx.getUserService().findUserCredentialsByUserId(edge.getTenantId(), userId);
+                if (userCredentialsByUserId != null) {
+                    UserCredentialsUpdateMsg userCredentialsUpdateMsg =
+                            ctx.getUserUpdateMsgConstructor().constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
+                    EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setUserCredentialsUpdateMsg(userCredentialsUpdateMsg)
+                            .build();
+                    outputStream.onNext(ResponseMsg.newBuilder()
+                            .setEntityUpdateMsg(entityUpdateMsg)
+                            .build());
+                }
                 break;
         }
     }
@@ -572,27 +561,20 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void processAlarmCRUD(EdgeEvent edgeEvent, UpdateMsgType msgType) {
-        AlarmId alarmId = new AlarmId(edgeEvent.getEntityId());
-        ListenableFuture<Alarm> alarmFuture = ctx.getAlarmService().findAlarmByIdAsync(edgeEvent.getTenantId(), alarmId);
-        Futures.addCallback(alarmFuture,
-                new FutureCallback<Alarm>() {
-                    @Override
-                    public void onSuccess(@Nullable Alarm alarm) {
-                        if (alarm != null) {
-                            EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                                    .setAlarmUpdateMsg(ctx.getAlarmUpdateMsgConstructor().constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm))
-                                    .build();
-                            outputStream.onNext(ResponseMsg.newBuilder()
-                                    .setEntityUpdateMsg(entityUpdateMsg)
-                                    .build());
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("Can't processAlarmCRUD, edgeEvent [{}]", edgeEvent, t);
-                    }
-                }, ctx.getDbCallbackExecutor());
+        try {
+            AlarmId alarmId = new AlarmId(edgeEvent.getEntityId());
+            Alarm alarm = ctx.getAlarmService().findAlarmByIdAsync(edgeEvent.getTenantId(), alarmId).get();
+            if (alarm != null) {
+                EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setAlarmUpdateMsg(ctx.getAlarmUpdateMsgConstructor().constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm))
+                        .build();
+                outputStream.onNext(ResponseMsg.newBuilder()
+                        .setEntityUpdateMsg(entityUpdateMsg)
+                        .build());
+            }
+        } catch (Exception e) {
+            log.error("Can't process alarm CRUD msg [{}] [{}]", edgeEvent, msgType, e);
+        }
     }
 
     private UpdateMsgType getResponseMsgType(ActionType actionType) {
@@ -665,27 +647,27 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgList() != null && !uplinkMsg.getRuleChainMetadataRequestMsgList().isEmpty()) {
                 for (RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg : uplinkMsg.getRuleChainMetadataRequestMsgList()) {
-                    ctx.getSyncEdgeService().processRuleChainMetadata(edge, ruleChainMetadataRequestMsg, outputStream);
+                    ctx.getSyncEdgeService().processRuleChainMetadataRequestMsg(edge, ruleChainMetadataRequestMsg);
                 }
             }
             if (uplinkMsg.getAttributesRequestMsgList() != null && !uplinkMsg.getAttributesRequestMsgList().isEmpty()) {
                 for (AttributesRequestMsg attributesRequestMsg : uplinkMsg.getAttributesRequestMsgList()) {
-                    ctx.getSyncEdgeService().processAttributesRequestMsg(edge, attributesRequestMsg, outputStream);
+                    ctx.getSyncEdgeService().processAttributesRequestMsg(edge, attributesRequestMsg);
                 }
             }
             if (uplinkMsg.getRelationRequestMsgList() != null && !uplinkMsg.getRelationRequestMsgList().isEmpty()) {
                 for (RelationRequestMsg relationRequestMsg : uplinkMsg.getRelationRequestMsgList()) {
-                    ctx.getSyncEdgeService().processRelationRequestMsg(edge, relationRequestMsg, outputStream);
+                    ctx.getSyncEdgeService().processRelationRequestMsg(edge, relationRequestMsg);
                 }
             }
             if (uplinkMsg.getUserCredentialsRequestMsgList() != null && !uplinkMsg.getUserCredentialsRequestMsgList().isEmpty()) {
                 for (UserCredentialsRequestMsg userCredentialsRequestMsg : uplinkMsg.getUserCredentialsRequestMsgList()) {
-                    ctx.getSyncEdgeService().processUserCredentialsRequestMsg(edge, userCredentialsRequestMsg, outputStream);
+                    ctx.getSyncEdgeService().processUserCredentialsRequestMsg(edge, userCredentialsRequestMsg);
                 }
             }
             if (uplinkMsg.getDeviceCredentialsRequestMsgList() != null && !uplinkMsg.getDeviceCredentialsRequestMsgList().isEmpty()) {
                 for (DeviceCredentialsRequestMsg deviceCredentialsRequestMsg : uplinkMsg.getDeviceCredentialsRequestMsgList()) {
-                    ctx.getSyncEdgeService().processDeviceCredentialsRequestMsg(edge, deviceCredentialsRequestMsg, outputStream);
+                    ctx.getSyncEdgeService().processDeviceCredentialsRequestMsg(edge, deviceCredentialsRequestMsg);
                 }
             }
         } catch (Exception e) {

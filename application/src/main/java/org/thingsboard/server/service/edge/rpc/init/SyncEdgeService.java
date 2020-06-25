@@ -15,26 +15,24 @@
  */
 package org.thingsboard.server.service.edge.rpc.init;
 
-import io.grpc.stub.StreamObserver;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.gen.edge.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.RelationRequestMsg;
-import org.thingsboard.server.gen.edge.ResponseMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
 
 public interface SyncEdgeService {
 
-    void sync(Edge edge, StreamObserver<ResponseMsg> outputStream);
+    void sync(Edge edge);
 
-    void processRuleChainMetadata(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg, StreamObserver<ResponseMsg> outputStream);
+    void processRuleChainMetadataRequestMsg(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg);
 
-    void processAttributesRequestMsg(Edge edge, AttributesRequestMsg attributesRequestMsg, StreamObserver<ResponseMsg> outputStream);
+    void processAttributesRequestMsg(Edge edge, AttributesRequestMsg attributesRequestMsg);
 
-    void processRelationRequestMsg(Edge edge, RelationRequestMsg relationRequestMsg, StreamObserver<ResponseMsg> outputStream);
+    void processRelationRequestMsg(Edge edge, RelationRequestMsg relationRequestMsg);
 
-    void processDeviceCredentialsRequestMsg(Edge edge, DeviceCredentialsRequestMsg deviceCredentialsRequestMsg, StreamObserver<ResponseMsg> outputStream);
+    void processDeviceCredentialsRequestMsg(Edge edge, DeviceCredentialsRequestMsg deviceCredentialsRequestMsg);
 
-    void processUserCredentialsRequestMsg(Edge edge, UserCredentialsRequestMsg userCredentialsRequestMsg, StreamObserver<ResponseMsg> outputStream);
+    void processUserCredentialsRequestMsg(Edge edge, UserCredentialsRequestMsg userCredentialsRequestMsg);
 }
