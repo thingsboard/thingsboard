@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
@@ -36,7 +38,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Component(value = "oauth2AuthenticationSuccessHandler")
-@ConditionalOnProperty(prefix = "security.oauth2", value = "enabled", havingValue = "true")
 public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenFactory tokenFactory;
@@ -64,9 +65,11 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
-            OAuth2ClientRegistration clientRegistration = oAuth2Service.getClientRegistrationWithTenant(token.getAuthorizedClientRegistrationId()).getRight();
+            Pair<TenantId, OAuth2ClientRegistration> clientRegistrationPair = oAuth2Service.getClientRegistrationWithTenant(token.getAuthorizedClientRegistrationId());
+            TenantId tenantId = clientRegistrationPair.getKey();
+            OAuth2ClientRegistration clientRegistration = clientRegistrationPair.getValue();
             OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(clientRegistration.getMapperConfig().getType());
-            SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, clientRegistration.getMapperConfig());
+            SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, tenantId, clientRegistration.getMapperConfig());
 
             JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
             JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);

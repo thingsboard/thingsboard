@@ -79,7 +79,7 @@ public abstract class AbstractOAuth2ClientMapper {
 
     private final Lock userCreationLock = new ReentrantLock();
 
-    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, boolean allowUserCreation, boolean activateUser) {
+    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(TenantId parentTenantId, OAuth2User oauth2User, boolean allowUserCreation, boolean activateUser) {
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, oauth2User.getEmail());
 
         User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, oauth2User.getEmail());
@@ -99,8 +99,13 @@ public abstract class AbstractOAuth2ClientMapper {
                     } else {
                         user.setAuthority(Authority.CUSTOMER_USER);
                     }
-                    TenantId tenantId = oauth2User.getTenantId() != null ?
-                            oauth2User.getTenantId() : getTenantId(oauth2User.getTenantName());
+                    TenantId tenantId;
+                    if (TenantId.SYS_TENANT_ID.equals(parentTenantId)) {
+                        tenantId = oauth2User.getTenantId() != null ?
+                                oauth2User.getTenantId() : getTenantId(oauth2User.getTenantName());
+                    } else {
+                        tenantId = parentTenantId;
+                    }
                     user.setTenantId(tenantId);
                     CustomerId customerId = oauth2User.getCustomerId() != null ?
                             oauth2User.getCustomerId() : getCustomerId(user.getTenantId(), oauth2User.getCustomerName());
