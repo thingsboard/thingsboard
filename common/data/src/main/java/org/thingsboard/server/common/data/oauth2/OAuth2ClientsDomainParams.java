@@ -25,6 +25,9 @@ import java.util.List;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class OAuth2ClientsParams {
-    private List<OAuth2ClientsDomainParams> clientsDomainsParams;
+public class OAuth2ClientsDomainParams {
+    private String domainName;
+    private String adminSettingsId;
+
+    private List<OAuth2ClientRegistration> clientRegistrations;
 }
