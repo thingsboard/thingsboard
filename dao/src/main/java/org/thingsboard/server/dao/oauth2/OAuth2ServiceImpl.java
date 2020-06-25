@@ -371,6 +371,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }
     }
 
+    // TODO maybe it's better to load all tenants and get attribute for each one
     private ListenableFuture<Map<String, String>> getAllOAuth2ClientsParamsAttribute() {
         ListenableFuture<List<EntityAttributeKvEntry>> entityAttributeKvEntriesFuture;
         try {
