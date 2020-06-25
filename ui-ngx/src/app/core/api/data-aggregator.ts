@@ -121,6 +121,12 @@ export class DataAggregator {
     }
   }
 
+  public updateOnDataCb(newOnDataCb: onAggregatedData): onAggregatedData {
+    const prevOnDataCb = this.onDataCb;
+    this.onDataCb = newOnDataCb;
+    return prevOnDataCb;
+  }
+
   public reset(startTs: number, timeWindow: number, interval: number) {
     if (this.intervalTimeoutHandle) {
       clearTimeout(this.intervalTimeoutHandle);

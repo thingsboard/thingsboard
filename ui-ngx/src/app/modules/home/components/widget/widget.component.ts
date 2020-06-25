@@ -123,6 +123,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   widgetTypeInstance: WidgetTypeInstance;
   widgetErrorData: ExceptionData;
   loadingData: boolean;
+  displayNoData = false;
 
   displayLegend: boolean;
   legendConfig: LegendConfig;
@@ -493,6 +494,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             }
           } else {
             this.loadingData = false;
+            this.displayNoData = true;
           }
           this.detectChanges();
         } catch (e) {
@@ -625,6 +627,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           subscriptionChanged = subscriptionChanged || subscription.onAliasesChanged(aliasIds);
         }
         if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
+          this.displayNoData = false;
           this.reInit();
         }
       }
@@ -761,31 +764,24 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         options.useDashboardTimewindow = true;
       }
     }
-    let createDatasourcesObservable: Observable<Array<Datasource> | Datasource>;
+    let datasource: Datasource;
     if (options.type === widgetType.alarm) {
-      createDatasourcesObservable = this.entityService.createAlarmSourceFromSubscriptionInfo(subscriptionsInfo[0]);
+      datasource = this.entityService.createAlarmSourceFromSubscriptionInfo(subscriptionsInfo[0]);
     } else {
-      createDatasourcesObservable = this.entityService.createDatasourcesFromSubscriptionsInfo(subscriptionsInfo);
+      datasource = this.entityService.createDatasourcesFromSubscriptionsInfo(subscriptionsInfo);
     }
-    createDatasourcesObservable.subscribe(
-      (result) => {
-        if (options.type === widgetType.alarm) {
-          options.alarmSource = result as Datasource;
-        } else {
-          options.datasources = result as Array<Datasource>;
+    if (options.type === widgetType.alarm) {
+      options.alarmSource = datasource;
+    } else {
+      options.datasources = [datasource];
+    }
+    this.createSubscription(options, subscribe).subscribe(
+      (subscription) => {
+        if (useDefaultComponents) {
+          this.defaultSubscriptionOptions(subscription, options);
         }
-        this.createSubscription(options, subscribe).subscribe(
-          (subscription) => {
-            if (useDefaultComponents) {
-              this.defaultSubscriptionOptions(subscription, options);
-            }
-            createSubscriptionSubject.next(subscription);
-            createSubscriptionSubject.complete();
-          },
-          (err) => {
-            createSubscriptionSubject.error(err);
-          }
-        );
+        createSubscriptionSubject.next(subscription);
+        createSubscriptionSubject.complete();
       },
       (err) => {
         createSubscriptionSubject.error(err);

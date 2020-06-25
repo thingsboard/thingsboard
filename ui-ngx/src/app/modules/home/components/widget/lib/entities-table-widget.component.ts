@@ -151,15 +151,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
               private translate: TranslateService,
               private domSanitizer: DomSanitizer) {
     super(store);
-
-    // const sortOrder: EntityDataSortOrder = sortOrderFromString(this.defaultSortOrder);
     this.pageLink = {
       page: 0,
       pageSize: this.defaultPageSize,
       textSearch: null,
       dynamic: true
     };
-      // new PageLink(this.defaultPageSize, 0, null, sortOrder);
   }
 
   ngOnInit(): void {
@@ -566,43 +563,15 @@ class EntityDatasource implements DataSource<EntityData> {
   private entitiesSubject = new BehaviorSubject<EntityData[]>([]);
   private pageDataSubject = new BehaviorSubject<PageData<EntityData>>(emptyPageData<EntityData>());
 
-//  private allEntities: Array<EntityData> = [];
-//  private allEntitiesSubject = new BehaviorSubject<EntityData[]>([]);
-//  private allEntities$: Observable<Array<EntityData>> = this.allEntitiesSubject.asObservable();
-
   private currentEntity: EntityData = null;
+
+  public dataLoading = true;
 
   constructor(
        private translate: TranslateService,
        private dataKeys: Array<DataKey>,
        private subscription: IWidgetSubscription
-       // datasources: Array<Datasource>
     ) {
-/*
-    for (const datasource of datasources) {
-      if (datasource.type === DatasourceType.entity && !datasource.entityId) {
-        continue;
-      }
-      const entity: EntityData = {
-        id: {} as EntityId,
-        entityName: datasource.entityName,
-        entityLabel: datasource.entityLabel ? datasource.entityLabel : datasource.entityName
-      };
-      if (datasource.entityId) {
-        entity.id.id = datasource.entityId;
-      }
-      if (datasource.entityType) {
-        entity.id.entityType = datasource.entityType;
-        entity.entityType = this.translate.instant(entityTypeTranslations.get(datasource.entityType).type);
-      } else {
-        entity.entityType = '';
-      }
-      this.dataKeys.forEach((dataKey) => {
-        entity[dataKey.label] = '';
-      });
-      this.allEntities.push(entity);
-    }
-    this.allEntitiesSubject.next(this.allEntities);*/
   }
 
   connect(collectionViewer: CollectionViewer): Observable<EntityData[] | ReadonlyArray<EntityData>> {
@@ -615,15 +584,8 @@ class EntityDatasource implements DataSource<EntityData> {
   }
 
   loadEntities(pageLink: EntityDataPageLink, keyFilters: KeyFilter[]) {
+    this.dataLoading = true;
     this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);
-/*    this.fetchEntities(pageLink).pipe(
-      catchError(() => of(emptyPageData<EntityData>())),
-    ).subscribe(
-      (pageData) => {
-        this.entitiesSubject.next(pageData.data);
-        this.pageDataSubject.next(pageData);
-      }
-    );*/
   }
 
   dataUpdated() {
@@ -641,6 +603,7 @@ class EntityDatasource implements DataSource<EntityData> {
     };
     this.entitiesSubject.next(entities);
     this.pageDataSubject.next(entitiesPageData);
+    this.dataLoading = false;
   }
 
   private datasourceToEntityData(datasource: Datasource, data: DatasourceData[]): EntityData {
@@ -670,24 +633,6 @@ class EntityDatasource implements DataSource<EntityData> {
     return entity;
   }
 
-/*  updateEntitiesData(data: DatasourceData[]) {
-    for (let i = 0; i < this.allEntities.length; i++) {
-      const entity = this.allEntities[i];
-      for (let a = 0; a < this.dataKeys.length; a++) {
-        const dataKey = this.dataKeys[a];
-        const index = i * this.dataKeys.length + a;
-        const keyData = data[index].data;
-        if (keyData && keyData.length && keyData[0].length > 1) {
-          const value = keyData[0][1];
-          entity[dataKey.label] = value;
-        } else {
-          entity[dataKey.label] = '';
-        }
-      }
-    }
-    this.allEntitiesSubject.next(this.allEntities);
-  }*/
-
   isEmpty(): Observable<boolean> {
     return this.entitiesSubject.pipe(
       map((entities) => !entities.length)
@@ -713,10 +658,4 @@ class EntityDatasource implements DataSource<EntityData> {
     return (this.currentEntity && entity && this.currentEntity.id && entity.id) &&
       (this.currentEntity.id.id === entity.id.id);
   }
-
- /* private fetchEntities(pageLink: PageLink): Observable<PageData<EntityData>> {
-    return this.allEntities$.pipe(
-      map((data) => pageLink.filterData(data))
-    );
-  }*/
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -316,12 +316,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                                     EntityType entityType) {
         String permissionQuery = this.buildPermissionQuery(ctx, entityFilter, tenantId, customerId, entityType);
         String entityFilterQuery = this.buildEntityFilterQuery(ctx, entityFilter);
+        String entityFieldsQuery = EntityKeyMapping.buildQuery(ctx, entityFieldsFilters);
         String result = permissionQuery;
         if (!entityFilterQuery.isEmpty()) {
             result += " and " + entityFilterQuery;
         }
-        if (!entityFieldsFilters.isEmpty()) {
-            result += " and " + entityFieldsFilters;
+        if (!entityFieldsQuery.isEmpty()) {
+            result += " and " + entityFieldsQuery;
         }
         return result;
     }

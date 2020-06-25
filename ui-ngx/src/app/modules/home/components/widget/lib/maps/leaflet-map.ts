@@ -28,7 +28,7 @@ import {
     UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
@@ -113,10 +113,11 @@ export default abstract class LeafletMap {
                         dsItem.setAttribute('style', 'font-size: 14px');
                         dsItem.onclick = () => {
                             const updatedEnttity = { ...ds, ...customLatLng };
-                            this.saveMarkerLocation(updatedEnttity);
-                            this.map.removeLayer(newMarker);
-                            this.deleteMarker(ds.entityName);
-                            this.createMarker(ds.entityName, updatedEnttity, this.datasources, this.options);
+                            this.saveMarkerLocation(updatedEnttity).subscribe(() => {
+                              this.map.removeLayer(newMarker);
+                              this.deleteMarker(ds.entityName);
+                              this.createMarker(ds.entityName, updatedEnttity, this.datasources, this.options);
+                            });
                         }
                         datasourcesList.append(dsItem);
                     });
@@ -171,12 +172,12 @@ export default abstract class LeafletMap {
         this.map$.next(this.map);
     }
 
-    public setDataSources(dataSources) {
+    public setDataSources(dataSources: FormattedData[]) {
         this.datasources = dataSources;
     }
 
-    public saveMarkerLocation(_e) {
-
+    public saveMarkerLocation(_e: FormattedData, lat?: number, lng?: number): Observable<any> {
+      return of(null);
     }
 
     createLatLng(lat: number, lng: number): L.LatLng {
@@ -248,35 +249,40 @@ export default abstract class LeafletMap {
         }
     }
 
-    updateData(data: DatasourceData[], drawRoutes: boolean, showPolygon: boolean) {
+    updateData(data: DatasourceData[], formattedData: FormattedData[], drawRoutes: boolean, showPolygon: boolean) {
       this.ready$.subscribe(() => {
         if (drawRoutes) {
           this.updatePolylines(parseArray(data), false);
         }
         if (showPolygon) {
-          this.updatePolygons(parseData(data), false);
+          this.updatePolygons(formattedData, false);
         }
-        this.updateMarkers(parseData(data), false);
+        this.updateMarkers(formattedData, false);
         this.updateBoundsInternal(drawRoutes, showPolygon);
       });
     }
 
   private updateBoundsInternal(drawRoutes: boolean, showPolygon: boolean) {
-    this.bounds = new L.LatLngBounds(null, null);
+    const bounds = new L.LatLngBounds(null, null);
     if (drawRoutes) {
       this.polylines.forEach((polyline) => {
-        this.bounds.extend(polyline.leafletPoly.getBounds());
+        bounds.extend(polyline.leafletPoly.getBounds());
       });
     }
     if (showPolygon) {
       this.polygons.forEach((polygon) => {
-        this.bounds.extend(polygon.leafletPoly.getBounds());
+        bounds.extend(polygon.leafletPoly.getBounds());
       });
     }
     this.markers.forEach((marker) => {
-      this.bounds.extend(marker.leafletMarker.getLatLng());
+      bounds.extend(marker.leafletMarker.getLatLng());
     });
-    this.fitBounds(this.bounds);
+
+    const mapBounds = this.map.getBounds();
+    if (bounds.isValid() && (!this.bounds || !mapBounds.contains(bounds))) {
+      this.bounds = bounds;
+      this.fitBounds(bounds);
+    }
   }
 
   // Markers
@@ -319,9 +325,9 @@ export default abstract class LeafletMap {
         });
     }
 
-    dragMarker = (e, data = {}) => {
+    dragMarker = (e, data = {} as FormattedData) => {
         if (e.type !== 'dragend') return;
-        this.saveMarkerLocation({ ...data, ...this.convertToCustomFormat(e.target._latlng) });
+        this.saveMarkerLocation({ ...data, ...this.convertToCustomFormat(e.target._latlng) }).subscribe();
     }
 
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings,

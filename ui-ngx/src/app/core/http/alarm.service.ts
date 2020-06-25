@@ -222,7 +222,7 @@ export class AlarmService {
       query.alarmStatus,
       query.fetchOriginator,
       null);
-    return this.getAlarms(alarmQuery, {ignoreLoading: true}).pipe(
+    return this.getAlarms(alarmQuery, {ignoreLoading: true, ignoreErrors: true}).pipe(
       expand((data) => {
         let continueLoad = data.hasNext && !query.limit;
         if (continueLoad && isDefined(leftToLoad)) {

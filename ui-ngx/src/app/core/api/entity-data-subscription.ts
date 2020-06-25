@@ -15,7 +15,7 @@
 ///
 
 import { DataSet, DataSetHolder, DatasourceType, widgetType } from '@shared/models/widget.models';
-import { AggregationType, SubscriptionTimewindow, YEAR } from '@shared/models/time/time.models';
+import { AggregationType, SubscriptionTimewindow } from '@shared/models/time/time.models';
 import { SubscriptionDataKey } from '@core/api/datasource-subcription';
 import {
   EntityData,
@@ -154,11 +154,15 @@ export class EntityDataSubscription {
   }
 
   public subscribe(): Observable<EntityDataLoadResult> {
-    if (!this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-      this.entityDataResolveSubject = new ReplaySubject(1);
-    } else {
+    this.entityDataResolveSubject = new ReplaySubject(1);
+    if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
       this.started = true;
       this.dataResolved = true;
+      this.subsTw = this.entityDataSubscriptionOptions.subscriptionTimewindow;
+      this.history = this.entityDataSubscriptionOptions.subscriptionTimewindow &&
+        isObject(this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow);
+      this.realtime = this.entityDataSubscriptionOptions.subscriptionTimewindow &&
+        isDefinedAndNotNull(this.entityDataSubscriptionOptions.subscriptionTimewindow.realtimeWindowMs);
     }
     if (this.datasourceType === DatasourceType.entity) {
       const entityFields: Array<EntityKey> =
@@ -200,13 +204,7 @@ export class EntityDataSubscription {
       };
 
       if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-        if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
-          if (this.latestValues.length > 0) {
-            this.dataCommand.latestCmd = {
-              keys: this.latestValues
-            };
-          }
-        }
+        this.prepareSubscriptionCommands(this.dataCommand);
       }
 
       this.subscriber.subscriptionCommands.push(this.dataCommand);
@@ -222,23 +220,24 @@ export class EntityDataSubscription {
       );
 
       this.subscriber.reconnect$.subscribe(() => {
-        if (this.started && !this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
+        if (this.started) {
+          const targetCommand = this.entityDataSubscriptionOptions.isPaginatedDataSubscription ? this.dataCommand : this.subsCommand;
           if (this.entityDataSubscriptionOptions.type === widgetType.timeseries &&
               !this.history && this.tsFields.length) {
             const newSubsTw: SubscriptionTimewindow = this.listener.updateRealtimeSubscription();
             this.subsTw = newSubsTw;
-            this.subsCommand.tsCmd.startTs = this.subsTw.startTs;
-            this.subsCommand.tsCmd.timeWindow = this.subsTw.aggregation.timeWindow;
-            this.subsCommand.tsCmd.interval = this.subsTw.aggregation.interval;
-            this.subsCommand.tsCmd.limit = this.subsTw.aggregation.limit;
-            this.subsCommand.tsCmd.agg = this.subsTw.aggregation.type;
-            this.subsCommand.tsCmd.fetchLatestPreviousPoint = this.subsTw.aggregation.stateData;
+            targetCommand.tsCmd.startTs = this.subsTw.startTs;
+            targetCommand.tsCmd.timeWindow = this.subsTw.aggregation.timeWindow;
+            targetCommand.tsCmd.interval = this.subsTw.aggregation.interval;
+            targetCommand.tsCmd.limit = this.subsTw.aggregation.limit;
+            targetCommand.tsCmd.agg = this.subsTw.aggregation.type;
+            targetCommand.tsCmd.fetchLatestPreviousPoint = this.subsTw.aggregation.stateData;
             this.dataAggregators.forEach((dataAggregator) => {
               dataAggregator.reset(newSubsTw.startTs,  newSubsTw.aggregation.timeWindow, newSubsTw.aggregation.interval);
             });
           }
-          this.subsCommand.query = this.dataCommand.query;
-          this.subscriber.subscriptionCommands = [this.subsCommand];
+          targetCommand.query = this.dataCommand.query;
+          this.subscriber.subscriptionCommands = [targetCommand];
         } else {
           this.subscriber.subscriptionCommands = [this.dataCommand];
         }
@@ -265,12 +264,6 @@ export class EntityDataSubscription {
         totalPages: 1
       };
       this.onPageData(pageData);
-      if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-        if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
-          this.frequency = 1000;
-          this.timer = setTimeout(this.onTick.bind(this, true), 0);
-        }
-      }
     }
     if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
       return of(null);
@@ -289,6 +282,70 @@ export class EntityDataSubscription {
     this.realtime = this.entityDataSubscriptionOptions.subscriptionTimewindow &&
       isDefinedAndNotNull(this.entityDataSubscriptionOptions.subscriptionTimewindow.realtimeWindowMs);
 
+    this.prepareData();
+
+    if (this.datasourceType === DatasourceType.entity) {
+      this.subsCommand = new EntityDataCmd();
+      this.subsCommand.cmdId = this.dataCommand.cmdId;
+      this.prepareSubscriptionCommands(this.subsCommand);
+      if (!this.subsCommand.isEmpty()) {
+        this.subscriber.subscriptionCommands = [this.subsCommand];
+        this.subscriber.update();
+      }
+    } else if (this.datasourceType === DatasourceType.function) {
+      this.startFunction();
+    }
+    this.started = true;
+  }
+
+  private prepareSubscriptionCommands(cmd: EntityDataCmd) {
+    if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
+      if (this.tsFields.length > 0) {
+        if (this.history) {
+          cmd.historyCmd = {
+            keys: this.tsFields.map(key => key.key),
+            startTs: this.subsTw.fixedWindow.startTimeMs,
+            endTs: this.subsTw.fixedWindow.endTimeMs,
+            interval: this.subsTw.aggregation.interval,
+            limit: this.subsTw.aggregation.limit,
+            agg: this.subsTw.aggregation.type,
+            fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
+          };
+        } else {
+          cmd.tsCmd = {
+            keys: this.tsFields.map(key => key.key),
+            startTs: this.subsTw.startTs,
+            timeWindow: this.subsTw.aggregation.timeWindow,
+            interval: this.subsTw.aggregation.interval,
+            limit: this.subsTw.aggregation.limit,
+            agg: this.subsTw.aggregation.type,
+            fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
+          }
+        }
+      }
+    } else if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
+      if (this.latestValues.length > 0) {
+        cmd.latestCmd = {
+          keys: this.latestValues
+        };
+      }
+    }
+  }
+
+  private startFunction() {
+    this.frequency = 1000;
+    if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
+      this.frequency = Math.min(this.entityDataSubscriptionOptions.subscriptionTimewindow.aggregation.interval, 5000);
+    }
+    this.tickScheduledTime = this.utils.currentPerfTime();
+    if (this.history) {
+      this.onTick(true);
+    } else {
+      this.timer = setTimeout(this.onTick.bind(this, true), 0);
+    }
+  }
+
+  private prepareData() {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -324,57 +381,6 @@ export class EntityDataSubscription {
         }
       }
     }
-    if (this.datasourceType === DatasourceType.entity) {
-      this.subsCommand = new EntityDataCmd();
-      this.subsCommand.cmdId = this.dataCommand.cmdId;
-      if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-        if (this.tsFields.length > 0) {
-          if (this.history) {
-            this.subsCommand.historyCmd = {
-              keys: this.tsFields.map(key => key.key),
-              startTs: this.subsTw.fixedWindow.startTimeMs,
-              endTs: this.subsTw.fixedWindow.endTimeMs,
-              interval: this.subsTw.aggregation.interval,
-              limit: this.subsTw.aggregation.limit,
-              agg: this.subsTw.aggregation.type,
-              fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
-            };
-          } else {
-            this.subsCommand.tsCmd = {
-              keys: this.tsFields.map(key => key.key),
-              startTs: this.subsTw.startTs,
-              timeWindow: this.subsTw.aggregation.timeWindow,
-              interval: this.subsTw.aggregation.interval,
-              limit: this.subsTw.aggregation.limit,
-              agg: this.subsTw.aggregation.type,
-              fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
-            }
-          }
-        }
-      } else if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
-        if (this.latestValues.length > 0) {
-          this.subsCommand.latestCmd = {
-            keys: this.latestValues
-          };
-        }
-      }
-      if (!this.subsCommand.isEmpty()) {
-        this.subscriber.subscriptionCommands = [this.subsCommand];
-        this.subscriber.update();
-      }
-    } else if (this.datasourceType === DatasourceType.function) {
-      this.frequency = 1000;
-      if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-        this.frequency = Math.min(this.entityDataSubscriptionOptions.subscriptionTimewindow.aggregation.interval, 5000);
-      }
-      this.tickScheduledTime = this.utils.currentPerfTime();
-      if (this.history) {
-        this.onTick(true);
-      } else {
-        this.timer = setTimeout(this.onTick.bind(this, true), 0);
-      }
-    }
-    this.started = true;
   }
 
   private resetData() {
@@ -432,7 +438,10 @@ export class EntityDataSubscription {
       }
     }
     this.pageData = pageData;
-    if (isInitialData || this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
+
+    if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
+      this.prepareData();
+    } else if (isInitialData) {
       this.resetData();
     }
     const data: Array<Array<DataSetHolder>> = [];
@@ -462,6 +471,19 @@ export class EntityDataSubscription {
         this.listener.dataLoaded(pageData, data,
           this.listener.configDatasourceIndex);
       }
+      if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription && isInitialData) {
+        if (this.datasourceType === DatasourceType.function) {
+          this.startFunction();
+        }
+        this.entityDataResolveSubject.next(
+          {
+            pageData,
+            data,
+            datasourceIndex: this.listener.configDatasourceIndex
+          }
+        );
+        this.entityDataResolveSubject.complete();
+      }
     }
   }
 
@@ -478,7 +500,7 @@ export class EntityDataSubscription {
         dataIndex, dataKeyIndex, detectChanges);
   }
 
-  private processEntityData(entityData: EntityData, dataIndex: number, aggregate: boolean,
+  private processEntityData(entityData: EntityData, dataIndex: number, isUpdate: boolean,
                             dataUpdatedCb: DataUpdatedCb) {
     if (this.entityDataSubscriptionOptions.type === widgetType.latest && entityData.latest) {
       for (const type of Object.keys(entityData.latest)) {
@@ -490,9 +512,20 @@ export class EntityDataSubscription {
     if (this.entityDataSubscriptionOptions.type === widgetType.timeseries && entityData.timeseries) {
       const subscriptionData = this.toSubscriptionData(entityData.timeseries, true);
       if (this.dataAggregators && this.dataAggregators[dataIndex]) {
-        this.dataAggregators[dataIndex].onData({data: subscriptionData}, false, this.history, true);
+        const dataAggregator = this.dataAggregators[dataIndex];
+        let prevDataCb;
+        if (!isUpdate) {
+          prevDataCb = dataAggregator.updateOnDataCb((data, detectChanges) => {
+            this.onData(data, this.datasourceType === DatasourceType.function ?
+              DataKeyType.function : DataKeyType.timeseries, dataIndex, detectChanges, dataUpdatedCb);
+          });
+        }
+        dataAggregator.onData({data: subscriptionData}, false, this.history, true);
+        if (prevDataCb) {
+          dataAggregator.updateOnDataCb(prevDataCb);
+        }
       }
-      if (!this.history && !aggregate) {
+      if (!this.history && !isUpdate) {
         this.onData(subscriptionData, DataKeyType.timeseries, dataIndex, true, dataUpdatedCb);
       }
     }

@@ -129,7 +129,7 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
       overlayRef,
       {
         aliasController: this.aliasController,
-        entityAliasesInfo: this.entityAliasesInfo
+        entityAliasesInfo: deepClone(this.entityAliasesInfo)
       }
     );
     overlayRef.attach(new ComponentPortal(AliasesEntitySelectPanelComponent, this.viewContainerRef, injector));
@@ -178,7 +178,7 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
     for (const aliasId of Object.keys(allEntityAliases)) {
       const aliasInfo = this.aliasController.getInstantAliasInfo(aliasId);
       if (aliasInfo && !aliasInfo.resolveMultiple && aliasInfo.currentEntity
-        && aliasInfo.resolvedEntities.length > 1) {
+        && aliasInfo.entityFilter /*aliasInfo.resolvedEntities.length > 1*/) {
         this.entityAliasesInfo[aliasId] = deepClone(aliasInfo);
         this.entityAliasesInfo[aliasId].selectedId = aliasInfo.currentEntity.id;
         this.hasSelectableAliasEntities = true;

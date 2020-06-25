@@ -17,7 +17,14 @@
 -->
 <div fxLayout="column" class="mat-content mat-padding">
   <div fxLayout="row" *ngFor="let alias of entityAliasesInfo | keyvalue">
-    <mat-form-field fxFlex>
+    <tb-aliases-entity-autocomplete fxFlex
+      required
+      [alias]="alias.value.alias"
+      [entityFilter]="alias.value.entityFilter"
+      [(ngModel)]="alias.value.currentEntity"
+      (ngModelChange)="currentAliasEntityChanged(alias.key, alias.value.currentEntity)">
+    </tb-aliases-entity-autocomplete>
+    <!--mat-form-field fxFlex>
       <mat-label>{{alias.value.alias}}</mat-label>
       <mat-select [(ngModel)]="alias.value.selectedId"
                   (ngModelChange)="currentAliasEntityChanged(alias.key, alias.value.selectedId)">
@@ -25,6 +32,6 @@
           {{resolvedEntity.name}}
         </mat-option>
       </mat-select>
-    </mat-form-field>
+    </mat-form-field-->
   </div>
 </div>

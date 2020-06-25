@@ -16,14 +16,18 @@
 
 import { AliasInfo, IAliasController, StateControllerHolder, StateEntityInfo } from '@core/api/widget-api.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject } from 'rxjs';
-import { DataKey, Datasource, DatasourceType } from '@app/shared/models/widget.models';
-import { createLabelFromDatasource, deepClone, isEqual } from '@core/utils';
+import { Datasource, DatasourceType } from '@app/shared/models/widget.models';
+import { deepClone, isEqual } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
-import { AliasFilterType, EntityAliases } from '@shared/models/alias.models';
+import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import { map, mergeMap } from 'rxjs/operators';
-import { createDefaultEntityDataPageLink, defaultEntityDataPageLink } from '@shared/models/query/query.models';
+import {
+  createDefaultEntityDataPageLink,
+  defaultEntityDataPageLink, singleEntityDataPageLink,
+  updateDatasourceFromEntityInfo
+} from '@shared/models/query/query.models';
 
 export class AliasController implements IAliasController {
 
@@ -139,11 +143,10 @@ export class AliasController implements IAliasController {
             this.resolvedAliases[aliasId] = resolvedAliasInfo;
             delete this.resolvedAliasesObservable[aliasId];
             if (resolvedAliasInfo.stateEntity) {
-              const stateEntityInfo: StateEntityInfo = {
+              this.resolvedAliasesToStateEntities[aliasId] = {
                 entityParamName: resolvedAliasInfo.entityParamName,
                 entityId: this.stateControllerHolder().getEntityId(resolvedAliasInfo.entityParamName)
               };
-              this.resolvedAliasesToStateEntities[aliasId] = stateEntityInfo;
             }
             this.entityAliasResolvedSubject.next(aliasId);
             resolvedAliasSubject.next(resolvedAliasInfo);
@@ -186,172 +189,59 @@ export class AliasController implements IAliasController {
     );
   }
 
-  private resolveDatasource(datasource: Datasource, isSingle?: boolean): Observable<Datasource> {
-    if (datasource.type === DatasourceType.entity) {
-      if (datasource.entityAliasId) {
-        return this.getAliasInfo(datasource.entityAliasId).pipe(
-          map((aliasInfo) => {
-            datasource.aliasName = aliasInfo.alias;
-            if (aliasInfo.resolveMultiple && !isSingle) {
-              let newDatasource: Datasource;
-              // const resolvedEntities = aliasInfo.resolvedEntities;
-              if (aliasInfo.entityFilter) {
-                newDatasource = deepClone(datasource);
-                newDatasource.entityFilter = aliasInfo.entityFilter;
-                /*const datasources: Array<Datasource> = [];
-                for (let i = 0; i < resolvedEntities.length; i++) {
-                  const resolvedEntity = resolvedEntities[i];
-                  newDatasource = deepClone(datasource);
-                  if (resolvedEntity.origEntity) {
-                    newDatasource.entity = deepClone(resolvedEntity.origEntity);
-                  } else {
-                    newDatasource.entity = {};
-                  }
-                  newDatasource.entityId = resolvedEntity.id;
-                  newDatasource.entityType = resolvedEntity.entityType;
-                  newDatasource.entityName = resolvedEntity.name;
-                  newDatasource.entityLabel = resolvedEntity.label;
-                  newDatasource.entityDescription = resolvedEntity.entityDescription;
-                  newDatasource.name = resolvedEntity.name;
-                  newDatasource.generated = i > 0 ? true : false;
-                  datasources.push(newDatasource);
-                }
-                return datasources;*/
-                return newDatasource;
+  private resolveDatasource(datasource: Datasource, forceFilter = false): Observable<Datasource> {
+    const newDatasource = deepClone(datasource);
+    if (newDatasource.type === DatasourceType.entity) {
+      if (newDatasource.entityAliasId) {
+        return this.getAliasInfo(newDatasource.entityAliasId).pipe(
+          mergeMap((aliasInfo) => {
+            newDatasource.aliasName = aliasInfo.alias;
+            if (!aliasInfo.entityFilter) {
+              newDatasource.unresolvedStateEntity = true;
+              newDatasource.name = 'Unresolved';
+              newDatasource.entityName = 'Unresolved';
+              return of(newDatasource);
+            }
+            if (aliasInfo.resolveMultiple) {
+              newDatasource.entityFilter = aliasInfo.entityFilter;
+              if (forceFilter) {
+                return this.entityService.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
+                  {ignoreLoading: true, ignoreErrors: true}).pipe(
+                  map((entity) => {
+                    if (entity) {
+                      updateDatasourceFromEntityInfo(newDatasource, entity, true);
+                    }
+                    return newDatasource;
+                  })
+                );
               } else {
-                if (aliasInfo.stateEntity) {
-                  newDatasource = deepClone(datasource);
-                  newDatasource.unresolvedStateEntity = true;
-                  return newDatasource;
-                } else {
-                  return null;
-                  // throw new Error('Unable to resolve datasource.');
-                }
+                return of(newDatasource);
               }
             } else {
-              const entity = aliasInfo.currentEntity;
-              if (entity) {
-                if (entity.origEntity) {
-                  datasource.entity = deepClone(entity.origEntity);
-                } else {
-                  datasource.entity = {};
-                }
-                datasource.entityId = entity.id;
-                datasource.entityType = entity.entityType;
-                datasource.entityName = entity.name;
-                datasource.entityLabel = entity.label;
-                datasource.name = entity.name;
-                datasource.entityDescription = entity.entityDescription;
-                datasource.entityFilter = {
-                  type: AliasFilterType.singleEntity,
-                  singleEntity: {
-                    id: entity.id,
-                    entityType: entity.entityType
-                  }
-                };
-                return datasource;
-              } else {
-                if (aliasInfo.stateEntity) {
-                  datasource.unresolvedStateEntity = true;
-                  return datasource;
-                } else {
-                  return null;
-                  // throw new Error('Unable to resolve datasource.');
-                }
+              if (aliasInfo.currentEntity) {
+                updateDatasourceFromEntityInfo(newDatasource, aliasInfo.currentEntity, true);
+              } else if (aliasInfo.stateEntity) {
+                newDatasource.unresolvedStateEntity = true;
+                newDatasource.name = 'Unresolved';
+                newDatasource.entityName = 'Unresolved';
               }
+              return of(newDatasource);
             }
           })
         );
       } else {
-        datasource.aliasName = datasource.entityName;
-        datasource.name = datasource.entityName;
-        return of(datasource);
+        newDatasource.aliasName = newDatasource.entityName;
+        newDatasource.name = newDatasource.entityName;
+        return of(newDatasource);
       }
     } else {
-      return of(datasource);
+      return of(newDatasource);
     }
   }
 
- /* private resolveDatasourceOld(datasource: Datasource, isSingle?: boolean): Observable<Array<Datasource>> {
-    if (datasource.type === DatasourceType.entity) {
-      if (datasource.entityAliasId) {
-        return this.getAliasInfo(datasource.entityAliasId).pipe(
-          map((aliasInfo) => {
-            datasource.aliasName = aliasInfo.alias;
-            if (aliasInfo.resolveMultiple && !isSingle) {
-              let newDatasource: Datasource;
-              const resolvedEntities = aliasInfo.resolvedEntities;
-              if (resolvedEntities && resolvedEntities.length) {
-                const datasources: Array<Datasource> = [];
-                for (let i = 0; i < resolvedEntities.length; i++) {
-                  const resolvedEntity = resolvedEntities[i];
-                  newDatasource = deepClone(datasource);
-                  if (resolvedEntity.origEntity) {
-                    newDatasource.entity = deepClone(resolvedEntity.origEntity);
-                  } else {
-                    newDatasource.entity = {};
-                  }
-                  newDatasource.entityId = resolvedEntity.id;
-                  newDatasource.entityType = resolvedEntity.entityType;
-                  newDatasource.entityName = resolvedEntity.name;
-                  newDatasource.entityLabel = resolvedEntity.label;
-                  newDatasource.entityDescription = resolvedEntity.entityDescription;
-                  newDatasource.name = resolvedEntity.name;
-                  newDatasource.generated = i > 0 ? true : false;
-                  datasources.push(newDatasource);
-                }
-                return datasources;
-              } else {
-                if (aliasInfo.stateEntity) {
-                  newDatasource = deepClone(datasource);
-                  newDatasource.unresolvedStateEntity = true;
-                  return [newDatasource];
-                } else {
-                  return [];
-                  // throw new Error('Unable to resolve datasource.');
-                }
-              }
-            } else {
-              const entity = aliasInfo.currentEntity;
-              if (entity) {
-                if (entity.origEntity) {
-                  datasource.entity = deepClone(entity.origEntity);
-                } else {
-                  datasource.entity = {};
-                }
-                datasource.entityId = entity.id;
-                datasource.entityType = entity.entityType;
-                datasource.entityName = entity.name;
-                datasource.entityLabel = entity.label;
-                datasource.name = entity.name;
-                datasource.entityDescription = entity.entityDescription;
-                return [datasource];
-              } else {
-                if (aliasInfo.stateEntity) {
-                  datasource.unresolvedStateEntity = true;
-                  return [datasource];
-                } else {
-                  return [];
-                  // throw new Error('Unable to resolve datasource.');
-                }
-              }
-            }
-          })
-        );
-      } else {
-        datasource.aliasName = datasource.entityName;
-        datasource.name = datasource.entityName;
-        return of([datasource]);
-      }
-    } else {
-      return of([datasource]);
-    }
-  } */
-
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource> {
     return this.resolveDatasource(alarmSource, true).pipe(
-      map((datasources) => {
-        const datasource = datasources && datasources.length ? datasources[0] : deepClone(alarmSource);
+      map((datasource) => {
         if (datasource.type === DatasourceType.function) {
           let name: string;
           if (datasource.name && datasource.name.length) {
@@ -362,9 +252,6 @@ export class AliasController implements IAliasController {
           datasource.name = name;
           datasource.aliasName = name;
           datasource.entityName = name;
-        } else if (datasource.unresolvedStateEntity) {
-          datasource.name = 'Unresolved';
-          datasource.entityName = 'Unresolved';
         }
         return datasource;
       })
@@ -372,9 +259,9 @@ export class AliasController implements IAliasController {
   }
 
   resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>> {
-    const newDatasources = deepClone(singleEntity ? [datasources[0]] : datasources);
+    const toResolve = singleEntity ? [datasources[0]] : datasources;
     const observables = new Array<Observable<Datasource>>();
-    newDatasources.forEach((datasource) => {
+    toResolve.forEach((datasource) => {
       observables.push(this.resolveDatasource(datasource));
     });
     return forkJoin(observables).pipe(
@@ -395,14 +282,10 @@ export class AliasController implements IAliasController {
             datasource.name = name;
             datasource.aliasName = name;
             datasource.entityName = name;
-          } else if (datasource.unresolvedStateEntity) {
-            datasource.name = 'Unresolved';
-            datasource.entityName = 'Unresolved';
-          } else if (datasource.type === DatasourceType.entity) {
+          } else {
             if (singleEntity) {
-              datasource.pageLink = createDefaultEntityDataPageLink(1);
-            }
-            if (!datasource.pageLink) {
+              datasource.pageLink = deepClone(singleEntityDataPageLink);
+            } else if (!datasource.pageLink) {
               datasource.pageLink = deepClone(defaultEntityDataPageLink);
             }
           }
@@ -411,71 +294,6 @@ export class AliasController implements IAliasController {
       })
     );
   }
-
-  /*resolveDatasourcesOld(datasources: Array<Datasource>): Observable<Array<Datasource>> {
-    const newDatasources = deepClone(datasources);
-    const observables = new Array<Observable<Array<Datasource>>>();
-    newDatasources.forEach((datasource) => {
-      observables.push(this.resolveDatasource(datasource));
-    });
-    return forkJoin(observables).pipe(
-      map((arrayOfDatasources) => {
-        const result = new Array<Datasource>();
-        arrayOfDatasources.forEach((datasourcesArray) => {
-          result.push(...datasourcesArray);
-        });
-        result.sort((d1, d2) => {
-          const i1 = d1.generated ? 1 : 0;
-          const i2 = d2.generated ? 1 : 0;
-          return i1 - i2;
-        });
-        let index = 0;
-        let functionIndex = 0;
-        result.forEach((datasource) => {
-          if (datasource.type === DatasourceType.function) {
-            let name: string;
-            if (datasource.name && datasource.name.length) {
-              name = datasource.name;
-            } else {
-              functionIndex++;
-              name = DatasourceType.function;
-              if (functionIndex > 1) {
-                name += ' ' + functionIndex;
-              }
-            }
-            datasource.name = name;
-            datasource.aliasName = name;
-            datasource.entityName = name;
-          } else if (datasource.unresolvedStateEntity) {
-            datasource.name = 'Unresolved';
-            datasource.entityName = 'Unresolved';
-          }
-          datasource.dataKeys.forEach((dataKey) => {
-            if (datasource.generated) {
-              dataKey._hash = Math.random();
-              dataKey.color = this.utils.getMaterialColor(index);
-            }
-            index++;
-          });
-          this.updateDatasourceKeyLabels(datasource);
-        });
-        return result;
-      })
-    );
-  }*/
-
- /* private updateDatasourceKeyLabels(datasource: Datasource) {
-    datasource.dataKeys.forEach((dataKey) => {
-      this.updateDataKeyLabel(dataKey, datasource);
-    });
-  }
-
-  private updateDataKeyLabel(dataKey: DataKey, datasource: Datasource) {
-    if (!dataKey.pattern) {
-      dataKey.pattern = deepClone(dataKey.label);
-    }
-    dataKey.label = createLabelFromDatasource(datasource, dataKey.pattern);
-  }*/
 
   getInstantAliasInfo(aliasId: string): AliasInfo {
     return this.resolvedAliases[aliasId];

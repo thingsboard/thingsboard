@@ -110,8 +110,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.settings.tooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);
     this.settings.labelFunction = parseFunction(this.settings.labelFunction, ['data', 'dsData', 'dsIndex']);
     this.normalizationStep = this.settings.normalizationStep;
-    const subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
-    if (subscription) subscription.callbacks.onDataUpdated = () => {
+    const subscription = this.ctx.defaultSubscription;
+    subscription.callbacks.onDataUpdated = () => {
       this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
       if (this.historicalData.length) {
         this.calculateIntervals();
@@ -123,8 +123,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   ngAfterViewInit() {
-    const ctxCopy: WidgetContext = _.cloneDeep(this.ctx);
-    this.mapWidget = new MapWidgetController(MapProviders.openstreet, false, ctxCopy, this.mapContainer.nativeElement);
+    this.mapWidget = new MapWidgetController(MapProviders.openstreet, false, this.ctx, this.mapContainer.nativeElement);
     this.mapResize$ = new ResizeObserver(() => {
       this.mapWidget.resize();
     });

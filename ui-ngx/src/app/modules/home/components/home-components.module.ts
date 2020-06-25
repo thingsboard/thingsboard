@@ -65,6 +65,7 @@ import { EventContentDialogComponent } from '@home/components/event/event-conten
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
 import { SelectTargetStateDialogComponent } from '@home/components/dashboard/select-target-state-dialog.component';
+import { AliasesEntityAutocompleteComponent } from '@home/components/alias/aliases-entity-autocomplete.component';
 
 @NgModule({
   declarations:
@@ -88,6 +89,7 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
       EditAttributeValuePanelComponent,
       AliasesEntitySelectPanelComponent,
       AliasesEntitySelectComponent,
+      AliasesEntityAutocompleteComponent,
       EntityAliasesDialogComponent,
       EntityAliasDialogComponent,
       DashboardComponent,
@@ -131,6 +133,7 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
     AlarmTableComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
+    AliasesEntityAutocompleteComponent,
     EntityAliasesDialogComponent,
     EntityAliasDialogComponent,
     DashboardComponent,

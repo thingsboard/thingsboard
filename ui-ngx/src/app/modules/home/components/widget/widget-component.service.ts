@@ -356,8 +356,7 @@ export class WidgetComponentService {
         result.typeParameters.maxDataKeys = -1;
       }
       if (isUndefined(result.typeParameters.singleEntity)) {
-        result.typeParameters.singleEntity = result.typeParameters.maxDatasources === 1 &&
-          result.typeParameters.maxDataKeys === 1;
+        result.typeParameters.singleEntity = false;
       }
       if (isUndefined(result.typeParameters.dataKeysOptional)) {
         result.typeParameters.dataKeysOptional = false;

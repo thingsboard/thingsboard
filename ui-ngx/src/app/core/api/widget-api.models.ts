@@ -287,7 +287,7 @@ export interface IWidgetSubscription {
 
   subscribeForPaginatedData(datasourceIndex: number,
                             pageLink: EntityDataPageLink,
-                            keyFilters: KeyFilter[]): void;
+                            keyFilters: KeyFilter[]): Observable<any>;
 
   isDataResolved(): boolean;
 

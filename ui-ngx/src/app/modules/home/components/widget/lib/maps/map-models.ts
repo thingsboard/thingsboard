@@ -23,6 +23,7 @@ import {
     openstreetMapSettingsSchema, tencentMapSettingsSchema,
     googleMapSettingsSchema, hereMapSettingsSchema, imageMapSettingsSchema
 } from './schemes';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export const DEFAULT_MAP_PAGE_SIZE = 1024;
 
@@ -112,6 +113,8 @@ export type MarkerSettings = {
 export interface FormattedData {
     $datasource: Datasource;
     entityName: string;
+    entityId: string;
+    entityType: EntityType;
     dsIndex: number;
     deviceType: string;
     [key: string]: any

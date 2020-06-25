@@ -65,26 +65,33 @@ export class EntityDataService {
   }
 
   public startSubscription(listener: EntityDataListener) {
-    if (listener.subscriptionType === widgetType.timeseries) {
-      listener.subscription.entityDataSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+    if (listener.subscription) {
+      if (listener.subscriptionType === widgetType.timeseries) {
+        listener.subscription.entityDataSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+      }
+      listener.subscription.start();
     }
-    listener.subscription.start();
   }
 
   public subscribeForPaginatedData(listener: EntityDataListener,
                                    pageLink: EntityDataPageLink,
-                                   keyFilters: KeyFilter[]) {
+                                   keyFilters: KeyFilter[]): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
-      return;
+      return of(null);
     }
     listener.subscription = this.createSubscription(listener,
       pageLink, keyFilters,  true);
-    listener.subscription.subscribe();
+    if (listener.subscriptionType === widgetType.timeseries) {
+      listener.subscription.entityDataSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+    }
+    return listener.subscription.subscribe();
   }
 
   public stopSubscription(listener: EntityDataListener) {
-    listener.subscription.unsubscribe();
+    if (listener.subscription) {
+      listener.subscription.unsubscribe();
+    }
   }
 
   private createSubscription(listener: EntityDataListener,

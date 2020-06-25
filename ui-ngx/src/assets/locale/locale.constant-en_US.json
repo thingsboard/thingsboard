@@ -1711,7 +1711,8 @@
         "widget-template-load-failed-error": "Failed to load widget template!",
         "add": "Add Widget",
         "undo": "Undo widget changes",
-        "export": "Export widget"
+        "export": "Export widget",
+        "no-data": "No data to display on widget"
     },
     "widget-action": {
         "header-button": "Widget header button",

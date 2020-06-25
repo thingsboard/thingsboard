@@ -58,7 +58,7 @@ import {
   EntityDataPageLink,
   entityDataToEntityInfo,
   EntityKeyType,
-  KeyFilter
+  KeyFilter, updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
 import { map } from 'rxjs/operators';
 
@@ -450,7 +450,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           this.dataLoaded(resolveResult.pageData, resolveResult.data, resolveResult.datasourceIndex, false);
         });
         this.configureLoadedData();
-        this.hasResolvedData = true;
+        this.hasResolvedData = this.datasources.length > 0;
         this.notifyDataLoaded();
         this.onDataUpdated(true);
       })
@@ -577,11 +577,11 @@ export class WidgetSubscription implements IWidgetSubscription {
   } */
 
   private resetData() {
-    this.data = [];
-    this.hiddenData = [];
+    this.data.length = 0;
+    this.hiddenData.length = 0;
     if (this.displayLegend) {
-      this.legendData.keys = [];
-      this.legendData.data = [];
+      this.legendData.keys.length = 0;
+      this.legendData.data.length = 0;
     }
     this.onDataUpdated();
   }
@@ -885,32 +885,50 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   subscribeAllForPaginatedData(pageLink: EntityDataPageLink,
-                               keyFilters: KeyFilter[]): void {
+                               keyFilters: KeyFilter[]): Observable<any> {
+    const observables: Observable<any>[] = [];
     this.configuredDatasources.forEach((datasource, datasourceIndex) => {
-      this.subscribeForPaginatedData(datasourceIndex, pageLink, keyFilters);
+      observables.push(this.subscribeForPaginatedData(datasourceIndex, pageLink, keyFilters));
     });
+    if (observables.length) {
+      return forkJoin(observables);
+    } else {
+      return of(null);
+    }
   }
 
   subscribeForPaginatedData(datasourceIndex: number,
                             pageLink: EntityDataPageLink,
-                            keyFilters: KeyFilter[]): void {
+                            keyFilters: KeyFilter[]): Observable<any> {
     let entityDataListener = this.entityDataListeners[datasourceIndex];
     if (entityDataListener) {
       this.ctx.entityDataService.stopSubscription(entityDataListener);
     }
     const datasource = this.configuredDatasources[datasourceIndex];
     if (datasource) {
+      if (this.type === widgetType.timeseries && this.timeWindowConfig) {
+        this.updateRealtimeSubscription();
+      }
       entityDataListener = {
         subscriptionType: this.type,
         configDatasource: datasource,
         configDatasourceIndex: datasourceIndex,
+        subscriptionTimewindow: this.subscriptionTimewindow,
         dataLoaded: (pageData, data1, datasourceIndex1) => {
           this.dataLoaded(pageData, data1, datasourceIndex1, true)
         },
-        dataUpdated: this.dataUpdated.bind(this)
+        dataUpdated: this.dataUpdated.bind(this),
+        updateRealtimeSubscription: () => {
+          return this.updateRealtimeSubscription();
+        },
+        setRealtimeSubscription: (subscriptionTimewindow) => {
+          this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
+        }
       };
       this.entityDataListeners[datasourceIndex] = entityDataListener;
-      this.ctx.entityDataService.subscribeForPaginatedData(entityDataListener, pageLink, keyFilters);
+      return this.ctx.entityDataService.subscribeForPaginatedData(entityDataListener, pageLink, keyFilters);
+    } else {
+      return of(null);
     }
   }
 
@@ -1362,14 +1380,12 @@ export class WidgetSubscription implements IWidgetSubscription {
     return datasource.dataKeys.map((dataKey, keyIndex) => {
       dataKey.hidden = dataKey.settings.hideDataByDefault ? true : false;
       dataKey.inLegend = dataKey.settings.removeFromLegend ? false : true;
-      if (this.comparisonEnabled && dataKey.isAdditional) {
-        if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
-          dataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
-        } else {
+      if (this.comparisonEnabled && dataKey.isAdditional && dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+         dataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
+      } else {
+        if (this.comparisonEnabled && dataKey.isAdditional) {
           dataKey.label = dataKey.label + ' ' + this.ctx.translate.instant('legend.comparison-time-ago.' + this.timeForComparison);
         }
-        dataKey.pattern = dataKey.label;
-      } else {
         dataKey.pattern = dataKey.label;
         dataKey.label = createLabelFromDatasource(datasource, dataKey.pattern);
       }
@@ -1387,16 +1403,8 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private entityDataToDatasource(configDatasource: Datasource, entityData: EntityData, index: number): Datasource {
     const newDatasource = deepClone(configDatasource);
-    newDatasource.entity = {};
-    newDatasource.entityId = entityData.entityId.id;
-    newDatasource.entityType = entityData.entityId.entityType as EntityType;
-    if (configDatasource.type === DatasourceType.entity) {
-      const entityInfo = entityDataToEntityInfo(entityData);
-      newDatasource.name = entityInfo.name;
-      newDatasource.entityName = entityInfo.name;
-      newDatasource.entityLabel = entityInfo.label;
-      newDatasource.entityDescription = entityInfo.entityDescription;
-    }
+    const entityInfo = entityDataToEntityInfo(entityData);
+    updateDatasourceFromEntityInfo(newDatasource, entityInfo);
     newDatasource.generated = index > 0 ? true : false;
     return newDatasource;
   }

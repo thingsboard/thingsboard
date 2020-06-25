@@ -20,6 +20,7 @@ import { SortDirection } from '@angular/material/sort';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { Datasource, DatasourceType } from '@shared/models/widget.models';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -85,34 +86,34 @@ export enum ComplexOperation {
 }
 
 export interface StringFilterPredicate {
+  type: FilterPredicateType.STRING,
   operation: StringOperation;
   value: string;
   ignoreCase: boolean;
 }
 
 export interface NumericFilterPredicate {
+  type: FilterPredicateType.NUMERIC,
   operation: NumericOperation;
   value: number;
 }
 
 export interface BooleanFilterPredicate {
+  type: FilterPredicateType.BOOLEAN,
   operation: BooleanOperation;
   value: boolean;
 }
 
 export interface ComplexFilterPredicate {
+  type: FilterPredicateType.COMPLEX,
   operation: ComplexOperation;
   predicates: Array<KeyFilterPredicate>;
 }
 
-export type KeyFilterPredicates = StringFilterPredicate &
-  NumericFilterPredicate &
-  BooleanFilterPredicate &
+export type KeyFilterPredicate = StringFilterPredicate |
+  NumericFilterPredicate |
+  BooleanFilterPredicate |
   ComplexFilterPredicate;
-
-export interface KeyFilterPredicate extends KeyFilterPredicates {
-  type?: FilterPredicateType;
-}
 
 export interface KeyFilter {
   key: EntityKey;
@@ -163,6 +164,7 @@ export function createDefaultEntityDataPageLink(pageSize: number): EntityDataPag
   }
 }
 
+export const singleEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1);
 export const defaultEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1024);
 
 export interface EntityCountQuery {
@@ -187,6 +189,17 @@ export interface EntityData {
   timeseries: {[key: string]: Array<TsValue>};
 }
 
+export const entityInfoFields: EntityKey[] = [
+  {
+    type: EntityKeyType.ENTITY_FIELD,
+    key: 'name'
+  },
+  {
+    type: EntityKeyType.ENTITY_FIELD,
+    key: 'label'
+  }
+];
+
 export function entityDataToEntityInfo(entityData: EntityData): EntityInfo {
   const entityInfo: EntityInfo = {
     id: entityData.entityId.id,
@@ -207,4 +220,25 @@ export function entityDataToEntityInfo(entityData: EntityData): EntityInfo {
     entityInfo.entityDescription = 'TODO: Not implemented';
   }
   return entityInfo;
+}
+
+export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: EntityInfo, createFilter = false) {
+  datasource.entity = {};
+  datasource.entityId = entity.id;
+  datasource.entityType = entity.entityType;
+  if (datasource.type === DatasourceType.entity) {
+    datasource.entityName = entity.name;
+    datasource.entityLabel = entity.label;
+    datasource.name = entity.name;
+    datasource.entityDescription = entity.entityDescription;
+    if (createFilter) {
+      datasource.entityFilter = {
+        type: AliasFilterType.singleEntity,
+        singleEntity: {
+          id: entity.id,
+          entityType: entity.entityType
+        }
+      };
+    }
+  }
 }
