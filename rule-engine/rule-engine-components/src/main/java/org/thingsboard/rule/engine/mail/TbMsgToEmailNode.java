@@ -41,8 +41,7 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
                       "Set 'SEND_EMAIL' output message type.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeToEmailConfig",
-        icon = "email",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "email"
 )
 public class TbMsgToEmailNode implements TbNode {
 

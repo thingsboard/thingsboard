@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
@@ -56,7 +58,8 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         nodeDetails = "Pushes messages to edge, if Message Originator assigned to particular edge or is EDGE entity. This node is used only on Cloud instances to push messages from Cloud to Edge. Supports only DEVICE, ENTITY_VIEW, ASSET and EDGE Message Originator(s).",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbNodeEmptyConfig",
-        icon = "cloud_download"
+        icon = "cloud_download",
+        ruleChainTypes = RuleChainType.CORE
 )
 public class TbMsgPushToEdgeNode implements TbNode {
 
@@ -81,7 +84,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
                 Futures.addCallback(getEdgeIdFuture, new FutureCallback<EdgeId>() {
                     @Override
                     public void onSuccess(@Nullable EdgeId edgeId) {
-                        EdgeEventType edgeEventTypeByEntityType = ctx.getEdgeEventService().getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
+                        EdgeEventType edgeEventTypeByEntityType = EdgeUtils.getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
                         if (edgeEventTypeByEntityType == null) {
                             log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
                             ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));

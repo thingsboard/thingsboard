@@ -78,7 +78,8 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 " otherwise, the message will be routed via <b>success</b> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCustomTableConfig",
-        icon = "file_upload"
+        icon = "file_upload",
+        ruleChainTypes = RuleChainType.CORE
 )
 public class TbSaveToCustomCassandraTableNode implements TbNode {
 

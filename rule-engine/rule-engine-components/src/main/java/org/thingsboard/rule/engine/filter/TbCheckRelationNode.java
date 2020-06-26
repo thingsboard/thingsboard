@@ -52,8 +52,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 " any relation to the originator of the message by type and direction.",
         nodeDetails = "If at least one relation exists - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeCheckRelationConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbFilterNodeCheckRelationConfig"
 )
 public class TbCheckRelationNode implements TbNode {
 

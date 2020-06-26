@@ -51,9 +51,7 @@ import java.util.List;
                         "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateAlarmConfig",
-        icon = "notifications_active",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
-)
+        icon = "notifications_active")
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
     private static ObjectMapper mapper = new ObjectMapper();

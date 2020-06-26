@@ -47,8 +47,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "with <code>to Email</code> Node using <code>Successful</code> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeSendEmailConfig",
-        icon = "send",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "send"
 )
 public class TbSendEmailNode implements TbNode {
 

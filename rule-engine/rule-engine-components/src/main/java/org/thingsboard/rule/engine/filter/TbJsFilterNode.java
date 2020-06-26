@@ -37,8 +37,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
                 "Message type can be accessed via <code>msgType</code> property.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeScriptConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbFilterNodeScriptConfig"
 )
 
 public class TbJsFilterNode implements TbNode {

@@ -45,8 +45,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         inEnabled = false,
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeGeneratorConfig",
-        icon = "repeat",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "repeat"
 )
 
 public class TbMsgGeneratorNode implements TbNode {

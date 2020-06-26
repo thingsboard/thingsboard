@@ -53,8 +53,7 @@ import java.util.List;
         nodeDescription = "Filter incoming messages by GPS based geofencing",
         nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns 'True' if they are inside configured perimeters, 'False' otherwise.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeGpsGeofencingConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbFilterNodeGpsGeofencingConfig"
 )
 public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofencingFilterNodeConfiguration> {
 
