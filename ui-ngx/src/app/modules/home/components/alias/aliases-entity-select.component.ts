@@ -178,9 +178,8 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
     for (const aliasId of Object.keys(allEntityAliases)) {
       const aliasInfo = this.aliasController.getInstantAliasInfo(aliasId);
       if (aliasInfo && !aliasInfo.resolveMultiple && aliasInfo.currentEntity
-        && aliasInfo.entityFilter /*aliasInfo.resolvedEntities.length > 1*/) {
+        && aliasInfo.entityFilter) {
         this.entityAliasesInfo[aliasId] = deepClone(aliasInfo);
-        this.entityAliasesInfo[aliasId].selectedId = aliasInfo.currentEntity.id;
         this.hasSelectableAliasEntities = true;
       }
     }

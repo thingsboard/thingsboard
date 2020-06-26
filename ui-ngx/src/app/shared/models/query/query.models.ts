@@ -21,6 +21,8 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Datasource, DatasourceType } from '@shared/models/widget.models';
+import { PageData } from '@shared/models/page/page-data';
+import { isEqual } from '@core/utils';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -187,6 +189,12 @@ export interface EntityData {
   entityId: EntityId;
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
   timeseries: {[key: string]: Array<TsValue>};
+}
+
+export function entityPageDataChanged(prevPageData: PageData<EntityData>, nextPageData: PageData<EntityData>): boolean {
+  const prevIds = prevPageData.data.map((entityData) => entityData.entityId.id);
+  const nextIds = nextPageData.data.map((entityData) => entityData.entityId.id);
+  return !isEqual(prevIds, nextIds);
 }
 
 export const entityInfoFields: EntityKey[] = [

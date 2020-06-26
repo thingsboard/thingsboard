@@ -16,14 +16,13 @@
 
 import { DataSet, DataSetHolder, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { AggregationType, SubscriptionTimewindow } from '@shared/models/time/time.models';
-import { SubscriptionDataKey } from '@core/api/datasource-subcription';
 import {
   EntityData,
   EntityDataPageLink,
   EntityFilter,
   EntityKey,
   EntityKeyType,
-  entityKeyTypeToDataKeyType,
+  entityKeyTypeToDataKeyType, entityPageDataChanged,
   KeyFilter,
   TsValue
 } from '@shared/models/query/query.models';
@@ -37,13 +36,29 @@ import {
 } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataListener, EntityDataLoadResult } from '@core/api/entity-data.service';
-import { deepClone, isDefinedAndNotNull, isEqual, isObject, objectHashCode } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isObject, objectHashCode } from '@core/utils';
 import { PageData } from '@shared/models/page/page-data';
 import { DataAggregator } from '@core/api/data-aggregator';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Observable, of, ReplaySubject, Subject } from 'rxjs';
 import Timeout = NodeJS.Timeout;
+
+declare type DataKeyFunction = (time: number, prevValue: any) => any;
+declare type DataKeyPostFunction = (time: number, value: any, prevValue: any, timePrev: number, prevOrigValue: any) => any;
+declare type DataUpdatedCb = (data: DataSetHolder, dataIndex: number, dataKeyIndex: number, detectChanges: boolean) => void;
+
+export interface SubscriptionDataKey {
+  name: string;
+  type: DataKeyType;
+  funcBody: string;
+  func?: DataKeyFunction;
+  postFuncBody: string;
+  postFunc?: DataKeyPostFunction;
+  index?: number;
+  key?: string;
+  lastUpdateTime?: number;
+}
 
 export interface EntityDataSubscriptionOptions {
   datasourceType: DatasourceType;
@@ -55,10 +70,6 @@ export interface EntityDataSubscriptionOptions {
   keyFilters?: Array<KeyFilter>;
   subscriptionTimewindow?: SubscriptionTimewindow;
 }
-
-declare type DataKeyFunction = (time: number, prevValue: any) => any;
-declare type DataKeyPostFunction = (time: number, value: any, prevValue: any, timePrev: number, prevOrigValue: any) => any;
-declare type DataUpdatedCb = (data: DataSetHolder, dataIndex: number, dataKeyIndex: number, detectChanges: boolean) => void;
 
 export class EntityDataSubscription {
 
@@ -421,16 +432,10 @@ export class EntityDataSubscription {
     }
   }
 
-  private pageDataChanged(prevPageData: PageData<EntityData>, nextPageData: PageData<EntityData>) {
-    const prevIds = prevPageData.data.map((entityData) => entityData.entityId.id);
-    const nextIds = nextPageData.data.map((entityData) => entityData.entityId.id);
-    return !isEqual(prevIds, nextIds);
-  }
-
   private onPageData(pageData: PageData<EntityData>) {
     const isInitialData = !this.pageData;
     if (!isInitialData && !this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-      if (this.pageDataChanged(this.pageData, pageData)) {
+      if (entityPageDataChanged(this.pageData, pageData)) {
         if (this.listener.initialPageDataChanged) {
           this.listener.initialPageDataChanged(pageData);
         }

@@ -35,7 +35,6 @@ import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DatasourceService } from '@core/api/datasource.service';
 import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
@@ -82,8 +81,6 @@ export interface AliasInfo {
   stateEntity?: boolean;
   entityFilter?: EntityFilter;
   currentEntity?: EntityInfo;
-  selectedId?: string;
-  resolvedEntities?: Array<EntityInfo>;
   entityParamName?: string;
   resolveMultiple?: boolean;
 }
@@ -176,7 +173,6 @@ export class WidgetSubscriptionContext {
   deviceService: DeviceService;
   alarmService: AlarmService;
   translate: TranslateService;
-  // datasourceService: DatasourceService;
   entityDataService: EntityDataService;
   utils: UtilsService;
   raf: RafService;

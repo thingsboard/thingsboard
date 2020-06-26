@@ -42,7 +42,7 @@ import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber } f
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
@@ -56,7 +56,11 @@ import {
   constructTableCssString,
   DisplayColumn,
   EntityColumn,
-  EntityData, entityDataSortOrderFromString, findColumnByEntityKey, findEntityKeyByColumnDef,
+  EntityData,
+  entityDataSortOrderFromString,
+  findColumnByEntityKey,
+  findEntityKeyByColumnDef,
+  fromEntityColumnDef,
   getCellContentInfo,
   getCellStyleInfo,
   getColumnWidth,
@@ -79,6 +83,7 @@ import {
   EntityKeyType,
   KeyFilter
 } from '@shared/models/query/query.models';
+import { sortItems } from '@shared/models/page/page-link';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -382,7 +387,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
     config.hasBackdrop = true;
@@ -457,8 +462,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       key: findEntityKeyByColumnDef(this.sort.active, this.columns),
       direction: Direction[this.sort.direction.toUpperCase()]
     };
+    const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
     const keyFilters: KeyFilter[] = null; // TODO:
-    this.entityDatasource.loadEntities(this.pageLink, keyFilters);
+    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, keyFilters);
     this.ctx.detectChanges();
   }
 
@@ -483,7 +489,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           style = {};
         }
       } else {
-        style = this.defaultStyle(key, value);
+        style = {};
       }
     }
     if (!style.width) {
@@ -497,7 +503,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (entity && key) {
       const contentInfo = this.contentsInfo[key.def];
       const value = getEntityValue(entity, key);
-      let content = '';
+      let content: string;
       if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
         try {
           content = contentInfo.cellContentFunction(value, entity, this.ctx);
@@ -549,14 +555,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
     this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, null, entityLabel);
   }
-
-  private defaultStyle(key: EntityColumn, value: any): any {
-    return {};
-  }
-
 }
-
-
 
 class EntityDatasource implements DataSource<EntityData> {
 
@@ -566,6 +565,9 @@ class EntityDatasource implements DataSource<EntityData> {
   private currentEntity: EntityData = null;
 
   public dataLoading = true;
+
+  private appliedPageLink: EntityDataPageLink;
+  private appliedSortOrderLabel: string;
 
   constructor(
        private translate: TranslateService,
@@ -583,18 +585,24 @@ class EntityDatasource implements DataSource<EntityData> {
     this.pageDataSubject.complete();
   }
 
-  loadEntities(pageLink: EntityDataPageLink, keyFilters: KeyFilter[]) {
+  loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
+    this.appliedPageLink = pageLink;
+    this.appliedSortOrderLabel = sortOrderLabel;
     this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);
   }
 
   dataUpdated() {
     const datasourcesPageData = this.subscription.datasourcePages[0];
     const dataPageData = this.subscription.dataPages[0];
-    const entities = new Array<EntityData>();
+    let entities = new Array<EntityData>();
     datasourcesPageData.data.forEach((datasource, index) => {
       entities.push(this.datasourceToEntityData(datasource, dataPageData.data[index]));
     });
+    if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
+      const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
+      entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
+    }
     const entitiesPageData: PageData<EntityData> = {
       data: entities,
       totalPages: datasourcesPageData.totalPages,
@@ -624,8 +632,7 @@ class EntityDatasource implements DataSource<EntityData> {
     this.dataKeys.forEach((dataKey, index) => {
       const keyData = data[index].data;
       if (keyData && keyData.length && keyData[0].length > 1) {
-        const value = keyData[0][1];
-        entity[dataKey.label] = value;
+        entity[dataKey.label] = keyData[0][1];
       } else {
         entity[dataKey.label] = '';
       }

@@ -24,7 +24,6 @@ import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import { map, mergeMap } from 'rxjs/operators';
 import {
-  createDefaultEntityDataPageLink,
   defaultEntityDataPageLink, singleEntityDataPageLink,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
