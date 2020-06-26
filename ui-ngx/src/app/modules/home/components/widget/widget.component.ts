@@ -68,7 +68,7 @@ import {
   StateObject,
   StateParams,
   SubscriptionEntityInfo,
-  SubscriptionInfo,
+  SubscriptionInfo, SubscriptionMessage,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
@@ -93,6 +93,7 @@ import { ServicesMap } from '@home/models/services.map';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { EntityDataService } from '@core/api/entity-data.service';
 import { TranslateService } from '@ngx-translate/core';
+import { NotificationType } from '@core/notification/notification.models';
 
 @Component({
   selector: 'tb-widget',
@@ -142,8 +143,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   widgetSizeDetected = false;
   widgetInstanceInited = false;
   dataUpdatePending = false;
+  pendingMessage: SubscriptionMessage;
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
+
+  toastTargetId = 'widget-messages-' + this.utils.guid();
 
   private widgetResize$: ResizeObserver;
 
@@ -368,6 +372,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       }
       this.subscriptionInited = false;
       this.dataUpdatePending = false;
+      this.pendingMessage = null;
       this.widgetContext.subscriptions = {};
       if (this.widgetContext.inited) {
         this.widgetContext.inited = false;
@@ -489,6 +494,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             if (this.dataUpdatePending) {
               this.widgetTypeInstance.onDataUpdated();
               this.dataUpdatePending = false;
+            }
+            if (this.pendingMessage) {
+              this.displayMessage(this.pendingMessage.severity, this.pendingMessage.message);
+              this.pendingMessage = null;
             }
           } else {
             this.loadingData = false;
@@ -678,6 +687,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.detectChanges();
   }
 
+  private displayMessage(type: NotificationType, message: string, duration?: number) {
+    this.widgetContext.showToast(type, message, duration, 'bottom', 'right', this.toastTargetId);
+  }
+
+  private clearMessage() {
+    this.widgetContext.hideToast(this.toastTargetId);
+  }
+
   private configureDynamicWidgetComponent() {
       this.widgetContentContainer.clear();
       const injector: Injector = Injector.create(
@@ -815,6 +832,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       onDataUpdateError: (subscription, e) => {
         this.handleWidgetException(e);
       },
+      onSubscriptionMessage: (subscription, message) => {
+        if (this.displayWidgetInstance()) {
+          if (this.widgetInstanceInited) {
+            this.displayMessage(message.severity, message.message);
+          } else {
+            this.pendingMessage = message;
+          }
+        }
+      },
       onInitialPageDataChanged: (subscription, nextPageData) => {
         this.reInit();
       },
@@ -855,6 +881,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         stateData: this.typeParameters.stateData,
         hasDataPageLink: this.typeParameters.hasDataPageLink,
         singleEntity: this.typeParameters.singleEntity,
+        warnOnPageDataOverflow: this.typeParameters.warnOnPageDataOverflow,
         comparisonEnabled: comparisonSettings.comparisonEnabled,
         timeForComparison: comparisonSettings.timeForComparison
       };
@@ -910,6 +937,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+            this.clearMessage();
             this.detectChanges();
           }
         },
@@ -918,6 +946,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+            if (subscription.rpcErrorText) {
+              this.displayMessage('error', subscription.rpcErrorText);
+            }
             this.detectChanges();
           }
         },
@@ -925,6 +956,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.dynamicWidgetComponent) {
             this.dynamicWidgetComponent.rpcErrorText = null;
             this.dynamicWidgetComponent.rpcRejection = null;
+            this.clearMessage();
             this.detectChanges();
           }
         }

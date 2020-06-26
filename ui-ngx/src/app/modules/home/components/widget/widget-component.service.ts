@@ -358,6 +358,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.singleEntity)) {
         result.typeParameters.singleEntity = false;
       }
+      if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
+        result.typeParameters.warnOnPageDataOverflow = true;
+      }
       if (isUndefined(result.typeParameters.dataKeysOptional)) {
         result.typeParameters.dataKeysOptional = false;
       }

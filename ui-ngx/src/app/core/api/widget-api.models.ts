@@ -180,9 +180,17 @@ export class WidgetSubscriptionContext {
   getServerTimeDiff: () => Observable<number>;
 }
 
+export type SubscriptionMessageSeverity = 'info' | 'warn' | 'error' | 'success';
+
+export interface SubscriptionMessage {
+  severity: SubscriptionMessageSeverity,
+  message: string;
+}
+
 export interface WidgetSubscriptionCallbacks {
   onDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   onDataUpdateError?: (subscription: IWidgetSubscription, e: any) => void;
+  onSubscriptionMessage?: (subscription: IWidgetSubscription, message: SubscriptionMessage) => void;
   onInitialPageDataChanged?: (subscription: IWidgetSubscription, nextPageData: PageData<EntityData>) => void;
   dataLoading?: (subscription: IWidgetSubscription) => void;
   legendDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
@@ -204,6 +212,7 @@ export interface WidgetSubscriptionOptions {
   datasources?: Array<Datasource>;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
+  warnOnPageDataOverflow?: boolean;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
   useDashboardTimewindow?: boolean;

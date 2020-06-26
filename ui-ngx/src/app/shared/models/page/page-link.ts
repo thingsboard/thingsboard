@@ -70,18 +70,18 @@ export function sortItems(item1: any, item2: any, property: string, asc: boolean
   const item2Value = getDescendantProp(item2, property);
   let result = 0;
   if (item1Value !== item2Value) {
-    if (typeof item1Value === 'number' && typeof item2Value === 'number') {
+    const item1Type = typeof item1Value;
+    const item2Type = typeof item2Value;
+    if (item1Type === 'number' && item2Type === 'number') {
       result = item1Value - item2Value;
-    } else if (typeof item1Value === 'string' && typeof item2Value === 'string') {
+    } else if (item1Type === 'string' && item2Type === 'string') {
       result = item1Value.localeCompare(item2Value);
-    } else if (typeof item1Value === 'boolean' && typeof item2Value === 'boolean') {
+    } else if ((item1Type === 'boolean' && item2Type === 'boolean') || (item1Type !== item2Type)) {
       if (item1Value && !item2Value) {
         result = 1;
       } else if (!item1Value && item2Value) {
         result = -1;
       }
-    } else if (typeof item1Value !== typeof item2Value) {
-      result = 1;
     }
   }
   return asc ? result : result * -1;

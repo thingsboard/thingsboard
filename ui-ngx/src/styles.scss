@@ -1056,4 +1056,8 @@ mat-label {
     line-height: 1.5;
     white-space: pre-line;
   }
+
+  .tb-toast-panel {
+    pointer-events: none !important;
+  }
 }

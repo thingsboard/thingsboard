@@ -16,7 +16,7 @@
 
 import {
   IWidgetSubscription,
-  SubscriptionEntityInfo,
+  SubscriptionEntityInfo, SubscriptionMessage,
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
@@ -78,6 +78,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   hasDataPageLink: boolean;
   singleEntity: boolean;
+  warnOnPageDataOverflow: boolean;
 
   datasourcePages: PageData<Datasource>[];
   dataPages: PageData<Array<DatasourceData>>[];
@@ -174,6 +175,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     } else if (this.type === widgetType.alarm) {
       this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || (() => {});
       this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || (() => {});
+      this.callbacks.onSubscriptionMessage = this.callbacks.onSubscriptionMessage || (() => {});
       this.callbacks.dataLoading = this.callbacks.dataLoading || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
       this.alarmSource = options.alarmSource;
@@ -208,6 +210,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     } else {
       this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || (() => {});
       this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || (() => {});
+      this.callbacks.onSubscriptionMessage = this.callbacks.onSubscriptionMessage || (() => {});
       this.callbacks.onInitialPageDataChanged = this.callbacks.onInitialPageDataChanged || (() => {});
       this.callbacks.dataLoading = this.callbacks.dataLoading || (() => {});
       this.callbacks.legendDataUpdated = this.callbacks.legendDataUpdated || (() => {});
@@ -217,6 +220,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.entityDataListeners = [];
       this.hasDataPageLink = options.hasDataPageLink;
       this.singleEntity = options.singleEntity;
+      this.warnOnPageDataOverflow = options.warnOnPageDataOverflow;
       this.datasourcePages = [];
       this.datasources = [];
       this.dataPages = [];
@@ -417,8 +421,8 @@ export class WidgetSubscription implements IWidgetSubscription {
         subscriptionType: this.type,
         configDatasource: datasource,
         configDatasourceIndex: index,
-        dataLoaded: (pageData, data1, datasourceIndex) => {
-          this.dataLoaded(pageData, data1, datasourceIndex, true)
+        dataLoaded: (pageData, data1, datasourceIndex, pageLink) => {
+          this.dataLoaded(pageData, data1, datasourceIndex, pageLink, true)
         },
         initialPageDataChanged: this.initialPageDataChanged.bind(this),
         dataUpdated: this.dataUpdated.bind(this),
@@ -443,7 +447,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     return forkJoin(resolveResultObservables).pipe(
       map((resolveResults) => {
         resolveResults.forEach((resolveResult) => {
-          this.dataLoaded(resolveResult.pageData, resolveResult.data, resolveResult.datasourceIndex, false);
+          this.dataLoaded(resolveResult.pageData, resolveResult.data, resolveResult.datasourceIndex, resolveResult.pageLink, false);
         });
         this.configureLoadedData();
         this.hasResolvedData = this.datasources.length > 0;
@@ -530,6 +534,16 @@ export class WidgetSubscription implements IWidgetSubscription {
       } catch (e) {
         this.callbacks.onDataUpdateError(this, e);
       }
+    });
+  }
+
+  private onSubscriptionMessage(message: SubscriptionMessage) {
+    if (this.cafs.message) {
+      this.cafs.message();
+      this.cafs.message = null;
+    }
+    this.cafs.message = this.ctx.raf.raf(() => {
+      this.callbacks.onSubscriptionMessage(this, message);
     });
   }
 
@@ -776,8 +790,8 @@ export class WidgetSubscription implements IWidgetSubscription {
         configDatasource: datasource,
         configDatasourceIndex: datasourceIndex,
         subscriptionTimewindow: this.subscriptionTimewindow,
-        dataLoaded: (pageData, data1, datasourceIndex1) => {
-          this.dataLoaded(pageData, data1, datasourceIndex1, true)
+        dataLoaded: (pageData, data1, datasourceIndex1, pageLink1) => {
+          this.dataLoaded(pageData, data1, datasourceIndex1, pageLink1, true)
         },
         dataUpdated: this.dataUpdated.bind(this),
         updateRealtimeSubscription: () => {
@@ -1039,7 +1053,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private dataLoaded(pageData: PageData<EntityData>,
                      data: Array<Array<DataSetHolder>>,
-                     datasourceIndex: number, isUpdate: boolean) {
+                     datasourceIndex: number, pageLink: EntityDataPageLink, isUpdate: boolean) {
     const datasource = this.configuredDatasources[datasourceIndex];
     datasource.dataReceived = true;
     const datasources = pageData.data.map((entityData, index) =>
@@ -1062,6 +1076,17 @@ export class WidgetSubscription implements IWidgetSubscription {
       totalPages: pageData.totalPages
     };
     this.dataPages[datasourceIndex] = datasourceDataPage;
+    if (datasource.type === DatasourceType.entity &&
+        pageData.hasNext && pageLink.pageSize > 1) {
+      if (this.warnOnPageDataOverflow) {
+        const message = this.ctx.translate.instant('widget.data-overflow',
+          {count: pageData.data.length, total: pageData.totalElements});
+        this.onSubscriptionMessage({
+          severity: 'warn',
+          message
+        })
+      }
+    }
     if (isUpdate) {
       this.configureLoadedData();
       this.onDataUpdated(true);

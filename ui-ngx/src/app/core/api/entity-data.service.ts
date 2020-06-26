@@ -34,7 +34,9 @@ export interface EntityDataListener {
   subscriptionTimewindow?: SubscriptionTimewindow;
   configDatasource: Datasource;
   configDatasourceIndex: number;
-  dataLoaded: (pageData: PageData<EntityData>, data: Array<Array<DataSetHolder>>, datasourceIndex: number) => void;
+  dataLoaded: (pageData: PageData<EntityData>,
+               data: Array<Array<DataSetHolder>>,
+               datasourceIndex: number, pageLink: EntityDataPageLink) => void;
   dataUpdated: (data: DataSetHolder, datasourceIndex: number, dataIndex: number, dataKeyIndex: number, detectChanges: boolean) => void;
   initialPageDataChanged?: (nextPageData: PageData<EntityData>) => void;
   updateRealtimeSubscription?: () => SubscriptionTimewindow;
@@ -46,6 +48,7 @@ export interface EntityDataLoadResult {
   pageData: PageData<EntityData>;
   data: Array<Array<DataSetHolder>>;
   datasourceIndex: number;
+  pageLink: EntityDataPageLink;
 }
 
 @Injectable({

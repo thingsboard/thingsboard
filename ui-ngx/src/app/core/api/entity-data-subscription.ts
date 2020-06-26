@@ -467,14 +467,15 @@ export class EntityDataSubscription {
         {
           pageData,
           data,
-          datasourceIndex: this.listener.configDatasourceIndex
+          datasourceIndex: this.listener.configDatasourceIndex,
+          pageLink: this.entityDataSubscriptionOptions.pageLink
         }
       );
       this.entityDataResolveSubject.complete();
     } else {
       if (isInitialData || this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
         this.listener.dataLoaded(pageData, data,
-          this.listener.configDatasourceIndex);
+          this.listener.configDatasourceIndex, this.entityDataSubscriptionOptions.pageLink);
       }
       if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription && isInitialData) {
         if (this.datasourceType === DatasourceType.function) {
@@ -484,7 +485,8 @@ export class EntityDataSubscription {
           {
             pageData,
             data,
-            datasourceIndex: this.listener.configDatasourceIndex
+            datasourceIndex: this.listener.configDatasourceIndex,
+            pageLink: this.entityDataSubscriptionOptions.pageLink
           }
         );
         this.entityDataResolveSubject.complete();

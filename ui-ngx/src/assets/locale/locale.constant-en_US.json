@@ -1712,7 +1712,8 @@
         "add": "Add Widget",
         "undo": "Undo widget changes",
         "export": "Export widget",
-        "no-data": "No data to display on widget"
+        "no-data": "No data to display on widget",
+        "data-overflow": "Widget displays {{count}} out of {{total}} entities"
     },
     "widget-action": {
         "header-button": "Widget header button",

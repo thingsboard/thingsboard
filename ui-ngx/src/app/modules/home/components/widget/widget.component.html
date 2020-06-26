@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<div class="tb-absolute-fill" [fxLayout]="legendContainerLayoutType">
+<div class="tb-absolute-fill" [fxLayout]="legendContainerLayoutType" tb-toast
+     toastTarget="{{ toastTargetId }}">
   <tb-legend *ngIf="displayLegend && isLegendFirst"
              [ngStyle]="legendStyle"
              [legendConfig]="legendConfig"

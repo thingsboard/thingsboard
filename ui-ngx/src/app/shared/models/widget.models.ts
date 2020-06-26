@@ -152,6 +152,7 @@ export interface WidgetTypeParameters {
   stateData?: boolean;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
+  warnOnPageDataOverflow?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
