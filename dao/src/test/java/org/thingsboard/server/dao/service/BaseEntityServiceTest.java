@@ -88,7 +88,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testCountEntitiesByQuery() {
+    public void testCountEntitiesByQuery() throws InterruptedException {
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
@@ -131,7 +131,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testCountHierarchicalEntitiesByQuery() {
+    public void testCountHierarchicalEntitiesByQuery() throws InterruptedException {
         List<Asset> assets = new ArrayList<>();
         List<Device> devices = new ArrayList<>();
         createTestHierarchy(assets, devices, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -408,7 +408,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         deviceService.deleteDevicesByTenantId(tenantId);
     }
 
-    private void createTestHierarchy(List<Asset> assets, List<Device> devices, List<Long> consumptions, List<Long> highConsumptions, List<Long> temperatures, List<Long> highTemperatures) {
+    private void createTestHierarchy(List<Asset> assets, List<Device> devices, List<Long> consumptions, List<Long> highConsumptions, List<Long> temperatures, List<Long> highTemperatures) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
@@ -416,6 +416,8 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             asset.setType("type" + i);
             asset.setLabel("AssetLabel" + i);
             asset = assetService.saveAsset(asset);
+            //TO make sure devices have different created time
+            Thread.sleep(1);
             assets.add(asset);
             EntityRelation er = new EntityRelation();
             er.setFrom(tenantId);
@@ -435,6 +437,8 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
                 device.setType("default" + j);
                 device.setLabel("testLabel" + (int) (Math.random() * 1000));
                 device = deviceService.saveDevice(device);
+                //TO make sure devices have different created time
+                Thread.sleep(1);
                 devices.add(device);
                 er = new EntityRelation();
                 er.setFrom(asset.getId());
@@ -452,7 +456,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSimpleFindEntityDataByQuery() {
+    public void testSimpleFindEntityDataByQuery() throws InterruptedException {
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
@@ -460,6 +464,8 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             device.setName("Device" + i);
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            //TO make sure devices have different created time
+            Thread.sleep(1);
             devices.add(deviceService.saveDevice(device));
         }
 
@@ -529,6 +535,8 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
             devices.add(deviceService.saveDevice(device));
+            //TO make sure devices have different created time
+            Thread.sleep(1);
             long temperature = (long) (Math.random() * 100);
             temperatures.add(temperature);
             if (temperature > 45) {

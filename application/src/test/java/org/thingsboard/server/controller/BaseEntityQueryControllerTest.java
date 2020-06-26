@@ -102,6 +102,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
             devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
         }
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceType("default");
@@ -141,6 +142,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
             devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
@@ -210,6 +212,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
             devices.add(doPost("/api/device?accessToken=" + name, device, Device.class));
+            Thread.sleep(1);
             long temperature = (long) (Math.random() * 100);
             temperatures.add(temperature);
             if (temperature > 45) {
