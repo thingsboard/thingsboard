@@ -335,7 +335,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
         vm.grid = grid;
     }
 
-    function getDefaultEdges(ruleChains) {
+    function mapRuleChainsWithDefaultEdges(ruleChains) {
         var deferred = $q.defer();
         ruleChainService.getDefaultEdgeRuleChains(null).then(
             function success(response) {
@@ -365,7 +365,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
             var deferred = $q.defer();
             ruleChainService.getRuleChains(pageLink, null, type).then(
                 function success(ruleChains) {
-                    getDefaultEdges(ruleChains).then(
+                    mapRuleChainsWithDefaultEdges(ruleChains).then(
                         function success(response) {
                             deferred.resolve(response);
                         }, function fail() {
