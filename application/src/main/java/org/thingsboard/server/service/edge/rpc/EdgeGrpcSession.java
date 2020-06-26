@@ -248,7 +248,7 @@ public final class EdgeGrpcSession implements Closeable {
             } else {
                 return 0L;
             }
-        }, MoreExecutors.directExecutor());
+        }, ctx.getDbCallbackExecutor());
     }
 
     private void updateQueueStartTs(Long newStartTs) {
@@ -270,7 +270,9 @@ public final class EdgeGrpcSession implements Closeable {
             case ENTITY_VIEW:
                 entityId = new EntityViewId(edgeEvent.getEntityId());
                 break;
-
+            case DASHBOARD:
+                entityId = new DashboardId(edgeEvent.getEntityId());
+                break;
         }
         if (entityId != null) {
             log.debug("Sending telemetry data msg, entityId [{}], body [{}]", edgeEvent.getEntityId(), edgeEvent.getEntityBody());
@@ -290,7 +292,7 @@ public final class EdgeGrpcSession implements Closeable {
 
     private void processEntityMessage(EdgeEvent edgeEvent, ActionType edgeEventAction) {
         UpdateMsgType msgType = getResponseMsgType(ActionType.valueOf(edgeEvent.getEdgeEventAction()));
-        log.trace("Executing processEntityCRUDMessage, edgeEvent [{}], edgeEventAction [{}], msgType [{}]", edgeEvent, edgeEventAction, msgType);
+        log.trace("Executing processEntityMessage, edgeEvent [{}], edgeEventAction [{}], msgType [{}]", edgeEvent, edgeEventAction, msgType);
         switch (edgeEvent.getEdgeEventType()) {
             case EDGE:
                 // TODO: voba - add edge update logic
@@ -571,13 +573,14 @@ public final class EdgeGrpcSession implements Closeable {
                         .build());
             }
         } catch (Exception e) {
-            log.error("Can't process alarm CRUD msg [{}] [{}]", edgeEvent, msgType, e);
+            log.error("Can't process alarm msg [{}] [{}]", edgeEvent, msgType, e);
         }
     }
 
     private UpdateMsgType getResponseMsgType(ActionType actionType) {
         switch (actionType) {
             case UPDATED:
+            case CREDENTIALS_UPDATED:
                 return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
             case ADDED:
             case ASSIGNED_TO_EDGE:

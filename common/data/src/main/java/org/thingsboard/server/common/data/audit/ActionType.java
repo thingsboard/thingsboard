@@ -43,7 +43,8 @@ public enum ActionType {
     LOGOUT(false),
     LOCKOUT(false),
     ASSIGNED_TO_EDGE(false), // log edge name
-    UNASSIGNED_FROM_EDGE(false); // log edge name
+    UNASSIGNED_FROM_EDGE(false), // log edge name
+    CREDENTIALS_REQUEST(false);  // request credentials from edge
 
     private final boolean isRead;
 
