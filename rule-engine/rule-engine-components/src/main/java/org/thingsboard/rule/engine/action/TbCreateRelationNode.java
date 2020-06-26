@@ -54,9 +54,7 @@ import java.util.List;
         nodeDetails = "If the relation already exists or successfully created -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateRelationConfig",
-        icon = "add_circle",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
-)
+        icon = "add_circle")
 public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateRelationNodeConfiguration> {
 
     @Override

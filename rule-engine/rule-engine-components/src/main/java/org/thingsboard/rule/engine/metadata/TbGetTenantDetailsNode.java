@@ -38,8 +38,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "<b>Note:</b> only Device, Asset, and Entity View type are allowed.<br><br>" +
                 "If the originator of the message is not assigned to Tenant, or originator type is not supported - Message will be forwarded to <b>Failure</b> chain, otherwise, <b>Success</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeEntityDetailsConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbEnrichmentNodeEntityDetailsConfig"
 )
 public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration> {
 

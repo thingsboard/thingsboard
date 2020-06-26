@@ -37,9 +37,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "Will create new Customer if it doesn't exists and 'Create new Customer if not exists' is set to true.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAssignToCustomerConfig",
-        icon = "add_circle",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
-)
+        icon = "add_circle")
 public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssignToCustomerNodeConfiguration> {
 
     @Override

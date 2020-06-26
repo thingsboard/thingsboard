@@ -45,8 +45,7 @@ import java.util.Set;
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeAttributesConfig",
-        icon = "file_upload",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "file_upload"
 )
 public class TbMsgAttributesNode implements TbNode {
 

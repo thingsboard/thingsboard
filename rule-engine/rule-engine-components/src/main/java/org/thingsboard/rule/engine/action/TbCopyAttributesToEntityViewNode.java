@@ -57,9 +57,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "Changes message originator to related entity view and produces new messages according to count of updated entity views",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
-        icon = "content_copy",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
-)
+        icon = "content_copy")
 public class TbCopyAttributesToEntityViewNode implements TbNode {
 
     EmptyNodeConfiguration config;

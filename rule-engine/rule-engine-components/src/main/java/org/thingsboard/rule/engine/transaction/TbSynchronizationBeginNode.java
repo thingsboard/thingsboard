@@ -39,8 +39,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "Subsequent messages will not be processed until the previous message processing is completed or timeout event occurs.\n" +
                 "Size of the queue per originator and timeout values are configurable on a system level",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbNodeEmptyConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbNodeEmptyConfig"
 )
 @Deprecated
 public class TbSynchronizationBeginNode implements TbNode {

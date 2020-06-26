@@ -44,9 +44,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         nodeDetails = "Count incoming messages for specified interval and produces POST_TELEMETRY_REQUEST msg with messages count",
         icon = "functions",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeMsgCountConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
-)
+        configDirective = "tbActionNodeMsgCountConfig")
 public class TbMsgCountNode implements TbNode {
 
     private static final String TB_MSG_COUNT_NODE_MSG = "TbMsgCountNodeMsg";

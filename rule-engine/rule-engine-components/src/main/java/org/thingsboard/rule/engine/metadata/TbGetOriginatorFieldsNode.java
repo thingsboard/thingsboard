@@ -44,8 +44,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         nodeDescription = "Add Message Originator fields values into Message Metadata",
         nodeDetails = "Will fetch fields values specified in mapping. If specified field is not part of originator fields it will be ignored.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeOriginatorFieldsConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbEnrichmentNodeOriginatorFieldsConfig"
 )
 public class TbGetOriginatorFieldsNode implements TbNode {
 
