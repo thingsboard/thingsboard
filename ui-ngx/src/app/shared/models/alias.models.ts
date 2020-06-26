@@ -156,7 +156,6 @@ export interface EntityAliases {
 }
 
 export interface EntityAliasFilterResult {
-  entities: Array<EntityInfo>;
   stateEntity: boolean;
   entityFilter: EntityFilter;
   entityParamName?: string;

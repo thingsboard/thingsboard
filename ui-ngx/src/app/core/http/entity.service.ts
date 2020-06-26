@@ -45,7 +45,6 @@ import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.m
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
 import { entityFields, EntityInfo, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
-import { EntityRelationInfo, EntitySearchDirection } from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
 import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { Asset } from '@shared/models/asset.models';
@@ -669,7 +668,6 @@ export class EntityService {
           entityParamName: result.entityParamName,
           resolveMultiple: filter.resolveMultiple
         };
-        aliasInfo.resolvedEntities = result.entities;
         aliasInfo.currentEntity = null;
         if (!aliasInfo.resolveMultiple && aliasInfo.entityFilter) {
           return this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
@@ -687,7 +685,6 @@ export class EntityService {
 
   public resolveAliasFilter(filter: EntityAliasFilter, stateParams: StateParams): Observable<EntityAliasFilterResult> {
     const result: EntityAliasFilterResult = {
-      entities: [],
       entityFilter: null,
       stateEntity: false
     };
@@ -704,40 +701,12 @@ export class EntityService {
           singleEntity: aliasEntityId
         };
         return of(result);
-        /*return this.getEntity(aliasEntityId.entityType as EntityType, aliasEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entity) => {
-            result.entities = this.entitiesToEntitiesInfo([entity]);
-            return result;
-          }
-        ));*/
       case AliasFilterType.entityList:
         result.entityFilter = deepClone(filter);
         return of(result);
-        /*return this.getEntities(filter.entityType, filter.entityList, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          ));*/
       case AliasFilterType.entityName:
         result.entityFilter = deepClone(filter);
         return of(result);
-        /*return this.getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems,
-          '', {ignoreLoading: true, ignoreErrors: true}).pipe(
-            map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          )
-        );*/
       case AliasFilterType.stateEntity:
         result.stateEntity = true;
         if (stateEntityId) {
@@ -747,60 +716,15 @@ export class EntityService {
           };
         }
         return of(result);
-          /*return this.getEntity(stateEntityId.entityType as EntityType, stateEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
-            map((entity) => {
-                result.entities = this.entitiesToEntitiesInfo([entity]);
-                return result;
-              }
-            ));
-        } else {
-          return of(result);
-        }*/
       case AliasFilterType.assetType:
         result.entityFilter = deepClone(filter);
         return of(result);
-        /*return this.getEntitiesByNameFilter(EntityType.ASSET, filter.assetNameFilter, maxItems,
-          filter.assetType, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          )
-        );*/
       case AliasFilterType.deviceType:
         result.entityFilter = deepClone(filter);
         return of(result);
-        /*return this.getEntitiesByNameFilter(EntityType.DEVICE, filter.deviceNameFilter, maxItems,
-          filter.deviceType, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          )
-        );*/
       case AliasFilterType.entityViewType:
         result.entityFilter = deepClone(filter);
         return of(result);
-        /*return this.getEntitiesByNameFilter(EntityType.ENTITY_VIEW, filter.entityViewNameFilter, maxItems,
-          filter.entityViewType, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          )
-        );*/
       case AliasFilterType.relationsQuery:
         result.stateEntity = filter.rootStateEntity;
         let rootEntityType;
@@ -817,34 +741,6 @@ export class EntityService {
           result.entityFilter = deepClone(filter);
           result.entityFilter.rootEntity = relationQueryRootEntityId;
           return of(result);
-          /*const searchQuery: EntityRelationsQuery = {
-            parameters: {
-              rootId: relationQueryRootEntityId.id,
-              rootType: relationQueryRootEntityId.entityType as EntityType,
-              direction: filter.direction,
-              fetchLastLevelOnly: filter.fetchLastLevelOnly
-            },
-            filters: filter.filters
-          };
-          searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
-          return this.entityRelationService.findInfoByQuery(searchQuery, {ignoreLoading: true, ignoreErrors: true}).pipe(
-            mergeMap((allRelations) => {
-              if (allRelations && allRelations.length || !failOnEmpty) {
-                if (isDefined(maxItems) && maxItems > 0 && allRelations) {
-                  const limit = Math.min(allRelations.length, maxItems);
-                  allRelations.length = limit;
-                }
-                return this.entityRelationInfosToEntitiesInfo(allRelations, filter.direction).pipe(
-                  map((entities) => {
-                    result.entities = entities;
-                    return result;
-                  })
-                );
-              } else {
-                return throwError(null);
-              }
-            })
-          );*/
         } else {
           return of(result);
         }
@@ -864,44 +760,6 @@ export class EntityService {
           result.entityFilter = deepClone(filter);
           result.entityFilter.rootEntity = searchQueryRootEntityId;
           return of(result);
-          /* const searchQuery: EntitySearchQuery = {
-            parameters: {
-              rootId: searchQueryRootEntityId.id,
-              rootType: searchQueryRootEntityId.entityType as EntityType,
-              direction: filter.direction,
-              fetchLastLevelOnly: filter.fetchLastLevelOnly
-            },
-            relationType: filter.relationType
-          };
-          searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
-          let findByQueryObservable: Observable<Array<BaseData<EntityId>>>;
-          if (filter.type === AliasFilterType.assetSearchQuery) {
-            const assetSearchQuery = searchQuery as AssetSearchQuery;
-            assetSearchQuery.assetTypes = filter.assetTypes;
-            findByQueryObservable = this.assetService.findByQuery(assetSearchQuery, {ignoreLoading: true, ignoreErrors: true});
-          } else if (filter.type === AliasFilterType.deviceSearchQuery) {
-            const deviceSearchQuery = searchQuery as DeviceSearchQuery;
-            deviceSearchQuery.deviceTypes = filter.deviceTypes;
-            findByQueryObservable = this.deviceService.findByQuery(deviceSearchQuery, {ignoreLoading: true, ignoreErrors: true});
-          } else if (filter.type === AliasFilterType.entityViewSearchQuery) {
-            const entityViewSearchQuery = searchQuery as EntityViewSearchQuery;
-            entityViewSearchQuery.entityViewTypes = filter.entityViewTypes;
-            findByQueryObservable = this.entityViewService.findByQuery(entityViewSearchQuery, {ignoreLoading: true, ignoreErrors: true});
-          }
-          return findByQueryObservable.pipe(
-            map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                if (isDefined(maxItems) && maxItems > 0 && entities) {
-                  const limit = Math.min(entities.length, maxItems);
-                  entities.length = limit;
-                }
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw Error();
-              }
-            })
-          );*/
         } else {
           return of(result);
         }
@@ -915,12 +773,6 @@ export class EntityService {
           return true;
         } else {
           return isDefinedAndNotNull(result.entityFilter);
-          /*const entities = result.entities;
-          if (entities && entities.length) {
-            return true;
-          } else {
-            return false;
-          }*/
         }
       }),
       catchError(err => of(false))
@@ -1070,73 +922,6 @@ export class EntityService {
         } else {
           return response;
         }
-      })
-    );
-  }
-
-  private entitiesToEntitiesInfo(entities: Array<BaseData<EntityId>>): Array<EntityInfo> {
-    const entitiesInfo = [];
-    if (entities) {
-      entities.forEach((entity) => {
-        entitiesInfo.push(this.entityToEntityInfo(entity));
-      });
-    }
-    return entitiesInfo;
-  }
-
-  private entityToEntityInfo(entity: BaseData<EntityId>): EntityInfo {
-    return {
-      origEntity: entity,
-      name: entity.name,
-      label: (entity as any).label ? (entity as any).label : '',
-      entityType: entity.id.entityType as EntityType,
-      id: entity.id.id,
-      entityDescription: (entity as any).additionalInfo ? (entity as any).additionalInfo.description : ''
-    };
-  }
-
-  private entityRelationInfosToEntitiesInfo(entityRelations: Array<EntityRelationInfo>,
-                                            direction: EntitySearchDirection): Observable<Array<EntityInfo>> {
-    if (entityRelations.length) {
-      const packs: Observable<EntityInfo>[][] = [];
-      let packTasks: Observable<EntityInfo>[] = [];
-      entityRelations.forEach((entityRelation) => {
-        packTasks.push(this.entityRelationInfoToEntityInfo(entityRelation, direction));
-        if (packTasks.length === 100) {
-          packs.push(packTasks);
-          packTasks = [];
-        }
-      });
-      if (packTasks.length) {
-        packs.push(packTasks);
-      }
-      return this.executePack(packs, 0);
-    } else {
-      return of([]);
-    }
-  }
-
-  private executePack(packs: Observable<EntityInfo>[][], index: number): Observable<Array<EntityInfo>> {
-    return forkJoin(packs[index]).pipe(
-      expand(() => {
-        index++;
-        if (packs[index]) {
-          return forkJoin(packs[index]);
-        } else {
-          return EMPTY;
-        }
-       }
-      ),
-      concatMap((data) => data),
-      toArray()
-    );
-  }
-
-  private entityRelationInfoToEntityInfo(entityRelationInfo: EntityRelationInfo, direction: EntitySearchDirection): Observable<EntityInfo> {
-    const entityId = direction === EntitySearchDirection.FROM ? entityRelationInfo.to : entityRelationInfo.from;
-    return this.getEntity(entityId.entityType as EntityType, entityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
-      map((entity) => {
-        return this.entityToEntityInfo(entity);
       })
     );
   }

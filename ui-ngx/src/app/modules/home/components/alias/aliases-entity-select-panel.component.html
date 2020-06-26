@@ -24,14 +24,5 @@
       [(ngModel)]="alias.value.currentEntity"
       (ngModelChange)="currentAliasEntityChanged(alias.key, alias.value.currentEntity)">
     </tb-aliases-entity-autocomplete>
-    <!--mat-form-field fxFlex>
-      <mat-label>{{alias.value.alias}}</mat-label>
-      <mat-select [(ngModel)]="alias.value.selectedId"
-                  (ngModelChange)="currentAliasEntityChanged(alias.key, alias.value.selectedId)">
-        <mat-option *ngFor="let resolvedEntity of alias.value.resolvedEntities" [value]="resolvedEntity.id">
-          {{resolvedEntity.name}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field-->
   </div>
 </div>

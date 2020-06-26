@@ -57,7 +57,6 @@ import {
   EntityData,
   EntityDataPageLink,
   entityDataToEntityInfo,
-  EntityKeyType,
   KeyFilter, updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
 import { map } from 'rxjs/operators';
@@ -87,7 +86,6 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   data: Array<DatasourceData>;
   datasources: Array<Datasource>;
-  // datasourceListeners: Array<DatasourceListener>;
   hiddenData: Array<DataSetHolder>;
   legendData: LegendData;
   legendConfig: LegendConfig;
@@ -215,12 +213,10 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.legendDataUpdated = this.callbacks.legendDataUpdated || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
 
-      // this.datasources = this.ctx.utils.validateDatasources(options.datasources);
       this.configuredDatasources = this.ctx.utils.validateDatasources(options.datasources);
       this.entityDataListeners = [];
       this.hasDataPageLink = options.hasDataPageLink;
       this.singleEntity = options.singleEntity;
-      // this.datasourceListeners = [];
       this.datasourcePages = [];
       this.datasources = [];
       this.dataPages = [];
@@ -457,125 +453,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     );
   }
 
-/*  private initDataSubscriptionOld(): Observable<any> {
-    const initDataSubscriptionSubject = new ReplaySubject(1);
-    this.loadStDiff().subscribe(() => {
-      if (!this.ctx.aliasController) {
-        this.hasResolvedData = true;
-        this.configureData();
-        initDataSubscriptionSubject.next();
-        initDataSubscriptionSubject.complete();
-      } else {
-        this.ctx.aliasController.resolveDatasources(this.datasources).subscribe(
-          (datasources) => {
-            this.datasources = datasources;
-            if (datasources && datasources.length) {
-              this.hasResolvedData = true;
-            }
-            this.configureData();
-            initDataSubscriptionSubject.next();
-            initDataSubscriptionSubject.complete();
-          },
-          (err) => {
-            this.notifyDataLoaded();
-            initDataSubscriptionSubject.error(err);
-          }
-        );
-      }
-    });
-    return initDataSubscriptionSubject.asObservable();
-  } */
-
- /* private configureData() {
-    const additionalDatasources: Datasource[] = [];
-    let dataIndex = 0;
-    let additionalKeysNumber = 0;
-    this.datasources.forEach((datasource) => {
-      const additionalDataKeys: DataKey[] = [];
-      let datasourceAdditionalKeysNumber = 0;
-      datasource.dataKeys.forEach((dataKey) => {
-        dataKey.hidden = dataKey.settings.hideDataByDefault ? true : false;
-        dataKey.inLegend = dataKey.settings.removeFromLegend ? false : true;
-        dataKey.pattern = dataKey.label;
-        if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
-          datasourceAdditionalKeysNumber++;
-          additionalKeysNumber++;
-          const additionalDataKey = this.ctx.utils.createAdditionalDataKey(dataKey, datasource,
-            this.timeForComparison, this.datasources, additionalKeysNumber);
-          dataKey.settings.comparisonSettings.color = additionalDataKey.color;
-          additionalDataKeys.push(additionalDataKey);
-        }
-        const datasourceData: DatasourceData = {
-          datasource,
-          dataKey,
-          data: []
-        };
-        if (dataKey.type === DataKeyType.entityField && datasource.entity) {
-          const propName = entityFields[dataKey.name] ? entityFields[dataKey.name].value : dataKey.name;
-          if (datasource.entity[propName]) {
-            datasourceData.data.push([Date.now(), datasource.entity[propName]]);
-          }
-        }
-        this.data.push(datasourceData);
-        this.hiddenData.push({data: []});
-        if (this.displayLegend) {
-          const legendKey: LegendKey = {
-            dataKey,
-            dataIndex: dataIndex++
-          };
-          this.legendData.keys.push(legendKey);
-          const legendKeyData: LegendKeyData = {
-            min: null,
-            max: null,
-            avg: null,
-            total: null,
-            hidden: false
-          };
-          this.legendData.data.push(legendKeyData);
-        }
-      });
-      if (datasourceAdditionalKeysNumber > 0) {
-        const additionalDatasource: Datasource = deepClone(datasource);
-        additionalDatasource.dataKeys = additionalDataKeys;
-        additionalDatasource.isAdditional = true;
-        additionalDatasources.push(additionalDatasource);
-      }
-    });
-
-    additionalDatasources.forEach((additionalDatasource) => {
-      additionalDatasource.dataKeys.forEach((additionalDataKey) => {
-        const additionalDatasourceData: DatasourceData = {
-          datasource: additionalDatasource,
-          dataKey: additionalDataKey,
-          data: []
-        };
-        this.data.push(additionalDatasourceData);
-        this.hiddenData.push({data: []});
-        if (this.displayLegend) {
-          const additionalLegendKey: LegendKey = {
-            dataKey: additionalDataKey,
-            dataIndex: dataIndex++
-          };
-          this.legendData.keys.push(additionalLegendKey);
-          const additionalLegendKeyData: LegendKeyData = {
-            min: null,
-            max: null,
-            avg: null,
-            total: null,
-            hidden: false
-          };
-          this.legendData.data.push(additionalLegendKeyData);
-        }
-      });
-    });
-
-    this.datasources = this.datasources.concat(additionalDatasources);
-
-    if (this.displayLegend) {
-      this.legendData.keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
-    }
-  } */
-
   private resetData() {
     this.data.length = 0;
     this.hiddenData.length = 0;
@@ -585,21 +462,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     this.onDataUpdated();
   }
-
-/*  private resetDataOld() {
-    for (let i = 0; i < this.data.length; i++) {
-      this.data[i].data = [];
-      this.hiddenData[i].data = [];
-      if (this.displayLegend) {
-        this.legendData.data[i].min = null;
-        this.legendData.data[i].max = null;
-        this.legendData.data[i].avg = null;
-        this.legendData.data[i].total = null;
-        this.legendData.data[i].hidden = false;
-      }
-    }
-    this.onDataUpdated();
-  }*/
 
   getFirstEntityInfo(): SubscriptionEntityInfo {
     let entityId: EntityId;
@@ -969,83 +831,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
- /* private doSubscribeOld() {
-    if (this.type === widgetType.rpc) {
-      return;
-    }
-    if (this.type === widgetType.alarm) {
-      this.alarmsSubscribe();
-    } else {
-      this.notifyDataLoading();
-      if (this.type === widgetType.timeseries && this.timeWindowConfig) {
-        this.updateRealtimeSubscription();
-        if (this.comparisonEnabled) {
-          this.updateSubscriptionForComparison();
-        }
-        if (this.subscriptionTimewindow.fixedWindow) {
-          this.onDataUpdated();
-        }
-      }
-      let index = 0;
-      let forceUpdate = !this.datasources.length;
-      this.datasources.forEach((datasource) => {
-        const listener: DatasourceListener = {
-          subscriptionType: this.type,
-          subscriptionTimewindow: this.subscriptionTimewindow,
-          datasource,
-          entityType: datasource.entityType,
-          entityId: datasource.entityId,
-          dataUpdated: this.dataUpdated.bind(this),
-          updateRealtimeSubscription: () => {
-            this.subscriptionTimewindow = this.updateRealtimeSubscription();
-            return this.subscriptionTimewindow;
-          },
-          setRealtimeSubscription: (subscriptionTimewindow) => {
-            this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
-          },
-          datasourceIndex: index
-        };
-
-        if (this.comparisonEnabled && datasource.isAdditional) {
-          listener.subscriptionTimewindow = this.timewindowForComparison;
-          listener.updateRealtimeSubscription = () => {
-            this.subscriptionTimewindow = this.updateSubscriptionForComparison();
-            return this.subscriptionTimewindow;
-          };
-          listener.setRealtimeSubscription = () => {
-            this.updateSubscriptionForComparison();
-          };
-        }
-
-        let entityFieldKey = false;
-
-        for (let a = 0; a < datasource.dataKeys.length; a++) {
-          if (datasource.dataKeys[a].type !== DataKeyType.entityField) {
-            this.data[index + a].data = [];
-          } else {
-            entityFieldKey = true;
-          }
-        }
-        index += datasource.dataKeys.length;
-        this.datasourceListeners.push(listener);
-
-        if (datasource.dataKeys.length) {
-          this.ctx.datasourceService.subscribeToDatasource(listener);
-        }
-        if (datasource.unresolvedStateEntity || entityFieldKey ||
-          !datasource.dataKeys.length ||
-          (datasource.type === DatasourceType.entity && !datasource.entityId)
-        ) {
-          forceUpdate = true;
-        }
-      });
-      if (forceUpdate) {
-        this.notifyDataLoaded();
-        this.onDataUpdated();
-      }
-    }
-  } */
-
   private alarmsSubscribe() {
     this.notifyDataLoading();
     if (this.timeWindowConfig) {
@@ -1096,20 +881,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     this.subscribed = false;
   }
-
-/*  unsubscribeOld() {
-    if (this.type !== widgetType.rpc) {
-      if (this.type === widgetType.alarm) {
-        this.alarmsUnsubscribe();
-      } else {
-        this.datasourceListeners.forEach((listener) => {
-          this.ctx.datasourceService.unsubscribeFromDatasource(listener);
-        });
-        this.datasourceListeners.length = 0;
-        this.resetData();
-      }
-    }
-  } */
 
   private alarmsUnsubscribe() {
     if (this.alarmSourceListener) {
@@ -1448,48 +1219,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-/*  private dataUpdatedOld(sourceData: DataSetHolder, datasourceIndex: number, dataKeyIndex: number, detectChanges: boolean) {
-    for (let x = 0; x < this.datasourceListeners.length; x++) {
-      this.datasources[x].dataReceived = this.datasources[x].dataReceived === true;
-      if (this.datasourceListeners[x].datasourceIndex === datasourceIndex && sourceData.data.length > 0) {
-        this.datasources[x].dataReceived = true;
-      }
-    }
-    this.notifyDataLoaded();
-    let update = true;
-    let currentData: DataSetHolder;
-    if (this.displayLegend && this.legendData.keys[datasourceIndex + dataKeyIndex].dataKey.hidden) {
-      currentData = this.hiddenData[datasourceIndex + dataKeyIndex];
-    } else {
-      currentData = this.data[datasourceIndex + dataKeyIndex];
-    }
-    if (this.type === widgetType.latest) {
-      const prevData = currentData.data;
-      if (!sourceData.data.length) {
-        update = false;
-      } else if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
-        const prevTs = prevData[0][0];
-        const prevValue = prevData[0][1];
-        if (prevTs === sourceData.data[0][0] && prevValue === sourceData.data[0][1]) {
-          update = false;
-        }
-      }
-    }
-    if (update) {
-      if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
-        this.updateTimewindow();
-        if (this.timewindowForComparison && this.timewindowForComparison.realtimeWindowMs) {
-          this.updateComparisonTimewindow();
-        }
-      }
-      currentData.data = sourceData.data;
-      if (this.caulculateLegendData) {
-        this.updateLegend(datasourceIndex + dataKeyIndex, sourceData.data, detectChanges);
-      }
-      this.onDataUpdated(detectChanges);
-    }
-  } */
-
   private alarmsUpdated(alarms: Array<AlarmInfo>) {
     this.notifyDataLoaded();
     const updated = !this.alarms || !isEqual(this.alarms, alarms);
@@ -1521,7 +1250,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     this.callbacks.legendDataUpdated(this, detectChanges !== false);
   }
-
 
   private loadStDiff(): Observable<any> {
     const loadSubject = new ReplaySubject(1);

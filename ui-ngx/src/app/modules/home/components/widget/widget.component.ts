@@ -165,7 +165,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private entityService: EntityService,
               private alarmService: AlarmService,
               private dashboardService: DashboardService,
-              // private datasourceService: DatasourceService,
               private entityDataService: EntityDataService,
               private translate: TranslateService,
               private utils: UtilsService,
@@ -299,7 +298,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext.deviceService = this.deviceService;
     this.subscriptionContext.alarmService = this.alarmService;
     this.subscriptionContext.translate = this.translate;
-    // this.subscriptionContext.datasourceService = this.datasourceService;
     this.subscriptionContext.entityDataService = this.entityDataService;
     this.subscriptionContext.utils = this.utils;
     this.subscriptionContext.raf = this.raf;
