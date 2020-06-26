@@ -295,6 +295,16 @@ message TbAttributeUpdateProto {
   repeated TsKvProto data = 7;
 }
 
+message TbAttributeDeleteProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string scope = 6;
+  repeated string keys = 7;
+}
+
 message TbTimeSeriesUpdateProto {
   string entityType = 1;
   int64 entityIdMSB = 2;
@@ -340,6 +350,7 @@ message SubscriptionMgrMsgProto {
   TbSubscriptionCloseProto subClose = 3;
   TbTimeSeriesUpdateProto tsUpdate = 4;
   TbAttributeUpdateProto attrUpdate = 5;
+  TbAttributeDeleteProto attrDelete = 6;
 }
 
 message LocalSubscriptionServiceMsgProto {

@@ -134,6 +134,13 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     }
 
     @Override
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
+        addMainCallback(deleteFuture, callback);
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
+    }
+
+    @Override
     public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, long value, FutureCallback<Void> callback) {
         saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
@@ -167,6 +174,20 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             }
         } else {
             TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
+            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+        }
+    }
+
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        if (currentPartitions.contains(tpi)) {
+            if (subscriptionManagerService.isPresent()) {
+                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY);
+            } else {
+                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+            }
+        } else {
+            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys);
             clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
         }
     }

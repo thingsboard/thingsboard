@@ -455,22 +455,18 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getTs());
         Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getValue());
 
+
+        wsClient.registerWaitForUpdate();
+        Thread.sleep(100);
+
         AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
         List<AttributeKvEntry> tsData = Arrays.asList(dataPoint1);
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
 
-        Thread.sleep(100);
-
-        cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
-        wrapper = new TelemetryPluginCmdsWrapper();
-        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
-
-        wsClient.send(mapper.writeValueAsString(wrapper));
-        msg = wsClient.waitForReply();
+        msg = wsClient.waitForUpdate();
         update = mapper.readValue(msg, EntityDataUpdate.class);
 
         Assert.assertEquals(1, update.getCmdId());
-
         List<EntityData> listData = update.getUpdate();
         Assert.assertNotNull(listData);
         Assert.assertEquals(1, listData.size());
@@ -483,6 +479,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         AttributeKvEntry dataPoint2 = new BaseAttributeKvEntry(now, new LongDataEntry("serverAttributeKey", 52L));
 
         wsClient.registerWaitForUpdate();
+        Thread.sleep(100);
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint2));
         msg = wsClient.waitForUpdate();
 
@@ -498,12 +495,14 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
 
         //Sending update from the past, while latest value has new timestamp;
         wsClient.registerWaitForUpdate();
+        Thread.sleep(100);
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint1));
         msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
 
         //Sending duplicate update again
         wsClient.registerWaitForUpdate();
+        Thread.sleep(100);
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint2));
         msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
