@@ -61,6 +61,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -490,13 +491,16 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
         List<EntityId> loadedIds = loadedEntities.stream().map(EntityData::getEntityId).collect(Collectors.toList());
         List<EntityId> deviceIds = devices.stream().map(Device::getId).collect(Collectors.toList());
-
+        deviceIds.sort(Comparator.comparing(EntityId::getId));
+        loadedIds.sort(Comparator.comparing(EntityId::getId));
         Assert.assertEquals(deviceIds, loadedIds);
 
         List<String> loadedNames = loadedEntities.stream().map(entityData ->
                 entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
         List<String> deviceNames = devices.stream().map(Device::getName).collect(Collectors.toList());
 
+        Collections.sort(loadedNames);
+        Collections.sort(deviceNames);
         Assert.assertEquals(deviceNames, loadedNames);
 
         sortOrder = new EntityDataSortOrder(
@@ -560,8 +564,11 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             loadedEntities.addAll(data.getData());
         }
         Assert.assertEquals(67, loadedEntities.size());
-        List<String> loadedTemperatures = loadedEntities.stream().map(entityData ->
-                entityData.getLatest().get(EntityKeyType.ATTRIBUTE).get("temperature").getValue()).collect(Collectors.toList());
+        List<String> loadedTemperatures = new ArrayList<>();
+        for (Device device : devices) {
+            loadedTemperatures.add(loadedEntities.stream().filter(entityData -> entityData.getEntityId().equals(device.getId())).findFirst().orElse(null)
+                    .getLatest().get(EntityKeyType.ATTRIBUTE).get("temperature").getValue());
+        }
         List<String> deviceTemperatures = temperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());
         Assert.assertEquals(deviceTemperatures, loadedTemperatures);
 

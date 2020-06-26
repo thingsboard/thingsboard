@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -250,6 +251,32 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                         , null);
             }
         }
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, TbCallback callback) {
+        onLocalSubUpdate(entityId,
+                s -> {
+                    if (TbSubscriptionType.ATTRIBUTES.equals(s.getType())) {
+                        return (TbAttributeSubscription) s;
+                    } else {
+                        return null;
+                    }
+                },
+                s -> (TbAttributeSubscriptionScope.ANY_SCOPE.equals(s.getScope()) || scope.equals(s.getScope().name())),
+                s -> {
+                    List<TsKvEntry> subscriptionUpdate = null;
+                    for (String key : keys) {
+                        if (s.isAllKeys() || s.getKeyStates().containsKey(key)) {
+                            if (subscriptionUpdate == null) {
+                                subscriptionUpdate = new ArrayList<>();
+                            }
+                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, null)));
+                        }
+                    }
+                    return subscriptionUpdate;
+                });
         callback.onSuccess();
     }
 

@@ -218,12 +218,17 @@ public class TbEntityDataSubCtx {
                 latestCtxValues.forEach((k, v) -> {
                     TsValue update = latestUpdate.get(k);
                     if (update != null) {
-                        if (update.getTs() < v.getTs()) {
-                            log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                            latestUpdate.remove(k);
-                        } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
-                            log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                            latestUpdate.remove(k);
+                        //Ignore notifications about deleted keys
+                        if (!(update.getTs() == 0 && (update.getValue() == null || update.getValue().isEmpty()))) {
+                            if (update.getTs() < v.getTs()) {
+                                log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                                latestUpdate.remove(k);
+                            } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
+                                log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                                latestUpdate.remove(k);
+                            }
+                        } else {
+                            log.trace("[{}][{}][{}] Received deleted notification for: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k);
                         }
                     }
                 });

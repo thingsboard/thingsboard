@@ -34,6 +34,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeSubscriptionProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionCloseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionKetStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionProto;
@@ -181,6 +182,22 @@ public class TbSubscriptionUtils {
         msgBuilder.setAttrUpdate(builder);
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
+
+    public static ToCoreMsg toAttributesDeleteProto(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+        TbAttributeDeleteProto.Builder builder = TbAttributeDeleteProto.newBuilder();
+        builder.setEntityType(entityId.getEntityType().name());
+        builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
+        builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
+        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+        builder.setScope(scope);
+        builder.addAllKeys(keys);
+
+        SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
+        msgBuilder.setAttrDelete(builder);
+        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+    }
+
 
     private static TsKvProto.Builder toKeyValueProto(long ts, KvEntry attr) {
         KeyValueProto.Builder dataBuilder = KeyValueProto.newBuilder();
