@@ -403,7 +403,6 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 .tokenUri("tokenUri")
                 .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
                 .scope("scope")
-                .authorizationGrantType("authorizationGrantType")
                 .userInfoUri("userInfoUri")
                 .userNameAttributeName("userNameAttributeName")
                 .jwkSetUri("jwkSetUri")

@@ -47,7 +47,7 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
                 .redirectUriTemplate(localClientRegistration.getRedirectUriTemplate())
                 .scope(localClientRegistration.getScope().split(","))
                 .clientName(localClientRegistration.getClientName())
-                .authorizationGrantType(new AuthorizationGrantType(localClientRegistration.getAuthorizationGrantType()))
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .userInfoUri(localClientRegistration.getUserInfoUri())
                 .userNameAttributeName(localClientRegistration.getUserNameAttributeName())
                 .jwkSetUri(localClientRegistration.getJwkSetUri())

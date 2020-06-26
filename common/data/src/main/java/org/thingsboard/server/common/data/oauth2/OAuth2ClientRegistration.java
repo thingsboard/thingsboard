@@ -35,7 +35,6 @@ public class OAuth2ClientRegistration {
     private String tokenUri;
     private String redirectUriTemplate;
     private String scope;
-    private String authorizationGrantType;
     private String userInfoUri;
     private String userNameAttributeName;
     private String jwkSetUri;

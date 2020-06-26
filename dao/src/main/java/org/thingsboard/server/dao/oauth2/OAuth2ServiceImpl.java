@@ -473,9 +473,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         if (StringUtils.isEmpty(clientRegistration.getScope())) {
             throw new DataValidationException("Scope should be specified!");
         }
-        if (StringUtils.isEmpty(clientRegistration.getAuthorizationGrantType())) {
-            throw new DataValidationException("Authorization grant type should be specified!");
-        }
         if (StringUtils.isEmpty(clientRegistration.getUserInfoUri())) {
             throw new DataValidationException("User info uri should be specified!");
         }
