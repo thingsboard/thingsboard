@@ -24,10 +24,12 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 
 @Slf4j
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'  && '${transport.lwm2m.bootstrap.enable}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 @Component("LwM2MTransportContextBootstrap")
 public class LwM2MTransportContextBootstrap extends TransportContext {
 
@@ -60,12 +62,20 @@ public class LwM2MTransportContextBootstrap extends TransportContext {
     private String bootstrapPublicY;
 
     @Getter
+    @Setter
+    private PublicKey bootstrapPublicKey;
+
+    @Getter
     @Value("${transport.lwm2m.bootstrap.secure.private_s:}")
     private String bootstrapPrivateS;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.alias:}")
     private String bootstrapAlias;
+
+    @Getter
+    @Setter
+    private X509Certificate bootstrapCertificate;
 
     @Getter
     @Setter

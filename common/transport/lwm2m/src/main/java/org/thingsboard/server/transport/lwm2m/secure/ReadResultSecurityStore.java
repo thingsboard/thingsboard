@@ -31,32 +31,34 @@ public class ReadResultSecurityStore {
     private int securityMode = DEFAULT_MODE.code;
     /** bootstrap */
     JsonObject bootstrapJson;
-    /** serverBs */
-    private String hostServerBs;
-    private Integer portServerBs;
-    @Builder.Default
-    private int securityModeServerBs = DEFAULT_MODE.code;
-    /** PSK/RPK/x509/NoSec */
-    private String clientPublicKeyOrIdServerBs;
-    private String serverPublicServerBs;
-    private String clientSecretKeyServerBs;
-    /** bootstrapBs */
-    private String hostBootstrapBs;
-    private Integer portBootstrapBs;
-    @Builder.Default
-    private int securityModeBootstrapBs = DEFAULT_MODE.code;
-    /** PSK/RPK/x509/NoSec */
-    private String clientPublicKeyOrIdBootstrapBs;
-    private String serverPublicBootstrapBs;
-    private String clientSecretKeyBootstrapBs;
-
-
-    public BootstrapConfig getLwM2MBootstrapConfig() {
-        String uri0 = "coaps://" + this.hostBootstrapBs + ":" + Integer.toString(this.portBootstrapBs);
-        String uri1 = "coaps://" + this.hostServerBs + ":" + Integer.toString(this.portServerBs);
-        return new LwM2MBootstrapConfig(uri0, securityModeBootstrapBs, clientPublicKeyOrIdBootstrapBs, serverPublicBootstrapBs, clientSecretKeyBootstrapBs,
-                                        uri1, securityModeServerBs, clientPublicKeyOrIdServerBs, serverPublicServerBs, clientSecretKeyServerBs);
-    }
+    String endPoint;
+    BootstrapConfig bootstrapConfig;
+//    /** serverBs */
+//    private String host;
+//    private Integer port;
+//    @Builder.Default
+//    private int securityModeServerBs = DEFAULT_MODE.code;
+//    /** PSK/RPK/x509/NoSec */
+//    private String clientPublicKeyOrIdServerBs;
+//    private String serverPublicServerBs;
+//    private String clientSecretKeyServerBs;
+//    /** bootstrapBs */
+//    private String hostBootstrapBs;
+//    private Integer portBootstrapBs;
+//    @Builder.Default
+//    private int securityModeBootstrapBs = DEFAULT_MODE.code;
+//    /** PSK/RPK/x509/NoSec */
+//    private String clientPublicKeyOrIdBootstrapBs;
+//    private String serverPublicBootstrapBs;
+//    private String clientSecretKeyBootstrapBs;
+//
+//
+//    public BootstrapConfig getLwM2MBootstrapConfig() {
+//        String uri0 = "coaps://" + this.hostBootstrapBs + ":" + Integer.toString(this.portBootstrapBs);
+//        String uri1 = "coaps://" + this.host + ":" + Integer.toString(this.port);
+//        return new LwM2MBootstrapConfig(uri0, securityModeBootstrapBs, clientPublicKeyOrIdBootstrapBs, serverPublicBootstrapBs, clientSecretKeyBootstrapBs,
+//                                        uri1, securityModeServerBs, clientPublicKeyOrIdServerBs, serverPublicServerBs, clientSecretKeyServerBs);
+//    }
 
 
 

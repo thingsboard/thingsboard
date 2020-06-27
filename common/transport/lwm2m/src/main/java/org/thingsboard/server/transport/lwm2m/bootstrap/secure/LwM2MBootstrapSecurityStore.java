@@ -1,7 +1,30 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.SecurityMode;
+import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.bootstrap.EditableBootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
@@ -10,14 +33,23 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MGetSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.cert.CertificateEncodingException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Component("LwM2MBootstrapSecurityStore")
@@ -29,9 +61,6 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Autowired
     LwM2MGetSecurityInfo lwM2MGetSecurityInfo;
-
-    @Autowired
-    LwM2MTransportContextBootstrap contextBS;
 
     public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore) {
         this.bootstrapConfigStore = bootstrapConfigStore;
@@ -47,9 +76,17 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         }
         if (store.getBootstrapJson() != null) {
             /** add value to store  from BootstrapJson */
-            setBootstrapConfig (store);
-            BootstrapConfig bsConfigNew = store.getLwM2MBootstrapConfig();
+            setBootstrapConfig_ScurityInfo(store);
+//            loadFromFile(store, endpoint);
+            BootstrapConfig bsConfigNew = store.getBootstrapConfig();
             try {
+//                bootstrapConfigStore.getAll().keySet().removeIf(key -> key.equals(endpoint));
+//                bootstrapConfigStore.getAll().entrySet().removeIf(entry -> entry.getKey().equals(endpoint));
+                for (String config : bootstrapConfigStore.getAll().keySet()) {
+                    if (config.equals(endpoint)) {
+                        bootstrapConfigStore.remove(config);
+                    }
+                }
                 bootstrapConfigStore.add(endpoint, bsConfigNew);
             } catch (InvalidConfigurationException e) {
                 e.printStackTrace();
@@ -79,7 +116,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 //        for (Map.Entry<Integer, BootstrapConfig.ServerSecurity> bsEntry : bsConfig.security.entrySet()) {
 //            BootstrapConfig.ServerSecurity value = bsEntry.getValue();
 
-            // Extract PSK security info
+        // Extract PSK security info
 //            if (store.getSecurityMode() == LwM2MSecurityMode.PSK.code) {
 ////                SecurityInfo securityInfo = SecurityInfo.newPreSharedKeyInfo(endpoint,
 ////                        new String(value.publicKeyOrId, StandardCharsets.UTF_8), value.secretKey);
@@ -107,12 +144,20 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public SecurityInfo getByIdentity(String identity) {
-//        byte[] identityBytes = identity.getBytes(StandardCharsets.UTF_8);
-
         ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(identity, TypeServer.BOOTSTRAP);
-
+        /** add value to store  from BootstrapJson */
+        setBootstrapConfig_ScurityInfo(store);
         if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
-            return store.getSecurityInfo();
+            BootstrapConfig bsConfig = store.getBootstrapConfig();
+            log.info("bsConfig: [{}]", bsConfig);
+            if (bsConfig.security != null) {
+                try {
+                    bootstrapConfigStore.add(store.getEndPoint(), bsConfig);
+                } catch (InvalidConfigurationException e) {
+                    e.printStackTrace();
+                }
+                return store.getSecurityInfo();
+            }
         }
 
 //        String jsonString =
@@ -144,11 +189,86 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         return null;
     }
 
-    private void setBootstrapConfig (ReadResultSecurityStore store) {
-        JsonObject object = store.getBootstrapJson();
-//        store.setPortBootstrapBs();
-//        store.setHostBootstrapBs();
-//        store.setServerPublicBootstrapBs();
+    private void setBootstrapConfig_ScurityInfo(ReadResultSecurityStore store) {
+        try {
+            /** BootstrapConfig */
+            JsonObject object = store.getBootstrapJson();
+            ObjectMapper mapper = new ObjectMapper();
+            LwM2MBootstrapConfig lwM2MBootstrapConfig = mapper.readValue(object.toString(), LwM2MBootstrapConfig.class);
+            /** Security info */
+            switch (SecurityMode.valueOf(lwM2MBootstrapConfig.getSecurityModeBootstrapBs())) {
+                /** Use RPK only */
+                case PSK:
+                    lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
+                    lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePort());
+                    lwM2MBootstrapConfig.setServerPublicBootstrapBs("");
+                    store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndPoint(),
+                            lwM2MBootstrapConfig.getClientPublicKeyOrIdBootstrapBs(),
+                            store.getBootstrapConfig().security.get(0).secretKey));
+                    store.setSecurityMode(SecurityMode.PSK.code);
+                    break;
+                case RPK:
+                    lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
+                    lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePort());
+                    lwM2MBootstrapConfig.setServerPublicBootstrapBs(Hex.encodeHexString(lwM2MGetSecurityInfo.contextBS.getBootstrapPublicKey().getEncoded()));
+                    try {
+                        store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndPoint(),
+                                SecurityUtil.publicKey.decode(Hex.decodeHex(lwM2MBootstrapConfig.getClientPublicKeyOrIdBootstrapBs().toCharArray()))));
+                        store.setSecurityMode(SecurityMode.RPK.code);
+                        break;
+                    } catch (IOException | GeneralSecurityException e) {
+                        log.error("Unable to decode Client public key for [{}]  [{}]", store.getEndPoint(), e.getMessage());
+                    }
+                case X509:
+                    lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
+                    lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePort());
+                    lwM2MBootstrapConfig.setServerPublicBootstrapBs(Hex.encodeHexString(lwM2MGetSecurityInfo.contextBS.getBootstrapCertificate().getEncoded()));
+                    store.setSecurityInfo(SecurityInfo.newX509CertInfo(store.getEndPoint()));
+                    store.setSecurityMode(SecurityMode.X509.code);
+                    break;
+                case NO_SEC:
+                    lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapHost());
+                    lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapPort());
+                    store.setSecurityMode(SecurityMode.NO_SEC.code);
+                    break;
+                default:
+            }
+            store.setBootstrapConfig(lwM2MBootstrapConfig.getLwM2MBootstrapConfig());
+
+        } catch (JsonProcessingException | CertificateEncodingException e) {
+            log.error("Unable to decode Json or Certificate for [{}]  [{}]", store.getEndPoint(), e.getMessage());
+        }
+    }
+
+    // /////// For Integraation test File persistence
+    // default location for persistence
+    // public static final String DEFAULT_FILE = "data/bootstrap.json";
+    private void loadFromFile(String endpoint) {
+        try {
+            File file = new File("data/bootstrap.json");
+            if (file.exists()) {
+                try (InputStreamReader in = new InputStreamReader(new FileInputStream(file))) {
+                    GsonBuilder builder = new GsonBuilder();
+                    builder.setPrettyPrinting();
+                    Gson gson = builder.create();
+                    Type gsonType = new TypeToken<Map<String, BootstrapConfig>>() {
+                    }.getType();
+                    Map<String, BootstrapConfig> configs = gson.fromJson(in, gsonType);
+                    for (Map.Entry<String, BootstrapConfig> config : bootstrapConfigStore.getAll().entrySet()) {
+                        if (config.getKey().equals(endpoint)) {
+                            bootstrapConfigStore.remove(config.getKey());
+                        }
+                    }
+                    for (Map.Entry<String, BootstrapConfig> config : configs.entrySet()) {
+                        if (config.getKey().equals(endpoint)) {
+                            bootstrapConfigStore.add(config.getKey(), config.getValue());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Could not load bootstrap infos from file [{}]", e.getMessage());
+        }
     }
 
 }

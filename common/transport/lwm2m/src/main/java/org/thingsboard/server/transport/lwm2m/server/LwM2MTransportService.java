@@ -96,10 +96,13 @@ public class LwM2MTransportService {
                 //Tests.
 //                Collection<Registration> registrations = lwM2MTransportRequest.doGetRegistrations();
 //                log.info("Ok process get registrations: [{}]", registrations);
-//                String traget = "/3";
-//                String typeOper = GET_TYPE_OPER_READ;
-//                LwM2mResponse cResponse =  lwM2MTransportRequest.doGet(endpointId,  traget, typeOper, ContentFormat.TLV.getName());
-//                log.info("[{}] [{}] [{}] Ok process get request: [{}]", endpointId, traget, typeOper, cResponse);
+                String target = "/0";
+                String typeOper = GET_TYPE_OPER_READ;
+                LwM2mResponse cResponse =  lwM2MTransportRequest.doGet(endpointId,  target, typeOper, ContentFormat.TLV.getName());
+                log.info("[{}] [{}] [{}] Ok process get request: [{}]", endpointId, target, typeOper, cResponse);
+                target = "/1";
+                cResponse =  lwM2MTransportRequest.doGet(endpointId,  target, typeOper, ContentFormat.TLV.getName());
+                log.info("[{}] [{}] [{}] Ok process get request: [{}]", endpointId, target, typeOper, cResponse);
 //                traget = "/3/0";
 //                cResponse =  lwM2MTransportRequest.doGet(endpointId,  traget, typeOper, ContentFormat.TLV.getName());
 //                log.info("[{}] [{}] [{}] Ok process get request: [{}]", endpointId, traget, typeOper, cResponse);

@@ -43,7 +43,7 @@ import java.util.List;
 @ComponentScan("org.thingsboard.server.transport.lwm2m.server")
 @ComponentScan("org.thingsboard.server.transport.lwm2m.bootstrap")
 @Configuration("LwM2MTransportBootstrapServerConfiguration")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'  && '${transport.lwm2m.bootstrap.enable}'=='true')")
 public class LwM2MTransportBootstrapServerConfiguration {
 
     @Autowired
@@ -65,10 +65,11 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setLocalAddress(contextBs.getBootstrapHost(), contextBs.getBootstrapPort());
         builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), contextBs.getBootstrapSecurePort());
 
+        /**  ConfigStore */
         builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
+
+        /** SecurityStore */
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
-
-
 
         /** Create Models */
         List<ObjectModel> models = ObjectLoader.loadDefault();
@@ -97,9 +98,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         }
         builder.setCoapConfig(coapConfig);
 
-
+        /** Create BootstrapServer */
         return builder.build();
     }
-
-
 }

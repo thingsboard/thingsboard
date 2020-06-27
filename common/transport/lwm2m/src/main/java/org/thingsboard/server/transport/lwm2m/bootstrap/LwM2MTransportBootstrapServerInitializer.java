@@ -40,7 +40,7 @@ public class LwM2MTransportBootstrapServerInitializer {
 
     @PostConstruct
     public void init() {
-//        this.context.setSessions(new ConcurrentHashMap<>());
+//     ??    this.context.setSessions(new ConcurrentHashMap<>()); ??
         this.lhBServer.start();
     }
 

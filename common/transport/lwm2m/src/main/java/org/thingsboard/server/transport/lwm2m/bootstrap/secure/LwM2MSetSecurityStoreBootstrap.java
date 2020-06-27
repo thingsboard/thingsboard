@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,26 +19,16 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
-import org.eclipse.leshan.server.redis.RedisRegistrationStore;
-import org.eclipse.leshan.server.redis.RedisSecurityStore;
-import org.eclipse.leshan.server.security.DefaultAuthorizer;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
-import org.eclipse.leshan.server.security.SecurityChecker;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.util.Pool;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.*;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
@@ -74,71 +64,48 @@ public class LwM2MSetSecurityStoreBootstrap {
 
             /** Use RPK only */
             case RPK:
-                generatePSK_RPK();
-                if (this.publicKey != null && this.publicKey.getEncoded().length > 0 &&
-                        this.privateKey != null && this.privateKey.getEncoded().length > 0) {
-                    builder.setPublicKey(this.publicKey);
-                    builder.setPrivateKey(this.privateKey);
-                    getParamsRPK();
-                }
+                setRPK();
                 break;
-//            /** Use x509 only */
-//            case X509:
-//                setServerWithX509Cert();
-//                break;
-//            /** No security */
-//            case NO_SEC:
-//                builder.setTrustedCertificates(new X509Certificate[0]);
-//                break;
-//            /** Use x509 with EST */
+            /** Use X509_EST only */
             case X509_EST:
                 // TODO support sentinel pool and make pool configurable
                 break;
+            /** Use ather X509, PSK,  No_Sec ?? */
             default:
                 setServerWithX509Cert();
         }
-
-        /** Set securityStore with new registrationStore (if not redis)*/
-//        if (this.dtlsMode < REDIS.code) {
-//            securityStore = lwM2mInMemorySecurityStore;
-//            if (this.dtlsMode == X509.code) {
-//                builder.setAuthorizer(new DefaultAuthorizer(securityStore, new SecurityChecker() {
-//                    @Override
-//                    protected boolean matchX509Identity(String endpoint, String receivedX509CommonName,
-//                                                        String expectedX509CommonName) {
-//                        return endpoint.startsWith(expectedX509CommonName);
-//                    }
-//                }));
-//            }
-//        }
-
-//        /** Set securityStore with new registrationStore */
-//        builder.setSecurityStore(securityStore);
     }
 
-    private void generatePSK_RPK() {
+    private void setRPK() {
         try {
             /** Get Elliptic Curve Parameter spec for secp256r1 */
             AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
             algoParameters.init(new ECGenParameterSpec("secp256r1"));
             ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-            if (contextBS.getBootstrapPublicX() != null && !contextBS.getBootstrapPublicX().isEmpty() && contextBS.getBootstrapPublicY() != null && !contextBS.getBootstrapPublicY().isEmpty()) {
+            if (this.contextBS.getBootstrapPublicX() != null && !this.contextBS.getBootstrapPublicX().isEmpty() && this.contextBS.getBootstrapPublicY() != null && !this.contextBS.getBootstrapPublicY().isEmpty()) {
                 /** Get point values */
-                byte[] publicX = Hex.decodeHex(contextBS.getBootstrapPublicX().toCharArray());
-                byte[] publicY = Hex.decodeHex(contextBS.getBootstrapPublicY().toCharArray());
+                byte[] publicX = Hex.decodeHex(this.contextBS.getBootstrapPublicX().toCharArray());
+                byte[] publicY = Hex.decodeHex(this.contextBS.getBootstrapPublicY().toCharArray());
                 /** Create key specs */
                 KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
                         parameterSpec);
                 /** Get keys */
                 this.publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
             }
-            if (contextBS.getBootstrapPrivateS() != null && !contextBS.getBootstrapPrivateS().isEmpty()) {
+            if (this.contextBS.getBootstrapPrivateS() != null && !this.contextBS.getBootstrapPrivateS().isEmpty()) {
                 /** Get point values */
                 byte[] privateS = Hex.decodeHex(contextBS.getBootstrapPrivateS().toCharArray());
                 /** Create key specs */
                 KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
                 /** Get keys */
                 this.privateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
+            }
+            if (this.publicKey != null && this.publicKey.getEncoded().length > 0 &&
+                    this.privateKey != null && this.privateKey.getEncoded().length > 0) {
+                this.builder.setPublicKey(this.publicKey);
+                this.builder.setPrivateKey(this.privateKey);
+                this.contextBS.setBootstrapPublicKey(this.publicKey);
+                getParamsRPK();
             }
         } catch (GeneralSecurityException | IllegalArgumentException e) {
             log.error("[{}] Failed generate Server PSK/RPK", e.getMessage());
@@ -154,10 +121,10 @@ public class LwM2MSetSecurityStoreBootstrap {
             if (rootCAX509Cert != null) {
                 X509Certificate[] trustedCertificates = new X509Certificate[1];
                 trustedCertificates[0] = rootCAX509Cert;
-                builder.setTrustedCertificates(trustedCertificates);
+                this.builder.setTrustedCertificates(trustedCertificates);
             } else {
                 /** by default trust all */
-                builder.setTrustedCertificates(new X509Certificate[0]);
+                this.builder.setTrustedCertificates(new X509Certificate[0]);
             }
         } catch (KeyStoreException ex) {
             log.error("[{}] Unable to load X509 files server", ex.getMessage());
@@ -172,9 +139,12 @@ public class LwM2MSetSecurityStoreBootstrap {
             keyStoreServer.load(inServer, contextS.getKeyStorePasswordServer() == null ? null : contextS.getKeyStorePasswordServer().toCharArray());
             this.certificate = (X509Certificate) keyStoreServer.getCertificate(contextBS.getBootstrapAlias());
             this.privateKey = (PrivateKey) keyStoreServer.getKey(contextBS.getBootstrapAlias(), contextS.getKeyStorePasswordServer() == null ? null : contextS.getKeyStorePasswordServer().toCharArray());
-            this.builder.setPrivateKey(this.privateKey);
-            this.builder.setCertificateChain(new X509Certificate[]{this.certificate});
+            if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
+                this.builder.setPrivateKey(this.privateKey);
+            }
             if (this.certificate != null) {
+                this.builder.setCertificateChain(new X509Certificate[]{this.certificate});
+                this.contextBS.setBootstrapCertificate(this.certificate);
                 getParamsX509();
             }
         } catch (Exception ex) {
@@ -208,7 +178,6 @@ public class LwM2MSetSecurityStoreBootstrap {
                     params, Hex.encodeHexString(x), Hex.encodeHexString(y),
                     Hex.encodeHexString(this.publicKey.getEncoded()),
                     Hex.encodeHexString(this.privateKey.getEncoded()));
-
         } else {
             throw new IllegalStateException("Unsupported Public Key Format (only ECPublicKey supported).");
         }

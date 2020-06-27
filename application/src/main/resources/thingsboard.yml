@@ -588,7 +588,7 @@ transport:
         #3: NoSec mode  *
         #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
         #4: Certificate mode X509 with EST
-        dtls_mode: "${LWM2M_SECURITY_MODE:3}"
+        dtls_mode: "${LWM2M_SECURITY_MODE:1}"
         bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
         bind_port: "${LWM2M_BIND_PORT:5686}"
         # Only RPK: Public & Private Key
@@ -603,13 +603,13 @@ transport:
       bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
       bind_port: "${LWM2M_BIND_PORT:5687}"
       secure:
-        dtls_mode: "${LWM2M_SECURITY_MODE:0}"
+        dtls_mode: "${LWM2M_SECURITY_MODE:1}"
         bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
         bind_port: "${LWM2M_BIND_PORT:5688}"
         # Only RPK: Public & Private Key
-        public_x: "${LWM2M_SERVER_PUBLIC_X:2d46abb8f35cacb55952930f1559da60b9b0c891e5052cbd66e6e925ae85332d}"
-        public_y: "${LWM2M_SERVER_PUBLIC_Y:55bbeb93fe136d36131043ed607e0ea4de1af05973f6bf9c0a11a4129f2f7519}"
-        private_s: "${LWM2M_SERVER_PRIVATE_S:da94b0f94a64c1101ca2c0703de9a23f4deab833d10974e7d92c8cf479c700c3}"
+        public_x: "${LWM2M_SERVER_PUBLIC_X:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
+        private_s: "${LWM2M_SERVER_PRIVATE_S:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
       # Redis
