@@ -79,19 +79,21 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             setBootstrapConfig_ScurityInfo(store);
 //            loadFromFile(store, endpoint);
             BootstrapConfig bsConfigNew = store.getBootstrapConfig();
-            try {
+            if (bsConfigNew != null) {
+                try {
 //                bootstrapConfigStore.getAll().keySet().removeIf(key -> key.equals(endpoint));
 //                bootstrapConfigStore.getAll().entrySet().removeIf(entry -> entry.getKey().equals(endpoint));
-                for (String config : bootstrapConfigStore.getAll().keySet()) {
-                    if (config.equals(endpoint)) {
-                        bootstrapConfigStore.remove(config);
+                    for (String config : bootstrapConfigStore.getAll().keySet()) {
+                        if (config.equals(endpoint)) {
+                            bootstrapConfigStore.remove(config);
+                        }
                     }
+                    bootstrapConfigStore.add(endpoint, bsConfigNew);
+                } catch (InvalidConfigurationException e) {
+                    e.printStackTrace();
                 }
-                bootstrapConfigStore.add(endpoint, bsConfigNew);
-            } catch (InvalidConfigurationException e) {
-                e.printStackTrace();
+                return store.getSecurityInfo() == null ? null : Arrays.asList(store.getSecurityInfo());
             }
-            return Arrays.asList(store.getSecurityInfo());
         }
         return null;
 //        String jsonString =
@@ -204,7 +206,8 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                     lwM2MBootstrapConfig.setServerPublicBootstrapBs("");
                     store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndPoint(),
                             lwM2MBootstrapConfig.getClientPublicKeyOrIdBootstrapBs(),
-                            store.getBootstrapConfig().security.get(0).secretKey));
+                            Hex.decodeHex(lwM2MBootstrapConfig.getClientSecretKeyServerBs().toCharArray())));
+//                            store.getBootstrapConfig().security.get(0).secretKey));
                     store.setSecurityMode(SecurityMode.PSK.code);
                     break;
                 case RPK:
@@ -230,6 +233,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                     lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapHost());
                     lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapPort());
                     store.setSecurityMode(SecurityMode.NO_SEC.code);
+                    store.setSecurityInfo(null);
                     break;
                 default:
             }

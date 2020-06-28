@@ -588,7 +588,7 @@ transport:
         #3: NoSec mode  *
         #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
         #4: Certificate mode X509 with EST
-        dtls_mode: "${LWM2M_SECURITY_MODE:1}"
+        dtls_mode: "${LWM2M_SECURITY_MODE:0}"
         bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
         bind_port: "${LWM2M_BIND_PORT:5686}"
         # Only RPK: Public & Private Key
@@ -603,7 +603,7 @@ transport:
       bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
       bind_port: "${LWM2M_BIND_PORT:5687}"
       secure:
-        dtls_mode: "${LWM2M_SECURITY_MODE:1}"
+        dtls_mode: "${LWM2M_SECURITY_MODE:3}"
         bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
         bind_port: "${LWM2M_BIND_PORT:5688}"
         # Only RPK: Public & Private Key

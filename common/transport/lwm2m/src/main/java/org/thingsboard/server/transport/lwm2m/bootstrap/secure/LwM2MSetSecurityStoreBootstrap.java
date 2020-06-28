@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
@@ -61,7 +62,10 @@ public class LwM2MSetSecurityStoreBootstrap {
         /** Set securityStore with new registrationStore */
 
         switch (LwM2MSecurityMode.fromSecurityMode(this.dtlsMode)) {
-
+            /** Use No_Sec only */
+            case NO_SEC:
+                setServerWithX509Cert(NO_SEC.code);
+                break;
             /** Use RPK only */
             case RPK:
                 setRPK();
@@ -72,7 +76,7 @@ public class LwM2MSetSecurityStoreBootstrap {
                 break;
             /** Use ather X509, PSK,  No_Sec ?? */
             default:
-                setServerWithX509Cert();
+                setServerWithX509Cert(X509.code);
         }
     }
 
@@ -113,12 +117,12 @@ public class LwM2MSetSecurityStoreBootstrap {
         }
     }
 
-    private void setServerWithX509Cert() {
+    private void setServerWithX509Cert(int securityModeCode) {
         try {
             KeyStore keyStoreServer = getKeyStoreServer();
             X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(contextS.getRootAlias());
             rootCAX509Cert = null;
-            if (rootCAX509Cert != null) {
+            if (rootCAX509Cert != null && securityModeCode == X509.code) {
                 X509Certificate[] trustedCertificates = new X509Certificate[1];
                 trustedCertificates[0] = rootCAX509Cert;
                 this.builder.setTrustedCertificates(trustedCertificates);
