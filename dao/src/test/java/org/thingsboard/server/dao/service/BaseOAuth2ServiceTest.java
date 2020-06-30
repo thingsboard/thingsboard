@@ -55,8 +55,8 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();
 
-        Assert.assertNull(oAuth2Service.getSystemOAuth2ClientsParams());
-        Assert.assertNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId));
+        Assert.assertNull(oAuth2Service.getSystemOAuth2ClientsParams().getClientsDomainsParams());
+        Assert.assertNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId).getClientsDomainsParams());
 
         Assert.assertTrue(attributesService.findAll(tenantId, tenantId, DataConstants.SERVER_SCOPE).get().isEmpty());
         Assert.assertNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAuth2Utils.OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
@@ -68,8 +68,8 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
         tenantService.deleteTenant(tenantId);
 
-        Assert.assertNull(oAuth2Service.getSystemOAuth2ClientsParams());
-        Assert.assertNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId));
+        Assert.assertNull(oAuth2Service.getSystemOAuth2ClientsParams().getClientsDomainsParams());
+        Assert.assertNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId).getClientsDomainsParams());
 
         Assert.assertTrue(attributesService.findAll(tenantId, tenantId, DataConstants.SERVER_SCOPE).get().isEmpty());
         Assert.assertNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAuth2Utils.OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
@@ -277,22 +277,22 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     public void testDeleteSystemOAuth2ClientsParams() {
         OAuth2ClientsParams sysAdminClientsParams = validClientsParams();
 
-        Assert.assertNull(oAuth2Service.getSystemOAuth2ClientsParams());
+        Assert.assertNull(oAuth2Service.getSystemOAuth2ClientsParams().getClientsDomainsParams());
 
         oAuth2Service.saveSystemOAuth2ClientsParams(sysAdminClientsParams);
 
-        Assert.assertNotNull(oAuth2Service.getSystemOAuth2ClientsParams());
+        Assert.assertNotNull(oAuth2Service.getSystemOAuth2ClientsParams().getClientsDomainsParams());
     }
 
     @Test
     public void testDeleteTenantOAuth2ClientsParams() {
         OAuth2ClientsParams tenantClientsParams = validClientsParams();
 
-        Assert.assertNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId));
+        Assert.assertNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId).getClientsDomainsParams());
 
         oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, tenantClientsParams);
 
-        Assert.assertNotNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId));
+        Assert.assertNotNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId).getClientsDomainsParams());
     }
 
 

@@ -57,7 +57,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private final ReentrantLock clientRegistrationSaveLock = new ReentrantLock();
-    private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
 
     @Autowired
     private Environment environment;
@@ -75,18 +74,9 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return environment.acceptsProfiles("install");
     }
 
-    @PostConstruct
-    public void init() {
-        if (isInstall()) return;
-
-        Map<TenantId, OAuth2ClientsParams> allOAuth2ClientsParams = getAllOAuth2ClientsParams();
-
-        allOAuth2ClientsParams.forEach(clientsParams::put);
-    }
-
     @Override
     public Pair<TenantId, OAuth2ClientRegistration> getClientRegistrationWithTenant(String registrationId) {
-        return clientsParams.entrySet().stream()
+        return getAllOAuth2ClientsParams().entrySet().stream()
                 .map(entry -> {
                     TenantId tenantId = entry.getKey();
                     OAuth2ClientRegistration clientRegistration = toClientRegistrationStream(entry.getValue())
@@ -135,7 +125,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             String json = toJson(oAuth2ClientsParams);
             ((ObjectNode) oauth2SystemAdminSettings.getJsonValue()).put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
             adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, oauth2SystemAdminSettings);
-            clientsParams.put(TenantId.SYS_TENANT_ID, oAuth2ClientsParams);
         } finally {
             clientRegistrationSaveLock.unlock();
         }
@@ -167,7 +156,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 throw new IncorrectParameterException("Unable to save OAuth2 Client Registration Params to attributes!");
             }
 
-            clientsParams.put(tenantId, oAuth2ClientsParams);
         } finally {
             clientRegistrationSaveLock.unlock();
         }
@@ -258,7 +246,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         toClientRegistrationStream(inputOAuth2ClientsParams)
                 .map(OAuth2ClientRegistration::getRegistrationId)
                 .forEach(registrationId -> {
-                    clientsParams.forEach((paramsTenantId, oAuth2ClientsParams) -> {
+                    getAllOAuth2ClientsParams().forEach((paramsTenantId, oAuth2ClientsParams) -> {
                         boolean registrationExists = toClientRegistrationStream(oAuth2ClientsParams)
                                 .map(OAuth2ClientRegistration::getRegistrationId)
                                 .anyMatch(registrationId::equals);
@@ -352,23 +340,22 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     @Override
     public void deleteTenantOAuth2ClientsParams(TenantId tenantId) {
         OAuth2ClientsParams params = getTenantOAuth2ClientsParams(tenantId);
-        if (params == null) return;
+        if (params == null || params.getClientsDomainsParams() == null) return;
         OAuth2ClientsDomainParams domainParams = params.getClientsDomainsParams().get(0);
         String settingsKey = constructAdminSettingsDomainKey(domainParams.getDomainName());
         adminSettingsService.deleteAdminSettingsByKey(tenantId, settingsKey);
         attributesService.removeAll(tenantId, tenantId, DataConstants.SERVER_SCOPE, Collections.singletonList(OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
-        clientsParams.remove(tenantId);
     }
 
     @Override
     public void deleteSystemOAuth2ClientsParams() {
         adminSettingsService.deleteAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAuth2Utils.OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
-        clientsParams.remove(TenantId.SYS_TENANT_ID);
     }
 
     @Override
     public boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId) {
         Tenant tenant = tenantService.findTenantById(tenantId);
+        if (tenant == null) return false;
         JsonNode allowOAuth2ConfigurationJsonNode = tenant.getAdditionalInfo() != null ? tenant.getAdditionalInfo().get(ALLOW_OAUTH2_CONFIGURATION) : null;
         if (allowOAuth2ConfigurationJsonNode == null) {
             return true;
