@@ -37,13 +37,15 @@ export interface DeviceInfo extends Device {
 
 export enum DeviceCredentialsType {
   ACCESS_TOKEN = 'ACCESS_TOKEN',
-  X509_CERTIFICATE = 'X509_CERTIFICATE'
+  X509_CERTIFICATE = 'X509_CERTIFICATE',
+  LWM2M_CREDENTIALS = 'LWM2M_CREDENTIALS'
 }
 
 export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
   [
     [DeviceCredentialsType.ACCESS_TOKEN, 'Access token'],
     [DeviceCredentialsType.X509_CERTIFICATE, 'X.509 Certificate'],
+    [DeviceCredentialsType.LWM2M_CREDENTIALS, 'LwM2M Credentials'],
   ]
 );
 
@@ -52,6 +54,8 @@ export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
   credentialsType: DeviceCredentialsType;
   credentialsId: string;
   credentialsValue: string;
+  credentialsLwKey: string;
+  credentialsLwValue: string;
 }
 
 export interface DeviceSearchQuery extends EntitySearchQuery {

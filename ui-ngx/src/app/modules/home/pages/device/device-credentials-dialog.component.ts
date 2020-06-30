@@ -120,6 +120,12 @@ export class DeviceCredentialsDialogComponent extends
         this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
         break;
+      case DeviceCredentialsType.LWM2M_CREDENTIALS:
+        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
+        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
+        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
+        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
+        break;
     }
   }
 
