@@ -297,10 +297,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientsParams getSystemOAuth2ClientsParams() {
-        return clientsParams.get(TenantId.SYS_TENANT_ID);
-    }
-
-    private OAuth2ClientsParams getSystemOAuth2ClientsParamsFromDb() {
         AdminSettings oauth2ClientsParamsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
         String json = null;
         if (oauth2ClientsParamsSettings != null) {
@@ -311,13 +307,24 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientsParams getTenantOAuth2ClientsParams(TenantId tenantId) {
-        return clientsParams.get(tenantId);
+        ListenableFuture<String> jsonFuture;
+        if (isOAuth2ClientRegistrationAllowed(tenantId)) {
+            jsonFuture = getOAuth2ClientsParamsAttribute(tenantId);
+        } else {
+            jsonFuture = Futures.immediateFuture("");
+        }
+        try {
+            return Futures.transform(jsonFuture, this::constructOAuth2ClientsParams, MoreExecutors.directExecutor()).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Failed to read OAuth2 Clients Params from attributes!", e);
+            throw new RuntimeException("Failed to read OAuth2 Clients Params from attributes!", e);
+        }
     }
 
     // TODO this is just for test, maybe there's a better way to test it without exporting to interface
     @Override
     public Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
-        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParamsFromDb();
+        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams();
         ListenableFuture<Map<String, String>> jsonFuture = getAllOAuth2ClientsParamsAttribute();
         try {
             return Futures.transform(jsonFuture,
@@ -368,6 +375,25 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         } else {
             return allowOAuth2ConfigurationJsonNode.asBoolean();
         }
+    }
+
+    private ListenableFuture<String> getOAuth2ClientsParamsAttribute(TenantId tenantId) {
+        ListenableFuture<List<AttributeKvEntry>> attributeKvEntriesFuture;
+        try {
+            attributeKvEntriesFuture = attributesService.find(tenantId, tenantId, DataConstants.SERVER_SCOPE,
+                    Collections.singletonList(OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
+        } catch (Exception e) {
+            log.error("Unable to read OAuth2 Clients Params from attributes!", e);
+            throw new IncorrectParameterException("Unable to read OAuth2 Clients Params from attributes!");
+        }
+        return Futures.transform(attributeKvEntriesFuture, attributeKvEntries -> {
+            if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
+                AttributeKvEntry kvEntry = attributeKvEntries.get(0);
+                return kvEntry.getValueAsString();
+            } else {
+                return "";
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     // TODO maybe it's better to load all tenants and get attribute for each one
