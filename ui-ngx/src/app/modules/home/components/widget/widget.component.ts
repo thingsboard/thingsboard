@@ -640,6 +640,20 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       }
     ));
 
+    this.rxSubscriptions.push(this.widgetContext.aliasController.filtersChanged.subscribe(
+      (filterIds) => {
+        let subscriptionChanged = false;
+        for (const id of Object.keys(this.widgetContext.subscriptions)) {
+          const subscription = this.widgetContext.subscriptions[id];
+          subscriptionChanged = subscriptionChanged || subscription.onFiltersChanged(filterIds);
+        }
+        if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
+          this.displayNoData = false;
+          this.reInit();
+        }
+      }
+    ));
+
     this.rxSubscriptions.push(this.widgetContext.dashboard.dashboardTimewindowChanged.subscribe(
       (dashboardTimewindow) => {
         for (const id of Object.keys(this.widgetContext.subscriptions)) {

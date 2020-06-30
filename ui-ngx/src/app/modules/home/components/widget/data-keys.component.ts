@@ -155,10 +155,6 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
               private dialog: MatDialog,
               private fb: FormBuilder,
               public truncate: TruncatePipe) {
-    this.keysListFormGroup = this.fb.group({
-      keys: [null, this.required ? [Validators.required] : []],
-      key: [null]
-    });
   }
 
   updateValidators() {
@@ -174,6 +170,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   }
 
   ngOnInit() {
+    this.keysListFormGroup = this.fb.group({
+        keys: [null, this.required ? [Validators.required] : []],
+        key: [null]
+    });
     this.alarmKeys = [];
     for (const name of Object.keys(alarmFields)) {
       this.alarmKeys.push({

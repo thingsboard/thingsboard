@@ -15,36 +15,38 @@
     limitations under the License.
 
 -->
-<form [formGroup]="widgetFormGroup" (ngSubmit)="add()" style="width: 900px;">
+<form [formGroup]="complexFilterFormGroup" (ngSubmit)="save()">
   <mat-toolbar color="primary">
-    <h2 translate>widget.add</h2>
+    <h2 translate>filter.complex-filter</h2>
     <span fxFlex></span>
-    <div [tb-help]="helpLinkIdForWidgetType()"></div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" style="position: relative; height: 600px;">
-      <tb-widget-config
-        [aliasController]="aliasController"
-        [functionsOnly]="false"
-        [entityAliases]="dashboard.configuration.entityAliases"
-        [filters]="dashboard.configuration.filters"
-        [dashboardStates]="dashboard.configuration.states"
-        formControlName="widgetConfig">
-      </tb-widget-config>
+    <fieldset [disabled]="isLoading$ | async" fxLayout="column">
+      <mat-form-field class="mat-block">
+        <mat-label translate>filter.operation.operation</mat-label>
+        <mat-select required formControlName="operation">
+          <mat-option *ngFor="let operation of complexOperations" [value]="operation">
+            {{complexOperationTranslations.get(complexOperationEnum[operation]) | translate}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <tb-filter-predicate-list
+        [userMode]="data.userMode"
+        [valueType]="data.valueType"
+        formControlName="predicates">
+      </tb-filter-predicate-list>
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || widgetFormGroup.invalid">
-      {{ 'action.add' | translate }}
+            [disabled]="(isLoading$ | async) || complexFilterFormGroup.invalid">
+      {{ 'action.update' | translate }}
     </button>
     <button mat-button color="primary"
             type="button"

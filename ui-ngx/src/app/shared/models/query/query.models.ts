@@ -33,6 +33,14 @@ export enum EntityKeyType {
   ENTITY_FIELD = 'ENTITY_FIELD'
 }
 
+export const entityKeyTypeTranslationMap = new Map<EntityKeyType, string>(
+  [
+    [EntityKeyType.ATTRIBUTE, 'filter.key-type.attribute'],
+    [EntityKeyType.TIME_SERIES, 'filter.key-type.timeseries'],
+    [EntityKeyType.ENTITY_FIELD, 'filter.key-type.entity-field']
+  ]
+);
+
 export function entityKeyTypeToDataKeyType(entityKeyType: EntityKeyType): DataKeyType {
   switch (entityKeyType) {
     case EntityKeyType.ATTRIBUTE:
@@ -52,6 +60,80 @@ export interface EntityKey {
   key: string;
 }
 
+export enum EntityKeyValueType {
+  STRING = 'STRING',
+  NUMERIC = 'NUMERIC',
+  BOOLEAN = 'BOOLEAN'
+}
+
+export interface EntityKeyValueTypeData {
+  name: string;
+  icon: string;
+}
+
+export const entityKeyValueTypesMap = new Map<EntityKeyValueType, EntityKeyValueTypeData>(
+  [
+    [
+      EntityKeyValueType.STRING,
+      {
+        name: 'filter.value-type.string',
+        icon: 'mdi:format-text'
+      }
+    ],
+    [
+      EntityKeyValueType.NUMERIC,
+      {
+        name: 'filter.value-type.numeric',
+        icon: 'mdi:numeric'
+      }
+    ],
+    [
+      EntityKeyValueType.BOOLEAN,
+      {
+        name: 'filter.value-type.boolean',
+        icon: 'mdi:checkbox-marked-outline'
+      }
+    ]
+  ]
+);
+
+export function entityKeyValueTypeToFilterPredicateType(valueType: EntityKeyValueType): FilterPredicateType {
+  switch (valueType) {
+    case EntityKeyValueType.STRING:
+      return FilterPredicateType.STRING;
+    case EntityKeyValueType.NUMERIC:
+      return FilterPredicateType.NUMERIC;
+    case EntityKeyValueType.BOOLEAN:
+      return FilterPredicateType.BOOLEAN;
+  }
+}
+
+export function createDefaultFilterPredicate(valueType: EntityKeyValueType, complex: boolean): KeyFilterPredicate {
+  const predicate = {
+    type: complex ? FilterPredicateType.COMPLEX : entityKeyValueTypeToFilterPredicateType(valueType)
+  } as KeyFilterPredicate;
+  switch (predicate.type) {
+    case FilterPredicateType.STRING:
+      predicate.operation = StringOperation.STARTS_WITH;
+      predicate.value = '';
+      predicate.ignoreCase = false;
+      break;
+    case FilterPredicateType.NUMERIC:
+      predicate.operation = NumericOperation.EQUAL;
+      predicate.value = 0;
+      break;
+    case FilterPredicateType.BOOLEAN:
+      predicate.operation = BooleanOperation.EQUAL;
+      predicate.value = false;
+      break;
+    case FilterPredicateType.COMPLEX:
+      predicate.operation = ComplexOperation.AND;
+      predicate.predicates = [];
+      break;
+  }
+  return predicate;
+}
+
 export enum FilterPredicateType {
   STRING = 'STRING',
   NUMERIC = 'NUMERIC',
@@ -68,6 +150,17 @@ export enum StringOperation {
   NOT_CONTAIN = 'NOT_CONTAIN'
 }
 
+export const stringOperationTranslationMap = new Map<StringOperation, string>(
+  [
+    [StringOperation.EQUAL, 'filter.operation.equal'],
+    [StringOperation.NOT_EQUAL, 'filter.operation.not-equal'],
+    [StringOperation.STARTS_WITH, 'filter.operation.starts-with'],
+    [StringOperation.ENDS_WITH, 'filter.operation.ends-with'],
+    [StringOperation.CONTAINS, 'filter.operation.contains'],
+    [StringOperation.NOT_CONTAIN, 'filter.operation.not-contain']
+  ]
+);
+
 export enum NumericOperation {
   EQUAL = 'EQUAL',
   NOT_EQUAL = 'NOT_EQUAL',
@@ -77,15 +170,40 @@ export enum NumericOperation {
   LESS_OR_EQUAL = 'LESS_OR_EQUAL'
 }
 
+export const numericOperationTranslationMap = new Map<NumericOperation, string>(
+  [
+    [NumericOperation.EQUAL, 'filter.operation.equal'],
+    [NumericOperation.NOT_EQUAL, 'filter.operation.not-equal'],
+    [NumericOperation.GREATER, 'filter.operation.greater'],
+    [NumericOperation.LESS, 'filter.operation.less'],
+    [NumericOperation.GREATER_OR_EQUAL, 'filter.operation.greater-or-equal'],
+    [NumericOperation.LESS_OR_EQUAL, 'filter.operation.less-or-equal']
+  ]
+);
+
 export enum BooleanOperation {
   EQUAL = 'EQUAL',
   NOT_EQUAL = 'NOT_EQUAL'
 }
 
+export const booleanOperationTranslationMap = new Map<BooleanOperation, string>(
+  [
+    [BooleanOperation.EQUAL, 'filter.operation.equal'],
+    [BooleanOperation.NOT_EQUAL, 'filter.operation.not-equal']
+  ]
+);
+
 export enum ComplexOperation {
   AND = 'AND',
   OR = 'OR'
 }
+
+export const complexOperationTranslationMap = new Map<ComplexOperation, string>(
+  [
+    [ComplexOperation.AND, 'filter.operation.and'],
+    [ComplexOperation.OR, 'filter.operation.or']
+  ]
+);
 
 export interface StringFilterPredicate {
   type: FilterPredicateType.STRING,
@@ -120,6 +238,45 @@ export type KeyFilterPredicate = StringFilterPredicate |
 export interface KeyFilter {
   key: EntityKey;
   predicate: KeyFilterPredicate;
+}
+
+export interface KeyFilterInfo {
+  key: EntityKey;
+  valueType: EntityKeyValueType;
+  predicates: Array<KeyFilterPredicate>;
+}
+
+export interface FilterInfo {
+  filter: string;
+  keyFilters: Array<KeyFilterInfo>;
+}
+
+export interface FiltersInfo {
+  datasourceFilters: {[datasourceIndex: number]: FilterInfo};
+}
+
+export function filterInfoToKeyFilters(filter: FilterInfo): Array<KeyFilter> {
+  const keyFilterInfos = filter.keyFilters;
+  const keyFilters: Array<KeyFilter> = [];
+  for (const keyFilterInfo of keyFilterInfos) {
+    const key = keyFilterInfo.key;
+    for (const predicate of keyFilterInfo.predicates) {
+      const keyFilter: KeyFilter = {
+        key,
+        predicate
+      };
+      keyFilters.push(keyFilter);
+    }
+  }
+  return keyFilters;
+}
+
+export interface Filter extends FilterInfo {
+  id: string;
+}
+
+export interface Filters {
+  [id: string]: Filter
 }
 
 export interface EntityFilter extends EntityFilters {

@@ -29,34 +29,32 @@ import { map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityType } from '@shared/models/entity-type.models';
-import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { EntityAlias } from '@shared/models/alias.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { EntityAliasSelectCallbacks } from './entity-alias-select.component.models';
 import { ENTER } from '@angular/cdk/keycodes';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
+import { Filter } from '@shared/models/query/query.models';
 
 @Component({
-  selector: 'tb-entity-alias-select',
-  templateUrl: './entity-alias-select.component.html',
-  styleUrls: ['./entity-alias-select.component.scss'],
+  selector: 'tb-filter-select',
+  templateUrl: './filter-select.component.html',
+  styleUrls: ['./filter-select.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityAliasSelectComponent),
+    useExisting: forwardRef(() => FilterSelectComponent),
     multi: true
   },
-  {
-    provide: ErrorStateMatcher,
-    useExisting: EntityAliasSelectComponent
-  }]
+    {
+      provide: ErrorStateMatcher,
+      useExisting: FilterSelectComponent
+    }]
 })
-export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, ErrorStateMatcher {
+export class FilterSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, ErrorStateMatcher {
 
-  selectEntityAliasFormGroup: FormGroup;
+  selectFilterFormGroup: FormGroup;
 
   modelValue: string | null;
 
@@ -64,15 +62,12 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   aliasController: IAliasController;
 
   @Input()
-  allowedEntityTypes: Array<EntityType>;
-
-  @Input()
-  callbacks: EntityAliasSelectCallbacks;
+  callbacks: FilterSelectCallbacks;
 
   @Input()
   showLabel: boolean;
 
-  @ViewChild('entityAliasAutocomplete') entityAliasAutocomplete: MatAutocomplete;
+  @ViewChild('filterAutocomplete') filterAutocomplete: MatAutocomplete;
   @ViewChild('autocomplete', { read: MatAutocompleteTrigger }) autoCompleteTrigger: MatAutocompleteTrigger;
 
 
@@ -88,28 +83,27 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   @Input()
   disabled: boolean;
 
-  @ViewChild('entityAliasInput', {static: true}) entityAliasInput: ElementRef;
+  @ViewChild('filterInput', {static: true}) filterInput: ElementRef;
 
-  entityAliasList: Array<EntityAlias> = [];
+  filterList: Array<Filter> = [];
 
-  filteredEntityAliases: Observable<Array<EntityAlias>>;
+  filteredFilters: Observable<Array<Filter>>;
 
   searchText = '';
 
   private dirty = false;
 
-  private creatingEntityAlias = false;
+  private creatingFilter = false;
 
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              private entityService: EntityService,
               public translate: TranslateService,
               public truncate: TruncatePipe,
               private fb: FormBuilder) {
-    this.selectEntityAliasFormGroup = this.fb.group({
-      entityAlias: [null]
+    this.selectFilterFormGroup = this.fb.group({
+      filter: [null]
     });
   }
 
@@ -121,17 +115,12 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   }
 
   ngOnInit() {
-    const entityAliases = this.aliasController.getEntityAliases();
-    for (const aliasId of Object.keys(entityAliases)) {
-      if (this.allowedEntityTypes && this.allowedEntityTypes.length) {
-        if (!this.entityService.filterAliasByEntityTypes(entityAliases[aliasId], this.allowedEntityTypes)) {
-          continue;
-        }
-      }
-      this.entityAliasList.push(entityAliases[aliasId]);
+    const filters = this.aliasController.getFilters();
+    for (const filterId of Object.keys(filters)) {
+      this.filterList.push(filters[filterId]);
     }
 
-    this.filteredEntityAliases = this.selectEntityAliasFormGroup.get('entityAlias').valueChanges
+    this.filteredFilters = this.selectFilterFormGroup.get('filter').valueChanges
       .pipe(
         tap(value => {
           let modelValue;
@@ -145,8 +134,8 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
             this.clear();
           }
         }),
-        map(value => value ? (typeof value === 'string' ? value : value.alias) : ''),
-        mergeMap(name => this.fetchEntityAliases(name) ),
+        map(value => value ? (typeof value === 'string' ? value : value.filter) : ''),
+        mergeMap(name => this.fetchFilters(name) ),
         share()
       );
   }
@@ -162,65 +151,65 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.selectEntityAliasFormGroup.disable({emitEvent: false});
+      this.selectFilterFormGroup.disable({emitEvent: false});
     } else {
-      this.selectEntityAliasFormGroup.enable({emitEvent: false});
+      this.selectFilterFormGroup.enable({emitEvent: false});
     }
   }
 
   writeValue(value: string | null): void {
     this.searchText = '';
-    let entityAlias = null;
+    let filter = null;
     if (value != null) {
-      const entityAliases = this.aliasController.getEntityAliases();
-      if (entityAliases[value]) {
-        entityAlias = entityAliases[value];
+      const filters = this.aliasController.getFilters();
+      if (filters[value]) {
+        filter = filters[value];
       }
     }
-    if (entityAlias != null) {
-      this.modelValue = entityAlias.id;
-      this.selectEntityAliasFormGroup.get('entityAlias').patchValue(entityAlias, {emitEvent: false});
+    if (filter != null) {
+      this.modelValue = filter.id;
+      this.selectFilterFormGroup.get('filter').patchValue(filter, {emitEvent: false});
     } else {
       this.modelValue = null;
-      this.selectEntityAliasFormGroup.get('entityAlias').patchValue('', {emitEvent: false});
+      this.selectFilterFormGroup.get('filter').patchValue('', {emitEvent: false});
     }
     this.dirty = true;
   }
 
   onFocus() {
     if (this.dirty) {
-      this.selectEntityAliasFormGroup.get('entityAlias').updateValueAndValidity({onlySelf: true, emitEvent: true});
+      this.selectFilterFormGroup.get('filter').updateValueAndValidity({onlySelf: true, emitEvent: true});
       this.dirty = false;
     }
   }
 
-  updateView(value: EntityAlias | null) {
-    const aliasId = value ? value.id : null;
-    if (this.modelValue !== aliasId) {
-      this.modelValue = aliasId;
+  updateView(value: Filter | null) {
+    const filterId = value ? value.id : null;
+    if (this.modelValue !== filterId) {
+      this.modelValue = filterId;
       this.propagateChange(this.modelValue);
     }
   }
 
-  displayEntityAliasFn(entityAlias?: EntityAlias): string | undefined {
-    return entityAlias ? entityAlias.alias : undefined;
+  displayFilterFn(filter?: Filter): string | undefined {
+    return filter ? filter.filter : undefined;
   }
 
-  fetchEntityAliases(searchText?: string): Observable<Array<EntityAlias>> {
+  fetchFilters(searchText?: string): Observable<Array<Filter>> {
     this.searchText = searchText;
-    let result = this.entityAliasList;
+    let result = this.filterList;
     if (searchText && searchText.length) {
-      result = this.entityAliasList.filter((entityAlias) => entityAlias.alias.toLowerCase().includes(searchText.toLowerCase()));
+      result = this.filterList.filter((filter) => filter.filter.toLowerCase().includes(searchText.toLowerCase()));
     }
     return of(result);
   }
 
   clear(value: string = '') {
-    this.entityAliasInput.nativeElement.value = value;
-    this.selectEntityAliasFormGroup.get('entityAlias').patchValue(value, {emitEvent: true});
+    this.filterInput.nativeElement.value = value;
+    this.selectFilterFormGroup.get('filter').patchValue(value, {emitEvent: true});
     setTimeout(() => {
-      this.entityAliasInput.nativeElement.blur();
-      this.entityAliasInput.nativeElement.focus();
+      this.filterInput.nativeElement.blur();
+      this.filterInput.nativeElement.focus();
     }, 0);
   }
 
@@ -228,29 +217,29 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
     return (text && text != null && text.length > 0) ? true : false;
   }
 
-  entityAliasEnter($event: KeyboardEvent) {
+  filterEnter($event: KeyboardEvent) {
     if ($event.keyCode === ENTER) {
       $event.preventDefault();
       if (!this.modelValue) {
-        this.createEntityAlias($event, this.searchText);
+        this.createFilter($event, this.searchText);
       }
     }
   }
 
-  createEntityAlias($event: Event, alias: string) {
+  createFilter($event: Event, filter: string) {
     $event.preventDefault();
-    this.creatingEntityAlias = true;
-    if (this.callbacks && this.callbacks.createEntityAlias) {
-      this.callbacks.createEntityAlias(alias, this.allowedEntityTypes).subscribe((newAlias) => {
-          if (!newAlias) {
+    this.creatingFilter = true;
+    if (this.callbacks && this.callbacks.createFilter) {
+      this.callbacks.createFilter(filter).subscribe((newFilter) => {
+          if (!newFilter) {
             setTimeout(() => {
-              this.entityAliasInput.nativeElement.blur();
-              this.entityAliasInput.nativeElement.focus();
+              this.filterInput.nativeElement.blur();
+              this.filterInput.nativeElement.focus();
             }, 0);
           } else {
-            this.entityAliasList.push(newAlias);
-            this.modelValue = newAlias.id;
-            this.selectEntityAliasFormGroup.get('entityAlias').patchValue(newAlias, {emitEvent: true});
+            this.filterList.push(newFilter);
+            this.modelValue = newFilter.id;
+            this.selectFilterFormGroup.get('filter').patchValue(newFilter, {emitEvent: true});
             this.propagateChange(this.modelValue);
           }
         }

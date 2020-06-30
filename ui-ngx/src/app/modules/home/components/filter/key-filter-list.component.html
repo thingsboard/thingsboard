@@ -1,0 +1,53 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section fxLayout="column" [formGroup]="keyFilterListFormGroup">
+  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" style="max-height: 40px;"
+       formArrayName="keyFilters"
+       *ngFor="let keyFilterControl of keyFiltersFormArray().controls; let $index = index">
+    <span>{{ keyFilterControl.value.key.key }}</span>
+    <span>{{ keyFilterControl.value.key.type }}</span>
+    <button mat-icon-button color="primary"
+            type="button"
+            (click)="editKeyFilter($index)"
+            matTooltip="{{ 'filter.edit-key-filter' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button color="primary"
+            [fxShow]="!disabled && !userMode"
+            type="button"
+            (click)="removeKeyFilter($index)"
+            matTooltip="{{ 'filter.remove-key-filter' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <span [fxShow]="!keyFiltersFormArray().length"
+        fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
+        class="no-data-found" translate>filter.no-key-filters</span>
+  <div style="margin-top: 8px;">
+    <button mat-button mat-raised-button color="primary"
+            [fxShow]="!disabled && !userMode"
+            (click)="addKeyFilter()"
+            type="button"
+            matTooltip="{{ 'filter.add-key-filter' | translate }}"
+            matTooltipPosition="above">
+      {{ 'filter.add-key-filter' | translate }}
+    </button>
+  </div>
+</section>

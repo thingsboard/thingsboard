@@ -154,12 +154,21 @@
                       </mat-form-field>
                     </ng-template>
                     <ng-template [ngSwitchCase]="datasourceType.entity">
-                      <tb-entity-alias-select
-                        [tbRequired]="datasourceControl.get('type').value === datasourceType.entity"
-                        [aliasController]="aliasController"
-                        formControlName="entityAliasId"
-                        [callbacks]="widgetConfigCallbacks">
-                      </tb-entity-alias-select>
+                      <section fxLayout="column">
+                        <tb-entity-alias-select
+                          [showLabel]="true"
+                          [tbRequired]="datasourceControl.get('type').value === datasourceType.entity"
+                          [aliasController]="aliasController"
+                          formControlName="entityAliasId"
+                          [callbacks]="widgetConfigCallbacks">
+                        </tb-entity-alias-select>
+                        <tb-filter-select
+                          [showLabel]="true"
+                          [aliasController]="aliasController"
+                          formControlName="filterId"
+                          [callbacks]="widgetConfigCallbacks">
+                        </tb-filter-select>
+                      </section>
                     </ng-template>
                   </section>
                   <tb-data-keys class="tb-data-keys" fxFlex
@@ -250,11 +259,18 @@
               </ng-template>
               <ng-template [ngSwitchCase]="datasourceType.entity">
                 <tb-entity-alias-select
+                  [showLabel]="true"
                   [tbRequired]="alarmSourceSettings.get('type').value === datasourceType.entity"
                   [aliasController]="aliasController"
                   formControlName="entityAliasId"
                   [callbacks]="widgetConfigCallbacks">
                 </tb-entity-alias-select>
+                <tb-filter-select
+                  [showLabel]="true"
+                  [aliasController]="aliasController"
+                  formControlName="filterId"
+                  [callbacks]="widgetConfigCallbacks">
+                </tb-filter-select>
               </ng-template>
             </section>
             <tb-data-keys class="tb-data-keys" fxFlex

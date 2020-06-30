@@ -36,7 +36,7 @@ import {
 } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataListener, EntityDataLoadResult } from '@core/api/entity-data.service';
-import { deepClone, isDefinedAndNotNull, isObject, objectHashCode } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isObject, objectHashCode } from '@core/utils';
 import { PageData } from '@shared/models/page/page-data';
 import { DataAggregator } from '@core/api/data-aggregator';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -497,7 +497,9 @@ export class EntityDataSubscription {
   private onDataUpdate(update: Array<EntityData>) {
     for (const entityData of update) {
       const dataIndex = this.entityIdToDataIndex[entityData.entityId.id];
-      this.processEntityData(entityData, dataIndex, true, this.notifyListener.bind(this));
+      if (isDefined(dataIndex) && dataIndex >= 0) {
+        this.processEntityData(entityData, dataIndex, true, this.notifyListener.bind(this));
+      }
     }
   }
 

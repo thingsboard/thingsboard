@@ -24,7 +24,7 @@ import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import { map, mergeMap } from 'rxjs/operators';
 import {
-  defaultEntityDataPageLink, singleEntityDataPageLink,
+  defaultEntityDataPageLink, FilterInfo, filterInfoToKeyFilters, Filters, KeyFilter, singleEntityDataPageLink,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
 
@@ -33,10 +33,14 @@ export class AliasController implements IAliasController {
   entityAliasesChangedSubject = new Subject<Array<string>>();
   entityAliasesChanged: Observable<Array<string>> = this.entityAliasesChangedSubject.asObservable();
 
+  filtersChangedSubject = new Subject<Array<string>>();
+  filtersChanged: Observable<Array<string>> = this.filtersChangedSubject.asObservable();
+
   private entityAliasResolvedSubject = new Subject<string>();
   entityAliasResolved: Observable<string> = this.entityAliasResolvedSubject.asObservable();
 
   entityAliases: EntityAliases;
+  filters: Filters;
 
   resolvedAliases: {[aliasId: string]: AliasInfo} = {};
   resolvedAliasesObservable: {[aliasId: string]: Observable<AliasInfo>} = {};
@@ -46,10 +50,11 @@ export class AliasController implements IAliasController {
   constructor(private utils: UtilsService,
               private entityService: EntityService,
               private stateControllerHolder: StateControllerHolder,
-              private origEntityAliases: EntityAliases) {
+              private origEntityAliases: EntityAliases,
+              private origFilters: Filters) {
     this.entityAliases = deepClone(this.origEntityAliases);
+    this.filters = deepClone(this.origFilters);
   }
-
 
   updateEntityAliases(newEntityAliases: EntityAliases) {
     const changedAliasIds: Array<string> = [];
@@ -70,6 +75,26 @@ export class AliasController implements IAliasController {
     this.entityAliases = deepClone(newEntityAliases);
     if (changedAliasIds.length) {
       this.entityAliasesChangedSubject.next(changedAliasIds);
+    }
+  }
+
+  updateFilters(newFilters: Filters) {
+    const changedFilterIds: Array<string> = [];
+    for (const filterId of Object.keys(newFilters)) {
+      const newFilter = newFilters[filterId];
+      const prevFilter = this.filters[filterId];
+      if (!isEqual(newFilter, prevFilter)) {
+        changedFilterIds.push(filterId);
+      }
+    }
+    for (const filterId of Object.keys(this.filters)) {
+      if (!newFilters[filterId]) {
+        changedFilterIds.push(filterId);
+      }
+    }
+    this.filters = deepClone(newFilters);
+    if (changedFilterIds.length) {
+      this.filtersChangedSubject.next(changedFilterIds);
     }
   }
 
@@ -114,6 +139,23 @@ export class AliasController implements IAliasController {
 
   getEntityAliases(): EntityAliases {
     return this.entityAliases;
+  }
+
+  getFilters(): Filters {
+    return this.filters;
+  }
+
+  getFilterInfo(filterId: string): FilterInfo {
+    return this.filters[filterId];
+  }
+
+  getKeyFilters(filterId: string): Array<KeyFilter> {
+    const filter = this.getFilterInfo(filterId);
+    if (filter) {
+      return filterInfoToKeyFilters(filter);
+    } else {
+      return [];
+    }
   }
 
   getEntityAliasId(aliasName: string): string {
@@ -191,6 +233,9 @@ export class AliasController implements IAliasController {
   private resolveDatasource(datasource: Datasource, forceFilter = false): Observable<Datasource> {
     const newDatasource = deepClone(datasource);
     if (newDatasource.type === DatasourceType.entity) {
+      if (newDatasource.filterId) {
+        newDatasource.keyFilters = this.getKeyFilters(newDatasource.filterId);
+      }
       if (newDatasource.entityAliasId) {
         return this.getAliasInfo(newDatasource.entityAliasId).pipe(
           mergeMap((aliasInfo) => {

@@ -87,6 +87,8 @@ import {
 } from '@home/pages/dashboard/states/manage-dashboard-states-dialog.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { AuthState } from '@app/core/auth/auth.models';
+import { FiltersDialogComponent, FiltersDialogData } from '@home/components/filter/filters-dialog.component';
+import { Filters } from '@shared/models/query/query.models';
 
 // @dynamic
 @Component({
@@ -277,7 +279,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.dashboardCtx.aliasController = new AliasController(this.utils,
       this.entityService,
       () => this.dashboardCtx.stateController,
-      this.dashboardConfiguration.entityAliases);
+      this.dashboardConfiguration.entityAliases,
+      this.dashboardConfiguration.filters);
 
     if (this.widgetEditMode) {
       const message: WindowMessage = {
@@ -491,6 +494,27 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     });
   }
 
+  public openFilters($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<FiltersDialogComponent, FiltersDialogData,
+      Filters>(FiltersDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        filters: deepClone(this.dashboard.configuration.filters),
+        widgets: this.dashboardUtils.getWidgetsArray(this.dashboard),
+        isSingleFilter: false
+      }
+    }).afterClosed().subscribe((filters) => {
+      if (filters) {
+        this.dashboard.configuration.filters = filters;
+        this.filtersUpdated();
+      }
+    });
+  }
+
   public openDashboardSettings($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -577,7 +601,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       $event.stopPropagation();
     }
     this.importExport.importWidget(this.dashboard, this.dashboardCtx.state,
-      this.selectTargetLayout.bind(this), this.entityAliasesUpdated.bind(this)).subscribe(
+      this.selectTargetLayout.bind(this), this.entityAliasesUpdated.bind(this), this.filtersUpdated.bind(this)).subscribe(
       (importData) => {
         if (importData) {
           const widget = importData.widget;
@@ -667,6 +691,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           this.dashboardConfiguration = this.dashboard.configuration;
           this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
           this.entityAliasesUpdated();
+          this.filtersUpdated();
           this.updateLayouts();
         } else {
           this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
@@ -687,6 +712,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private entityAliasesUpdated() {
     this.dashboardCtx.aliasController.updateEntityAliases(this.dashboard.configuration.entityAliases);
+  }
+
+  private filtersUpdated() {
+    this.dashboardCtx.aliasController.updateFilters(this.dashboard.configuration.filters);
   }
 
   private notifyDashboardUpdated() {
@@ -894,7 +923,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   pasteWidget($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition) {
     this.itembuffer.pasteWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id,
-            pos, this.entityAliasesUpdated.bind(this)).subscribe(
+            pos, this.entityAliasesUpdated.bind(this), this.filtersUpdated.bind(this)).subscribe(
       (widget) => {
         layoutCtx.widgets.addWidgetId(widget.id);
       });

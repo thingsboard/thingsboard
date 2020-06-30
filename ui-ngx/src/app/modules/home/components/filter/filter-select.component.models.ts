@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { EntityAliasSelectCallbacks } from '../alias/entity-alias-select.component.models';
-import { DataKeysCallbacks } from './data-keys.component.models';
-import { WidgetActionCallbacks } from './action/manage-widget-actions.component.models';
-import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
+import { Observable } from 'rxjs';
+import { Filter } from '@shared/models/query/query.models';
 
-export type WidgetConfigCallbacks = EntityAliasSelectCallbacks & FilterSelectCallbacks & DataKeysCallbacks & WidgetActionCallbacks;
+export interface FilterSelectCallbacks {
+  createFilter: (filter: string) => Observable<Filter>;
+}

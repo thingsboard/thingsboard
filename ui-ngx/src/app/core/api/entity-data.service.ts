@@ -86,6 +86,13 @@ export class EntityDataService {
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
       return of(null);
     }
+    if (datasource.keyFilters) {
+      if (keyFilters) {
+        keyFilters = keyFilters.concat(datasource.keyFilters);
+      } else {
+        keyFilters = datasource.keyFilters;
+      }
+    }
     listener.subscription = this.createSubscription(listener,
       pageLink, keyFilters,  true);
     if (listener.subscriptionType === widgetType.timeseries) {

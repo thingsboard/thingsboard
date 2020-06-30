@@ -15,15 +15,16 @@
     limitations under the License.
 
 -->
-<form [formGroup]="widgetFormGroup">
-  <fieldset [disabled]="isLoading$ | async">
-    <tb-widget-config
-      [aliasController]="aliasController"
-      [functionsOnly]="widgetEditMode"
-      [entityAliases]="dashboard.configuration.entityAliases"
-      [filters]="dashboard.configuration.filters"
-      [dashboardStates]="dashboard.configuration.states"
-      formControlName="widgetConfig">
-    </tb-widget-config>
-  </fieldset>
-</form>
+<div fxLayout="row" [formGroup]="booleanFilterPredicateFormGroup">
+  <mat-form-field class="mat-block">
+    <mat-label translate>filter.operation.operation</mat-label>
+    <mat-select required formControlName="operation">
+      <mat-option *ngFor="let operation of booleanOperations" [value]="operation">
+        {{booleanOperationTranslations.get(booleanOperationEnum[operation]) | translate}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-checkbox formControlName="value">
+    {{ 'filter.value' | translate }}
+  </mat-checkbox>
+</div>

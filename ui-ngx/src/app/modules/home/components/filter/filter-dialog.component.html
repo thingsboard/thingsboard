@@ -15,11 +15,10 @@
     limitations under the License.
 
 -->
-<form [formGroup]="widgetFormGroup" (ngSubmit)="add()" style="width: 900px;">
+<form [formGroup]="filterFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
   <mat-toolbar color="primary">
-    <h2 translate>widget.add</h2>
+    <h2>{{ (isAdd ? 'filter.add' : 'filter.edit') | translate }}</h2>
     <span fxFlex></span>
-    <div [tb-help]="helpLinkIdForWidgetType()"></div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -29,28 +28,35 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" style="position: relative; height: 600px;">
-      <tb-widget-config
-        [aliasController]="aliasController"
-        [functionsOnly]="false"
-        [entityAliases]="dashboard.configuration.entityAliases"
-        [filters]="dashboard.configuration.filters"
-        [dashboardStates]="dashboard.configuration.states"
-        formControlName="widgetConfig">
-      </tb-widget-config>
+    <fieldset [disabled]="isLoading$ | async">
+      <div fxFlex fxLayout="column">
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>filter.name</mat-label>
+          <input matInput formControlName="filter" required>
+          <mat-error *ngIf="filterFormGroup.get('filter').hasError('required')">
+            {{ 'filter.name-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="filterFormGroup.get('filter').hasError('duplicateFilterName')">
+            {{ 'filter.duplicate-filter' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <tb-key-filter-list
+          formControlName="keyFilters"
+          [userMode]="userMode">
+        </tb-key-filter-list>
+      </div>
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || widgetFormGroup.invalid">
-      {{ 'action.add' | translate }}
+            [disabled]="(isLoading$ | async) || filterFormGroup.invalid || !filterFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
-            (click)="cancel()"
-            cdkFocusInitial>
+            (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
   </div>

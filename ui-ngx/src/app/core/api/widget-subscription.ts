@@ -16,7 +16,8 @@
 
 import {
   IWidgetSubscription,
-  SubscriptionEntityInfo, SubscriptionMessage,
+  SubscriptionEntityInfo,
+  SubscriptionMessage,
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
@@ -57,7 +58,8 @@ import {
   EntityData,
   EntityDataPageLink,
   entityDataToEntityInfo,
-  KeyFilter, updateDatasourceFromEntityInfo
+  KeyFilter,
+  updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
 import { map } from 'rxjs/operators';
 
@@ -523,6 +525,17 @@ export class WidgetSubscription implements IWidgetSubscription {
     return false;
   }
 
+  onFiltersChanged(filterIds: Array<string>): boolean {
+    if (this.type !== widgetType.rpc) {
+      if (this.type === widgetType.alarm) {
+        return this.checkAlarmSourceFilters(filterIds);
+      } else {
+        return this.checkSubscriptionsFilters(filterIds);
+      }
+    }
+    return false;
+  }
+
   private onDataUpdated(detectChanges?: boolean) {
     if (this.cafs.dataUpdated) {
       this.cafs.dataUpdated();
@@ -919,6 +932,14 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
+  private checkAlarmSourceFilters(filterIds: Array<string>): boolean {
+    if (this.options.alarmSource && this.options.alarmSource.filterId) {
+      return filterIds.indexOf(this.options.alarmSource.filterId) > -1;
+    } else {
+      return false;
+    }
+  }
+
   private checkSubscriptions(aliasIds: Array<string>): boolean {
     let subscriptionsChanged = false;
     const datasources = this.options.datasources;
@@ -926,6 +947,26 @@ export class WidgetSubscription implements IWidgetSubscription {
       for (const datasource of datasources) {
         if (datasource.entityAliasId) {
           if (aliasIds.indexOf(datasource.entityAliasId) > -1) {
+            subscriptionsChanged = true;
+            break;
+          }
+        }
+      }
+    }
+    if (subscriptionsChanged && this.hasDataPageLink) {
+      subscriptionsChanged = false;
+      this.updateDataSubscriptions();
+    }
+    return subscriptionsChanged;
+  }
+
+  private checkSubscriptionsFilters(filterIds: Array<string>): boolean {
+    let subscriptionsChanged = false;
+    const datasources = this.options.datasources;
+    if (datasources) {
+      for (const datasource of datasources) {
+        if (datasource.filterId) {
+          if (filterIds.indexOf(datasource.filterId) > -1) {
             subscriptionsChanged = true;
             break;
           }

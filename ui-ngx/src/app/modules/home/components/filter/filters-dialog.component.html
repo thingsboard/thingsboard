@@ -1,0 +1,99 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="filtersFormGroup" (ngSubmit)="save()" style="width: 700px;">
+  <mat-toolbar color="primary">
+    <h2>{{ title | translate }}</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <div class="tb-filters-header" fxLayout="row" fxLayoutAlign="start center">
+      <span fxFlex="5"></span>
+      <div fxFlex="95" fxLayout="row" fxLayoutAlign="start center">
+        <span class="tb-header-label" translate fxFlex>filter.filter</span>
+        <span style="min-width: 80px;"></span>
+      </div>
+    </div>
+    <fieldset [disabled]="isLoading$ | async">
+      <mat-divider></mat-divider>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center"
+           formArrayName="filters"
+           *ngFor="let filterControl of filtersFormArray().controls; let $index = index">
+        <span fxFlex="5">{{$index + 1}}.</span>
+        <div class="mat-elevation-z4 tb-filter" fxFlex="95" fxLayout="row" fxLayoutAlign="start center">
+          <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block" fxFlex>
+            <mat-label></mat-label>
+            <input matInput [formControl]="filterControl.get('filter')" required placeholder="{{ 'filter.filter' | translate }}">
+            <mat-error *ngIf="filterControl.get('filter').hasError('required')">
+              {{ 'filter.filter-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <button [disabled]="isLoading$ | async"
+                  mat-icon-button color="primary"
+                  style="min-width: 40px;"
+                  type="button"
+                  (click)="editFilter($index)"
+                  matTooltip="{{ 'filter.edit' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button [disabled]="isLoading$ | async"
+                  mat-icon-button color="primary"
+                  style="min-width: 40px;"
+                  type="button"
+                  (click)="removeFilter($index)"
+                  matTooltip="{{ 'filter.remove-filter' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-raised-button color="primary"
+            type="button"
+            (click)="addFilter()"
+            [fxShow]="!disableAdd"
+            [disabled]="isLoading$ | async"
+            matTooltip="{{ 'filter.add' | translate }}"
+            matTooltipPosition="above">
+      {{ 'filter.add' | translate }}
+    </button>
+    <span fxFlex></span>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || filtersFormGroup.invalid || !filtersFormGroup.dirty">
+      {{ 'action.save' | translate }}
+    </button>
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()"
+            cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+  </div>
+</form>

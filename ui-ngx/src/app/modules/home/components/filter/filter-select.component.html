@@ -16,46 +16,46 @@
 
 -->
 <mat-form-field [floatLabel]="showLabel ? 'auto' : 'always'"
-                [hideRequiredMarker]="!showLabel" [formGroup]="selectEntityAliasFormGroup" class="mat-block">
+                [hideRequiredMarker]="!showLabel" [formGroup]="selectFilterFormGroup" class="mat-block">
   <mat-label *ngIf="!showLabel"></mat-label>
-  <input matInput type="text" placeholder="{{ 'entity.entity-alias' | translate }}"
-         #entityAliasInput
-         formControlName="entityAlias"
+  <input matInput type="text" placeholder="{{ 'filter.filter' | translate }}"
+         #filterInput
+         formControlName="filter"
          (focusin)="onFocus()"
          [required]="tbRequired"
-         (keydown)="entityAliasEnter($event)"
-         (keypress)="entityAliasEnter($event)"
-         [matAutocomplete]="entityAliasAutocomplete">
-  <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
+         (keydown)="filterEnter($event)"
+         (keypress)="filterEnter($event)"
+         [matAutocomplete]="filterAutocomplete">
+  <button *ngIf="selectFilterFormGroup.get('filter').value && !disabled"
           type="button"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
   <mat-autocomplete class="tb-autocomplete"
-                    #entityAliasAutocomplete="matAutocomplete"
-                    [displayWith]="displayEntityAliasFn">
-    <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
-      <span [innerHTML]="entityAlias.alias | highlight:searchText"></span>
+                    #filterAutocomplete="matAutocomplete"
+                    [displayWith]="displayFilterFn">
+    <mat-option *ngFor="let filter of filteredFilters | async" [value]="filter">
+      <span [innerHTML]="filter.filter | highlight:searchText"></span>
     </mat-option>
-    <mat-option *ngIf="!(filteredEntityAliases | async)?.length" [value]="null" class="tb-not-found">
+    <mat-option *ngIf="!(filteredFilters | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">
         <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>entity.no-aliases-found</span>
+          <span translate>filter.no-filters-found</span>
         </div>
         <ng-template #searchNotEmpty>
           <span>
-            {{ translate.get('entity.no-alias-matching',
-              {alias: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            {{ translate.get('filter.no-filter-matching',
+            {filter: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
           </span>
         </ng-template>
         <span>
-          <a translate (click)="createEntityAlias($event, searchText)">entity.create-new-alias</a>
+          <a translate (click)="createFilter($event, searchText)">filter.create-new-filter</a>
         </span>
       </div>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="!modelValue && tbRequired">
-    {{ 'entity.alias-required' | translate }}
+    {{ 'filter.filter-required' | translate }}
   </mat-error>
 </mat-form-field>

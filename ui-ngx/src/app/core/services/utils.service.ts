@@ -254,6 +254,9 @@ export class UtilsService {
       if (datasource.type === DatasourceType.entity && datasource.entityId) {
         datasource.name = datasource.entityName;
       }
+      if (!datasource.dataKeys) {
+        datasource.dataKeys = [];
+      }
     });
     return datasources;
   }

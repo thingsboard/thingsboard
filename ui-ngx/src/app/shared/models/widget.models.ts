@@ -262,6 +262,7 @@ export interface Datasource {
   entityId?: string;
   entityName?: string;
   entityAliasId?: string;
+  filterId?: string;
   unresolvedStateEntity?: boolean;
   dataReceived?: boolean;
   entity?: BaseData<EntityId>;

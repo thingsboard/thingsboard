@@ -40,7 +40,14 @@ import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import * as moment_ from 'moment';
-import { EntityData, EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
+import {
+  EntityData,
+  EntityDataPageLink,
+  EntityFilter,
+  Filter, FilterInfo,
+  Filters,
+  KeyFilter
+} from '@shared/models/query/query.models';
 import { EntityDataService } from '@core/api/entity-data.service';
 import { PageData } from '@shared/models/page/page-data';
 import { TranslateService } from '@ngx-translate/core';
@@ -93,6 +100,7 @@ export interface StateEntityInfo {
 export interface IAliasController {
   entityAliasesChanged: Observable<Array<string>>;
   entityAliasResolved: Observable<string>;
+  filtersChanged: Observable<Array<string>>;
   getAliasInfo(aliasId: string): Observable<AliasInfo>;
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
@@ -100,8 +108,12 @@ export interface IAliasController {
   resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>>;
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
+  getFilters(): Filters;
+  getFilterInfo(filterId: string): FilterInfo;
+  getKeyFilters(filterId: string): Array<KeyFilter>;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
   updateEntityAliases(entityAliases: EntityAliases);
+  updateFilters(filters: Filters);
   updateAliases(aliasIds?: Array<string>);
   dashboardStateChanged();
 }
@@ -272,6 +284,8 @@ export interface IWidgetSubscription {
   getFirstEntityInfo(): SubscriptionEntityInfo;
 
   onAliasesChanged(aliasIds: Array<string>): boolean;
+
+  onFiltersChanged(filterIds: Array<string>): boolean;
 
   onDashboardTimewindowChanged(dashboardTimewindow: Timewindow): void;
 

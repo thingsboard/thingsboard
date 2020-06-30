@@ -61,6 +61,8 @@ import { JsonFormComponentData } from '@shared/components/json-form/json-form-co
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
 import { DashboardState } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
+import { Filter, Filters } from '@shared/models/query/query.models';
+import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -106,6 +108,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   entityAliases: EntityAliases;
 
   @Input()
+  filters: Filters;
+
+  @Input()
   functionsOnly: boolean;
 
   @Input()
@@ -121,6 +126,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   widgetConfigCallbacks: WidgetConfigCallbacks = {
     createEntityAlias: this.createEntityAlias.bind(this),
+    createFilter: this.createFilter.bind(this),
     generateDataKey: this.generateDataKey.bind(this),
     fetchEntityKeys: this.fetchEntityKeys.bind(this),
     fetchDashboardStates: this.fetchDashboardStates.bind(this)
@@ -498,6 +504,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         name: [datasource ? datasource.name : null, []],
         entityAliasId: [datasource ? datasource.entityAliasId : null,
           datasource && datasource.type === DatasourceType.entity ? [Validators.required] : []],
+        filterId: [datasource ? datasource.filterId : null, []],
         dataKeys: [datasource ? datasource.dataKeys : null, dataKeysRequired ? [Validators.required] : []]
       }
     );
@@ -713,6 +720,28 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     );
   }
 
+  private createFilter(filter: string): Observable<Filter> {
+    const singleFilter: Filter = {id: null, filter, keyFilters: []};
+    return this.dialog.open<FilterDialogComponent, FilterDialogData,
+      Filter>(FilterDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        isAdd: true,
+        filters: this.filters,
+        filter: singleFilter,
+        userMode: false
+      }
+    }).afterClosed().pipe(
+      tap((result) => {
+        if (result) {
+          this.filters[result.id] = result;
+          this.aliasController.updateFilters(this.filters);
+        }
+      })
+    );
+  }
+
   private fetchEntityKeys(entityAliasId: string, query: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
     return this.aliasController.resolveSingleEntityInfo(entityAliasId).pipe(
       mergeMap((entity) => {
@@ -805,7 +834,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           };
         }
       } else if (this.widgetType === widgetType.alarm && this.modelValue.isDataEnabled) {
-        if (!config.alarmSource) {
+        if (!this.alarmSourceSettings.valid || !config.alarmSource) {
           return {
             alarmSource: {
               valid: false

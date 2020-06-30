@@ -332,7 +332,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     const datasource = this.subscription.options.datasources ? this.subscription.options.datasources[0] : null;
 
-    if (datasource) {
+    if (datasource && datasource.dataKeys) {
       datasource.dataKeys.forEach((entityDataKey) => {
         const dataKey: EntityColumn = deepClone(entityDataKey) as EntityColumn;
         dataKey.entityKey = {

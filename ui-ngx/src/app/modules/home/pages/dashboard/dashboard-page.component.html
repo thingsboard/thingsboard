@@ -96,6 +96,12 @@
                                     [aliasController]="dashboardCtx.aliasController">
           </tb-aliases-entity-select>
           <button [fxShow]="isEdit" mat-icon-button
+                  matTooltip="{{ 'filter.filters' | translate }}"
+                  matTooltipPosition="below"
+                  (click)="openFilters($event)">
+            <mat-icon>filter_list</mat-icon>
+          </button>
+          <button [fxShow]="isEdit" mat-icon-button
                   matTooltip="{{ 'entity.aliases' | translate }}"
                   matTooltipPosition="below"
                   (click)="openEntityAliases($event)">
