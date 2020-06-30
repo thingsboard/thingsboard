@@ -45,7 +45,7 @@ public class LwM2MTransportServerInitializer {
     }
 
     @PreDestroy
-    public void shutdown() throws InterruptedException {
+    public void shutdown() {
         log.info("Stopping LwM2M transport Server!");
         try {
             lhServer.destroy();

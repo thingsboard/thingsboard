@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
-
 import lombok.Builder;
 import lombok.Data;
 import org.eclipse.leshan.core.SecurityMode;

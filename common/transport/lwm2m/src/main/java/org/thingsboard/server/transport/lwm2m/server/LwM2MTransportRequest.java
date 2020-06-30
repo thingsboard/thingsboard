@@ -27,8 +27,6 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-
-
 import javax.annotation.PostConstruct;
 import java.util.*;
 
@@ -36,13 +34,6 @@ import java.util.*;
 @Service("LwM2MTransportRequest")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportRequest {
-
-//    private ObjectModelSerDes serializer;
-//    private Gson gson;
-//    private JsonObject jsonModelAttributes;
-//    private JsonObject jsonModelTelemetry;
-//    @Autowired
-//    private LwM2MTransportService service;
 
     @Autowired
     private LeshanServer lwServer;
@@ -66,14 +57,13 @@ public class LwM2MTransportRequest {
 
     @SneakyThrows
     public LwM2mResponse doGet(String clientEndpoint, String target, String typeOper, String contentFormatParam) {
-        // all registered clients
-        // lwM2MTransportRequest.doGet(null);
+        /** all registered clients */
         LwM2mResponse cResponse = null;
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         if (registration != null) {
            if (typeOper.equals("discover")) {
                 try {
-                    // create & process request
+                    /** create & process request */
                     DiscoverRequest request = new DiscoverRequest(target);
                     return lwServer.send(registration, request, context.getTimeout());
                 } catch (RuntimeException | InterruptedException e) {
@@ -82,9 +72,9 @@ public class LwM2MTransportRequest {
             }
             else if (typeOper.equals("read")){
                try {
-                   // get content format
+                   /** get content format */
                    ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
-                   // create & process request
+                   /** create & process request */
                    ReadRequest request = new ReadRequest(contentFormat, target);
                    return lwServer.send(registration, request, context.getTimeout());
                } catch (RuntimeException | InterruptedException e) {

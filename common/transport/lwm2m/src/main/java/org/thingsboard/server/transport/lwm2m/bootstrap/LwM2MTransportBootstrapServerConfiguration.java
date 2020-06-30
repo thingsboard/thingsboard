@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
@@ -34,7 +33,6 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSec
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MSetSecurityStoreBootstrap;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
-
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.List;

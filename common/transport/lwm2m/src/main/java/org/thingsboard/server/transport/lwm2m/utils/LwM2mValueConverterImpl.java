@@ -35,23 +35,20 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
     public Object convertValue(Object value, Type currentType, Type expectedType, LwM2mPath resourcePath)
             throws CodecException {
         if (expectedType == null) {
-            // unknown resource, trusted value
+            /** unknown resource, trusted value */
             return value;
         }
 
         if (currentType == expectedType) {
-            // expected type
+            /** expected type */
             return value;
         }
-
-        // We received a value with an unexpected type.
-        // Let's do some magic to try to convert this value...
 
         switch (expectedType) {
             case INTEGER:
                 switch (currentType) {
                     case FLOAT:
-                        log.debug("Trying to convert float value {} to integer", value);
+                        log.debug("Trying to convert float value [{}] to integer", value);
                         Long longValue = ((Double) value).longValue();
                         if ((double) value == longValue.doubleValue()) {
                             return longValue;
@@ -63,7 +60,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             case FLOAT:
                 switch (currentType) {
                     case INTEGER:
-                        log.debug("Trying to convert integer value {} to float", value);
+                        log.debug("Trying to convert integer value [{}] to float", value);
                         Double floatValue = ((Long) value).doubleValue();
                         if ((long) value == floatValue.longValue()) {
                             return floatValue;
@@ -99,11 +96,11 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 switch (currentType) {
                     case INTEGER:
                         log.debug("Trying to convert long value {} to date", value);
-                        // let's assume we received the millisecond since 1970/1/1
+                        /** let's assume we received the millisecond since 1970/1/1 */
                         return new Date((Long) value);
                     case STRING:
                         log.debug("Trying to convert string value {} to date", value);
-                        // let's assume we received an ISO 8601 format date
+                        /** let's assume we received an ISO 8601 format date */
                         try {
                             DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
                             XMLGregorianCalendar cal = datatypeFactory.newXMLGregorianCalendar((String) value);
@@ -129,8 +126,8 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 break;
             case OPAQUE:
                 if (currentType == Type.STRING) {
-                    // let's assume we received an hexadecimal string
-                    log.debug("Trying to convert hexadecimal string {} to byte array", value);
+                    /** let's assume we received an hexadecimal string */
+                    log.debug("Trying to convert hexadecimal string [{}] to byte array", value);
                     // TODO check if we shouldn't instead assume that the string contains Base64 encoded data
                     try {
                         return Hex.decodeHex(((String) value).toCharArray());

@@ -35,8 +35,6 @@ import org.springframework.context.annotation.Configuration;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSetSecurityStoreServer;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
-
-
 import java.io.*;
 import java.net.URISyntaxException;
 import java.util.List;

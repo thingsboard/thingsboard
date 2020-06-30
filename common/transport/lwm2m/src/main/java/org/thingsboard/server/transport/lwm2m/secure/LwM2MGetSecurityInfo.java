@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.secure;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import jdk.nashorn.internal.parser.JSONParser;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.SecurityUtil;
@@ -31,7 +30,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;

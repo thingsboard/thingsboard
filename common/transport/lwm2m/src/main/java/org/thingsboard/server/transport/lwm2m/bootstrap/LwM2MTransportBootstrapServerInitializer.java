@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap;
-
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service("LwM2MTransportBootstrapServerInitializer")
@@ -35,12 +31,9 @@ public class LwM2MTransportBootstrapServerInitializer {
     @Autowired
     private LeshanBootstrapServer lhBServer;
 
-    @Autowired
-    private LwM2MTransportContextServer context;
-
     @PostConstruct
     public void init() {
-//     ??    this.context.setSessions(new ConcurrentHashMap<>()); ??
+        // TODO ??    this.context.setSessions(new ConcurrentHashMap<>()); ??
         this.lhBServer.start();
     }
 

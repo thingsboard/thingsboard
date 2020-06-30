@@ -20,7 +20,6 @@ import lombok.Builder;
 import lombok.Data;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.security.SecurityInfo;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.DEFAULT_MODE;
 
@@ -33,33 +32,4 @@ public class ReadResultSecurityStore {
     JsonObject bootstrapJson;
     String endPoint;
     BootstrapConfig bootstrapConfig;
-//    /** serverBs */
-//    private String host;
-//    private Integer port;
-//    @Builder.Default
-//    private int securityModeServerBs = DEFAULT_MODE.code;
-//    /** PSK/RPK/x509/NoSec */
-//    private String clientPublicKeyOrIdServerBs;
-//    private String serverPublicServerBs;
-//    private String clientSecretKeyServerBs;
-//    /** bootstrapBs */
-//    private String hostBootstrapBs;
-//    private Integer portBootstrapBs;
-//    @Builder.Default
-//    private int securityModeBootstrapBs = DEFAULT_MODE.code;
-//    /** PSK/RPK/x509/NoSec */
-//    private String clientPublicKeyOrIdBootstrapBs;
-//    private String serverPublicBootstrapBs;
-//    private String clientSecretKeyBootstrapBs;
-//
-//
-//    public BootstrapConfig getLwM2MBootstrapConfig() {
-//        String uri0 = "coaps://" + this.hostBootstrapBs + ":" + Integer.toString(this.portBootstrapBs);
-//        String uri1 = "coaps://" + this.host + ":" + Integer.toString(this.port);
-//        return new LwM2MBootstrapConfig(uri0, securityModeBootstrapBs, clientPublicKeyOrIdBootstrapBs, serverPublicBootstrapBs, clientSecretKeyBootstrapBs,
-//                                        uri1, securityModeServerBs, clientPublicKeyOrIdServerBs, serverPublicServerBs, clientSecretKeyServerBs);
-//    }
-
-
-
 }

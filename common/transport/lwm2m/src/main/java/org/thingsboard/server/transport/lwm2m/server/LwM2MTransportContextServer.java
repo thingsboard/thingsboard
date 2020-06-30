@@ -121,42 +121,6 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Getter
     @Value("#{${transport.lwm2m.bootstrap.enable} ?: false}")
     private Boolean bootstrapEnable;
-//
-//    @Getter
-//    @Value("#{${transport.lwm2m.bootstrap.bind_address} ?: localhost}")
-//    private String bootstrapHost;
-//
-//    @Getter
-//    @Value("#{${transport.lwm2m.bootstrap.bind_port} ?: 5687}")
-//    private Integer bootstrapPort;
-//
-//    @Getter
-//    @Value("#{${transport.lwm2m.bootstrap.secure.dtls_mode} ?: 3}")
-//    private int bootStrapDtlsMode;
-//
-//    @Getter
-//    @Value("#{${transport.lwm2m.bootstrap.secure.bind_address} ?: localhost}")
-//    private String bootstrapSecureHost;
-//
-//    @Getter
-//    @Value("#{${transport.lwm2m.bootstrap.secure.bind_port} ?: 5688}")
-//    private Integer bootstrapSecurePort;
-//
-//    @Getter
-//    @Value("${transport.lwm2m.bootstrap.secure.public_x:}")
-//    private String bootstrapPublicX;
-//
-//    @Getter
-//    @Value("${transport.lwm2m.bootstrap.secure.public_y:}")
-//    private String bootstrapPublicY;
-//
-//    @Getter
-//    @Value("${transport.lwm2m.server.bootstrap.private_s:}")
-//    private String bootstrapPrivateS;
-//
-//    @Getter
-//    @Value("${transport.lwm2m.secure.bootstrap.alias:}")
-//    private String bootstrapAlias;
 
     @Getter
     @Value("${transport.lwm2m.secure.redis_url:}")
@@ -165,5 +129,4 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Getter
     @Setter
     private Map<String /** clientEndPoint */, TransportProtos.ValidateDeviceCredentialsResponseMsg> sessions;
-
 }

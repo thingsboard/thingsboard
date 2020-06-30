@@ -34,12 +34,6 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
 
     @Autowired
     LwM2MGetSecurityInfo lwM2MGetSecurityInfo;
-//
-//    @Autowired
-//    public LwM2MTransportContext context;
-//
-//    @Autowired
-//    private LwM2MCredentials credentials;
 
     @Override
     public SecurityInfo getByEndpoint(String endpoint) {
@@ -74,34 +68,4 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         }
         return store.getSecurityInfo();
     }
-
-//    private ReadResultSecurityStore getSecurityInfo(String identity) {
-//        CountDownLatch latch = new CountDownLatch(1);
-//        final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
-//        context.getTransportService().process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(identity).build(),
-//                new TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg>() {
-//                    @Override
-//                    public void onSuccess(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
-//                        String ingfosStr = msg.getCredentialsBody();
-//                        resultSecurityStore[0] = credentials.getSecurityInfo(msg.getDeviceInfo().getDeviceName(), ingfosStr);
-//                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code) {
-//                            context.getSessions().put(msg.getDeviceInfo().getDeviceName(), msg);
-//                        }
-//                        latch.countDown();
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//                        log.trace("[{}] Failed to process credentials PSK: {}", identity, e);
-//                        resultSecurityStore[0]  = credentials.getSecurityInfo(identity, null);
-//                        latch.countDown();
-//                    }
-//                });
-//        try {
-//            latch.await(context.getTimeout(), TimeUnit.SECONDS);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//        return resultSecurityStore[0] ;
-//    }
 }

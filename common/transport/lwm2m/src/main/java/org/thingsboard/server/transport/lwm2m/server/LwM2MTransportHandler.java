@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
@@ -102,8 +101,6 @@ public class LwM2MTransportHandler {
     public static final String GET_TYPE_OPER_READ = "read";
     public static final String GET_TYPE_OPER_DISCOVER = "discover";
 
-    private static final long serialVersionUID = 1L;
-
     @Autowired
     private LeshanServer lhServer;
 
@@ -153,14 +150,11 @@ public class LwM2MTransportHandler {
 
         @Override
         public void onSleeping(Registration registration) {
-//            String data = new StringBuilder("{\"ep\":\"").append(registration.getEndpoint()).append("\"}").toString();
-            //            sendEvent(EVENT_SLEEPING, data, registration.getEndpoint());
             service.onSleepingDev (registration);
         }
 
         @Override
         public void onAwake(Registration registration) {
-//            String data = new StringBuilder("{\"ep\":\"").append(registration.getEndpoint()).append("\"}").toString();
             service.onAwakeDev (registration);
         }
     };

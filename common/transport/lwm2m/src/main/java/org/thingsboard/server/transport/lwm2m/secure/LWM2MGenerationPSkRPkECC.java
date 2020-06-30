@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
-
 import java.security.*;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;

@@ -37,8 +37,6 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
@@ -225,7 +223,6 @@ public class LwM2MSetSecurityStoreServer {
                     params, Hex.encodeHexString(x), Hex.encodeHexString(y),
                     Hex.encodeHexString(this.publicKey.getEncoded()),
                     Hex.encodeHexString(this.privateKey.getEncoded()));
-
         } else {
             throw new IllegalStateException("Unsupported Public Key Format (only ECPublicKey supported).");
         }

@@ -23,7 +23,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
-
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Map;
