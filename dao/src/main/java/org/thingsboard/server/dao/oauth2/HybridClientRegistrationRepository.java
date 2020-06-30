@@ -24,7 +24,6 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 
-@ConditionalOnProperty(prefix = "security.oauth2", value = "enabled", havingValue = "true")
 @Component
 public class HybridClientRegistrationRepository implements ClientRegistrationRepository {
 
