@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-js-executor",
   "private": true,
-  "version": "2.5.0",
+  "version": "3.0.1",
   "description": "ThingsBoard JavaScript Executor Microservice",
   "main": "server.js",
   "bin": "server.js",
@@ -12,14 +12,14 @@
     "start-prod": "NODE_ENV=production nodemon server.js"
   },
   "dependencies": {
-    "config": "^3.2.2",
+    "@azure/service-bus": "^1.1.7",
+    "@google-cloud/pubsub": "^1.7.3",
+    "amqplib": "^0.5.6",
+    "aws-sdk": "^2.677.0",
+    "azure-sb": "^0.11.1",
+    "config": "^3.3.1",
     "js-yaml": "^3.12.0",
     "kafkajs": "^1.12.0",
-    "@google-cloud/pubsub": "^1.7.1",
-    "aws-sdk": "^2.663.0",
-    "amqplib": "^0.5.5",
-    "@azure/service-bus": "^1.1.6",
-    "azure-sb": "^0.11.1",
     "long": "^4.0.0",
     "uuid-parse": "^1.0.0",
     "uuid-random": "^1.3.0",
@@ -40,7 +40,7 @@
   "devDependencies": {
     "fs-extra": "^6.0.1",
     "nodemon": "^1.17.5",
-    "pkg": "^4.4.0"
+    "pkg": "^4.4.8"
   },
   "pkg": {
     "assets": [

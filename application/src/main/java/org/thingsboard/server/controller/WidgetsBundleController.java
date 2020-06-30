@@ -28,8 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -61,17 +61,13 @@ public class WidgetsBundleController extends BaseController {
     @ResponseBody
     public WidgetsBundle saveWidgetsBundle(@RequestBody WidgetsBundle widgetsBundle) throws ThingsboardException {
         try {
-            if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
+            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
                 widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
             } else {
                 widgetsBundle.setTenantId(getCurrentUser().getTenantId());
             }
 
-            Operation operation = widgetsBundle.getId() == null ? Operation.CREATE : Operation.WRITE;
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, operation,
-                    widgetsBundle.getId(), widgetsBundle);
-
+            checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
             return checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
         } catch (Exception e) {
             throw handleException(e);
@@ -93,16 +89,17 @@ public class WidgetsBundleController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundles", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/widgetsBundles", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public TextPageData<WidgetsBundle> getWidgetsBundles(
-            @RequestParam int limit,
+    public PageData<WidgetsBundle> getWidgetsBundles(
+            @RequestParam int pageSize,
+            @RequestParam int page,
             @RequestParam(required = false) String textSearch,
-            @RequestParam(required = false) String idOffset,
-            @RequestParam(required = false) String textOffset) throws ThingsboardException {
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
                 return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), pageLink));
             } else {
                 TenantId tenantId = getCurrentUser().getTenantId();
@@ -118,7 +115,7 @@ public class WidgetsBundleController extends BaseController {
     @ResponseBody
     public List<WidgetsBundle> getWidgetsBundles() throws ThingsboardException {
         try {
-            if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
+            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
                 return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
             } else {
                 TenantId tenantId = getCurrentUser().getTenantId();

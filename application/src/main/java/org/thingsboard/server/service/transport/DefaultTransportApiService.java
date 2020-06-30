@@ -17,6 +17,7 @@ package org.thingsboard.server.service.transport;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -24,13 +25,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -50,6 +56,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MC
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.UUID;
@@ -83,6 +90,9 @@ public class DefaultTransportApiService implements TransportApiService {
 
     @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
+
+    @Autowired
+    protected TbClusterService tbClusterService;
 
     private ReentrantLock deviceCreationLock = new ReentrantLock();
 
@@ -133,14 +143,27 @@ public class DefaultTransportApiService implements TransportApiService {
             try {
                 Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
                 if (device == null) {
+                    TenantId tenantId = gateway.getTenantId();
                     device = new Device();
-                    device.setTenantId(gateway.getTenantId());
+                    device.setTenantId(tenantId);
                     device.setName(requestMsg.getDeviceName());
                     device.setType(requestMsg.getDeviceType());
                     device.setCustomerId(gateway.getCustomerId());
                     device = deviceService.saveDevice(device);
                     relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
                     deviceStateService.onDeviceAdded(device);
+
+                    TbMsgMetaData metaData = new TbMsgMetaData();
+                    CustomerId customerId = gateway.getCustomerId();
+                    if (customerId != null && !customerId.isNullUid()) {
+                        metaData.putValue("customerId", customerId.toString());
+                    }
+                    metaData.putValue("gatewayId", gatewayId.toString());
+
+                    DeviceId deviceId = device.getId();
+                    ObjectNode entityNode = mapper.valueToTree(device);
+                    TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, mapper.writeValueAsString(entityNode));
+                    tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
                 }
                 return TransportApiResponseMsg.newBuilder()
                         .setGetOrCreateDeviceResponseMsg(GetOrCreateDeviceFromGatewayResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).build()).build();

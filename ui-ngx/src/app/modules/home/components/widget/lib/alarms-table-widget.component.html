@@ -1,0 +1,139 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-table-widget tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="tb-absolute-fill">
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode && alarmsDatasource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+        <button mat-button mat-icon-button
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field fxFlex>
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [(ngModel)]="pageLink.textSearch"
+                 placeholder="{{ 'alarm.search' | translate }}"/>
+        </mat-form-field>
+        <button mat-button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="!alarmsDatasource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+                <span>
+                  {{ translate.get('alarm.selected-alarms',
+                  {count: alarmsDatasource.selection.selected.length}) | async }}
+                </span>
+        <span fxFlex></span>
+        <button *ngIf="allowAcknowledgment"
+                mat-button mat-icon-button [disabled]="isLoading$ | async"
+                matTooltip="{{ 'alarm.acknowledge' | translate }}"
+                matTooltipPosition="above"
+                (click)="ackAlarms($event)">
+          <mat-icon>done</mat-icon>
+        </button>
+        <button mat-button mat-icon-button
+                [disabled]="isLoading$ | async"
+                matTooltip="{{ 'alarm.clear' | translate }}"
+                matTooltipPosition="above"
+                (click)="clearAlarms($event)">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div fxFlex class="table-container">
+      <table mat-table [dataSource]="alarmsDatasource"
+                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        <ng-container matColumnDef="select" sticky>
+          <mat-header-cell *matHeaderCellDef style="width: 30px;">
+            <mat-checkbox (change)="$event ? alarmsDatasource.masterToggle() : null"
+                          [checked]="alarmsDatasource.selection.hasValue() && (alarmsDatasource.isAllSelected() | async)"
+                          [indeterminate]="alarmsDatasource.selection.hasValue() && !(alarmsDatasource.isAllSelected() | async)">
+            </mat-checkbox>
+          </mat-header-cell>
+          <mat-cell *matCellDef="let alarm">
+            <mat-checkbox (click)="$event.stopPropagation();"
+                          (change)="$event ? alarmsDatasource.toggleSelection(alarm) : null"
+                          [checked]="alarmsDatasource.isSelected(alarm)">
+            </mat-checkbox>
+          </mat-cell>
+        </ng-container>
+        <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
+          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
+          <mat-cell *matCellDef="let alarm;"
+                    [innerHTML]="cellContent(alarm, column)"
+                    [ngStyle]="cellStyle(alarm, column)">
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
+          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                maxWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                width: (actionCellDescriptors.length * 40) + 'px' }">
+          </mat-header-cell>
+          <mat-cell *matCellDef="let alarm" [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                maxWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                width: (actionCellDescriptors.length * 40) + 'px' }">
+            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+              <button mat-button mat-icon-button [disabled]="(isLoading$ | async) || !actionEnabled(alarm, actionDescriptor)"
+                      *ngFor="let actionDescriptor of actionCellDescriptors"
+                      matTooltip="{{ actionDescriptor.displayName }}"
+                      matTooltipPosition="above"
+                      (click)="onActionButtonClick($event, alarm, actionDescriptor)">
+                <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+              </button>
+            </div>
+            <div fxHide fxShow.lt-lg *ngIf="actionCellDescriptors.length">
+              <button mat-button mat-icon-button
+                      (click)="$event.stopPropagation(); ctx.detectChanges();"
+                      [matMenuTriggerFor]="cellActionsMenu">
+                <mat-icon class="material-icons">more_vert</mat-icon>
+              </button>
+              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                <button mat-menu-item *ngFor="let actionDescriptor of actionCellDescriptors"
+                        [disabled]="(isLoading$ | async) || !actionEnabled(alarm, actionDescriptor)"
+                        (click)="onActionButtonClick($event, alarm, actionDescriptor)">
+                  <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+                  <span>{{ actionDescriptor.displayName }}</span>
+                </button>
+              </mat-menu>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row [ngClass]="{'mat-row-select': enableSelection}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row [ngClass]="{'mat-row-select': enableSelection,
+                             'mat-selected': alarmsDatasource.isSelected(alarm),
+                             'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm)}"
+                 *matRowDef="let alarm; columns: displayedColumns;"
+                 (click)="onRowClick($event, alarm)"></mat-row>
+      </table>
+      <span [fxShow]="alarmsDatasource.isEmpty() | async"
+            fxLayoutAlign="center center"
+            class="no-data-found" translate>alarm.no-alarms-prompt</span>
+    </div>
+    <mat-divider *ngIf="displayPagination"></mat-divider>
+    <mat-paginator *ngIf="displayPagination"
+                   [length]="alarmsDatasource.total() | async"
+                   [pageIndex]="pageLink.page"
+                   [pageSize]="pageLink.pageSize"
+                   [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+  </div>
+</div>

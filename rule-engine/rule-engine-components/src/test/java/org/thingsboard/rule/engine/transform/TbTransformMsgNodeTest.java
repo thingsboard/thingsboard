@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -67,8 +67,8 @@ public class TbTransformMsgNodeTest {
         metaData.putValue("temp", "7");
         String rawJson = "{\"passed\": 5}";
 
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
         TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON,rawJson, ruleChainId, ruleNodeId);
         TbMsg transformedMsg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, "{new}", ruleChainId, ruleNodeId);
         mockJsExecutor();
@@ -89,8 +89,8 @@ public class TbTransformMsgNodeTest {
         metaData.putValue("temp", "7");
         String rawJson = "{\"passed\": 5";
 
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
         TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
         mockJsExecutor();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("error")));

@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -45,17 +45,18 @@ public class EventController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
     @ResponseBody
-    public TimePageData<Event> getEvents(
+    public PageData<Event> getEvents(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
             @PathVariable("eventType") String eventType,
             @RequestParam("tenantId") String strTenantId,
-            @RequestParam int limit,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
-            @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
-            @RequestParam(required = false) String offset
-    ) throws ThingsboardException {
+            @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {
@@ -63,8 +64,7 @@ public class EventController extends BaseController {
 
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
-
-            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
             return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, pageLink));
         } catch (Exception e) {
             throw handleException(e);
@@ -74,16 +74,17 @@ public class EventController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
-    public TimePageData<Event> getEvents(
+    public PageData<Event> getEvents(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
             @RequestParam("tenantId") String strTenantId,
-            @RequestParam int limit,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
-            @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
-            @RequestParam(required = false) String offset
-    ) throws ThingsboardException {
+            @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {
@@ -92,7 +93,8 @@ public class EventController extends BaseController {
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
 
-            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+
             return checkNotNull(eventService.findEvents(tenantId, entityId, pageLink));
         } catch (Exception e) {
             throw handleException(e);

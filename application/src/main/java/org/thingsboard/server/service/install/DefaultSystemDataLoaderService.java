@@ -218,6 +218,24 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         installScripts.loadSystemWidgets();
     }
 
+    @Override
+    public void updateSystemWidgets() throws Exception {
+        this.deleteSystemWidgetBundle("charts");
+        this.deleteSystemWidgetBundle("cards");
+        this.deleteSystemWidgetBundle("maps");
+        this.deleteSystemWidgetBundle("analogue_gauges");
+        this.deleteSystemWidgetBundle("digital_gauges");
+        this.deleteSystemWidgetBundle("gpio_widgets");
+        this.deleteSystemWidgetBundle("alarm_widgets");
+        this.deleteSystemWidgetBundle("control_widgets");
+        this.deleteSystemWidgetBundle("maps_v2");
+        this.deleteSystemWidgetBundle("gateway_widgets");
+        this.deleteSystemWidgetBundle("input_widgets");
+        this.deleteSystemWidgetBundle("date");
+        this.deleteSystemWidgetBundle("entity_admin_widgets");
+        installScripts.loadSystemWidgets();
+    }
+
     private User createUser(Authority authority,
                             TenantId tenantId,
                             CustomerId customerId,

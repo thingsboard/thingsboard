@@ -24,8 +24,8 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -117,11 +117,10 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     }
 
     @Override
-    public TextPageData<Tenant> findTenants(TextPageLink pageLink) {
+    public PageData<Tenant> findTenants(PageLink pageLink) {
         log.trace("Executing findTenants pageLink [{}]", pageLink);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<Tenant> tenants = tenantDao.findTenantsByRegion(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION, pageLink);
-        return new TextPageData<>(tenants, pageLink);
+        Validator.validatePageLink(pageLink);
+        return tenantDao.findTenantsByRegion(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION, pageLink);
     }
 
     @Override
@@ -159,7 +158,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
             new PaginatedRemover<String, Tenant>() {
 
                 @Override
-                protected List<Tenant> findEntities(TenantId tenantId, String region, TextPageLink pageLink) {
+                protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
                     return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
                 }
 

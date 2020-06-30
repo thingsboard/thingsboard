@@ -19,8 +19,8 @@ function installTb() {
 
     loadDemo=$1
 
-    kubectl apply -f tb-node-configmap.yml
-    kubectl apply -f database-setup.yml &&
+    kubectl apply -f common/tb-node-configmap.yml
+    kubectl apply -f common/database-setup.yml &&
     kubectl wait --for=condition=Ready pod/tb-db-setup --timeout=120s &&
     kubectl exec tb-db-setup -- sh -c 'export INSTALL_TB=true; export LOAD_DEMO='"$loadDemo"'; start-tb-node.sh; touch /tmp/install-finished;'
 
@@ -30,17 +30,19 @@ function installTb() {
 
 function installPostgres() {
 
-    kubectl apply -f postgres.yml
-    kubectl apply -f tb-node-postgres-configmap.yml
+    kubectl apply -f common/postgres.yml
+    kubectl apply -f common/tb-node-postgres-configmap.yml
 
     kubectl rollout status deployment/postgres
 }
 
-function installCassandra() {
+function installHybrid() {
 
-    kubectl apply -f cassandra.yml
-    kubectl apply -f tb-node-cassandra-configmap.yml
+    kubectl apply -f common/postgres.yml
+    kubectl apply -f common/cassandra.yml
+    kubectl apply -f common/tb-node-hybrid-configmap.yml
 
+    kubectl rollout status deployment/postgres
     kubectl rollout status statefulset/cassandra
 
     kubectl exec -it cassandra-0 -- bash -c "cqlsh -e \
@@ -75,19 +77,30 @@ fi
 
 source .env
 
-kubectl apply -f tb-namespace.yml
+kubectl apply -f common/tb-namespace.yml
 kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
+
+case $DEPLOYMENT_TYPE in
+        basic)
+        ;;
+        high-availability)
+        ;;
+        *)
+        echo "Unknown DEPLOYMENT_TYPE value specified: '${DEPLOYMENT_TYPE}'. Should be either basic or high-availability." >&2
+        exit 1
+esac
 
 case $DATABASE in
         postgres)
             installPostgres
             installTb ${loadDemo}
         ;;
-        cassandra)
-            installCassandra
+        hybrid)
+            installHybrid
             installTb ${loadDemo}
         ;;
         *)
-        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or cassandra." >&2
+        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or hybrid." >&2
         exit 1
 esac
+

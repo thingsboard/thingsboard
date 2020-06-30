@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.event.EventDao;
@@ -56,9 +57,9 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testSaveIfNotExists() {
-        UUID eventId = UUIDs.timeBased();
-        UUID tenantId = UUIDs.timeBased();
-        UUID entityId = UUIDs.timeBased();
+        UUID eventId = Uuids.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID entityId = Uuids.timeBased();
         Event event = getEvent(eventId, tenantId, entityId);
         Optional<Event> optEvent1 = eventDao.saveIfNotExists(event);
         assertTrue("Optional is expected to be non-empty", optEvent1.isPresent());
@@ -82,72 +83,74 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void findEventsByEntityIdAndPageLink() {
-        UUID tenantId = UUIDs.timeBased();
-        UUID entityId1 = UUIDs.timeBased();
-        UUID entityId2 = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID entityId1 = Uuids.timeBased();
+        UUID entityId2 = Uuids.timeBased();
         long startTime = System.currentTimeMillis();
         long endTime = createEventsTwoEntities(tenantId, entityId1, entityId2, startTime, 20);
 
-        TimePageLink pageLink1 = new TimePageLink(30, null, null, true);
-        List<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink1);
-        assertEquals(10, events1.size());
+        TimePageLink pageLink1 = new TimePageLink(30);
+        PageData<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink1);
+        assertEquals(10, events1.getData().size());
 
-        TimePageLink pageLink2 = new TimePageLink(30, startTime, null, true);
-        List<Event> events2 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink2);
-        assertEquals(10, events2.size());
+        TimePageLink pageLink2 = new TimePageLink(30, 0, "", null, startTime, null);
+        PageData<Event> events2 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink2);
+        assertEquals(10, events2.getData().size());
 
-        TimePageLink pageLink3 = new TimePageLink(30, startTime, endTime, true);
-        List<Event> events3 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink3);
-        assertEquals(10, events3.size());
+        TimePageLink pageLink3 = new TimePageLink(30, 0, "", null, startTime, endTime);
+        PageData<Event> events3 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink3);
+        assertEquals(10, events3.getData().size());
 
-        TimePageLink pageLink4 = new TimePageLink(5, startTime, endTime, true);
-        List<Event> events4 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink4);
-        assertEquals(5, events4.size());
+        TimePageLink pageLink4 = new TimePageLink(5, 0, "", null, startTime, endTime);
+        PageData<Event> events4 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink4);
+        assertEquals(5, events4.getData().size());
 
-        UUID idOffset = events4.get(4).getId().getId();
-        TimePageLink pageLink5 = new TimePageLink(10, startTime, endTime, true, idOffset);
-        List<Event> events5 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink5);
-        assertEquals(5, events5.size());
+        pageLink4 = pageLink4.nextPageLink();
+        PageData<Event> events5 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink4);
+        assertEquals(5, events5.getData().size());
+
+        pageLink4 = pageLink4.nextPageLink();
+        PageData<Event> events6 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink4);
+        assertEquals(0, events6.getData().size());
 
     }
 
     @Test
     public void findEventsByEntityIdAndEventTypeAndPageLink() {
-        UUID tenantId = UUIDs.timeBased();
-        UUID entityId1 = UUIDs.timeBased();
-        UUID entityId2 = UUIDs.timeBased();
+        UUID tenantId = Uuids.timeBased();
+        UUID entityId1 = Uuids.timeBased();
+        UUID entityId2 = Uuids.timeBased();
         long startTime = System.currentTimeMillis();
         long endTime = createEventsTwoEntitiesTwoTypes(tenantId, entityId1, entityId2, startTime, 20);
 
-        TimePageLink pageLink1 = new TimePageLink(30, null, null, true);
-        List<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink1);
-        assertEquals(5, events1.size());
+        TimePageLink pageLink1 = new TimePageLink(30);
+        PageData<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink1);
+        assertEquals(5, events1.getData().size());
 
-        TimePageLink pageLink2 = new TimePageLink(30, startTime, null, true);
-        List<Event> events2 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink2);
-        assertEquals(5, events2.size());
+        TimePageLink pageLink2 = new TimePageLink(30, 0, "", null, startTime, null);
+        PageData<Event> events2 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink2);
+        assertEquals(5, events2.getData().size());
 
-        TimePageLink pageLink3 = new TimePageLink(30, startTime, endTime, true);
-        List<Event> events3 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink3);
-        assertEquals(5, events3.size());
+        TimePageLink pageLink3 = new TimePageLink(30, 0, "", null, startTime, endTime);
+        PageData<Event> events3 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink3);
+        assertEquals(5, events3.getData().size());
 
-        TimePageLink pageLink4 = new TimePageLink(4, startTime, endTime, true);
-        List<Event> events4 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink4);
-        assertEquals(4, events4.size());
+        TimePageLink pageLink4 = new TimePageLink(4, 0, "", null, startTime, endTime);
+        PageData<Event> events4 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink4);
+        assertEquals(4, events4.getData().size());
 
-        UUID idOffset = events3.get(2).getId().getId();
-        TimePageLink pageLink5 = new TimePageLink(10, startTime, endTime, true, idOffset);
-        List<Event> events5 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink5);
-        assertEquals(2, events5.size());
+        pageLink4 = pageLink4.nextPageLink();
+        PageData<Event> events5 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink4);
+        assertEquals(2, events5.getData().size());
     }
 
     private long createEventsTwoEntitiesTwoTypes(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
         for (int i = 0; i < count / 2; i++) {
             String type = i % 2 == 0 ? STATS : ALARM;
-            UUID eventId1 = UUIDs.timeBased();
+            UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1, type);
             eventDao.save(new TenantId(tenantId), event1);
-            UUID eventId2 = UUIDs.timeBased();
+            UUID eventId2 = Uuids.timeBased();
             Event event2 = getEvent(eventId2, tenantId, entityId2, type);
             eventDao.save(new TenantId(tenantId), event2);
         }
@@ -156,10 +159,10 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
         for (int i = 0; i < count / 2; i++) {
-            UUID eventId1 = UUIDs.timeBased();
+            UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1);
             eventDao.save(new TenantId(tenantId), event1);
-            UUID eventId2 = UUIDs.timeBased();
+            UUID eventId2 = Uuids.timeBased();
             Event event2 = getEvent(eventId2, tenantId, entityId2);
             eventDao.save(new TenantId(tenantId), event2);
         }

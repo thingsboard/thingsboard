@@ -21,7 +21,6 @@ import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 /**
  * Created by ashvayka on 15.03.18.
  */
-//TODO: add all "See" references
 public enum MsgType {
 
     /**
@@ -97,6 +96,7 @@ public enum MsgType {
 
     STATS_PERSIST_TICK_MSG,
 
+    STATS_PERSIST_MSG,
 
     /**
      * Message that is sent by TransportRuleEngineService to Device Actor. Represents messages from the device itself.

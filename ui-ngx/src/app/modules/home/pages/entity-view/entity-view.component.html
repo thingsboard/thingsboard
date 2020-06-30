@@ -1,0 +1,156 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons" fxLayout.xs="column">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'makePublic')"
+          [fxShow]="!isEdit && entityViewScope === 'tenant' && !isAssignedToCustomer(entity) && !entity?.customerIsPublic">
+    {{'entity-view.make-public' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'assignToCustomer')"
+          [fxShow]="!isEdit && entityViewScope === 'tenant' && !isAssignedToCustomer(entity)">
+    {{'entity-view.assign-to-customer' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'unassignFromCustomer')"
+          [fxShow]="!isEdit && (entityViewScope === 'customer' || entityViewScope === 'tenant') && isAssignedToCustomer(entity)">
+    {{ (entity?.customerIsPublic ? 'entity-view.make-private' : 'entity-view.unassign-from-customer') | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [fxShow]="!hideDelete() && !isEdit">
+    {{'entity-view.delete' | translate }}
+  </button>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onEntityViewIdCopied($event)"
+            [cbContent]="entity?.id?.id"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>entity-view.copyId</span>
+    </button>
+  </div>
+</div>
+<div class="mat-padding" fxLayout="column">
+  <mat-form-field class="mat-block"
+                  [fxShow]="!isEdit && isAssignedToCustomer(entity)
+                              && !entity?.customerIsPublic && entityViewScope === 'tenant'">
+    <mat-label translate>entity-view.assignedToCustomer</mat-label>
+    <input matInput disabled [ngModel]="entity?.customerTitle">
+  </mat-form-field>
+  <div class="tb-small" style="padding-bottom: 10px; padding-left: 2px;"
+       [fxShow]="!isEdit && entity?.customerIsPublic && (entityViewScope === 'customer' || entityViewScope === 'tenant')">
+    {{ 'entity-view.entity-view-public' | translate }}
+  </div>
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block">
+        <mat-label translate>entity-view.name</mat-label>
+        <input matInput formControlName="name" required>
+        <mat-error *ngIf="entityForm.get('name').hasError('required')">
+          {{ 'entity-view.name-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <tb-entity-subtype-autocomplete
+        formControlName="type"
+        [required]="true"
+        [entityType]="entityType.ENTITY_VIEW"
+      >
+      </tb-entity-subtype-autocomplete>
+      <section fxLayout="column">
+        <label translate class="tb-title no-padding">entity-view.target-entity</label>
+        <tb-entity-select fxFlex
+                          [required]="true"
+                          [allowedEntityTypes]="allowedEntityTypes"
+                          formControlName="entityId">
+        </tb-entity-select>
+      </section>
+      <div class="mat-accordion-container" formGroupName="keys">
+        <mat-accordion [multi]="true">
+          <mat-expansion-panel formGroupName="attributes" [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div class="tb-panel-title" translate>entity-view.attributes-propagation</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div translate class="tb-hint">entity-view.attributes-propagation-hint</div>
+            <label translate class="tb-title no-padding">entity-view.client-attributes</label>
+            <tb-entity-keys-list
+              [entityId]="selectedEntityId | async"
+              formControlName="cs"
+              keysText="entity-view.client-attributes-placeholder"
+              [dataKeyType]="dataKeyType.attribute">
+            </tb-entity-keys-list>
+            <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
+            <tb-entity-keys-list
+              [entityId]="selectedEntityId | async"
+              formControlName="sh"
+              keysText="entity-view.shared-attributes-placeholder"
+              [dataKeyType]="dataKeyType.attribute">
+            </tb-entity-keys-list>
+            <label translate class="tb-title no-padding">entity-view.server-attributes</label>
+            <tb-entity-keys-list
+              [entityId]="selectedEntityId | async"
+              formControlName="ss"
+              keysText="entity-view.server-attributes-placeholder"
+              [dataKeyType]="dataKeyType.attribute">
+            </tb-entity-keys-list>
+          </mat-expansion-panel>
+          <mat-expansion-panel [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div class="tb-panel-title" translate>entity-view.timeseries-data</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div translate class="tb-hint">entity-view.timeseries-data-hint</div>
+            <label translate class="tb-title no-padding">entity-view.timeseries</label>
+            <tb-entity-keys-list
+              [entityId]="selectedEntityId | async"
+              formControlName="timeseries"
+              keysText="entity-view.timeseries-placeholder"
+              [dataKeyType]="dataKeyType.timeseries">
+            </tb-entity-keys-list>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+      <tb-datetime
+        dateText="entity-view.start-date"
+        timeText="entity-view.start-ts"
+        [maxDate]="maxStartTimeMs | async"
+        formControlName="startTimeMs"
+      ></tb-datetime>
+      <tb-datetime
+        dateText="entity-view.end-date"
+        timeText="entity-view.end-ts"
+        [minDate]="minEndTimeMs | async"
+        formControlName="endTimeMs"
+      ></tb-datetime>
+      <div formGroupName="additionalInfo">
+        <mat-form-field class="mat-block">
+          <mat-label translate>entity-view.description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+    </fieldset>
+  </form>
+</div>

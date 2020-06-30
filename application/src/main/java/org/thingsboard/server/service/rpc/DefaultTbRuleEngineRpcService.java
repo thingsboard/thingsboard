@@ -164,7 +164,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     }
 
     private void scheduleTimeout(ToDeviceRpcRequest request, UUID requestId) {
-        long timeout = Math.max(0, request.getExpirationTime() - System.currentTimeMillis());
+        long timeout = Math.max(0, request.getExpirationTime() - System.currentTimeMillis()) + TimeUnit.SECONDS.toMillis(1);
         log.trace("[{}] processing the request: [{}]", this.hashCode(), requestId);
         scheduler.schedule(() -> {
             log.trace("[{}] timeout the request: [{}]", this.hashCode(), requestId);

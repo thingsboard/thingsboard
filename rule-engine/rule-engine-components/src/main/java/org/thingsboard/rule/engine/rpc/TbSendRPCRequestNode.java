@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.rpc;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -82,7 +82,7 @@ public class TbSendRPCRequestNode implements TbNode {
             boolean oneway = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
 
             tmp = msg.getMetaData().getValue("requestUUID");
-            UUID requestUUID = !StringUtils.isEmpty(tmp) ? UUID.fromString(tmp) : UUIDs.timeBased();
+            UUID requestUUID = !StringUtils.isEmpty(tmp) ? UUID.fromString(tmp) : Uuids.timeBased();
             tmp = msg.getMetaData().getValue("originServiceId");
             String originServiceId = !StringUtils.isEmpty(tmp) ? tmp : null;
 
@@ -112,11 +112,11 @@ public class TbSendRPCRequestNode implements TbNode {
 
             ctx.getRpcService().sendRpcRequestToDevice(request, ruleEngineDeviceRpcResponse -> {
                 if (!ruleEngineDeviceRpcResponse.getError().isPresent()) {
-                    TbMsg next = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse("{}"));
+                    TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse("{}"));
                     ctx.enqueueForTellNext(next, TbRelationTypes.SUCCESS);
                 } else {
-                    TbMsg next = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));
-                    ctx.enqueueForTellFailure(next, ruleEngineDeviceRpcResponse.getError().get().name());
+                    TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));
+                    ctx.tellFailure(next, new RuntimeException(ruleEngineDeviceRpcResponse.getError().get().name()));
                 }
             });
             ctx.ack(msg);

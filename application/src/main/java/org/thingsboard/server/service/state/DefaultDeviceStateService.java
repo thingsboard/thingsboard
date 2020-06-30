@@ -35,13 +35,13 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -292,28 +292,38 @@ public class DefaultDeviceStateService implements DeviceStateService {
         }
     }
 
+    volatile Set<TopicPartitionInfo> pendingPartitions;
+
     @Override
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
             synchronized (this) {
+                pendingPartitions = partitionChangeEvent.getPartitions();
                 if (!clusterUpdatePending) {
                     clusterUpdatePending = true;
                     queueExecutor.submit(() -> {
                         clusterUpdatePending = false;
-                        initStateFromDB(partitionChangeEvent.getPartitions());
+                        initStateFromDB();
                     });
                 }
             }
         }
     }
 
-    private void initStateFromDB(Set<TopicPartitionInfo> partitions) {
+    private void initStateFromDB() {
         try {
-            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(partitions);
+            log.info("CURRENT PARTITIONS: {}", partitionedDevices.keySet());
+            log.info("NEW PARTITIONS: {}", pendingPartitions);
+
+            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(pendingPartitions);
             addedPartitions.removeAll(partitionedDevices.keySet());
 
+            log.info("ADDED PARTITIONS: {}", addedPartitions);
+
             Set<TopicPartitionInfo> removedPartitions = new HashSet<>(partitionedDevices.keySet());
-            removedPartitions.removeAll(partitions);
+            removedPartitions.removeAll(pendingPartitions);
+
+            log.info("REMOVED PARTITIONS: {}", removedPartitions);
 
             // We no longer manage current partition of devices;
             removedPartitions.forEach(partition -> {
@@ -329,13 +339,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
             //TODO 3.0: replace this dummy search with new functionality to search by partitions using SQL capabilities.
             // Adding only devices that are in new partitions
-            List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
+            List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
             for (Tenant tenant : tenants) {
-                TextPageLink pageLink = new TextPageLink(initFetchPackSize);
+                PageLink pageLink = new PageLink(initFetchPackSize);
                 while (pageLink != null) {
                     List<ListenableFuture<Void>> fetchFutures = new ArrayList<>();
-                    TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
-                    pageLink = page.getNextPageLink();
+                    PageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
+                    pageLink = page.hasNext() ? pageLink.nextPageLink() : null;
                     for (Device device : page.getData()) {
                         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), device.getId());
                         if (addedPartitions.contains(tpi)) {

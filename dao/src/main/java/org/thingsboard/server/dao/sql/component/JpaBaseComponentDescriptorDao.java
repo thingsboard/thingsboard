@@ -15,16 +15,16 @@
  */
 package org.thingsboard.server.dao.sql.component;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -34,11 +34,8 @@ import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -67,7 +64,7 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     @Override
     public Optional<ComponentDescriptor> saveIfNotExist(TenantId tenantId, ComponentDescriptor component) {
         if (component.getId() == null) {
-            component.setId(new ComponentDescriptorId(UUIDs.timeBased()));
+            component.setId(new ComponentDescriptorId(Uuids.timeBased()));
         }
         if (!componentDescriptorRepository.existsById(UUIDConverter.fromTimeUUID(component.getId().getId()))) {
             ComponentDescriptorEntity componentDescriptorEntity = new ComponentDescriptorEntity(component);
@@ -88,24 +85,22 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     }
 
     @Override
-    public List<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(componentDescriptorRepository
+    public PageData<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, PageLink pageLink) {
+        return DaoUtil.toPageData(componentDescriptorRepository
                 .findByType(
                         type,
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
-                        PageRequest.of(0, pageLink.getLimit())));
+                        DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(componentDescriptorRepository
+    public PageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, PageLink pageLink) {
+        return DaoUtil.toPageData(componentDescriptorRepository
                 .findByScopeAndType(
                         type,
                         scope,
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
-                        PageRequest.of(0, pageLink.getLimit())));
+                        DaoUtil.toPageable(pageLink)));
     }
 
     @Override
