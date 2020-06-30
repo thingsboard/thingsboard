@@ -47,7 +47,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.thingsboard.server.dao.oauth2.OAuth2Utils.*;
 
@@ -57,7 +56,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private final ReentrantLock cacheWriteLock = new ReentrantLock();
+    private final ReentrantLock clientRegistrationSaveLock = new ReentrantLock();
     private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
 
     @Autowired
@@ -126,7 +125,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
 
-        cacheWriteLock.lock();
+        clientRegistrationSaveLock.lock();
         try {
             validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
             AdminSettings oauth2SystemAdminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
@@ -138,7 +137,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, oauth2SystemAdminSettings);
             clientsParams.put(TenantId.SYS_TENANT_ID, oAuth2ClientsParams);
         } finally {
-            cacheWriteLock.unlock();
+            clientRegistrationSaveLock.unlock();
         }
 
         return getSystemOAuth2ClientsParams();
@@ -152,7 +151,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         validate(oAuth2ClientsParams);
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
-        cacheWriteLock.lock();
+        clientRegistrationSaveLock.lock();
         try {
             validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
 
@@ -170,7 +169,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
             clientsParams.put(tenantId, oAuth2ClientsParams);
         } finally {
-            cacheWriteLock.unlock();
+            clientRegistrationSaveLock.unlock();
         }
 
         return getTenantOAuth2ClientsParams(tenantId);
