@@ -260,7 +260,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     public ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validateId(edgeId, "Incorrect customerId " + edgeId);
+        Validator.validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
         Validator.validatePageLink(pageLink);
         return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
     }
