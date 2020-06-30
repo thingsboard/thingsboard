@@ -15,11 +15,15 @@
  */
 package org.thingsboard.rule.engine.mail;
 
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
+@JsonDeserialize(builder = EmailPojo.EmailPojoBuilder.class)
 class EmailPojo {
 
     private final String from;
@@ -28,5 +32,9 @@ class EmailPojo {
     private final String bcc;
     private final String subject;
     private final String body;
+
+    @JsonPOJOBuilder(withPrefix = "")
+    public static final class EmailPojoBuilder {
+    }
 
 }
