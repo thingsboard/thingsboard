@@ -36,7 +36,7 @@ public abstract class AbstractCassandraCluster {
     private Boolean jmx;
     @Value("${cassandra.metrics}")
     private Boolean metrics;
-    @Value("${cassandra.local_datacenter}")
+    @Value("${cassandra.local_datacenter:datacenter1}")
     private String localDatacenter;
 
     @Autowired
