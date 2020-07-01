@@ -33,6 +33,9 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.constructor.AlarmUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AssetUpdateMsgConstructor;
@@ -49,12 +52,20 @@ import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 @Component
+@TbCoreComponent
 @Data
 public class EdgeContextComponent {
 
     @Lazy
     @Autowired
     private EdgeService edgeService;
+
+    @Autowired
+    private PartitionService partitionService;
+
+    @Autowired
+    @Lazy
+    private TbQueueProducerProvider producerProvider;
 
     @Lazy
     @Autowired

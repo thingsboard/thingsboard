@@ -23,12 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -36,6 +38,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -46,7 +49,9 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -76,6 +81,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Autowired
     private AlarmService alarmService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private RelationService relationService;
@@ -142,6 +150,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             switch (edgeEventType) {
                 // TODO: voba - handle edge updates
                 // case EDGE:
+                case USER:
                 case ASSET:
                 case DEVICE:
                 case ENTITY_VIEW:
@@ -286,6 +295,15 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 return convertToEdgeIds(edgeService.findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())));
             case RULE_CHAIN:
                 return convertToEdgeIds(edgeService.findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())));
+            case USER:
+                User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
+                TextPageData<Edge> edges;
+                if (userById.getCustomerId() == null || userById.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                    edges = edgeService.findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
+                } else {
+                    edges = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new TextPageLink(Integer.MAX_VALUE));
+                }
+                return convertToEdgeIds(Futures.immediateFuture(edges.getData()));
             default:
                 return Futures.immediateFuture(Collections.emptyList());
         }
