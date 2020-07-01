@@ -28,6 +28,7 @@ import com.google.gson.JsonObject;
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.RandomStringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
@@ -878,6 +879,7 @@ public final class EdgeGrpcSession implements Closeable {
             device.setType(deviceUpdateMsg.getType());
             device.setLabel(deviceUpdateMsg.getLabel());
             device = ctx.getDeviceService().saveDevice(device);
+            createDeviceCredentials(device);
             createRelationFromEdge(device.getId());
             ctx.getDeviceStateService().onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(device);
@@ -886,6 +888,14 @@ public final class EdgeGrpcSession implements Closeable {
             deviceCreationLock.unlock();
         }
         return device;
+    }
+
+    private void createDeviceCredentials(Device device) {
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setDeviceId(device.getId());
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(RandomStringUtils.randomAlphanumeric(20));
+        ctx.getDeviceCredentialsService().createDeviceCredentials(device.getTenantId(), deviceCredentials);
     }
 
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
