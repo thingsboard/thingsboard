@@ -2201,13 +2201,12 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public TextPageData<EntityView> getEdgeEntityViews(EdgeId edgeId, String entityViewType, TextPageLink pageLink) {
+    public TextPageData<EntityView> getEdgeEntityViews(EdgeId edgeId, TextPageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("edgeId", edgeId.getId().toString());
-        params.put("type", entityViewType);
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/edge/{edgeId}/entityViews?type={type}&" + getUrlParams(pageLink),
+                baseURL + "/api/edge/{edgeId}/entityViews?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<TextPageData<EntityView>>() {
