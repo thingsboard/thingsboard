@@ -68,6 +68,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.dirty = true;
         }
       }
+      this.selectEntityFormGroup.get('entity').updateValueAndValidity();
     }
   }
 
