@@ -36,6 +36,8 @@ public abstract class AbstractCassandraCluster {
     private Boolean jmx;
     @Value("${cassandra.metrics}")
     private Boolean metrics;
+    @Value("${cassandra.local_datacenter}")
+    private String localDatacenter;
 
     @Autowired
     private CassandraDriverOptions driverOptions;
@@ -82,7 +84,7 @@ public abstract class AbstractCassandraCluster {
         if (this.keyspaceName != null) {
             this.sessionBuilder.withKeyspace(this.keyspaceName);
         }
-        this.sessionBuilder.withLocalDatacenter("datacenter1");
+        this.sessionBuilder.withLocalDatacenter(localDatacenter);
         session = sessionBuilder.build();
         if (this.metrics && this.jmx) {
             MetricRegistry registry =
