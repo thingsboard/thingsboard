@@ -48,15 +48,17 @@ message ResponseMsg {
 
 message EntityUpdateMsg {
   DeviceUpdateMsg deviceUpdateMsg = 1;
-  RuleChainUpdateMsg ruleChainUpdateMsg = 2;
-  RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 3;
-  DashboardUpdateMsg dashboardUpdateMsg = 4;
-  AssetUpdateMsg assetUpdateMsg = 5;
-  EntityViewUpdateMsg entityViewUpdateMsg = 6;
-  AlarmUpdateMsg alarmUpdateMsg = 7;
-  UserUpdateMsg userUpdateMsg = 8;
-  CustomerUpdateMsg customerUpdateMsg = 9;
-  RelationUpdateMsg relationUpdateMsg = 10;
+  DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 2;
+  RuleChainUpdateMsg ruleChainUpdateMsg = 3;
+  RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 4;
+  DashboardUpdateMsg dashboardUpdateMsg = 5;
+  AssetUpdateMsg assetUpdateMsg = 6;
+  EntityViewUpdateMsg entityViewUpdateMsg = 7;
+  AlarmUpdateMsg alarmUpdateMsg = 8;
+  UserUpdateMsg userUpdateMsg = 9;
+  UserCredentialsUpdateMsg userCredentialsUpdateMsg = 10;
+  CustomerUpdateMsg customerUpdateMsg = 11;
+  RelationUpdateMsg relationUpdateMsg = 12;
 }
 
 enum RequestMsgType {
@@ -169,9 +171,14 @@ message DeviceUpdateMsg {
   string name = 4;
   string type = 5;
   string label = 6;
-  string credentialsType = 7;
-  string credentialsId = 8;
-  string credentialsValue = 9;
+}
+
+message DeviceCredentialsUpdateMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  string credentialsType = 3;
+  string credentialsId = 4;
+  string credentialsValue = 5;
 }
 
 message AssetUpdateMsg {
@@ -248,13 +255,40 @@ message UserUpdateMsg {
   string firstName = 6;
   string lastName = 7;
   string additionalInfo = 8;
-  bool enabled = 9;
-  string password = 10;
+}
+
+message UserCredentialsUpdateMsg {
+  int64 userIdMSB = 1;
+  int64 userIdLSB = 2;
+  bool enabled = 3;
+  string password = 4;
 }
 
 message RuleChainMetadataRequestMsg {
   int64 ruleChainIdMSB = 1;
   int64 ruleChainIdLSB = 2;
+}
+
+message AttributesRequestMsg {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  string entityType = 3;
+}
+
+message RelationRequestMsg {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  string entityType = 3;
+}
+
+message UserCredentialsRequestMsg {
+  int64 userIdMSB = 1;
+  int64 userIdLSB = 2;
+}
+
+message DeviceCredentialsRequestMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
 }
 
 enum EdgeEntityType {
@@ -270,8 +304,13 @@ message UplinkMsg {
   int32 uplinkMsgId = 1;
   repeated EntityDataProto entityData = 2;
   repeated DeviceUpdateMsg deviceUpdateMsg = 3;
-  repeated AlarmUpdateMsg alarmUpdateMsg = 4;
-  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 5;
+  repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 4;
+  repeated AlarmUpdateMsg alarmUpdateMsg = 5;
+  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 6;
+  repeated AttributesRequestMsg attributesRequestMsg = 7;
+  repeated RelationRequestMsg relationRequestMsg = 8;
+  repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 9;
+  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 10;
 }
 
 message UplinkResponseMsg {
@@ -282,5 +321,6 @@ message UplinkResponseMsg {
 message DownlinkMsg {
   int32 downlinkMsgId = 1;
   repeated EntityDataProto entityData = 2;
+  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 3;
 }
 

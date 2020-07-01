@@ -32,8 +32,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Route incoming messages by Message Originator Type",
         nodeDetails = "Routes messages to chain according to the originator type ('Device', 'Asset', etc.).",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbNodeEmptyConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbNodeEmptyConfig"
 )
 public class TbOriginatorTypeSwitchNode implements TbNode {
 

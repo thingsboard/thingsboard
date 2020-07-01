@@ -67,8 +67,7 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
                 "Also, the rule node allows you to select telemetry sampling order: <b>ASC</b> or <b>DESC</b>. </br>" +
                 "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase"
 )
 public class TbGetTelemetryNode implements TbNode {
 

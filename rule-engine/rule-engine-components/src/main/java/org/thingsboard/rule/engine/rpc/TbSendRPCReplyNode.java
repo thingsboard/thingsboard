@@ -40,8 +40,7 @@ import java.util.UUID;
         nodeDetails = "Expects messages with any message type. Will forward message body to the device.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcReplyConfig",
-        icon = "call_merge",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "call_merge"
 )
 public class TbSendRPCReplyNode implements TbNode {
 

@@ -332,6 +332,21 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, result.size());
     }
 
+    @Test
+    public void setDefaultRootEdgeRuleChain() throws Exception {
+        RuleChainId ruleChainId1 = saveRuleChainAndSetDefaultEdge("Default Edge Rule Chain 1");
+        RuleChainId ruleChainId2 = saveRuleChainAndSetDefaultEdge("Default Edge Rule Chain 2");
+
+        ruleChainService.setDefaultRootEdgeRuleChain(tenantId, ruleChainId1);
+        ruleChainService.setDefaultRootEdgeRuleChain(tenantId, ruleChainId2);
+
+        RuleChain ruleChainById = ruleChainService.findRuleChainById(tenantId, ruleChainId1);
+        Assert.assertFalse(ruleChainById.isRoot());
+
+        ruleChainById = ruleChainService.findRuleChainById(tenantId, ruleChainId2);
+        Assert.assertTrue(ruleChainById.isRoot());
+    }
+
     private RuleChainId saveRuleChainAndSetDefaultEdge(String name) {
         RuleChain edgeRuleChain = new RuleChain();
         edgeRuleChain.setTenantId(tenantId);

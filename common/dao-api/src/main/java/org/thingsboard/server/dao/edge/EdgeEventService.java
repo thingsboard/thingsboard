@@ -26,8 +26,6 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 
 public interface EdgeEventService {
 
-    EdgeEventType getEdgeEventTypeByEntityType(EntityType entityType);
-
     ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent);
 
     TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);

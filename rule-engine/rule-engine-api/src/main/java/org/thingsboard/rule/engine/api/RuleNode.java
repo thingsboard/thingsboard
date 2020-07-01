@@ -58,6 +58,6 @@ public @interface RuleNode {
 
     boolean customRelations() default false;
 
-    RuleChainType[] ruleChainTypes() default RuleChainType.CORE;
+    RuleChainType[] ruleChainTypes() default {RuleChainType.CORE, RuleChainType.EDGE};
 
 }

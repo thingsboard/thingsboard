@@ -51,8 +51,7 @@ import java.util.concurrent.TimeUnit;
                 "If the RPC call request is originated by REST API call from user, will forward the response to user immediately.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcRequestConfig",
-        icon = "call_made",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "call_made"
 )
 public class TbSendRPCRequestNode implements TbNode {
 

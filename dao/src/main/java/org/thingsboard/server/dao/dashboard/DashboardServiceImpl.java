@@ -232,7 +232,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (edge == null) {
             throw new DataValidationException("Can't assign dashboard to non-existent edge!");
         }
-        if (!edge.getTenantId().getId().equals(dashboard.getTenantId().getId())) {
+        if (!edge.getTenantId().equals(dashboard.getTenantId())) {
             throw new DataValidationException("Can't assign dashboard to edge from different tenant!");
         }
         try {

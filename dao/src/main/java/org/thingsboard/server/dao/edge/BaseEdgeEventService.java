@@ -20,9 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -38,27 +36,6 @@ public class BaseEdgeEventService implements EdgeEventService {
 
     @Autowired
     public EdgeEventDao edgeEventDao;
-
-    @Override
-    public EdgeEventType getEdgeEventTypeByEntityType(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-                return EdgeEventType.DEVICE;
-            case ASSET:
-                return EdgeEventType.ASSET;
-            case ENTITY_VIEW:
-                return EdgeEventType.ENTITY_VIEW;
-            case DASHBOARD:
-                return EdgeEventType.DASHBOARD;
-            case USER:
-                return EdgeEventType.USER;
-            case ALARM:
-                return EdgeEventType.ALARM;
-            default:
-                log.warn("Failed to push notification to edge service. Unsupported entity type [{}]", entityType);
-                return null;
-        }
-    }
 
     @Override
     public ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent) {
