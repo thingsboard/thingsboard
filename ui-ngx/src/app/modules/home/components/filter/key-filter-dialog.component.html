@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<form [formGroup]="keyFilterFormGroup" (ngSubmit)="save()">
+<form [formGroup]="keyFilterFormGroup" (ngSubmit)="save()" style="width: 700px;">
   <mat-toolbar color="primary">
-    <h2 translate>{{data.isAdd ? 'filter.add-key-filter' : 'filter.edit-key-filter'}}</h2>
+    <h2>{{data.userMode ? data.keyFilter.key.key : ((data.isAdd ? 'filter.add-key-filter' : 'filter.edit-key-filter') | translate)}}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -27,16 +27,16 @@
   </mat-toolbar>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" fxLayout="column">
-      <section fxLayout="row" fxLayoutGap="8px">
-        <section fxFlex="60" fxLayout="row" formGroupName="key" fxLayoutGap="8px">
-          <mat-form-field fxFlex="40" class="mat-block">
+      <section fxLayout="row" fxLayoutGap="8px" class="entity-key" [fxShow]="!data.userMode">
+        <section fxFlex="70" fxLayout="row" formGroupName="key" fxLayoutGap="8px">
+          <mat-form-field fxFlex="60" class="mat-block">
             <mat-label translate>filter.key-name</mat-label>
             <input matInput required formControlName="key">
             <mat-error *ngIf="keyFilterFormGroup.get('key.key').hasError('required')">
               {{ 'filter.key-name-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field fxFlex="60" class="mat-block">
+          <mat-form-field fxFlex="40" class="mat-block">
             <mat-label translate>filter.key-type.key-type</mat-label>
             <mat-select required formControlName="type">
               <mat-option *ngFor="let type of entityKeyTypes" [value]="type">
@@ -45,15 +45,15 @@
             </mat-select>
           </mat-form-field>
         </section>
-        <mat-form-field fxFlex="40" class="mat-block">
+        <mat-form-field fxFlex="30" class="mat-block">
           <mat-label translate>filter.value-type.value-type</mat-label>
           <mat-select matInput formControlName="valueType">
             <mat-select-trigger>
-              <mat-icon svgIcon="{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.icon }}"></mat-icon>
+              <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.icon }}"></mat-icon>
               <span>{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.name | translate }}</span>
             </mat-select-trigger>
             <mat-option *ngFor="let valueType of entityKeyValueTypesKeys" [value]="valueType">
-              <mat-icon svgIcon="{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).icon }}"></mat-icon>
+              <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).icon }}"></mat-icon>
               <span>{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).name | translate }}</span>
             </mat-option>
           </mat-select>
@@ -72,7 +72,7 @@
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || keyFilterFormGroup.invalid">
+            [disabled]="(isLoading$ | async) || keyFilterFormGroup.invalid || !keyFilterFormGroup.dirty">
       {{ (data.isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
     <button mat-button color="primary"

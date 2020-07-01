@@ -14,39 +14,22 @@
  * limitations under the License.
  */
 :host {
+  min-width: 300px;
+  max-height: 150px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow:
+    0 7px 8px -4px rgba(0, 0, 0, .2),
+    0 13px 19px 2px rgba(0, 0, 0, .14),
+    0 5px 24px 4px rgba(0, 0, 0, .12);
 
-  .tb-filters-header {
-    min-height: 40px;
-    padding: 0 11px;
-    margin: 5px;
-
-    .tb-header-label {
-      font-size: 14px;
-      color: rgba(0, 0, 0, .570588);
-    }
+  @media (min-height: 350px) {
+    max-height: 250px;
   }
 
-  mat-divider{
-    margin: -1px -24px;
-  }
-
-  .tb-filter {
-    padding: 0 0 0 10px;
-    margin: 5px;
-
-    .tb-editable-switch {
-      padding-left: 10px;
-
-      .editable-switch {
-        margin: 0;
-      }
-    }
-  }
-}
-
-:host ::ng-deep {
-  .mat-dialog-content {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+  .mat-content {
+    background-color: #fff;
   }
 }

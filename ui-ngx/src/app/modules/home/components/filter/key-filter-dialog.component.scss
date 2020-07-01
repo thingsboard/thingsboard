@@ -13,40 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-
-  .tb-filters-header {
-    min-height: 40px;
-    padding: 0 11px;
-    margin: 5px;
-
-    .tb-header-label {
-      font-size: 14px;
-      color: rgba(0, 0, 0, .570588);
-    }
-  }
-
-  mat-divider{
-    margin: -1px -24px;
-  }
-
-  .tb-filter {
-    padding: 0 0 0 10px;
-    margin: 5px;
-
-    .tb-editable-switch {
-      padding-left: 10px;
-
-      .editable-switch {
-        margin: 0;
+:host ::ng-deep {
+  .entity-key {
+    mat-form-field {
+      .mat-form-field-wrapper {
+        .mat-form-field-infix {
+          width: auto;
+        }
       }
     }
-  }
-}
-
-:host ::ng-deep {
-  .mat-dialog-content {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
   }
 }

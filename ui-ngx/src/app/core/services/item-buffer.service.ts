@@ -410,7 +410,8 @@ export class ItemBufferService {
   private prepareFilterInfo(filter: Filter): FilterInfo {
     return {
       filter: filter.filter,
-      keyFilters: filter.keyFilters
+      keyFilters: filter.keyFilters,
+      editable: filter.editable
     };
   }
 
@@ -513,7 +514,8 @@ export class ItemBufferService {
     if (!newFilterId) {
       const newFilterName = this.createFilterName(filters, filterInfo.filter);
       newFilterId = this.utils.guid();
-      filters[newFilterId] = {id: newFilterId, filter: newFilterName, keyFilters: filterInfo.keyFilters};
+      filters[newFilterId] = {id: newFilterId, filter: newFilterName,
+        keyFilters: filterInfo.keyFilters, editable: filterInfo.editable};
     }
     return newFilterId;
   }

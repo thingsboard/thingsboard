@@ -78,7 +78,8 @@ export class ComplexFilterPredicateComponent implements ControlValueAccessor, On
         complexPredicate: deepClone(this.complexFilterPredicate),
         disabled: this.disabled,
         userMode: this.userMode,
-        valueType: this.valueType
+        valueType: this.valueType,
+        isAdd: false
       }
     }).afterClosed().subscribe(
       (result) => {

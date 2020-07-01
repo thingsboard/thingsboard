@@ -33,6 +33,7 @@ export interface ComplexFilterPredicateDialogData {
   complexPredicate: ComplexFilterPredicate;
   userMode: boolean;
   disabled: boolean;
+  isAdd: boolean;
   valueType: EntityKeyValueType;
 }
 
@@ -52,6 +53,8 @@ export class ComplexFilterPredicateDialogComponent extends
   complexOperationEnum = ComplexOperation;
   complexOperationTranslations = complexOperationTranslationMap;
 
+  isAdd: boolean;
+
   submitted = false;
 
   constructor(protected store: Store<AppState>,
@@ -61,6 +64,8 @@ export class ComplexFilterPredicateDialogComponent extends
               public dialogRef: MatDialogRef<ComplexFilterPredicateDialogComponent, ComplexFilterPredicate>,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
+
+    this.isAdd = this.data.isAdd;
 
     this.complexFilterFormGroup = this.fb.group(
       {

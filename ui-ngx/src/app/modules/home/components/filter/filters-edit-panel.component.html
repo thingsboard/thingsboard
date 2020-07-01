@@ -15,15 +15,19 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-  <mat-label translate>filter.complex-filter</mat-label>
-  <button mat-icon-button color="primary"
-          class="tb-mat-32"
-          [fxShow]="!disabled"
-          type="button"
-          (click)="openComplexFilterDialog()"
-          matTooltip="{{ 'filter.edit-complex-filter' | translate }}"
-          matTooltipPosition="above">
-    <mat-icon>edit</mat-icon>
-  </button>
+<div fxLayout="column" class="mat-content mat-padding">
+  <div fxLayout="column" *ngFor="let filter of filtersInfo | keyvalue">
+    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+      <mat-label fxFlex>{{filter.value.filter}}</mat-label>
+      <button mat-icon-button color="primary"
+              style="min-width: 40px;"
+              type="button"
+              (click)="editFilter(filter.key, filter.value)"
+              matTooltip="{{ 'filter.edit' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>edit</mat-icon>
+      </button>
+    </div>
+    <mat-divider></mat-divider>
+  </div>
 </div>

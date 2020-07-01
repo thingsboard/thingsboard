@@ -45,7 +45,7 @@ export interface FilterDialogData {
   selector: 'tb-filter-dialog',
   templateUrl: './filter-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: FilterDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./filter-dialog.component.scss']
 })
 export class FilterDialogComponent extends DialogComponent<FilterDialogComponent, Filter>
   implements OnInit, ErrorStateMatcher {
@@ -83,7 +83,8 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
       this.filter = {
         id: null,
         filter: '',
-        keyFilters: []
+        keyFilters: [],
+        editable: true
       };
     } else {
       this.filter = data.filter;
@@ -91,6 +92,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
 
     this.filterFormGroup = this.fb.group({
       filter: [this.filter.filter, [this.validateDuplicateFilterName(), Validators.required]],
+      editable: [this.filter.editable],
       keyFilters: [this.filter.keyFilters, Validators.required]
     });
   }
@@ -128,6 +130,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
   save(): void {
     this.submitted = true;
     this.filter.filter = this.filterFormGroup.get('filter').value;
+    this.filter.editable = this.filterFormGroup.get('editable').value;
     this.filter.keyFilters = this.filterFormGroup.get('keyFilters').value;
     if (this.isAdd) {
       this.filter.id = this.utils.guid();

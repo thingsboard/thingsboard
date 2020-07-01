@@ -65,7 +65,7 @@ export class EntityDataService {
       return of(null);
     }
     listener.subscription = this.createSubscription(listener,
-      datasource.pageLink, datasource.keyFilters,
+      datasource.pageLink, datasource.keyFilters, null,
       false);
     return listener.subscription.subscribe();
   }
@@ -86,15 +86,8 @@ export class EntityDataService {
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
       return of(null);
     }
-    if (datasource.keyFilters) {
-      if (keyFilters) {
-        keyFilters = keyFilters.concat(datasource.keyFilters);
-      } else {
-        keyFilters = datasource.keyFilters;
-      }
-    }
     listener.subscription = this.createSubscription(listener,
-      pageLink, keyFilters,  true);
+      pageLink, datasource.keyFilters,  keyFilters,true);
     if (listener.subscriptionType === widgetType.timeseries) {
       listener.subscription.entityDataSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
     }
@@ -110,6 +103,7 @@ export class EntityDataService {
   private createSubscription(listener: EntityDataListener,
                              pageLink: EntityDataPageLink,
                              keyFilters: KeyFilter[],
+                             additionalKeyFilters: KeyFilter[],
                              isPaginatedDataSubscription: boolean): EntityDataSubscription {
     const datasource = listener.configDatasource;
     const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
@@ -131,6 +125,7 @@ export class EntityDataService {
       entityDataSubscriptionOptions.entityFilter = datasource.entityFilter;
       entityDataSubscriptionOptions.pageLink = pageLink;
       entityDataSubscriptionOptions.keyFilters = keyFilters;
+      entityDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
     }
     entityDataSubscriptionOptions.isPaginatedDataSubscription = isPaginatedDataSubscription;
     return new EntityDataSubscription(entityDataSubscriptionOptions,

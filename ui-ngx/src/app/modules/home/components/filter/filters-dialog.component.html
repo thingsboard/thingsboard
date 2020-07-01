@@ -32,8 +32,11 @@
     <div class="tb-filters-header" fxLayout="row" fxLayoutAlign="start center">
       <span fxFlex="5"></span>
       <div fxFlex="95" fxLayout="row" fxLayoutAlign="start center">
-        <span class="tb-header-label" translate fxFlex>filter.filter</span>
-        <span style="min-width: 80px;"></span>
+        <div class="tb-header-label" translate fxFlex>filter.filter</div>
+        <div class="tb-header-label" translate fxFlex="120px"
+             fxLayout="column" fxLayoutAlign="center center"
+             style="padding-left: 30px;">filter.editable</div>
+        <div style="min-width: 80px;"></div>
       </div>
     </div>
     <fieldset [disabled]="isLoading$ | async">
@@ -43,13 +46,15 @@
            *ngFor="let filterControl of filtersFormArray().controls; let $index = index">
         <span fxFlex="5">{{$index + 1}}.</span>
         <div class="mat-elevation-z4 tb-filter" fxFlex="95" fxLayout="row" fxLayoutAlign="start center">
-          <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block" fxFlex>
-            <mat-label></mat-label>
-            <input matInput [formControl]="filterControl.get('filter')" required placeholder="{{ 'filter.filter' | translate }}">
-            <mat-error *ngIf="filterControl.get('filter').hasError('required')">
-              {{ 'filter.filter-required' | translate }}
-            </mat-error>
-          </mat-form-field>
+          <mat-label fxFlex>{{filterControl.get('filter').value}}</mat-label>
+          <section fxFlex="120px" style="padding-left: 10px;"
+                   class="tb-editable-switch"
+                   fxLayout="column"
+                   fxLayoutAlign="center center">
+            <mat-slide-toggle class="editable-switch"
+                              [formControl]="filterControl.get('editable')">
+            </mat-slide-toggle>
+          </section>
           <button [disabled]="isLoading$ | async"
                   mat-icon-button color="primary"
                   style="min-width: 40px;"

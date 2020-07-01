@@ -26,7 +26,7 @@ import {
 @Component({
   selector: 'tb-string-filter-predicate',
   templateUrl: './string-filter-predicate.component.html',
-  styleUrls: [],
+  styleUrls: ['./filter-predicate.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

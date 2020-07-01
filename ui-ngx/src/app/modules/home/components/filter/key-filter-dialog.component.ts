@@ -27,8 +27,10 @@ import {
   entityKeyTypeTranslationMap,
   EntityKeyValueType,
   entityKeyValueTypesMap,
-  KeyFilterInfo
+  KeyFilterInfo, KeyFilterPredicate
 } from '@shared/models/query/query.models';
+import { DialogService } from '@core/services/dialog.service';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface KeyFilterDialogData {
   keyFilter: KeyFilterInfo;
@@ -40,7 +42,7 @@ export interface KeyFilterDialogData {
   selector: 'tb-key-filter-dialog',
   templateUrl: './key-filter-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: KeyFilterDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./key-filter-dialog.component.scss']
 })
 export class KeyFilterDialogComponent extends
   DialogComponent<KeyFilterDialogComponent, KeyFilterInfo>
@@ -65,6 +67,8 @@ export class KeyFilterDialogComponent extends
               @Inject(MAT_DIALOG_DATA) public data: KeyFilterDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<KeyFilterDialogComponent, KeyFilterInfo>,
+              private dialogs: DialogService,
+              private translate: TranslateService,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
 
@@ -80,6 +84,22 @@ export class KeyFilterDialogComponent extends
         predicates: [this.data.keyFilter.predicates, [Validators.required]]
       }
     );
+    this.keyFilterFormGroup.get('valueType').valueChanges.subscribe((valueType: EntityKeyValueType) => {
+      const prevValue: EntityKeyValueType = this.keyFilterFormGroup.value.valueType;
+      const predicates: KeyFilterPredicate[] = this.keyFilterFormGroup.get('predicates').value;
+      if (prevValue && prevValue !== valueType && predicates && predicates.length) {
+        this.dialogs.confirm(this.translate.instant('filter.key-value-type-change-title'),
+          this.translate.instant('filter.key-value-type-change-message')).subscribe(
+          (result) => {
+            if (result) {
+              this.keyFilterFormGroup.get('predicates').setValue([]);
+            } else {
+              this.keyFilterFormGroup.get('valueType').setValue(prevValue, {emitEvent: false});
+            }
+          }
+        );
+      }
+    });
   }
 
   ngOnInit(): void {

@@ -112,6 +112,7 @@ export interface IAliasController {
   getFilterInfo(filterId: string): FilterInfo;
   getKeyFilters(filterId: string): Array<KeyFilter>;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
+  updateUserFilter(filter: Filter);
   updateEntityAliases(entityAliases: EntityAliases);
   updateFilters(filters: Filters);
   updateAliases(aliasIds?: Array<string>);

@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<form [formGroup]="filterFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+<form [formGroup]="filterFormGroup" (ngSubmit)="save()" style="width: 700px;">
   <mat-toolbar color="primary">
-    <h2>{{ (isAdd ? 'filter.add' : 'filter.edit') | translate }}</h2>
+    <h2>{{ userMode ? filter.filter : ((isAdd ? 'filter.add' : 'filter.edit') | translate) }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -30,16 +30,24 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <div fxFlex fxLayout="column">
-        <mat-form-field fxFlex class="mat-block">
-          <mat-label translate>filter.name</mat-label>
-          <input matInput formControlName="filter" required>
-          <mat-error *ngIf="filterFormGroup.get('filter').hasError('required')">
-            {{ 'filter.name-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="filterFormGroup.get('filter').hasError('duplicateFilterName')">
-            {{ 'filter.duplicate-filter' | translate }}
-          </mat-error>
-        </mat-form-field>
+        <div fxLayout="row" [fxShow]="!userMode">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>filter.name</mat-label>
+            <input matInput formControlName="filter" required>
+            <mat-error *ngIf="filterFormGroup.get('filter').hasError('required')">
+              {{ 'filter.name-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="filterFormGroup.get('filter').hasError('duplicateFilterName')">
+              {{ 'filter.duplicate-filter' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <section class="tb-editable-switch" fxLayout="column" fxLayoutAlign="start center">
+            <label class="tb-small editable-label" translate>filter.editable</label>
+            <mat-slide-toggle class="editable-switch"
+                              formControlName="editable">
+            </mat-slide-toggle>
+          </section>
+        </div>
         <tb-key-filter-list
           formControlName="keyFilters"
           [userMode]="userMode">
@@ -51,7 +59,7 @@
     <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || filterFormGroup.invalid || !filterFormGroup.dirty">
-      {{ (isAdd ? 'action.add' : 'action.update') | translate }}
+      {{ (userMode ? 'action.update' : (isAdd ? 'action.add' : 'action.update')) | translate }}
     </button>
     <button mat-button color="primary"
             type="button"

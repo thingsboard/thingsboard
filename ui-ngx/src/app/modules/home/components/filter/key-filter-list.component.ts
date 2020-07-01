@@ -25,7 +25,7 @@ import {
   Validators
 } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
-import { EntityKeyType, KeyFilterInfo } from '@shared/models/query/query.models';
+import { EntityKeyType, entityKeyTypeTranslationMap, KeyFilterInfo } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
 import { KeyFilterDialogComponent, KeyFilterDialogData } from '@home/components/filter/key-filter-dialog.component';
@@ -33,7 +33,7 @@ import { KeyFilterDialogComponent, KeyFilterDialogData } from '@home/components/
 @Component({
   selector: 'tb-key-filter-list',
   templateUrl: './key-filter-list.component.html',
-  styleUrls: [],
+  styleUrls: ['./key-filter-list.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -49,6 +49,8 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
   @Input() userMode: boolean;
 
   keyFilterListFormGroup: FormGroup;
+
+  entityKeyTypeTranslations = entityKeyTypeTranslationMap;
 
   private propagateChange = null;
 

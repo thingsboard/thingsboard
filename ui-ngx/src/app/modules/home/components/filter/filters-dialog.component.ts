@@ -36,7 +36,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
-import { deepClone } from '@core/utils';
+import { deepClone, isUndefined } from '@core/utils';
 import { Filter, Filters, KeyFilterInfo } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 
@@ -109,6 +109,9 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
     const filterControls: Array<AbstractControl> = [];
     for (const filterId of Object.keys(this.data.filters)) {
       const filter = this.data.filters[filterId];
+      if (isUndefined(filter.editable)) {
+        filter.editable = true;
+      }
       filterControls.push(this.createFilterFormControl(filterId, filter));
     }
 
@@ -121,7 +124,8 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
     const filterFormControl = this.fb.group({
       id: [filterId],
       filter: [filter ? filter.filter : null, [Validators.required]],
-      keyFilters: [filter ? filter.keyFilters : [], [Validators.required]]
+      keyFilters: [filter ? filter.keyFilters : [], [Validators.required]],
+      editable: [filter ? filter.editable : true]
     });
     return filterFormControl;
   }
@@ -148,9 +152,9 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       for (const widgetTitle of widgetsTitleList) {
         widgetsListHtml += '<br/>\'' + widgetTitle + '\'';
       }
-      const message = this.translate.instant('entity.unable-delete-filter-text',
+      const message = this.translate.instant('filter.unable-delete-filter-text',
         {filter: filter.filter, widgetsList: widgetsListHtml});
-      this.dialogs.alert(this.translate.instant('entity.unable-delete-filter-title'),
+      this.dialogs.alert(this.translate.instant('filter.unable-delete-filter-title'),
         message, this.translate.instant('action.close'), true);
     } else {
       (this.filtersFormGroup.get('filters') as FormArray).removeAt(index);
@@ -190,8 +194,9 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
             .push(this.createFilterFormControl(result.id, result));
         } else {
           const filterFormControl = (this.filtersFormGroup.get('filters') as FormArray).at(index);
-          filterFormControl.get('filter').patchValue(filter.filter);
-          filterFormControl.get('keyFilters').patchValue(filter.keyFilters);
+          filterFormControl.get('filter').patchValue(result.filter);
+          filterFormControl.get('editable').patchValue(result.editable);
+          filterFormControl.get('keyFilters').patchValue(result.keyFilters);
         }
         this.filtersFormGroup.markAsDirty();
       }
@@ -215,6 +220,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       const filterId: string = filterValue.id;
       const filter: string = filterValue.filter;
       const keyFilters: Array<KeyFilterInfo> = filterValue.keyFilters;
+      const editable: boolean = filterValue.editable;
       if (uniqueFilterList[filter]) {
         valid = false;
         message = this.translate.instant('filter.duplicate-filter-error', {filter});
@@ -225,7 +231,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         break;
       } else {
         uniqueFilterList[filter] = filter;
-        filters[filterId] = {id: filterId, filter, keyFilters};
+        filters[filterId] = {id: filterId, filter, keyFilters, editable};
       }
     }
     if (valid) {

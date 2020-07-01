@@ -78,6 +78,8 @@ import { KeyFilterDialogComponent } from '@home/components/filter/key-filter-dia
 import { FiltersDialogComponent } from '@home/components/filter/filters-dialog.component';
 import { FilterDialogComponent } from '@home/components/filter/filter-dialog.component';
 import { FilterSelectComponent } from './filter/filter-select.component';
+import { FiltersEditComponent } from '@home/components/filter/filters-edit.component';
+import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-panel.component';
 
 @NgModule({
   declarations:
@@ -138,7 +140,9 @@ import { FilterSelectComponent } from './filter/filter-select.component';
       KeyFilterDialogComponent,
       FilterDialogComponent,
       FiltersDialogComponent,
-      FilterSelectComponent
+      FilterSelectComponent,
+      FiltersEditComponent,
+      FiltersEditPanelComponent
     ],
   imports: [
     CommonModule,
@@ -192,7 +196,8 @@ import { FilterSelectComponent } from './filter/filter-select.component';
     KeyFilterDialogComponent,
     FilterDialogComponent,
     FiltersDialogComponent,
-    FilterSelectComponent
+    FilterSelectComponent,
+    FiltersEditComponent
   ],
   providers: [
     WidgetComponentService,

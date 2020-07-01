@@ -15,20 +15,21 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" [formGroup]="stringFilterPredicateFormGroup">
-  <mat-form-field class="mat-block">
-    <mat-label translate>filter.operation.operation</mat-label>
-    <mat-select required formControlName="operation">
-      <mat-option *ngFor="let operation of stringOperations" [value]="operation">
-        {{stringOperationTranslations.get(stringOperationEnum[operation]) | translate}}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-checkbox formControlName="ignoreCase">
-    {{ 'filter.ignore-case' | translate }}
-  </mat-checkbox>
-  <mat-form-field class="mat-block">
-    <mat-label translate>filter.value</mat-label>
-    <input matInput formControlName="value">
+<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="stringFilterPredicateFormGroup">
+  <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+      <mat-label></mat-label>
+      <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
+        <mat-option *ngFor="let operation of stringOperations" [value]="operation">
+          {{stringOperationTranslations.get(stringOperationEnum[operation]) | translate}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-checkbox fxLayout="row" fxLayoutAlign="center" formControlName="ignoreCase" style="min-width: 70px;">
+    </mat-checkbox>
+  </div>
+  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+    <mat-label></mat-label>
+    <input matInput formControlName="value" placeholder="{{'filter.value' | translate}}">
   </mat-form-field>
 </div>

@@ -15,17 +15,18 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" [formGroup]="numericFilterPredicateFormGroup">
-  <mat-form-field class="mat-block">
-    <mat-label translate>filter.operation.operation</mat-label>
-    <mat-select required formControlName="operation">
+<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="numericFilterPredicateFormGroup">
+  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+    <mat-label></mat-label>
+    <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
       <mat-option *ngFor="let operation of numericOperations" [value]="operation">
         {{numericOperationTranslations.get(numericOperationEnum[operation]) | translate}}
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-form-field class="mat-block">
-    <mat-label translate>filter.value</mat-label>
-    <input required type="number" matInput formControlName="value">
+  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+    <mat-label></mat-label>
+    <input required type="number" matInput formControlName="value"
+           placeholder="{{'filter.value' | translate}}">
   </mat-form-field>
 </div>

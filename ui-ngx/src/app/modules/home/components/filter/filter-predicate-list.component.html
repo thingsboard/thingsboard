@@ -16,42 +16,72 @@
 
 -->
 <section fxLayout="column" [formGroup]="filterListFormGroup">
-  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" style="max-height: 40px;"
-       formArrayName="predicates"
-       *ngFor="let predicateControl of predicatesFormArray().controls; let $index = index">
-    <tb-filter-predicate
-      [userMode]="userMode"
-      [valueType]="valueType"
-      [formControl]="predicateControl">
-    </tb-filter-predicate>
-    <button mat-icon-button color="primary"
-            [fxShow]="!disabled && !userMode"
-            type="button"
-            (click)="removePredicate($index)"
-            matTooltip="{{ 'filter.remove-filter' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-  <span [fxShow]="!predicatesFormArray().length"
-        fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
-        class="no-data-found" translate>filter.no-filters</span>
-  <div style="margin-top: 8px;" fxLayout="row" fxLayoutGap="8px">
-    <button mat-button mat-raised-button color="primary"
-            [fxShow]="!disabled && !userMode"
-            (click)="addPredicate(false)"
-            type="button"
-            matTooltip="{{ 'filter.add-filter' | translate }}"
-            matTooltipPosition="above">
-      {{ 'action.add' | translate }}
-    </button>
-    <button mat-button mat-raised-button color="primary"
-            [fxShow]="!disabled && !userMode"
-            (click)="addPredicate(true)"
-            type="button"
-            matTooltip="{{ 'filter.add-complex-filter' | translate }}"
-            matTooltipPosition="above">
-      {{ 'filter.add-complex' | translate }}
-    </button>
-  </div>
+  <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <div translate>filter.filters</div>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <div fxLayout="row">
+      <span fxFlex="8"></span>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex="92">
+        <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <label fxFlex translate class="tb-title no-padding">filter.operation.operation</label>
+          <label *ngIf="valueType === valueTypeEnum.STRING"
+                 translate class="tb-title no-padding" style="min-width: 70px;">filter.ignore-case</label>
+        </div>
+        <label fxFlex translate class="tb-title no-padding">filter.value</label>
+        <span [fxShow]="!disabled && !userMode" style="min-width: 40px;">&nbsp;</span>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="predicate-list">
+      <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;"
+           formArrayName="predicates"
+           *ngFor="let predicateControl of predicatesFormArray().controls; let $index = index">
+        <div fxFlex="8" fxLayout="row" fxLayoutAlign="center" class="filters-operation">
+          <span *ngIf="$index > 0">{{ complexOperationTranslations.get(operation) | translate }}</span>
+        </div>
+        <div fxLayout="column" fxFlex="92">
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex>
+            <tb-filter-predicate
+              fxFlex
+              [userMode]="userMode"
+              [valueType]="valueType"
+              [formControl]="predicateControl">
+            </tb-filter-predicate>
+            <button mat-icon-button color="primary"
+                    [fxShow]="!disabled && !userMode"
+                    type="button"
+                    (click)="removePredicate($index)"
+                    matTooltip="{{ 'filter.remove-filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      <span [fxShow]="!predicatesFormArray().length"
+            fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
+            class="no-data-found" translate>filter.no-filters</span>
+    </div>
+    <div style="margin-top: 16px;" fxLayout="row" fxLayoutGap="8px">
+      <button mat-button mat-raised-button color="primary"
+              [fxShow]="!disabled && !userMode"
+              (click)="addPredicate(false)"
+              type="button"
+              matTooltip="{{ 'filter.add-filter' | translate }}"
+              matTooltipPosition="above">
+        {{ 'action.add' | translate }}
+      </button>
+      <button mat-button mat-raised-button color="primary"
+              [fxShow]="!disabled && !userMode"
+              (click)="addPredicate(true)"
+              type="button"
+              matTooltip="{{ 'filter.add-complex-filter' | translate }}"
+              matTooltipPosition="above">
+        {{ 'filter.add-complex' | translate }}
+      </button>
+    </div>
+  </mat-expansion-panel>
 </section>

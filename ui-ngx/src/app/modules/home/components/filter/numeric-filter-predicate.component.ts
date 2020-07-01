@@ -24,7 +24,7 @@ import { isDefined } from '@core/utils';
 @Component({
   selector: 'tb-numeric-filter-predicate',
   templateUrl: './numeric-filter-predicate.component.html',
-  styleUrls: [],
+  styleUrls: ['./filter-predicate.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

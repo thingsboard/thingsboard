@@ -24,7 +24,7 @@ import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import { map, mergeMap } from 'rxjs/operators';
 import {
-  defaultEntityDataPageLink, FilterInfo, filterInfoToKeyFilters, Filters, KeyFilter, singleEntityDataPageLink,
+  defaultEntityDataPageLink, Filter, FilterInfo, filterInfoToKeyFilters, Filters, KeyFilter, singleEntityDataPageLink,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
 
@@ -41,6 +41,7 @@ export class AliasController implements IAliasController {
 
   entityAliases: EntityAliases;
   filters: Filters;
+  userFilters: Filters;
 
   resolvedAliases: {[aliasId: string]: AliasInfo} = {};
   resolvedAliasesObservable: {[aliasId: string]: Observable<AliasInfo>} = {};
@@ -54,6 +55,7 @@ export class AliasController implements IAliasController {
               private origFilters: Filters) {
     this.entityAliases = deepClone(this.origEntityAliases);
     this.filters = deepClone(this.origFilters);
+    this.userFilters = {};
   }
 
   updateEntityAliases(newEntityAliases: EntityAliases) {
@@ -94,6 +96,9 @@ export class AliasController implements IAliasController {
     }
     this.filters = deepClone(newFilters);
     if (changedFilterIds.length) {
+      for (const filterId of changedFilterIds) {
+        delete this.userFilters[filterId];
+      }
       this.filtersChangedSubject.next(changedFilterIds);
     }
   }
@@ -146,7 +151,11 @@ export class AliasController implements IAliasController {
   }
 
   getFilterInfo(filterId: string): FilterInfo {
-    return this.filters[filterId];
+    if (this.userFilters[filterId]) {
+      return this.userFilters[filterId];
+    } else {
+      return this.filters[filterId];
+    }
   }
 
   getKeyFilters(filterId: string): Array<KeyFilter> {
@@ -351,6 +360,17 @@ export class AliasController implements IAliasController {
         aliasInfo.currentEntity = currentEntity;
         this.entityAliasesChangedSubject.next([aliasId]);
       }
+    }
+  }
+
+  updateUserFilter(filter: Filter) {
+    let prevUserFilter = this.userFilters[filter.id];
+    if (!prevUserFilter) {
+      prevUserFilter = this.filters[filter.id];
+    }
+    if (prevUserFilter && !isEqual(prevUserFilter, filter)) {
+      this.userFilters[filter.id] = filter;
+      this.filtersChangedSubject.next([filter.id]);
     }
   }
 }

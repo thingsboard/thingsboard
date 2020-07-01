@@ -26,7 +26,7 @@ import { isDefined } from '@core/utils';
 @Component({
   selector: 'tb-boolean-filter-predicate',
   templateUrl: './boolean-filter-predicate.component.html',
-  styleUrls: [],
+  styleUrls: ['./filter-predicate.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

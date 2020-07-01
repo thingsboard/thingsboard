@@ -14,39 +14,15 @@
  * limitations under the License.
  */
 :host {
+  .tb-editable-switch {
+    padding-left: 10px;
 
-  .tb-filters-header {
-    min-height: 40px;
-    padding: 0 11px;
-    margin: 5px;
-
-    .tb-header-label {
-      font-size: 14px;
-      color: rgba(0, 0, 0, .570588);
+    .editable-switch {
+      margin: 0;
     }
-  }
 
-  mat-divider{
-    margin: -1px -24px;
-  }
-
-  .tb-filter {
-    padding: 0 0 0 10px;
-    margin: 5px;
-
-    .tb-editable-switch {
-      padding-left: 10px;
-
-      .editable-switch {
-        margin: 0;
-      }
+    .editable-label {
+      margin: 5px 0;
     }
-  }
-}
-
-:host ::ng-deep {
-  .mat-dialog-content {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
   }
 }

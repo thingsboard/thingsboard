@@ -721,7 +721,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   private createFilter(filter: string): Observable<Filter> {
-    const singleFilter: Filter = {id: null, filter, keyFilters: []};
+    const singleFilter: Filter = {id: null, filter, keyFilters: [], editable: true};
     return this.dialog.open<FilterDialogComponent, FilterDialogData,
       Filter>(FilterDialogComponent, {
       disableClose: true,

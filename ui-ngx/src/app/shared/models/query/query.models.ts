@@ -248,6 +248,7 @@ export interface KeyFilterInfo {
 
 export interface FilterInfo {
   filter: string;
+  editable: boolean;
   keyFilters: Array<KeyFilterInfo>;
 }
 

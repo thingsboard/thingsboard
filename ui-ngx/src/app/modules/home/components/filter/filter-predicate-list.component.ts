@@ -27,6 +27,7 @@ import {
 import { Observable, of, Subscription } from 'rxjs';
 import {
   ComplexFilterPredicate,
+  ComplexOperation, complexOperationTranslationMap,
   createDefaultFilterPredicate,
   EntityKeyValueType,
   KeyFilterPredicate
@@ -40,7 +41,7 @@ import { MatDialog } from '@angular/material/dialog';
 @Component({
   selector: 'tb-filter-predicate-list',
   templateUrl: './filter-predicate-list.component.html',
-  styleUrls: [],
+  styleUrls: ['./filter-predicate-list.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -57,7 +58,13 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
 
   @Input() valueType: EntityKeyValueType;
 
+  @Input() operation: ComplexOperation = ComplexOperation.AND;
+
   filterListFormGroup: FormGroup;
+
+  valueTypeEnum = EntityKeyValueType;
+
+  complexOperationTranslations = complexOperationTranslationMap;
 
   private propagateChange = null;
 
@@ -143,7 +150,8 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
         complexPredicate: predicate,
         disabled: this.disabled,
         userMode: this.userMode,
-        valueType: this.valueType
+        valueType: this.valueType,
+        isAdd: true
       }
     }).afterClosed();
   }

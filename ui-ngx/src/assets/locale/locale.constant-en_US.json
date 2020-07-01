@@ -549,6 +549,7 @@
         "title-color": "Title color",
         "display-dashboards-selection": "Display dashboards selection",
         "display-entities-selection": "Display entities selection",
+        "display-filters": "Display filters",
         "display-dashboard-timewindow": "Display timewindow",
         "display-dashboard-export": "Display export",
         "import": "Import dashboard",
@@ -1166,6 +1167,7 @@
          "duplicate-filter-error": "Duplicate filter found '{{filter}}'.<br>Filters must be unique within the dashboard.",
          "missing-key-filters-error": "Key filters is missing for filter '{{filter}}'.",
          "filter": "Filter",
+         "editable": "Editable",
          "no-filters-found": "No filters found.",
          "no-filter-matching": "'{{filter}}' not found.",
          "create-new-filter": "Create a new one!",
@@ -1195,6 +1197,7 @@
          "complex-filter": "Complex filter",
          "edit-complex-filter": "Edit complex filter",
          "key-filter": "Key filter",
+         "key-filters": "Key filters",
          "key-name": "Key name",
          "key-name-required": "Key name is required.",
          "key-type": {
@@ -1210,6 +1213,8 @@
            "boolean": "Boolean"
          },
          "value-type-required": "Key value type is required.",
+         "key-value-type-change-title": "Are you sure you want to change key value type?",
+         "key-value-type-change-message": "If you confirm new value type all entered key filters will be removed.",
          "no-key-filters": "No key filters configured",
          "add-key-filter": "Add key filter",
          "remove-key-filter": "Remove key filter",

@@ -16,38 +16,65 @@
 
 -->
 <section fxLayout="column" [formGroup]="keyFilterListFormGroup">
-  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" style="max-height: 40px;"
-       formArrayName="keyFilters"
-       *ngFor="let keyFilterControl of keyFiltersFormArray().controls; let $index = index">
-    <span>{{ keyFilterControl.value.key.key }}</span>
-    <span>{{ keyFilterControl.value.key.type }}</span>
-    <button mat-icon-button color="primary"
-            type="button"
-            (click)="editKeyFilter($index)"
-            matTooltip="{{ 'filter.edit-key-filter' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>edit</mat-icon>
-    </button>
-    <button mat-icon-button color="primary"
-            [fxShow]="!disabled && !userMode"
-            type="button"
-            (click)="removeKeyFilter($index)"
-            matTooltip="{{ 'filter.remove-key-filter' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-  <span [fxShow]="!keyFiltersFormArray().length"
-        fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
-        class="no-data-found" translate>filter.no-key-filters</span>
-  <div style="margin-top: 8px;">
-    <button mat-button mat-raised-button color="primary"
-            [fxShow]="!disabled && !userMode"
-            (click)="addKeyFilter()"
-            type="button"
-            matTooltip="{{ 'filter.add-key-filter' | translate }}"
-            matTooltipPosition="above">
-      {{ 'filter.add-key-filter' | translate }}
-    </button>
-  </div>
+  <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <div translate>filter.key-filters</div>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <div fxLayout="row">
+      <span fxFlex="8"></span>
+      <div fxLayout="row" fxLayoutAlign="start center" fxFlex="92">
+        <label fxFlex translate class="tb-title no-padding">filter.key-name</label>
+        <label fxFlex translate class="tb-title no-padding">filter.key-type.key-type</label>
+        <span [fxShow]="!disabled && !userMode" style="min-width: 80px;">&nbsp;</span>
+        <span [fxShow]="disabled || userMode" style="min-width: 40px;">&nbsp;</span>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="key-filter-list">
+      <div fxLayout="row" fxLayoutAlign="start center" style="max-height: 40px;"
+           formArrayName="keyFilters"
+           *ngFor="let keyFilterControl of keyFiltersFormArray().controls; let $index = index">
+        <div fxFlex="8" class="filters-operation">
+          <span *ngIf="$index > 0" translate>filter.operation.and</span>
+        </div>
+        <div fxLayout="column" fxFlex="92">
+          <div fxLayout="row" fxLayoutAlign="start center" fxFlex>
+            <div fxFlex>{{ keyFilterControl.value.key.key }}</div>
+            <div fxFlex translate>{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) }}</div>
+            <button mat-icon-button color="primary"
+                    type="button"
+                    (click)="editKeyFilter($index)"
+                    matTooltip="{{ 'filter.edit-key-filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="primary"
+                    [fxShow]="!disabled && !userMode"
+                    type="button"
+                    (click)="removeKeyFilter($index)"
+                    matTooltip="{{ 'filter.remove-key-filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <mat-divider></mat-divider>
+        </div>
+      </div>
+      <span [fxShow]="!keyFiltersFormArray().length"
+            fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
+            class="no-data-found" translate>filter.no-key-filters</span>
+    </div>
+    <div style="margin-top: 16px;">
+      <button mat-button mat-raised-button color="primary"
+              [fxShow]="!disabled && !userMode"
+              (click)="addKeyFilter()"
+              type="button"
+              matTooltip="{{ 'filter.add-key-filter' | translate }}"
+              matTooltipPosition="above">
+        {{ 'filter.add-key-filter' | translate }}
+      </button>
+    </div>
+  </mat-expansion-panel>
 </section>

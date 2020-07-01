@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="complexFilterFormGroup" (ngSubmit)="save()">
+<form [formGroup]="complexFilterFormGroup" (ngSubmit)="save()" style="width: 700px;">
   <mat-toolbar color="primary">
     <h2 translate>filter.complex-filter</h2>
     <span fxFlex></span>
@@ -38,6 +38,7 @@
       <tb-filter-predicate-list
         [userMode]="data.userMode"
         [valueType]="data.valueType"
+        [operation]="complexFilterFormGroup.get('operation').value"
         formControlName="predicates">
       </tb-filter-predicate-list>
     </fieldset>
@@ -45,8 +46,8 @@
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || complexFilterFormGroup.invalid">
-      {{ 'action.update' | translate }}
+            [disabled]="(isLoading$ | async) || complexFilterFormGroup.invalid || !complexFilterFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
     <button mat-button color="primary"
             type="button"

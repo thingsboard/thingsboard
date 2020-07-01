@@ -1011,7 +1011,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       const entityDataListener = this.entityDataListeners[datasourceIndex];
       if (entityDataListener) {
         const pageLink = entityDataListener.subscription.entityDataSubscriptionOptions.pageLink;
-        const keyFilters = entityDataListener.subscription.entityDataSubscriptionOptions.keyFilters;
+        const keyFilters = entityDataListener.subscription.entityDataSubscriptionOptions.additionalKeyFilters;
         this.subscribeForPaginatedData(datasourceIndex, pageLink, keyFilters);
       }
     }

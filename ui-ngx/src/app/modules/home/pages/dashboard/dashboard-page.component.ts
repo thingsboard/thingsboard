@@ -410,6 +410,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
+  public displayFilters(): boolean {
+    if (this.dashboard.configuration.settings &&
+      isDefined(this.dashboard.configuration.settings.showFilters)) {
+      return this.dashboard.configuration.settings.showFilters;
+    } else {
+      return true;
+    }
+  }
+
   public showRightLayoutSwitch(): boolean {
     return this.isMobile && this.layouts.right.show;
   }

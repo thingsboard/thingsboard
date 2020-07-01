@@ -68,6 +68,7 @@ export interface EntityDataSubscriptionOptions {
   isPaginatedDataSubscription?: boolean;
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
+  additionalKeyFilters?: Array<KeyFilter>;
   subscriptionTimewindow?: SubscriptionTimewindow;
 }
 
@@ -206,10 +207,19 @@ export class EntityDataSubscription {
       this.subscriber = new TelemetrySubscriber(this.telemetryService);
       this.dataCommand = new EntityDataCmd();
 
+      let keyFilters = this.entityDataSubscriptionOptions.keyFilters;
+      if (this.entityDataSubscriptionOptions.additionalKeyFilters) {
+        if (keyFilters) {
+          keyFilters = keyFilters.concat(this.entityDataSubscriptionOptions.additionalKeyFilters);
+        } else {
+          keyFilters = this.entityDataSubscriptionOptions.additionalKeyFilters;
+        }
+      }
+
       this.dataCommand.query = {
         entityFilter: this.entityDataSubscriptionOptions.entityFilter,
         pageLink: this.entityDataSubscriptionOptions.pageLink,
-        keyFilters: this.entityDataSubscriptionOptions.keyFilters,
+        keyFilters,
         entityFields,
         latestValues: this.latestValues
       };

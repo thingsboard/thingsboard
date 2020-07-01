@@ -750,6 +750,9 @@ mat-label {
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
     }
+    &.tb-mat-18 {
+      @include tb-mat-icon-size(18);
+    }
     &.tb-mat-20 {
       @include tb-mat-icon-size(20);
     }
