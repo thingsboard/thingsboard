@@ -406,7 +406,7 @@ public class EntityKeyMapping {
             String entityFieldAlias = getEntityFieldAlias(filterType, entityType);
             String column = null;
             if (existingEntityFields.contains(entityFieldAlias)) {
-                column = entityFieldColumnMap.get(key.getKey());
+                column = entityFieldColumnMap.get(entityFieldAlias);
             }
             if (column != null) {
                 String field = alias + "." + column;
