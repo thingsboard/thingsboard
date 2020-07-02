@@ -84,6 +84,9 @@ import {
   KeyFilter
 } from '@shared/models/query/query.models';
 import { sortItems } from '@shared/models/page/page-link';
+import { entityFields } from '@shared/models/entity.models';
+import { alarmFields } from '@shared/models/alarm.models';
+import { DatePipe } from '@angular/common';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -153,6 +156,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
+              private datePipe: DatePipe,
               private translate: TranslateService,
               private domSanitizer: DomSanitizer) {
     super(store);
@@ -511,11 +515,25 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
             content = '' + value;
         }
       } else {
-        const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
-        const units = contentInfo.units || this.ctx.widgetConfig.units;
-        content = this.ctx.utils.formatValue(value, decimals, units, true);
+        content = this.defaultContent(key, contentInfo, value);
       }
       return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
+    } else {
+      return '';
+    }
+  }
+
+  private defaultContent(key: EntityColumn, contentInfo: CellContentInfo, value: any): any {
+    if (isDefined(value)) {
+      const entityField = entityFields[key.name];
+      if (entityField) {
+        if (entityField.time) {
+          return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
+        }
+      }
+      const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
+      const units = contentInfo.units || this.ctx.widgetConfig.units;
+      return this.ctx.utils.formatValue(value, decimals, units, true);
     } else {
       return '';
     }

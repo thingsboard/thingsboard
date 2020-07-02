@@ -254,7 +254,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
         String entityWhereClause = this.buildEntityWhere(ctx, tenantId, customerId, query.getEntityFilter(), entityFieldsFiltersMapping, entityType);
         String latestJoins = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings);
-        String whereClause = this.buildWhere(ctx, latestFiltersMapping);
+        String whereClause = this.buildWhere(ctx, latestFiltersMapping, query.getEntityFilter().getType(), entityType);
         String textSearchQuery = this.buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
         String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
         String entityTypeStr;
@@ -316,7 +316,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                                     EntityType entityType) {
         String permissionQuery = this.buildPermissionQuery(ctx, entityFilter, tenantId, customerId, entityType);
         String entityFilterQuery = this.buildEntityFilterQuery(ctx, entityFilter);
-        String entityFieldsQuery = EntityKeyMapping.buildQuery(ctx, entityFieldsFilters);
+        String entityFieldsQuery = EntityKeyMapping.buildQuery(ctx, entityFieldsFilters, entityFilter.getType(), entityType);
         String result = permissionQuery;
         if (!entityFilterQuery.isEmpty()) {
             result += " and " + entityFilterQuery;
@@ -478,8 +478,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return from;
     }
 
-    private String buildWhere(QueryContext ctx, List<EntityKeyMapping> latestFiltersMapping) {
-        String latestFilters = EntityKeyMapping.buildQuery(ctx, latestFiltersMapping);
+    private String buildWhere(QueryContext ctx, List<EntityKeyMapping> latestFiltersMapping, EntityFilterType filterType, EntityType entityType) {
+        String latestFilters = EntityKeyMapping.buildQuery(ctx, latestFiltersMapping, filterType, entityType);
         if (!StringUtils.isEmpty(latestFilters)) {
             return String.format("where %s", latestFilters);
         } else {

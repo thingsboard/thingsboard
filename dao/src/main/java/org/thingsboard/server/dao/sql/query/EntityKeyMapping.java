@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -86,7 +87,7 @@ public class EntityKeyMapping {
         allowedEntityFieldMap.get(EntityType.TENANT).add(REGION);
         allowedEntityFieldMap.put(EntityType.CUSTOMER, new HashSet<>(contactBasedEntityFields));
 
-        allowedEntityFieldMap.put(EntityType.USER, new HashSet<>(Arrays.asList(FIRST_NAME, LAST_NAME, EMAIL)));
+        allowedEntityFieldMap.put(EntityType.USER, new HashSet<>(Arrays.asList(CREATED_TIME, FIRST_NAME, LAST_NAME, EMAIL)));
 
         allowedEntityFieldMap.put(EntityType.DASHBOARD, new HashSet<>(commonEntityFields));
         allowedEntityFieldMap.put(EntityType.RULE_CHAIN, new HashSet<>(commonEntityFields));
@@ -160,27 +161,8 @@ public class EntityKeyMapping {
 
     public String toSelection(EntityFilterType filterType, EntityType entityType) {
         if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-            Set<String> existingEntityFields;
-            String alias;
-            if (filterType.equals(EntityFilterType.RELATIONS_QUERY)) {
-                existingEntityFields = relationQueryEntityFieldsSet;
-                alias = entityKey.getKey();
-            } else {
-                existingEntityFields = allowedEntityFieldMap.get(entityType);
-                if (existingEntityFields == null) {
-                    existingEntityFields = commonEntityFieldsSet;
-                }
-
-                Map<String, String> entityAliases = aliases.get(entityType);
-                if (entityAliases != null) {
-                    alias = entityAliases.get(entityKey.getKey());
-                } else {
-                    alias = null;
-                }
-                if (alias == null) {
-                    alias = entityKey.getKey();
-                }
-            }
+            Set<String> existingEntityFields = getExistingEntityFields(filterType, entityType);
+            String alias = getEntityFieldAlias(filterType, entityType);
             if (existingEntityFields.contains(alias)) {
                 String column = entityFieldColumnMap.get(alias);
                 return String.format("e.%s as %s", column, getValueAlias());
@@ -194,11 +176,48 @@ public class EntityKeyMapping {
         }
     }
 
-    public Stream<String> toQueries(QueryContext ctx) {
+    private String getEntityFieldAlias(EntityFilterType filterType, EntityType entityType) {
+        String alias;
+        if (filterType.equals(EntityFilterType.RELATIONS_QUERY)) {
+            alias = entityKey.getKey();
+        } else {
+            alias = getAliasByEntityKeyAndType(entityKey.getKey(), entityType);
+        }
+        return alias;
+    }
+
+    private Set<String> getExistingEntityFields(EntityFilterType filterType, EntityType entityType) {
+        Set<String> existingEntityFields;
+        if (filterType.equals(EntityFilterType.RELATIONS_QUERY)) {
+            existingEntityFields = relationQueryEntityFieldsSet;
+        } else {
+            existingEntityFields = allowedEntityFieldMap.get(entityType);
+            if (existingEntityFields == null) {
+                existingEntityFields = commonEntityFieldsSet;
+            }
+        }
+        return existingEntityFields;
+    }
+
+    private String getAliasByEntityKeyAndType(String key, EntityType entityType) {
+        String alias;
+        Map<String, String> entityAliases = aliases.get(entityType);
+        if (entityAliases != null) {
+            alias = entityAliases.get(key);
+        } else {
+            alias = null;
+        }
+        if (alias == null) {
+            alias = key;
+        }
+        return alias;
+    }
+
+    public Stream<String> toQueries(QueryContext ctx, EntityFilterType filterType, EntityType entityType) {
         if (hasFilter()) {
             String keyAlias = entityKey.getType().equals(EntityKeyType.ENTITY_FIELD) ? "e" : alias;
             return keyFilters.stream().map(keyFilter ->
-                    this.buildKeyQuery(ctx, keyAlias, keyFilter));
+                    this.buildKeyQuery(ctx, keyAlias, keyFilter, filterType, entityType));
         } else {
             return null;
         }
@@ -244,8 +263,8 @@ public class EntityKeyMapping {
                 Collectors.joining(" "));
     }
 
-    public static String buildQuery(QueryContext ctx, List<EntityKeyMapping> mappings) {
-        return mappings.stream().flatMap(mapping -> mapping.toQueries(ctx)).collect(
+    public static String buildQuery(QueryContext ctx, List<EntityKeyMapping> mappings, EntityFilterType filterType, EntityType entityType) {
+        return mappings.stream().flatMap(mapping -> mapping.toQueries(ctx, filterType, entityType)).filter(Objects::nonNull).collect(
                 Collectors.joining(" AND "));
     }
 
@@ -357,47 +376,63 @@ public class EntityKeyMapping {
         return String.join(", ", attrValSelection, attrTsSelection);
     }
 
-    private String buildKeyQuery(QueryContext ctx, String alias, KeyFilter keyFilter) {
-        return this.buildPredicateQuery(ctx, alias, keyFilter.getKey(), keyFilter.getPredicate());
+    private String buildKeyQuery(QueryContext ctx, String alias, KeyFilter keyFilter,
+                                 EntityFilterType filterType, EntityType entityType) {
+        return this.buildPredicateQuery(ctx, alias, keyFilter.getKey(), keyFilter.getPredicate(), filterType, entityType);
     }
 
-    private String buildPredicateQuery(QueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
+    private String buildPredicateQuery(QueryContext ctx, String alias, EntityKey key,
+                                       KeyFilterPredicate predicate, EntityFilterType filterType, EntityType entityType) {
         if (predicate.getType().equals(FilterPredicateType.COMPLEX)) {
-            return this.buildComplexPredicateQuery(ctx, alias, key, (ComplexFilterPredicate) predicate);
+            return this.buildComplexPredicateQuery(ctx, alias, key, (ComplexFilterPredicate) predicate, filterType, entityType);
         } else {
-            return this.buildSimplePredicateQuery(ctx, alias, key, predicate);
+            return this.buildSimplePredicateQuery(ctx, alias, key, predicate, filterType, entityType);
         }
     }
 
-    private String buildComplexPredicateQuery(QueryContext ctx, String alias, EntityKey key, ComplexFilterPredicate predicate) {
+    private String buildComplexPredicateQuery(QueryContext ctx, String alias, EntityKey key,
+                                              ComplexFilterPredicate predicate, EntityFilterType filterType, EntityType entityType) {
         return predicate.getPredicates().stream()
-                .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate)).collect(Collectors.joining(
+                .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate, filterType, entityType))
+                .filter(Objects::nonNull).collect(Collectors.joining(
                         " " + predicate.getOperation().name() + " "
                 ));
     }
 
-    private String buildSimplePredicateQuery(QueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
-        if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
-            if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-                String column = entityFieldColumnMap.get(key.getKey());
-                return this.buildNumericPredicateQuery(ctx, alias + "." + column, (NumericFilterPredicate) predicate);
+    private String buildSimplePredicateQuery(QueryContext ctx, String alias, EntityKey key,
+                                             KeyFilterPredicate predicate, EntityFilterType filterType, EntityType entityType) {
+        if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
+            Set<String> existingEntityFields = getExistingEntityFields(filterType, entityType);
+            String entityFieldAlias = getEntityFieldAlias(filterType, entityType);
+            String column = null;
+            if (existingEntityFields.contains(entityFieldAlias)) {
+                column = entityFieldColumnMap.get(key.getKey());
+            }
+            if (column != null) {
+                String field = alias + "." + column;
+                if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
+                    return this.buildNumericPredicateQuery(ctx, field, (NumericFilterPredicate) predicate);
+                } else if (predicate.getType().equals(FilterPredicateType.STRING)) {
+                    return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate);
+                } else {
+                    return this.buildBooleanPredicateQuery(ctx, field, (BooleanFilterPredicate) predicate);
+                }
             } else {
+                return null;
+            }
+        } else {
+            if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
                 String longQuery = this.buildNumericPredicateQuery(ctx, alias + ".long_v", (NumericFilterPredicate) predicate);
                 String doubleQuery = this.buildNumericPredicateQuery(ctx, alias + ".dbl_v", (NumericFilterPredicate) predicate);
                 return String.format("(%s or %s)", longQuery, doubleQuery);
-            }
-        } else {
-            String column;
-            if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-                column = entityFieldColumnMap.get(key.getKey());
             } else {
-                column = predicate.getType().equals(FilterPredicateType.STRING) ? "str_v" : "bool_v";
-            }
-            String field = alias + "." + column;
-            if (predicate.getType().equals(FilterPredicateType.STRING)) {
-                return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate);
-            } else {
-                return this.buildBooleanPredicateQuery(ctx, field, (BooleanFilterPredicate) predicate);
+                String column = predicate.getType().equals(FilterPredicateType.STRING) ? "str_v" : "bool_v";
+                String field = alias + "." + column;
+                if (predicate.getType().equals(FilterPredicateType.STRING)) {
+                    return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate);
+                } else {
+                    return this.buildBooleanPredicateQuery(ctx, field, (BooleanFilterPredicate) predicate);
+                }
             }
         }
     }

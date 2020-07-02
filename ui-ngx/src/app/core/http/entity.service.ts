@@ -310,7 +310,8 @@ export class EntityService {
         }
         break;
       case EntityType.USER:
-        console.error('Get User Entities is not implemented!');
+        pageLink.sortOrder.property = 'email';
+        entitiesObservable = this.userService.getUsers(pageLink);
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entities is not implemented!');
@@ -548,6 +549,7 @@ export class EntityService {
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.TENANT);
         entityTypes.push(EntityType.CUSTOMER);
+        entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
@@ -559,11 +561,15 @@ export class EntityService {
         entityTypes.push(EntityType.ASSET);
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.CUSTOMER);
+        entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
         }
         break;
+    }
+    if (useAliasEntityTypes) {
+      entityTypes.push(AliasEntityType.CURRENT_USER);
     }
     if (allowedEntityTypes && allowedEntityTypes.length) {
       for (let index = entityTypes.length - 1; index >= 0; index--) {
@@ -961,6 +967,10 @@ export class EntityService {
       const authUser =  getCurrentAuthUser(this.store);
       entityId.entityType = EntityType.TENANT;
       entityId.id = authUser.tenantId;
+    } else if (entityType === AliasEntityType.CURRENT_USER){
+      const authUser =  getCurrentAuthUser(this.store);
+      entityId.entityType = EntityType.USER;
+      entityId.id = authUser.userId;
     }
     return entityId;
   }

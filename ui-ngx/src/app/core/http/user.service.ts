@@ -32,6 +32,12 @@ export class UserService {
     private http: HttpClient
   ) { }
 
+  public getUsers(pageLink: PageLink,
+                  config?: RequestConfig): Observable<PageData<User>> {
+    return this.http.get<PageData<User>>(`/api/users${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getTenantAdmins(tenantId: string, pageLink: PageLink,
                          config?: RequestConfig): Observable<PageData<User>> {
     return this.http.get<PageData<User>>(`/api/tenant/${tenantId}/users${pageLink.toQuery()}`,
