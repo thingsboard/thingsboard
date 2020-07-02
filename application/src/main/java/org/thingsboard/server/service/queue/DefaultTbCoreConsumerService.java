@@ -26,16 +26,7 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
-import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
-import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
-import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionCloseProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
@@ -47,6 +38,7 @@ import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.stats.CoreStatisticsService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -81,18 +73,20 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbLocalSubscriptionService localSubscriptionService;
     private final SubscriptionManagerService subscriptionManagerService;
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
+    private final CoreStatisticsService statisticsService;
     private final TbCoreConsumerStats stats = new TbCoreConsumerStats();
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         DeviceStateService stateService, TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
-                                        TbCoreDeviceRpcService tbCoreDeviceRpcService) {
+                                        TbCoreDeviceRpcService tbCoreDeviceRpcService, CoreStatisticsService statisticsService) {
         super(actorContext, encodingService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
         this.subscriptionManagerService = subscriptionManagerService;
         this.tbCoreDeviceRpcService = tbCoreDeviceRpcService;
+        this.statisticsService = statisticsService;
     }
 
     @PostConstruct
@@ -228,6 +222,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     public void printStats() {
         if (statsEnabled) {
             stats.printStats();
+            statisticsService.reportStats(stats);
             stats.reset();
         }
     }
