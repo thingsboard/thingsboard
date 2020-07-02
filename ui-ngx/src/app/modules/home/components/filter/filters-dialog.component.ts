@@ -184,8 +184,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       data: {
         isAdd,
         filters: filtersArray,
-        filter: isAdd ? null : deepClone(filter),
-        userMode: false
+        filter: isAdd ? null : deepClone(filter)
       }
     }).afterClosed().subscribe((result) => {
       if (result) {

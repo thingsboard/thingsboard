@@ -576,7 +576,7 @@ export class EntityService {
   }
 
   private getEntityFieldKeys (entityType: EntityType, searchText: string): Array<string> {
-    const entityFieldKeys: string[] = [];
+    const entityFieldKeys: string[] = [entityFields.createdTime.keyName];
     const query = searchText.toLowerCase();
     switch(entityType) {
       case EntityType.USER:

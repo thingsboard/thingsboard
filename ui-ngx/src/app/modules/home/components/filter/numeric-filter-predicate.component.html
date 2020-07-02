@@ -16,7 +16,7 @@
 
 -->
 <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="numericFilterPredicateFormGroup">
-  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex="40" class="mat-block">
     <mat-label></mat-label>
     <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
       <mat-option *ngFor="let operation of numericOperations" [value]="operation">
@@ -24,9 +24,19 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
-    <mat-label></mat-label>
-    <input required type="number" matInput formControlName="value"
-           placeholder="{{'filter.value' | translate}}">
-  </mat-form-field>
+  <div fxFlex="60" fxLayout="column" [ngSwitch]="valueType">
+    <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
+      <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+        <mat-label></mat-label>
+        <input required type="number" matInput formControlName="value"
+               placeholder="{{'filter.value' | translate}}">
+      </mat-form-field>
+    </ng-template>
+    <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
+      <tb-datetime fxFlex formControlName="value"
+                   dateText="filter.date"
+                   timeText="filter.time"
+                   required [showLabel]="false"></tb-datetime>
+    </ng-template>
+  </div>
 </div>

@@ -16,7 +16,7 @@
 
 -->
 <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="stringFilterPredicateFormGroup">
-  <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+  <div fxFlex="40" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
     <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
       <mat-label></mat-label>
       <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
@@ -28,7 +28,7 @@
     <mat-checkbox fxLayout="row" fxLayoutAlign="center" formControlName="ignoreCase" style="min-width: 70px;">
     </mat-checkbox>
   </div>
-  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex="60" class="mat-block">
     <mat-label></mat-label>
     <input matInput formControlName="value" placeholder="{{'filter.value' | translate}}">
   </mat-form-field>

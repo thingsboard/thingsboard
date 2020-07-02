@@ -39,8 +39,6 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, On
 
   @Input() disabled: boolean;
 
-  @Input() userMode: boolean;
-
   booleanFilterPredicateFormGroup: FormGroup;
 
   booleanOperations = Object.keys(BooleanOperation);
@@ -57,9 +55,6 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, On
       operation: [BooleanOperation.EQUAL, [Validators.required]],
       value: [false]
     });
-    if (this.userMode) {
-      this.booleanFilterPredicateFormGroup.get('operation').disable({emitEvent: false});
-    }
     this.booleanFilterPredicateFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });

@@ -17,40 +17,43 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
-  ComplexFilterPredicate,
-  ComplexFilterPredicateInfo,
-  EntityKeyValueType
+  BooleanOperation,
+  EntityKeyValueType,
+  KeyFilterPredicateUserInfo, NumericOperation,
+  StringOperation
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import {
-  ComplexFilterPredicateDialogComponent,
-  ComplexFilterPredicateDialogData
-} from '@home/components/filter/complex-filter-predicate-dialog.component';
+  FilterUserInfoDialogComponent,
+  FilterUserInfoDialogData
+} from '@home/components/filter/filter-user-info-dialog.component';
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-complex-filter-predicate',
-  templateUrl: './complex-filter-predicate.component.html',
+  selector: 'tb-filter-user-info',
+  templateUrl: './filter-user-info.component.html',
   styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ComplexFilterPredicateComponent),
+      useExisting: forwardRef(() => FilterUserInfoComponent),
       multi: true
     }
   ]
 })
-export class ComplexFilterPredicateComponent implements ControlValueAccessor, OnInit {
+export class FilterUserInfoComponent implements ControlValueAccessor, OnInit {
 
   @Input() disabled: boolean;
 
-  @Input() valueType: EntityKeyValueType;
-
   @Input() key: string;
+
+  @Input() operation: StringOperation | BooleanOperation | NumericOperation;
+
+  @Input() valueType: EntityKeyValueType;
 
   private propagateChange = null;
 
-  private complexFilterPredicate: ComplexFilterPredicateInfo;
+  private keyFilterPredicateUserInfo: KeyFilterPredicateUserInfo;
 
   constructor(private dialog: MatDialog) {
   }
@@ -69,26 +72,25 @@ export class ComplexFilterPredicateComponent implements ControlValueAccessor, On
     this.disabled = isDisabled;
   }
 
-  writeValue(predicate: ComplexFilterPredicateInfo): void {
-    this.complexFilterPredicate = predicate;
+  writeValue(keyFilterPredicateUserInfo: KeyFilterPredicateUserInfo): void {
+    this.keyFilterPredicateUserInfo = keyFilterPredicateUserInfo;
   }
 
-  private openComplexFilterDialog() {
-    this.dialog.open<ComplexFilterPredicateDialogComponent, ComplexFilterPredicateDialogData,
-      ComplexFilterPredicateInfo>(ComplexFilterPredicateDialogComponent, {
+  private openFilterUserInfoDialog() {
+   this.dialog.open<FilterUserInfoDialogComponent, FilterUserInfoDialogData,
+     KeyFilterPredicateUserInfo>(FilterUserInfoDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        complexPredicate: deepClone(this.complexFilterPredicate),
-        disabled: this.disabled,
+        keyFilterPredicateUserInfo: deepClone(this.keyFilterPredicateUserInfo),
         valueType: this.valueType,
-        isAdd: false,
-        key: this.key
+        key: this.key,
+        operation: this.operation
       }
     }).afterClosed().subscribe(
       (result) => {
         if (result) {
-          this.complexFilterPredicate = result;
+          this.keyFilterPredicateUserInfo = result;
           this.updateModel();
         }
       }
@@ -96,7 +98,7 @@ export class ComplexFilterPredicateComponent implements ControlValueAccessor, On
   }
 
   private updateModel() {
-    this.propagateChange(this.complexFilterPredicate);
+    this.propagateChange(this.keyFilterPredicateUserInfo);
   }
 
 }

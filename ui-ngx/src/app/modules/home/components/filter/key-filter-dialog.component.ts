@@ -34,7 +34,6 @@ import { TranslateService } from '@ngx-translate/core';
 
 export interface KeyFilterDialogData {
   keyFilter: KeyFilterInfo;
-  userMode: boolean;
   isAdd: boolean;
 }
 

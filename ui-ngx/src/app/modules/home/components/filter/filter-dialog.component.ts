@@ -36,7 +36,6 @@ import { Filter, Filters } from '@shared/models/query/query.models';
 
 export interface FilterDialogData {
   isAdd: boolean;
-  userMode: boolean;
   filters: Filters | Array<Filter>;
   filter?: Filter;
 }
@@ -51,7 +50,6 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
   implements OnInit, ErrorStateMatcher {
 
   isAdd: boolean;
-  userMode: boolean;
   filters: Array<Filter>;
 
   filter: Filter;
@@ -70,7 +68,6 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
               public translate: TranslateService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
-    this.userMode = data.userMode;
     if (Array.isArray(data.filters)) {
       this.filters = data.filters;
     } else {

@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="filterFormGroup" (ngSubmit)="save()" style="width: 700px;">
   <mat-toolbar color="primary">
-    <h2>{{ userMode ? filter.filter : ((isAdd ? 'filter.add' : 'filter.edit') | translate) }}</h2>
+    <h2>{{ (isAdd ? 'filter.add' : 'filter.edit') | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -30,7 +30,7 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <div fxFlex fxLayout="column">
-        <div fxLayout="row" [fxShow]="!userMode">
+        <div fxLayout="row">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>filter.name</mat-label>
             <input matInput formControlName="filter" required>
@@ -49,8 +49,7 @@
           </section>
         </div>
         <tb-key-filter-list
-          formControlName="keyFilters"
-          [userMode]="userMode">
+          formControlName="keyFilters">
         </tb-key-filter-list>
       </div>
     </fieldset>
@@ -59,7 +58,7 @@
     <button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || filterFormGroup.invalid || !filterFormGroup.dirty">
-      {{ (userMode ? 'action.update' : (isAdd ? 'action.add' : 'action.update')) | translate }}
+      {{ (isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
     <button mat-button color="primary"
             type="button"

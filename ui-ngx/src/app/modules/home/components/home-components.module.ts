@@ -80,6 +80,9 @@ import { FilterDialogComponent } from '@home/components/filter/filter-dialog.com
 import { FilterSelectComponent } from './filter/filter-select.component';
 import { FiltersEditComponent } from '@home/components/filter/filters-edit.component';
 import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-panel.component';
+import { UserFilterDialogComponent } from '@home/components/filter/user-filter-dialog.component';
+import { FilterUserInfoComponent } from './filter/filter-user-info.component';
+import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.component';
 
 @NgModule({
   declarations:
@@ -142,7 +145,10 @@ import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-
       FiltersDialogComponent,
       FilterSelectComponent,
       FiltersEditComponent,
-      FiltersEditPanelComponent
+      FiltersEditPanelComponent,
+      UserFilterDialogComponent,
+      FilterUserInfoComponent,
+      FilterUserInfoDialogComponent
     ],
   imports: [
     CommonModule,
@@ -197,7 +203,8 @@ import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-
     FilterDialogComponent,
     FiltersDialogComponent,
     FilterSelectComponent,
-    FiltersEditComponent
+    FiltersEditComponent,
+    UserFilterDialogComponent
   ],
   providers: [
     WidgetComponentService,

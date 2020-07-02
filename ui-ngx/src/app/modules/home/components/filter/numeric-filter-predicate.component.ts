@@ -17,6 +17,7 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
+  EntityKeyValueType,
   FilterPredicateType, NumericFilterPredicate, NumericOperation, numericOperationTranslationMap,
 } from '@shared/models/query/query.models';
 import { isDefined } from '@core/utils';
@@ -37,9 +38,11 @@ export class NumericFilterPredicateComponent implements ControlValueAccessor, On
 
   @Input() disabled: boolean;
 
-  @Input() userMode: boolean;
+  @Input() valueType: EntityKeyValueType;
 
   numericFilterPredicateFormGroup: FormGroup;
+
+  valueTypeEnum = EntityKeyValueType;
 
   numericOperations = Object.keys(NumericOperation);
   numericOperationEnum = NumericOperation;
@@ -55,9 +58,6 @@ export class NumericFilterPredicateComponent implements ControlValueAccessor, On
       operation: [NumericOperation.EQUAL, [Validators.required]],
       value: [0, [Validators.required]]
     });
-    if (this.userMode) {
-      this.numericFilterPredicateFormGroup.get('operation').disable({emitEvent: false});
-    }
     this.numericFilterPredicateFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });

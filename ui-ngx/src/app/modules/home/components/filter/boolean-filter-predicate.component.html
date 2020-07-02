@@ -16,7 +16,7 @@
 
 -->
 <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="booleanFilterPredicateFormGroup">
-  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex="40" class="mat-block">
     <mat-label></mat-label>
     <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
       <mat-option *ngFor="let operation of booleanOperations" [value]="operation">
@@ -24,7 +24,7 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-checkbox fxFlex formControlName="value">
+  <mat-checkbox fxFlex="60" formControlName="value">
     {{ (booleanFilterPredicateFormGroup.get('value').value ? 'value.true' : 'value.false') | translate }}
   </mat-checkbox>
 </div>

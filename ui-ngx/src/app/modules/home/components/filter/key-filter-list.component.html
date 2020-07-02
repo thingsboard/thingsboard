@@ -27,8 +27,8 @@
       <div fxLayout="row" fxLayoutAlign="start center" fxFlex="92">
         <label fxFlex translate class="tb-title no-padding">filter.key-name</label>
         <label fxFlex translate class="tb-title no-padding">filter.key-type.key-type</label>
-        <span [fxShow]="!disabled && !userMode" style="min-width: 80px;">&nbsp;</span>
-        <span [fxShow]="disabled || userMode" style="min-width: 40px;">&nbsp;</span>
+        <span [fxShow]="!disabled" style="min-width: 80px;">&nbsp;</span>
+        <span [fxShow]="disabled" style="min-width: 40px;">&nbsp;</span>
       </div>
     </div>
     <mat-divider></mat-divider>
@@ -51,7 +51,7 @@
               <mat-icon>edit</mat-icon>
             </button>
             <button mat-icon-button color="primary"
-                    [fxShow]="!disabled && !userMode"
+                    [fxShow]="!disabled"
                     type="button"
                     (click)="removeKeyFilter($index)"
                     matTooltip="{{ 'filter.remove-key-filter' | translate }}"
@@ -68,7 +68,7 @@
     </div>
     <div style="margin-top: 16px;">
       <button mat-button mat-raised-button color="primary"
-              [fxShow]="!disabled && !userMode"
+              [fxShow]="!disabled"
               (click)="addKeyFilter()"
               type="button"
               matTooltip="{{ 'filter.add-key-filter' | translate }}"

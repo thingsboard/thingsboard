@@ -18,7 +18,7 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   EntityKeyValueType,
-  FilterPredicateType, KeyFilterPredicate
+  FilterPredicateType, KeyFilterPredicate, KeyFilterPredicateInfo
 } from '@shared/models/query/query.models';
 
 @Component({
@@ -37,9 +37,9 @@ export class FilterPredicateComponent implements ControlValueAccessor, OnInit {
 
   @Input() disabled: boolean;
 
-  @Input() userMode: boolean;
-
   @Input() valueType: EntityKeyValueType;
+
+  @Input() key: string;
 
   filterPredicateFormGroup: FormGroup;
 
@@ -54,7 +54,8 @@ export class FilterPredicateComponent implements ControlValueAccessor, OnInit {
 
   ngOnInit(): void {
     this.filterPredicateFormGroup = this.fb.group({
-      predicate: [null, [Validators.required]]
+      predicate: [null, [Validators.required]],
+      userInfo: [null, []]
     });
     this.filterPredicateFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -77,15 +78,19 @@ export class FilterPredicateComponent implements ControlValueAccessor, OnInit {
     }
   }
 
-  writeValue(predicate: KeyFilterPredicate): void {
-    this.type = predicate.type;
-    this.filterPredicateFormGroup.get('predicate').patchValue(predicate, {emitEvent: false});
+  writeValue(predicate: KeyFilterPredicateInfo): void {
+    this.type = predicate.keyFilterPredicate.type;
+    this.filterPredicateFormGroup.get('predicate').patchValue(predicate.keyFilterPredicate, {emitEvent: false});
+    this.filterPredicateFormGroup.get('userInfo').patchValue(predicate.userInfo, {emitEvent: false});
   }
 
   private updateModel() {
-    let predicate: KeyFilterPredicate = null;
+    let predicate: KeyFilterPredicateInfo = null;
     if (this.filterPredicateFormGroup.valid) {
-      predicate = this.filterPredicateFormGroup.getRawValue().predicate;
+      predicate = {
+        keyFilterPredicate: this.filterPredicateFormGroup.getRawValue().predicate,
+        userInfo: this.filterPredicateFormGroup.getRawValue().userInfo
+      };
     }
     this.propagateChange(predicate);
   }

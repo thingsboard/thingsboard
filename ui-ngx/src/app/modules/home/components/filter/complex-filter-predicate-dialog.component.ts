@@ -24,14 +24,14 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
   BooleanOperation, booleanOperationTranslationMap,
-  ComplexFilterPredicate, ComplexOperation, complexOperationTranslationMap,
+  ComplexFilterPredicate, ComplexFilterPredicateInfo, ComplexOperation, complexOperationTranslationMap,
   EntityKeyValueType,
-  FilterPredicateType
+  FilterPredicateType, KeyFilterPredicateInfo
 } from '@shared/models/query/query.models';
 
 export interface ComplexFilterPredicateDialogData {
-  complexPredicate: ComplexFilterPredicate;
-  userMode: boolean;
+  complexPredicate: ComplexFilterPredicateInfo;
+  key: string;
   disabled: boolean;
   isAdd: boolean;
   valueType: EntityKeyValueType;
@@ -44,7 +44,7 @@ export interface ComplexFilterPredicateDialogData {
   styleUrls: []
 })
 export class ComplexFilterPredicateDialogComponent extends
-  DialogComponent<ComplexFilterPredicateDialogComponent, ComplexFilterPredicate>
+  DialogComponent<ComplexFilterPredicateDialogComponent, ComplexFilterPredicateInfo>
   implements OnInit, ErrorStateMatcher {
 
   complexFilterFormGroup: FormGroup;
@@ -61,7 +61,7 @@ export class ComplexFilterPredicateDialogComponent extends
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ComplexFilterPredicateDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<ComplexFilterPredicateDialogComponent, ComplexFilterPredicate>,
+              public dialogRef: MatDialogRef<ComplexFilterPredicateDialogComponent, ComplexFilterPredicateInfo>,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
 
@@ -91,7 +91,7 @@ export class ComplexFilterPredicateDialogComponent extends
   save(): void {
     this.submitted = true;
     if (this.complexFilterFormGroup.valid) {
-      const predicate: ComplexFilterPredicate = this.complexFilterFormGroup.getRawValue();
+      const predicate: ComplexFilterPredicateInfo = this.complexFilterFormGroup.getRawValue();
       predicate.type = FilterPredicateType.COMPLEX;
       this.dialogRef.close(predicate);
     }

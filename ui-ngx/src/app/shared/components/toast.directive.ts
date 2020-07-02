@@ -71,10 +71,10 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
         if (this.shouldDisplayMessage(notificationMessage)) {
           this.currentMessage = notificationMessage;
           const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
-          if (isGtSm) {
+          if (isGtSm && this.toastTarget !== 'root') {
             this.showToastPanel(notificationMessage);
           } else {
-            this.showSnackBar(notificationMessage);
+            this.showSnackBar(notificationMessage, isGtSm);
           }
         }
       }
@@ -180,13 +180,14 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
     });
   }
 
-  private showSnackBar(notificationMessage: NotificationMessage) {
+  private showSnackBar(notificationMessage: NotificationMessage, isGtSm: boolean) {
     const data: ToastPanelData = {
-      notification: notificationMessage
+      notification: notificationMessage,
+      parent: this.elementRef
     };
     const config: MatSnackBarConfig = {
       horizontalPosition: notificationMessage.horizontalPosition || 'left',
-      verticalPosition: 'bottom',
+      verticalPosition: !isGtSm ? 'bottom' : (notificationMessage.verticalPosition || 'top'),
       viewContainerRef: this.viewContainerRef,
       duration: notificationMessage.duration,
       panelClass: notificationMessage.panelClass,
@@ -248,6 +249,7 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
 
 interface ToastPanelData {
   notification: NotificationMessage;
+  parent?: ElementRef;
 }
 
 import {
@@ -259,6 +261,7 @@ import {
   style,
   animate,
 } from '@angular/animations';
+import { onParentScrollOrWindowResize } from '@core/utils';
 
 export const toastAnimations: {
   readonly showHideToast: AnimationTriggerMetadata;
@@ -285,6 +288,10 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('actionButton', {static: true}) actionButton: MatButton;
 
+  private parentEl: HTMLElement;
+  private snackBarContainerEl: HTMLElement;
+  private parentScrollSubscription: Subscription = null;
+
   public notification: NotificationMessage;
 
   animationState: ToastAnimationState;
@@ -296,6 +303,7 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
 
   constructor(@Inject(MAT_SNACK_BAR_DATA)
               private data: ToastPanelData,
+              private elementRef: ElementRef,
               @Optional()
               private snackBarRef: MatSnackBarRef<TbSnackBarComponent>,
               @Optional()
@@ -305,9 +313,51 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
+    if (this.snackBarRef) {
+      this.parentEl = this.data.parent.nativeElement;
+      this.snackBarContainerEl = this.elementRef.nativeElement.parentNode;
+      this.snackBarContainerEl.style.position = 'absolute';
+      this.updateContainerRect();
+      this.updatePosition(this.snackBarRef.containerInstance.snackBarConfig);
+      const snackBarComponent = this;
+      this.parentScrollSubscription = onParentScrollOrWindowResize(this.parentEl).subscribe(() => {
+        snackBarComponent.updateContainerRect();
+      });
+    }
+  }
+
+  private updatePosition(config: MatSnackBarConfig) {
+    const isRtl = config.direction === 'rtl';
+    const isLeft = (config.horizontalPosition === 'left' ||
+      (config.horizontalPosition === 'start' && !isRtl) ||
+      (config.horizontalPosition === 'end' && isRtl));
+    const isRight = !isLeft && config.horizontalPosition !== 'center';
+    if (isLeft) {
+      this.snackBarContainerEl.style.justifyContent = 'flex-start';
+    } else if (isRight) {
+      this.snackBarContainerEl.style.justifyContent = 'flex-end';
+    } else {
+      this.snackBarContainerEl.style.justifyContent = 'center';
+    }
+    if (config.verticalPosition === 'top') {
+      this.snackBarContainerEl.style.alignItems = 'flex-start';
+    } else {
+      this.snackBarContainerEl.style.alignItems = 'flex-end';
+    }
+  }
+
+  private updateContainerRect() {
+    const viewportOffset = this.parentEl.getBoundingClientRect();
+    this.snackBarContainerEl.style.top = viewportOffset.top + 'px';
+    this.snackBarContainerEl.style.left = viewportOffset.left + 'px';
+    this.snackBarContainerEl.style.width = viewportOffset.width + 'px';
+    this.snackBarContainerEl.style.height = viewportOffset.height + 'px';
   }
 
   ngOnDestroy() {
+    if (this.parentScrollSubscription) {
+      this.parentScrollSubscription.unsubscribe();
+    }
   }
 
   action(): void {

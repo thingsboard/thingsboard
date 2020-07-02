@@ -18,8 +18,8 @@ import { Component, Inject, InjectionToken } from '@angular/core';
 import { IAliasController } from '@core/api/widget-api.models';
 import { Filter, FilterInfo } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
-import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { deepClone } from '@core/utils';
+import { UserFilterDialogComponent, UserFilterDialogData } from '@home/components/filter/user-filter-dialog.component';
 
 export const FILTER_EDIT_PANEL_DATA = new InjectionToken<any>('FiltersEditPanelData');
 
@@ -44,15 +44,12 @@ export class FiltersEditPanelComponent {
 
   public editFilter(filterId: string, filter: FilterInfo) {
     const singleFilter: Filter = {id: filterId, ...deepClone(filter)};
-    this.dialog.open<FilterDialogComponent, FilterDialogData,
-      Filter>(FilterDialogComponent, {
+    this.dialog.open<UserFilterDialogComponent, UserFilterDialogData,
+      Filter>(UserFilterDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        isAdd: false,
-        filters: [],
-        filter: singleFilter,
-        userMode: true
+        filter: singleFilter
       }
     }).afterClosed().subscribe(
       (result) => {

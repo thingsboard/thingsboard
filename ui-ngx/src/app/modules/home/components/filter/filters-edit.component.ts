@@ -22,7 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { deepClone } from '@core/utils';
-import { FilterInfo } from '@shared/models/query/query.models';
+import { FilterInfo, isFilterEditable } from '@shared/models/query/query.models';
 import {
   FILTER_EDIT_PANEL_DATA,
   FiltersEditPanelComponent,
@@ -144,7 +144,7 @@ export class FiltersEditComponent implements OnInit, OnDestroy {
     this.hasEditableFilters = false;
     for (const filterId of Object.keys(allFilters)) {
       const filterInfo = this.aliasController.getFilterInfo(filterId);
-      if (filterInfo && filterInfo.editable) {
+      if (filterInfo && isFilterEditable(filterInfo)) {
         this.filtersInfo[filterId] = deepClone(filterInfo);
         this.hasEditableFilters = true;
       }

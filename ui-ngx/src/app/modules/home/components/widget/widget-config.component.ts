@@ -633,7 +633,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     } else {
       let label: string = chip;
       if (type === DataKeyType.alarm || type === DataKeyType.entityField) {
-        const keyField = type === DataKeyType.alarm ? alarmFields[label] : entityFields[chip];;
+        const keyField = type === DataKeyType.alarm ? alarmFields[label] : entityFields[chip];
         if (keyField) {
           label = this.translate.instant(keyField.name);
         }
@@ -729,8 +729,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       data: {
         isAdd: true,
         filters: this.filters,
-        filter: singleFilter,
-        userMode: false
+        filter: singleFilter
       }
     }).afterClosed().pipe(
       tap((result) => {

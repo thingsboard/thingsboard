@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="keyFilterFormGroup" (ngSubmit)="save()" style="width: 700px;">
   <mat-toolbar color="primary">
-    <h2>{{data.userMode ? data.keyFilter.key.key : ((data.isAdd ? 'filter.add-key-filter' : 'filter.edit-key-filter') | translate)}}</h2>
+    <h2>{{(data.isAdd ? 'filter.add-key-filter' : 'filter.edit-key-filter') | translate}}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -27,7 +27,7 @@
   </mat-toolbar>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" fxLayout="column">
-      <section fxLayout="row" fxLayoutGap="8px" class="entity-key" [fxShow]="!data.userMode">
+      <section fxLayout="row" fxLayoutGap="8px" class="entity-key">
         <section fxFlex="70" fxLayout="row" formGroupName="key" fxLayoutGap="8px">
           <mat-form-field fxFlex="60" class="mat-block">
             <mat-label translate>filter.key-name</mat-label>
@@ -63,8 +63,8 @@
         </mat-form-field>
       </section>
       <tb-filter-predicate-list *ngIf="keyFilterFormGroup.get('valueType').value"
-                                [userMode]="data.userMode"
                                 [valueType]="keyFilterFormGroup.get('valueType').value"
+                                [key]="keyFilterFormGroup.get('key.key').value"
                                 formControlName="predicates">
       </tb-filter-predicate-list>
     </fieldset>

@@ -26,17 +26,19 @@ import {
 } from '@angular/forms';
 import { Observable, of, Subscription } from 'rxjs';
 import {
-  ComplexFilterPredicate,
-  ComplexOperation, complexOperationTranslationMap,
-  createDefaultFilterPredicate,
+  ComplexFilterPredicateInfo,
+  ComplexOperation,
+  complexOperationTranslationMap,
+  createDefaultFilterPredicateInfo,
   EntityKeyValueType,
-  KeyFilterPredicate
+  KeyFilterPredicateInfo
 } from '@shared/models/query/query.models';
 import {
   ComplexFilterPredicateDialogComponent,
   ComplexFilterPredicateDialogData
 } from '@home/components/filter/complex-filter-predicate-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-filter-predicate-list',
@@ -54,9 +56,9 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
 
   @Input() disabled: boolean;
 
-  @Input() userMode: boolean;
-
   @Input() valueType: EntityKeyValueType;
+
+  @Input() key: string;
 
   @Input() operation: ComplexOperation = ComplexOperation.AND;
 
@@ -100,7 +102,7 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
     }
   }
 
-  writeValue(predicates: Array<KeyFilterPredicate>): void {
+  writeValue(predicates: Array<KeyFilterPredicateInfo>): void {
     if (this.valueChangeSubscription) {
       this.valueChangeSubscription.unsubscribe();
     }
@@ -127,10 +129,10 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
 
   public addPredicate(complex: boolean) {
     const predicatesFormArray = this.filterListFormGroup.get('predicates') as FormArray;
-    const predicate = createDefaultFilterPredicate(this.valueType, complex);
-    let observable: Observable<KeyFilterPredicate>;
+    const predicate = createDefaultFilterPredicateInfo(this.valueType, complex);
+    let observable: Observable<KeyFilterPredicateInfo>;
     if (complex) {
-      observable = this.openComplexFilterDialog(predicate as ComplexFilterPredicate);
+      observable = this.openComplexFilterDialog(predicate);
     } else {
       observable = of(predicate);
     }
@@ -141,24 +143,33 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
     });
   }
 
-  private openComplexFilterDialog(predicate: ComplexFilterPredicate): Observable<KeyFilterPredicate> {
+  private openComplexFilterDialog(predicate: KeyFilterPredicateInfo): Observable<KeyFilterPredicateInfo> {
     return this.dialog.open<ComplexFilterPredicateDialogComponent, ComplexFilterPredicateDialogData,
-      ComplexFilterPredicate>(ComplexFilterPredicateDialogComponent, {
+      ComplexFilterPredicateInfo>(ComplexFilterPredicateDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        complexPredicate: predicate,
+        complexPredicate: predicate.keyFilterPredicate as ComplexFilterPredicateInfo,
         disabled: this.disabled,
-        userMode: this.userMode,
         valueType: this.valueType,
+        key: this.key,
         isAdd: true
       }
-    }).afterClosed();
+    }).afterClosed().pipe(
+      map((result) => {
+        if (result) {
+          predicate.keyFilterPredicate = result;
+          return predicate;
+        } else {
+          return null;
+        }
+      })
+    );
   }
 
   private updateModel() {
-    const predicates: Array<KeyFilterPredicate> = this.filterListFormGroup.getRawValue().predicates;
-    if (predicates.length) {
+    const predicates: Array<KeyFilterPredicateInfo> = this.filterListFormGroup.getRawValue().predicates;
+    if (this.filterListFormGroup.valid && predicates.length) {
       this.propagateChange(predicates);
     } else {
       this.propagateChange(null);

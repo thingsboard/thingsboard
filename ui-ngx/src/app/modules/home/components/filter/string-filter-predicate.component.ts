@@ -39,8 +39,6 @@ export class StringFilterPredicateComponent implements ControlValueAccessor, OnI
 
   @Input() disabled: boolean;
 
-  @Input() userMode: boolean;
-
   stringFilterPredicateFormGroup: FormGroup;
 
   stringOperations = Object.keys(StringOperation);
@@ -58,10 +56,6 @@ export class StringFilterPredicateComponent implements ControlValueAccessor, OnI
       value: [''],
       ignoreCase: [false]
     });
-    if (this.userMode) {
-      this.stringFilterPredicateFormGroup.get('operation').disable({emitEvent: false});
-      this.stringFilterPredicateFormGroup.get('ignoreCase').disable({emitEvent: false});
-    }
     this.stringFilterPredicateFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
