@@ -30,7 +30,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
+import java.sql.Statement;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
@@ -233,6 +236,28 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Schema updated.");
                 }
                 break;
+            case "3.0.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    if (isOldSchema(conn, 3001000)) {
+                        String[] tables = new String[]{"admin_settings", "alarm", "asset", "audit_log", "attribute_kv",
+                                "component_descriptor", "customer", "dashboard", "device", "device_credentials", "event",
+                                "relation", "tb_user", "tenant", "user_credentials", "widget_type", "widgets_bundle",
+                                "rule_chain", "rule_node", "entity_view"};
+                        log.info("Updating schema ...");
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.0.1", "schema_update_to_uuid.sql");
+                        loadSql(schemaUpdateFile, conn);
+                        for (String table : tables) {
+                            log.info("Updating {}.", table);
+                            conn.createStatement().execute("call update_" + table + "();");
+                            log.info("{} updated.", table);
+                        }
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3001000;");
+                        log.info("Schema updated.");
+                    }
+                    log.info("Schema updated.");
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
@@ -242,5 +267,25 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         String sql = new String(Files.readAllBytes(sqlFile), Charset.forName("UTF-8"));
         conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
         Thread.sleep(5000);
+    }
+
+    protected boolean isOldSchema(Connection conn, long fromVersion) {
+        boolean isOldSchema = true;
+        try {
+            Statement statement = conn.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS tb_schema_settings ( schema_version bigint NOT NULL, CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version));");
+            Thread.sleep(1000);
+            ResultSet resultSet = statement.executeQuery("SELECT schema_version FROM tb_schema_settings;");
+            if (resultSet.next()) {
+                isOldSchema = resultSet.getLong(1) <= fromVersion;
+            } else {
+                resultSet.close();
+                statement.execute("INSERT INTO tb_schema_settings (schema_version) VALUES (" + fromVersion + ")");
+            }
+            statement.close();
+        } catch (InterruptedException | SQLException e) {
+            log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
+        }
+        return isOldSchema;
     }
 }
