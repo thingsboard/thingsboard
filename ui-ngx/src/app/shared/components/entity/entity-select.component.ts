@@ -97,7 +97,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   ngOnInit() {
     this.entitySelectFormGroup.get('entityType').valueChanges.subscribe(
       (value) => {
-        if(value === AliasEntityType.CURRENT_TENANT){
+        if(value === AliasEntityType.CURRENT_TENANT || value === AliasEntityType.CURRENT_USER) {
           this.modelValue.id = NULL_UUID;
         }
         this.updateView(value, this.modelValue.id);
@@ -145,7 +145,9 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
           entityType,
           id: this.modelValue.entityType !== entityType ? null : entityId
         };
-        if (this.modelValue.entityType && (this.modelValue.id || this.modelValue.entityType === AliasEntityType.CURRENT_TENANT)) {
+        if (this.modelValue.entityType && (this.modelValue.id ||
+          this.modelValue.entityType === AliasEntityType.CURRENT_TENANT ||
+          this.modelValue.entityType === AliasEntityType.CURRENT_USER)) {
           this.propagateChange(this.modelValue);
         } else {
           this.propagateChange(null);

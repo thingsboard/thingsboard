@@ -246,6 +246,28 @@ public class UserController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<User> getUsers(
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            SecurityUser currentUser = getCurrentUser();
+            if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
+                return checkNotNull(userService.findUsersByTenantId(currentUser.getTenantId(), pageLink));
+            } else {
+                return checkNotNull(userService.findCustomerUsers(currentUser.getTenantId(), currentUser.getCustomerId(), pageLink));
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody

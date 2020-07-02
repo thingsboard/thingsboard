@@ -86,7 +86,7 @@ public class EntityKeyMapping {
         allowedEntityFieldMap.get(EntityType.TENANT).add(REGION);
         allowedEntityFieldMap.put(EntityType.CUSTOMER, new HashSet<>(contactBasedEntityFields));
 
-        allowedEntityFieldMap.put(EntityType.USER, new HashSet<>(Arrays.asList(FIRST_NAME, LAST_NAME, EMAIL)));
+        allowedEntityFieldMap.put(EntityType.USER, new HashSet<>(Arrays.asList(CREATED_TIME, FIRST_NAME, LAST_NAME, EMAIL)));
 
         allowedEntityFieldMap.put(EntityType.DASHBOARD, new HashSet<>(commonEntityFields));
         allowedEntityFieldMap.put(EntityType.RULE_CHAIN, new HashSet<>(commonEntityFields));
@@ -377,27 +377,29 @@ public class EntityKeyMapping {
     }
 
     private String buildSimplePredicateQuery(EntityQueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
-        if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
-            if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-                String column = entityFieldColumnMap.get(key.getKey());
-                return this.buildNumericPredicateQuery(ctx, alias + "." + column, (NumericFilterPredicate) predicate);
-            } else {
-                String longQuery = this.buildNumericPredicateQuery(ctx, alias + ".long_v", (NumericFilterPredicate) predicate);
-                String doubleQuery = this.buildNumericPredicateQuery(ctx, alias + ".dbl_v", (NumericFilterPredicate) predicate);
-                return String.format("(%s or %s)", longQuery, doubleQuery);
-            }
-        } else {
-            String column;
-            if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-                column = entityFieldColumnMap.get(key.getKey());
-            } else {
-                column = predicate.getType().equals(FilterPredicateType.STRING) ? "str_v" : "bool_v";
-            }
+        if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
+            String column = entityFieldColumnMap.get(key.getKey());
             String field = alias + "." + column;
-            if (predicate.getType().equals(FilterPredicateType.STRING)) {
+            if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
+                return this.buildNumericPredicateQuery(ctx, field, (NumericFilterPredicate) predicate);
+            } else if (predicate.getType().equals(FilterPredicateType.STRING)) {
                 return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate);
             } else {
                 return this.buildBooleanPredicateQuery(ctx, field, (BooleanFilterPredicate) predicate);
+            }
+        } else {
+            if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
+                String longQuery = this.buildNumericPredicateQuery(ctx, alias + ".long_v", (NumericFilterPredicate) predicate);
+                String doubleQuery = this.buildNumericPredicateQuery(ctx, alias + ".dbl_v", (NumericFilterPredicate) predicate);
+                return String.format("(%s or %s)", longQuery, doubleQuery);
+            } else {
+                String column = predicate.getType().equals(FilterPredicateType.STRING) ? "str_v" : "bool_v";
+                String field = alias + "." + column;
+                if (predicate.getType().equals(FilterPredicateType.STRING)) {
+                    return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate);
+                } else {
+                    return this.buildBooleanPredicateQuery(ctx, field, (BooleanFilterPredicate) predicate);
+                }
             }
         }
     }
