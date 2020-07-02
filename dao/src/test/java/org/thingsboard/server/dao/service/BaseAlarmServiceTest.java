@@ -24,16 +24,26 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.query.AlarmData;
+import org.thingsboard.server.common.data.query.AlarmDataPageLink;
+import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -190,6 +200,128 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+    }
+
+    @Test
+    public void testFindAlarmUsingAlarmDataQuery() throws ExecutionException, InterruptedException {
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
+
+        EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
+
+        Assert.assertTrue(relationService.saveRelationAsync(tenantId, relation).get());
+
+        long ts = System.currentTimeMillis();
+        Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
+                .type(TEST_ALARM)
+                .propagate(false)
+                .severity(AlarmSeverity.CRITICAL)
+                .status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+
+        Alarm created = alarmService.createOrUpdateAlarm(alarm);
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(1);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(false);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(childId));
+
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+
+        pageLink.setPage(0);
+        pageLink.setPageSize(1);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(false);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(childId));
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+
+        // Check child relation
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
+
+        created.setPropagate(true);
+        created = alarmService.createOrUpdateAlarm(created);
+
+        // Check child relation
+        pageLink.setPage(0);
+        pageLink.setPageSize(1);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(true);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(childId));
+
+        // Check parent relation
+        pageLink.setPage(0);
+        pageLink.setPageSize(1);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(true);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(parentId));
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+
+        pageLink.setPage(0);
+        pageLink.setPageSize(1);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(true);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(parentId));
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+
+        alarmService.ackAlarm(tenantId, created.getId(), System.currentTimeMillis()).get();
+        created = alarmService.findAlarmByIdAsync(tenantId, created.getId()).get();
+
+        pageLink.setPage(0);
+        pageLink.setPageSize(1);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(true);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, alarms.getData().get(0));

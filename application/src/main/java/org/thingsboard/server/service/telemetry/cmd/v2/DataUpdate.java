@@ -13,31 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.service.telemetry.cmd.v2;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class EntityDataPageLink {
+public abstract class DataUpdate<T> {
 
-    private int pageSize;
-    private int page;
-    private String textSearch;
-    private EntityDataSortOrder sortOrder;
-    private boolean dynamic = false;
+    private final int cmdId;
+    private final PageData<T> data;
+    private final List<T> update;
+    private final int errorCode;
+    private final String errorMsg;
 
-    public EntityDataPageLink() {
+    public DataUpdate(int cmdId, PageData<T> data, List<T> update) {
+        this(cmdId, data, update, SubscriptionErrorCode.NO_ERROR.getCode(), null);
     }
 
-    public EntityDataPageLink(int pageSize, int page, String textSearch, EntityDataSortOrder sortOrder) {
-        this(pageSize, page, textSearch, sortOrder, false);
+    public DataUpdate(int cmdId, int errorCode, String errorMsg) {
+        this(cmdId, null, null, errorCode, errorMsg);
     }
 
-    @JsonIgnore
-    public EntityDataPageLink nextPageLink() {
-        return new EntityDataPageLink(this.pageSize, this.page + 1, this.textSearch, this.sortOrder);
-    }
 }

@@ -22,22 +22,21 @@ import lombok.ToString;
 import java.util.List;
 
 @ToString
-public class EntityDataQuery extends AbstractDataQuery<EntityDataPageLink> {
+public class AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
 
-    public EntityDataQuery() {
+    public AlarmDataQuery() {
     }
 
-    public EntityDataQuery(EntityFilter entityFilter) {
+    public AlarmDataQuery(EntityFilter entityFilter) {
         super(entityFilter);
     }
 
-    public EntityDataQuery(EntityFilter entityFilter, EntityDataPageLink pageLink, List<EntityKey> entityFields, List<EntityKey> latestValues, List<KeyFilter> keyFilters) {
+    public AlarmDataQuery(EntityFilter entityFilter, AlarmDataPageLink pageLink, List<EntityKey> entityFields, List<EntityKey> latestValues, List<KeyFilter> keyFilters) {
         super(entityFilter, pageLink, entityFields, latestValues, keyFilters);
     }
 
     @JsonIgnore
-    public EntityDataQuery next() {
-        return new EntityDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters);
+    public AlarmDataQuery next() {
+        return new AlarmDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters);
     }
-
 }
