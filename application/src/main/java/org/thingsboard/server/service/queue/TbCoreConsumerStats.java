@@ -18,10 +18,24 @@ package org.thingsboard.server.service.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class TbCoreConsumerStats {
+    public static final String TOTAL_MSGS = "totalMsgs";
+    public static final String SESSION_EVENTS = "sessionEvents";
+    public static final String GET_ATTRIBUTE = "getAttr";
+    public static final String ATTRIBUTE_SUBSCRIBES = "subToAttr";
+    public static final String RPC_SUBSCRIBES = "subToRpc";
+    public static final String TO_DEVICE_RPC_CALL_RESPONSES = "toDevRpc";
+    public static final String SUBSCRIPTION_INFO = "subInfo";
+    public static final String DEVICE_CLAIMS = "claimDevice";
+    public static final String DEVICE_STATES = "deviceState";
+    public static final String SUBSCRIPTION_MSGS = "subMsgs";
+    public static final String TO_CORE_NOTIFICATIONS = "coreNfs";
 
     private final AtomicInteger totalCounter = new AtomicInteger(0);
     private final AtomicInteger sessionEventCounter = new AtomicInteger(0);
@@ -35,6 +49,31 @@ public class TbCoreConsumerStats {
     private final AtomicInteger deviceStateCounter = new AtomicInteger(0);
     private final AtomicInteger subscriptionMsgCounter = new AtomicInteger(0);
     private final AtomicInteger toCoreNotificationsCounter = new AtomicInteger(0);
+
+    private final Map<String, AtomicInteger> counters;
+
+    public TbCoreConsumerStats() {
+        Map<String, AtomicInteger> tmpCounters = new HashMap<>();
+
+        tmpCounters.put(TOTAL_MSGS, totalCounter);
+        tmpCounters.put(SESSION_EVENTS, sessionEventCounter);
+        tmpCounters.put(GET_ATTRIBUTE, getAttributesCounter);
+        tmpCounters.put(ATTRIBUTE_SUBSCRIBES, subscribeToAttributesCounter);
+        tmpCounters.put(RPC_SUBSCRIBES, subscribeToRPCCounter);
+        tmpCounters.put(TO_DEVICE_RPC_CALL_RESPONSES, toDeviceRPCCallResponseCounter);
+        tmpCounters.put(SUBSCRIPTION_INFO, subscriptionInfoCounter);
+        tmpCounters.put(DEVICE_CLAIMS, claimDeviceCounter);
+
+        tmpCounters.put(DEVICE_STATES, deviceStateCounter);
+        tmpCounters.put(SUBSCRIPTION_MSGS, subscriptionMsgCounter);
+        tmpCounters.put(TO_CORE_NOTIFICATIONS, toCoreNotificationsCounter);
+
+        counters = Collections.unmodifiableMap(tmpCounters);
+    }
+
+    public Map<String, AtomicInteger> getCounters() {
+        return counters;
+    }
 
     public void log(TransportProtos.TransportToDeviceActorMsg msg) {
         totalCounter.incrementAndGet();
@@ -77,16 +116,17 @@ public class TbCoreConsumerStats {
     }
 
     public void printStats() {
-        int total = totalCounter.getAndSet(0);
+        int total = totalCounter.get();
         if (total > 0) {
-            log.info("Total [{}] sessionEvents [{}] getAttr [{}] subToAttr [{}] subToRpc [{}] toDevRpc [{}] subInfo [{}] claimDevice [{}]" +
-                            " deviceState [{}] subMgr [{}] coreNfs [{}]",
-                    total, sessionEventCounter.getAndSet(0),
-                    getAttributesCounter.getAndSet(0), subscribeToAttributesCounter.getAndSet(0),
-                    subscribeToRPCCounter.getAndSet(0), toDeviceRPCCallResponseCounter.getAndSet(0),
-                    subscriptionInfoCounter.getAndSet(0), claimDeviceCounter.getAndSet(0)
-                    , deviceStateCounter.getAndSet(0), subscriptionMsgCounter.getAndSet(0), toCoreNotificationsCounter.getAndSet(0));
+            StringBuilder stats = new StringBuilder();
+            counters.forEach((label, value) -> {
+                stats.append(label).append(" = [").append(value.get()).append("] ");
+            });
+            log.info("Core Stats: {}", stats);
         }
     }
 
+    public void reset() {
+        counters.values().forEach(counter -> counter.set(0));
+    }
 }

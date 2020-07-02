@@ -228,6 +228,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     public void printStats() {
         if (statsEnabled) {
             stats.printStats();
+            stats.reset();
         }
     }
 
