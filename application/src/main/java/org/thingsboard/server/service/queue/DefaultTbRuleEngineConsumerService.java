@@ -269,6 +269,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             consumerStats.forEach((queue, stats) -> {
                 stats.printStats();
                 statisticsService.reportQueueStats(ts, stats);
+                stats.reset();
             });
         }
     }
