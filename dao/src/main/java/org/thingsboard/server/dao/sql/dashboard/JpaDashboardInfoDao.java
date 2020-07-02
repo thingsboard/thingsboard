@@ -91,19 +91,17 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     @Override
     public ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
         log.debug("Try to find dashboards by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
-
         ListenableFuture<PageData<EntityRelation>> relations =
                 relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.DASHBOARD, pageLink);
-
         return Futures.transformAsync(relations, relationsData -> {
-            if (relationsData != null && relationsData.getData() != null && relationsData.getData().isEmpty()) {
-            List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(relationsData.getData().size());
-            for (EntityRelation relation : relationsData.getData()) {
-                dashboardFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
-            }
-            return Futures.transform(Futures.successfulAsList(dashboardFutures),
-                    dashboards -> new PageData<>(dashboards, relationsData.getTotalPages(), relationsData.getTotalElements(),
-                            relationsData.hasNext()), MoreExecutors.directExecutor());
+            if (relationsData != null && relationsData.getData() != null && !relationsData.getData().isEmpty()) {
+                List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(relationsData.getData().size());
+                for (EntityRelation relation : relationsData.getData()) {
+                    dashboardFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+                }
+                return Futures.transform(Futures.successfulAsList(dashboardFutures),
+                        dashboards -> new PageData<>(dashboards, relationsData.getTotalPages(), relationsData.getTotalElements(),
+                                relationsData.hasNext()), MoreExecutors.directExecutor());
             } else {
                 return Futures.immediateFuture(new PageData<>());
             }
