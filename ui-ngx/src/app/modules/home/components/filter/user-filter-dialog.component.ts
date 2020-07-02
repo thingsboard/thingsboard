@@ -84,12 +84,12 @@ export class UserFilterDialogComponent extends DialogComponent<UserFilterDialogC
     const userInputControl = this.fb.group({
       label: [userInput.label],
       valueType: [userInput.valueType],
-      value: [(userInput.info.keyFilterPredicate as any).value,
+      value: [(userInput.info.keyFilterPredicate as any).value.defaultValue,
         userInput.valueType === EntityKeyValueType.NUMERIC ||
         userInput.valueType === EntityKeyValueType.DATE_TIME  ? [Validators.required] : []]
     });
     userInputControl.get('value').valueChanges.subscribe(value => {
-      (userInput.info.keyFilterPredicate as any).value = value;
+      (userInput.info.keyFilterPredicate as any).value.defaultValue = value;
     });
     return userInputControl;
   }

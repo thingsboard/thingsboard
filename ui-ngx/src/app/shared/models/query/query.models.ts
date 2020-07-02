@@ -138,16 +138,22 @@ export function createDefaultFilterPredicate(valueType: EntityKeyValueType, comp
   switch (predicate.type) {
     case FilterPredicateType.STRING:
       predicate.operation = StringOperation.STARTS_WITH;
-      predicate.value = '';
+      predicate.value = {
+        defaultValue: ''
+      };
       predicate.ignoreCase = false;
       break;
     case FilterPredicateType.NUMERIC:
       predicate.operation = NumericOperation.EQUAL;
-      predicate.value = valueType === EntityKeyValueType.DATE_TIME ? Date.now() : 0;
+      predicate.value = {
+        defaultValue: valueType === EntityKeyValueType.DATE_TIME ? Date.now() : 0
+      };
       break;
     case FilterPredicateType.BOOLEAN:
       predicate.operation = BooleanOperation.EQUAL;
-      predicate.value = false;
+      predicate.value = {
+        defaultValue: false
+      };
       break;
     case FilterPredicateType.COMPLEX:
       predicate.operation = ComplexOperation.AND;
@@ -228,23 +234,47 @@ export const complexOperationTranslationMap = new Map<ComplexOperation, string>(
   ]
 );
 
+export enum DynamicValueSourceType {
+  CURRENT_TENANT = 'CURRENT_TENANT',
+  CURRENT_CUSTOMER = 'CURRENT_CUSTOMER',
+  CURRENT_USER = 'CURRENT_USER'
+}
+
+export const dynamicValueSourceTypeTranslationMap = new Map<DynamicValueSourceType, string>(
+  [
+    [DynamicValueSourceType.CURRENT_TENANT, 'filter.current-tenant'],
+    [DynamicValueSourceType.CURRENT_CUSTOMER, 'filter.current-customer'],
+    [DynamicValueSourceType.CURRENT_USER, 'filter.current-user']
+  ]
+);
+
+export interface DynamicValue<T> {
+  sourceType: DynamicValueSourceType;
+  sourceAttribute: string;
+}
+
+export interface FilterPredicateValue<T> {
+  defaultValue: T;
+  dynamicValue?: DynamicValue<T>;
+}
+
 export interface StringFilterPredicate {
   type: FilterPredicateType.STRING,
   operation: StringOperation;
-  value: string;
+  value: FilterPredicateValue<string>;
   ignoreCase: boolean;
 }
 
 export interface NumericFilterPredicate {
   type: FilterPredicateType.NUMERIC,
   operation: NumericOperation;
-  value: number;
+  value: FilterPredicateValue<number>;
 }
 
 export interface BooleanFilterPredicate {
   type: FilterPredicateType.BOOLEAN,
   operation: BooleanOperation;
-  value: boolean;
+  value: FilterPredicateValue<boolean>;
 }
 
 export interface BaseComplexFilterPredicate<T extends KeyFilterPredicate | KeyFilterPredicateInfo> {

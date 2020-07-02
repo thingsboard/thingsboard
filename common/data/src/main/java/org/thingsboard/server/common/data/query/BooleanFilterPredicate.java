@@ -21,7 +21,7 @@ import lombok.Data;
 public class BooleanFilterPredicate implements KeyFilterPredicate {
 
     private BooleanOperation operation;
-    private boolean value;
+    private FilterPredicateValue<Boolean> value;
 
     @Override
     public FilterPredicateType getType() {

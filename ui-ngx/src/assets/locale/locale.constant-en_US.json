@@ -1227,7 +1227,10 @@
          "remove-key-filter": "Remove key filter",
          "edit-key-filter": "Edit key filter",
          "date": "Date",
-         "time": "Time"
+         "time": "Time",
+         "current-tenant": "Current tenant",
+         "current-customer": "Current customer",
+         "current-user": "Current user"
     },
     "fullscreen": {
         "expand": "Expand to fullscreen",

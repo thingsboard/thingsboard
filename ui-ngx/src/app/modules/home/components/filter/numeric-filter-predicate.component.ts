@@ -18,9 +18,11 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   EntityKeyValueType,
-  FilterPredicateType, NumericFilterPredicate, NumericOperation, numericOperationTranslationMap,
+  FilterPredicateType,
+  NumericFilterPredicate,
+  NumericOperation,
+  numericOperationTranslationMap,
 } from '@shared/models/query/query.models';
-import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-numeric-filter-predicate',
@@ -56,7 +58,7 @@ export class NumericFilterPredicateComponent implements ControlValueAccessor, On
   ngOnInit(): void {
     this.numericFilterPredicateFormGroup = this.fb.group({
       operation: [NumericOperation.EQUAL, [Validators.required]],
-      value: [0, [Validators.required]]
+      value: [null, [Validators.required]]
     });
     this.numericFilterPredicateFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -81,16 +83,13 @@ export class NumericFilterPredicateComponent implements ControlValueAccessor, On
 
   writeValue(predicate: NumericFilterPredicate): void {
     this.numericFilterPredicateFormGroup.get('operation').patchValue(predicate.operation, {emitEvent: false});
-    this.numericFilterPredicateFormGroup.get('value').patchValue(isDefined(predicate.value) ? predicate.value : 0, {emitEvent: false});
+    this.numericFilterPredicateFormGroup.get('value').patchValue(predicate.value, {emitEvent: false});
   }
 
   private updateModel() {
     let predicate: NumericFilterPredicate = null;
     if (this.numericFilterPredicateFormGroup.valid) {
       predicate = this.numericFilterPredicateFormGroup.getRawValue();
-      if (!predicate.value) {
-        predicate.value = 0;
-      }
       predicate.type = FilterPredicateType.NUMERIC;
     }
     this.propagateChange(predicate);

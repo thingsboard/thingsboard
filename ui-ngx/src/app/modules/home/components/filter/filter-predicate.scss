@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+:host {
+  .tb-hint {
+    padding-bottom: 0;
+  }
+}
+
 :host ::ng-deep {
   mat-form-field {
     .mat-form-field-wrapper {

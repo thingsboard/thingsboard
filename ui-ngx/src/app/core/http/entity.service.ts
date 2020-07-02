@@ -396,7 +396,9 @@ export class EntityService {
             type: FilterPredicateType.STRING,
             operation: StringOperation.STARTS_WITH,
             ignoreCase: true,
-            value: searchText
+            value: {
+              defaultValue: searchText
+            }
           }
         }
       ] : null

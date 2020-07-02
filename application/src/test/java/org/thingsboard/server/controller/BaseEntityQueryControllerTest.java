@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.security.Authority;
@@ -259,7 +260,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         KeyFilter highTemperatureFilter = new KeyFilter();
         highTemperatureFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
         NumericFilterPredicate predicate = new NumericFilterPredicate();
-        predicate.setValue(45);
+        predicate.setValue(FilterPredicateValue.fromDouble(45));
         predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
         highTemperatureFilter.setPredicate(predicate);
         List<KeyFilter> keyFilters = Collections.singletonList(highTemperatureFilter);

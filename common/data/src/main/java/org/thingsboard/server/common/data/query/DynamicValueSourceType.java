@@ -15,26 +15,8 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import lombok.Data;
-
-@Data
-public class StringFilterPredicate implements KeyFilterPredicate {
-
-    private StringOperation operation;
-    private FilterPredicateValue<String> value;
-    private boolean ignoreCase;
-
-    @Override
-    public FilterPredicateType getType() {
-        return FilterPredicateType.STRING;
-    }
-
-    public enum StringOperation {
-        EQUAL,
-        NOT_EQUAL,
-        STARTS_WITH,
-        ENDS_WITH,
-        CONTAINS,
-        NOT_CONTAINS
-    }
+public enum DynamicValueSourceType {
+    CURRENT_TENANT,
+    CURRENT_CUSTOMER,
+    CURRENT_USER
 }

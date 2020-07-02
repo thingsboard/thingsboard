@@ -21,7 +21,7 @@ import lombok.Data;
 public class NumericFilterPredicate implements KeyFilterPredicate {
 
     private NumericOperation operation;
-    private double value;
+    private FilterPredicateValue<Double> value;
 
     @Override
     public FilterPredicateType getType() {
