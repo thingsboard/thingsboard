@@ -194,7 +194,7 @@ public class EntityKeyMapping {
         }
     }
 
-    public Stream<String> toQueries(EntityQueryContext ctx) {
+    public Stream<String> toQueries(QueryContext ctx) {
         if (hasFilter()) {
             String keyAlias = entityKey.getType().equals(EntityKeyType.ENTITY_FIELD) ? "e" : alias;
             return keyFilters.stream().map(keyFilter ->
@@ -204,7 +204,7 @@ public class EntityKeyMapping {
         }
     }
 
-    public String toLatestJoin(EntityQueryContext ctx, EntityFilter entityFilter, EntityType entityType) {
+    public String toLatestJoin(QueryContext ctx, EntityFilter entityFilter, EntityType entityType) {
         String entityTypeStr;
         if (entityFilter.getType().equals(EntityFilterType.RELATIONS_QUERY)) {
             entityTypeStr = "entities.entity_type";
@@ -239,12 +239,12 @@ public class EntityKeyMapping {
                 Collectors.joining(", "));
     }
 
-    public static String buildLatestJoins(EntityQueryContext ctx, EntityFilter entityFilter, EntityType entityType, List<EntityKeyMapping> latestMappings) {
+    public static String buildLatestJoins(QueryContext ctx, EntityFilter entityFilter, EntityType entityType, List<EntityKeyMapping> latestMappings) {
         return latestMappings.stream().map(mapping -> mapping.toLatestJoin(ctx, entityFilter, entityType)).collect(
                 Collectors.joining(" "));
     }
 
-    public static String buildQuery(EntityQueryContext ctx, List<EntityKeyMapping> mappings) {
+    public static String buildQuery(QueryContext ctx, List<EntityKeyMapping> mappings) {
         return mappings.stream().flatMap(mapping -> mapping.toQueries(ctx)).collect(
                 Collectors.joining(" AND "));
     }
@@ -357,11 +357,11 @@ public class EntityKeyMapping {
         return String.join(", ", attrValSelection, attrTsSelection);
     }
 
-    private String buildKeyQuery(EntityQueryContext ctx, String alias, KeyFilter keyFilter) {
+    private String buildKeyQuery(QueryContext ctx, String alias, KeyFilter keyFilter) {
         return this.buildPredicateQuery(ctx, alias, keyFilter.getKey(), keyFilter.getPredicate());
     }
 
-    private String buildPredicateQuery(EntityQueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
+    private String buildPredicateQuery(QueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
         if (predicate.getType().equals(FilterPredicateType.COMPLEX)) {
             return this.buildComplexPredicateQuery(ctx, alias, key, (ComplexFilterPredicate) predicate);
         } else {
@@ -369,14 +369,14 @@ public class EntityKeyMapping {
         }
     }
 
-    private String buildComplexPredicateQuery(EntityQueryContext ctx, String alias, EntityKey key, ComplexFilterPredicate predicate) {
+    private String buildComplexPredicateQuery(QueryContext ctx, String alias, EntityKey key, ComplexFilterPredicate predicate) {
         return predicate.getPredicates().stream()
                 .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate)).collect(Collectors.joining(
                         " " + predicate.getOperation().name() + " "
                 ));
     }
 
-    private String buildSimplePredicateQuery(EntityQueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
+    private String buildSimplePredicateQuery(QueryContext ctx, String alias, EntityKey key, KeyFilterPredicate predicate) {
         if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
             if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
                 String column = entityFieldColumnMap.get(key.getKey());
@@ -402,7 +402,7 @@ public class EntityKeyMapping {
         }
     }
 
-    private String buildStringPredicateQuery(EntityQueryContext ctx, String field, StringFilterPredicate stringFilterPredicate) {
+    private String buildStringPredicateQuery(QueryContext ctx, String field, StringFilterPredicate stringFilterPredicate) {
         String operationField = field;
         String paramName = getNextParameterName(field);
         String value = stringFilterPredicate.getValue();
@@ -439,7 +439,7 @@ public class EntityKeyMapping {
         return String.format("(%s is not null and %s)", field, stringOperationQuery);
     }
 
-    private String buildNumericPredicateQuery(EntityQueryContext ctx, String field, NumericFilterPredicate numericFilterPredicate) {
+    private String buildNumericPredicateQuery(QueryContext ctx, String field, NumericFilterPredicate numericFilterPredicate) {
         String paramName = getNextParameterName(field);
         ctx.addDoubleParameter(paramName, numericFilterPredicate.getValue());
         String numericOperationQuery = "";
@@ -466,7 +466,7 @@ public class EntityKeyMapping {
         return String.format("(%s is not null and %s)", field, numericOperationQuery);
     }
 
-    private String buildBooleanPredicateQuery(EntityQueryContext ctx, String field,
+    private String buildBooleanPredicateQuery(QueryContext ctx, String field,
                                               BooleanFilterPredicate booleanFilterPredicate) {
         String paramName = getNextParameterName(field);
         ctx.addBooleanParameter(paramName, booleanFilterPredicate.isValue());

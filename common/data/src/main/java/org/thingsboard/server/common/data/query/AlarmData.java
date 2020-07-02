@@ -15,12 +15,23 @@
  */
 package org.thingsboard.server.common.data.query;
 
-public enum EntityKeyType {
-    ATTRIBUTE,
-    CLIENT_ATTRIBUTE,
-    SHARED_ATTRIBUTE,
-    SERVER_ATTRIBUTE,
-    TIME_SERIES,
-    ENTITY_FIELD,
-    ALARM_FIELD;
+import lombok.Data;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.id.EntityId;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+public class AlarmData extends AlarmInfo {
+
+    private final UUID entityId;
+    private final Map<EntityKeyType, Map<String, TsValue>> latest;
+
+    public AlarmData(Alarm alarm, String originatorName, UUID entityId) {
+        super(alarm, originatorName);
+        this.entityId = entityId;
+        this.latest = new HashMap<>();
+    }
 }

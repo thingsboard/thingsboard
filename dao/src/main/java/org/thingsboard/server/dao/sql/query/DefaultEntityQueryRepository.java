@@ -218,7 +218,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
         EntityType entityType = resolveEntityType(query.getEntityFilter());
-        EntityQueryContext ctx = new EntityQueryContext();
+        QueryContext ctx = new QueryContext();
         ctx.append("select count(e.id) from ");
         ctx.append(addEntityTableQuery(ctx, query.getEntityFilter(), entityType));
         ctx.append(" e where ");
@@ -228,7 +228,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     @Override
     public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
-        EntityQueryContext ctx = new EntityQueryContext();
+        QueryContext ctx = new QueryContext();
         EntityType entityType = resolveEntityType(query.getEntityFilter());
         EntityDataPageLink pageLink = query.getPageLink();
 
@@ -308,7 +308,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return EntityDataAdapter.createEntityData(pageLink, selectionMapping, rows, totalElements);
     }
 
-    private String buildEntityWhere(EntityQueryContext ctx,
+    private String buildEntityWhere(QueryContext ctx,
                                     TenantId tenantId,
                                     CustomerId customerId,
                                     EntityFilter entityFilter,
@@ -327,7 +327,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return result;
     }
 
-    private String buildPermissionQuery(EntityQueryContext ctx, EntityFilter entityFilter, TenantId tenantId, CustomerId customerId, EntityType entityType) {
+    private String buildPermissionQuery(QueryContext ctx, EntityFilter entityFilter, TenantId tenantId, CustomerId customerId, EntityType entityType) {
         switch (entityFilter.getType()) {
             case RELATIONS_QUERY:
             case DEVICE_SEARCH_QUERY:
@@ -343,7 +343,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         }
     }
 
-    private String defaultPermissionQuery(EntityQueryContext ctx, TenantId tenantId, CustomerId customerId, EntityType entityType) {
+    private String defaultPermissionQuery(QueryContext ctx, TenantId tenantId, CustomerId customerId, EntityType entityType) {
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
         if (customerId != null && !customerId.isNullUid()) {
             ctx.addUuidParameter("permissions_customer_id", customerId.getId());
@@ -357,7 +357,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         }
     }
 
-    private String buildEntityFilterQuery(EntityQueryContext ctx, EntityFilter entityFilter) {
+    private String buildEntityFilterQuery(QueryContext ctx, EntityFilter entityFilter) {
         switch (entityFilter.getType()) {
             case SINGLE_ENTITY:
                 return this.singleEntityQuery(ctx, (SingleEntityFilter) entityFilter);
@@ -378,7 +378,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         }
     }
 
-    private String addEntityTableQuery(EntityQueryContext ctx, EntityFilter entityFilter, EntityType entityType) {
+    private String addEntityTableQuery(QueryContext ctx, EntityFilter entityFilter, EntityType entityType) {
         switch (entityFilter.getType()) {
             case RELATIONS_QUERY:
                 return relationQuery(ctx, (RelationsQueryFilter) entityFilter);
@@ -393,7 +393,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         }
     }
 
-    private String entitySearchQuery(EntityQueryContext ctx, EntitySearchQueryFilter entityFilter, EntityType entityType, List<String> types) {
+    private String entitySearchQuery(QueryContext ctx, EntitySearchQueryFilter entityFilter, EntityType entityType, List<String> types) {
         EntityId rootId = entityFilter.getRootEntity();
         //TODO: fetch last level only.
         //TODO: fetch distinct records.
@@ -416,7 +416,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return query;
     }
 
-    private String relationQuery(EntityQueryContext ctx, RelationsQueryFilter entityFilter) {
+    private String relationQuery(QueryContext ctx, RelationsQueryFilter entityFilter) {
         EntityId rootId = entityFilter.getRootEntity();
         String lvlFilter = getLvlFilter(entityFilter.getMaxLevel());
         String selectFields = SELECT_TENANT_ID + ", " + SELECT_CUSTOMER_ID
@@ -478,7 +478,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return from;
     }
 
-    private String buildWhere(EntityQueryContext ctx, List<EntityKeyMapping> latestFiltersMapping) {
+    private String buildWhere(QueryContext ctx, List<EntityKeyMapping> latestFiltersMapping) {
         String latestFilters = EntityKeyMapping.buildQuery(ctx, latestFiltersMapping);
         if (!StringUtils.isEmpty(latestFilters)) {
             return String.format("where %s", latestFilters);
@@ -487,7 +487,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         }
     }
 
-    private String buildTextSearchQuery(EntityQueryContext ctx, List<EntityKeyMapping> selectionMapping, String searchText) {
+    private String buildTextSearchQuery(QueryContext ctx, List<EntityKeyMapping> selectionMapping, String searchText) {
         if (!StringUtils.isEmpty(searchText) && !selectionMapping.isEmpty()) {
             String lowerSearchText = searchText.toLowerCase() + "%";
             List<String> searchPredicates = selectionMapping.stream().map(mapping -> {
@@ -502,22 +502,22 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         }
     }
 
-    private String singleEntityQuery(EntityQueryContext ctx, SingleEntityFilter filter) {
+    private String singleEntityQuery(QueryContext ctx, SingleEntityFilter filter) {
         ctx.addUuidParameter("entity_filter_single_entity_id", filter.getSingleEntity().getId());
         return "e.id=:entity_filter_single_entity_id";
     }
 
-    private String entityListQuery(EntityQueryContext ctx, EntityListFilter filter) {
+    private String entityListQuery(QueryContext ctx, EntityListFilter filter) {
         ctx.addUuidListParameter("entity_filter_entity_ids", filter.getEntityList().stream().map(UUID::fromString).collect(Collectors.toList()));
         return "e.id in (:entity_filter_entity_ids)";
     }
 
-    private String entityNameQuery(EntityQueryContext ctx, EntityNameFilter filter) {
+    private String entityNameQuery(QueryContext ctx, EntityNameFilter filter) {
         ctx.addStringParameter("entity_filter_name_filter", filter.getEntityNameFilter());
         return "lower(e.search_text) like lower(concat(:entity_filter_name_filter, '%%'))";
     }
 
-    private String typeQuery(EntityQueryContext ctx, EntityFilter filter) {
+    private String typeQuery(QueryContext ctx, EntityFilter filter) {
         String type;
         String name;
         switch (filter.getType()) {

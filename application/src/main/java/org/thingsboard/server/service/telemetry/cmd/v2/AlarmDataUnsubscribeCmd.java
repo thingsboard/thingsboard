@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.service.telemetry.cmd.v2;
 
-public enum EntityKeyType {
-    ATTRIBUTE,
-    CLIENT_ATTRIBUTE,
-    SHARED_ATTRIBUTE,
-    SERVER_ATTRIBUTE,
-    TIME_SERIES,
-    ENTITY_FIELD,
-    ALARM_FIELD;
+import lombok.Data;
+
+@Data
+public class AlarmDataUnsubscribeCmd {
+
+    private final int cmdId;
+
 }

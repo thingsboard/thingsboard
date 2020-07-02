@@ -16,12 +16,15 @@
 package org.thingsboard.server.service.subscription;
 
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
+import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
 
 public interface TbEntityDataSubscriptionService {
 
     void handleCmd(TelemetryWebSocketSessionRef sessionId, EntityDataCmd cmd);
+
+    void handleCmd(TelemetryWebSocketSessionRef sessionId, AlarmDataCmd cmd);
 
     void cancelSubscription(String sessionId, EntityDataUnsubscribeCmd subscriptionId);
 

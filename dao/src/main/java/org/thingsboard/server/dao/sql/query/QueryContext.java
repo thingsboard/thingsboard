@@ -24,13 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class EntityQueryContext implements SqlParameterSource {
+public class QueryContext implements SqlParameterSource {
     private static final PostgresUUIDType UUID_TYPE = new PostgresUUIDType();
 
     private final StringBuilder query;
     private final Map<String, Parameter> params;
 
-    public EntityQueryContext() {
+    public QueryContext() {
         query = new StringBuilder();
         params = new HashMap<>();
     }
@@ -89,6 +89,10 @@ public class EntityQueryContext implements SqlParameterSource {
 
     public void addDoubleParameter(String name, double value) {
         addParameter(name, value, Types.DOUBLE, "DOUBLE");
+    }
+
+    public void addLongParameter(String name, long value) {
+        addParameter(name, value, Types.BIGINT, "BIGINT");
     }
 
     public void addStringListParameter(String name, List<String> value) {

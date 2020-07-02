@@ -20,10 +20,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmData;
+import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,4 +79,6 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("endTime") Long endTime,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
+
+
 }

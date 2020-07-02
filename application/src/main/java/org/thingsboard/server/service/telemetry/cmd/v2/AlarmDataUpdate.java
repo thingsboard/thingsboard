@@ -17,29 +17,30 @@ package org.thingsboard.server.service.telemetry.cmd.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 
 import java.util.List;
 
-public class EntityDataUpdate extends DataUpdate<EntityData> {
+public class AlarmDataUpdate extends DataUpdate<AlarmData> {
 
-    public EntityDataUpdate(int cmdId, PageData<EntityData> data, List<EntityData> update) {
+    public AlarmDataUpdate(int cmdId, PageData<AlarmData> data, List<AlarmData> update) {
         super(cmdId, data, update, SubscriptionErrorCode.NO_ERROR.getCode(), null);
     }
 
-    public EntityDataUpdate(int cmdId, int errorCode, String errorMsg) {
+    public AlarmDataUpdate(int cmdId, int errorCode, String errorMsg) {
         super(cmdId, null, null, errorCode, errorMsg);
     }
 
     @JsonCreator
-    public EntityDataUpdate(@JsonProperty("cmdId") int cmdId,
-                            @JsonProperty("data") PageData<EntityData> data,
-                            @JsonProperty("update") List<EntityData> update,
-                            @JsonProperty("errorCode") int errorCode,
-                            @JsonProperty("errorMsg") String errorMsg) {
+    public AlarmDataUpdate(@JsonProperty("cmdId") int cmdId,
+                           @JsonProperty("data") PageData<AlarmData> data,
+                           @JsonProperty("update") List<AlarmData> update,
+                           @JsonProperty("errorCode") int errorCode,
+                           @JsonProperty("errorMsg") String errorMsg) {
         super(cmdId, data, update, errorCode, errorMsg);
     }
-
 }

@@ -63,6 +63,9 @@ import org.thingsboard.server.service.telemetry.cmd.v1.SubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.TelemetryPluginCmd;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.DataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.DataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
@@ -210,6 +213,9 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 if (cmdsWrapper.getEntityDataCmds() != null) {
                     cmdsWrapper.getEntityDataCmds().forEach(cmd -> handleWsEntityDataCmd(sessionRef, cmd));
                 }
+                if (cmdsWrapper.getAlarmDataCmds() != null) {
+                    cmdsWrapper.getAlarmDataCmds().forEach(cmd -> handleWsAlarmDataCmd(sessionRef, cmd));
+                }
                 if (cmdsWrapper.getEntityDataUnsubscribeCmds() != null) {
                     cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsEntityDataUnsubscribeCmd(sessionRef, cmd));
                 }
@@ -222,6 +228,16 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private void handleWsEntityDataCmd(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
+        String sessionId = sessionRef.getSessionId();
+        log.debug("[{}] Processing: {}", sessionId, cmd);
+
+        if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)
+                && validateSubscriptionCmd(sessionRef, cmd)) {
+            entityDataSubService.handleCmd(sessionRef, cmd);
+        }
+    }
+
+    private void handleWsAlarmDataCmd(TelemetryWebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
         String sessionId = sessionRef.getSessionId();
         log.debug("[{}] Processing: {}", sessionId, cmd);
 
@@ -246,7 +262,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     @Override
-    public void sendWsMsg(String sessionId, EntityDataUpdate update) {
+    public void sendWsMsg(String sessionId, DataUpdate update) {
         sendWsMsg(sessionId, update.getCmdId(), update);
     }
 
@@ -653,6 +669,21 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             sendWsMsg(sessionRef, update);
             return false;
         } else if (cmd.getQuery() == null && cmd.getLatestCmd() == null && cmd.getHistoryCmd() == null && cmd.getTsCmd() == null) {
+            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Query is empty!");
+            sendWsMsg(sessionRef, update);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateSubscriptionCmd(TelemetryWebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
+        if (cmd.getCmdId() < 0) {
+            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Cmd id is negative value!");
+            sendWsMsg(sessionRef, update);
+            return false;
+        } else if (cmd.getQuery() == null) {
             SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
                     "Query is empty!");
             sendWsMsg(sessionRef, update);
