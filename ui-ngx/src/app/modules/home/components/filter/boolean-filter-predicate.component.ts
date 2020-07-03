@@ -18,10 +18,10 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   BooleanFilterPredicate,
-  BooleanOperation, booleanOperationTranslationMap,
+  BooleanOperation,
+  booleanOperationTranslationMap, EntityKeyValueType,
   FilterPredicateType
 } from '@shared/models/query/query.models';
-import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-boolean-filter-predicate',
@@ -39,6 +39,8 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, On
 
   @Input() disabled: boolean;
 
+  valueTypeEnum = EntityKeyValueType;
+
   booleanFilterPredicateFormGroup: FormGroup;
 
   booleanOperations = Object.keys(BooleanOperation);
@@ -53,7 +55,7 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, On
   ngOnInit(): void {
     this.booleanFilterPredicateFormGroup = this.fb.group({
       operation: [BooleanOperation.EQUAL, [Validators.required]],
-      value: [false]
+      value: [null, [Validators.required]]
     });
     this.booleanFilterPredicateFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -78,16 +80,13 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, On
 
   writeValue(predicate: BooleanFilterPredicate): void {
     this.booleanFilterPredicateFormGroup.get('operation').patchValue(predicate.operation, {emitEvent: false});
-    this.booleanFilterPredicateFormGroup.get('value').patchValue(isDefined(predicate.value) ? predicate.value : false, {emitEvent: false});
+    this.booleanFilterPredicateFormGroup.get('value').patchValue(predicate.value, {emitEvent: false});
   }
 
   private updateModel() {
     let predicate: BooleanFilterPredicate = null;
     if (this.booleanFilterPredicateFormGroup.valid) {
       predicate = this.booleanFilterPredicateFormGroup.getRawValue();
-      if (!isDefined(predicate.value)) {
-        predicate.value = false;
-      }
       predicate.type = FilterPredicateType.BOOLEAN;
     }
     this.propagateChange(predicate);

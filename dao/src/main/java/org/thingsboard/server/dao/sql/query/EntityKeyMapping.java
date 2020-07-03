@@ -406,7 +406,7 @@ public class EntityKeyMapping {
             String entityFieldAlias = getEntityFieldAlias(filterType, entityType);
             String column = null;
             if (existingEntityFields.contains(entityFieldAlias)) {
-                column = entityFieldColumnMap.get(key.getKey());
+                column = entityFieldColumnMap.get(entityFieldAlias);
             }
             if (column != null) {
                 String field = alias + "." + column;
@@ -440,7 +440,7 @@ public class EntityKeyMapping {
     private String buildStringPredicateQuery(QueryContext ctx, String field, StringFilterPredicate stringFilterPredicate) {
         String operationField = field;
         String paramName = getNextParameterName(field);
-        String value = stringFilterPredicate.getValue();
+        String value = stringFilterPredicate.getValue().getValue();
         String stringOperationQuery = "";
         if (stringFilterPredicate.isIgnoreCase()) {
             value = value.toLowerCase();
@@ -476,7 +476,7 @@ public class EntityKeyMapping {
 
     private String buildNumericPredicateQuery(QueryContext ctx, String field, NumericFilterPredicate numericFilterPredicate) {
         String paramName = getNextParameterName(field);
-        ctx.addDoubleParameter(paramName, numericFilterPredicate.getValue());
+        ctx.addDoubleParameter(paramName, numericFilterPredicate.getValue().getValue());
         String numericOperationQuery = "";
         switch (numericFilterPredicate.getOperation()) {
             case EQUAL:
@@ -504,7 +504,7 @@ public class EntityKeyMapping {
     private String buildBooleanPredicateQuery(QueryContext ctx, String field,
                                               BooleanFilterPredicate booleanFilterPredicate) {
         String paramName = getNextParameterName(field);
-        ctx.addBooleanParameter(paramName, booleanFilterPredicate.isValue());
+        ctx.addBooleanParameter(paramName, booleanFilterPredicate.getValue().getValue());
         String booleanOperationQuery = "";
         switch (booleanFilterPredicate.getOperation()) {
             case EQUAL:

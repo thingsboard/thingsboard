@@ -33,10 +33,11 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
   EntityKeyValueType,
-  Filter,
+  Filter, FilterPredicateValue,
   filterToUserFilterInfoList,
   UserFilterInputInfo
 } from '@shared/models/query/query.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export interface UserFilterDialogData {
   filter: Filter;
@@ -81,15 +82,17 @@ export class UserFilterDialogComponent extends DialogComponent<UserFilterDialogC
   }
 
   private createUserInputFormControl(userInput: UserFilterInputInfo): AbstractControl {
+    const predicateValue: FilterPredicateValue<string | number | boolean> = (userInput.info.keyFilterPredicate as any).value;
+    const value = isDefinedAndNotNull(predicateValue.userValue) ? predicateValue.userValue : predicateValue.defaultValue;
     const userInputControl = this.fb.group({
       label: [userInput.label],
       valueType: [userInput.valueType],
-      value: [(userInput.info.keyFilterPredicate as any).value,
+      value: [value,
         userInput.valueType === EntityKeyValueType.NUMERIC ||
         userInput.valueType === EntityKeyValueType.DATE_TIME  ? [Validators.required] : []]
     });
-    userInputControl.get('value').valueChanges.subscribe(value => {
-      (userInput.info.keyFilterPredicate as any).value = value;
+    userInputControl.get('value').valueChanges.subscribe(userValue => {
+      (userInput.info.keyFilterPredicate as any).value.userValue = userValue;
     });
     return userInputControl;
   }

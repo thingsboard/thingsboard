@@ -17,6 +17,7 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
+  EntityKeyValueType,
   FilterPredicateType,
   StringFilterPredicate,
   StringOperation,
@@ -39,6 +40,8 @@ export class StringFilterPredicateComponent implements ControlValueAccessor, OnI
 
   @Input() disabled: boolean;
 
+  valueTypeEnum = EntityKeyValueType;
+
   stringFilterPredicateFormGroup: FormGroup;
 
   stringOperations = Object.keys(StringOperation);
@@ -53,7 +56,7 @@ export class StringFilterPredicateComponent implements ControlValueAccessor, OnI
   ngOnInit(): void {
     this.stringFilterPredicateFormGroup = this.fb.group({
       operation: [StringOperation.STARTS_WITH, [Validators.required]],
-      value: [''],
+      value: [null, [Validators.required]],
       ignoreCase: [false]
     });
     this.stringFilterPredicateFormGroup.valueChanges.subscribe(() => {
@@ -79,7 +82,7 @@ export class StringFilterPredicateComponent implements ControlValueAccessor, OnI
 
   writeValue(predicate: StringFilterPredicate): void {
     this.stringFilterPredicateFormGroup.get('operation').patchValue(predicate.operation, {emitEvent: false});
-    this.stringFilterPredicateFormGroup.get('value').patchValue(predicate.value ? predicate.value : '', {emitEvent: false});
+    this.stringFilterPredicateFormGroup.get('value').patchValue(predicate.value, {emitEvent: false});
     this.stringFilterPredicateFormGroup.get('ignoreCase').patchValue(predicate.ignoreCase, {emitEvent: false});
   }
 
@@ -87,9 +90,6 @@ export class StringFilterPredicateComponent implements ControlValueAccessor, OnI
     let predicate: StringFilterPredicate = null;
     if (this.stringFilterPredicateFormGroup.valid) {
       predicate = this.stringFilterPredicateFormGroup.getRawValue();
-      if (!predicate.value) {
-        predicate.value = '';
-      }
       predicate.type = FilterPredicateType.STRING;
     }
     this.propagateChange(predicate);

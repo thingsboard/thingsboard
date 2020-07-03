@@ -83,6 +83,7 @@ import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-
 import { UserFilterDialogComponent } from '@home/components/filter/user-filter-dialog.component';
 import { FilterUserInfoComponent } from './filter/filter-user-info.component';
 import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.component';
+import { FilterPredicateValueComponent } from './filter/filter-predicate-value.component';
 
 @NgModule({
   declarations:
@@ -148,7 +149,8 @@ import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.
       FiltersEditPanelComponent,
       UserFilterDialogComponent,
       FilterUserInfoComponent,
-      FilterUserInfoDialogComponent
+      FilterUserInfoDialogComponent,
+      FilterPredicateValueComponent
     ],
   imports: [
     CommonModule,

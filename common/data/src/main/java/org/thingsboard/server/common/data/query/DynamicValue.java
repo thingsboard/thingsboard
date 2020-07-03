@@ -15,26 +15,19 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.Getter;
 
 @Data
-public class StringFilterPredicate implements KeyFilterPredicate {
+public class DynamicValue<T> {
 
-    private StringOperation operation;
-    private FilterPredicateValue<String> value;
-    private boolean ignoreCase;
+    @JsonIgnore
+    private T resolvedValue;
 
-    @Override
-    public FilterPredicateType getType() {
-        return FilterPredicateType.STRING;
-    }
+    @Getter
+    private final DynamicValueSourceType sourceType;
+    @Getter
+    private final String sourceAttribute;
 
-    public enum StringOperation {
-        EQUAL,
-        NOT_EQUAL,
-        STARTS_WITH,
-        ENDS_WITH,
-        CONTAINS,
-        NOT_CONTAINS
-    }
 }
