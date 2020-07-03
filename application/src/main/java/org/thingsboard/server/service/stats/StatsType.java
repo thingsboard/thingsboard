@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.stats;
 
 public enum StatsType {
-    RULE_ENGINE("ruleEngine"), CORE("core");
+    RULE_ENGINE("ruleEngine"), CORE("core"), TRANSPORT("transport");
 
     private String name;
 
