@@ -64,18 +64,13 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
         }
     };
 
-    @Value("${metrics.enabled}")
-    private Boolean metricsEnabled;
-
-    private final MetricsService metricsService;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TelemetrySubscriptionService tsService;
     private final Lock lock = new ReentrantLock();
     private final AssetService assetService;
     private final ConcurrentMap<TenantQueueKey, AssetId> tenantQueueAssets;
 
-    public DefaultRuleEngineStatisticsService(MetricsService metricsService, TelemetrySubscriptionService tsService, TbServiceInfoProvider serviceInfoProvider, AssetService assetService) {
-        this.metricsService = metricsService;
+    public DefaultRuleEngineStatisticsService(TelemetrySubscriptionService tsService, TbServiceInfoProvider serviceInfoProvider, AssetService assetService) {
         this.tsService = tsService;
         this.serviceInfoProvider = serviceInfoProvider;
         this.assetService = assetService;
@@ -113,12 +108,6 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                 }
             }
         });
-        // TODO is this check necessary?
-        if (metricsEnabled) {
-            ruleEngineStats.getCounters().forEach((label, counter) ->
-                    metricsService.getSummary(StatsType.RULE_ENGINE, queueName + "." + label).record(counter.get())
-            );
-        }
     }
 
     private AssetId getServiceAssetId(TenantId tenantId, String queueName) {

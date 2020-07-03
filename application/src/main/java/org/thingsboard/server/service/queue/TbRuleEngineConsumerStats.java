@@ -22,15 +22,17 @@ import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
+import org.thingsboard.server.service.stats.StatsCounter;
+import org.thingsboard.server.service.stats.StatsCounterFactory;
+import org.thingsboard.server.service.stats.StatsType;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
+// TODO remove this
 @Data
 public class TbRuleEngineConsumerStats {
 
@@ -43,61 +45,73 @@ public class TbRuleEngineConsumerStats {
     public static final String SUCCESSFUL_ITERATIONS = "successfulIterations";
     public static final String FAILED_ITERATIONS = "failedIterations";
 
-    private final AtomicInteger totalMsgCounter = new AtomicInteger(0);
-    private final AtomicInteger successMsgCounter = new AtomicInteger(0);
-    private final AtomicInteger tmpTimeoutMsgCounter = new AtomicInteger(0);
-    private final AtomicInteger tmpFailedMsgCounter = new AtomicInteger(0);
+    private final StatsCounter totalMsgCounter;
+    private final StatsCounter successMsgCounter;
+    private final StatsCounter tmpTimeoutMsgCounter;
+    private final StatsCounter tmpFailedMsgCounter;
 
-    private final AtomicInteger timeoutMsgCounter = new AtomicInteger(0);
-    private final AtomicInteger failedMsgCounter = new AtomicInteger(0);
+    private final StatsCounter timeoutMsgCounter;
+    private final StatsCounter failedMsgCounter;
 
-    private final AtomicInteger successIterationsCounter = new AtomicInteger(0);
-    private final AtomicInteger failedIterationsCounter = new AtomicInteger(0);
+    private final StatsCounter successIterationsCounter;
+    private final StatsCounter failedIterationsCounter;
 
-    private final Map<String, AtomicInteger> counters = new HashMap<>();
+    private final List<StatsCounter> counters = new ArrayList<>();
     private final ConcurrentMap<UUID, TbTenantRuleEngineStats> tenantStats = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, RuleEngineException> tenantExceptions = new ConcurrentHashMap<>();
 
     private final String queueName;
 
-    public TbRuleEngineConsumerStats(String queueName) {
+    // TODO maybe it's possible to do this somehow better and without passing factory obj
+    public TbRuleEngineConsumerStats(String queueName, StatsCounterFactory counterFactory) {
         this.queueName = queueName;
-        counters.put(TOTAL_MSGS, totalMsgCounter);
-        counters.put(SUCCESSFUL_MSGS, successMsgCounter);
-        counters.put(TIMEOUT_MSGS, timeoutMsgCounter);
-        counters.put(FAILED_MSGS, failedMsgCounter);
 
-        counters.put(TMP_TIMEOUT, tmpTimeoutMsgCounter);
-        counters.put(TMP_FAILED, tmpFailedMsgCounter);
-        counters.put(SUCCESSFUL_ITERATIONS, successIterationsCounter);
-        counters.put(FAILED_ITERATIONS, failedIterationsCounter);
+        String statsKey = StatsType.RULE_ENGINE.getName() + "." + queueName;
+        this.totalMsgCounter = counterFactory.createStatsCounter(statsKey, TOTAL_MSGS);
+        this.successMsgCounter = counterFactory.createStatsCounter(statsKey, SUCCESSFUL_MSGS);
+        this.timeoutMsgCounter = counterFactory.createStatsCounter(statsKey, TIMEOUT_MSGS);
+        this.failedMsgCounter = counterFactory.createStatsCounter(statsKey, FAILED_MSGS);
+        this.tmpTimeoutMsgCounter = counterFactory.createStatsCounter(statsKey, TMP_TIMEOUT);
+        this.tmpFailedMsgCounter = counterFactory.createStatsCounter(statsKey, TMP_FAILED);
+        this.successIterationsCounter = counterFactory.createStatsCounter(statsKey, SUCCESSFUL_ITERATIONS);
+        this.failedIterationsCounter = counterFactory.createStatsCounter(statsKey, FAILED_ITERATIONS);
+
+        counters.add(totalMsgCounter);
+        counters.add(successMsgCounter);
+        counters.add(timeoutMsgCounter);
+        counters.add(failedMsgCounter);
+
+        counters.add(tmpTimeoutMsgCounter);
+        counters.add(tmpFailedMsgCounter);
+        counters.add(successIterationsCounter);
+        counters.add(failedIterationsCounter);
     }
 
     public void log(TbRuleEngineProcessingResult msg, boolean finalIterationForPack) {
         int success = msg.getSuccessMap().size();
         int pending = msg.getPendingMap().size();
         int failed = msg.getFailedMap().size();
-        totalMsgCounter.addAndGet(success + pending + failed);
-        successMsgCounter.addAndGet(success);
+        totalMsgCounter.add(success + pending + failed);
+        successMsgCounter.add(success);
         msg.getSuccessMap().values().forEach(m -> getTenantStats(m).logSuccess());
         if (finalIterationForPack) {
             if (pending > 0 || failed > 0) {
-                timeoutMsgCounter.addAndGet(pending);
-                failedMsgCounter.addAndGet(failed);
+                timeoutMsgCounter.add(pending);
+                failedMsgCounter.add(failed);
                 if (pending > 0) {
                     msg.getPendingMap().values().forEach(m -> getTenantStats(m).logTimeout());
                 }
                 if (failed > 0) {
                     msg.getFailedMap().values().forEach(m -> getTenantStats(m).logFailed());
                 }
-                failedIterationsCounter.incrementAndGet();
+                failedIterationsCounter.increment();
             } else {
-                successIterationsCounter.incrementAndGet();
+                successIterationsCounter.increment();
             }
         } else {
-            failedIterationsCounter.incrementAndGet();
-            tmpTimeoutMsgCounter.addAndGet(pending);
-            tmpFailedMsgCounter.addAndGet(failed);
+            failedIterationsCounter.increment();
+            tmpTimeoutMsgCounter.add(pending);
+            tmpFailedMsgCounter.add(failed);
             if (pending > 0) {
                 msg.getPendingMap().values().forEach(m -> getTenantStats(m).logTmpTimeout());
             }
@@ -117,15 +131,15 @@ public class TbRuleEngineConsumerStats {
         int total = totalMsgCounter.get();
         if (total > 0) {
             StringBuilder stats = new StringBuilder();
-            counters.forEach((label, value) -> {
-                stats.append(label).append(" = [").append(value.get()).append("] ");
+            counters.forEach(counter -> {
+                stats.append(counter.getName()).append(" = [").append(counter.get()).append("] ");
             });
             log.info("[{}] Stats: {}", queueName, stats);
         }
     }
 
     public void reset() {
-        counters.values().forEach(counter -> counter.set(0));
+        counters.forEach(StatsCounter::clear);
         tenantStats.clear();
         tenantExceptions.clear();
     }
