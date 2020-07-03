@@ -32,8 +32,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-// TODO remove this
-@Data
 public class TbRuleEngineConsumerStats {
 
     public static final String TOTAL_MSGS = "totalMsgs";
@@ -125,6 +123,18 @@ public class TbRuleEngineConsumerStats {
     private TbTenantRuleEngineStats getTenantStats(TbProtoQueueMsg<ToRuleEngineMsg> m) {
         ToRuleEngineMsg reMsg = m.getValue();
         return tenantStats.computeIfAbsent(new UUID(reMsg.getTenantIdMSB(), reMsg.getTenantIdLSB()), TbTenantRuleEngineStats::new);
+    }
+
+    public ConcurrentMap<UUID, TbTenantRuleEngineStats> getTenantStats() {
+        return tenantStats;
+    }
+
+    public String getQueueName() {
+        return queueName;
+    }
+
+    public ConcurrentMap<TenantId, RuleEngineException> getTenantExceptions() {
+        return tenantExceptions;
     }
 
     public void printStats() {
