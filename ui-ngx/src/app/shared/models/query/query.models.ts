@@ -255,6 +255,7 @@ export interface DynamicValue<T> {
 
 export interface FilterPredicateValue<T> {
   defaultValue: T;
+  userValue?: T;
   dynamicValue?: DynamicValue<T>;
 }
 

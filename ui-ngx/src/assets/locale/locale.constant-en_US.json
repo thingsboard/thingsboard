@@ -1230,7 +1230,13 @@
          "time": "Time",
          "current-tenant": "Current tenant",
          "current-customer": "Current customer",
-         "current-user": "Current user"
+         "current-user": "Current user",
+         "default-value": "Default value",
+         "dynamic-source-type": "Dynamic source type",
+         "no-dynamic-value": "No dynamic value",
+         "source-attribute": "Source attribute",
+         "switch-to-dynamic-value": "Switch to dynamic value",
+         "switch-to-default-value": "Switch to default value"
     },
     "fullscreen": {
         "expand": "Expand to fullscreen",

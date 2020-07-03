@@ -23,7 +23,12 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { EntityKeyValueType, FilterPredicateValue } from '@shared/models/query/query.models';
+import {
+  DynamicValueSourceType,
+  dynamicValueSourceTypeTranslationMap,
+  EntityKeyValueType,
+  FilterPredicateValue
+} from '@shared/models/query/query.models';
 
 @Component({
   selector: 'tb-filter-predicate-value',
@@ -46,7 +51,13 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
 
   valueTypeEnum = EntityKeyValueType;
 
+  dynamicValueSourceTypes = Object.keys(DynamicValueSourceType);
+  dynamicValueSourceTypeEnum = DynamicValueSourceType;
+  dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
+
   filterPredicateValueFormGroup: FormGroup;
+
+  dynamicMode = false;
 
   private propagateChange = null;
 
@@ -83,6 +94,13 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
         }
       )
     });
+    this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceType').valueChanges.subscribe(
+      (sourceType) => {
+        if (!sourceType) {
+          this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceAttribute').patchValue(null, {emitEvent: false});
+        }
+      }
+    );
     this.filterPredicateValueFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
@@ -106,8 +124,10 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
 
   writeValue(predicateValue: FilterPredicateValue<string | number | boolean>): void {
     this.filterPredicateValueFormGroup.get('defaultValue').patchValue(predicateValue.defaultValue, {emitEvent: false});
-    this.filterPredicateValueFormGroup.get('dynamicValue').patchValue(predicateValue.dynamicValue ?
-      predicateValue.dynamicValue : { sourceType: null, sourceAttribute: null }, {emitEvent: false});
+    this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceType').patchValue(predicateValue.dynamicValue ?
+      predicateValue.dynamicValue.sourceType : null, {emitEvent: false});
+    this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceAttribute').patchValue(predicateValue.dynamicValue ?
+      predicateValue.dynamicValue.sourceAttribute : null, {emitEvent: false});
   }
 
   private updateModel() {
