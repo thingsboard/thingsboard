@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -63,19 +64,19 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     }
 
     public static final String SELECT_ORIGINATOR_NAME = " CASE" +
-            " WHEN a.originator_type = 0" +
+            " WHEN a.originator_type = "+ EntityType.TENANT.ordinal() +
             " THEN (select title from tenant where id = a.originator_id)" +
-            " WHEN a.originator_type = 1 " +
+            " WHEN a.originator_type = "+ EntityType.CUSTOMER.ordinal() +
             " THEN (select title from customer where id = a.originator_id)" +
-            " WHEN a.originator_type = 2" +
+            " WHEN a.originator_type = " + EntityType.USER.ordinal() +
             " THEN (select CONCAT (first_name, ' ', last_name) from tb_user where id = a.originator_id)" +
-            " WHEN a.originator_type = 3" +
+            " WHEN a.originator_type = " + EntityType.DASHBOARD.ordinal() +
             " THEN (select title from dashboard where id = a.originator_id)" +
-            " WHEN a.originator_type = 4" +
+            " WHEN a.originator_type = " + EntityType.ASSET.ordinal() +
             " THEN (select name from asset where id = a.originator_id)" +
-            " WHEN a.originator_type = 5" +
+            " WHEN a.originator_type = " + EntityType.DEVICE.ordinal() +
             " THEN (select name from device where id = a.originator_id)" +
-            " WHEN a.originator_type = 9" +
+            " WHEN a.originator_type = " + EntityType.ENTITY_VIEW.ordinal() +
             " THEN (select name from entity_view where id = a.originator_id)" +
             " END as originator_name";
 
@@ -114,8 +115,11 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         if (pageLink.isSearchPropagatedAlarms()) {
             selectPart.append(" r.from_id as entity_id ");
             fromPart.append(JOIN_RELATIONS);
+            wherePart.append(buildPermissionsQuery(tenantId, customerId, ctx));
+            addAnd = true;
         } else {
             selectPart.append(" a.originator_id as entity_id ");
+            //No need to check permissions if we select by originator.
         }
         EntityDataSortOrder sortOrder = pageLink.getSortOrder();
         if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
@@ -126,8 +130,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             if (pageLink.isSearchPropagatedAlarms()) {
                 fromPart.append(" and r.from_id in (:entity_ids)");
             } else {
-                wherePart.append(" a.originator_id in (:entity_ids)");
+                addAndIfNeeded(wherePart, addAnd);
                 addAnd = true;
+                wherePart.append(" a.originator_id in (:entity_ids)");
             }
         } else {
             fromPart.append(" left join (select * from (VALUES");
@@ -200,6 +205,31 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         }
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
         return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements);
+    }
+
+    private String buildPermissionsQuery(TenantId tenantId, CustomerId customerId, QueryContext ctx) {
+        StringBuilder permissionsQuery = new StringBuilder();
+        ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
+        permissionsQuery.append(" a.tenant_id = :permissions_tenant_id ");
+        if (customerId != null && !customerId.isNullUid()) {
+            ctx.addUuidParameter("permissions_customer_id", customerId.getId());
+            ctx.addUuidParameter("permissions_device_customer_id", customerId.getId());
+            ctx.addUuidParameter("permissions_asset_customer_id", customerId.getId());
+            ctx.addUuidParameter("permissions_user_customer_id", customerId.getId());
+            ctx.addUuidParameter("permissions_entity_view_customer_id", customerId.getId());
+            permissionsQuery.append(" and (");
+            permissionsQuery.append("(a.originator_type = '").append(EntityType.DEVICE.ordinal()).append("' and exists (select 1 from device cd where cd.id = a.originator_id and cd.customer_id = :permissions_device_customer_id))");
+            permissionsQuery.append(" or ");
+            permissionsQuery.append("(a.originator_type = '").append(EntityType.ASSET.ordinal()).append("' and exists (select 1 from asset ca where ca.id = a.originator_id and ca.customer_id = :permissions_device_customer_id))");
+            permissionsQuery.append(" or ");
+            permissionsQuery.append("(a.originator_type = '").append(EntityType.CUSTOMER.ordinal()).append("' and exists (select 1 from customer cc where cc.id = a.originator_id and cc.id = :permissions_customer_id))");
+            permissionsQuery.append(" or ");
+            permissionsQuery.append("(a.originator_type = '").append(EntityType.USER.ordinal()).append("' and exists (select 1 from tb_user cu where cu.id = a.originator_id and cu.customer_id = :permissions_user_customer_id))");
+            permissionsQuery.append(" or ");
+            permissionsQuery.append("(a.originator_type = '").append(EntityType.ENTITY_VIEW.ordinal()).append("' and exists (select 1 from entity_view cv where cv.id = a.originator_id and cv.customer_id = :permissions_entity_view_customer_id))");
+            permissionsQuery.append(")");
+        }
+        return permissionsQuery.toString();
     }
 
     private Set<AlarmStatus> toStatusSet(List<AlarmSearchStatus> statusList) {

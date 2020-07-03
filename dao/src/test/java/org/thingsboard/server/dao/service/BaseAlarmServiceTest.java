@@ -20,6 +20,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -203,6 +205,63 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, alarms.getData().get(0));
+    }
+
+    @Test
+    public void testFindCustomerAlarm() throws ExecutionException, InterruptedException {
+        Customer customer = new Customer();
+        customer.setTitle("TestCustomer");
+        customer.setTenantId(tenantId);
+        customer = customerService.saveCustomer(customer);
+
+        Device tenantDevice = new Device();
+        tenantDevice.setName("TestTenantDevice");
+        tenantDevice.setType("default");
+        tenantDevice.setTenantId(tenantId);
+        tenantDevice = deviceService.saveDevice(tenantDevice);
+
+        Device customerDevice = new Device();
+        customerDevice.setName("TestCustomerDevice");
+        customerDevice.setType("default");
+        customerDevice.setTenantId(tenantId);
+        customerDevice.setCustomerId(customer.getId());
+        customerDevice = deviceService.saveDevice(customerDevice);
+
+        long ts = System.currentTimeMillis();
+        Alarm tenantAlarm = Alarm.builder().tenantId(tenantId)
+                .originator(tenantDevice.getId())
+                .type(TEST_ALARM)
+                .propagate(true)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+        tenantAlarm = alarmService.createOrUpdateAlarm(tenantAlarm);
+
+        Alarm deviceAlarm = Alarm.builder().tenantId(tenantId)
+                .originator(customerDevice.getId())
+                .type(TEST_ALARM)
+                .propagate(true)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+        deviceAlarm = alarmService.createOrUpdateAlarm(deviceAlarm);
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(10);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(true);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        PageData<AlarmData> tenantAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Arrays.asList(tenantDevice.getId(), customerDevice.getId()));
+        Assert.assertEquals(2, tenantAlarms.getData().size());
+
+        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, customer.getId(), pageLink, Arrays.asList(tenantDevice.getId(), customerDevice.getId()));
+        Assert.assertEquals(1, customerAlarms.getData().size());
+        Assert.assertEquals(deviceAlarm, customerAlarms.getData().get(0));
+
     }
 
     @Test
