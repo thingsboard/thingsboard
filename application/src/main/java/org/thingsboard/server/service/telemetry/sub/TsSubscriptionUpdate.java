@@ -24,14 +24,14 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class SubscriptionUpdate {
+public class TsSubscriptionUpdate {
 
     private int subscriptionId;
     private int errorCode;
     private String errorMsg;
     private Map<String, List<Object>> data;
 
-    public SubscriptionUpdate(int subscriptionId, List<TsKvEntry> data) {
+    public TsSubscriptionUpdate(int subscriptionId, List<TsKvEntry> data) {
         super();
         this.subscriptionId = subscriptionId;
         this.data = new TreeMap<>();
@@ -46,17 +46,17 @@ public class SubscriptionUpdate {
         }
     }
 
-    public SubscriptionUpdate(int subscriptionId, Map<String, List<Object>> data) {
+    public TsSubscriptionUpdate(int subscriptionId, Map<String, List<Object>> data) {
         super();
         this.subscriptionId = subscriptionId;
         this.data = data;
     }
 
-    public SubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode) {
+    public TsSubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode) {
         this(subscriptionId, errorCode, null);
     }
 
-    public SubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode, String errorMsg) {
+    public TsSubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode, String errorMsg) {
         super();
         this.subscriptionId = subscriptionId;
         this.errorCode = errorCode.getCode();
@@ -93,7 +93,7 @@ public class SubscriptionUpdate {
 
     @Override
     public String toString() {
-        return "SubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data="
+        return "TsSubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data="
                 + data + "]";
     }
 }

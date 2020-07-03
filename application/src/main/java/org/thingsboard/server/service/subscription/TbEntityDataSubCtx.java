@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,12 +18,9 @@ package org.thingsboard.server.service.subscription;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -36,7 +33,7 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TsSubscriptionUpdate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,11 +53,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private TimeSeriesCmd tsCmd;
     @Getter
     private PageData<EntityData> data;
-    @Getter @Setter
+    @Getter
+    @Setter
     private boolean initialDataSent;
     private Map<Integer, EntityId> subToEntityIdMap;
     private volatile ScheduledFuture<?> refreshTask;
@@ -170,11 +169,11 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         return keyStates;
     }
 
-    private void sendWsMsg(String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
+    private void sendWsMsg(String sessionId, TsSubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         sendWsMsg(sessionId, subscriptionUpdate, keyType, true);
     }
 
-    private void sendWsMsg(String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType, boolean resultToLatestValues) {
+    private void sendWsMsg(String sessionId, TsSubscriptionUpdate subscriptionUpdate, EntityKeyType keyType, boolean resultToLatestValues) {
         EntityId entityId = subToEntityIdMap.get(subscriptionUpdate.getSubscriptionId());
         if (entityId != null) {
             log.trace("[{}][{}][{}][{}] Received subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
@@ -188,7 +187,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         }
     }
 
-    private void sendLatestWsMsg(EntityId entityId, String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
+    private void sendLatestWsMsg(EntityId entityId, String sessionId, TsSubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         Map<String, TsValue> latestUpdate = new HashMap<>();
         subscriptionUpdate.getData().forEach((k, v) -> {
             Object[] data = (Object[]) v.get(0);
@@ -227,7 +226,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         }
     }
 
-    private void sendTsWsMsg(EntityId entityId, String sessionId, SubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
+    private void sendTsWsMsg(EntityId entityId, String sessionId, TsSubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         Map<String, List<TsValue>> tsUpdate = new HashMap<>();
         subscriptionUpdate.getData().forEach((k, v) -> {
             Object[] data = (Object[]) v.get(0);

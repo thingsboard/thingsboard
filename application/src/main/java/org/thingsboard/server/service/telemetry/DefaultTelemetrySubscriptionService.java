@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,38 +61,31 @@ import java.util.function.Consumer;
  */
 @Service
 @Slf4j
-public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptionService {
-
-    private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
+public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionService implements TelemetrySubscriptionService {
 
     private final AttributesService attrService;
     private final TimeseriesService tsService;
-    private final TbClusterService clusterService;
-    private final PartitionService partitionService;
-    private Optional<SubscriptionManagerService> subscriptionManagerService;
 
     private ExecutorService tsCallBackExecutor;
-    private ExecutorService wsCallBackExecutor;
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService) {
+        super(clusterService, partitionService);
         this.attrService = attrService;
         this.tsService = tsService;
-        this.clusterService = clusterService;
-        this.partitionService = partitionService;
-    }
-
-    @Autowired(required = false)
-    public void setSubscriptionManagerService(Optional<SubscriptionManagerService> subscriptionManagerService) {
-        this.subscriptionManagerService = subscriptionManagerService;
     }
 
     @PostConstruct
     public void initExecutor() {
+        super.initExecutor();
         tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-service-ts-callback"));
-        wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-service-ws-callback"));
+    }
+
+    @Override
+    protected String getExecutorPrefix() {
+        return "ts";
     }
 
     @PreDestroy
@@ -100,18 +93,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         if (tsCallBackExecutor != null) {
             tsCallBackExecutor.shutdownNow();
         }
-        if (wsCallBackExecutor != null) {
-            wsCallBackExecutor.shutdownNow();
-        }
-    }
-
-    @Override
-    @EventListener(PartitionChangeEvent.class)
-    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            currentPartitions.clear();
-            currentPartitions.addAll(partitionChangeEvent.getPartitions());
-        }
+        super.shutdownExecutor();
     }
 
     @Override
@@ -218,18 +200,5 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 callback.onFailure(t);
             }
         }, tsCallBackExecutor);
-    }
-
-    private void addWsCallback(ListenableFuture<List<Void>> saveFuture, Consumer<Void> callback) {
-        Futures.addCallback(saveFuture, new FutureCallback<List<Void>>() {
-            @Override
-            public void onSuccess(@Nullable List<Void> result) {
-                callback.accept(null);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-            }
-        }, wsCallBackExecutor);
     }
 }

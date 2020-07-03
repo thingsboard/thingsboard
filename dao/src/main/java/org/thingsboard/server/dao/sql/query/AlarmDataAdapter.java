@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -32,10 +33,13 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,19 +49,20 @@ public class AlarmDataAdapter {
 
     public static PageData<AlarmData> createAlarmData(EntityDataPageLink pageLink,
                                                       List<Map<String, Object>> rows,
-                                                      int totalElements) {
+                                                      int totalElements, Collection<EntityId> orderedEntityIds) {
+        Map<UUID, EntityId> entityIdMap = orderedEntityIds.stream().collect(Collectors.toMap(EntityId::getId, Function.identity()));
         int totalPages = pageLink.getPageSize() > 0 ? (int) Math.ceil((float) totalElements / pageLink.getPageSize()) : 1;
         int startIndex = pageLink.getPageSize() * pageLink.getPage();
         boolean hasNext = pageLink.getPageSize() > 0 && totalElements > startIndex + rows.size();
-        List<AlarmData> entitiesData = convertListToAlarmData(rows);
+        List<AlarmData> entitiesData = convertListToAlarmData(rows, entityIdMap);
         return new PageData<>(entitiesData, totalPages, totalElements, hasNext);
     }
 
-    private static List<AlarmData> convertListToAlarmData(List<Map<String, Object>> result) {
-        return result.stream().map(AlarmDataAdapter::toEntityData).collect(Collectors.toList());
+    private static List<AlarmData> convertListToAlarmData(List<Map<String, Object>> result, Map<UUID, EntityId> entityIdMap) {
+        return result.stream().map(tmp -> toEntityData(tmp, entityIdMap)).collect(Collectors.toList());
     }
 
-    private static AlarmData toEntityData(Map<String, Object> row) {
+    private static AlarmData toEntityData(Map<String, Object> row, Map<UUID, EntityId> entityIdMap) {
         Alarm alarm = new Alarm();
         alarm.setId(new AlarmId((UUID) row.get(ModelConstants.ID_PROPERTY)));
         alarm.setCreatedTime((long) row.get(ModelConstants.CREATED_TIME_PROPERTY));
@@ -91,7 +96,8 @@ public class AlarmDataAdapter {
         } else {
             alarm.setPropagateRelationTypes(Collections.emptyList());
         }
-        UUID entityId = (UUID) row.get(ModelConstants.ENTITY_ID_COLUMN);
+        UUID entityUuid = (UUID) row.get(ModelConstants.ENTITY_ID_COLUMN);
+        EntityId entityId = entityIdMap.get(entityUuid);
         Object originatorNameObj = row.get(ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY);
         String originatorName = originatorNameObj != null ? originatorNameObj.toString() : null;
         return new AlarmData(alarm, originatorName, entityId);

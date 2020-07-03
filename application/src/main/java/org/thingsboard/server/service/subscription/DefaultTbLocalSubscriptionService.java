@@ -36,8 +36,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
-import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TsSubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -138,7 +137,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     @Override
-    public void onSubscriptionUpdate(String sessionId, SubscriptionUpdate update, TbCallback callback) {
+    public void onSubscriptionUpdate(String sessionId, TsSubscriptionUpdate update, TbCallback callback) {
         TbSubscription subscription = subscriptionsBySessionId
                 .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
         if (subscription != null) {

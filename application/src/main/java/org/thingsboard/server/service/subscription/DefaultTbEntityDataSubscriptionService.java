@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -248,7 +248,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             log.debug("[{}][{}] Creating new alarm subscription using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
             ctx = createSubCtx(session, cmd);
         }
-        AlarmDataQuery adq = cmd.getQuery();
+        ctx.setQuery(cmd.getQuery());
+        AlarmDataQuery adq = ctx.getQuery();
         EntityDataSortOrder sortOrder = adq.getPageLink().getSortOrder();
         EntityDataSortOrder entitiesSortOrder;
         if (sortOrder == null || sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
@@ -265,12 +266,16 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), new PageData<>(Collections.emptyList(), 1, 0, false), null);
             wsService.sendWsMsg(ctx.getSessionId(), update);
         } else {
+            ctx.setLastFetchTs(System.currentTimeMillis());
             PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(ctx.getTenantId(), ctx.getCustomerId(),
                     ctx.getQuery().getPageLink(), ctx.getOrderedEntityIds());
-            ctx.setAlarmsData(alarms);
+            alarms = ctx.setAndMergeAlarmsData(alarms);
             AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), alarms, null);
             wsService.sendWsMsg(ctx.getSessionId(), update);
-            //TODO: Create WS subscription for alarms for this entities. If this is first page(?!) and new alarm matches the filter - invalidate alarms.
+            if (adq.getPageLink().getTimeWindow() > 0) {
+                //TODO: refresh list of entities periodically (similar to time-series subscription).
+                createAlarmSubscriptions(ctx);
+            }
         }
     }
 
@@ -389,7 +394,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             }
             wsService.sendWsMsg(ctx.getSessionId(), update);
             if (subscribe) {
-                createSubscriptions(ctx, keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), false);
+                createTelemetrySubscriptions(ctx, keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), false);
             }
             ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;
@@ -438,7 +443,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
                     }
                     wsService.sendWsMsg(ctx.getSessionId(), update);
-                    createSubscriptions(ctx, latestCmd.getKeys());
+                    createTelemetrySubscriptions(ctx, latestCmd.getKeys());
                 }
 
                 @Override
@@ -454,16 +459,20 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 wsService.sendWsMsg(ctx.getSessionId(), update);
                 ctx.setInitialDataSent(true);
             }
-            createSubscriptions(ctx, latestCmd.getKeys());
+            createTelemetrySubscriptions(ctx, latestCmd.getKeys());
         }
     }
 
-    private void createSubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys) {
-        createSubscriptions(ctx, keys, true);
+    private void createTelemetrySubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys) {
+        createTelemetrySubscriptions(ctx, keys, true);
     }
 
-    private void createSubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys, boolean latest) {
-        //TODO: create context for this (session, cmdId) that contains query, latestCmd and update. Subscribe + periodic updates.
+    private void createAlarmSubscriptions(TbAlarmDataSubCtx ctx) {
+        List<TbSubscription> subscriptions = ctx.createSubscriptions();
+        subscriptions.forEach(localSubscriptionService::addSubscription);
+    }
+
+    private void createTelemetrySubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys, boolean latest) {
         List<TbSubscription> tbSubs = ctx.createSubscriptions(keys, latest);
         tbSubs.forEach(sub -> localSubscriptionService.addSubscription(sub));
     }
