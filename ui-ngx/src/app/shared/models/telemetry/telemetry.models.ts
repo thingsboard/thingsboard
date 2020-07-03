@@ -21,7 +21,7 @@ import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
-import { EntityData, EntityDataQuery, EntityKey } from '@shared/models/query/query.models';
+import { AlarmData, AlarmDataQuery, EntityData, EntityDataQuery, EntityKey } from '@shared/models/query/query.models';
 import { PageData } from '@shared/models/page/page-data';
 
 export enum DataKeyType {
@@ -165,7 +165,20 @@ export class EntityDataCmd implements WebsocketCmd {
   }
 }
 
+export class AlarmDataCmd implements WebsocketCmd {
+  cmdId: number;
+  query?: AlarmDataQuery;
+
+  public isEmpty(): boolean {
+    return !this.query;
+  }
+}
+
 export class EntityDataUnsubscribeCmd implements WebsocketCmd {
+  cmdId: number;
+}
+
+export class AlarmDataUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
 }
 
@@ -175,6 +188,8 @@ export class TelemetryPluginCmdsWrapper {
   historyCmds: Array<GetHistoryCmd>;
   entityDataCmds: Array<EntityDataCmd>;
   entityDataUnsubscribeCmds: Array<EntityDataUnsubscribeCmd>;
+  alarmDataCmds: Array<AlarmDataCmd>;
+  alarmDataUnsubscribeCmds: Array<AlarmDataUnsubscribeCmd>;
 
   constructor() {
     this.attrSubCmds = [];
@@ -182,6 +197,8 @@ export class TelemetryPluginCmdsWrapper {
     this.historyCmds = [];
     this.entityDataCmds = [];
     this.entityDataUnsubscribeCmds = [];
+    this.alarmDataCmds = [];
+    this.alarmDataUnsubscribeCmds = [];
   }
 
   public hasCommands(): boolean {
@@ -189,7 +206,9 @@ export class TelemetryPluginCmdsWrapper {
       this.historyCmds.length > 0 ||
       this.attrSubCmds.length > 0 ||
       this.entityDataCmds.length > 0 ||
-      this.entityDataUnsubscribeCmds.length > 0;
+      this.entityDataUnsubscribeCmds.length > 0 ||
+      this.alarmDataCmds.length > 0 ||
+      this.alarmDataUnsubscribeCmds.length > 0;
   }
 
   public clear() {
@@ -198,6 +217,8 @@ export class TelemetryPluginCmdsWrapper {
     this.historyCmds.length = 0;
     this.entityDataCmds.length = 0;
     this.entityDataUnsubscribeCmds.length = 0;
+    this.alarmDataCmds.length = 0;
+    this.alarmDataUnsubscribeCmds.length = 0;
   }
 
   public preparePublishCommands(maxCommands: number): TelemetryPluginCmdsWrapper {
@@ -212,6 +233,10 @@ export class TelemetryPluginCmdsWrapper {
     preparedWrapper.entityDataCmds = this.popCmds(this.entityDataCmds, leftCount);
     leftCount -= preparedWrapper.entityDataCmds.length;
     preparedWrapper.entityDataUnsubscribeCmds = this.popCmds(this.entityDataUnsubscribeCmds, leftCount);
+    leftCount -= preparedWrapper.entityDataUnsubscribeCmds.length;
+    preparedWrapper.alarmDataCmds = this.popCmds(this.alarmDataCmds, leftCount);
+    leftCount -= preparedWrapper.alarmDataCmds.length;
+    preparedWrapper.alarmDataUnsubscribeCmds = this.popCmds(this.alarmDataUnsubscribeCmds, leftCount);
     return preparedWrapper;
   }
 
@@ -239,18 +264,38 @@ export interface SubscriptionUpdateMsg extends SubscriptionDataHolder {
   errorMsg: string;
 }
 
-export interface EntityDataUpdateMsg {
-  cmdId: number;
-  data?: PageData<EntityData>;
-  update?: Array<EntityData>;
-  errorCode: number;
-  errorMsg: string;
+export enum DataUpdateType {
+  ENTITY_DATA = 'ENTITY_DATA',
+  ALARM_DATA = 'ALARM_DATA'
 }
 
-export type WebsocketDataMsg = EntityDataUpdateMsg | SubscriptionUpdateMsg;
+export interface DataUpdateMsg<T> {
+  cmdId: number;
+  data?: PageData<T>;
+  update?: Array<T>;
+  errorCode: number;
+  errorMsg: string;
+  dataUpdateType: DataUpdateType;
+}
+
+export interface EntityDataUpdateMsg extends DataUpdateMsg<EntityData> {
+  dataUpdateType: DataUpdateType.ENTITY_DATA;
+}
+
+export interface AlarmDataUpdateMsg extends DataUpdateMsg<AlarmData> {
+  dataUpdateType: DataUpdateType.ALARM_DATA;
+}
+
+export type WebsocketDataMsg = AlarmDataUpdateMsg | EntityDataUpdateMsg | SubscriptionUpdateMsg;
 
 export function isEntityDataUpdateMsg(message: WebsocketDataMsg): message is EntityDataUpdateMsg {
-  return (message as EntityDataUpdateMsg).cmdId !== undefined;
+  const updateMsg = (message as DataUpdateMsg<any>);
+  return updateMsg.cmdId !== undefined && updateMsg.dataUpdateType === DataUpdateType.ENTITY_DATA;
+}
+
+export function isAlarmDataUpdateMsg(message: WebsocketDataMsg): message is AlarmDataUpdateMsg {
+  const updateMsg = (message as DataUpdateMsg<any>);
+  return updateMsg.cmdId !== undefined && updateMsg.dataUpdateType === DataUpdateType.ALARM_DATA;
 }
 
 export class SubscriptionUpdate implements SubscriptionUpdateMsg {
@@ -302,19 +347,33 @@ export class SubscriptionUpdate implements SubscriptionUpdateMsg {
   }
 }
 
-export class EntityDataUpdate implements EntityDataUpdateMsg {
+export class DataUpdate<T> implements DataUpdateMsg<T> {
   cmdId: number;
   errorCode: number;
   errorMsg: string;
-  data?: PageData<EntityData>;
-  update?: Array<EntityData>;
+  data?: PageData<T>;
+  update?: Array<T>;
+  dataUpdateType: DataUpdateType;
 
-  constructor(msg: EntityDataUpdateMsg) {
+  constructor(msg: DataUpdateMsg<T>) {
     this.cmdId = msg.cmdId;
     this.errorCode = msg.errorCode;
     this.errorMsg = msg.errorMsg;
     this.data = msg.data;
     this.update = msg.update;
+    this.dataUpdateType = msg.dataUpdateType;
+  }
+}
+
+export class EntityDataUpdate extends DataUpdate<EntityData> {
+  constructor(msg: EntityDataUpdateMsg) {
+    super(msg);
+  }
+}
+
+export class AlarmDataUpdate extends DataUpdate<AlarmData> {
+  constructor(msg: AlarmDataUpdateMsg) {
+    super(msg);
   }
 }
 
@@ -328,6 +387,7 @@ export class TelemetrySubscriber {
 
   private dataSubject = new ReplaySubject<SubscriptionUpdate>(1);
   private entityDataSubject = new ReplaySubject<EntityDataUpdate>(1);
+  private alarmDataSubject = new ReplaySubject<AlarmDataUpdate>(1);
   private reconnectSubject = new Subject();
 
   private zone: NgZone;
@@ -336,6 +396,7 @@ export class TelemetrySubscriber {
 
   public data$ = this.dataSubject.asObservable();
   public entityData$ = this.entityDataSubject.asObservable();
+  public alarmData$ = this.alarmDataSubject.asObservable();
   public reconnect$ = this.reconnectSubject.asObservable();
 
   public static createEntityAttributesSubscription(telemetryService: TelemetryService,
@@ -379,6 +440,7 @@ export class TelemetrySubscriber {
   public complete() {
     this.dataSubject.complete();
     this.entityDataSubject.complete();
+    this.alarmDataSubject.complete();
     this.reconnectSubject.complete();
   }
 
@@ -413,6 +475,18 @@ export class TelemetrySubscriber {
       );
     } else {
       this.entityDataSubject.next(message);
+    }
+  }
+
+  public onAlarmData(message: AlarmDataUpdate) {
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.alarmDataSubject.next(message);
+        }
+      );
+    } else {
+      this.alarmDataSubject.next(message);
     }
   }
 

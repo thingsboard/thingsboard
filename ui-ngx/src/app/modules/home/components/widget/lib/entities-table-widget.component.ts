@@ -77,6 +77,7 @@ import {
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
 import {
+  dataKeyToEntityKey,
   Direction,
   EntityDataPageLink,
   entityDataPageLinkSortDirection,
@@ -205,7 +206,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public onDataUpdated() {
     this.ngZone.run(() => {
-      this.entityDatasource.dataUpdated(); // .updateEntitiesData(this.subscription.data);
+      this.entityDatasource.dataUpdated();
       this.ctx.detectChanges();
     });
   }
@@ -339,19 +340,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (datasource && datasource.dataKeys) {
       datasource.dataKeys.forEach((entityDataKey) => {
         const dataKey: EntityColumn = deepClone(entityDataKey) as EntityColumn;
-        dataKey.entityKey = {
-          key: dataKey.name,
-          type: null
-        };
+        dataKey.entityKey = dataKeyToEntityKey(entityDataKey);
         if (dataKey.type === DataKeyType.function) {
           dataKey.name = dataKey.label;
-          dataKey.entityKey.type = EntityKeyType.ENTITY_FIELD;
-        } else if (dataKey.type === DataKeyType.entityField) {
-          dataKey.entityKey.type = EntityKeyType.ENTITY_FIELD;
-        } else if (dataKey.type === DataKeyType.attribute) {
-          dataKey.entityKey.type = EntityKeyType.ATTRIBUTE;
-        } else if (dataKey.type === DataKeyType.timeseries) {
-          dataKey.entityKey.type = EntityKeyType.TIME_SERIES;
         }
         dataKeys.push(dataKey);
 

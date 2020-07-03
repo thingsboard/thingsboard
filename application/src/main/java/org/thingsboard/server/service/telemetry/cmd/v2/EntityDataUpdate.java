@@ -33,6 +33,11 @@ public class EntityDataUpdate extends DataUpdate<EntityData> {
         super(cmdId, null, null, errorCode, errorMsg);
     }
 
+    @Override
+    public DataUpdateType getDataUpdateType() {
+        return DataUpdateType.ENTITY_DATA;
+    }
+
     @JsonCreator
     public EntityDataUpdate(@JsonProperty("cmdId") int cmdId,
                             @JsonProperty("data") PageData<EntityData> data,

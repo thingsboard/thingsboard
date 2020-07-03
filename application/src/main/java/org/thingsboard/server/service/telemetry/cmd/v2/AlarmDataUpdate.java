@@ -35,6 +35,11 @@ public class AlarmDataUpdate extends DataUpdate<AlarmData> {
         super(cmdId, null, null, errorCode, errorMsg);
     }
 
+    @Override
+    public DataUpdateType getDataUpdateType() {
+        return DataUpdateType.ALARM_DATA;
+    }
+
     @JsonCreator
     public AlarmDataUpdate(@JsonProperty("cmdId") int cmdId,
                            @JsonProperty("data") PageData<AlarmData> data,

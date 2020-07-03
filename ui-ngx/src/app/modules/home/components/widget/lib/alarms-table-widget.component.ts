@@ -29,21 +29,21 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
-import { Datasource, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
+import { DataKey, Datasource, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, isDefined, isNumber, createLabelFromDatasource, hashCode } from '@core/utils';
+import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber } from '@core/utils';
 import cssjs from '@core/css/css';
-import { PageLink } from '@shared/models/page/page-link';
-import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
+import { sortItems } from '@shared/models/page/page-link';
+import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of } from 'rxjs';
+import { BehaviorSubject, forkJoin, fromEvent, merge, Observable } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
-import { catchError, debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   CellContentInfo,
@@ -51,14 +51,16 @@ import {
   constructTableCssString,
   DisplayColumn,
   EntityColumn,
-  fromAlarmColumnDef,
+  entityDataSortOrderFromString,
+  findColumnByEntityKey,
+  findEntityKeyByColumnDef,
+  fromEntityColumnDef,
   getAlarmValue,
   getCellContentInfo,
   getCellStyleInfo,
   getColumnWidth,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
-  toAlarmColumnDef,
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -69,8 +71,8 @@ import {
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
 import {
+  AlarmDataInfo,
   alarmFields,
-  AlarmInfo,
   alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmStatus,
@@ -90,6 +92,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { DialogService } from '@core/services/dialog.service';
 import { AlarmService } from '@core/http/alarm.service';
+import {
+  AlarmData,
+  AlarmDataPageLink,
+  dataKeyToEntityKey,
+  dataKeyTypeToEntityKeyType,
+  entityDataPageLinkSortDirection,
+  KeyFilter
+} from '@app/shared/models/query/query.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -125,7 +136,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public displayPagination = true;
   public enableStickyAction = false;
   public pageSizeOptions;
-  public pageLink: PageLink;
+  public pageLink: AlarmDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
   public columns: Array<EntityColumn> = [];
@@ -189,9 +200,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               private dialogService: DialogService,
               private alarmService: AlarmService) {
     super(store);
-
-    const sortOrder: SortOrder = sortOrderFromString(this.defaultSortOrder);
-    this.pageLink = new PageLink(this.defaultPageSize, 0, null, sortOrder);
+    this.pageLink = {
+      page: 0,
+      pageSize: this.defaultPageSize,
+      textSearch: null
+    };
   }
 
   ngOnInit(): void {
@@ -232,9 +245,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   public onDataUpdated() {
     this.ngZone.run(() => {
-      this.alarmsDatasource.updateAlarms(this.subscription.alarms);
+      this.alarmsDatasource.updateAlarms();
       this.ctx.detectChanges();
     });
+  }
+
+  public pageLinkSortDirection(): SortDirection {
+    return entityDataPageLinkSortDirection(this.pageLink);
   }
 
   private initializeConfig() {
@@ -304,6 +321,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
 
+    // TODO: search status, severity, types, searchPropagatedAlarms from widget config to pageLink
+    this.pageLink.searchPropagatedAlarms = false; // true for old widget configs
+    this.pageLink.severityList = [];
+    this.pageLink.statusList = [];
+    this.pageLink.typeList = [];
+
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();
     cssParser.testMode = false;
@@ -319,9 +342,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.displayedColumns.push('select');
     }
 
+    const latestDataKeys: Array<DataKey> = [];
+
     if (this.alarmSource) {
       this.alarmSource.dataKeys.forEach((alarmDataKey) => {
         const dataKey: EntityColumn = deepClone(alarmDataKey) as EntityColumn;
+        dataKey.entityKey = dataKeyToEntityKey(alarmDataKey);
         dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.def = 'def' + this.columns.length;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
@@ -330,19 +356,28 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, alarm, ctx');
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
         this.columns.push(dataKey);
+
+        if (dataKey.type !== DataKeyType.alarm) {
+          latestDataKeys.push(dataKey);
+        }
       });
       this.displayedColumns.push(...this.columns.map(column => column.def));
     }
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
       this.defaultSortOrder = this.settings.defaultSortOrder;
     }
-    this.pageLink.sortOrder = sortOrderFromString(this.defaultSortOrder);
-    this.sortOrderProperty = toAlarmColumnDef(this.pageLink.sortOrder.property, this.columns);
+    this.pageLink.sortOrder = entityDataSortOrderFromString(this.defaultSortOrder, this.columns);
+    let sortColumn: EntityColumn;
+    if (this.pageLink.sortOrder) {
+      sortColumn = findColumnByEntityKey(this.pageLink.sortOrder.key, this.columns);
+    }
+    this.sortOrderProperty = sortColumn ? sortColumn.def : null;
 
     if (this.actionCellDescriptors.length) {
       this.displayedColumns.push('actions');
     }
-    this.alarmsDatasource = new AlarmsDatasource();
+
+    this.alarmsDatasource = new AlarmsDatasource(this.subscription, latestDataKeys);
     if (this.enableSelection) {
       this.alarmsDatasource.selectionModeChanged$.subscribe((selectionMode) => {
         const hideTitlePanel = selectionMode || this.textSearchMode;
@@ -467,9 +502,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     } else {
       this.pageLink.page = 0;
     }
-    this.pageLink.sortOrder.property = fromAlarmColumnDef(this.sort.active, this.columns);
-    this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
-    this.alarmsDatasource.loadAlarms(this.pageLink);
+    this.pageLink.sortOrder = {
+      key: findEntityKeyByColumnDef(this.sort.active, this.columns),
+      direction: Direction[this.sort.direction.toUpperCase()]
+    };
+    const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    const keyFilters: KeyFilter[] = null; // TODO:
+    this.alarmsDatasource.loadAlarms(this.pageLink, sortOrderLabel, keyFilters);
     this.ctx.detectChanges();
   }
 
@@ -482,7 +521,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return widthStyle(columnWidth);
   }
 
-  public cellStyle(alarm: AlarmInfo, key: EntityColumn): any {
+  public cellStyle(alarm: AlarmDataInfo, key: EntityColumn): any {
     let style: any = {};
     if (alarm && key) {
       const styleInfo = this.stylesInfo[key.def];
@@ -504,7 +543,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return style;
   }
 
-  public cellContent(alarm: AlarmInfo, key: EntityColumn): SafeHtml {
+  public cellContent(alarm: AlarmDataInfo, key: EntityColumn): SafeHtml {
     if (alarm && key) {
       const contentInfo = this.contentsInfo[key.def];
       const value = getAlarmValue(alarm, key);
@@ -524,7 +563,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
-  public onRowClick($event: Event, alarm: AlarmInfo) {
+  public onRowClick($event: Event, alarm: AlarmDataInfo) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -541,7 +580,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
-  public onActionButtonClick($event: Event, alarm: AlarmInfo, actionDescriptor: AlarmWidgetActionDescriptor) {
+  public onActionButtonClick($event: Event, alarm: AlarmDataInfo, actionDescriptor: AlarmWidgetActionDescriptor) {
     if (actionDescriptor.details) {
       this.openAlarmDetails($event, alarm);
     } else if (actionDescriptor.acknowledge) {
@@ -562,7 +601,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
-  public actionEnabled(alarm: AlarmInfo, actionDescriptor: AlarmWidgetActionDescriptor): boolean {
+  public actionEnabled(alarm: AlarmDataInfo, actionDescriptor: AlarmWidgetActionDescriptor): boolean {
     if (actionDescriptor.acknowledge) {
       return (alarm.status === AlarmStatus.ACTIVE_UNACK ||
         alarm.status === AlarmStatus.CLEARED_UNACK);
@@ -573,7 +612,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return true;
   }
 
-  private openAlarmDetails($event: Event, alarm: AlarmInfo) {
+  private openAlarmDetails($event: Event, alarm: AlarmDataInfo) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -599,7 +638,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
-  private ackAlarm($event: Event, alarm: AlarmInfo) {
+  private ackAlarm($event: Event, alarm: AlarmDataInfo) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -626,12 +665,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       $event.stopPropagation();
     }
     if (this.alarmsDatasource.selection.hasValue()) {
-      const alarms = this.alarmsDatasource.selection.selected.filter(
-        (alarm) => alarm.id.id !== NULL_UUID
+      const alarmIds = this.alarmsDatasource.selection.selected.filter(
+        (alarmId) => alarmId !== NULL_UUID
       );
-      if (alarms.length) {
-        const title = this.translate.instant('alarm.aknowledge-alarms-title', {count: alarms.length});
-        const content = this.translate.instant('alarm.aknowledge-alarms-text', {count: alarms.length});
+      if (alarmIds.length) {
+        const title = this.translate.instant('alarm.aknowledge-alarms-title', {count: alarmIds.length});
+        const content = this.translate.instant('alarm.aknowledge-alarms-text', {count: alarmIds.length});
         this.dialogService.confirm(
           title,
           content,
@@ -641,8 +680,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           if (res) {
             if (res) {
               const tasks: Observable<void>[] = [];
-              for (const alarm of alarms) {
-                tasks.push(this.alarmService.ackAlarm(alarm.id.id));
+              for (const alarmId of alarmIds) {
+                tasks.push(this.alarmService.ackAlarm(alarmId));
               }
               forkJoin(tasks).subscribe(() => {
                 this.alarmsDatasource.clearSelection();
@@ -655,7 +694,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
-  private clearAlarm($event: Event, alarm: AlarmInfo) {
+  private clearAlarm($event: Event, alarm: AlarmDataInfo) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -682,12 +721,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       $event.stopPropagation();
     }
     if (this.alarmsDatasource.selection.hasValue()) {
-      const alarms = this.alarmsDatasource.selection.selected.filter(
-        (alarm) => alarm.id.id !== NULL_UUID
+      const alarmIds = this.alarmsDatasource.selection.selected.filter(
+        (alarmId) => alarmId !== NULL_UUID
       );
-      if (alarms.length) {
-        const title = this.translate.instant('alarm.clear-alarms-title', {count: alarms.length});
-        const content = this.translate.instant('alarm.clear-alarms-text', {count: alarms.length});
+      if (alarmIds.length) {
+        const title = this.translate.instant('alarm.clear-alarms-title', {count: alarmIds.length});
+        const content = this.translate.instant('alarm.clear-alarms-text', {count: alarmIds.length});
         this.dialogService.confirm(
           title,
           content,
@@ -697,8 +736,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           if (res) {
             if (res) {
               const tasks: Observable<void>[] = [];
-              for (const alarm of alarms) {
-                tasks.push(this.alarmService.clearAlarm(alarm.id.id));
+              for (const alarmId of alarmIds) {
+                tasks.push(this.alarmService.clearAlarm(alarmId));
               }
               forkJoin(tasks).subscribe(() => {
                 this.alarmsDatasource.clearSelection();
@@ -756,27 +795,29 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
 }
 
-class AlarmsDatasource implements DataSource<AlarmInfo> {
+class AlarmsDatasource implements DataSource<AlarmDataInfo> {
 
-  private alarmsSubject = new BehaviorSubject<AlarmInfo[]>([]);
-  private pageDataSubject = new BehaviorSubject<PageData<AlarmInfo>>(emptyPageData<AlarmInfo>());
+  private alarmsSubject = new BehaviorSubject<AlarmDataInfo[]>([]);
+  private pageDataSubject = new BehaviorSubject<PageData<AlarmDataInfo>>(emptyPageData<AlarmDataInfo>());
 
-  public selection = new SelectionModel<AlarmInfo>(true, [], false);
+  public selection = new SelectionModel<string>(true, [], false);
 
   private selectionModeChanged = new EventEmitter<boolean>();
 
-  public  selectionModeChanged$ = this.selectionModeChanged.asObservable();
+  public selectionModeChanged$ = this.selectionModeChanged.asObservable();
 
-  private allAlarms: Array<AlarmInfo> = [];
-  private allAlarmsSubject = new BehaviorSubject<AlarmInfo[]>([]);
-  private allAlarms$: Observable<Array<AlarmInfo>> = this.allAlarmsSubject.asObservable();
+  private currentAlarm: AlarmDataInfo = null;
 
-  private currentAlarm: AlarmInfo = null;
+  public dataLoading = true;
 
-  constructor() {
+  private appliedPageLink: AlarmDataPageLink;
+  private appliedSortOrderLabel: string;
+
+  constructor(private subscription: IWidgetSubscription,
+              private dataKeys: Array<DataKey>) {
   }
 
-  connect(collectionViewer: CollectionViewer): Observable<AlarmInfo[] | ReadonlyArray<AlarmInfo>> {
+  connect(collectionViewer: CollectionViewer): Observable<AlarmDataInfo[] | ReadonlyArray<AlarmDataInfo>> {
     return this.alarmsSubject.asObservable();
   }
 
@@ -785,51 +826,63 @@ class AlarmsDatasource implements DataSource<AlarmInfo> {
     this.pageDataSubject.complete();
   }
 
-  loadAlarms(pageLink: PageLink) {
+  loadAlarms(pageLink: AlarmDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
     if (this.selection.hasValue()) {
       this.selection.clear();
       this.onSelectionModeChanged(false);
     }
-    this.fetchAlarms(pageLink).pipe(
-      catchError(() => of(emptyPageData<AlarmInfo>())),
-    ).subscribe(
-      (pageData) => {
-        this.alarmsSubject.next(pageData.data);
-        this.pageDataSubject.next(pageData);
-      }
-    );
+    this.appliedPageLink = pageLink;
+    this.appliedSortOrderLabel = sortOrderLabel;
+    this.subscription.subscribeForAlarms(pageLink, keyFilters);
   }
 
-  updateAlarms(alarms: AlarmInfo[]) {
-    alarms.forEach((newAlarm) => {
-      const existingAlarmIndex = this.allAlarms.findIndex(alarm => alarm.id.id === newAlarm.id.id);
-      if (existingAlarmIndex > -1) {
-        Object.assign(this.allAlarms[existingAlarmIndex], newAlarm);
-      } else {
-        this.allAlarms.push(newAlarm);
-      }
+  updateAlarms() {
+    const subscriptionAlarms = this.subscription.alarms;
+    let alarms = new Array<AlarmDataInfo>();
+    subscriptionAlarms.data.forEach((alarmData) => {
+      alarms.push(this.alarmDataToInfo(alarmData));
     });
-    for (let i = this.allAlarms.length - 1; i >= 0; i--) {
-      const oldAlarm = this.allAlarms[i];
-      const newAlarmIndex = alarms.findIndex(alarm => alarm.id.id === oldAlarm.id.id);
-      if (newAlarmIndex === -1) {
-        this.allAlarms.splice(i, 1);
-      }
+    if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
+      const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
+      alarms = alarms.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
     }
     if (this.selection.hasValue()) {
-      const toRemove: AlarmInfo[] = [];
-      this.selection.selected.forEach((selectedAlarm) => {
-        const existingAlarm = this.allAlarms.find(alarm => alarm.id.id === selectedAlarm.id.id);
-        if (!existingAlarm) {
-          toRemove.push(selectedAlarm);
-        }
-      });
+      const alarmIds = alarms.map((alarm) => alarm.id.id);
+      const toRemove = this.selection.selected.filter(alarmId => alarmIds.indexOf(alarmId) === -1);
       this.selection.deselect(...toRemove);
       if (this.selection.isEmpty()) {
         this.onSelectionModeChanged(false);
       }
     }
-    this.allAlarmsSubject.next(this.allAlarms);
+    const alarmsPageData: PageData<AlarmDataInfo> = {
+      data: alarms,
+      totalPages: subscriptionAlarms.totalPages,
+      totalElements: subscriptionAlarms.totalElements,
+      hasNext: subscriptionAlarms.hasNext
+    };
+    this.alarmsSubject.next(alarms);
+    this.pageDataSubject.next(alarmsPageData);
+    this.dataLoading = false;
+  }
+
+  private alarmDataToInfo(alarmData: AlarmData): AlarmDataInfo {
+    const alarm: AlarmDataInfo = deepClone(alarmData);
+    delete alarm.latest;
+    const latest = alarmData.latest;
+    this.dataKeys.forEach((dataKey, index) => {
+      const type = dataKeyTypeToEntityKeyType(dataKey.type);
+      let value = '';
+      if (type) {
+        if (latest && latest[type]) {
+          const tsVal = latest[type][dataKey.name];
+          if (tsVal) {
+            value = tsVal.value;
+          }
+        }
+      }
+      alarm[dataKey.label] = value;
+    });
+    return alarm;
   }
 
   isAllSelected(): Observable<boolean> {
@@ -851,16 +904,16 @@ class AlarmsDatasource implements DataSource<AlarmInfo> {
     );
   }
 
-  toggleSelection(alarm: AlarmInfo) {
+  toggleSelection(alarm: AlarmDataInfo) {
     const hasValue = this.selection.hasValue();
-    this.selection.toggle(alarm);
+    this.selection.toggle(alarm.id.id);
     if (hasValue !== this.selection.hasValue()) {
       this.onSelectionModeChanged(this.selection.hasValue());
     }
   }
 
-  isSelected(alarm: AlarmInfo): boolean {
-    return this.selection.isSelected(alarm);
+  isSelected(alarm: AlarmDataInfo): boolean {
+    return this.selection.isSelected(alarm.id.id);
   }
 
   clearSelection() {
@@ -881,7 +934,7 @@ class AlarmsDatasource implements DataSource<AlarmInfo> {
           }
         } else {
           alarms.forEach(row => {
-            this.selection.select(row);
+            this.selection.select(row.id.id);
           });
           if (numSelected === 0) {
             this.onSelectionModeChanged(true);
@@ -892,7 +945,7 @@ class AlarmsDatasource implements DataSource<AlarmInfo> {
     ).subscribe();
   }
 
-  public toggleCurrentAlarm(alarm: AlarmInfo): boolean {
+  public toggleCurrentAlarm(alarm: AlarmDataInfo): boolean {
     if (this.currentAlarm !== alarm) {
       this.currentAlarm = alarm;
       return true;
@@ -901,18 +954,12 @@ class AlarmsDatasource implements DataSource<AlarmInfo> {
     }
   }
 
-  public isCurrentAlarm(alarm: AlarmInfo): boolean {
+  public isCurrentAlarm(alarm: AlarmDataInfo): boolean {
     return (this.currentAlarm && alarm && this.currentAlarm.id && alarm.id) &&
       (this.currentAlarm.id.id === alarm.id.id);
   }
 
   private onSelectionModeChanged(selectionMode: boolean) {
     this.selectionModeChanged.emit(selectionMode);
-  }
-
-  private fetchAlarms(pageLink: PageLink): Observable<PageData<AlarmInfo>> {
-    return this.allAlarms$.pipe(
-      map((data) => pageLink.filterData(data))
-    );
   }
 }
