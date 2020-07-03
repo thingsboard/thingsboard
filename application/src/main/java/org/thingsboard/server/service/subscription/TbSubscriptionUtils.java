@@ -44,7 +44,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdatePr
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TsSubscriptionUpdate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -137,9 +137,9 @@ public class TbSubscriptionUtils {
         return builder.build();
     }
 
-    public static SubscriptionUpdate fromProto(TbSubscriptionUpdateProto proto) {
+    public static TsSubscriptionUpdate fromProto(TbSubscriptionUpdateProto proto) {
         if (proto.getErrorCode() > 0) {
-            return new SubscriptionUpdate(proto.getSubscriptionId(), SubscriptionErrorCode.forCode(proto.getErrorCode()), proto.getErrorMsg());
+            return new TsSubscriptionUpdate(proto.getSubscriptionId(), SubscriptionErrorCode.forCode(proto.getErrorCode()), proto.getErrorMsg());
         } else {
             Map<String, List<Object>> data = new TreeMap<>();
             proto.getDataList().forEach(v -> {
@@ -151,7 +151,7 @@ public class TbSubscriptionUtils {
                     values.add(value);
                 }
             });
-            return new SubscriptionUpdate(proto.getSubscriptionId(), data);
+            return new TsSubscriptionUpdate(proto.getSubscriptionId(), data);
         }
     }
 

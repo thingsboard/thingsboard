@@ -15,20 +15,14 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import org.thingsboard.server.service.telemetry.cmd.v2.DataUpdate;
-import org.thingsboard.server.service.telemetry.sub.TsSubscriptionUpdate;
+import org.springframework.context.ApplicationListener;
+import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
+import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 
 /**
  * Created by ashvayka on 27.03.18.
  */
-public interface TelemetryWebSocketService {
-
-    void handleWebSocketSessionEvent(TelemetryWebSocketSessionRef sessionRef, SessionEvent sessionEvent);
-
-    void handleWebSocketMsg(TelemetryWebSocketSessionRef sessionRef, String msg);
-
-    void sendWsMsg(String sessionId, TsSubscriptionUpdate update);
-
-    void sendWsMsg(String sessionId, DataUpdate update);
+public interface AlarmSubscriptionService extends RuleEngineAlarmService, ApplicationListener<PartitionChangeEvent> {
 
 }

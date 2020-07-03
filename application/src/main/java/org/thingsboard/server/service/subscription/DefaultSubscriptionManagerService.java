@@ -18,7 +18,6 @@ package org.thingsboard.server.service.subscription;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
@@ -53,7 +52,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TsSubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -146,6 +145,9 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     break;
                 case ATTRIBUTES:
                     handleNewAttributeSubscription((TbAttributeSubscription) subscription);
+                    break;
+                case ALARMS:
+                    handleNewAlarmsSubscription((TbAlarmsSubscription) subscription);
                     break;
             }
         }
@@ -290,7 +292,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                 List<TsKvEntry> subscriptionUpdate = processFunction.apply(s);
                 if (subscriptionUpdate != null && !subscriptionUpdate.isEmpty()) {
                     if (serviceId.equals(s.getServiceId())) {
-                        SubscriptionUpdate update = new SubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
+                        TsSubscriptionUpdate update = new TsSubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
                         localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                     } else {
                         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
@@ -344,6 +346,12 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     }
                 },
                 e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);
+    }
+
+    private void handleNewAlarmsSubscription(TbAlarmsSubscription subscription) {
+        log.trace("[{}][{}][{}] Processing remote alarm subscription for entity [{}]",
+                serviceId, subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
+        //TODO: @dlandiak search all new alarms for this entity.
     }
 
     private void handleNewTelemetrySubscription(TbTimeseriesSubscription subscription) {

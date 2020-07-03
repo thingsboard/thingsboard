@@ -169,7 +169,7 @@ public interface TbContext {
 
     DashboardService getDashboardService();
 
-    AlarmService getAlarmService();
+    RuleEngineAlarmService getAlarmService();
 
     RuleChainService getRuleChainService();
 

@@ -204,7 +204,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
         }
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
-        return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements);
+        return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
     }
 
     private String buildPermissionsQuery(TenantId tenantId, CustomerId customerId, QueryContext ctx) {
