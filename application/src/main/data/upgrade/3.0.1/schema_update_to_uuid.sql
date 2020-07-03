@@ -78,9 +78,9 @@ BEGIN
         ALTER TABLE admin_settings ADD CONSTRAINT admin_settings_pkey PRIMARY KEY (id);
         ALTER TABLE admin_settings ADD COLUMN created_time BIGINT;
         UPDATE admin_settings SET created_time = extract_ts(id) WHERE id is not null;
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 END;
 $$;
@@ -104,26 +104,26 @@ BEGIN
         ALTER TABLE alarm ADD COLUMN created_time BIGINT;
         UPDATE alarm SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE alarm ADD CONSTRAINT alarm_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_originator_id);
     IF data_type = 'character varying' THEN
         DROP INDEX IF EXISTS idx_alarm_originator_alarm_type;
         PERFORM column_type_to_uuid(table_name, column_originator_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_originator_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_originator_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_originator_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_originator_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
     CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type ON alarm(originator_id, type, start_ts DESC);
 END;
@@ -148,9 +148,9 @@ BEGIN
         ALTER TABLE asset ADD COLUMN created_time BIGINT;
         UPDATE asset SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE asset ADD CONSTRAINT asset_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_customer_id);
@@ -158,9 +158,9 @@ BEGIN
         DROP INDEX IF EXISTS idx_asset_customer_id;
         DROP INDEX IF EXISTS idx_asset_customer_id_and_type;
         PERFORM column_type_to_uuid(table_name, column_customer_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_customer_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_customer_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
@@ -169,9 +169,9 @@ BEGIN
         ALTER TABLE asset DROP CONSTRAINT asset_name_unq_key;
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
         ALTER TABLE asset ADD CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
     CREATE INDEX IF NOT EXISTS idx_asset_type ON asset(tenant_id, type);
     CREATE INDEX IF NOT EXISTS idx_asset_customer_id ON asset(tenant_id, customer_id);
@@ -193,9 +193,9 @@ BEGIN
         ALTER TABLE attribute_kv DROP CONSTRAINT attribute_kv_pkey;
         PERFORM column_type_to_uuid(table_name, column_entity_id);
         ALTER TABLE attribute_kv ADD CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_entity_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_entity_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_entity_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_entity_id;
     END IF;
 END;
 $$;
@@ -220,41 +220,41 @@ BEGIN
         ALTER TABLE audit_log ADD COLUMN created_time BIGINT;
         UPDATE audit_log SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE audit_log ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_customer_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_customer_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_customer_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_customer_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 
     data_type := get_column_type(table_name, column_entity_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_entity_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_entity_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_entity_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_entity_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_entity_id;
     END IF;
 
     data_type := get_column_type(table_name, column_user_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_user_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_user_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_user_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_user_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_user_id;
     END IF;
 END;
 $$;
@@ -276,9 +276,9 @@ BEGIN
         ALTER TABLE component_descriptor ADD CONSTRAINT component_descriptor_pkey PRIMARY KEY (id);
         ALTER TABLE component_descriptor ADD COLUMN created_time BIGINT;
         UPDATE component_descriptor SET created_time = extract_ts(id) WHERE id is not null;
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 END;
 $$;
@@ -300,17 +300,17 @@ BEGIN
         ALTER TABLE customer ADD CONSTRAINT customer_pkey PRIMARY KEY (id);
         ALTER TABLE customer ADD COLUMN created_time BIGINT;
         UPDATE customer SET created_time = extract_ts(id) WHERE id is not null;
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 END;
 $$;
@@ -333,17 +333,17 @@ BEGIN
         ALTER TABLE dashboard ADD CONSTRAINT dashboard_pkey PRIMARY KEY (id);
         ALTER TABLE dashboard ADD COLUMN created_time BIGINT;
         UPDATE dashboard SET created_time = extract_ts(id) WHERE id is not null;
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 END;
 $$;
@@ -366,9 +366,9 @@ BEGIN
         ALTER TABLE device ADD COLUMN created_time BIGINT;
         UPDATE device SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE device ADD CONSTRAINT device_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_customer_id);
@@ -376,9 +376,9 @@ BEGIN
         DROP INDEX IF EXISTS idx_device_customer_id;
         DROP INDEX IF EXISTS idx_device_customer_id_and_type;
         PERFORM column_type_to_uuid(table_name, column_customer_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_customer_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_customer_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
@@ -389,9 +389,9 @@ BEGIN
         ALTER TABLE device DROP CONSTRAINT device_name_unq_key;
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
         ALTER TABLE device ADD CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
     CREATE INDEX IF NOT EXISTS idx_device_customer_id ON device(tenant_id, customer_id);
     CREATE INDEX IF NOT EXISTS idx_device_customer_id_and_type ON device(tenant_id, customer_id, type);
@@ -417,17 +417,17 @@ BEGIN
         ALTER TABLE device_credentials ADD COLUMN created_time BIGINT;
         UPDATE device_credentials SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE device_credentials ADD CONSTRAINT device_credentials_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_device_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_device_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_device_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_device_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_device_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_device_id;
     END IF;
 END;
 $$;
@@ -451,9 +451,9 @@ BEGIN
         ALTER TABLE event ADD COLUMN created_time BIGINT;
         UPDATE event SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE event ADD CONSTRAINT event_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     ALTER TABLE event DROP CONSTRAINT event_unq_key;
@@ -462,17 +462,17 @@ BEGIN
     data_type := get_column_type(table_name, column_entity_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_entity_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_entity_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_entity_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_entity_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_entity_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 
     ALTER TABLE event ADD CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid);
@@ -498,17 +498,17 @@ BEGIN
     data_type := get_column_type(table_name, column_from_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_from_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_from_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_from_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_from_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_from_id;
     END IF;
 
     data_type := get_column_type(table_name, column_to_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_to_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_to_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_to_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_to_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_to_id;
     END IF;
 
     ALTER TABLE relation ADD CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type);
@@ -536,25 +536,25 @@ BEGIN
         ALTER TABLE tb_user ADD COLUMN created_time BIGINT;
         UPDATE tb_user SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE tb_user ADD CONSTRAINT tb_user_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_customer_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_customer_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_customer_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_customer_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 END;
 $$;
@@ -576,9 +576,9 @@ BEGIN
         ALTER TABLE tenant ADD COLUMN created_time BIGINT;
         UPDATE tenant SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE tenant ADD CONSTRAINT tenant_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 END;
 $$;
@@ -601,19 +601,21 @@ BEGIN
         ALTER TABLE user_credentials ADD COLUMN created_time BIGINT;
         UPDATE user_credentials SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE user_credentials ADD CONSTRAINT user_credentials_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_user_id);
     IF data_type = 'character varying' THEN
+        ALTER TABLE user_credentials DROP CONSTRAINT user_credentials_user_id_key;
         ALTER TABLE user_credentials RENAME COLUMN user_id TO old_user_id;
         ALTER TABLE user_credentials ADD COLUMN user_id UUID UNIQUE;
         UPDATE user_credentials SET user_id = to_uuid(old_user_id) WHERE old_user_id is not null;
-        ALTER TABLE user_credentials DROP COLUMN old_user_id;        RAISE NOTICE 'Column % from table % updated!', table_name, column_user_id;
+        ALTER TABLE user_credentials DROP COLUMN old_user_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_user_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_user_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_user_id;
     END IF;
 END;
 $$;
@@ -636,17 +638,17 @@ BEGIN
         ALTER TABLE widget_type ADD COLUMN created_time BIGINT;
         UPDATE widget_type SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE widget_type ADD CONSTRAINT widget_type_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 END;
 $$;
@@ -669,17 +671,17 @@ BEGIN
         ALTER TABLE widgets_bundle ADD COLUMN created_time BIGINT;
         UPDATE widgets_bundle SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE widgets_bundle ADD CONSTRAINT widgets_bundle_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 END;
 $$;
@@ -703,25 +705,25 @@ BEGIN
         ALTER TABLE rule_chain ADD COLUMN created_time BIGINT;
         UPDATE rule_chain SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE rule_chain ADD CONSTRAINT rule_chain_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_first_rule_node_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_first_rule_node_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_first_rule_node_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_first_rule_node_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_first_rule_node_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_first_rule_node_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 END;
 $$;
@@ -744,17 +746,17 @@ BEGIN
         ALTER TABLE rule_node ADD COLUMN created_time BIGINT;
         UPDATE rule_node SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE rule_node ADD CONSTRAINT rule_node_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_rule_chain_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_rule_chain_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_rule_chain_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_rule_chain_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_rule_chain_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_rule_chain_id;
     END IF;
 END;
 $$;
@@ -779,33 +781,33 @@ BEGIN
         ALTER TABLE entity_view ADD COLUMN created_time BIGINT;
         UPDATE entity_view SET created_time = extract_ts(id) WHERE id is not null;
         ALTER TABLE entity_view ADD CONSTRAINT entity_view_pkey PRIMARY KEY (id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_id;
     END IF;
 
     data_type := get_column_type(table_name, column_entity_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_entity_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_entity_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_entity_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_entity_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_entity_id;
     END IF;
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_tenant_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_tenant_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
 
     data_type := get_column_type(table_name, column_customer_id);
     IF data_type = 'character varying' THEN
         PERFORM column_type_to_uuid(table_name, column_customer_id);
-        RAISE NOTICE 'Column % from table % updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % updated!', table_name, column_customer_id;
     ELSE
-        RAISE NOTICE 'Column % from table % already updated!', table_name, column_customer_id;
+        RAISE NOTICE 'Table % column % already updated!', table_name, column_customer_id;
     END IF;
 END;
 $$;
