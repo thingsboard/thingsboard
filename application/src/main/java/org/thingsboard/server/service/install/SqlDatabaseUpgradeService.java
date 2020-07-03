@@ -33,6 +33,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
+import java.sql.SQLWarning;
 import java.sql.Statement;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
@@ -186,18 +187,22 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Updating schema ...");
                     try {
                         conn.createStatement().execute("ALTER TABLE asset ADD COLUMN label varchar(255)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.2", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     try {
                         conn.createStatement().execute("ALTER TABLE device ADD CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     try {
                         conn.createStatement().execute("ALTER TABLE device_credentials ADD CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     try {
                         conn.createStatement().execute("ALTER TABLE asset ADD CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     log.info("Schema updated.");
                 }
                 break;
@@ -239,23 +244,37 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             case "3.0.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
-                    if (isOldSchema(conn, 3001000)) {
+                    if (isOldSchema(conn, 3000001)) {
                         String[] tables = new String[]{"admin_settings", "alarm", "asset", "audit_log", "attribute_kv",
                                 "component_descriptor", "customer", "dashboard", "device", "device_credentials", "event",
                                 "relation", "tb_user", "tenant", "user_credentials", "widget_type", "widgets_bundle",
                                 "rule_chain", "rule_node", "entity_view"};
-                        log.info("Updating schema ...");
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.0.1", "schema_update_to_uuid.sql");
                         loadSql(schemaUpdateFile, conn);
                         for (String table : tables) {
-                            log.info("Updating {}.", table);
-                            conn.createStatement().execute("call update_" + table + "();");
-                            log.info("{} updated.", table);
+                            log.info("Updating table {}.", table);
+                            Statement statement = conn.createStatement();
+                            statement.execute("call update_" + table + "();");
+
+                            SQLWarning warnings = statement.getWarnings();
+                            if (warnings != null) {
+                                log.info("{}", warnings.getMessage());
+                                SQLWarning nextWarning = warnings.getNextWarning();
+                                while (nextWarning != null) {
+                                    log.info("{}", nextWarning.getMessage());
+                                    nextWarning = nextWarning.getNextWarning();
+                                }
+                            }
+
+                            conn.createStatement().execute("DROP PROCEDURE update_" + table);
+                            log.info("Table {} updated.", table);
                         }
+                        conn.createStatement().execute("DROP FUNCTION column_type_to_uuid");
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3001000;");
-                        log.info("Schema updated.");
                     }
                     log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
                 }
                 break;
             default:
