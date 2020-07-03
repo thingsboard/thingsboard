@@ -141,6 +141,10 @@ DECLARE
     column_customer_id varchar := 'customer_id';
     column_tenant_id varchar := 'tenant_id';
 BEGIN
+        DROP INDEX IF EXISTS idx_asset_type;
+        DROP INDEX IF EXISTS idx_asset_customer_id;
+        DROP INDEX IF EXISTS idx_asset_customer_id_and_type;
+
     data_type := get_column_type(table_name, column_id);
     IF data_type = 'character varying' THEN
         ALTER TABLE asset DROP CONSTRAINT asset_pkey;
@@ -155,8 +159,6 @@ BEGIN
 
     data_type := get_column_type(table_name, column_customer_id);
     IF data_type = 'character varying' THEN
-        DROP INDEX IF EXISTS idx_asset_customer_id;
-        DROP INDEX IF EXISTS idx_asset_customer_id_and_type;
         PERFORM column_type_to_uuid(table_name, column_customer_id);
         RAISE NOTICE 'Table % column % updated!', table_name, column_customer_id;
     ELSE
@@ -165,7 +167,6 @@ BEGIN
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
-        DROP INDEX IF EXISTS idx_asset_customer_id_and_type;
         ALTER TABLE asset DROP CONSTRAINT asset_name_unq_key;
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
         ALTER TABLE asset ADD CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name);
@@ -359,6 +360,10 @@ DECLARE
     column_customer_id varchar := 'customer_id';
     column_tenant_id varchar := 'tenant_id';
 BEGIN
+        DROP INDEX IF EXISTS idx_device_type;
+        DROP INDEX IF EXISTS idx_device_customer_id;
+        DROP INDEX IF EXISTS idx_device_customer_id_and_type;
+
     data_type := get_column_type(table_name, column_id);
     IF data_type = 'character varying' THEN
         ALTER TABLE device DROP CONSTRAINT device_pkey;
@@ -373,8 +378,6 @@ BEGIN
 
     data_type := get_column_type(table_name, column_customer_id);
     IF data_type = 'character varying' THEN
-        DROP INDEX IF EXISTS idx_device_customer_id;
-        DROP INDEX IF EXISTS idx_device_customer_id_and_type;
         PERFORM column_type_to_uuid(table_name, column_customer_id);
         RAISE NOTICE 'Table % column % updated!', table_name, column_customer_id;
     ELSE
@@ -383,9 +386,6 @@ BEGIN
 
     data_type := get_column_type(table_name, column_tenant_id);
     IF data_type = 'character varying' THEN
-        DROP INDEX IF EXISTS idx_device_type;
-        DROP INDEX IF EXISTS idx_device_customer_id;
-        DROP INDEX IF EXISTS idx_device_customer_id_and_type;
         ALTER TABLE device DROP CONSTRAINT device_name_unq_key;
         PERFORM column_type_to_uuid(table_name, column_tenant_id);
         ALTER TABLE device ADD CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name);
