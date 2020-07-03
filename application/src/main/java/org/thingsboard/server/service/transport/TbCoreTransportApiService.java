@@ -45,9 +45,9 @@ import java.util.concurrent.*;
 @Service
 @TbCoreComponent
 public class TbCoreTransportApiService {
-    public static final String TOTAL_MSGS = "totalMsgs";
-    public static final String SUCCESSFUL_MSGS = "successfulMsgs";
-    public static final String FAILED_MSGS = "failedMsgs";
+    private static final String TOTAL_MSGS = "totalMsgs";
+    private static final String SUCCESSFUL_MSGS = "successfulMsgs";
+    private static final String FAILED_MSGS = "failedMsgs";
 
     private final TbCoreQueueFactory tbCoreQueueFactory;
     private final TransportApiService transportApiService;
@@ -78,9 +78,10 @@ public class TbCoreTransportApiService {
         TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> producer = tbCoreQueueFactory.createTransportApiResponseProducer();
         TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> consumer = tbCoreQueueFactory.createTransportApiRequestConsumer();
 
-        StatsCounter totalCounter = counterFactory.createStatsCounter(StatsType.TRANSPORT.getName(), TOTAL_MSGS);
-        StatsCounter successfulCounter = counterFactory.createStatsCounter(StatsType.TRANSPORT.getName(), SUCCESSFUL_MSGS);
-        StatsCounter failedCounter = counterFactory.createStatsCounter(StatsType.TRANSPORT.getName(), FAILED_MSGS);
+        String key = StatsType.TRANSPORT.getName();
+        StatsCounter totalCounter = counterFactory.createStatsCounter(key, TOTAL_MSGS);
+        StatsCounter successfulCounter = counterFactory.createStatsCounter(key, SUCCESSFUL_MSGS);
+        StatsCounter failedCounter = counterFactory.createStatsCounter(key, FAILED_MSGS);
         DefaultQueueStats queueStats = new DefaultQueueStats(totalCounter, successfulCounter, failedCounter);
 
         DefaultTbQueueResponseTemplate.DefaultTbQueueResponseTemplateBuilder
