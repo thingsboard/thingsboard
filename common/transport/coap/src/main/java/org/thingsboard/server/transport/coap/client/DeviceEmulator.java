@@ -62,7 +62,7 @@ public class DeviceEmulator {
         this.attributesClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.ATTRIBUTES));
         this.telemetryClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.TELEMETRY));
         this.rpcClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.RPC));
-        this.keys = keys.split(",");
+        this.keys = (keys != null && !keys.isEmpty()) ?  keys.split(",") : null;
     }
 
     public void start() {
@@ -73,11 +73,8 @@ public class DeviceEmulator {
                 try {
                     sendObserveRequest(rpcClient);
                     while (!Thread.interrupted()) {
-
-
                         sendRequest(attributesClient, createAttributesRequest());
                         sendRequest(telemetryClient, createTelemetryRequest());
-
                         Thread.sleep(1000);
                     }
                 } catch (Exception e) {
@@ -114,6 +111,7 @@ public class DeviceEmulator {
 
                                 @Override
                                 public void onError() {
+                                    log.info("Command Response Ack Error, No connect");
                                     //Do nothing
                                 }
                             }, mapper.writeValueAsString(response), MediaTypeRegistry.APPLICATION_JSON);
@@ -158,7 +156,17 @@ public class DeviceEmulator {
         if (args.length != 4) {
             System.out.println("Usage: java -jar " + DeviceEmulator.class.getSimpleName() + ".jar host port device_token keys");
         }
+        /**
+         * DeviceEmulator(String host, int port, String token, String keys)
+         * args[]:
+         * host = "localhost",
+         * port = 0,
+         * token = "{Tokrn device from thingboard}"),
+         * keys = "{Telemetry}"
+         *
+         */
         final DeviceEmulator emulator = new DeviceEmulator(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+
         emulator.start();
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override

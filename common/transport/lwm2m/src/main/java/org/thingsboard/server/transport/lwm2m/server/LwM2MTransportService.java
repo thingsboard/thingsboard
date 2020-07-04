@@ -24,10 +24,7 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.DiscoverRequest;
-import org.eclipse.leshan.core.response.DiscoverResponse;
-import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ObserveResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.core.response.*;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,9 +44,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_READ;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
 
 @Service("LwM2MTransportService")
@@ -80,6 +75,15 @@ public class LwM2MTransportService {
     public void onRegistered(Registration registration) {
         String endpointId = registration.getEndpoint();
         String lwm2mVersion = registration.getLwM2mVersion();
+        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(endpointId, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+        log.info("cResponse1: [{}]", cResponse);
+       cResponse = doTrigerServer(endpointId, "/1/0/8", null);
+        if (cResponse == null|| cResponse.getCode().getCode() == 500) {
+            doTrigerServer(endpointId, "/3/0/22", null);
+//            cResponse = doTrigerServer(endpointId, "/1/0/8", null);
+        }
+        log.info("cResponse2: [{}]", cResponse);
+        log.info("[{}] [{}] Received endpoint registration version event", endpointId, lwm2mVersion);
     }
 
     public void processDevicePublish(JsonElement msg, String topicName, int msgId, String clientEndpoint) {
@@ -118,7 +122,7 @@ public class LwM2MTransportService {
     private TransportProtos.SessionInfoProto getValidateSessionInfo(String endpointId) {
         TransportProtos.SessionInfoProto sessionInfo = null;
         TransportProtos.ValidateDeviceCredentialsResponseMsg msg = context.getSessions().get(endpointId);
-        if (msg == null || msg.getDeviceInfo()== null) {
+        if (msg == null || msg.getDeviceInfo() == null) {
             log.warn("[{}] [{}]", endpointId, CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
         } else {
             sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
@@ -175,7 +179,9 @@ public class LwM2MTransportService {
         //TODO: associate endpointId with device information.
     }
 
-    /** /clients/endPoint/LWRequest/discover : do LightWeight M2M discover request on a given client. */
+    /**
+     * /clients/endPoint/LWRequest/discover : do LightWeight M2M discover request on a given client.
+     */
     public DiscoverResponse getDiscover(String target, String clientEndpoint, String timeoutParam) throws InterruptedException {
         DiscoverRequest request = new DiscoverRequest(target);
         return this.lwServer.send(getRegistration(clientEndpoint), request, this.context.getTimeout());
@@ -200,22 +206,43 @@ public class LwM2MTransportService {
                 LwM2mNode content = ((ReadResponse) cResponse).getContent();
                 ((LwM2mObject) content).getInstances().entrySet().stream().forEach(instance -> {
                     String instanceId = String.valueOf(instance.getValue().getId());
+                    om.resources.entrySet().stream().forEach(resOm -> {
+                        String attrTelName = om.name + "_" + instanceId + "_" + resOm.getValue().name;
+                        /** Attributs: om.id: Security, Server, ACL & 'R' ? */
+//                        if (resOm.getValue().operations.name().equals("R") || om.id <= 2 ) {
+                        if (om.id <= 2 ) {
+                            readResultAttrTel.getPostAttribute().addProperty(attrTelName, "");
+                        } else {
+                            readResultAttrTel.getPostTelemetry().addProperty(attrTelName, "");
+                        }
+                    });
+
                     instance.getValue().getResources().entrySet().stream().forEach(resource -> {
                         int resourceId = resource.getValue().getId();
                         String resourceValue = getResourceValueToString(resource.getValue());
                         String attrTelName = om.name + "_" + instanceId + "_" + om.resources.get(resourceId).name;
                         log.info("resource.getValue() [{}] : [{}] -> [{}]", attrTelName, resourceValue, om.resources.get(resourceId).operations.name());
-                        if ((om.resources.get(resourceId).operations.name().equals("R"))) {
+                        if (readResultAttrTel.getPostAttribute().has(attrTelName)) {
+                            readResultAttrTel.getPostAttribute().remove(attrTelName);
                             readResultAttrTel.getPostAttribute().addProperty(attrTelName, resourceValue);
-                        } else {
+                        }
+                        else if (readResultAttrTel.getPostTelemetry().has(attrTelName))  {
+                            readResultAttrTel.getPostTelemetry().remove(attrTelName);
                             readResultAttrTel.getPostTelemetry().addProperty(attrTelName, resourceValue);
                         }
                     });
+
                 });
             }
         });
         return readResultAttrTel;
     }
+
+    public LwM2mResponse doTrigerServer(String clientEndpoint, String target, String param) {
+        param = param != null  ? param : "";
+        return lwM2MTransportRequest.doPost(clientEndpoint, target, POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
+   }
+
 
     private String getResourceValueToString(LwM2mResource resource) {
         Object resValue;

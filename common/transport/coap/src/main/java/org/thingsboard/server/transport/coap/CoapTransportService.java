@@ -20,6 +20,7 @@ import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 
 import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.core.network.CoapEndpoint.Builder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,11 @@ public class CoapTransportService {
         createResources();
         InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
         InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());
+        Builder builder = new Builder();
+        builder.setInetSocketAddress(sockAddr);
+        CoapEndpoint coapEndpoint = builder.build();
+
+        server.addEndpoint(coapEndpoint);
 //        server.addEndpoint(new CoapEndpoint(sockAddr));
         server.start();
         log.info("CoAP transport started!");

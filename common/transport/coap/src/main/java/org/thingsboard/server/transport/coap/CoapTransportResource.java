@@ -68,7 +68,8 @@ public class CoapTransportResource extends CoapResource {
         // CoapResource. We will have our own observe monitoring due to 1:1
         // observe relationship.
         this.setObservable(false);
-        observerField = ReflectionUtils.findField(Exchange.class, "observer");
+        observerField = ReflectionUtils.findField(CoapResource.class, "observable");
+//        observerField = ReflectionUtils.findField(CoapExchange.class, "observer");
         observerField.setAccessible(true);
     }
 

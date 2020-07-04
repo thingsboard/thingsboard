@@ -134,10 +134,10 @@ public class LwM2MGetSecurityInfo {
                                     if (rpk.has("key") && rpk.get("key").isJsonPrimitive()) {
                                         byte[] rpkkey = Hex.decodeHex(rpk.get("key").getAsString().toLowerCase().toCharArray());
                                         key = SecurityUtil.publicKey.decode(rpkkey);
-                                        ECPublicKey ecPublicKey = (ECPublicKey) key;
-                                        log.info("params : [{}]", ecPublicKey.getParams().toString());
-                                        log.info("x : [{}]", Hex.encodeHexString(ecPublicKey.getW().getAffineX().toByteArray()));
-                                        log.info("y : [{}]", Hex.encodeHexString(ecPublicKey.getW().getAffineY().toByteArray()));
+//                                        ECPublicKey ecPublicKey = (ECPublicKey) key;
+//                                        log.info("params : [{}]", ecPublicKey.getParams().toString());
+//                                        log.info("x : [{}]", Hex.encodeHexString(ecPublicKey.getW().getAffineX().toByteArray()));
+//                                        log.info("y : [{}]", Hex.encodeHexString(ecPublicKey.getW().getAffineY().toByteArray()));
                                     } else {
                                         log.error("Missing RPK key");
                                     }

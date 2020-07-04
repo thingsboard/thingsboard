@@ -19,9 +19,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.DiscoverRequest;
+import org.eclipse.leshan.core.request.ExecuteRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.response.LwM2mResponse;
-
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +29,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.util.*;
+
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
 @Slf4j
 @Service("LwM2MTransportRequest")
@@ -58,10 +60,9 @@ public class LwM2MTransportRequest {
     @SneakyThrows
     public LwM2mResponse doGet(String clientEndpoint, String target, String typeOper, String contentFormatParam) {
         /** all registered clients */
-        LwM2mResponse cResponse = null;
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         if (registration != null) {
-           if (typeOper.equals("discover")) {
+           if (typeOper.equals(GET_TYPE_OPER_DISCOVER)) {
                 try {
                     /** create & process request */
                     DiscoverRequest request = new DiscoverRequest(target);
@@ -70,7 +71,7 @@ public class LwM2MTransportRequest {
                     log.error("EndPoint: get client/discover: with id [{}]: [{}]", clientEndpoint, e);
                 }
             }
-            else if (typeOper.equals("read")){
+            else if (typeOper.equals(GET_TYPE_OPER_READ)){
                try {
                    /** get content format */
                    ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
@@ -83,6 +84,19 @@ public class LwM2MTransportRequest {
            }
         } else {
             log.warn("EndPoint: get: no registered client with id [{}]", clientEndpoint);
+        }
+        return null;
+    }
+
+    @SneakyThrows
+    public LwM2mResponse doPost(String clientEndpoint, String target, String typeOper, String contentFormatParam, String params) {
+        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
+        if (registration != null) {
+            /** Execute */
+            if (typeOper.equals(POST_TYPE_OPER_EXECUTE)) {
+                ExecuteRequest request = new ExecuteRequest(target, params);
+                return lwServer.send(registration, request, context.getTimeout());
+            }
         }
         return null;
     }

@@ -100,6 +100,7 @@ public class LwM2MTransportHandler {
 
     public static final String GET_TYPE_OPER_READ = "read";
     public static final String GET_TYPE_OPER_DISCOVER = "discover";
+    public static final String POST_TYPE_OPER_EXECUTE = "execute";
 
     @Autowired
     private LeshanServer lhServer;
