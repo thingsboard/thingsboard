@@ -14,16 +14,21 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
-import { DeviceService } from '@core/http/device.service';
-import { credentialTypeNames, DeviceCredentials, DeviceCredentialsType } from '@shared/models/device.models';
-import { DialogComponent } from '@shared/components/dialog.component';
-import { Router } from '@angular/router';
+import {Component, Inject, OnInit, SkipSelf} from '@angular/core';
+import {ErrorStateMatcher} from '@angular/material/core';
+import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators} from '@angular/forms';
+import {DeviceService} from '@core/http/device.service';
+import {credentialTypeNames, DeviceCredentials, DeviceCredentialsType} from '@shared/models/device.models';
+import {DialogComponent} from '@shared/components/dialog.component';
+import {Router} from '@angular/router';
+import {
+  JsonObjectEditDialogComponent,
+  JsonObjectEditDialogData
+} from "@shared/components/dialog/json-object-edit-dialog.component";
+import {TranslateService} from "@ngx-translate/core";
 
 export interface DeviceCredentialsDialogData {
   isReadOnly: boolean;
@@ -36,8 +41,7 @@ export interface DeviceCredentialsDialogData {
   providers: [{provide: ErrorStateMatcher, useExisting: DeviceCredentialsDialogComponent}],
   styleUrls: []
 })
-export class DeviceCredentialsDialogComponent extends
-  DialogComponent<DeviceCredentialsDialogComponent, DeviceCredentials> implements OnInit, ErrorStateMatcher {
+export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCredentialsDialogComponent, DeviceCredentials> implements OnInit, ErrorStateMatcher {
 
   deviceCredentialsFormGroup: FormGroup;
 
@@ -59,7 +63,9 @@ export class DeviceCredentialsDialogComponent extends
               private deviceService: DeviceService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<DeviceCredentialsDialogComponent, DeviceCredentials>,
-              public fb: FormBuilder) {
+              public fb: FormBuilder,
+              private translate: TranslateService,
+              private dialog: MatDialog,) {
     super(store, router, dialogRef);
 
     this.isReadOnly = data.isReadOnly;
@@ -139,6 +145,26 @@ export class DeviceCredentialsDialogComponent extends
     this.deviceService.saveDeviceCredentials(this.deviceCredentials).subscribe(
       (deviceCredentials) => {
         this.dialogRef.close(deviceCredentials);
+      }
+    );
+  }
+
+  openSecurityInfoDialog($event: Event, value: string, id: string): void {
+    if ($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+    }
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, object>(JsonObjectEditDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonValue: (value !== null && value.length === 0) ? JSON.parse("{}") : JSON.parse(value),
+        title: this.translate.instant('device.lwm2m-security-info', {typeName: id}) + " for " +
+          this.translate.instant('device.lwm2m-endpoint', {typeName: id}) + ": " + id
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length  === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
       }
     );
   }
