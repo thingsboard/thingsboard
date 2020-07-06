@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,9 @@ package org.thingsboard.server.service.subscription;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -26,15 +29,18 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
+import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
-import org.thingsboard.server.service.telemetry.sub.TsSubscriptionUpdate;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
@@ -42,6 +48,9 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     @Getter
     @Setter
     private final LinkedHashMap<EntityId, EntityData> entitiesMap;
+    @Getter
+    @Setter
+    private final HashMap<AlarmId, AlarmData> alarmsMap;
     @Getter
     @Setter
     private PageData<AlarmData> alarms;
@@ -56,6 +65,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     public TbAlarmDataSubCtx(String serviceId, TelemetryWebSocketService wsService, TelemetryWebSocketSessionRef sessionRef, int cmdId) {
         super(serviceId, wsService, sessionRef, cmdId);
         this.entitiesMap = new LinkedHashMap<>();
+        this.alarmsMap = new HashMap<>();
     }
 
     public void setEntitiesData(PageData<EntityData> entitiesData) {
@@ -81,6 +91,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                 }
             }
         }
+        alarmsMap.clear();
+        alarmsMap.putAll(alarms.getData().stream().collect(Collectors.toMap(AlarmData::getId, Function.identity())));
         return this.alarms;
     }
 
@@ -100,16 +112,64 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                     .entityId(entityData.getEntityId())
                     .updateConsumer(this::sendWsMsg)
                     .ts(lastFetchTs)
-                    .typeList(pageLink.getTypeList())
-                    .severityList(pageLink.getSeverityList())
-                    .statusList(pageLink.getStatusList())
-                    .searchPropagatedAlarms(pageLink.isSearchPropagatedAlarms())
                     .build());
         }
         return result;
     }
 
     private void sendWsMsg(String sessionId, AlarmSubscriptionUpdate subscriptionUpdate) {
+        Alarm alarm = subscriptionUpdate.getAlarm();
+        AlarmId alarmId = alarm.getId();
+        if (subscriptionUpdate.isAlarmDeleted()) {
+            Alarm deleted = alarmsMap.remove(alarmId);
+            if (deleted != null) {
+                //TODO: invalidate current page;
+            }
+        } else {
+            AlarmData current = alarmsMap.get(alarmId);
+            boolean onCurrentPage = current != null;
+            boolean matchesFilter = filter(alarm);
+            if (onCurrentPage) {
+                if (matchesFilter) {
+                    AlarmData updated = new AlarmData(alarm, current.getName(), current.getEntityId());
+                    alarmsMap.put(alarmId, updated);
+                    wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated)));
+                } else {
+                    //TODO: invalidate current page;
+                }
+            } else if (matchesFilter && query.getPageLink().getPage() == 0) {
+                //TODO: invalidate current page;
+            }
+        }
+    }
 
+    private boolean filter(Alarm alarm) {
+        AlarmDataPageLink filter = query.getPageLink();
+        long startTs = System.currentTimeMillis() - filter.getTimeWindow();
+        if (alarm.getCreatedTime() < startTs) {
+            //Skip update that does not match time window.
+            return false;
+        }
+        if (filter.getTypeList() != null && !filter.getTypeList().isEmpty() && !filter.getTypeList().contains(alarm.getType())) {
+            return false;
+        }
+        if (filter.getSeverityList() != null && !filter.getSeverityList().isEmpty()) {
+            if (!filter.getSeverityList().contains(alarm.getSeverity())) {
+                return false;
+            }
+        }
+        if (filter.getStatusList() != null && !filter.getStatusList().isEmpty()) {
+            boolean matches = false;
+            for (AlarmSearchStatus status : filter.getStatusList()) {
+                if (status.getStatuses().contains(alarm.getStatus())) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) {
+                return false;
+            }
+        }
+        return true;
     }
 }

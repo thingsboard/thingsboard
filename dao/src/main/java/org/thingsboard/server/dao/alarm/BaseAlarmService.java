@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -140,15 +140,17 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
+    public AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId) {
         try {
             log.debug("Deleting Alarm Id: {}", alarmId);
             Alarm alarm = alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId()).get();
             if (alarm == null) {
-                return false;
+                return new AlarmOperationResult(alarm, false);
             }
+            AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
             deleteEntityRelations(tenantId, alarm.getId());
-            return alarmDao.deleteAlarm(tenantId, alarm);
+            alarmDao.deleteAlarm(tenantId, alarm);
+            return result;
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -158,7 +160,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         List<EntityId> propagatedEntitiesList = createAlarmRelations(saved);
-        return new AlarmOperationResult(alarm, true, propagatedEntitiesList);
+        return new AlarmOperationResult(saved, true, propagatedEntitiesList);
     }
 
     private List<EntityId> createAlarmRelations(Alarm alarm) throws InterruptedException, ExecutionException {
@@ -168,13 +170,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             propagatedEntitiesList = new ArrayList<>(parentEntities.size() + 1);
             for (EntityId parentId : parentEntities) {
                 propagatedEntitiesList.add(parentId);
-                createAlarmRelation(alarm.getTenantId(), parentId, alarm.getId(), alarm.getStatus(), true);
+                createAlarmRelation(alarm.getTenantId(), parentId, alarm.getId());
             }
             propagatedEntitiesList.add(alarm.getOriginator());
         } else {
             propagatedEntitiesList = Collections.singletonList(alarm.getOriginator());
         }
-        createAlarmRelation(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), alarm.getStatus(), true);
+        createAlarmRelation(alarm.getTenantId(), alarm.getOriginator(), alarm.getId());
         return propagatedEntitiesList;
     }
 
@@ -225,34 +227,33 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<Boolean> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTime) {
-        return getAndUpdate(tenantId, alarmId, new Function<Alarm, Boolean>() {
+    public ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTime) {
+        return getAndUpdate(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
             @Nullable
             @Override
-            public Boolean apply(@Nullable Alarm alarm) {
+            public AlarmOperationResult apply(@Nullable Alarm alarm) {
                 if (alarm == null || alarm.getStatus().isAck()) {
-                    return false;
+                    return new AlarmOperationResult(alarm, false);
                 } else {
                     AlarmStatus oldStatus = alarm.getStatus();
                     AlarmStatus newStatus = oldStatus.isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK;
                     alarm.setStatus(newStatus);
                     alarm.setAckTs(ackTime);
-                    alarmDao.save(alarm.getTenantId(), alarm);
-                    updateRelations(alarm, oldStatus, newStatus);
-                    return true;
+                    alarm = alarmDao.save(alarm.getTenantId(), alarm);
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });
     }
 
     @Override
-    public ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTime) {
-        return getAndUpdate(tenantId, alarmId, new Function<Alarm, Boolean>() {
+    public ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTime) {
+        return getAndUpdate(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
             @Nullable
             @Override
-            public Boolean apply(@Nullable Alarm alarm) {
+            public AlarmOperationResult apply(@Nullable Alarm alarm) {
                 if (alarm == null || alarm.getStatus().isCleared()) {
-                    return false;
+                    return new AlarmOperationResult(alarm, false);
                 } else {
                     AlarmStatus oldStatus = alarm.getStatus();
                     AlarmStatus newStatus = oldStatus.isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
@@ -261,9 +262,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     if (details != null) {
                         alarm.setDetails(details);
                     }
-                    alarmDao.save(alarm.getTenantId(), alarm);
-                    updateRelations(alarm, oldStatus, newStatus);
-                    return true;
+                    alarm = alarmDao.save(alarm.getTenantId(), alarm);
+                    return new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
                 }
             }
         });

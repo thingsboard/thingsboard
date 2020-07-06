@@ -24,14 +24,14 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class TsSubscriptionUpdate {
+public class TelemetrySubscriptionUpdate {
 
     private int subscriptionId;
     private int errorCode;
     private String errorMsg;
     private Map<String, List<Object>> data;
 
-    public TsSubscriptionUpdate(int subscriptionId, List<TsKvEntry> data) {
+    public TelemetrySubscriptionUpdate(int subscriptionId, List<TsKvEntry> data) {
         super();
         this.subscriptionId = subscriptionId;
         this.data = new TreeMap<>();
@@ -46,17 +46,17 @@ public class TsSubscriptionUpdate {
         }
     }
 
-    public TsSubscriptionUpdate(int subscriptionId, Map<String, List<Object>> data) {
+    public TelemetrySubscriptionUpdate(int subscriptionId, Map<String, List<Object>> data) {
         super();
         this.subscriptionId = subscriptionId;
         this.data = data;
     }
 
-    public TsSubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode) {
+    public TelemetrySubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode) {
         this(subscriptionId, errorCode, null);
     }
 
-    public TsSubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode, String errorMsg) {
+    public TelemetrySubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode, String errorMsg) {
         super();
         this.subscriptionId = subscriptionId;
         this.errorCode = errorCode.getCode();

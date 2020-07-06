@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.subscription;
 
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,7 +45,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdatePr
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
-import org.thingsboard.server.service.telemetry.sub.TsSubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -137,9 +138,9 @@ public class TbSubscriptionUtils {
         return builder.build();
     }
 
-    public static TsSubscriptionUpdate fromProto(TbSubscriptionUpdateProto proto) {
+    public static TelemetrySubscriptionUpdate fromProto(TbSubscriptionUpdateProto proto) {
         if (proto.getErrorCode() > 0) {
-            return new TsSubscriptionUpdate(proto.getSubscriptionId(), SubscriptionErrorCode.forCode(proto.getErrorCode()), proto.getErrorMsg());
+            return new TelemetrySubscriptionUpdate(proto.getSubscriptionId(), SubscriptionErrorCode.forCode(proto.getErrorCode()), proto.getErrorMsg());
         } else {
             Map<String, List<Object>> data = new TreeMap<>();
             proto.getDataList().forEach(v -> {
@@ -151,7 +152,7 @@ public class TbSubscriptionUtils {
                     values.add(value);
                 }
             });
-            return new TsSubscriptionUpdate(proto.getSubscriptionId(), data);
+            return new TelemetrySubscriptionUpdate(proto.getSubscriptionId(), data);
         }
     }
 
@@ -260,5 +261,15 @@ public class TbSubscriptionUtils {
                 break;
         }
         return entry;
+    }
+
+    public static ToCoreMsg toAlarmUpdateProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
+//        TODO: 3.1
+        throw new RuntimeException("Not implemented!");
+    }
+
+    public static ToCoreMsg toAlarmDeletedProto(TenantId tenantId, EntityId entityId, Alarm alarm) {
+//        TODO: 3.1
+        throw new RuntimeException("Not implemented!");
     }
 }

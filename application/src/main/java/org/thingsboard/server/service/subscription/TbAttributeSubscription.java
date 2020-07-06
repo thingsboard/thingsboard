@@ -19,12 +19,12 @@ import lombok.Builder;
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.service.telemetry.sub.TsSubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class TbAttributeSubscription extends TbSubscription<TsSubscriptionUpdate> {
+public class TbAttributeSubscription extends TbSubscription<TelemetrySubscriptionUpdate> {
 
     @Getter private final boolean allKeys;
     @Getter private final Map<String, Long> keyStates;
@@ -32,7 +32,7 @@ public class TbAttributeSubscription extends TbSubscription<TsSubscriptionUpdate
 
     @Builder
     public TbAttributeSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
-                                   BiConsumer<String, TsSubscriptionUpdate> updateConsumer,
+                                   BiConsumer<String, TelemetrySubscriptionUpdate> updateConsumer,
                                    boolean allKeys, Map<String, Long> keyStates, TbAttributeSubscriptionScope scope) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.ATTRIBUTES, updateConsumer);
         this.allKeys = allKeys;
