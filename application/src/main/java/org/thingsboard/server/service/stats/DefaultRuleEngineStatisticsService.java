@@ -16,11 +16,8 @@
 package org.thingsboard.server.service.stats;
 
 import com.google.common.util.concurrent.FutureCallback;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -33,7 +30,6 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
-import org.thingsboard.server.service.metrics.MetricsService;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
