@@ -24,6 +24,27 @@ import eventTableTemplate from './event-table.tpl.html';
 /*@ngInject*/
 export default function EventTableDirective($compile, $templateCache, $rootScope, types, eventService) {
 
+    var edgeData = [
+            {
+                "createdTime": 1593592774537,
+                "tenantId": "63746950-bb76-11ea-9f96-69d7782607f7",
+                "edgeId": "85bb84b0-bb78-11ea-8472-c3dbdeb0fd97",
+                "edgeEventAction": "ASSIGNED_TO_EDGE",
+                "entityId": "640055a0-bb76-11ea-9f96-69d7782607f7",
+                "entityType": "DEVICE",
+                "success": true,
+            },
+            {
+                "createdTime": 1593592774538,
+                "tenantId": "63746950-bb76-11ea-9f96-69d7782607f7",
+                "edgeId": "85bb84b0-bb78-11ea-8472-c3dbdeb0fd97",
+                "edgeEventAction": "CREDENTIALS_UPDATED",
+                "entityId": "640055a0-bb76-11ea-9f96-69d7782607f8",
+                "entityType": "DEVICE",
+                "success": false
+            }
+        ]
+
     var linker = function (scope, element, attrs) {
 
         var template = $templateCache.get(eventTableTemplate);
@@ -98,7 +119,7 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
             },
 
             fetchMoreItems_: function () {
-                if (scope.events.hasNext && !scope.events.pending) {
+                if (scope.events.hasNext && !scope.events.pending && scope.eventType !== "EDGE_EVENT") {
                     if (scope.entityType && scope.entityId && scope.eventType && scope.tenantId) {
                         var promise = eventService.getEvents(scope.entityType, scope.entityId,
                             scope.eventType, scope.tenantId, scope.events.nextPageLink);
@@ -125,12 +146,16 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                         scope.events.hasNext = false;
                     }
                 }
+                if (scope.eventType === "EDGE_EVENT") {
+                    scope.events.data = edgeData;
+                    scope.events.nextPageLink = false;
+                    scope.events.hasNext = null;
+                }
             }
         };
 
         scope.$watch("entityId", function(newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {
-                scope.resetFilter();
                 scope.reload();
             }
         });
@@ -141,7 +166,7 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
             }
         });
 
-        scope.$watch("timewindow", function(newVal, prevVal) {
+        scope.$watch("createdTime", function(newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {
                 scope.reload();
             }

@@ -600,6 +600,10 @@ export default angular.module('thingsboard.types', [])
                 stats: {
                     value: "STATS",
                     name: "event.type-stats"
+                },
+                edgeEvent: {
+                    value: "EDGE_EVENT",
+                    name: "event.type-edge-event"
                 }
             },
             debugEventType: {
