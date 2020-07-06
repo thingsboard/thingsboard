@@ -166,7 +166,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
                 if (currentPartitions.contains(tpi)) {
                     if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm);
+                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
                     } else {
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }
@@ -186,7 +186,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
                 if (currentPartitions.contains(tpi)) {
                     if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarm);
+                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarm, TbCallback.EMPTY);
                     } else {
                         log.warn("Possible misconfiguration because subscriptionManagerService is null!");
                     }

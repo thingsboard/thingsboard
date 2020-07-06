@@ -61,6 +61,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put("severity", ModelConstants.ALARM_SEVERITY_PROPERTY);
         alarmFieldColumnMap.put("originator_id", ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);
         alarmFieldColumnMap.put("originator_type", ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY);
+        alarmFieldColumnMap.put("originator", "originator_name");
     }
 
     public static final String SELECT_ORIGINATOR_NAME = " CASE" +
@@ -124,7 +125,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         EntityDataSortOrder sortOrder = pageLink.getSortOrder();
         if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
             String sortOrderKey = sortOrder.getKey().getKey();
-            sortPart.append("a.").append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
+            sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
                     .append(" ").append(sortOrder.getDirection().name());
             ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             if (pageLink.isSearchPropagatedAlarms()) {

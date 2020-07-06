@@ -447,14 +447,21 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 if (!single) {
                     whereFilter.append(" (");
                 }
-                whereFilter.append(" re.relation_type = :where_relation_type").append(entityTypeFilterIdx).append(" and re.")
-                        .append(entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from")
-                        .append("_type in (:where_entity_types").append(entityTypeFilterIdx).append(")");
+                List<String> whereEntityTypes = etf.getEntityTypes().stream().map(EntityType::name).collect(Collectors.toList());
+                whereFilter
+                        .append(" re.relation_type = :where_relation_type").append(entityTypeFilterIdx);
+                if (!whereEntityTypes.isEmpty()) {
+                    whereFilter.append(" and re.")
+                            .append(entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from")
+                            .append("_type in (:where_entity_types").append(entityTypeFilterIdx).append(")");
+                }
                 if (!single) {
                     whereFilter.append(" )");
                 }
                 ctx.addStringParameter("where_relation_type" + entityTypeFilterIdx, relationType);
-                ctx.addStringListParameter("where_entity_types" + entityTypeFilterIdx, etf.getEntityTypes().stream().map(EntityType::name).collect(Collectors.toList()));
+                if (!whereEntityTypes.isEmpty()) {
+                    ctx.addStringListParameter("where_entity_types" + entityTypeFilterIdx, whereEntityTypes);
+                }
                 entityTypeFilterIdx++;
             }
         } else {

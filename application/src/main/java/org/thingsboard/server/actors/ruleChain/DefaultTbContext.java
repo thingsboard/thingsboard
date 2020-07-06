@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -351,7 +352,7 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public AlarmService getAlarmService() {
+    public RuleEngineAlarmService getAlarmService() {
         return mainCtx.getAlarmService();
     }
 
