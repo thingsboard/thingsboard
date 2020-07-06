@@ -33,7 +33,7 @@ export enum EntityKeyType {
   SERVER_ATTRIBUTE = 'SERVER_ATTRIBUTE',
   TIME_SERIES = 'TIME_SERIES',
   ENTITY_FIELD = 'ENTITY_FIELD',
-  ALARM_FIELD = 'ENTITY_FIELD'
+  ALARM_FIELD = 'ALARM_FIELD'
 }
 
 export const entityKeyTypeTranslationMap = new Map<EntityKeyType, string>(

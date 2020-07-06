@@ -293,7 +293,7 @@ export class AliasController implements IAliasController {
   }
 
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource> {
-    return this.resolveDatasource(alarmSource, true).pipe(
+    return this.resolveDatasource(alarmSource).pipe(
       map((datasource) => {
         if (datasource.type === DatasourceType.function) {
           let name: string;

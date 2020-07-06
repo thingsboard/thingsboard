@@ -71,6 +71,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   @Input()
   dataKeySettingsSchema: any;
 
+  @Input()
+  showPostProcessing = true;
+
   @ViewChild('keyInput') keyInput: ElementRef;
 
   @ViewChild('funcBodyEdit') funcBodyEdit: JsFuncComponent;

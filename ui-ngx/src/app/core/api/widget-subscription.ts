@@ -104,29 +104,9 @@ export class WidgetSubscription implements IWidgetSubscription {
   comparisonTimeWindow: WidgetTimewindow;
   timewindowForComparison: SubscriptionTimewindow;
 
-  // alarms: Array<AlarmInfo>;
   alarms: PageData<AlarmData>;
   alarmSource: Datasource;
-
-  /* private alarmSearchStatusValue: AlarmSearchStatus;
-
-  set alarmSearchStatus(value: AlarmSearchStatus) {
-    if (this.alarmSearchStatusValue !== value) {
-      this.alarmSearchStatusValue = value;
-      this.onAlarmSearchStatusChanged();
-    }
-  }
-
-  get alarmSearchStatus(): AlarmSearchStatus {
-    return this.alarmSearchStatusValue;
-  }*/
-
   alarmDataListener: AlarmDataListener;
-
-/*  alarmsPollingInterval: number;
-  alarmsMaxCountLoad: number;
-  alarmsFetchSize: number;
-  alarmSourceListener: AlarmSourceListener;*/
 
   loadingData: boolean;
 
@@ -186,17 +166,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.dataLoading = this.callbacks.dataLoading || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
       this.alarmSource = options.alarmSource;
-      /*this.alarmSearchStatusValue = isDefined(options.alarmSearchStatus) ?
-        options.alarmSearchStatus : AlarmSearchStatus.ANY;
-      this.alarmsPollingInterval = isDefined(options.alarmsPollingInterval) ?
-        options.alarmsPollingInterval : 5000;
-      this.alarmsMaxCountLoad = isDefined(options.alarmsMaxCountLoad) ?
-        options.alarmsMaxCountLoad : 0;
-      this.alarmsFetchSize = isDefined(options.alarmsFetchSize) ?
-        options.alarmsFetchSize : 100;
-      this.alarmSourceListener = null;*/
       this.alarmDataListener = null;
-      // this.alarms = [];
       this.alarms = emptyPageData();
       this.originalTimewindow = null;
       this.timeWindow = {};
@@ -834,9 +804,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     if (this.timeWindowConfig) {
       this.updateRealtimeSubscription();
-      if (this.subscriptionTimewindow.fixedWindow) {
-        this.onDataUpdated();
-      }
     }
     this.alarmDataListener = {
       subscriptionTimewindow: this.subscriptionTimewindow,
@@ -850,9 +817,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.ctx.alarmDataService.subscribeForAlarms(this.alarmDataListener, pageLink, keyFilters);
 
     let forceUpdate = false;
-    if (this.alarmSource.unresolvedStateEntity ||
-      (this.alarmSource.type === DatasourceType.entity && !this.alarmSource.entityId)
-    ) {
+    if (this.alarmSource.unresolvedStateEntity) {
       forceUpdate = true;
     }
     if (forceUpdate) {
@@ -891,41 +856,6 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
     }
   }
-
-  /* private alarmsSubscribe() {
-    this.notifyDataLoading();
-    if (this.timeWindowConfig) {
-      this.updateRealtimeSubscription();
-      if (this.subscriptionTimewindow.fixedWindow) {
-        this.onDataUpdated();
-      }
-    }
-    this.alarmSourceListener = {
-      subscriptionTimewindow: this.subscriptionTimewindow,
-      alarmSource: this.alarmSource,
-      alarmSearchStatus: this.alarmSearchStatus,
-      alarmsPollingInterval: this.alarmsPollingInterval,
-      alarmsMaxCountLoad: this.alarmsMaxCountLoad,
-      alarmsFetchSize: this.alarmsFetchSize,
-      alarmsUpdated: alarms => this.alarmsUpdated(alarms)
-    };
-
-    this.alarms = emptyPageData();
-
-    this.ctx.alarmDataService.subscribeForAlarms(this.alarmDataListener);
-
-    let forceUpdate = false;
-    if (this.alarmSource.unresolvedStateEntity ||
-      (this.alarmSource.type === DatasourceType.entity && !this.alarmSource.entityId)
-    ) {
-      forceUpdate = true;
-    }
-    if (forceUpdate) {
-      this.notifyDataLoaded();
-      this.onDataUpdated();
-    }
-  } */
-
 
   unsubscribe() {
     if (this.type !== widgetType.rpc) {

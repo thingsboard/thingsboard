@@ -128,6 +128,8 @@
         "no-alarms-matching": "No alarms matching '{{entity}}' were found.",
         "alarm-required": "Alarm is required",
         "alarm-status": "Alarm status",
+        "alarm-status-list": "Alarm status list",
+        "any-status": "Any status",
         "search-status": {
             "ANY": "Any",
             "ACTIVE": "Active",
@@ -154,6 +156,8 @@
         "end-time": "End time",
         "ack-time": "Acknowledged time",
         "clear-time": "Cleared time",
+        "alarm-severity-list": "Alarm severity list",
+        "any-severity": "Any severity",
         "severity-critical": "Critical",
         "severity-major": "Major",
         "severity-minor": "Minor",
@@ -176,12 +180,16 @@
         "clear-alarm-title": "Clear Alarm",
         "clear-alarm-text": "Are you sure you want to clear Alarm?",
         "alarm-status-filter": "Alarm Status Filter",
+        "alarm-filter": "Alarm Filter",
         "max-count-load": "Maximum number of alarms to load (0 - unlimited)",
         "max-count-load-required": "Maximum number of alarms to load is required.",
         "max-count-load-error-min": "Minimum value is 0.",
         "fetch-size": "Fetch size",
         "fetch-size-required": "Fetch size is required.",
-        "fetch-size-error-min": "Minimum value is 10."
+        "fetch-size-error-min": "Minimum value is 10.",
+        "alarm-type-list": "Alarm type list",
+        "any-type": "Any type",
+        "search-propagated-alarms": "Search propagated alarms"
     },
     "alias": {
         "add": "Add alias",
@@ -616,6 +624,7 @@
         "alarm": "Alarm fields",
         "timeseries-required": "Entity timeseries are required.",
         "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
+        "alarm-fields-timeseries-or-attributes-required": "Alarm fields or entity timeseries/attributes are required.",
         "maximum-timeseries-or-attributes": "Maximum { count, plural, 1 {1 timeseries/attribute is allowed.} other {# timeseries/attributes are allowed} }",
         "alarm-fields-required": "Alarm fields are required.",
         "function-types": "Function types",

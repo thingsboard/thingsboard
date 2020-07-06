@@ -42,58 +42,45 @@
       <div *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutAlign="center">
         <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
              fxLayoutGap="8px">
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>alarm.alarm-status</mat-label>
-            <mat-select formControlName="alarmSearchStatus">
+          <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-label translate>alarm.alarm-status-list</mat-label>
+            <mat-select formControlName="alarmStatusList" multiple
+                        placeholder="{{ !dataSettings.get('alarmStatusList').value?.length ? ('alarm.any-status' | translate) : '' }}">
               <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
-                {{ ('alarm.search-status.' + searchStatus) | translate }}
+                {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>alarm.polling-interval</mat-label>
-            <input matInput required
-                   formControlName="alarmsPollingInterval"
-                   type="number"
-                   step="1"/>
-            <mat-error *ngIf="dataSettings.get('alarmsPollingInterval').hasError('required')">
-              {{ 'alarm.polling-interval-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="dataSettings.get('alarmsPollingInterval').hasError('min')">
-              {{ 'alarm.min-polling-interval-message' | translate }}
-            </mat-error>
+          <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-label translate>alarm.alarm-severity-list</mat-label>
+            <mat-select formControlName="alarmSeverityList" multiple
+                        placeholder="{{ !dataSettings.get('alarmSeverityList').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+              <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+                {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
+              </mat-option>
+            </mat-select>
           </mat-form-field>
         </div>
         <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
              fxLayoutGap="8px">
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>alarm.max-count-load</mat-label>
-            <input matInput required
-                   formControlName="alarmsMaxCountLoad"
-                   type="number"
-                   min="0"
-                   step="1">
-            <mat-error *ngIf="dataSettings.get('alarmsMaxCountLoad').hasError('required')">
-              {{ 'alarm.max-count-load-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="dataSettings.get('alarmsMaxCountLoad').hasError('min')">
-              {{ 'alarm.max-count-load-error-min' | translate }}
-            </mat-error>
+          <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-label translate>alarm.alarm-type-list</mat-label>
+            <mat-chip-list #alarmTypeChipList formControlName="alarmTypeList">
+              <mat-chip *ngFor="let type of alarmTypeList()" [selectable]="true"
+              [removable]="true" (removed)="removeAlarmType(type)">
+              {{type}}
+              <mat-icon matChipRemove>cancel</mat-icon>
+              </mat-chip>
+              <input placeholder="{{ !dataSettings.get('alarmTypeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
+                     [matChipInputFor]="alarmTypeChipList"
+                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                     [matChipInputAddOnBlur]="true"
+                     (matChipInputTokenEnd)="addAlarmType($event)">
+            </mat-chip-list>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>alarm.fetch-size</mat-label>
-            <input matInput required
-                   formControlName="alarmsFetchSize"
-                   type="number"
-                   min="10"
-                   step="1">
-            <mat-error *ngIf="dataSettings.get('alarmsFetchSize').hasError('required')">
-              {{ 'alarm.fetch-size-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="dataSettings.get('alarmsFetchSize').hasError('min')">
-              {{ 'alarm.fetch-size-error-min' | translate }}
-            </mat-error>
-          </mat-form-field>
+          <mat-checkbox fxFlex formControlName="searchPropagatedAlarms">
+            {{ 'alarm.search-propagated-alarms' | translate }}
+          </mat-checkbox>
         </div>
       </div>
       <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&

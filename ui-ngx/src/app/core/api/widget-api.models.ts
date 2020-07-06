@@ -29,11 +29,9 @@ import {
 } from '@shared/models/widget.models';
 import { TimeService } from '../services/time.service';
 import { DeviceService } from '../http/device.service';
-import { AlarmService } from '../http/alarm.service';
 import { UtilsService } from '@core/services/utils.service';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
@@ -41,11 +39,13 @@ import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import * as moment_ from 'moment';
 import {
-  AlarmData, AlarmDataPageLink,
+  AlarmData,
+  AlarmDataPageLink,
   EntityData,
   EntityDataPageLink,
   EntityFilter,
-  Filter, FilterInfo,
+  Filter,
+  FilterInfo,
   Filters,
   KeyFilter
 } from '@shared/models/query/query.models';
@@ -220,10 +220,6 @@ export interface WidgetSubscriptionOptions {
   type?: widgetType;
   stateData?: boolean;
   alarmSource?: Datasource;
-/*  alarmSearchStatus?: AlarmSearchStatus;
-  alarmsPollingInterval?: number;
-  alarmsMaxCountLoad?: number;
-  alarmsFetchSize?: number; */
   datasources?: Array<Datasource>;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
@@ -273,8 +269,6 @@ export interface IWidgetSubscription {
 
   alarms?: PageData<AlarmData>;
   alarmSource?: Datasource;
-  /* alarmSearchStatus?: AlarmSearchStatus;
-  alarmsPollingInterval?: number; */
 
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;

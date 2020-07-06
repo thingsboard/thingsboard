@@ -86,7 +86,6 @@ import {
 } from '@shared/models/query/query.models';
 import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
-import { alarmFields } from '@shared/models/alarm.models';
 import { DatePipe } from '@angular/common';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
@@ -596,9 +595,15 @@ class EntityDatasource implements DataSource<EntityData> {
 
   loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
+    this.clear();
     this.appliedPageLink = pageLink;
     this.appliedSortOrderLabel = sortOrderLabel;
     this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);
+  }
+
+  private clear() {
+    this.entitiesSubject.next([]);
+    this.pageDataSubject.next(emptyPageData<EntityData>());
   }
 
   dataUpdated() {

@@ -61,9 +61,10 @@ import {
   EntityKey,
   EntityKeyType,
   FilterPredicateType,
-  singleEntityDataPageLink, StringFilterPredicate,
+  singleEntityDataPageLink,
   StringOperation
 } from '@shared/models/query/query.models';
+import { alarmFields } from '@shared/models/alarm.models';
 
 @Injectable({
   providedIn: 'root'
@@ -622,10 +623,18 @@ export class EntityService {
     return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
   }
 
+  private getAlarmKeys(searchText: string): Array<string> {
+    const alarmKeys: string[] = Object.keys(alarmFields);
+    const query = searchText.toLowerCase();
+    return query ? alarmKeys.filter((alarmField) => alarmField.toLowerCase().indexOf(query) === 0) : alarmKeys;
+  }
+
   public getEntityKeys(entityId: EntityId, query: string, type: DataKeyType,
                        config?: RequestConfig): Observable<Array<string>> {
     if (type === DataKeyType.entityField) {
       return of(this.getEntityFieldKeys(entityId.entityType as EntityType, query));
+    } else if (type === DataKeyType.alarm) {
+      return of(this.getAlarmKeys(query));
     }
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/keys/`;
     if (type === DataKeyType.timeseries) {
