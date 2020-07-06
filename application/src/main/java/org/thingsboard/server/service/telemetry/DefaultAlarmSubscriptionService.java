@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -58,7 +60,6 @@ import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
 
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Collection;
@@ -99,46 +100,32 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     @Override
     public Alarm createOrUpdateAlarm(Alarm alarm) {
-        //TODO 3.1: we also need a list of related entities if this is propagated alarm;
-        Alarm result = alarmService.createOrUpdateAlarm(alarm);
-        List<EntityId> relatedEntities = Collections.singletonList(result.getOriginator());
-        pushAlarmToSubService(result, relatedEntities);
-        return result;
-    }
-
-    private void pushAlarmToSubService(Alarm result, List<EntityId> entityIds) {
-        wsCallBackExecutor.submit(() -> {
-            TenantId tenantId = result.getTenantId();
-            for (EntityId entityId : entityIds) {
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-                if (currentPartitions.contains(tpi)) {
-                    if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, result);
-                    } else {
-                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-                    }
-                } else {
-                    //TODO 3.1: cluster mode notification
-//                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
-//                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-                }
-            }
-        });
+        AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm);
+        if (result.isSuccessful()) {
+            onAlarmUpdated(result);
+        }
+        return result.getAlarm();
     }
 
     @Override
     public Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
-        return alarmService.deleteAlarm(tenantId, alarmId);
+        AlarmOperationResult result = alarmService.deleteAlarm(tenantId, alarmId);
+        onAlarmDeleted(result);
+        return result.isSuccessful();
     }
 
     @Override
     public ListenableFuture<Boolean> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
-        return alarmService.ackAlarm(tenantId, alarmId, ackTs);
+        ListenableFuture<AlarmOperationResult> result = alarmService.ackAlarm(tenantId, alarmId, ackTs);
+        Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
+        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
     }
 
     @Override
     public ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs) {
-        return alarmService.clearAlarm(tenantId, alarmId, details, clearTs);
+        ListenableFuture<AlarmOperationResult> result = alarmService.clearAlarm(tenantId, alarmId, details, clearTs);
+        Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
+        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
     }
 
     @Override
@@ -147,9 +134,80 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
+    public ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId) {
+        return alarmService.findAlarmInfoByIdAsync(tenantId, alarmId);
+    }
+
+    @Override
+    public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
+        return alarmService.findAlarms(tenantId, query);
+    }
+
+    @Override
+    public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus, AlarmStatus alarmStatus) {
+        return alarmService.findHighestAlarmSeverity(tenantId, entityId, alarmSearchStatus, alarmStatus);
+    }
+
+    @Override
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId, AlarmDataPageLink pageLink, Collection<EntityId> orderedEntityIds) {
+        return alarmService.findAlarmDataByQueryForEntities(tenantId, customerId, pageLink, orderedEntityIds);
+    }
+
+    @Override
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmService.findLatestByOriginatorAndType(tenantId, originator, type);
     }
 
+    private void onAlarmUpdated(AlarmOperationResult result) {
+        wsCallBackExecutor.submit(() -> {
+            Alarm alarm = result.getAlarm();
+            TenantId tenantId = result.getAlarm().getTenantId();
+            for (EntityId entityId : result.getPropagatedEntitiesList()) {
+                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+                if (currentPartitions.contains(tpi)) {
+                    if (subscriptionManagerService.isPresent()) {
+                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm);
+                    } else {
+                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+                    }
+                } else {
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
+                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+                }
+            }
+        });
+    }
+
+    private void onAlarmDeleted(AlarmOperationResult result) {
+        wsCallBackExecutor.submit(() -> {
+            Alarm alarm = result.getAlarm();
+            TenantId tenantId = result.getAlarm().getTenantId();
+            for (EntityId entityId : result.getPropagatedEntitiesList()) {
+                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+                if (currentPartitions.contains(tpi)) {
+                    if (subscriptionManagerService.isPresent()) {
+                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarm);
+                    } else {
+                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+                    }
+                } else {
+                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
+                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+                }
+            }
+        });
+    }
+
+    private class AlarmUpdateCallback implements FutureCallback<AlarmOperationResult> {
+        @Override
+        public void onSuccess(@Nullable AlarmOperationResult result) {
+            onAlarmUpdated(result);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            log.warn("Failed to update alarm", t);
+        }
+    }
 
 }

@@ -103,6 +103,7 @@ import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
@@ -145,7 +146,7 @@ public abstract class BaseController {
     protected AssetService assetService;
 
     @Autowired
-    protected AlarmService alarmService;
+    protected AlarmSubscriptionService alarmService;
 
     @Autowired
     protected DeviceCredentialsService deviceCredentialsService;

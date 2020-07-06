@@ -64,9 +64,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     }
 
     public static final String SELECT_ORIGINATOR_NAME = " CASE" +
-            " WHEN a.originator_type = "+ EntityType.TENANT.ordinal() +
+            " WHEN a.originator_type = " + EntityType.TENANT.ordinal() +
             " THEN (select title from tenant where id = a.originator_id)" +
-            " WHEN a.originator_type = "+ EntityType.CUSTOMER.ordinal() +
+            " WHEN a.originator_type = " + EntityType.CUSTOMER.ordinal() +
             " THEN (select title from customer where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.USER.ordinal() +
             " THEN (select CONCAT (first_name, ' ', last_name) from tb_user where id = a.originator_id)" +
@@ -156,17 +156,27 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             sortPart.append("e.priority");
         }
 
-        if (pageLink.getStartTs() > 0) {
+        long startTs;
+        long endTs;
+        if (pageLink.getTimeWindow() > 0) {
+            endTs = System.currentTimeMillis();
+            startTs = endTs - pageLink.getTimeWindow();
+        } else {
+            startTs = pageLink.getStartTs();
+            endTs = pageLink.getEndTs();
+        }
+
+        if (startTs > 0) {
             addAndIfNeeded(wherePart, addAnd);
             addAnd = true;
-            ctx.addLongParameter("startTime", pageLink.getStartTs());
+            ctx.addLongParameter("startTime", startTs);
             wherePart.append("a.created_time >= :startTime");
         }
 
-        if (pageLink.getEndTs() > 0) {
+        if (endTs > 0) {
             addAndIfNeeded(wherePart, addAnd);
             addAnd = true;
-            ctx.addLongParameter("endTime", pageLink.getEndTs());
+            ctx.addLongParameter("endTime", endTs);
             wherePart.append("a.created_time <= :endTime");
         }
 

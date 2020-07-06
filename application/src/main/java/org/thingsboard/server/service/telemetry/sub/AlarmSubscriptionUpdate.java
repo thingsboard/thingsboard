@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.telemetry.sub;
 
+import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -28,15 +29,26 @@ import java.util.stream.Collectors;
 
 public class AlarmSubscriptionUpdate {
 
+    @Getter
     private int subscriptionId;
+    @Getter
     private int errorCode;
+    @Getter
     private String errorMsg;
+    @Getter
     private Alarm alarm;
+    @Getter
+    private boolean alarmDeleted;
 
     public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm) {
+        this(subscriptionId, alarm, false);
+    }
+
+    public AlarmSubscriptionUpdate(int subscriptionId, Alarm alarm, boolean alarmDeleted) {
         super();
         this.subscriptionId = subscriptionId;
         this.alarm = alarm;
+        this.alarmDeleted = alarmDeleted;
     }
 
     public AlarmSubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode) {
@@ -48,19 +60,6 @@ public class AlarmSubscriptionUpdate {
         this.subscriptionId = subscriptionId;
         this.errorCode = errorCode.getCode();
         this.errorMsg = errorMsg != null ? errorMsg : errorCode.getDefaultMsg();
-    }
-
-    public int getSubscriptionId() {
-        return subscriptionId;
-    }
-
-
-    public int getErrorCode() {
-        return errorCode;
-    }
-
-    public String getErrorMsg() {
-        return errorMsg;
     }
 
     @Override

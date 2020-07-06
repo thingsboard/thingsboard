@@ -102,15 +102,17 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query) {
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
-        String searchStatusName;
-        if (query.getSearchStatus() == null && query.getStatus() == null) {
-            searchStatusName = AlarmSearchStatus.ANY.name();
-        } else if (query.getSearchStatus() != null) {
-            searchStatusName = query.getSearchStatus().name();
-        } else {
-            searchStatusName = query.getStatus().name();
-        }
-        String relationType = BaseAlarmService.ALARM_RELATION_PREFIX + searchStatusName;
+
+        //TODO 3.1: add search by statuses
+//        String searchStatusName;
+//        if (query.getSearchStatus() == null && query.getStatus() == null) {
+//            searchStatusName = AlarmSearchStatus.ANY.name();
+//        } else if (query.getSearchStatus() != null) {
+//            searchStatusName = query.getSearchStatus().name();
+//        } else {
+//            searchStatusName = query.getStatus().name();
+//        }
+//        String relationType = BaseAlarmService.ALARM_RELATION_PREFIX;
 
         return DaoUtil.toPageData(
             alarmRepository.findAlarms(
