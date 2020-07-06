@@ -17,7 +17,6 @@ package org.thingsboard.server.service.stats;
 
 import org.thingsboard.server.queue.stats.QueueStats;
 
-// TODO do we need to have a scheduler that'll reset atomic integer?
 public class DefaultQueueStats implements QueueStats {
     private final StatsCounter totalCounter;
     private final StatsCounter successfulCounter;

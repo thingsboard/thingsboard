@@ -60,7 +60,6 @@ public class TbRuleEngineConsumerStats {
 
     private final String queueName;
 
-    // TODO maybe it's possible to do this somehow better and without passing factory obj
     public TbRuleEngineConsumerStats(String queueName, StatsCounterFactory counterFactory) {
         this.queueName = queueName;
 

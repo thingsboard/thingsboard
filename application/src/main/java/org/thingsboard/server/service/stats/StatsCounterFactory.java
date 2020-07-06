@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class StatsCounterFactory {
     private static final String STATS_NAME_TAG = "statsName";
 
-    // TODO not sure if that's a good idea
     private static final Counter STUB_COUNTER = new StubCounter();
 
     @Autowired
