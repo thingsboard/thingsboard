@@ -16,12 +16,16 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -32,17 +36,22 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 
 import java.util.List;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 public class BaseEdgeEventControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private TenantId tenantId;
     private User tenantAdmin;
+
+    private RestTemplate restTemplate;
 
     @Before
     public void beforeTest() throws Exception {
@@ -78,25 +87,31 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
         edge = doPost("/api/edge", edge, Edge.class);
 
         Device device = constructDevice("TestDevice", "default");
-        Asset asset = constructAsset("TestAsset", "default");
-
         Device savedDevice = doPost("/api/device", device, Device.class);
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
         doPost("/api/edge/" + edge.getId().toString() + "/device/" + savedDevice.getId().toString(), Device.class);
+
+        Asset asset = constructAsset("TestAsset", "default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
         doPost("/api/edge/" + edge.getId().toString() + "/asset/" + savedAsset.getId().toString(), Asset.class);
 
-        Thread.sleep(500);
+        EntityRelation relation = new EntityRelation(savedAsset.getId(), savedDevice.getId(), EntityRelation.CONTAINS_TYPE);
+
+        doPost("/api/relation", relation);
+
+        Thread.sleep(1000);
 
         List<EdgeEvent> edgeEvents = doGetTypedWithTimePageLink("/api/edge/" + edge.getId().toString() + "/events?",
                 new TypeReference<TimePageData<EdgeEvent>>() {
                 }, new TimePageLink(5)).getData();
 
         Assert.assertFalse(edgeEvents.isEmpty());
-        Assert.assertEquals(3, edgeEvents.size());
-        Assert.assertEquals(edgeEvents.get(0).getEdgeEventType(), EdgeEventType.DEVICE);
+        Assert.assertEquals(4, edgeEvents.size());
+        Assert.assertEquals(edgeEvents.get(0).getEdgeEventType(), EdgeEventType.RELATION);
         Assert.assertEquals(edgeEvents.get(1).getEdgeEventType(), EdgeEventType.ASSET);
-        Assert.assertEquals(edgeEvents.get(2).getEdgeEventType(), EdgeEventType.RULE_CHAIN);
+        Assert.assertEquals(edgeEvents.get(2).getEdgeEventType(), EdgeEventType.DEVICE);
+        Assert.assertEquals(edgeEvents.get(3).getEdgeEventType(), EdgeEventType.RULE_CHAIN);
     }
 
     private Edge constructEdge(String name, String type) {
@@ -122,6 +137,5 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
         asset.setType(type);
         return asset;
     }
-
 
 }

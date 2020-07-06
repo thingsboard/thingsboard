@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
@@ -245,8 +246,8 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         }, dbCallbackExecutorService);
     }
 
-    private void processRelation(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        EntityRelation relation = mapper.convertValue(edgeNotificationMsg.getEntityBody(), EntityRelation.class);
+    private void processRelation(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
+        EntityRelation relation = mapper.readValue(edgeNotificationMsg.getEntityBody(), EntityRelation.class);
         if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
                 !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
             List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
