@@ -22,7 +22,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -46,8 +45,6 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
     private Tenant savedTenant;
     private TenantId tenantId;
     private User tenantAdmin;
-
-    private RestTemplate restTemplate;
 
     @Before
     public void beforeTest() throws Exception {
