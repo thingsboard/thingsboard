@@ -77,12 +77,15 @@ public class LwM2MTransportService {
         String lwm2mVersion = registration.getLwM2mVersion();
         LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(endpointId, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
         log.info("cResponse1: [{}]", cResponse);
-       cResponse = doTrigerServer(endpointId, "/1/0/8", null);
-        if (cResponse == null|| cResponse.getCode().getCode() == 500) {
-            doTrigerServer(endpointId, "/3/0/22", null);
-//            cResponse = doTrigerServer(endpointId, "/1/0/8", null);
-        }
+        String target = "/1/0/8";
+       cResponse = doTrigerServer(endpointId, target, null);
         log.info("cResponse2: [{}]", cResponse);
+        if (cResponse == null|| cResponse.getCode().getCode() == 500) {
+            target = "/3/0/5";
+            cResponse = doTrigerServer(endpointId, target, null);
+            log.info("cResponse3: [{}]", cResponse);
+        }
+
         log.info("[{}] [{}] Received endpoint registration version event", endpointId, lwm2mVersion);
     }
 

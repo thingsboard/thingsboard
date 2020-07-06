@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import com.google.gson.JsonSyntaxException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.node.LwM2mNode;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.ExecuteRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
+import org.eclipse.leshan.core.request.exception.InvalidRequestException;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
@@ -28,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.*;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
@@ -100,4 +105,42 @@ public class LwM2MTransportRequest {
         }
         return null;
     }
+
+    @SneakyThrows
+    public LwM2mResponse doPut(String clientEndpoint, String target, String typeOper, String contentFormatParam, String params) {
+        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
+        if (registration != null) {
+            /** Update */
+            if (typeOper.equals(PUT_TYPE_OPER_UPDATE)) {
+                ExecuteRequest request = new ExecuteRequest(target, params);
+                return lwServer.send(registration, request, context.getTimeout());
+            }
+            /** Wright */
+            else if (typeOper.equals(PUT_TYPE_OPER_WRIGHT)) {
+
+            }
+        }
+        return null;
+    }
+
+
+//    private LwM2mNode createLwM2mNode(String target, HttpServletRequest req) throws IOException {
+//        String contentType = StringUtils.substringBefore(req.getContentType(), ";");
+//        if ("application/json".equals(contentType)) {
+//            String content = IOUtils.toString(req.getInputStream(), req.getCharacterEncoding());
+//            LwM2mNode node;
+//            try {
+//                node = gson.fromJson(content, LwM2mNode.class);
+//            } catch (JsonSyntaxException e) {
+//                throw new InvalidRequestException(e, "unable to parse json to tlv:%s", e.getMessage());
+//            }
+//            return node;
+//        } else if ("text/plain".equals(contentType)) {
+//            String content = IOUtils.toString(req.getInputStream(), req.getCharacterEncoding());
+//            int rscId = Integer.valueOf(target.substring(target.lastIndexOf("/") + 1));
+//            return LwM2mSingleResource.newStringResource(rscId, content);
+//        }
+//        throw new InvalidRequestException("content type %s not supported", req.getContentType());
+//    }
+
 }

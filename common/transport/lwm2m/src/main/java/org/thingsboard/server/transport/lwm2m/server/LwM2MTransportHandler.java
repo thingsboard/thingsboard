@@ -44,6 +44,9 @@ public class LwM2MTransportHandler {
     private static final String EVENT_NOTIFICATION = "NOTIFICATION";
     private static final String EVENT_COAP_LOG = "COAPLOG";
     private static final String QUERY_PARAM_ENDPOINT = "ep";
+    private static final String FORMAT_PARAM = "format";
+    private static final String TIMEOUT_PARAM = "timeout";
+    private static final String REPLACE_PARAM = "replace";
 
     /**
      * The default modelFolderPath for reading ObjectModel from resource
@@ -101,6 +104,8 @@ public class LwM2MTransportHandler {
     public static final String GET_TYPE_OPER_READ = "read";
     public static final String GET_TYPE_OPER_DISCOVER = "discover";
     public static final String POST_TYPE_OPER_EXECUTE = "execute";
+    public static final String PUT_TYPE_OPER_UPDATE = "update";
+    public static final String PUT_TYPE_OPER_WRIGHT = "wright";
 
     @Autowired
     private LeshanServer lhServer;
