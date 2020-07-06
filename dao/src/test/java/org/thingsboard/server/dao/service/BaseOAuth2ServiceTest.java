@@ -254,6 +254,12 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testGetEmptyOAuth2Clients() {
+        List<OAuth2ClientInfo> oAuth2Clients = oAuth2Service.getOAuth2Clients("random-domain");
+        Assert.assertTrue(oAuth2Clients.isEmpty());
+    }
+
+    @Test
     public void testGetAllOAuth2ClientsParams() {
         OAuth2ClientsParams tenantClientsParams = validClientsParams();
         OAuth2ClientsParams sysAdminClientsParams = validClientsParams();

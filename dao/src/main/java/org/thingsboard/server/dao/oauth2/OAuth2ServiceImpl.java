@@ -403,16 +403,22 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     private OAuth2ClientsDomainParams getMergedOAuth2ClientsParams(String domainName) {
-        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructAdminSettingsDomainKey(domainName));
-        OAuth2ClientsDomainParams result;
+        OAuth2ClientsDomainParams result = OAuth2ClientsDomainParams.builder()
+                .domainName(domainName)
+                .clientRegistrations(new ArrayList<>())
+                .build();
 
         OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams();
-        OAuth2ClientsDomainParams systemOAuth2ClientsDomainParams = systemOAuth2ClientsParams != null ?
+        OAuth2ClientsDomainParams systemOAuth2ClientsDomainParams = systemOAuth2ClientsParams != null && systemOAuth2ClientsParams.getClientsDomainsParams() != null ?
                 systemOAuth2ClientsParams.getClientsDomainsParams().stream()
                         .filter(oAuth2ClientsDomainParams -> domainName.equals(oAuth2ClientsDomainParams.getDomainName()))
                         .findFirst()
                         .orElse(null)
                 : null;
+
+        result = mergeDomainParams(result, systemOAuth2ClientsDomainParams);
+
+        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructAdminSettingsDomainKey(domainName));
         if (oauth2ClientsSettings != null) {
             String strEntityType = oauth2ClientsSettings.getJsonValue().get("entityType").asText();
             String strEntityId = oauth2ClientsSettings.getJsonValue().get("entityId").asText();
@@ -422,18 +428,31 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 throw new IllegalStateException("Only tenant can configure OAuth2 for certain domain!");
             }
             TenantId tenantId = (TenantId) entityId;
-            result = getTenantOAuth2ClientsParams(tenantId).getClientsDomainsParams().get(0);
-            if (systemOAuth2ClientsDomainParams != null) {
-                ArrayList<OAuth2ClientRegistration> tenantClientRegistrations = new ArrayList<>(result.getClientRegistrations());
-                tenantClientRegistrations.addAll(systemOAuth2ClientsDomainParams.getClientRegistrations());
-                result = result.toBuilder()
-                        .clientRegistrations(tenantClientRegistrations)
-                        .build();
-            }
-        } else {
-            result = systemOAuth2ClientsDomainParams;
+            OAuth2ClientsParams tenantOAuth2ClientsParams = getTenantOAuth2ClientsParams(tenantId);
+            OAuth2ClientsDomainParams tenantDomainsParams = tenantOAuth2ClientsParams != null && tenantOAuth2ClientsParams.getClientsDomainsParams() != null ?
+                    tenantOAuth2ClientsParams.getClientsDomainsParams().stream().findFirst().orElse(null) : null;
+            result = mergeDomainParams(result, tenantDomainsParams);
         }
         return result;
+    }
+
+    private OAuth2ClientsDomainParams mergeDomainParams(OAuth2ClientsDomainParams sourceParams, OAuth2ClientsDomainParams newParams){
+        if (newParams == null) return sourceParams;
+
+        OAuth2ClientsDomainParams.OAuth2ClientsDomainParamsBuilder mergedParamsBuilder = sourceParams.toBuilder();
+
+        if (newParams.getClientRegistrations() != null){
+            List<OAuth2ClientRegistration> mergedClientRegistrations = sourceParams.getClientRegistrations() != null ?
+                    sourceParams.getClientRegistrations() : new ArrayList<>();
+            mergedClientRegistrations.addAll(newParams.getClientRegistrations());
+            mergedParamsBuilder.clientRegistrations(mergedClientRegistrations);
+        }
+
+        if (newParams.getAdminSettingsId() != null){
+            mergedParamsBuilder.adminSettingsId(newParams.getAdminSettingsId());
+        }
+
+        return mergedParamsBuilder.build();
     }
 
     private OAuth2ClientsParams constructOAuth2ClientsParams(String json) {
