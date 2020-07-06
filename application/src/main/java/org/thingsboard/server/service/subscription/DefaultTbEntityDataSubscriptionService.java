@@ -266,16 +266,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), new PageData<>(Collections.emptyList(), 1, 0, false), null);
             wsService.sendWsMsg(ctx.getSessionId(), update);
         } else {
-            ctx.setLastFetchTs(System.currentTimeMillis());
-            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(ctx.getTenantId(), ctx.getCustomerId(),
-                    ctx.getQuery().getPageLink(), ctx.getOrderedEntityIds());
-            alarms = ctx.setAndMergeAlarmsData(alarms);
-            AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), alarms, null);
-            wsService.sendWsMsg(ctx.getSessionId(), update);
-            if (adq.getPageLink().getTimeWindow() > 0) {
-                //TODO: refresh list of entities periodically (similar to time-series subscription).
-                createAlarmSubscriptions(ctx);
-            }
+            ctx.fetchAlarmsAndCreateSubscriptions();
         }
     }
 
@@ -321,7 +312,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private TbAlarmDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
         Map<Integer, TbAbstractDataSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
-        TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, sessionRef, cmd.getCmdId());
+        TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, localSubscriptionService, alarmService, sessionRef, cmd.getCmdId());
         ctx.setQuery(cmd.getQuery());
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
@@ -465,11 +456,6 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private void createTelemetrySubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys) {
         createTelemetrySubscriptions(ctx, keys, true);
-    }
-
-    private void createAlarmSubscriptions(TbAlarmDataSubCtx ctx) {
-        List<TbSubscription> subscriptions = ctx.createSubscriptions();
-        subscriptions.forEach(localSubscriptionService::addSubscription);
     }
 
     private void createTelemetrySubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys, boolean latest) {

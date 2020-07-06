@@ -27,8 +27,10 @@ import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
+import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
 
@@ -45,6 +47,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
 
+    private final TbLocalSubscriptionService localSubscriptionService;
+    private final AlarmService alarmService;
     @Getter
     @Setter
     private final LinkedHashMap<EntityId, EntityData> entitiesMap;
@@ -59,13 +63,30 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     private boolean tooManyEntities;
 
     private Map<Integer, EntityId> subToEntityIdMap;
-    @Setter
-    private long lastFetchTs;
 
-    public TbAlarmDataSubCtx(String serviceId, TelemetryWebSocketService wsService, TelemetryWebSocketSessionRef sessionRef, int cmdId) {
+    public TbAlarmDataSubCtx(String serviceId, TelemetryWebSocketService wsService,
+                             TbLocalSubscriptionService localSubscriptionService,
+                             AlarmService alarmService,
+                             TelemetryWebSocketSessionRef sessionRef, int cmdId) {
         super(serviceId, wsService, sessionRef, cmdId);
+        this.localSubscriptionService = localSubscriptionService;
+        this.alarmService = alarmService;
         this.entitiesMap = new LinkedHashMap<>();
         this.alarmsMap = new HashMap<>();
+    }
+
+    public void fetchAlarmsAndCreateSubscriptions() {
+        PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(),
+                query.getPageLink(), getOrderedEntityIds());
+        alarms = setAndMergeAlarmsData(alarms);
+        AlarmDataUpdate update = new AlarmDataUpdate(cmdId, alarms, null);
+        wsService.sendWsMsg(getSessionId(), update);
+        if (query.getPageLink().getTimeWindow() > 0) {
+            clearSubscriptions();
+            //TODO: refresh list of entities periodically (similar to time-series subscription).
+            List<TbSubscription> subscriptions = createSubscriptions();
+            subscriptions.forEach(localSubscriptionService::addSubscription);
+        }
     }
 
     public void setEntitiesData(PageData<EntityData> entitiesData) {
@@ -99,22 +120,33 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     public List<TbSubscription> createSubscriptions() {
         this.subToEntityIdMap = new HashMap<>();
         AlarmDataPageLink pageLink = query.getPageLink();
+        long startTs = System.currentTimeMillis() - pageLink.getTimeWindow();
         List<TbSubscription> result = new ArrayList<>();
         for (EntityData entityData : entitiesMap.values()) {
             int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
             subToEntityIdMap.put(subIdx, entityData.getEntityId());
             log.trace("[{}][{}][{}] Creating alarms subscription for [{}] with query: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), pageLink);
             result.add(TbAlarmsSubscription.builder()
+                    .type(TbSubscriptionType.ALARMS)
                     .serviceId(serviceId)
                     .sessionId(sessionRef.getSessionId())
                     .subscriptionId(subIdx)
                     .tenantId(sessionRef.getSecurityCtx().getTenantId())
                     .entityId(entityData.getEntityId())
                     .updateConsumer(this::sendWsMsg)
-                    .ts(lastFetchTs)
+                    .ts(startTs)
                     .build());
         }
         return result;
+    }
+
+    public void clearSubscriptions() {
+        if (subToEntityIdMap != null) {
+            for (Integer subId : subToEntityIdMap.keySet()) {
+                localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), subId);
+            }
+            subToEntityIdMap.clear();
+        }
     }
 
     private void sendWsMsg(String sessionId, AlarmSubscriptionUpdate subscriptionUpdate) {
@@ -123,7 +155,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         if (subscriptionUpdate.isAlarmDeleted()) {
             Alarm deleted = alarmsMap.remove(alarmId);
             if (deleted != null) {
-                //TODO: invalidate current page;
+                fetchAlarmsAndCreateSubscriptions();
             }
         } else {
             AlarmData current = alarmsMap.get(alarmId);
@@ -131,14 +163,14 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             boolean matchesFilter = filter(alarm);
             if (onCurrentPage) {
                 if (matchesFilter) {
-                    AlarmData updated = new AlarmData(alarm, current.getName(), current.getEntityId());
+                    AlarmData updated = new AlarmData(alarm, current.getOriginatorName(), current.getEntityId());
                     alarmsMap.put(alarmId, updated);
                     wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated)));
                 } else {
-                    //TODO: invalidate current page;
+                    fetchAlarmsAndCreateSubscriptions();
                 }
             } else if (matchesFilter && query.getPageLink().getPage() == 0) {
-                //TODO: invalidate current page;
+                fetchAlarmsAndCreateSubscriptions();
             }
         }
     }
