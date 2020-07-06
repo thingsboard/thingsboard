@@ -20,10 +20,11 @@ import { SortDirection } from '@angular/material/sort';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Datasource, DatasourceType } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType } from '@shared/models/widget.models';
 import { PageData } from '@shared/models/page/page-data';
 import { isDefined, isEqual } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { AlarmInfo, AlarmSearchStatus, AlarmSeverity } from '../alarm.models';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -31,7 +32,8 @@ export enum EntityKeyType {
   SHARED_ATTRIBUTE = 'SHARED_ATTRIBUTE',
   SERVER_ATTRIBUTE = 'SERVER_ATTRIBUTE',
   TIME_SERIES = 'TIME_SERIES',
-  ENTITY_FIELD = 'ENTITY_FIELD'
+  ENTITY_FIELD = 'ENTITY_FIELD',
+  ALARM_FIELD = 'ALARM_FIELD'
 }
 
 export const entityKeyTypeTranslationMap = new Map<EntityKeyType, string>(
@@ -53,12 +55,37 @@ export function entityKeyTypeToDataKeyType(entityKeyType: EntityKeyType): DataKe
       return DataKeyType.timeseries;
     case EntityKeyType.ENTITY_FIELD:
       return DataKeyType.entityField;
+    case EntityKeyType.ALARM_FIELD:
+      return DataKeyType.alarm;
+  }
+}
+
+export function dataKeyTypeToEntityKeyType(dataKeyType: DataKeyType): EntityKeyType {
+  switch (dataKeyType) {
+    case DataKeyType.timeseries:
+      return EntityKeyType.TIME_SERIES;
+    case DataKeyType.attribute:
+      return EntityKeyType.ATTRIBUTE;
+    case DataKeyType.function:
+      return EntityKeyType.ENTITY_FIELD;
+    case DataKeyType.alarm:
+      return EntityKeyType.ALARM_FIELD;
+    case DataKeyType.entityField:
+      return EntityKeyType.ENTITY_FIELD;
   }
 }
 
 export interface EntityKey {
   type: EntityKeyType;
   key: string;
+}
+
+export function dataKeyToEntityKey(dataKey: DataKey): EntityKey {
+  const entityKey: EntityKey = {
+    key: dataKey.name,
+    type: dataKeyTypeToEntityKeyType(dataKey.type)
+  };
+  return entityKey;
 }
 
 export enum EntityKeyValueType {
@@ -479,6 +506,16 @@ export interface EntityDataPageLink {
   dynamic?: boolean;
 }
 
+export interface AlarmDataPageLink extends EntityDataPageLink {
+  startTs?: number;
+  endTs?: number;
+  timeWindow?: number;
+  typeList?: Array<string>;
+  statusList?: Array<AlarmSearchStatus>;
+  severityList?: Array<AlarmSeverity>;
+  searchPropagatedAlarms?: boolean;
+}
+
 export function entityDataPageLinkSortDirection(pageLink: EntityDataPageLink): SortDirection {
   if (pageLink.sortOrder) {
     return (pageLink.sortOrder.direction + '').toLowerCase() as SortDirection;
@@ -508,11 +545,17 @@ export interface EntityCountQuery {
   entityFilter: EntityFilter;
 }
 
-export interface EntityDataQuery extends EntityCountQuery {
-  pageLink: EntityDataPageLink;
+export interface AbstractDataQuery<T extends EntityDataPageLink> extends EntityCountQuery {
+  pageLink: T;
   entityFields?: Array<EntityKey>;
   latestValues?: Array<EntityKey>;
   keyFilters?: Array<KeyFilter>;
+}
+
+export interface EntityDataQuery extends AbstractDataQuery<EntityDataPageLink> {
+}
+
+export interface AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
 }
 
 export interface TsValue {
@@ -524,6 +567,11 @@ export interface EntityData {
   entityId: EntityId;
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
   timeseries: {[key: string]: Array<TsValue>};
+}
+
+export interface AlarmData extends AlarmInfo {
+  entityId: string;
+  latest: {[entityKeyType: string]: {[key: string]: TsValue}};
 }
 
 export function entityPageDataChanged(prevPageData: PageData<EntityData>, nextPageData: PageData<EntityData>): boolean {

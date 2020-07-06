@@ -29,11 +29,9 @@ import {
 } from '@shared/models/widget.models';
 import { TimeService } from '../services/time.service';
 import { DeviceService } from '../http/device.service';
-import { AlarmService } from '../http/alarm.service';
 import { UtilsService } from '@core/services/utils.service';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
@@ -41,16 +39,20 @@ import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import * as moment_ from 'moment';
 import {
+  AlarmData,
+  AlarmDataPageLink,
   EntityData,
   EntityDataPageLink,
   EntityFilter,
-  Filter, FilterInfo,
+  Filter,
+  FilterInfo,
   Filters,
   KeyFilter
 } from '@shared/models/query/query.models';
 import { EntityDataService } from '@core/api/entity-data.service';
 import { PageData } from '@shared/models/page/page-data';
 import { TranslateService } from '@ngx-translate/core';
+import { AlarmDataService } from '@core/api/alarm-data.service';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -184,9 +186,9 @@ export class WidgetSubscriptionContext {
 
   timeService: TimeService;
   deviceService: DeviceService;
-  alarmService: AlarmService;
   translate: TranslateService;
   entityDataService: EntityDataService;
+  alarmDataService: AlarmDataService;
   utils: UtilsService;
   raf: RafService;
   widgetUtils: IWidgetUtils;
@@ -218,10 +220,6 @@ export interface WidgetSubscriptionOptions {
   type?: widgetType;
   stateData?: boolean;
   alarmSource?: Datasource;
-  alarmSearchStatus?: AlarmSearchStatus;
-  alarmsPollingInterval?: number;
-  alarmsMaxCountLoad?: number;
-  alarmsFetchSize?: number;
   datasources?: Array<Datasource>;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
@@ -269,10 +267,8 @@ export interface IWidgetSubscription {
   timeWindow?: WidgetTimewindow;
   comparisonTimeWindow?: WidgetTimewindow;
 
-  alarms?: Array<AlarmInfo>;
+  alarms?: PageData<AlarmData>;
   alarmSource?: Datasource;
-  alarmSearchStatus?: AlarmSearchStatus;
-  alarmsPollingInterval?: number;
 
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
@@ -308,6 +304,9 @@ export interface IWidgetSubscription {
   subscribeForPaginatedData(datasourceIndex: number,
                             pageLink: EntityDataPageLink,
                             keyFilters: KeyFilter[]): Observable<any>;
+
+  subscribeForAlarms(pageLink: AlarmDataPageLink,
+                     keyFilters: KeyFilter[]): void;
 
   isDataResolved(): boolean;
 

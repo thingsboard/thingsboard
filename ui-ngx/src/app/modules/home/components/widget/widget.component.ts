@@ -94,6 +94,7 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { EntityDataService } from '@core/api/entity-data.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NotificationType } from '@core/notification/notification.models';
+import { AlarmDataService } from '@core/api/alarm-data.service';
 
 @Component({
   selector: 'tb-widget',
@@ -167,9 +168,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private timeService: TimeService,
               private deviceService: DeviceService,
               private entityService: EntityService,
-              private alarmService: AlarmService,
               private dashboardService: DashboardService,
               private entityDataService: EntityDataService,
+              private alarmDataService: AlarmDataService,
               private translate: TranslateService,
               private utils: UtilsService,
               private raf: RafService,
@@ -300,9 +301,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext = new WidgetSubscriptionContext(this.widgetContext.dashboard);
     this.subscriptionContext.timeService = this.timeService;
     this.subscriptionContext.deviceService = this.deviceService;
-    this.subscriptionContext.alarmService = this.alarmService;
     this.subscriptionContext.translate = this.translate;
     this.subscriptionContext.entityDataService = this.entityDataService;
+    this.subscriptionContext.alarmDataService = this.alarmDataService;
     this.subscriptionContext.utils = this.utils;
     this.subscriptionContext.raf = this.raf;
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
@@ -901,14 +902,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       };
       if (this.widget.type === widgetType.alarm) {
         options.alarmSource = deepClone(this.widget.config.alarmSource);
-        options.alarmSearchStatus = isDefined(this.widget.config.alarmSearchStatus) ?
-          this.widget.config.alarmSearchStatus : AlarmSearchStatus.ANY;
-        options.alarmsPollingInterval = isDefined(this.widget.config.alarmsPollingInterval) ?
-          this.widget.config.alarmsPollingInterval * 1000 : 5000;
-        options.alarmsMaxCountLoad = isDefined(this.widget.config.alarmsMaxCountLoad) ?
-          this.widget.config.alarmsMaxCountLoad : 0;
-        options.alarmsFetchSize = isDefined(this.widget.config.alarmsFetchSize) ?
-          this.widget.config.alarmsFetchSize : 100;
       } else {
         options.datasources = deepClone(this.widget.config.datasources);
       }

@@ -103,6 +103,10 @@ export interface AlarmInfo extends Alarm {
   originatorName: string;
 }
 
+export interface AlarmDataInfo extends AlarmInfo {
+  [key: string]: any;
+}
+
 export const simulatedAlarm: AlarmInfo = {
   id: new AlarmId(NULL_UUID),
   tenantId: new TenantId(NULL_UUID),

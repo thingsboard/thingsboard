@@ -40,4 +40,5 @@ public abstract class DataUpdate<T> {
         this(cmdId, null, null, errorCode, errorMsg);
     }
 
+    public abstract DataUpdateType getDataUpdateType();
 }

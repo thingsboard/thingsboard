@@ -16,8 +16,10 @@
 
 import { Inject, Injectable, NgZone } from '@angular/core';
 import {
+  AlarmDataCmd, AlarmDataUnsubscribeCmd,
+  AlarmDataUpdate,
   AttributesSubscriptionCmd, EntityDataCmd, EntityDataUnsubscribeCmd, EntityDataUpdate,
-  GetHistoryCmd, isEntityDataUpdateMsg,
+  GetHistoryCmd, isAlarmDataUpdateMsg, isEntityDataUpdateMsg,
   SubscriptionCmd,
   SubscriptionUpdate,
   SubscriptionUpdateMsg,
@@ -107,6 +109,8 @@ export class TelemetryWebsocketService implements TelemetryService {
           this.cmdsWrapper.historyCmds.push(subscriptionCommand);
         } else if (subscriptionCommand instanceof EntityDataCmd) {
           this.cmdsWrapper.entityDataCmds.push(subscriptionCommand);
+        } else if (subscriptionCommand instanceof AlarmDataCmd) {
+          this.cmdsWrapper.alarmDataCmds.push(subscriptionCommand);
         }
       }
     );
@@ -142,6 +146,10 @@ export class TelemetryWebsocketService implements TelemetryService {
             const entityDataUnsubscribeCmd = new EntityDataUnsubscribeCmd();
             entityDataUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
             this.cmdsWrapper.entityDataUnsubscribeCmds.push(entityDataUnsubscribeCmd);
+          } else if (subscriptionCommand instanceof AlarmDataCmd) {
+            const alarmDataUnsubscribeCmd = new AlarmDataUnsubscribeCmd();
+            alarmDataUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
+            this.cmdsWrapper.alarmDataUnsubscribeCmds.push(alarmDataUnsubscribeCmd);
           }
           const cmdId = subscriptionCommand.cmdId;
           if (cmdId) {
@@ -280,6 +288,11 @@ export class TelemetryWebsocketService implements TelemetryService {
         subscriber = this.subscribersMap.get(message.cmdId);
         if (subscriber) {
           subscriber.onEntityData(new EntityDataUpdate(message));
+        }
+      } else if (isAlarmDataUpdateMsg(message)) {
+        subscriber = this.subscribersMap.get(message.cmdId);
+        if (subscriber) {
+          subscriber.onAlarmData(new AlarmDataUpdate(message));
         }
       } else if (message.subscriptionId) {
         subscriber = this.subscribersMap.get(message.subscriptionId);

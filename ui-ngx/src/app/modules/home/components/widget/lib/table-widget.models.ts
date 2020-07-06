@@ -17,9 +17,10 @@
 import { EntityId } from '@shared/models/id/entity-id';
 import { DataKey, WidgetConfig } from '@shared/models/widget.models';
 import { getDescendantProp, isDefined } from '@core/utils';
-import { alarmFields, AlarmInfo } from '@shared/models/alarm.models';
+import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
 import * as tinycolor_ from 'tinycolor2';
 import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 const tinycolor = tinycolor_;
 
@@ -120,7 +121,15 @@ export function findColumn(searchProperty: string, searchValue: string, columns:
 }
 
 export function findColumnByLabel(label: string, columns: EntityColumn[]): EntityColumn {
-  return findColumn('label', label, columns);
+  let column: EntityColumn;
+  const alarmColumns = columns.filter(c => c.type === DataKeyType.alarm);
+  if (alarmColumns.length) {
+    column = findColumn('name', label, alarmColumns);
+  }
+  if (!column) {
+    column = findColumn('label', label, columns);
+  }
+  return column;
 }
 
 export function findColumnByDef(def: string, columns: EntityColumn[]): EntityColumn {
@@ -160,12 +169,12 @@ export function getEntityValue(entity: any, key: DataKey): any {
   return getDescendantProp(entity, key.label);
 }
 
-export function getAlarmValue(alarm: AlarmInfo, key: EntityColumn) {
+export function getAlarmValue(alarm: AlarmDataInfo, key: EntityColumn) {
   const alarmField = alarmFields[key.name];
   if (alarmField) {
     return getDescendantProp(alarm, alarmField.value);
   } else {
-    return getDescendantProp(alarm, key.name);
+    return getDescendantProp(alarm, key.label);
   }
 }
 

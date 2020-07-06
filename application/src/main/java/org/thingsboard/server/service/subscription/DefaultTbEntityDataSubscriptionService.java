@@ -257,7 +257,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         } else {
             entitiesSortOrder = sortOrder;
         }
-        EntityDataPageLink edpl = new EntityDataPageLink(0, maxEntitiesPerAlarmSubscription, null, entitiesSortOrder);
+        EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
         EntityDataQuery edq = new EntityDataQuery(adq.getEntityFilter(), edpl, adq.getEntityFields(), adq.getLatestValues(), adq.getKeyFilters());
         PageData<EntityData> entitiesData = entityService.findEntityDataByQuery(ctx.getTenantId(), ctx.getCustomerId(), edq);
         List<EntityData> entities = entitiesData.getData();
