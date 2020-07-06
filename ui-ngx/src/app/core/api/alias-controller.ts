@@ -20,7 +20,7 @@ import { Datasource, DatasourceType } from '@app/shared/models/widget.models';
 import { deepClone, isEqual } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
-import { EntityAliases } from '@shared/models/alias.models';
+import { AliasFilterType, EntityAliases, SingleEntityFilter } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import { map, mergeMap } from 'rxjs/operators';
 import {
@@ -282,6 +282,15 @@ export class AliasController implements IAliasController {
             }
           })
         );
+      } else if (newDatasource.entityId && !newDatasource.entityFilter) {
+        newDatasource.entityFilter = {
+          singleEntity: {
+            id: newDatasource.entityId,
+            entityType: newDatasource.entityType,
+          },
+          type: AliasFilterType.singleEntity
+        } as SingleEntityFilter;
+        return of(newDatasource);
       } else {
         newDatasource.aliasName = newDatasource.entityName;
         newDatasource.name = newDatasource.entityName;
