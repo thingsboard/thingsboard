@@ -62,6 +62,41 @@ END;
 $$;
 
 
+CREATE OR REPLACE PROCEDURE drop_all_idx()
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    DROP INDEX IF EXISTS idx_alarm_originator_alarm_type;
+    DROP INDEX IF EXISTS idx_event_type_entity_id;
+    DROP INDEX IF EXISTS idx_relation_to_id;
+    DROP INDEX IF EXISTS idx_relation_from_id;
+    DROP INDEX IF EXISTS idx_device_customer_id;
+    DROP INDEX IF EXISTS idx_device_customer_id_and_type;
+    DROP INDEX IF EXISTS idx_device_type;
+    DROP INDEX IF EXISTS idx_asset_customer_id;
+    DROP INDEX IF EXISTS idx_asset_customer_id_and_type;
+    DROP INDEX IF EXISTS idx_asset_type;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE create_all_idx()
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type ON alarm(originator_id, type, start_ts DESC);
+    CREATE INDEX IF NOT EXISTS idx_event_type_entity_id ON event(tenant_id, event_type, entity_type, entity_id);
+    CREATE INDEX IF NOT EXISTS idx_relation_to_id ON relation(relation_type_group, to_type, to_id);
+    CREATE INDEX IF NOT EXISTS idx_relation_from_id ON relation(relation_type_group, from_type, from_id);
+    CREATE INDEX IF NOT EXISTS idx_device_customer_id ON device(tenant_id, customer_id);
+    CREATE INDEX IF NOT EXISTS idx_device_customer_id_and_type ON device(tenant_id, customer_id, type);
+    CREATE INDEX IF NOT EXISTS idx_device_type ON device(tenant_id, type);
+    CREATE INDEX IF NOT EXISTS idx_asset_customer_id ON asset(tenant_id, customer_id);
+    CREATE INDEX IF NOT EXISTS idx_asset_customer_id_and_type ON asset(tenant_id, customer_id, type);
+    CREATE INDEX IF NOT EXISTS idx_asset_type ON asset(tenant_id, type);
+END;
+$$;
+
+
 -- admin_settings
 CREATE OR REPLACE PROCEDURE update_admin_settings()
     LANGUAGE plpgsql AS
@@ -111,7 +146,6 @@ BEGIN
 
     data_type := get_column_type(table_name, column_originator_id);
     IF data_type = 'character varying' THEN
-        DROP INDEX IF EXISTS idx_alarm_originator_alarm_type;
         PERFORM column_type_to_uuid(table_name, column_originator_id);
         RAISE NOTICE 'Table % column % updated!', table_name, column_originator_id;
     ELSE
@@ -125,7 +159,6 @@ BEGIN
     ELSE
         RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
-    CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type ON alarm(originator_id, type, start_ts DESC);
 END;
 $$;
 
@@ -141,10 +174,6 @@ DECLARE
     column_customer_id varchar := 'customer_id';
     column_tenant_id varchar := 'tenant_id';
 BEGIN
-        DROP INDEX IF EXISTS idx_asset_type;
-        DROP INDEX IF EXISTS idx_asset_customer_id;
-        DROP INDEX IF EXISTS idx_asset_customer_id_and_type;
-
     data_type := get_column_type(table_name, column_id);
     IF data_type = 'character varying' THEN
         ALTER TABLE asset DROP CONSTRAINT asset_pkey;
@@ -174,9 +203,6 @@ BEGIN
     ELSE
         RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
-    CREATE INDEX IF NOT EXISTS idx_asset_type ON asset(tenant_id, type);
-    CREATE INDEX IF NOT EXISTS idx_asset_customer_id ON asset(tenant_id, customer_id);
-    CREATE INDEX IF NOT EXISTS idx_asset_customer_id_and_type ON asset(tenant_id, customer_id, type);
     END;
 $$;
 
@@ -360,10 +386,6 @@ DECLARE
     column_customer_id varchar := 'customer_id';
     column_tenant_id varchar := 'tenant_id';
 BEGIN
-        DROP INDEX IF EXISTS idx_device_type;
-        DROP INDEX IF EXISTS idx_device_customer_id;
-        DROP INDEX IF EXISTS idx_device_customer_id_and_type;
-
     data_type := get_column_type(table_name, column_id);
     IF data_type = 'character varying' THEN
         ALTER TABLE device DROP CONSTRAINT device_pkey;
@@ -393,9 +415,6 @@ BEGIN
     ELSE
         RAISE NOTICE 'Table % column % already updated!', table_name, column_tenant_id;
     END IF;
-    CREATE INDEX IF NOT EXISTS idx_device_customer_id ON device(tenant_id, customer_id);
-    CREATE INDEX IF NOT EXISTS idx_device_customer_id_and_type ON device(tenant_id, customer_id, type);
-    CREATE INDEX IF NOT EXISTS idx_device_type ON device(tenant_id, type);
 END;
 $$;
 
@@ -457,7 +476,6 @@ BEGIN
     END IF;
 
     ALTER TABLE event DROP CONSTRAINT event_unq_key;
-    DROP INDEX idx_event_type_entity_id;
 
     data_type := get_column_type(table_name, column_entity_id);
     IF data_type = 'character varying' THEN
@@ -476,7 +494,6 @@ BEGIN
     END IF;
 
     ALTER TABLE event ADD CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid);
-    CREATE INDEX IF NOT EXISTS idx_event_type_entity_id ON event(tenant_id, event_type, entity_type, entity_id);
 END;
 $$;
 
@@ -492,8 +509,6 @@ DECLARE
     column_to_id varchar := 'to_id';
 BEGIN
     ALTER TABLE relation DROP CONSTRAINT relation_pkey;
-    DROP INDEX idx_relation_to_id;
-    DROP INDEX idx_relation_from_id;
 
     data_type := get_column_type(table_name, column_from_id);
     IF data_type = 'character varying' THEN
@@ -512,8 +527,6 @@ BEGIN
     END IF;
 
     ALTER TABLE relation ADD CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type);
-    CREATE INDEX IF NOT EXISTS idx_relation_to_id ON relation(relation_type_group, to_type, to_id);
-    CREATE INDEX IF NOT EXISTS idx_relation_from_id ON relation(relation_type_group, from_type, from_id);
 END;
 $$;
 
