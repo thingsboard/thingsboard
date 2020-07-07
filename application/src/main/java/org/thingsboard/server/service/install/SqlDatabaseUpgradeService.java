@@ -254,6 +254,14 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
                         conn.createStatement().execute("call drop_all_idx()");
 
+                        log.info("Updating alarm relations...");
+                        conn.createStatement().execute("DELETE from relation WHERE relation_type_group = 'ALARM' AND relation_type <> 'ALARM_ANY';");
+
+                        conn.createStatement().execute("UPDATE relation SET relation_type = 'ANY' WHERE relation_type_group = 'ALARM' AND relation_type = 'ALARM_ANY';");
+                        log.info("Alarm relations updated.");
+
+                        conn.createStatement().execute("VACUUM FULL relation");
+
                         for (String table : tables) {
                             log.info("Updating table {}.", table);
                             Statement statement = conn.createStatement();
@@ -277,12 +285,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         conn.createStatement().execute("DROP PROCEDURE drop_all_idx");
                         conn.createStatement().execute("DROP PROCEDURE create_all_idx");
                         conn.createStatement().execute("DROP FUNCTION column_type_to_uuid");
-
-                        log.info("Updating alarm relations...");
-                        conn.createStatement().execute("DELETE from relation WHERE relation_type_group = 'ALARM' AND relation_type <> 'ALARM_ANY';");
-
-                        conn.createStatement().execute("UPDATE relation SET relation_type = 'ANY' WHERE relation_type_group = 'ALARM' AND relation_type = 'ALARM_ANY';");
-                        log.info("Alarm relations updated.");
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3001000;");
 
