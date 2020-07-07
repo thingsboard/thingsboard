@@ -100,8 +100,9 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
             fetchMoreItems_: function () {
                 if (scope.events.hasNext && !scope.events.pending) {
                     if (scope.entityType && scope.entityId && scope.eventType && scope.tenantId) {
+                        var promise = '';
                         if (scope.eventType !== types.eventType.edgeEvent.value) {
-                            var promise = eventService.getEvents(scope.entityType, scope.entityId,
+                            promise = eventService.getEvents(scope.entityType, scope.entityId,
                                 scope.eventType, scope.tenantId, scope.events.nextPageLink);
                         } else {
                             promise = edgeService.getEdgeEvents(scope.entityId, scope.events.nextPageLink);
