@@ -25,7 +25,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,8 +43,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
-import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**

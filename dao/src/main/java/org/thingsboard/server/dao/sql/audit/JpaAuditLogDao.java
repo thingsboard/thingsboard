@@ -36,9 +36,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
-import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
-
 @Component
 @SqlDao
 public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> implements AuditLogDao {
@@ -73,8 +70,8 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                                 entityId.getEntityType(),
                                 entityId.getId(),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                startTimeToId(pageLink.getStartTime()),
-                                endTimeToId(pageLink.getEndTime()),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
                                 actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -87,8 +84,8 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                                 tenantId,
                                 customerId.getId(),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                startTimeToId(pageLink.getStartTime()),
-                                endTimeToId(pageLink.getEndTime()),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
                                 actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -101,8 +98,8 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                                 tenantId,
                                 userId.getId(),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                startTimeToId(pageLink.getStartTime()),
-                                endTimeToId(pageLink.getEndTime()),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
                                 actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -113,8 +110,8 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                 auditLogRepository.findByTenantId(
                         tenantId,
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        startTimeToId(pageLink.getStartTime()),
-                        endTimeToId(pageLink.getEndTime()),
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
                         actionTypes,
                         DaoUtil.toPageable(pageLink)));
     }

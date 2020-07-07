@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.dao;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -51,24 +49,6 @@ public abstract class DaoUtil {
 
     public static Pageable toPageable(PageLink pageLink, Map<String,String> columnMap) {
         return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), toSort(pageLink.getSortOrder(), columnMap));
-    }
-
-    public static String startTimeToId(Long startTime) {
-        if (startTime != null) {
-            UUID startOf = Uuids.startOf(startTime);
-            return UUIDConverter.fromTimeUUID(startOf);
-        } else {
-            return null;
-        }
-    }
-
-    public static String endTimeToId(Long endTime) {
-        if (endTime != null) {
-            UUID endOf = Uuids.endOf(endTime);
-            return UUIDConverter.fromTimeUUID(endOf);
-        } else {
-            return null;
-        }
     }
 
     public static Sort toSort(SortOrder sortOrder) {

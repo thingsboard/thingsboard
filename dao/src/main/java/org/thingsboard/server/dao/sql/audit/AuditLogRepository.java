@@ -31,8 +31,8 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
 
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
             "a.tenantId = :tenantId " +
-            "AND (:startId IS NULL OR a.id >= :startId) " +
-            "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -43,16 +43,16 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
     Page<AuditLogEntity> findByTenantId(
                                  @Param("tenantId") UUID tenantId,
                                  @Param("textSearch") String textSearch,
-                                 @Param("startId") String startId,
-                                 @Param("endId") String endId,
+                                 @Param("startTime") Long startTime,
+                                 @Param("endTime") Long endTime,
                                  @Param("actionTypes") List<ActionType> actionTypes,
                                  Pageable pageable);
 
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
             "a.tenantId = :tenantId " +
             "AND a.entityType = :entityType AND a.entityId = :entityId " +
-            "AND (:startId IS NULL OR a.id >= :startId) " +
-            "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
             "AND (LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.userName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -63,16 +63,16 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
                                                             @Param("entityType") EntityType entityType,
                                                             @Param("entityId") UUID entityId,
                                                             @Param("textSearch") String textSearch,
-                                                            @Param("startId") String startId,
-                                                            @Param("endId") String endId,
+                                                            @Param("startTime") Long startTime,
+                                                            @Param("endTime") Long endTime,
                                                             @Param("actionTypes") List<ActionType> actionTypes,
                                                             Pageable pageable);
 
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
             "a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND (:startId IS NULL OR a.id >= :startId) " +
-            "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -83,16 +83,16 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
     Page<AuditLogEntity> findAuditLogsByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                               @Param("customerId") UUID customerId,
                                                               @Param("textSearch") String textSearch,
-                                                              @Param("startId") String startId,
-                                                              @Param("endId") String endId,
+                                                              @Param("startTime") Long startTime,
+                                                              @Param("endTime") Long endTime,
                                                               @Param("actionTypes") List<ActionType> actionTypes,
                                                               Pageable pageable);
 
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
             "a.tenantId = :tenantId " +
             "AND a.userId = :userId " +
-            "AND (:startId IS NULL OR a.id >= :startId) " +
-            "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -102,8 +102,8 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
     Page<AuditLogEntity> findAuditLogsByTenantIdAndUserId(@Param("tenantId") UUID tenantId,
                                                           @Param("userId") UUID userId,
                                                           @Param("textSearch") String textSearch,
-                                                          @Param("startId") String startId,
-                                                          @Param("endId") String endId,
+                                                          @Param("startTime") Long startTime,
+                                                          @Param("endTime") Long endTime,
                                                           @Param("actionTypes") List<ActionType> actionTypes,
                                                           Pageable pageable);
 
