@@ -63,10 +63,12 @@ import org.thingsboard.server.service.telemetry.cmd.v1.TelemetryPluginCmd;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.DataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.telemetry.cmd.v2.UnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.exception.UnauthorizedException;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
@@ -214,7 +216,10 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                     cmdsWrapper.getAlarmDataCmds().forEach(cmd -> handleWsAlarmDataCmd(sessionRef, cmd));
                 }
                 if (cmdsWrapper.getEntityDataUnsubscribeCmds() != null) {
-                    cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsEntityDataUnsubscribeCmd(sessionRef, cmd));
+                    cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getAlarmDataUnsubscribeCmds() != null) {
+                    cmdsWrapper.getAlarmDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
                 }
             }
         } catch (IOException e) {
@@ -244,7 +249,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         }
     }
 
-    private void handleWsEntityDataUnsubscribeCmd(TelemetryWebSocketSessionRef sessionRef, EntityDataUnsubscribeCmd cmd) {
+    private void handleWsDataUnsubscribeCmd(TelemetryWebSocketSessionRef sessionRef, UnsubscribeCmd cmd) {
         String sessionId = sessionRef.getSessionId();
         log.debug("[{}] Processing: {}", sessionId, cmd);
 

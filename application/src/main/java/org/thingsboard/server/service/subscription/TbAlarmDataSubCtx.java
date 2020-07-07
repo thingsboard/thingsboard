@@ -30,24 +30,19 @@ import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
-import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
 
-    private final TbLocalSubscriptionService localSubscriptionService;
     private final AlarmService alarmService;
     @Getter
     @Setter
@@ -62,31 +57,22 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     @Setter
     private boolean tooManyEntities;
 
-    private Map<Integer, EntityId> subToEntityIdMap;
-
     public TbAlarmDataSubCtx(String serviceId, TelemetryWebSocketService wsService,
                              TbLocalSubscriptionService localSubscriptionService,
                              AlarmService alarmService,
                              TelemetryWebSocketSessionRef sessionRef, int cmdId) {
-        super(serviceId, wsService, sessionRef, cmdId);
-        this.localSubscriptionService = localSubscriptionService;
+        super(serviceId, wsService, localSubscriptionService, sessionRef, cmdId);
         this.alarmService = alarmService;
         this.entitiesMap = new LinkedHashMap<>();
         this.alarmsMap = new HashMap<>();
     }
 
-    public void fetchAlarmsAndCreateSubscriptions() {
+    public void fetchAlarms() {
         PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(),
                 query.getPageLink(), getOrderedEntityIds());
         alarms = setAndMergeAlarmsData(alarms);
         AlarmDataUpdate update = new AlarmDataUpdate(cmdId, alarms, null);
         wsService.sendWsMsg(getSessionId(), update);
-        if (query.getPageLink().getTimeWindow() > 0) {
-            clearSubscriptions();
-            //TODO: refresh list of entities periodically (similar to time-series subscription).
-            List<TbSubscription> subscriptions = createSubscriptions();
-            subscriptions.forEach(localSubscriptionService::addSubscription);
-        }
     }
 
     public void setEntitiesData(PageData<EntityData> entitiesData) {
@@ -117,16 +103,16 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         return this.alarms;
     }
 
-    public List<TbSubscription> createSubscriptions() {
+    public void createSubscriptions() {
+        clearSubscriptions();
         this.subToEntityIdMap = new HashMap<>();
         AlarmDataPageLink pageLink = query.getPageLink();
         long startTs = System.currentTimeMillis() - pageLink.getTimeWindow();
-        List<TbSubscription> result = new ArrayList<>();
         for (EntityData entityData : entitiesMap.values()) {
             int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
             subToEntityIdMap.put(subIdx, entityData.getEntityId());
             log.trace("[{}][{}][{}] Creating alarms subscription for [{}] with query: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), pageLink);
-            result.add(TbAlarmsSubscription.builder()
+            TbAlarmsSubscription subscription = TbAlarmsSubscription.builder()
                     .type(TbSubscriptionType.ALARMS)
                     .serviceId(serviceId)
                     .sessionId(sessionRef.getSessionId())
@@ -135,17 +121,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                     .entityId(entityData.getEntityId())
                     .updateConsumer(this::sendWsMsg)
                     .ts(startTs)
-                    .build());
-        }
-        return result;
-    }
-
-    public void clearSubscriptions() {
-        if (subToEntityIdMap != null) {
-            for (Integer subId : subToEntityIdMap.keySet()) {
-                localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), subId);
-            }
-            subToEntityIdMap.clear();
+                    .build();
+            localSubscriptionService.addSubscription(subscription);
         }
     }
 
@@ -155,7 +132,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         if (subscriptionUpdate.isAlarmDeleted()) {
             Alarm deleted = alarmsMap.remove(alarmId);
             if (deleted != null) {
-                fetchAlarmsAndCreateSubscriptions();
+                fetchAlarms();
             }
         } else {
             AlarmData current = alarmsMap.get(alarmId);
@@ -167,11 +144,25 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                     alarmsMap.put(alarmId, updated);
                     wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated)));
                 } else {
-                    fetchAlarmsAndCreateSubscriptions();
+                    fetchAlarms();
                 }
             } else if (matchesFilter && query.getPageLink().getPage() == 0) {
-                fetchAlarmsAndCreateSubscriptions();
+                fetchAlarms();
             }
+        }
+    }
+
+    public void cleanupOldAlarms() {
+        long expTime = System.currentTimeMillis() - query.getPageLink().getTimeWindow();
+        boolean shouldRefresh = false;
+        for (AlarmData alarmData : alarms.getData()) {
+            if (alarmData.getCreatedTime() < expTime) {
+                shouldRefresh = true;
+                break;
+            }
+        }
+        if (shouldRefresh) {
+            fetchAlarms();
         }
     }
 

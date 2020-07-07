@@ -52,6 +52,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -111,8 +112,8 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Override
     public <E extends HasName, I extends EntityId> ListenableFuture<List<Void>>
-        logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity,
-                               ActionType actionType, Exception e, Object... additionalInfo) {
+    logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity,
+                    ActionType actionType, Exception e, Object... additionalInfo) {
         if (canLog(entityId.getEntityType(), actionType)) {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
             ActionStatus actionStatus = ActionStatus.SUCCESS;
@@ -123,7 +124,8 @@ public class AuditLogServiceImpl implements AuditLogService {
             } else {
                 try {
                     entityName = entityService.fetchEntityNameAsync(tenantId, entityId).get();
-                } catch (Exception ex) {}
+                } catch (Exception ex) {
+                }
             }
             if (e != null) {
                 actionStatus = ActionStatus.FAILURE;
@@ -152,10 +154,10 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     private <E extends HasName, I extends EntityId> JsonNode constructActionData(I entityId, E entity,
-                                                                                                           ActionType actionType,
-                                                                                                           Object... additionalInfo) {
+                                                                                 ActionType actionType,
+                                                                                 Object... additionalInfo) {
         ObjectNode actionData = objectMapper.createObjectNode();
-        switch(actionType) {
+        switch (actionType) {
             case ADDED:
             case UPDATED:
             case ALARM_ACK:
@@ -202,7 +204,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 scope = extractParameter(String.class, 0, additionalInfo);
                 actionData.put("scope", scope);
                 List<String> keys = extractParameter(List.class, 1, additionalInfo);
-                ArrayNode attrsArrayNode =  actionData.putArray("attributes");
+                ArrayNode attrsArrayNode = actionData.putArray("attributes");
                 if (keys != null) {
                     keys.forEach(attrsArrayNode::add);
                 }
@@ -294,7 +296,9 @@ public class AuditLogServiceImpl implements AuditLogService {
                                          ActionStatus actionStatus,
                                          String actionFailureDetails) {
         AuditLog result = new AuditLog();
-        result.setId(new AuditLogId(Uuids.timeBased()));
+        UUID id = Uuids.timeBased();
+        result.setId(new AuditLogId(id));
+        result.setCreatedTime(id.timestamp());
         result.setTenantId(tenantId);
         result.setEntityId(entityId);
         result.setEntityName(entityName);

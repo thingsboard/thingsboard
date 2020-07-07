@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.persistence.criteria.Predicate;
@@ -51,7 +51,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @Slf4j
 @Component
 @SqlDao
-public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event> implements EventDao {
+public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implements EventDao {
 
     private final UUID systemTenantId = NULL_UUID;
 

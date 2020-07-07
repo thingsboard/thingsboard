@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,6 +33,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -55,6 +57,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
             "AND re.fromType = :affectedEntityType " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+            "AND (:alarmStatuses IS NULL OR a.status in :alarmStatuses) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))",
@@ -68,6 +71,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                     "AND re.fromType = :affectedEntityType " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+                    "AND (:alarmStatuses IS NULL OR a.status in :alarmStatuses) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
                     "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
                     "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))")
@@ -77,6 +81,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("relationType") String relationType,
                                      @Param("startTime") Long startTime,
                                      @Param("endTime") Long endTime,
+                                     @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 

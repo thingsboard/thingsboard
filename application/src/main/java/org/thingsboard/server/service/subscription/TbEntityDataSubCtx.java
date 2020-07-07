@@ -61,13 +61,13 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
     @Getter
     @Setter
     private boolean initialDataSent;
-    private Map<Integer, EntityId> subToEntityIdMap;
-    private volatile ScheduledFuture<?> refreshTask;
     private TimeSeriesCmd curTsCmd;
     private LatestValueCmd latestValueCmd;
 
-    public TbEntityDataSubCtx(String serviceId, TelemetryWebSocketService wsService, TelemetryWebSocketSessionRef sessionRef, int cmdId) {
-        super(serviceId, wsService, sessionRef, cmdId);
+    public TbEntityDataSubCtx(String serviceId, TelemetryWebSocketService wsService,
+                              TbLocalSubscriptionService localSubscriptionService,
+                              TelemetryWebSocketSessionRef sessionRef, int cmdId) {
+        super(serviceId, wsService, localSubscriptionService, sessionRef, cmdId);
     }
 
     public void setData(PageData<EntityData> data) {
@@ -272,28 +272,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
     private EntityData getDataForEntity(EntityId entityId) {
         return data.getData().stream().filter(item -> item.getEntityId().equals(entityId)).findFirst().orElse(null);
     }
-
-    public Collection<Integer> clearSubscriptions() {
-        if (subToEntityIdMap != null) {
-            List<Integer> oldSubIds = new ArrayList<>(subToEntityIdMap.keySet());
-            subToEntityIdMap.clear();
-            return oldSubIds;
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    public void setRefreshTask(ScheduledFuture<?> task) {
-        this.refreshTask = task;
-    }
-
-    public void cancelRefreshTask() {
-        if (this.refreshTask != null) {
-            log.trace("[{}][{}] Canceling old refresh task", sessionRef.getSessionId(), cmdId);
-            this.refreshTask.cancel(true);
-        }
-    }
-
+    
     public TbEntityDataSubCtxUpdateResult update(PageData<EntityData> newData) {
         Map<EntityId, EntityData> oldDataMap;
         if (data != null && !data.getData().isEmpty()) {

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,8 +41,10 @@ import org.thingsboard.server.dao.sql.query.AlarmQueryRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -96,29 +99,24 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query) {
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
-
-        //TODO 3.1: add search by statuses
-//        String searchStatusName;
-//        if (query.getSearchStatus() == null && query.getStatus() == null) {
-//            searchStatusName = AlarmSearchStatus.ANY.name();
-//        } else if (query.getSearchStatus() != null) {
-//            searchStatusName = query.getSearchStatus().name();
-//        } else {
-//            searchStatusName = query.getStatus().name();
-//        }
-//        String relationType = BaseAlarmService.ALARM_RELATION_PREFIX;
-
+        Set<AlarmStatus> statusSet = null;
+        if (query.getSearchStatus() != null) {
+            statusSet = query.getSearchStatus().getStatuses();
+        } else if (query.getStatus() != null){
+            statusSet = Collections.singleton(query.getStatus());
+        }
         return DaoUtil.toPageData(
-            alarmRepository.findAlarms(
-                    tenantId.getId(),
-                    affectedEntity.getId(),
-                    affectedEntity.getEntityType().name(),
-                    AlarmSearchStatus.ANY.name(),
-                    query.getPageLink().getStartTime(),
-                    query.getPageLink().getEndTime(),
-                    Objects.toString(query.getPageLink().getTextSearch(), ""),
-                    DaoUtil.toPageable(query.getPageLink())
-            )
+                alarmRepository.findAlarms(
+                        tenantId.getId(),
+                        affectedEntity.getId(),
+                        affectedEntity.getEntityType().name(),
+                        AlarmSearchStatus.ANY.name(),
+                        query.getPageLink().getStartTime(),
+                        query.getPageLink().getEndTime(),
+                        statusSet,
+                        Objects.toString(query.getPageLink().getTextSearch(), ""),
+                        DaoUtil.toPageable(query.getPageLink())
+                )
         );
     }
 

@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
@@ -55,19 +54,18 @@ import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.GetTsCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.UnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -203,7 +201,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 });
             }
             ctx.setData(data);
-            ctx.cancelRefreshTask();
+            ctx.cancelTasks();
             if (ctx.getQuery().getPageLink().isDynamic()) {
                 //TODO: validate number of dynamic page links against rate limits. Ignore dynamic flag if limit is reached.
                 TbEntityDataSubCtx finalCtx = ctx;
@@ -262,11 +260,20 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         PageData<EntityData> entitiesData = entityService.findEntityDataByQuery(ctx.getTenantId(), ctx.getCustomerId(), edq);
         List<EntityData> entities = entitiesData.getData();
         ctx.setEntitiesData(entitiesData);
+        ctx.cancelTasks();
         if (entities.isEmpty()) {
             AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), new PageData<>(Collections.emptyList(), 1, 0, false), null);
             wsService.sendWsMsg(ctx.getSessionId(), update);
         } else {
-            ctx.fetchAlarmsAndCreateSubscriptions();
+            ctx.fetchAlarms();
+            if (adq.getPageLink().getTimeWindow() > 0) {
+                ctx.createSubscriptions();
+                TbAlarmDataSubCtx finalCtx = ctx;
+                ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
+                        finalCtx::cleanupOldAlarms,
+                        dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+                finalCtx.setRefreshTask(task);
+            }
         }
     }
 
@@ -297,14 +304,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
-    private void clearSubs(TbEntityDataSubCtx ctx) {
-        Collection<Integer> oldSubIds = ctx.clearSubscriptions();
-        oldSubIds.forEach(subId -> localSubscriptionService.cancelSubscription(serviceId, subId));
+    private void clearSubs(TbAbstractDataSubCtx ctx) {
+        ctx.clearSubscriptions();
     }
 
     private TbEntityDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
         Map<Integer, TbAbstractDataSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
-        TbEntityDataSubCtx ctx = new TbEntityDataSubCtx(serviceId, wsService, sessionRef, cmd.getCmdId());
+        TbEntityDataSubCtx ctx = new TbEntityDataSubCtx(serviceId, wsService, localSubscriptionService, sessionRef, cmd.getCmdId());
         ctx.setQuery(cmd.getQuery());
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
@@ -468,13 +474,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     @Override
-    public void cancelSubscription(String sessionId, EntityDataUnsubscribeCmd cmd) {
+    public void cancelSubscription(String sessionId, UnsubscribeCmd cmd) {
         cleanupAndCancel(getSubCtx(sessionId, cmd.getCmdId()));
     }
 
-    private void cleanupAndCancel(TbEntityDataSubCtx ctx) {
+    private void cleanupAndCancel(TbAbstractDataSubCtx ctx) {
         if (ctx != null) {
-            ctx.cancelRefreshTask();
+            ctx.cancelTasks();
             clearSubs(ctx);
         }
     }
