@@ -258,6 +258,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     private void validate(OAuth2ClientsParams oAuth2ClientsParams) {
         validateDomainNames(oAuth2ClientsParams);
+        validateAdminSettingsIds(oAuth2ClientsParams);
 
         toClientRegistrationStream(oAuth2ClientsParams)
                 .forEach(validator);
@@ -278,6 +279,19 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 .anyMatch(domainName -> Collections.frequency(domainNames, domainName) > 1);
         if (duplicateDomainNames) {
             throw new DataValidationException("All domain names should be unique!");
+        }
+    }
+
+    private void validateAdminSettingsIds(OAuth2ClientsParams oAuth2ClientsParams) {
+        List<String> adminSettingsIds = oAuth2ClientsParams.getClientsDomainsParams().stream()
+                .map(OAuth2ClientsDomainParams::getAdminSettingsId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        boolean duplicateAdminSettingsIds = adminSettingsIds.stream()
+                .anyMatch(adminSettingsId -> Collections.frequency(adminSettingsIds, adminSettingsId) > 1);
+        if (duplicateAdminSettingsIds) {
+            throw new DataValidationException("All admin settings ids should be unique!");
         }
     }
 
