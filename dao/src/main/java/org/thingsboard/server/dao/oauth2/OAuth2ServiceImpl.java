@@ -114,7 +114,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         validate(oAuth2ClientsParams);
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
-
         clientRegistrationSaveLock.lock();
         try {
             validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
@@ -190,8 +189,8 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             );
 
             if (existentOAuth2ClientsSettingsById == null) {
-                log.error("Admin setting ID is already set in login white labeling object, but doesn't exist in the database");
-                throw new IllegalStateException("Admin setting ID is already set in login white labeling object, but doesn't exist in the database");
+                log.error("Admin setting ID is already set in OAuth2 Client Params object, but doesn't exist in the database");
+                throw new IllegalStateException("Admin setting ID is already set in OAuth2 Client Params object, but doesn't exist in the database");
             }
 
             if (!existentOAuth2ClientsSettingsById.getKey().equals(selectedDomainSettingsKey)) {
@@ -234,28 +233,27 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     private void validateRegistrationIdUniqueness(OAuth2ClientsParams inputOAuth2ClientsParams, TenantId tenantId) {
-        long distinctRegistrationIds = toClientRegistrationStream(inputOAuth2ClientsParams)
+        List<String> registrationIds = toClientRegistrationStream(inputOAuth2ClientsParams)
                 .map(OAuth2ClientRegistration::getRegistrationId)
-                .distinct()
-                .count();
-        long actualRegistrationIds = toClientRegistrationStream(inputOAuth2ClientsParams).count();
-        if (distinctRegistrationIds != actualRegistrationIds) {
+                .collect(Collectors.toList());
+
+        boolean regIdDuplicates = registrationIds.stream()
+                .anyMatch(registrationId -> Collections.frequency(registrationIds, registrationId) > 1);
+        if (regIdDuplicates) {
             throw new DataValidationException("All registration IDs should be unique!");
         }
 
-        toClientRegistrationStream(inputOAuth2ClientsParams)
-                .map(OAuth2ClientRegistration::getRegistrationId)
-                .forEach(registrationId -> {
-                    getAllOAuth2ClientsParams().forEach((paramsTenantId, oAuth2ClientsParams) -> {
-                        boolean registrationExists = toClientRegistrationStream(oAuth2ClientsParams)
-                                .map(OAuth2ClientRegistration::getRegistrationId)
-                                .anyMatch(registrationId::equals);
-                        if (registrationExists && !tenantId.equals(paramsTenantId)) {
-                            log.error("Current registrationId [{}] already registered in the system!", registrationId);
-                            throw new IncorrectParameterException("Current registrationId [" + registrationId + "] already registered in the system!");
-                        }
-                    });
-                });
+        getAllOAuth2ClientsParams().forEach((paramsTenantId, oAuth2ClientsParams) -> {
+            if (tenantId.equals(paramsTenantId)) return;
+            Set<String> duplicatedRegistrationIds = toClientRegistrationStream(oAuth2ClientsParams)
+                    .map(OAuth2ClientRegistration::getRegistrationId)
+                    .filter(registrationIds::contains)
+                    .collect(Collectors.toSet());
+            if (!duplicatedRegistrationIds.isEmpty()) {
+                log.error("RegistrationIds [{}] are already registered in the system!", duplicatedRegistrationIds);
+                throw new IncorrectParameterException("RegistrationIds [" + duplicatedRegistrationIds + "] are already registered in the system!");
+            }
+        });
     }
 
     private void validate(OAuth2ClientsParams oAuth2ClientsParams) {
@@ -266,19 +264,19 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     private void validateDomainNames(OAuth2ClientsParams oAuth2ClientsParams) {
-        oAuth2ClientsParams.getClientsDomainsParams()
-                .forEach(oAuth2ClientsDomainParams -> {
-                    if (StringUtils.isEmpty(oAuth2ClientsDomainParams.getDomainName())) {
-                        throw new DataValidationException("Domain name should be specified!");
-                    }
-                });
-
-        long distinctDomainNames = oAuth2ClientsParams.getClientsDomainsParams().stream()
+        List<String> domainNames = oAuth2ClientsParams.getClientsDomainsParams().stream()
                 .map(OAuth2ClientsDomainParams::getDomainName)
-                .distinct()
-                .count();
-        long actualDomainNames = oAuth2ClientsParams.getClientsDomainsParams().size();
-        if (distinctDomainNames != actualDomainNames) {
+                .collect(Collectors.toList());
+
+        domainNames.forEach(domainName -> {
+            if (StringUtils.isEmpty(domainName)) {
+                throw new DataValidationException("Domain name should be specified!");
+            }
+        });
+
+        boolean duplicateDomainNames = domainNames.stream()
+                .anyMatch(domainName -> Collections.frequency(domainNames, domainName) > 1);
+        if (duplicateDomainNames) {
             throw new DataValidationException("All domain names should be unique!");
         }
     }
