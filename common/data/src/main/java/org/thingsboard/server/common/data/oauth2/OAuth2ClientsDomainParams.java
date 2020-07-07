@@ -27,7 +27,5 @@ import java.util.List;
 @AllArgsConstructor
 public class OAuth2ClientsDomainParams {
     private String domainName;
-    private String adminSettingsId;
-
     private List<OAuth2ClientRegistration> clientRegistrations;
 }

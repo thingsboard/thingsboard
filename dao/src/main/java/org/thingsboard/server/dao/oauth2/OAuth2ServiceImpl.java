@@ -133,9 +133,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams) {
-        if (oAuth2ClientsParams.getClientsDomainsParams().size() != 1) {
-            throw new DataValidationException("Tenant can configure OAuth2 only for one domain!");
-        }
         validate(oAuth2ClientsParams);
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
@@ -143,9 +140,10 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         try {
             validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
 
-            OAuth2ClientsDomainParams oAuth2ClientsDomainParams = oAuth2ClientsParams.getClientsDomainsParams().get(0);
-            String adminSettingsId = processTenantAdminSettings(tenantId, oAuth2ClientsDomainParams.getDomainName(), oAuth2ClientsDomainParams.getAdminSettingsId());
-            oAuth2ClientsDomainParams.setAdminSettingsId(adminSettingsId);
+            Set<String> domainNames = oAuth2ClientsParams.getClientsDomainsParams().stream()
+                    .map(OAuth2ClientsDomainParams::getDomainName)
+                    .collect(Collectors.toSet());
+            processTenantAdminSettings(tenantId, domainNames);
 
             List<AttributeKvEntry> attributes = createOAuth2ClientsParamsAttributes(oAuth2ClientsParams);
             try {
@@ -170,46 +168,40 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return attributes;
     }
 
-    private String processTenantAdminSettings(TenantId tenantId, String domainName, String prevAdminSettingsId) {
-        String selectedDomainSettingsKey = constructAdminSettingsDomainKey(domainName);
-        AdminSettings existentAdminSettingsByKey = adminSettingsService.findAdminSettingsByKey(tenantId, selectedDomainSettingsKey);
-        if (StringUtils.isEmpty(prevAdminSettingsId)) {
-            if (existentAdminSettingsByKey == null) {
-                AdminSettings tenantAdminSettings = createTenantAdminSettings(tenantId, selectedDomainSettingsKey);
-                existentAdminSettingsByKey = adminSettingsService.saveAdminSettings(tenantId, tenantAdminSettings);
-                return existentAdminSettingsByKey.getId().getId().toString();
-            } else {
+    private void processTenantAdminSettings(TenantId tenantId, Set<String> domainNames) {
+        OAuth2ClientsParams existentClientsParams = getTenantOAuth2ClientsParams(tenantId);
+
+        Set<String> existentDomainNames = existentClientsParams != null && existentClientsParams.getClientsDomainsParams() != null ?
+                existentClientsParams.getClientsDomainsParams().stream()
+                        .map(OAuth2ClientsDomainParams::getDomainName)
+                        .collect(Collectors.toSet())
+                : Collections.emptySet();
+
+        Set<String> domainNamesToAdd = domainNames.stream()
+                .filter(domainName -> !existentDomainNames.contains(domainName))
+                .collect(Collectors.toSet());
+        Set<String> domainNamesToDelete = existentDomainNames.stream()
+                .filter(domainName -> !domainNames.contains(domainName))
+                .collect(Collectors.toSet());
+
+        domainNamesToAdd.forEach(domainName -> {
+            String domainSettingsKey = constructAdminSettingsDomainKey(domainName);
+            if (adminSettingsService.findAdminSettingsByKey(tenantId, domainSettingsKey) != null) {
                 log.error("Current domain name [{}] already registered in the system!", domainName);
                 throw new IncorrectParameterException("Current domain name [" + domainName + "] already registered in the system!");
             }
-        } else {
-            AdminSettings existentOAuth2ClientsSettingsById = adminSettingsService.findAdminSettingsById(
-                    tenantId,
-                    new AdminSettingsId(UUID.fromString(prevAdminSettingsId))
-            );
+        });
 
-            if (existentOAuth2ClientsSettingsById == null) {
-                log.error("Admin setting ID is already set in OAuth2 Client Params object, but doesn't exist in the database");
-                throw new IllegalStateException("Admin setting ID is already set in OAuth2 Client Params object, but doesn't exist in the database");
-            }
+        domainNamesToAdd.forEach(domainName -> {
+            String domainSettingsKey = constructAdminSettingsDomainKey(domainName);
+            AdminSettings tenantAdminSettings = createTenantAdminSettings(tenantId, domainSettingsKey);
+            adminSettingsService.saveAdminSettings(tenantId, tenantAdminSettings);
+        });
 
-            if (!existentOAuth2ClientsSettingsById.getKey().equals(selectedDomainSettingsKey)) {
-                if (existentAdminSettingsByKey == null) {
-                    AdminSettings newOAuth2ClientsSettings = replaceExistentAdminSettings(tenantId, selectedDomainSettingsKey, existentOAuth2ClientsSettingsById.getKey());
-                    return newOAuth2ClientsSettings.getId().getId().toString();
-                } else {
-                    log.error("Current domain name [{}] already registered in the system!", domainName);
-                    throw new IncorrectParameterException("Current domain name [" + domainName + "] already registered in the system!");
-                }
-            }
-            return prevAdminSettingsId;
-        }
-    }
-
-    private AdminSettings replaceExistentAdminSettings(TenantId tenantId, String newKey, String oldKey) {
-        adminSettingsService.deleteAdminSettingsByKey(tenantId, oldKey);
-        AdminSettings tenantAdminSettings = createTenantAdminSettings(tenantId, newKey);
-        return adminSettingsService.saveAdminSettings(tenantId, tenantAdminSettings);
+        domainNamesToDelete.forEach(domainName -> {
+            String domainSettingsKey = constructAdminSettingsDomainKey(domainName);
+            adminSettingsService.deleteAdminSettingsByKey(tenantId, domainSettingsKey);
+        });
     }
 
     private AdminSettings createTenantAdminSettings(TenantId tenantId, String clientRegistrationsKey) {
@@ -258,7 +250,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     private void validate(OAuth2ClientsParams oAuth2ClientsParams) {
         validateDomainNames(oAuth2ClientsParams);
-        validateAdminSettingsIds(oAuth2ClientsParams);
 
         toClientRegistrationStream(oAuth2ClientsParams)
                 .forEach(validator);
@@ -279,19 +270,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 .anyMatch(domainName -> Collections.frequency(domainNames, domainName) > 1);
         if (duplicateDomainNames) {
             throw new DataValidationException("All domain names should be unique!");
-        }
-    }
-
-    private void validateAdminSettingsIds(OAuth2ClientsParams oAuth2ClientsParams) {
-        List<String> adminSettingsIds = oAuth2ClientsParams.getClientsDomainsParams().stream()
-                .map(OAuth2ClientsDomainParams::getAdminSettingsId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        boolean duplicateAdminSettingsIds = adminSettingsIds.stream()
-                .anyMatch(adminSettingsId -> Collections.frequency(adminSettingsIds, adminSettingsId) > 1);
-        if (duplicateAdminSettingsIds) {
-            throw new DataValidationException("All admin settings ids should be unique!");
         }
     }
 
@@ -353,9 +331,10 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     public void deleteTenantOAuth2ClientsParams(TenantId tenantId) {
         OAuth2ClientsParams params = getTenantOAuth2ClientsParams(tenantId);
         if (params == null || params.getClientsDomainsParams() == null) return;
-        OAuth2ClientsDomainParams domainParams = params.getClientsDomainsParams().get(0);
-        String settingsKey = constructAdminSettingsDomainKey(domainParams.getDomainName());
-        adminSettingsService.deleteAdminSettingsByKey(tenantId, settingsKey);
+        params.getClientsDomainsParams().forEach(domainParams -> {
+            String settingsKey = constructAdminSettingsDomainKey(domainParams.getDomainName());
+            adminSettingsService.deleteAdminSettingsByKey(tenantId, settingsKey);
+        });
         attributesService.removeAll(tenantId, tenantId, DataConstants.SERVER_SCOPE, Collections.singletonList(OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
     }
 
@@ -448,20 +427,16 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return result;
     }
 
-    private OAuth2ClientsDomainParams mergeDomainParams(OAuth2ClientsDomainParams sourceParams, OAuth2ClientsDomainParams newParams){
+    private OAuth2ClientsDomainParams mergeDomainParams(OAuth2ClientsDomainParams sourceParams, OAuth2ClientsDomainParams newParams) {
         if (newParams == null) return sourceParams;
 
         OAuth2ClientsDomainParams.OAuth2ClientsDomainParamsBuilder mergedParamsBuilder = sourceParams.toBuilder();
 
-        if (newParams.getClientRegistrations() != null){
+        if (newParams.getClientRegistrations() != null) {
             List<OAuth2ClientRegistration> mergedClientRegistrations = sourceParams.getClientRegistrations() != null ?
                     sourceParams.getClientRegistrations() : new ArrayList<>();
             mergedClientRegistrations.addAll(newParams.getClientRegistrations());
             mergedParamsBuilder.clientRegistrations(mergedClientRegistrations);
-        }
-
-        if (newParams.getAdminSettingsId() != null){
-            mergedParamsBuilder.adminSettingsId(newParams.getAdminSettingsId());
         }
 
         return mergedParamsBuilder.build();

@@ -114,11 +114,6 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, clientsParamsWithDuplicateRegistrationIds());
     }
 
-    @Test(expected = DataValidationException.class)
-    public void testSaveTenantParamsWithMultipleDomains() {
-        oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, validClientsParamsWithMultipleDomains());
-    }
-
     @Test
     public void testSaveSystemParams() {
         OAuth2ClientsParams clientsParams = validClientsParams();
@@ -130,7 +125,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveSystemParamsWithMultipleDomains() {
-        OAuth2ClientsParams clientsParams = validClientsParamsWithMultipleDomains();
+        OAuth2ClientsParams clientsParams = validClientsParamsWithThreeDomains();
         OAuth2ClientsParams savedClientParams = oAuth2Service.saveSystemOAuth2ClientsParams(clientsParams);
 
         Assert.assertNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAuth2Utils.OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
@@ -163,9 +158,79 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(savedClientParams);
 
         OAuth2ClientsDomainParams savedDomainParams = savedClientParams.getClientsDomainsParams().get(0);
-        Assert.assertNotNull(savedDomainParams.getAdminSettingsId());
         Assert.assertEquals(domainParams.getDomainName(), savedDomainParams.getDomainName());
         Assert.assertEquals(domainParams.getClientRegistrations(), savedDomainParams.getClientRegistrations());
+    }
+
+    @Test
+    public void testSaveTenantMultipleParams() {
+        OAuth2ClientsParams clientsParams = validClientsParamsWithThreeDomains();
+
+        clientsParams.getClientsDomainsParams().forEach(oAuth2ClientsDomainParams -> {
+            String domainName = oAuth2ClientsDomainParams.getDomainName();
+            String domainKey = OAuth2Utils.constructAdminSettingsDomainKey(domainName);
+            Assert.assertNull(adminSettingsService.findAdminSettingsByKey(tenantId, domainKey));
+        });
+
+        OAuth2ClientsParams savedClientParams = oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, clientsParams);
+        Assert.assertNotNull(savedClientParams);
+
+        clientsParams.getClientsDomainsParams().forEach(oAuth2ClientsDomainParams -> {
+            String domainName = oAuth2ClientsDomainParams.getDomainName();
+            String domainKey = OAuth2Utils.constructAdminSettingsDomainKey(domainName);
+            Assert.assertNotNull(adminSettingsService.findAdminSettingsByKey(tenantId, domainKey));
+        });
+
+        Assert.assertEquals(clientsParams, savedClientParams);
+    }
+
+    @Test
+    public void testRewriteSameDomainTenantParams() {
+        OAuth2ClientsParams clientsParams = validClientsParamsWithThreeDomains();
+        oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, clientsParams);
+
+        List<OAuth2ClientsDomainParams> clientsDomainsParams = clientsParams.getClientsDomainsParams();
+        OAuth2ClientsParams updatedClientsParams = validClientsParamsWithThreeDomains();
+        String sameDomainName = clientsDomainsParams.get(0).getDomainName();
+        updatedClientsParams.getClientsDomainsParams().get(0).setDomainName(sameDomainName);
+        OAuth2ClientsParams rewrittenClientParams = oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, updatedClientsParams);
+        Assert.assertEquals(updatedClientsParams, rewrittenClientParams);
+
+        clientsParams.getClientsDomainsParams().forEach(oAuth2ClientsDomainParams -> {
+            String domainName = oAuth2ClientsDomainParams.getDomainName();
+            String domainKey = OAuth2Utils.constructAdminSettingsDomainKey(domainName);
+            if (domainName.equals(sameDomainName)) {
+                Assert.assertNotNull(adminSettingsService.findAdminSettingsByKey(tenantId, domainKey));
+            } else {
+                Assert.assertNull(adminSettingsService.findAdminSettingsByKey(tenantId, domainKey));
+            }
+        });
+        updatedClientsParams.getClientsDomainsParams().forEach(oAuth2ClientsDomainParams -> {
+            String domainName = oAuth2ClientsDomainParams.getDomainName();
+            String domainKey = OAuth2Utils.constructAdminSettingsDomainKey(domainName);
+            Assert.assertNotNull(adminSettingsService.findAdminSettingsByKey(tenantId, domainKey));
+        });
+    }
+
+    @Test
+    public void testAddDeleteTenantDomainParams() {
+        OAuth2ClientsParams clientsParams = validClientsParamsWithThreeDomains();
+        oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, clientsParams);
+
+        List<OAuth2ClientsDomainParams> clientsDomainsParams = clientsParams.getClientsDomainsParams();
+        OAuth2ClientsParams updatedClientsParams = validClientsParamsWithThreeDomains();
+        for (int i = 0; i < updatedClientsParams.getClientsDomainsParams().size(); i++) {
+            String domainName = clientsDomainsParams.get(i).getDomainName();
+            updatedClientsParams.getClientsDomainsParams().get(i).setDomainName(domainName);
+        }
+        OAuth2ClientsParams rewrittenClientParams = oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, updatedClientsParams);
+        Assert.assertEquals(updatedClientsParams, rewrittenClientParams);
+
+        clientsParams.getClientsDomainsParams().forEach(oAuth2ClientsDomainParams -> {
+            String domainName = oAuth2ClientsDomainParams.getDomainName();
+            String domainKey = OAuth2Utils.constructAdminSettingsDomainKey(domainName);
+            Assert.assertNotNull(adminSettingsService.findAdminSettingsByKey(tenantId, domainKey));
+        });
     }
 
     @Test
@@ -288,6 +353,9 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         oAuth2Service.saveSystemOAuth2ClientsParams(sysAdminClientsParams);
 
         Assert.assertNotNull(oAuth2Service.getSystemOAuth2ClientsParams().getClientsDomainsParams());
+
+        oAuth2Service.deleteSystemOAuth2ClientsParams();
+        Assert.assertNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAuth2Utils.OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
     }
 
     @Test
@@ -299,6 +367,14 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         oAuth2Service.saveTenantOAuth2ClientsParams(tenantId, tenantClientsParams);
 
         Assert.assertNotNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId).getClientsDomainsParams());
+
+        oAuth2Service.deleteTenantOAuth2ClientsParams(tenantId);
+        Assert.assertNull(oAuth2Service.getTenantOAuth2ClientsParams(tenantId).getClientsDomainsParams());
+        tenantClientsParams.getClientsDomainsParams().forEach(oAuth2ClientsDomainParams -> {
+            String domainName = oAuth2ClientsDomainParams.getDomainName();
+            String domainKey = OAuth2Utils.constructAdminSettingsDomainKey(domainName);
+            Assert.assertNull(adminSettingsService.findAdminSettingsByKey(tenantId, domainKey));
+        });
     }
 
 
@@ -331,7 +407,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 .build();
     }
 
-    private OAuth2ClientsParams validClientsParamsWithMultipleDomains() {
+    private OAuth2ClientsParams validClientsParamsWithThreeDomains() {
         OAuth2ClientRegistration first = validClientRegistration();
         OAuth2ClientRegistration second = validClientRegistration();
         OAuth2ClientRegistration third = validClientRegistration();
