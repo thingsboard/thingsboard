@@ -52,10 +52,14 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     static {
         alarmFieldColumnMap.put("createdTime", ModelConstants.CREATED_TIME_PROPERTY);
         alarmFieldColumnMap.put("ackTs", ModelConstants.ALARM_ACK_TS_PROPERTY);
+        alarmFieldColumnMap.put("ackTime", ModelConstants.ALARM_ACK_TS_PROPERTY);
         alarmFieldColumnMap.put("clearTs", ModelConstants.ALARM_CLEAR_TS_PROPERTY);
+        alarmFieldColumnMap.put("clearTime", ModelConstants.ALARM_CLEAR_TS_PROPERTY);
         alarmFieldColumnMap.put("details", ModelConstants.ADDITIONAL_INFO_PROPERTY);
         alarmFieldColumnMap.put("endTs", ModelConstants.ALARM_END_TS_PROPERTY);
+        alarmFieldColumnMap.put("endTime", ModelConstants.ALARM_END_TS_PROPERTY);
         alarmFieldColumnMap.put("startTs", ModelConstants.ALARM_START_TS_PROPERTY);
+        alarmFieldColumnMap.put("startTime", ModelConstants.ALARM_START_TS_PROPERTY);
         alarmFieldColumnMap.put("status", ModelConstants.ALARM_STATUS_PROPERTY);
         alarmFieldColumnMap.put("type", ModelConstants.ALARM_TYPE_PROPERTY);
         alarmFieldColumnMap.put("severity", ModelConstants.ALARM_SEVERITY_PROPERTY);
