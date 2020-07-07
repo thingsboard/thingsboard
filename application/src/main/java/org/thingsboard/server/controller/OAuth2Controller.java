@@ -40,8 +40,6 @@ import java.util.List;
 @RequestMapping("/api")
 @Slf4j
 public class OAuth2Controller extends BaseController {
-    private static final String REGISTRATION_ID = "registrationId";
-
     @Autowired
     private OAuth2Service oauth2Service;
 
@@ -57,9 +55,9 @@ public class OAuth2Controller extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/oauth2/currentOAuth2Configuration", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/oauth2/config", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public OAuth2ClientsParams getCurrentOAuth2ClientsParams() throws ThingsboardException {
+    public OAuth2ClientsParams getCurrentClientsParams() throws ThingsboardException {
         try {
             Authority authority = getCurrentUser().getAuthority();
             checkOAuth2ConfigPermissions(Operation.READ);
@@ -76,9 +74,9 @@ public class OAuth2Controller extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/oauth2/oAuth2Configuration", method = RequestMethod.POST)
+    @RequestMapping(value = "/oauth2/config", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public OAuth2ClientsParams saveLoginWhiteLabelParams(@RequestBody OAuth2ClientsParams oAuth2ClientsParams) throws ThingsboardException {
+    public OAuth2ClientsParams saveClientParams(@RequestBody OAuth2ClientsParams oAuth2ClientsParams) throws ThingsboardException {
         try {
             Authority authority = getCurrentUser().getAuthority();
             checkOAuth2ConfigPermissions(Operation.WRITE);
@@ -95,7 +93,7 @@ public class OAuth2Controller extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/oauth2/isOAuth2ConfigurationAllowed", method = RequestMethod.GET)
+    @RequestMapping(value = "/oauth2/config/isAllowed", method = RequestMethod.GET)
     @ResponseBody
     public Boolean isOAuth2ConfigurationAllowed() throws ThingsboardException {
         try {
@@ -104,7 +102,6 @@ public class OAuth2Controller extends BaseController {
             throw handleException(e);
         }
     }
-
 
     private void checkOAuth2ConfigPermissions(Operation operation) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION, operation);
