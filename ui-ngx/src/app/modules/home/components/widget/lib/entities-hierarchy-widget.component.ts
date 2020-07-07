@@ -418,6 +418,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     const childrenDatasource = {
       dataKeys: datasource.dataKeys,
       type: DatasourceType.entity,
+      filterId: datasource.filterId,
       entityFilter
     } as HierarchyNodeDatasource;
     const subscriptionOptions: WidgetSubscriptionOptions = {

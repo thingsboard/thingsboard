@@ -219,8 +219,12 @@ export default abstract class LeafletMap {
                 }
             } else {
                 this.map.once('zoomend', () => {
-                    if (!this.options.defaultZoomLevel && this.map.getZoom() > this.options.minZoomLevel) {
-                        this.map.setZoom(this.options.minZoomLevel, { animate: false });
+                    let minZoom = this.options.minZoomLevel;
+                    if (this.options.defaultZoomLevel) {
+                      minZoom = Math.min(minZoom, this.options.defaultZoomLevel);
+                    }
+                    if (this.map.getZoom() > minZoom) {
+                        this.map.setZoom(minZoom, { animate: false });
                     }
                 });
                 if (this.options.useDefaultCenterPosition) {
