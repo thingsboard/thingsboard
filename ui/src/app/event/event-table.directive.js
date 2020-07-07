@@ -22,9 +22,9 @@ import eventTableTemplate from './event-table.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventTableDirective($compile, $templateCache, $rootScope, $stateParams, types, eventService, edgeService) {
+export default function EventTableDirective($compile, $templateCache, $rootScope, types, eventService, edgeService) {
 
-        var linker = function (scope, element, attrs) {
+    var linker = function (scope, element, attrs) {
 
         var template = $templateCache.get(eventTableTemplate);
 
@@ -134,6 +134,7 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
 
         scope.$watch("entityId", function(newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {
+                scope.resetFilter();
                 scope.reload();
             }
         });
@@ -144,7 +145,7 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
             }
         });
 
-        scope.$watch("createdTime", function(newVal, prevVal) {
+        scope.$watch("timewindow", function(newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {
                 scope.reload();
             }
@@ -221,8 +222,7 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
         scope: {
             entityType: '=',
             entityId: '=',
-            tenantId: '=',
-            edge: '=?'
+            tenantId: '='
         }
     };
 }

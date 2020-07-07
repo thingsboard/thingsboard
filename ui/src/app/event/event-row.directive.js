@@ -98,22 +98,27 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             if (!contentType) {
                 contentType = null;
             }
-            if (scope.event.edgeEventType === 'RELATION') {
-                var content = angular.toJson(scope.event.entityBody);
-            } else if (scope.event.edgeEventType === 'RULE_CHAIN_METADATA') {
-                content = ruleChainService.getRuleChainMetaData(scope.event.entityId, {}).then(
-                    function success(info) {
-                        return angular.toJson(info);
-                    }, function fail() {
-                        toast.showError($translate.instant('edge.load-entity-error'));
-                    });
-            } else {
-                content = entityService.getEntity(scope.event.edgeEventType, scope.event.entityId, {}).then(
-                    function success(info) {
-                        return angular.toJson(info);
-                    }, function fail() {
-                        toast.showError($translate.instant('edge.load-entity-error'));
-                    });
+            var content = '';
+            switch(scope.event.edgeEventType) {
+                case 'RELATION':
+                    content = angular.toJson(scope.event.entityBody);
+                    break;
+                case 'RULE_CHAIN_METADATA':
+                    content = ruleChainService.getRuleChainMetaData(scope.event.entityId, {}).then(
+                        function success(info) {
+                            return angular.toJson(info);
+                        }, function fail() {
+                            toast.showError($translate.instant('edge.load-entity-error'));
+                        });
+                    break;
+                default:
+                    content = entityService.getEntity(scope.event.edgeEventType, scope.event.entityId, {}).then(
+                        function success(info) {
+                            return angular.toJson(info);
+                        }, function fail() {
+                            toast.showError($translate.instant('edge.load-entity-error'));
+                        });
+                    break;
             }
             $mdDialog.show({
                 controller: 'EventContentDialogController',
