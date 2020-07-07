@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.stats;
+package org.thingsboard.server.queue.stats;
 
 import io.micrometer.core.instrument.Counter;
 

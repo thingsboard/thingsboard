@@ -559,7 +559,8 @@ public class DefaultTransportService implements TransportService {
         }
         tbCoreMsgProducer.send(tpi,
                 new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
-                        ToCoreMsg.newBuilder().setToDeviceActorMsg(toDeviceActorMsg).build()), callback != null ?
+                        ToCoreMsg.newBuilder().setToDeviceActorMsg(toDeviceActorMsg).build()),
+                callback != null ?
                         new TransportTbQueueCallback(callback) : null);
     }
 

@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.stats;
+package org.thingsboard.server.queue.stats;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.service.metrics.StubCounter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
-public class StatsCounterFactory {
+public class DefaultStatsFactory implements StatsFactory {
+    private static final String TOTAL_MSGS = "totalMsgs";
+    private static final String SUCCESSFUL_MSGS = "successfulMsgs";
+    private static final String FAILED_MSGS = "failedMsgs";
+
     private static final String STATS_NAME_TAG = "statsName";
 
     private static final Counter STUB_COUNTER = new StubCounter();
@@ -33,9 +36,10 @@ public class StatsCounterFactory {
     @Autowired
     private MeterRegistry meterRegistry;
 
-    @Value("${metrics.enabled}")
+    @Value("${metrics.enabled:false}")
     private Boolean metricsEnabled;
 
+    @Override
     public StatsCounter createStatsCounter(String key, String statsName) {
         return new StatsCounter(
                 new AtomicInteger(0),
@@ -44,5 +48,28 @@ public class StatsCounterFactory {
                         : STUB_COUNTER,
                 statsName
         );
+    }
+
+    @Override
+    public MessagesStats createMessagesStats(String key) {
+        StatsCounter totalCounter = createStatsCounter(key, TOTAL_MSGS);
+        StatsCounter successfulCounter = createStatsCounter(key, SUCCESSFUL_MSGS);
+        StatsCounter failedCounter = createStatsCounter(key, FAILED_MSGS);
+        return new DefaultMessagesStats(totalCounter, successfulCounter, failedCounter);
+    }
+
+    private static class StubCounter implements Counter {
+        @Override
+        public void increment(double amount) {}
+
+        @Override
+        public double count() {
+            return 0;
+        }
+
+        @Override
+        public Id getId() {
+            return null;
+        }
     }
 }
