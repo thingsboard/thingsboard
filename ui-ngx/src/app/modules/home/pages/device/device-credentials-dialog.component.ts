@@ -163,6 +163,7 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
           this.translate.instant('device.lwm2m-endpoint', {typeName: id}) + ": " + id
       }
     }).afterClosed().subscribe(
+
       (res) => {
         if (res) {
           this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
