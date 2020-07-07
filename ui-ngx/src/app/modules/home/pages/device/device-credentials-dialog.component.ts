@@ -164,7 +164,9 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
       }
     }).afterClosed().subscribe(
       (res) => {
-        this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length  === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
+        if (res) {
+          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
+        }
       }
     );
   }
