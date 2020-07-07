@@ -26,7 +26,8 @@ import eventRowEdgeEventTemplate from './event-row-edge-event.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, $translate, types, toast, entityService) {
+export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, $translate,
+                                          types, toast, entityService, ruleChainService) {
 
     var linker = function (scope, element, attrs) {
 
@@ -97,27 +98,36 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             if (!contentType) {
                 contentType = null;
             }
-            entityService.getEntity(scope.event.entityType, scope.event.entityId, {}).then(
-                function success(info) {
-                    var content = angular.toJson(info);
-                    $mdDialog.show({
-                        controller: 'EventContentDialogController',
-                        controllerAs: 'vm',
-                        templateUrl: eventErrorDialogTemplate,
-                        locals: {content: content, title: title, contentType: contentType, showingCallback: onShowingCallback},
-                        parent: angular.element($document[0].body),
-                        fullscreen: true,
-                        targetEvent: $event,
-                        multiple: true,
-                        onShowing: function(scope, element) {
-                            onShowingCallback.onShowing(scope, element);
-                        }
+            if (scope.event.edgeEventType === 'RELATION') {
+                var content = angular.toJson(scope.event.entityBody);
+            } else if (scope.event.edgeEventType === 'RULE_CHAIN_METADATA') {
+                content = ruleChainService.getRuleChainMetaData(scope.event.entityId, {}).then(
+                    function success(info) {
+                        return angular.toJson(info);
+                    }, function fail() {
+                        toast.showError($translate.instant('edge.load-entity-error'));
                     });
-                },
-                function fail() {
-                    toast.showError($translate.instant('edge.load-entity-error'));
+            } else {
+                content = entityService.getEntity(scope.event.edgeEventType, scope.event.entityId, {}).then(
+                    function success(info) {
+                        return angular.toJson(info);
+                    }, function fail() {
+                        toast.showError($translate.instant('edge.load-entity-error'));
+                    });
+            }
+            $mdDialog.show({
+                controller: 'EventContentDialogController',
+                controllerAs: 'vm',
+                templateUrl: eventErrorDialogTemplate,
+                locals: {content: content, title: title, contentType: contentType, showingCallback: onShowingCallback},
+                parent: angular.element($document[0].body),
+                fullscreen: true,
+                targetEvent: $event,
+                multiple: true,
+                onShowing: function(scope, element) {
+                    onShowingCallback.onShowing(scope, element);
                 }
-                );
+            });
         }
 
         scope.checkTooltip = function($event) {

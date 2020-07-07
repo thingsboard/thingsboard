@@ -22,30 +22,9 @@ import eventTableTemplate from './event-table.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventTableDirective($compile, $templateCache, $rootScope, types, eventService) {
+export default function EventTableDirective($compile, $templateCache, $rootScope, $stateParams, types, eventService, edgeService) {
 
-    var edgeData = [
-            {
-                "createdTime": 1593592774537,
-                "tenantId": "63746950-bb76-11ea-9f96-69d7782607f7",
-                "edgeId": "85bb84b0-bb78-11ea-8472-c3dbdeb0fd97",
-                "edgeEventAction": "ASSIGNED_TO_EDGE",
-                "entityId": "640055a0-bb76-11ea-9f96-69d7782607f7",
-                "entityType": "DEVICE",
-                "success": true,
-            },
-            {
-                "createdTime": 1593592774538,
-                "tenantId": "63746950-bb76-11ea-9f96-69d7782607f7",
-                "edgeId": "85bb84b0-bb78-11ea-8472-c3dbdeb0fd97",
-                "edgeEventAction": "CREDENTIALS_UPDATED",
-                "entityId": "640055a0-bb76-11ea-9f96-69d7782607f8",
-                "entityType": "DEVICE",
-                "success": false
-            }
-        ]
-
-    var linker = function (scope, element, attrs) {
+        var linker = function (scope, element, attrs) {
 
         var template = $templateCache.get(eventTableTemplate);
 
@@ -119,10 +98,14 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
             },
 
             fetchMoreItems_: function () {
-                if (scope.events.hasNext && !scope.events.pending && scope.eventType !== "EDGE_EVENT") {
+                if (scope.events.hasNext && !scope.events.pending) {
                     if (scope.entityType && scope.entityId && scope.eventType && scope.tenantId) {
-                        var promise = eventService.getEvents(scope.entityType, scope.entityId,
-                            scope.eventType, scope.tenantId, scope.events.nextPageLink);
+                        if (scope.eventType !== "EDGE_EVENT") {
+                            var promise = eventService.getEvents(scope.entityType, scope.entityId,
+                                scope.eventType, scope.tenantId, scope.events.nextPageLink);
+                        } else {
+                            promise = edgeService.getEdgeEvents(scope.entityId, scope.events.nextPageLink);
+                        }
                         if (promise) {
                             scope.events.pending = true;
                             promise.then(
@@ -145,11 +128,6 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                     } else {
                         scope.events.hasNext = false;
                     }
-                }
-                if (scope.eventType === "EDGE_EVENT") {
-                    scope.events.data = edgeData;
-                    scope.events.nextPageLink = false;
-                    scope.events.hasNext = null;
                 }
             }
         };
@@ -243,7 +221,8 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
         scope: {
             entityType: '=',
             entityId: '=',
-            tenantId: '='
+            tenantId: '=',
+            edge: '=?'
         }
     };
 }
