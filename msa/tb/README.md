@@ -8,6 +8,15 @@ This project provides the build for the ThingsBoard single docker images.
 
 ## Running
 
+Before starting Docker container run following command to create a directory for storing data and change its owner to docker container user.
+To be able to change user, **chown** command is used, which requires sudo permissions (command will request password for a sudo access):
+
+`
+$ mkdir -p ~/.mytb-data && sudo chown -R 799:799 ~/.mytb-data
+` 
+
+**NOTE**: replace directory `~/.mytb-data` with directory you're planning to use on container creation. 
+
 In this example `thingsboard/tb` image will be used. You can choose any other images with different databases (see above).
 Execute the following command to run this docker directly:
 
