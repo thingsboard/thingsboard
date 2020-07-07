@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -85,9 +84,6 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     @Autowired
     private CustomerDao customerDao;
-
-    @Autowired
-    private EdgeService edgeService;
 
     @Override
     public User findUserByEmail(TenantId tenantId, String email) {

@@ -1042,11 +1042,14 @@ public final class EdgeGrpcSession implements Closeable {
 
     private EdgeConfiguration constructEdgeConfigProto(Edge edge) throws JsonProcessingException {
         return EdgeConfiguration.newBuilder()
+                .setEdgeIdMSB(edge.getId().getId().getMostSignificantBits())
+                .setEdgeIdLSB(edge.getId().getId().getLeastSignificantBits())
                 .setTenantIdMSB(edge.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(edge.getTenantId().getId().getLeastSignificantBits())
                 .setName(edge.getName())
                 .setRoutingKey(edge.getRoutingKey())
                 .setType(edge.getType())
+                .setCloudType("CE")
                 .build();
     }
 

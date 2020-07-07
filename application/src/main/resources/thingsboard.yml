@@ -591,6 +591,8 @@ edges:
       max_read_records_count: "${EDGES_RPC_STORAGE_MAX_READ_RECORDS_COUNT:50}"
       no_read_records_sleep: "${EDGES_RPC_NO_READ_RECORDS_SLEEP:1000}"
       sleep_between_batches: "${EDGES_RPC_SLEEP_BETWEEN_BATCHES:1000}"
+  state:
+    persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
