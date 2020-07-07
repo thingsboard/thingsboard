@@ -376,6 +376,19 @@ export default angular.module('thingsboard.types', [])
                 entityView: "ENTITY_VIEW",
                 edge: "EDGE"
             },
+            edgeEventType:{
+                dashboard: "DASHBOARD",
+                asset: "ASSET",
+                device: "DEVICE",
+                entityView: "ENTITY_VIEW",
+                alarm: "ALARM",
+                rulechain: "RULE_CHAIN",
+                ruleChainMetaData: "RULE_CHAIN_METADATA",
+                edge: "EDGE",
+                user: "USER",
+                customer: "CUSTOMER",
+                relation: "RELATION"
+            },
             importEntityColumnType: {
                 name: {
                     name: 'import.column-type.name',
