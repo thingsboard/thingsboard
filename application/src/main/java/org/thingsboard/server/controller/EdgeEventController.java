@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
 
 @Slf4j
 @RestController
@@ -58,6 +59,7 @@ public class EdgeEventController extends BaseController {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
             return checkNotNull(edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink));
         } catch (Exception e) {
