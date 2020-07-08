@@ -47,26 +47,28 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a, " +
-            "RelationEntity re " +
-            "WHERE a.tenantId = :tenantId " +
-            "AND (a.originatorId = :affectedEntityId or (a.id = re.toId " +
-            "AND re.relationTypeGroup = 'ALARM' AND re.toType = 'ALARM' " +
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+            "LEFT JOIN RelationEntity re ON a.id = re.toId " +
+            "AND re.relationTypeGroup = 'ALARM' " +
+            "AND re.toType = 'ALARM' " +
             "AND re.fromId = :affectedEntityId " +
-            "AND re.fromType = :affectedEntityType)) " +
+            "AND re.fromType = :affectedEntityType " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND (a.originatorId = :affectedEntityId or re.fromId IS NOT NULL) " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND (:alarmStatuses IS NULL OR a.status in :alarmStatuses) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))",
-            countQuery = "SELECT count(a) FROM AlarmEntity a, " +
-                    "RelationEntity re " +
-                    "WHERE a.tenantId = :tenantId " +
-                    "AND (a.originatorId = :affectedEntityId or (a.id = re.toId " +
-                    "AND re.relationTypeGroup = 'ALARM' AND re.toType = 'ALARM' " +
+            countQuery = "SELECT count(a) FROM AlarmEntity a " +
+                    "LEFT JOIN RelationEntity re ON a.id = re.toId " +
+                    "AND re.relationTypeGroup = 'ALARM' " +
+                    "AND re.toType = 'ALARM' " +
                     "AND re.fromId = :affectedEntityId " +
-                    "AND re.fromType = :affectedEntityType)) " +
+                    "AND re.fromType = :affectedEntityType " +
+                    "WHERE a.tenantId = :tenantId " +
+                    "AND (a.originatorId = :affectedEntityId or re.fromId IS NOT NULL) " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND (:alarmStatuses IS NULL OR a.status in :alarmStatuses) " +

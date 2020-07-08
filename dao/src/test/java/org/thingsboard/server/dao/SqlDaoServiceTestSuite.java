@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        "org.thingsboard.server.dao.service.sql.AlarmServiceSqlTest"
+        "org.thingsboard.server.dao.service.sql.*SqlTest"
 })
 public class SqlDaoServiceTestSuite {
 

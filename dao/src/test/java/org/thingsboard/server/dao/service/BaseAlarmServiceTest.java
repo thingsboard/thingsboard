@@ -268,16 +268,29 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, customerAlarms.getData().size());
         Assert.assertEquals(deviceAlarm, customerAlarms.getData().get(0));
 
+        PageData<AlarmInfo> alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+                .affectedEntityId(tenantDevice.getId())
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(10, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(tenantAlarm, alarms.getData().get(0));
+
     }
 
     @Test
     public void testFindAlarmUsingAlarmDataQuery() throws ExecutionException, InterruptedException {
         AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId parentId2 = new AssetId(Uuids.timeBased());
         AssetId childId = new AssetId(Uuids.timeBased());
 
         EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relation2 = new EntityRelation(parentId2, childId, EntityRelation.CONTAINS_TYPE);
 
         Assert.assertTrue(relationService.saveRelationAsync(tenantId, relation).get());
+        Assert.assertTrue(relationService.saveRelationAsync(tenantId, relation2).get());
 
         long ts = System.currentTimeMillis();
         Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
@@ -292,7 +305,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         AlarmDataPageLink pageLink = new AlarmDataPageLink();
         pageLink.setPage(0);
-        pageLink.setPageSize(1);
+        pageLink.setPageSize(10);
         pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
 
         pageLink.setStartTs(0L);
@@ -308,7 +321,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(created, alarms.getData().get(0));
 
         pageLink.setPage(0);
-        pageLink.setPageSize(1);
+        pageLink.setPageSize(10);
         pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime")));
 
         pageLink.setStartTs(0L);
@@ -320,20 +333,22 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+        Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
-        // Check child relation
+        pageLink.setSearchPropagatedAlarms(true);
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new Alarm(alarms.getData().get(0)));
 
+        // Check child relation
         created.setPropagate(true);
         result = alarmService.createOrUpdateAlarm(created);
         created = result.getAlarm();
 
         // Check child relation
         pageLink.setPage(0);
-        pageLink.setPageSize(1);
+        pageLink.setPageSize(10);
         pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
 
         pageLink.setStartTs(0L);
@@ -349,7 +364,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         // Check parent relation
         pageLink.setPage(0);
-        pageLink.setPageSize(1);
+        pageLink.setPageSize(10);
         pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
 
         pageLink.setStartTs(0L);
@@ -363,8 +378,38 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, alarms.getData().get(0));
 
+        PageData<AlarmInfo> alarmsInfoData = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+                .affectedEntityId(childId)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(10, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarmsInfoData.getData());
+        Assert.assertEquals(1, alarmsInfoData.getData().size());
+        Assert.assertEquals(created, alarmsInfoData.getData().get(0));
+
+        alarmsInfoData = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+                .affectedEntityId(parentId)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(10, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarmsInfoData.getData());
+        Assert.assertEquals(1, alarmsInfoData.getData().size());
+        Assert.assertEquals(created, alarmsInfoData.getData().get(0));
+
+        alarmsInfoData = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+                .affectedEntityId(parentId2)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(10, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarmsInfoData.getData());
+        Assert.assertEquals(1, alarmsInfoData.getData().size());
+        Assert.assertEquals(created, alarmsInfoData.getData().get(0));
+
         pageLink.setPage(0);
-        pageLink.setPageSize(1);
+        pageLink.setPageSize(10);
         pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime")));
 
         pageLink.setStartTs(0L);
@@ -382,7 +427,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         created = alarmService.findAlarmByIdAsync(tenantId, created.getId()).get();
 
         pageLink.setPage(0);
-        pageLink.setPageSize(1);
+        pageLink.setPageSize(10);
         pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
 
         pageLink.setStartTs(0L);

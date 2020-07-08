@@ -74,7 +74,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " WHEN a.originator_type = " + EntityType.CUSTOMER.ordinal() +
             " THEN (select title from customer where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.USER.ordinal() +
-            " THEN (select CONCAT (first_name, ' ', last_name) from tb_user where id = a.originator_id)" +
+            " THEN (select email from tb_user where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.DASHBOARD.ordinal() +
             " THEN (select title from dashboard where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.ASSET.ordinal() +
@@ -101,7 +101,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.propagate_relation_types as propagate_relation_types, " +
             " a.type as type," + SELECT_ORIGINATOR_NAME + ", ";
 
-    public static final String JOIN_RELATIONS = ", relation r";
+    public static final String JOIN_RELATIONS = "left join relation r on r.relation_type_group = 'ALARM' and r.relation_type = 'ANY' and a.id = r.to_id and r.from_id in (:entity_ids)";
 
     @Autowired
     protected NamedParameterJdbcTemplate jdbcTemplate;
@@ -111,6 +111,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
                                                                AlarmDataPageLink pageLink, Collection<EntityId> orderedEntityIds) {
         QueryContext ctx = new QueryContext();
+        ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
 
         StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
         StringBuilder fromPart = new StringBuilder(" from alarm a ");
@@ -118,22 +119,20 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         StringBuilder sortPart = new StringBuilder(" order by ");
         boolean addAnd = false;
         if (pageLink.isSearchPropagatedAlarms()) {
-            selectPart.append(" r.from_id as entity_id ");
+            selectPart.append(" CASE WHEN r.from_id IS NULL THEN a.originator_id ELSE r.from_id END as entity_id ");
             fromPart.append(JOIN_RELATIONS);
             wherePart.append(buildPermissionsQuery(tenantId, customerId, ctx));
             addAnd = true;
         } else {
             selectPart.append(" a.originator_id as entity_id ");
-            //No need to check permissions if we select by originator.
         }
         EntityDataSortOrder sortOrder = pageLink.getSortOrder();
         if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
             String sortOrderKey = sortOrder.getKey().getKey();
             sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
                     .append(" ").append(sortOrder.getDirection().name());
-            ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             if (pageLink.isSearchPropagatedAlarms()) {
-                wherePart.append(" and (a.originator_id in (:entity_ids) or (r.relation_type_group = 'ALARM' and r.relation_type = 'ALARM_ANY' and a.id = r.to_id and r.from_id in (:entity_ids)))");
+                wherePart.append(" and (a.originator_id in (:entity_ids) or r.from_id IS NOT NULL)");
             } else {
                 addAndIfNeeded(wherePart, addAnd);
                 addAnd = true;
@@ -154,7 +153,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
             fromPart.append(" as e(id, priority)) e ");
             if (pageLink.isSearchPropagatedAlarms()) {
-                fromPart.append("on r.from_id = e.id");
+                fromPart.append("on (r.from_id IS NULL and a.originator_id = e.id) or (r.from_id IS NOT NULL and r.from_id = e.id)");
             } else {
                 fromPart.append("on a.originator_id = e.id");
             }
@@ -219,12 +218,6 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
         }
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
-        log.error(dataQuery);
-        log.error("PARAMS:");
-        for (String param : ctx.getParameterNames()) {
-            log.error("PARAM: {}, VALUE: {}", param, ctx.getValue(param));
-        }
-
         return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
     }
 

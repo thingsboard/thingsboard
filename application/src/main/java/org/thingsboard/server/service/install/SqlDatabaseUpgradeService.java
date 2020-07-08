@@ -256,6 +256,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
                         log.info("Optimizing alarm relations...");
                         conn.createStatement().execute("DELETE from relation WHERE relation_type_group = 'ALARM' AND relation_type <> 'ALARM_ANY';");
+                        conn.createStatement().execute("DELETE from relation WHERE relation_type_group = 'ALARM' AND relation_type = 'ALARM_ANY' " +
+                                "AND exists(SELECT * FROM alarm WHERE alarm.id = relation.to_id AND alarm.originator_id = relation.from_id)");
                         log.info("Alarm relations optimized.");
 
                         for (String table : tables) {
