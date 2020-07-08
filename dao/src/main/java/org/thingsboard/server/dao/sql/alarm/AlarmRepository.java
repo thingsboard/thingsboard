@@ -50,11 +50,10 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
     @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a, " +
             "RelationEntity re " +
             "WHERE a.tenantId = :tenantId " +
-            "AND a.id = re.toId AND re.toType = 'ALARM' " +
-            "AND re.relationTypeGroup = 'ALARM' " +
-            "AND re.relationType = :relationType " +
+            "AND (a.originatorId = :affectedEntityId or (a.id = re.toId " +
+            "AND re.relationTypeGroup = 'ALARM' AND re.toType = 'ALARM' " +
             "AND re.fromId = :affectedEntityId " +
-            "AND re.fromType = :affectedEntityType " +
+            "AND re.fromType = :affectedEntityType)) " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND (:alarmStatuses IS NULL OR a.status in :alarmStatuses) " +
@@ -64,11 +63,10 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
             countQuery = "SELECT count(a) FROM AlarmEntity a, " +
                     "RelationEntity re " +
                     "WHERE a.tenantId = :tenantId " +
-                    "AND a.id = re.toId AND re.toType = 'ALARM' " +
-                    "AND re.relationTypeGroup = 'ALARM' " +
-                    "AND re.relationType = :relationType " +
+                    "AND (a.originatorId = :affectedEntityId or (a.id = re.toId " +
+                    "AND re.relationTypeGroup = 'ALARM' AND re.toType = 'ALARM' " +
                     "AND re.fromId = :affectedEntityId " +
-                    "AND re.fromType = :affectedEntityType " +
+                    "AND re.fromType = :affectedEntityType)) " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND (:alarmStatuses IS NULL OR a.status in :alarmStatuses) " +
@@ -78,12 +76,10 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
     Page<AlarmInfoEntity> findAlarms(@Param("tenantId") UUID tenantId,
                                      @Param("affectedEntityId") UUID affectedEntityId,
                                      @Param("affectedEntityType") String affectedEntityType,
-                                     @Param("relationType") String relationType,
                                      @Param("startTime") Long startTime,
                                      @Param("endTime") Long endTime,
                                      @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
-
 
 }

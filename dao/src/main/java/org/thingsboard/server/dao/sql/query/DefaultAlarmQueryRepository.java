@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -101,7 +101,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.propagate_relation_types as propagate_relation_types, " +
             " a.type as type," + SELECT_ORIGINATOR_NAME + ", ";
 
-    public static final String JOIN_RELATIONS = "left join relation r on r.relation_type_group = 'ALARM' and r.relation_type = 'ALARM_ANY' and a.id = r.to_id";
+    public static final String JOIN_RELATIONS = ", relation r";
 
     @Autowired
     protected NamedParameterJdbcTemplate jdbcTemplate;
@@ -133,7 +133,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                     .append(" ").append(sortOrder.getDirection().name());
             ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             if (pageLink.isSearchPropagatedAlarms()) {
-                fromPart.append(" and r.from_id in (:entity_ids)");
+                wherePart.append(" and (a.originator_id in (:entity_ids) or (r.relation_type_group = 'ALARM' and r.relation_type = 'ALARM_ANY' and a.id = r.to_id and r.from_id in (:entity_ids)))");
             } else {
                 addAndIfNeeded(wherePart, addAnd);
                 addAnd = true;
@@ -219,6 +219,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
         }
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
+        log.error(dataQuery);
+        log.error("PARAMS:");
+        for (String param : ctx.getParameterNames()) {
+            log.error("PARAM: {}, VALUE: {}", param, ctx.getValue(param));
+        }
+
         return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
     }
 

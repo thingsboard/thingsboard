@@ -343,6 +343,9 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
         alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), pageLink, Collections.singletonList(childId));
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
 
         // Check parent relation
         pageLink.setPage(0);
@@ -435,10 +438,10 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(created, alarms.getData().get(0));
 
         List<EntityRelation> toAlarmRelations = relationService.findByTo(tenantId, created.getId(), RelationTypeGroup.ALARM);
-        Assert.assertEquals(2, toAlarmRelations.size());
+        Assert.assertEquals(1, toAlarmRelations.size());
 
         List<EntityRelation> fromChildRelations = relationService.findByFrom(tenantId, childId, RelationTypeGroup.ALARM);
-        Assert.assertEquals(1, fromChildRelations.size());
+        Assert.assertEquals(0, fromChildRelations.size());
 
         List<EntityRelation> fromParentRelations = relationService.findByFrom(tenantId, parentId, RelationTypeGroup.ALARM);
         Assert.assertEquals(1, fromParentRelations.size());

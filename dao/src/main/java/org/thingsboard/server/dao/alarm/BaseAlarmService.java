@@ -176,7 +176,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             propagatedEntitiesList = Collections.singletonList(alarm.getOriginator());
         }
-        createAlarmRelation(alarm.getTenantId(), alarm.getOriginator(), alarm.getId());
         return propagatedEntitiesList;
     }
 

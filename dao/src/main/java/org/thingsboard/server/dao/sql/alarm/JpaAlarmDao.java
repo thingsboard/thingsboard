@@ -110,7 +110,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                         tenantId.getId(),
                         affectedEntity.getId(),
                         affectedEntity.getEntityType().name(),
-                        AlarmSearchStatus.ANY.name(),
                         query.getPageLink().getStartTime(),
                         query.getPageLink().getEndTime(),
                         statusSet,
