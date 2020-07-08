@@ -23,7 +23,7 @@ import org.thingsboard.server.queue.TbQueueHandler;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
-import org.thingsboard.server.queue.stats.MessagesStats;
+import org.thingsboard.server.common.msg.stats.MessagesStats;
 
 import java.util.List;
 import java.util.UUID;

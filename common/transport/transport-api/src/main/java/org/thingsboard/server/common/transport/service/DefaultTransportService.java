@@ -55,9 +55,9 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
-import org.thingsboard.server.queue.stats.MessagesStats;
-import org.thingsboard.server.queue.stats.StatsFactory;
-import org.thingsboard.server.queue.stats.StatsType;
+import org.thingsboard.server.common.msg.stats.MessagesStats;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
+import org.thingsboard.server.common.msg.stats.StatsType;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

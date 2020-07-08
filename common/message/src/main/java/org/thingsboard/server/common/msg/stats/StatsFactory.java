@@ -13,25 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.stats;
+package org.thingsboard.server.common.msg.stats;
 
-public interface MessagesStats {
-    default void incrementTotal() {
-        incrementTotal(1);
-    }
+public interface StatsFactory {
+    StatsCounter createStatsCounter(String key, String statsName);
 
-    void incrementTotal(int amount);
-
-    default void incrementSuccessful() {
-        incrementSuccessful(1);
-    }
-
-    void incrementSuccessful(int amount);
-
-
-    default void incrementFailed() {
-        incrementFailed(1);
-    }
-
-    void incrementFailed(int amount);
+    MessagesStats createMessagesStats(String key);
 }

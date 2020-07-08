@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.stats;
-
-import org.thingsboard.server.queue.stats.MessagesStats;
-import org.thingsboard.server.queue.stats.StatsCounter;
+package org.thingsboard.server.common.msg.stats;
 
 public class DefaultMessagesStats implements MessagesStats {
     private final StatsCounter totalCounter;

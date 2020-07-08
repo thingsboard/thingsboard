@@ -18,9 +18,9 @@ package org.thingsboard.server.service.stats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.JsInvokeStats;
-import org.thingsboard.server.queue.stats.StatsCounter;
-import org.thingsboard.server.queue.stats.StatsFactory;
-import org.thingsboard.server.queue.stats.StatsType;
+import org.thingsboard.server.common.msg.stats.StatsCounter;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
+import org.thingsboard.server.common.msg.stats.StatsType;
 
 import javax.annotation.PostConstruct;
 

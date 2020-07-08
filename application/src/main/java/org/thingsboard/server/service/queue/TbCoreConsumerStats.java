@@ -17,9 +17,9 @@ package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.stats.StatsCounter;
-import org.thingsboard.server.queue.stats.StatsFactory;
-import org.thingsboard.server.queue.stats.StatsType;
+import org.thingsboard.server.common.msg.stats.StatsCounter;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
+import org.thingsboard.server.common.msg.stats.StatsType;
 
 import java.util.*;
 

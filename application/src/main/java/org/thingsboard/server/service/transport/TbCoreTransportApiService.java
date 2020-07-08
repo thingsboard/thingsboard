@@ -20,6 +20,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.msg.stats.MessagesStats;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
+import org.thingsboard.server.common.msg.stats.StatsType;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
@@ -28,7 +31,6 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
-import org.thingsboard.server.queue.stats.*;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;

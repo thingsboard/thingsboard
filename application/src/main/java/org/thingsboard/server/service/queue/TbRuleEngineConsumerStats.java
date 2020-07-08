@@ -20,10 +20,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.stats.StatsFactory;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
-import org.thingsboard.server.queue.stats.StatsCounter;
-import org.thingsboard.server.queue.stats.StatsType;
+import org.thingsboard.server.common.msg.stats.StatsCounter;
+import org.thingsboard.server.common.msg.stats.StatsType;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
