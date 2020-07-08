@@ -30,10 +30,12 @@ import { EntityViewService } from '@core/http/entity-view.service';
 import { CustomerService } from '@core/http/customer.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { UserService } from '@core/http/user.service';
+import { AlarmService } from '@core/http/alarm.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
    ['deviceService', DeviceService],
+   ['alarmService', AlarmService],
    ['assetService', AssetService],
    ['entityViewService', EntityViewService],
    ['customerService', CustomerService],
