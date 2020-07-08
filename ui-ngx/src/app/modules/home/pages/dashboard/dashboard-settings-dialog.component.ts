@@ -78,6 +78,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
         titleColor: [isUndefined(this.settings.titleColor) ? 'rgba(0,0,0,0.870588)' : this.settings.titleColor, []],
         showDashboardsSelect: [isUndefined(this.settings.showDashboardsSelect) ? true : this.settings.showDashboardsSelect, []],
         showEntitiesSelect: [isUndefined(this.settings.showEntitiesSelect) ? true : this.settings.showEntitiesSelect, []],
+        showFilters: [isUndefined(this.settings.showFilters) ? true : this.settings.showFilters, []],
         showDashboardTimewindow: [isUndefined(this.settings.showDashboardTimewindow) ? true : this.settings.showDashboardTimewindow, []],
         showDashboardExport: [isUndefined(this.settings.showDashboardExport) ? true : this.settings.showDashboardExport, []]
       });

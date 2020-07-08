@@ -18,12 +18,12 @@ package org.thingsboard.server.service.subscription;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -52,7 +53,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -124,7 +126,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
 
     @Override
     public void addSubscription(TbSubscription subscription, TbCallback callback) {
-        log.trace("[{}][{}][{}] Registering remote subscription for entity [{}]",
+        log.trace("[{}][{}][{}] Registering subscription for entity [{}]",
                 subscription.getServiceId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, subscription.getTenantId(), subscription.getEntityId());
         if (currentPartitions.contains(tpi)) {
@@ -145,6 +147,9 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     break;
                 case ATTRIBUTES:
                     handleNewAttributeSubscription((TbAttributeSubscription) subscription);
+                    break;
+                case ALARMS:
+                    handleNewAlarmsSubscription((TbAlarmsSubscription) subscription);
                     break;
             }
         }
@@ -192,7 +197,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
 
     @Override
     public void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbCallback callback) {
-        onLocalSubUpdate(entityId,
+        onLocalTelemetrySubUpdate(entityId,
                 s -> {
                     if (TbSubscriptionType.TIMESERIES.equals(s.getType())) {
                         return (TbTimeseriesSubscription) s;
@@ -216,7 +221,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
 
     @Override
     public void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbCallback callback) {
-        onLocalSubUpdate(entityId,
+        onLocalTelemetrySubUpdate(entityId,
                 s -> {
                     if (TbSubscriptionType.ATTRIBUTES.equals(s.getType())) {
                         return (TbAttributeSubscription) s;
@@ -253,21 +258,104 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
         callback.onSuccess();
     }
 
-    private <T extends TbSubscription> void onLocalSubUpdate(EntityId entityId,
-                                                             Function<TbSubscription, T> castFunction,
-                                                             Predicate<T> filterFunction,
-                                                             Function<T, List<TsKvEntry>> processFunction) {
+    @Override
+    public void onAlarmUpdate(TenantId tenantId, EntityId entityId, Alarm alarm, TbCallback callback) {
+        onLocalAlarmSubUpdate(entityId,
+                s -> {
+                    if (TbSubscriptionType.ALARMS.equals(s.getType())) {
+                        return (TbAlarmsSubscription) s;
+                    } else {
+                        return null;
+                    }
+                },
+                s -> alarm.getCreatedTime() >= s.getTs(),
+                s -> alarm,
+                false
+        );
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onAlarmDeleted(TenantId tenantId, EntityId entityId, Alarm alarm, TbCallback callback) {
+        onLocalAlarmSubUpdate(entityId,
+                s -> {
+                    if (TbSubscriptionType.ALARMS.equals(s.getType())) {
+                        return (TbAlarmsSubscription) s;
+                    } else {
+                        return null;
+                    }
+                },
+                s -> alarm.getCreatedTime() >= s.getTs(),
+                s -> alarm,
+                true
+        );
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, TbCallback callback) {
+        onLocalTelemetrySubUpdate(entityId,
+                s -> {
+                    if (TbSubscriptionType.ATTRIBUTES.equals(s.getType())) {
+                        return (TbAttributeSubscription) s;
+                    } else {
+                        return null;
+                    }
+                },
+                s -> (TbAttributeSubscriptionScope.ANY_SCOPE.equals(s.getScope()) || scope.equals(s.getScope().name())),
+                s -> {
+                    List<TsKvEntry> subscriptionUpdate = null;
+                    for (String key : keys) {
+                        if (s.isAllKeys() || s.getKeyStates().containsKey(key)) {
+                            if (subscriptionUpdate == null) {
+                                subscriptionUpdate = new ArrayList<>();
+                            }
+                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, null)));
+                        }
+                    }
+                    return subscriptionUpdate;
+                });
+        callback.onSuccess();
+    }
+
+    private <T extends TbSubscription> void onLocalTelemetrySubUpdate(EntityId entityId,
+                                                                      Function<TbSubscription, T> castFunction,
+                                                                      Predicate<T> filterFunction,
+                                                                      Function<T, List<TsKvEntry>> processFunction) {
         Set<TbSubscription> entitySubscriptions = subscriptionsByEntityId.get(entityId);
         if (entitySubscriptions != null) {
             entitySubscriptions.stream().map(castFunction).filter(Objects::nonNull).filter(filterFunction).forEach(s -> {
                 List<TsKvEntry> subscriptionUpdate = processFunction.apply(s);
                 if (subscriptionUpdate != null && !subscriptionUpdate.isEmpty()) {
                     if (serviceId.equals(s.getServiceId())) {
-                        SubscriptionUpdate update = new SubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
+                        TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
                         localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                     } else {
                         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
                         toCoreNotificationsProducer.send(tpi, toProto(s, subscriptionUpdate), null);
+                    }
+                }
+            });
+        } else {
+            log.debug("[{}] No device subscriptions to process!", entityId);
+        }
+    }
+
+    private void onLocalAlarmSubUpdate(EntityId entityId,
+                                       Function<TbSubscription, TbAlarmsSubscription> castFunction,
+                                       Predicate<TbAlarmsSubscription> filterFunction,
+                                       Function<TbAlarmsSubscription, Alarm> processFunction, boolean deleted) {
+        Set<TbSubscription> entitySubscriptions = subscriptionsByEntityId.get(entityId);
+        if (entitySubscriptions != null) {
+            entitySubscriptions.stream().map(castFunction).filter(Objects::nonNull).filter(filterFunction).forEach(s -> {
+                Alarm alarm = processFunction.apply(s);
+                if (alarm != null) {
+                    if (serviceId.equals(s.getServiceId())) {
+                        AlarmSubscriptionUpdate update = new AlarmSubscriptionUpdate(s.getSubscriptionId(), alarm, deleted);
+                        localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
+                    } else {
+                        TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
+                        toCoreNotificationsProducer.send(tpi, toProto(s, alarm), null);
                     }
                 }
             });
@@ -317,6 +405,12 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     }
                 },
                 e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);
+    }
+
+    private void handleNewAlarmsSubscription(TbAlarmsSubscription subscription) {
+        log.trace("[{}][{}][{}] Processing remote alarm subscription for entity [{}]",
+                serviceId, subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
+        //TODO: @dlandiak search all new alarms for this entity.
     }
 
     private void handleNewTelemetrySubscription(TbTimeseriesSubscription subscription) {
@@ -375,6 +469,21 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                 LocalSubscriptionServiceMsgProto.newBuilder().setSubUpdate(builder.build()).build())
                 .build();
         return new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg);
+    }
+
+    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, Alarm alarm) {
+        TbSubscriptionUpdateProto.Builder builder = TbSubscriptionUpdateProto.newBuilder();
+
+        builder.setSessionId(subscription.getSessionId());
+        builder.setSubscriptionId(subscription.getSubscriptionId());
+
+        //TODO 3.1
+        throw new RuntimeException("Not implemented!");
+//
+//        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(
+//                LocalSubscriptionServiceMsgProto.newBuilder().setSubUpdate(builder.build()).build())
+//                .build();
+//        return new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg);
     }
 
 }

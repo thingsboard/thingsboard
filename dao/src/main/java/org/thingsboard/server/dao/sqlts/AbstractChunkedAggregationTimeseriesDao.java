@@ -152,7 +152,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 query.getEndTs(),
                 PageRequest.of(0, query.getLimit(),
                         Sort.by(Sort.Direction.fromString(
-                                query.getOrderBy()), "ts")));
+                                query.getOrder()), "ts")));
         tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
     }

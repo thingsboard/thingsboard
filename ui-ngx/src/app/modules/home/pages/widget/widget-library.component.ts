@@ -90,6 +90,7 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
       }
     } as IStateController;
     },
+    {},
     {});
 
   @ViewChild('dashboard', {static: true}) dashboard: IDashboardComponent;

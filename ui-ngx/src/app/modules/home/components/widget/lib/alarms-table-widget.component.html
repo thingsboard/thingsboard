@@ -62,7 +62,7 @@
     </mat-toolbar>
     <div fxFlex class="table-container">
       <table mat-table [dataSource]="alarmsDatasource"
-                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
             <mat-checkbox (change)="$event ? alarmsDatasource.masterToggle() : null"
@@ -125,9 +125,12 @@
                  *matRowDef="let alarm; columns: displayedColumns;"
                  (click)="onRowClick($event, alarm)"></mat-row>
       </table>
-      <span [fxShow]="alarmsDatasource.isEmpty() | async"
+      <span [fxShow]="(alarmsDatasource.isEmpty() | async) && !alarmsDatasource.dataLoading"
             fxLayoutAlign="center center"
             class="no-data-found" translate>alarm.no-alarms-prompt</span>
+      <span [fxShow]="alarmsDatasource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider *ngIf="displayPagination"></mat-divider>
     <mat-paginator *ngIf="displayPagination"

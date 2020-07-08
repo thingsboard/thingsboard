@@ -16,11 +16,12 @@
 
 import L from 'leaflet';
 import { FormattedData, MarkerSettings, PolygonSettings, PolylineSettings } from './map-models';
-import { Datasource } from '@app/shared/models/widget.models';
+import { Datasource, DatasourceData } from '@app/shared/models/widget.models';
 import _ from 'lodash';
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createLabelFromDatasource, hashCode, isNumber, isUndefined, padValue } from '@core/utils';
+import { Form } from '@angular/forms';
 
 export function createTooltip(target: L.Layer,
     settings: MarkerSettings | PolylineSettings | PolygonSettings,
@@ -236,12 +237,14 @@ export const parseWithTranslation = {
   }
 }
 
-export function parseData(input: any[]): FormattedData[] {
+export function parseData(input: DatasourceData[]): FormattedData[] {
   return _(input).groupBy(el => el?.datasource?.entityName)
     .values().value().map((entityArray, i) => {
-      const obj = {
+      const obj: FormattedData = {
         entityName: entityArray[0]?.datasource?.entityName,
-        $datasource: entityArray[0]?.datasource as Datasource,
+        entityId: entityArray[0]?.datasource?.entityId,
+        entityType: entityArray[0]?.datasource?.entityType,
+        $datasource: entityArray[0]?.datasource,
         dsIndex: i,
         deviceType: null
       };
@@ -256,12 +259,14 @@ export function parseData(input: any[]): FormattedData[] {
     });
 }
 
-export function parseArray(input: any[]): any[] {
+export function parseArray(input: DatasourceData[]): FormattedData[][] {
   return _(input).groupBy(el => el?.datasource?.entityName)
     .values().value().map((entityArray, dsIndex) =>
       entityArray[0].data.map((el, i) => {
-        const obj = {
+        const obj: FormattedData = {
           entityName: entityArray[0]?.datasource?.entityName,
+          entityId: entityArray[0]?.datasource?.entityId,
+          entityType: entityArray[0]?.datasource?.entityType,
           $datasource: entityArray[0]?.datasource,
           dsIndex: i,
           time: el[0],

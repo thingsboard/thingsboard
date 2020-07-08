@@ -31,6 +31,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCRespons
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionCloseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -54,6 +55,7 @@ import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWra
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -259,6 +261,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     proto.getScope(), TbSubscriptionUtils.toAttributeKvList(proto.getDataList()), callback);
+        } else if (msg.hasAttrDelete()) {
+            TbAttributeDeleteProto proto = msg.getAttrDelete();
+            subscriptionManagerService.onAttributesDelete(
+                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
+                    proto.getScope(), proto.getKeysList(), callback);
         } else {
             throwNotHandled(msg, callback);
         }

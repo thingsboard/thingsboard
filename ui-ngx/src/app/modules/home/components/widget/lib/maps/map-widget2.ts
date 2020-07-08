@@ -14,7 +14,14 @@
 /// limitations under the License.
 ///
 
-import { defaultSettings, hereProviders, MapProviders, providerSets, UnitedMapSettings } from './map-models';
+import {
+  DEFAULT_MAP_PAGE_SIZE,
+  defaultSettings, FormattedData,
+  hereProviders,
+  MapProviders,
+  providerSets,
+  UnitedMapSettings
+} from './map-models';
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
@@ -35,6 +42,9 @@ import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import _ from 'lodash';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
+import { isDefined } from '@core/utils';
+import { forkJoin, Observable, of } from 'rxjs';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
@@ -69,10 +79,15 @@ export class MapWidgetController implements MapWidgetInterface {
         }
         parseWithTranslation.setTranslate(this.translate);
         this.map = new MapClass(this.ctx, $element, this.settings);
+        (this.ctx as any).mapInstance = this.map;
         this.map.saveMarkerLocation = this.setMarkerLocation;
-        if (this.settings.draggableMarker) {
-            this.map.setDataSources(parseData(this.data));
-        }
+        this.pageLink = {
+          page: 0,
+          pageSize: DEFAULT_MAP_PAGE_SIZE,
+          textSearch: null,
+          dynamic: true
+        };
+        this.ctx.defaultSubscription.subscribeAllForPaginatedData(this.pageLink, null);
     }
 
     map: LeafletMap;
@@ -80,6 +95,7 @@ export class MapWidgetController implements MapWidgetInterface {
     schema: JsonSettingsSchema;
     data: DatasourceData[];
     settings: UnitedMapSettings;
+    pageLink: EntityDataPageLink;
 
     public static dataKeySettingsSchema(): object {
         return {};
@@ -169,7 +185,7 @@ export class MapWidgetController implements MapWidgetInterface {
         }, entityName, null, entityLabel);
     }
 
-    setMarkerLocation = (e) => {
+    setMarkerLocation = (e: FormattedData, lat?: number, lng?: number) => {
         const attributeService = this.ctx.$injector.get(AttributeService);
 
         const entityId: EntityId = {
@@ -178,34 +194,50 @@ export class MapWidgetController implements MapWidgetInterface {
         };
         const attributes = [];
         const timeseries = [];
-        const latLngProperties = [this.settings.latKeyName, this.settings.lngKeyName, this.settings.xPosKeyName, this.settings.yPosKeyName];
+
+        const latProperties = [this.settings.latKeyName, this.settings.xPosKeyName];
+        const lngProperties = [this.settings.lngKeyName, this.settings.yPosKeyName];
         e.$datasource.dataKeys.forEach(key => {
-            if (latLngProperties.includes(key.name)) {
-                const value = {
+            let value;
+            if (latProperties.includes(key.name)) {
+                value = {
                     key: key.name,
-                    value: e[key.name]
+                    value: isDefined(lat) ? lat : e[key.name]
                 };
-                if (key.type === DataKeyType.attribute) {
-                    attributes.push(value)
-                }
-                if (key.type === DataKeyType.timeseries) {
-                    timeseries.push(value)
-                }
+            } else if (lngProperties.includes(key.name)) {
+              value = {
+                key: key.name,
+                value: isDefined(lng) ? lng : e[key.name]
+              };
+            }
+            if (value) {
+              if (key.type === DataKeyType.attribute) {
+                attributes.push(value)
+              }
+              if (key.type === DataKeyType.timeseries) {
+                timeseries.push(value)
+              }
             }
         });
+        const observables: Observable<any>[] = [];
         if (timeseries.length) {
-            attributeService.saveEntityTimeseries(
-                entityId,
-                LatestTelemetry.LATEST_TELEMETRY,
-                timeseries
-            ).subscribe(() => { });
+            observables.push(attributeService.saveEntityTimeseries(
+              entityId,
+              LatestTelemetry.LATEST_TELEMETRY,
+              timeseries
+            ));
         }
         if (attributes.length) {
-            attributeService.saveEntityAttributes(
-                entityId,
-                AttributeScope.SERVER_SCOPE,
-                attributes
-            ).subscribe(() => { });
+            observables.push(attributeService.saveEntityAttributes(
+              entityId,
+              AttributeScope.SERVER_SCOPE,
+              attributes
+            ));
+        }
+        if (observables.length) {
+          return forkJoin(observables);
+        } else {
+          return of(null);
         }
     }
 
@@ -241,12 +273,11 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     update() {
-        if (this.drawRoutes)
-            this.map.updatePolylines(parseArray(this.data));
-        if (this.settings.showPolygon) {
-            this.map.updatePolygons(parseData(this.data));
+        const formattedData = parseData(this.data);
+        this.map.updateData(this.data, formattedData, this.drawRoutes, this.settings.showPolygon);
+        if (this.settings.draggableMarker) {
+          this.map.setDataSources(formattedData);
         }
-        this.map.updateMarkers(parseData(this.data));
     }
 
     resize() {

@@ -45,18 +45,26 @@ import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.m
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
 import { entityFields, EntityInfo, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
-import {
-  EntityRelationInfo,
-  EntityRelationsQuery,
-  EntitySearchDirection,
-  EntitySearchQuery
-} from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { isDefined } from '@core/utils';
-import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
-import { Device, DeviceCredentialsType, DeviceSearchQuery } from '@shared/models/device.models';
-import { EntityViewSearchQuery } from '@shared/models/entity-view.models';
+import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
+import { Asset } from '@shared/models/asset.models';
+import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
+import {
+  createDefaultEntityDataPageLink,
+  defaultEntityDataPageLink,
+  EntityData,
+  EntityDataQuery,
+  entityDataToEntityInfo,
+  EntityFilter,
+  entityInfoFields,
+  EntityKey,
+  EntityKeyType,
+  FilterPredicateType,
+  singleEntityDataPageLink,
+  StringOperation
+} from '@shared/models/query/query.models';
+import { alarmFields } from '@shared/models/alarm.models';
 
 @Injectable({
   providedIn: 'root'
@@ -303,7 +311,8 @@ export class EntityService {
         }
         break;
       case EntityType.USER:
-        console.error('Get User Entities is not implemented!');
+        pageLink.sortOrder.property = 'email';
+        entitiesObservable = this.userService.getUsers(pageLink);
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entities is not implemented!');
@@ -358,6 +367,72 @@ export class EntityService {
         return of(null);
       }
     }
+  }
+
+  public findEntityDataByQuery(query: EntityDataQuery, config?: RequestConfig): Observable<PageData<EntityData>> {
+    return this.http.post<PageData<EntityData>>('/api/entitiesQuery/find', query, defaultHttpOptionsFromConfig(config));
+  }
+
+  public findEntityInfosByFilterAndName(filter: EntityFilter,
+                                        searchText: string, config?: RequestConfig): Observable<PageData<EntityInfo>> {
+    const nameField: EntityKey = {
+      type: EntityKeyType.ENTITY_FIELD,
+      key: 'name'
+    };
+    const query: EntityDataQuery = {
+      entityFilter: filter,
+      pageLink: {
+        pageSize: 10,
+        page: 0,
+        sortOrder: {
+          key: nameField,
+          direction: Direction.ASC
+        }
+      },
+      entityFields: entityInfoFields,
+      keyFilters: searchText && searchText.length ? [
+        {
+          key: nameField,
+          predicate: {
+            type: FilterPredicateType.STRING,
+            operation: StringOperation.STARTS_WITH,
+            ignoreCase: true,
+            value: {
+              defaultValue: searchText
+            }
+          }
+        }
+      ] : null
+    };
+    return this.findEntityDataByQuery(query, config).pipe(
+      map((data) => {
+        const entityInfos = data.data.map(entityData => entityDataToEntityInfo(entityData));
+        return {
+          data: entityInfos,
+          hasNext: data.hasNext,
+          totalElements: data.totalElements,
+          totalPages: data.totalPages
+        };
+      })
+    );
+  }
+
+  public findSingleEntityInfoByEntityFilter(filter: EntityFilter, config?: RequestConfig): Observable<EntityInfo> {
+    const query: EntityDataQuery = {
+      entityFilter: filter,
+      pageLink: createDefaultEntityDataPageLink(1),
+      entityFields: entityInfoFields
+    };
+    return this.findEntityDataByQuery(query, config).pipe(
+      map((data) => {
+        if (data.data.length) {
+          const entityData = data.data[0];
+          return entityDataToEntityInfo(entityData);
+        } else {
+          return null;
+        }
+      })
+    );
   }
 
   public getAliasFilterTypesByEntityTypes(entityTypes: Array<EntityType | AliasEntityType>): Array<AliasFilterType> {
@@ -477,6 +552,7 @@ export class EntityService {
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.TENANT);
         entityTypes.push(EntityType.CUSTOMER);
+        entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
@@ -488,11 +564,15 @@ export class EntityService {
         entityTypes.push(EntityType.ASSET);
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.CUSTOMER);
+        entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
         }
         break;
+    }
+    if (useAliasEntityTypes) {
+      entityTypes.push(AliasEntityType.CURRENT_USER);
     }
     if (allowedEntityTypes && allowedEntityTypes.length) {
       for (let index = entityTypes.length - 1; index >= 0; index--) {
@@ -505,7 +585,7 @@ export class EntityService {
   }
 
   private getEntityFieldKeys (entityType: EntityType, searchText: string): Array<string> {
-    const entityFieldKeys: string[] = [];
+    const entityFieldKeys: string[] = [entityFields.createdTime.keyName];
     const query = searchText.toLowerCase();
     switch(entityType) {
       case EntityType.USER:
@@ -543,10 +623,18 @@ export class EntityService {
     return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
   }
 
+  private getAlarmKeys(searchText: string): Array<string> {
+    const alarmKeys: string[] = Object.keys(alarmFields);
+    const query = searchText.toLowerCase();
+    return query ? alarmKeys.filter((alarmField) => alarmField.toLowerCase().indexOf(query) === 0) : alarmKeys;
+  }
+
   public getEntityKeys(entityId: EntityId, query: string, type: DataKeyType,
                        config?: RequestConfig): Observable<Array<string>> {
     if (type === DataKeyType.entityField) {
       return of(this.getEntityFieldKeys(entityId.entityType as EntityType, query));
+    } else if (type === DataKeyType.alarm) {
+      return of(this.getAlarmKeys(query));
     }
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/keys/`;
     if (type === DataKeyType.timeseries) {
@@ -570,62 +658,51 @@ export class EntityService {
     );
   }
 
-  public createDatasourcesFromSubscriptionsInfo(subscriptionsInfo: Array<SubscriptionInfo>): Observable<Array<Datasource>> {
-    const observables = new Array<Observable<Array<Datasource>>>();
-    subscriptionsInfo.forEach((subscriptionInfo) => {
-      observables.push(this.createDatasourcesFromSubscriptionInfo(subscriptionInfo));
-    });
-    return forkJoin(observables).pipe(
-      map((arrayOfDatasources) => {
-        const result = new Array<Datasource>();
-        arrayOfDatasources.forEach((datasources) => {
-          result.push(...datasources);
-        });
-        this.utils.generateColors(result);
-        return result;
-      })
-    );
+  public createDatasourcesFromSubscriptionsInfo(subscriptionsInfo: Array<SubscriptionInfo>): Array<Datasource> {
+    const datasources = subscriptionsInfo.map(subscriptionInfo => this.createDatasourceFromSubscriptionInfo(subscriptionInfo));
+    this.utils.generateColors(datasources);
+    return datasources;
   }
 
-  public createAlarmSourceFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Observable<Datasource> {
+  public createAlarmSourceFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Datasource {
     if (subscriptionInfo.entityId && subscriptionInfo.entityType) {
-      return this.getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId,
-        {ignoreLoading: true, ignoreErrors: true}).pipe(
-        map((entity) => {
-          const alarmSource = this.createDatasourceFromSubscription(subscriptionInfo, entity);
-          this.utils.generateColors([alarmSource]);
-          return alarmSource;
-        })
-      );
+      const alarmSource = this.createDatasourceFromSubscriptionInfo(subscriptionInfo);
+      this.utils.generateColors([alarmSource]);
+      return alarmSource;
     } else {
-      return throwError(null);
+      throw new Error('Can\'t crate alarm source without entityId information!');
     }
   }
 
   public resolveAlias(entityAlias: EntityAlias, stateParams: StateParams): Observable<AliasInfo> {
     const filter = entityAlias.filter;
-    return this.resolveAliasFilter(filter, stateParams, -1, false).pipe(
-      map((result) => {
+    return this.resolveAliasFilter(filter, stateParams).pipe(
+      mergeMap((result) => {
         const aliasInfo: AliasInfo = {
           alias: entityAlias.alias,
+          entityFilter: result.entityFilter,
           stateEntity: result.stateEntity,
           entityParamName: result.entityParamName,
           resolveMultiple: filter.resolveMultiple
         };
-        aliasInfo.resolvedEntities = result.entities;
         aliasInfo.currentEntity = null;
-        if (aliasInfo.resolvedEntities.length) {
-          aliasInfo.currentEntity = aliasInfo.resolvedEntities[0];
+        if (!aliasInfo.resolveMultiple && aliasInfo.entityFilter) {
+          return this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
+            {ignoreLoading: true, ignoreErrors: true}).pipe(
+            map((entity) => {
+              aliasInfo.currentEntity = entity;
+              return aliasInfo;
+            })
+          );
         }
-        return aliasInfo;
+        return of(aliasInfo);
       })
     );
   }
 
-  public resolveAliasFilter(filter: EntityAliasFilter, stateParams: StateParams,
-                            maxItems: number, failOnEmpty: boolean): Observable<EntityAliasFilterResult> {
+  public resolveAliasFilter(filter: EntityAliasFilter, stateParams: StateParams): Observable<EntityAliasFilterResult> {
     const result: EntityAliasFilterResult = {
-      entities: [],
+      entityFilter: null,
       stateEntity: false
     };
     if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
@@ -636,87 +713,35 @@ export class EntityService {
     switch (filter.type) {
       case AliasFilterType.singleEntity:
         const aliasEntityId = this.resolveAliasEntityId(filter.singleEntity.entityType, filter.singleEntity.id);
-        return this.getEntity(aliasEntityId.entityType as EntityType, aliasEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entity) => {
-            result.entities = this.entitiesToEntitiesInfo([entity]);
-            return result;
-          }
-        ));
+        result.entityFilter = {
+          type: AliasFilterType.singleEntity,
+          singleEntity: aliasEntityId
+        };
+        return of(result);
       case AliasFilterType.entityList:
-        return this.getEntities(filter.entityType, filter.entityList, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          ));
+        result.entityFilter = deepClone(filter);
+        return of(result);
       case AliasFilterType.entityName:
-        return this.getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems,
-          '', {ignoreLoading: true, ignoreErrors: true}).pipe(
-            map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          )
-        );
+        result.entityFilter = deepClone(filter);
+        return of(result);
       case AliasFilterType.stateEntity:
         result.stateEntity = true;
         if (stateEntityId) {
-          return this.getEntity(stateEntityId.entityType as EntityType, stateEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
-            map((entity) => {
-                result.entities = this.entitiesToEntitiesInfo([entity]);
-                return result;
-              }
-            ));
-        } else {
-          return of(result);
+          result.entityFilter = {
+            type: AliasFilterType.singleEntity,
+            singleEntity: stateEntityId
+          };
         }
+        return of(result);
       case AliasFilterType.assetType:
-        return this.getEntitiesByNameFilter(EntityType.ASSET, filter.assetNameFilter, maxItems,
-          filter.assetType, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          )
-        );
+        result.entityFilter = deepClone(filter);
+        return of(result);
       case AliasFilterType.deviceType:
-        return this.getEntitiesByNameFilter(EntityType.DEVICE, filter.deviceNameFilter, maxItems,
-          filter.deviceType, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          )
-        );
+        result.entityFilter = deepClone(filter);
+        return of(result);
       case AliasFilterType.entityViewType:
-        return this.getEntitiesByNameFilter(EntityType.ENTITY_VIEW, filter.entityViewNameFilter, maxItems,
-          filter.entityViewType, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw new Error();
-              }
-            }
-          )
-        );
+        result.entityFilter = deepClone(filter);
+        return of(result);
       case AliasFilterType.relationsQuery:
         result.stateEntity = filter.rootStateEntity;
         let rootEntityType;
@@ -730,34 +755,9 @@ export class EntityService {
         }
         if (rootEntityType && rootEntityId) {
           const relationQueryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
-          const searchQuery: EntityRelationsQuery = {
-            parameters: {
-              rootId: relationQueryRootEntityId.id,
-              rootType: relationQueryRootEntityId.entityType as EntityType,
-              direction: filter.direction,
-              fetchLastLevelOnly: filter.fetchLastLevelOnly
-            },
-            filters: filter.filters
-          };
-          searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
-          return this.entityRelationService.findInfoByQuery(searchQuery, {ignoreLoading: true, ignoreErrors: true}).pipe(
-            mergeMap((allRelations) => {
-              if (allRelations && allRelations.length || !failOnEmpty) {
-                if (isDefined(maxItems) && maxItems > 0 && allRelations) {
-                  const limit = Math.min(allRelations.length, maxItems);
-                  allRelations.length = limit;
-                }
-                return this.entityRelationInfosToEntitiesInfo(allRelations, filter.direction).pipe(
-                  map((entities) => {
-                    result.entities = entities;
-                    return result;
-                  })
-                );
-              } else {
-                return throwError(null);
-              }
-            })
-          );
+          result.entityFilter = deepClone(filter);
+          result.entityFilter.rootEntity = relationQueryRootEntityId;
+          return of(result);
         } else {
           return of(result);
         }
@@ -774,44 +774,9 @@ export class EntityService {
         }
         if (rootEntityType && rootEntityId) {
           const searchQueryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
-          const searchQuery: EntitySearchQuery = {
-            parameters: {
-              rootId: searchQueryRootEntityId.id,
-              rootType: searchQueryRootEntityId.entityType as EntityType,
-              direction: filter.direction,
-              fetchLastLevelOnly: filter.fetchLastLevelOnly
-            },
-            relationType: filter.relationType
-          };
-          searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
-          let findByQueryObservable: Observable<Array<BaseData<EntityId>>>;
-          if (filter.type === AliasFilterType.assetSearchQuery) {
-            const assetSearchQuery = searchQuery as AssetSearchQuery;
-            assetSearchQuery.assetTypes = filter.assetTypes;
-            findByQueryObservable = this.assetService.findByQuery(assetSearchQuery, {ignoreLoading: true, ignoreErrors: true});
-          } else if (filter.type === AliasFilterType.deviceSearchQuery) {
-            const deviceSearchQuery = searchQuery as DeviceSearchQuery;
-            deviceSearchQuery.deviceTypes = filter.deviceTypes;
-            findByQueryObservable = this.deviceService.findByQuery(deviceSearchQuery, {ignoreLoading: true, ignoreErrors: true});
-          } else if (filter.type === AliasFilterType.entityViewSearchQuery) {
-            const entityViewSearchQuery = searchQuery as EntityViewSearchQuery;
-            entityViewSearchQuery.entityViewTypes = filter.entityViewTypes;
-            findByQueryObservable = this.entityViewService.findByQuery(entityViewSearchQuery, {ignoreLoading: true, ignoreErrors: true});
-          }
-          return findByQueryObservable.pipe(
-            map((entities) => {
-              if (entities && entities.length || !failOnEmpty) {
-                if (isDefined(maxItems) && maxItems > 0 && entities) {
-                  const limit = Math.min(entities.length, maxItems);
-                  entities.length = limit;
-                }
-                result.entities = this.entitiesToEntitiesInfo(entities);
-                return result;
-              } else {
-                throw Error();
-              }
-            })
-          );
+          result.entityFilter = deepClone(filter);
+          result.entityFilter.rootEntity = searchQueryRootEntityId;
+          return of(result);
         } else {
           return of(result);
         }
@@ -819,17 +784,12 @@ export class EntityService {
   }
 
   public checkEntityAlias(entityAlias: EntityAlias): Observable<boolean> {
-    return this.resolveAliasFilter(entityAlias.filter, null, 1, true).pipe(
+    return this.resolveAliasFilter(entityAlias.filter, null).pipe(
       map((result) => {
         if (result.stateEntity) {
           return true;
         } else {
-          const entities = result.entities;
-          if (entities && entities.length) {
-            return true;
-          } else {
-            return false;
-          }
+          return isDefinedAndNotNull(result.entityFilter);
         }
       }),
       catchError(err => of(false))
@@ -983,73 +943,6 @@ export class EntityService {
     );
   }
 
-  private entitiesToEntitiesInfo(entities: Array<BaseData<EntityId>>): Array<EntityInfo> {
-    const entitiesInfo = [];
-    if (entities) {
-      entities.forEach((entity) => {
-        entitiesInfo.push(this.entityToEntityInfo(entity));
-      });
-    }
-    return entitiesInfo;
-  }
-
-  private entityToEntityInfo(entity: BaseData<EntityId>): EntityInfo {
-    return {
-      origEntity: entity,
-      name: entity.name,
-      label: (entity as any).label ? (entity as any).label : '',
-      entityType: entity.id.entityType as EntityType,
-      id: entity.id.id,
-      entityDescription: (entity as any).additionalInfo ? (entity as any).additionalInfo.description : ''
-    };
-  }
-
-  private entityRelationInfosToEntitiesInfo(entityRelations: Array<EntityRelationInfo>,
-                                            direction: EntitySearchDirection): Observable<Array<EntityInfo>> {
-    if (entityRelations.length) {
-      const packs: Observable<EntityInfo>[][] = [];
-      let packTasks: Observable<EntityInfo>[] = [];
-      entityRelations.forEach((entityRelation) => {
-        packTasks.push(this.entityRelationInfoToEntityInfo(entityRelation, direction));
-        if (packTasks.length === 100) {
-          packs.push(packTasks);
-          packTasks = [];
-        }
-      });
-      if (packTasks.length) {
-        packs.push(packTasks);
-      }
-      return this.executePack(packs, 0);
-    } else {
-      return of([]);
-    }
-  }
-
-  private executePack(packs: Observable<EntityInfo>[][], index: number): Observable<Array<EntityInfo>> {
-    return forkJoin(packs[index]).pipe(
-      expand(() => {
-        index++;
-        if (packs[index]) {
-          return forkJoin(packs[index]);
-        } else {
-          return EMPTY;
-        }
-       }
-      ),
-      concatMap((data) => data),
-      toArray()
-    );
-  }
-
-  private entityRelationInfoToEntityInfo(entityRelationInfo: EntityRelationInfo, direction: EntitySearchDirection): Observable<EntityInfo> {
-    const entityId = direction === EntitySearchDirection.FROM ? entityRelationInfo.to : entityRelationInfo.from;
-    return this.getEntity(entityId.entityType as EntityType, entityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
-      map((entity) => {
-        return this.entityToEntityInfo(entity);
-      })
-    );
-  }
-
   private getStateEntityInfo(filter: EntityAliasFilter, stateParams: StateParams): {entityId: EntityId} {
     let entityId: EntityId = null;
     if (stateParams) {
@@ -1085,62 +978,49 @@ export class EntityService {
       const authUser =  getCurrentAuthUser(this.store);
       entityId.entityType = EntityType.TENANT;
       entityId.id = authUser.tenantId;
+    } else if (entityType === AliasEntityType.CURRENT_USER){
+      const authUser =  getCurrentAuthUser(this.store);
+      entityId.entityType = EntityType.USER;
+      entityId.id = authUser.userId;
     }
     return entityId;
   }
 
-  private createDatasourcesFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Observable<Array<Datasource>> {
+  private createDatasourceFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Datasource {
     subscriptionInfo = this.validateSubscriptionInfo(subscriptionInfo);
+    let datasource: Datasource = null;
     if (subscriptionInfo.type === DatasourceType.entity) {
-      return this.resolveEntitiesFromSubscriptionInfo(subscriptionInfo).pipe(
-        map((entities) => {
-          const datasources = new Array<Datasource>();
-          entities.forEach((entity) => {
-            datasources.push(this.createDatasourceFromSubscription(subscriptionInfo, entity));
-          });
-          return datasources;
-        })
-      );
+      datasource = {
+        type: subscriptionInfo.type,
+        entityName: subscriptionInfo.entityName,
+        name: subscriptionInfo.entityName,
+        entityType: subscriptionInfo.entityType,
+        entityId: subscriptionInfo.entityId,
+        dataKeys: []
+      };
+      this.prepareEntityFilterFromSubscriptionInfo(datasource, subscriptionInfo);
     } else if (subscriptionInfo.type === DatasourceType.function) {
-      return of([this.createDatasourceFromSubscription(subscriptionInfo)]);
-    } else {
-      return of([]);
+      datasource = {
+        type: subscriptionInfo.type,
+        name: subscriptionInfo.name || DatasourceType.function,
+        dataKeys: []
+      };
     }
-  }
-
-  private resolveEntitiesFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Observable<Array<BaseData<EntityId>>> {
-    if (subscriptionInfo.entityId) {
-      if (subscriptionInfo.entityName) {
-        const entity: BaseData<EntityId> = {
-          id: {id: subscriptionInfo.entityId, entityType: subscriptionInfo.entityType},
-          name: subscriptionInfo.entityName
-        };
-        return of([entity]);
-      } else {
-        return this.getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId,
-          {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entity) => [entity]),
-          catchError(e => of([]))
-        );
+    if (datasource !== null) {
+      if (subscriptionInfo.timeseries) {
+        this.createDatasourceKeys(subscriptionInfo.timeseries, DataKeyType.timeseries, datasource);
       }
-    } else if (subscriptionInfo.entityName || subscriptionInfo.entityNamePrefix || subscriptionInfo.entityIds) {
-      let entitiesObservable: Observable<Array<BaseData<EntityId>>>;
-      if (subscriptionInfo.entityName) {
-        entitiesObservable = this.getEntitiesByNameFilter(subscriptionInfo.entityType, subscriptionInfo.entityName,
-          1, null, {ignoreLoading: true, ignoreErrors: true});
-      } else if (subscriptionInfo.entityNamePrefix) {
-        entitiesObservable = this.getEntitiesByNameFilter(subscriptionInfo.entityType, subscriptionInfo.entityNamePrefix,
-          100, null, {ignoreLoading: true, ignoreErrors: true});
-      } else if (subscriptionInfo.entityIds) {
-        entitiesObservable = this.getEntities(subscriptionInfo.entityType, subscriptionInfo.entityIds,
-          {ignoreLoading: true, ignoreErrors: true});
+      if (subscriptionInfo.attributes) {
+        this.createDatasourceKeys(subscriptionInfo.attributes, DataKeyType.attribute, datasource);
       }
-      return entitiesObservable.pipe(
-        catchError(e => of([]))
-      );
-    } else {
-      return of([]);
+      if (subscriptionInfo.functions) {
+        this.createDatasourceKeys(subscriptionInfo.functions, DataKeyType.function, datasource);
+      }
+      if (subscriptionInfo.alarmFields) {
+        this.createDatasourceKeys(subscriptionInfo.alarmFields, DataKeyType.alarm, datasource);
+      }
     }
+    return datasource;
   }
 
   private validateSubscriptionInfo(subscriptionInfo: SubscriptionInfo): SubscriptionInfo {
@@ -1161,37 +1041,40 @@ export class EntityService {
     return subscriptionInfo;
   }
 
-  private createDatasourceFromSubscription(subscriptionInfo: SubscriptionInfo, entity?: BaseData<EntityId>): Datasource {
-    let datasource: Datasource;
-    if (subscriptionInfo.type === DatasourceType.entity) {
-      datasource = {
-        type: subscriptionInfo.type,
-        entityName: entity.name,
-        name: entity.name,
+  private prepareEntityFilterFromSubscriptionInfo(datasource: Datasource, subscriptionInfo: SubscriptionInfo) {
+    if (subscriptionInfo.entityId) {
+      datasource.entityFilter = {
+        type: AliasFilterType.singleEntity,
+        singleEntity: {
+          entityType: subscriptionInfo.entityType,
+          id: subscriptionInfo.entityId
+        }
+      };
+      datasource.pageLink = singleEntityDataPageLink;
+    } else if (subscriptionInfo.entityName || subscriptionInfo.entityNamePrefix) {
+      let nameFilter;
+      let pageLink;
+      if (isDefined(subscriptionInfo.entityName) && subscriptionInfo.entityName.length) {
+        nameFilter = subscriptionInfo.entityName;
+        pageLink = deepClone(singleEntityDataPageLink);
+      } else {
+        nameFilter = subscriptionInfo.entityNamePrefix;
+        pageLink = deepClone(defaultEntityDataPageLink);
+      }
+      datasource.entityFilter = {
+        type: AliasFilterType.entityName,
         entityType: subscriptionInfo.entityType,
-        entityId: entity.id.id,
-        dataKeys: []
+        entityNameFilter: nameFilter
       };
-    } else if (subscriptionInfo.type === DatasourceType.function) {
-      datasource = {
-        type: subscriptionInfo.type,
-        name: subscriptionInfo.name || DatasourceType.function,
-        dataKeys: []
+      datasource.pageLink = pageLink;
+    } else if (subscriptionInfo.entityIds) {
+      datasource.entityFilter = {
+        type: AliasFilterType.entityList,
+        entityType: subscriptionInfo.entityType,
+        entityList: subscriptionInfo.entityIds
       };
+      datasource.pageLink = deepClone(defaultEntityDataPageLink);
     }
-    if (subscriptionInfo.timeseries) {
-      this.createDatasourceKeys(subscriptionInfo.timeseries, DataKeyType.timeseries, datasource);
-    }
-    if (subscriptionInfo.attributes) {
-      this.createDatasourceKeys(subscriptionInfo.attributes, DataKeyType.attribute, datasource);
-    }
-    if (subscriptionInfo.functions) {
-      this.createDatasourceKeys(subscriptionInfo.functions, DataKeyType.function, datasource);
-    }
-    if (subscriptionInfo.alarmFields) {
-      this.createDatasourceKeys(subscriptionInfo.alarmFields, DataKeyType.alarm, datasource);
-    }
-    return datasource;
   }
 
   private createDatasourceKeys(keyInfos: Array<KeyInfo>, type: DataKeyType, datasource: Datasource) {

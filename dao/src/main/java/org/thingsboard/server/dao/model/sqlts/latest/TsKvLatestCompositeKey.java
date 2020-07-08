@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.model.sqlts.latest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
 
 import javax.persistence.Transient;
 import java.io.Serializable;

@@ -21,6 +21,8 @@ import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
+import { AlarmData, AlarmDataQuery, EntityData, EntityDataQuery, EntityKey } from '@shared/models/query/query.models';
+import { PageData } from '@shared/models/page/page-data';
 
 export enum DataKeyType {
   timeseries = 'timeseries',
@@ -79,8 +81,11 @@ export interface AttributeData {
   value: any;
 }
 
-export interface TelemetryPluginCmd {
+export interface WebsocketCmd {
   cmdId: number;
+}
+
+export interface TelemetryPluginCmd extends WebsocketCmd {
   keys: string;
 }
 
@@ -124,27 +129,96 @@ export class GetHistoryCmd implements TelemetryPluginCmd {
   agg: AggregationType;
 }
 
+export interface EntityHistoryCmd {
+  keys: Array<string>;
+  startTs: number;
+  endTs: number;
+  interval: number;
+  limit: number;
+  agg: AggregationType;
+  fetchLatestPreviousPoint?: boolean;
+}
+
+export interface LatestValueCmd {
+  keys: Array<EntityKey>;
+}
+
+export interface TimeSeriesCmd {
+  keys: Array<string>;
+  startTs: number;
+  timeWindow: number;
+  interval: number;
+  limit: number;
+  agg: AggregationType;
+  fetchLatestPreviousPoint?: boolean;
+}
+
+export class EntityDataCmd implements WebsocketCmd {
+  cmdId: number;
+  query?: EntityDataQuery;
+  historyCmd?: EntityHistoryCmd;
+  latestCmd?: LatestValueCmd;
+  tsCmd?: TimeSeriesCmd;
+
+  public isEmpty(): boolean {
+    return !this.query && !this.historyCmd && !this.latestCmd && !this.tsCmd;
+  }
+}
+
+export class AlarmDataCmd implements WebsocketCmd {
+  cmdId: number;
+  query?: AlarmDataQuery;
+
+  public isEmpty(): boolean {
+    return !this.query;
+  }
+}
+
+export class EntityDataUnsubscribeCmd implements WebsocketCmd {
+  cmdId: number;
+}
+
+export class AlarmDataUnsubscribeCmd implements WebsocketCmd {
+  cmdId: number;
+}
+
 export class TelemetryPluginCmdsWrapper {
   attrSubCmds: Array<AttributesSubscriptionCmd>;
   tsSubCmds: Array<TimeseriesSubscriptionCmd>;
   historyCmds: Array<GetHistoryCmd>;
+  entityDataCmds: Array<EntityDataCmd>;
+  entityDataUnsubscribeCmds: Array<EntityDataUnsubscribeCmd>;
+  alarmDataCmds: Array<AlarmDataCmd>;
+  alarmDataUnsubscribeCmds: Array<AlarmDataUnsubscribeCmd>;
 
   constructor() {
     this.attrSubCmds = [];
     this.tsSubCmds = [];
     this.historyCmds = [];
+    this.entityDataCmds = [];
+    this.entityDataUnsubscribeCmds = [];
+    this.alarmDataCmds = [];
+    this.alarmDataUnsubscribeCmds = [];
   }
 
   public hasCommands(): boolean {
     return this.tsSubCmds.length > 0 ||
       this.historyCmds.length > 0 ||
-      this.attrSubCmds.length > 0;
+      this.attrSubCmds.length > 0 ||
+      this.entityDataCmds.length > 0 ||
+      this.entityDataUnsubscribeCmds.length > 0 ||
+      this.alarmDataCmds.length > 0 ||
+      this.alarmDataUnsubscribeCmds.length > 0;
   }
 
   public clear() {
     this.attrSubCmds.length = 0;
     this.tsSubCmds.length = 0;
     this.historyCmds.length = 0;
+    this.entityDataCmds.length = 0;
+    this.entityDataUnsubscribeCmds.length = 0;
+    this.alarmDataCmds.length = 0;
+    this.alarmDataUnsubscribeCmds.length = 0;
   }
 
   public preparePublishCommands(maxCommands: number): TelemetryPluginCmdsWrapper {
@@ -155,10 +229,18 @@ export class TelemetryPluginCmdsWrapper {
     preparedWrapper.historyCmds = this.popCmds(this.historyCmds, leftCount);
     leftCount -= preparedWrapper.historyCmds.length;
     preparedWrapper.attrSubCmds = this.popCmds(this.attrSubCmds, leftCount);
+    leftCount -= preparedWrapper.attrSubCmds.length;
+    preparedWrapper.entityDataCmds = this.popCmds(this.entityDataCmds, leftCount);
+    leftCount -= preparedWrapper.entityDataCmds.length;
+    preparedWrapper.entityDataUnsubscribeCmds = this.popCmds(this.entityDataUnsubscribeCmds, leftCount);
+    leftCount -= preparedWrapper.entityDataUnsubscribeCmds.length;
+    preparedWrapper.alarmDataCmds = this.popCmds(this.alarmDataCmds, leftCount);
+    leftCount -= preparedWrapper.alarmDataCmds.length;
+    preparedWrapper.alarmDataUnsubscribeCmds = this.popCmds(this.alarmDataUnsubscribeCmds, leftCount);
     return preparedWrapper;
   }
 
-  private popCmds<T extends TelemetryPluginCmd>(cmds: Array<T>, leftCount: number): Array<T> {
+  private popCmds<T>(cmds: Array<T>, leftCount: number): Array<T> {
     const toPublish = Math.min(cmds.length, leftCount);
     if (toPublish > 0) {
       return cmds.splice(0, toPublish);
@@ -180,6 +262,40 @@ export interface SubscriptionUpdateMsg extends SubscriptionDataHolder {
   subscriptionId: number;
   errorCode: number;
   errorMsg: string;
+}
+
+export enum DataUpdateType {
+  ENTITY_DATA = 'ENTITY_DATA',
+  ALARM_DATA = 'ALARM_DATA'
+}
+
+export interface DataUpdateMsg<T> {
+  cmdId: number;
+  data?: PageData<T>;
+  update?: Array<T>;
+  errorCode: number;
+  errorMsg: string;
+  dataUpdateType: DataUpdateType;
+}
+
+export interface EntityDataUpdateMsg extends DataUpdateMsg<EntityData> {
+  dataUpdateType: DataUpdateType.ENTITY_DATA;
+}
+
+export interface AlarmDataUpdateMsg extends DataUpdateMsg<AlarmData> {
+  dataUpdateType: DataUpdateType.ALARM_DATA;
+}
+
+export type WebsocketDataMsg = AlarmDataUpdateMsg | EntityDataUpdateMsg | SubscriptionUpdateMsg;
+
+export function isEntityDataUpdateMsg(message: WebsocketDataMsg): message is EntityDataUpdateMsg {
+  const updateMsg = (message as DataUpdateMsg<any>);
+  return updateMsg.cmdId !== undefined && updateMsg.dataUpdateType === DataUpdateType.ENTITY_DATA;
+}
+
+export function isAlarmDataUpdateMsg(message: WebsocketDataMsg): message is AlarmDataUpdateMsg {
+  const updateMsg = (message as DataUpdateMsg<any>);
+  return updateMsg.cmdId !== undefined && updateMsg.dataUpdateType === DataUpdateType.ALARM_DATA;
 }
 
 export class SubscriptionUpdate implements SubscriptionUpdateMsg {
@@ -231,21 +347,56 @@ export class SubscriptionUpdate implements SubscriptionUpdateMsg {
   }
 }
 
+export class DataUpdate<T> implements DataUpdateMsg<T> {
+  cmdId: number;
+  errorCode: number;
+  errorMsg: string;
+  data?: PageData<T>;
+  update?: Array<T>;
+  dataUpdateType: DataUpdateType;
+
+  constructor(msg: DataUpdateMsg<T>) {
+    this.cmdId = msg.cmdId;
+    this.errorCode = msg.errorCode;
+    this.errorMsg = msg.errorMsg;
+    this.data = msg.data;
+    this.update = msg.update;
+    this.dataUpdateType = msg.dataUpdateType;
+  }
+}
+
+export class EntityDataUpdate extends DataUpdate<EntityData> {
+  constructor(msg: EntityDataUpdateMsg) {
+    super(msg);
+  }
+}
+
+export class AlarmDataUpdate extends DataUpdate<AlarmData> {
+  constructor(msg: AlarmDataUpdateMsg) {
+    super(msg);
+  }
+}
+
 export interface TelemetryService {
   subscribe(subscriber: TelemetrySubscriber);
+  update(subscriber: TelemetrySubscriber);
   unsubscribe(subscriber: TelemetrySubscriber);
 }
 
 export class TelemetrySubscriber {
 
   private dataSubject = new ReplaySubject<SubscriptionUpdate>(1);
+  private entityDataSubject = new ReplaySubject<EntityDataUpdate>(1);
+  private alarmDataSubject = new ReplaySubject<AlarmDataUpdate>(1);
   private reconnectSubject = new Subject();
 
   private zone: NgZone;
 
-  public subscriptionCommands: Array<TelemetryPluginCmd>;
+  public subscriptionCommands: Array<WebsocketCmd>;
 
   public data$ = this.dataSubject.asObservable();
+  public entityData$ = this.entityDataSubject.asObservable();
+  public alarmData$ = this.alarmDataSubject.asObservable();
   public reconnect$ = this.reconnectSubject.asObservable();
 
   public static createEntityAttributesSubscription(telemetryService: TelemetryService,
@@ -277,6 +428,10 @@ export class TelemetrySubscriber {
     this.telemetryService.subscribe(this);
   }
 
+  public update() {
+    this.telemetryService.update(this);
+  }
+
   public unsubscribe() {
     this.telemetryService.unsubscribe(this);
     this.complete();
@@ -284,6 +439,8 @@ export class TelemetrySubscriber {
 
   public complete() {
     this.dataSubject.complete();
+    this.entityDataSubject.complete();
+    this.alarmDataSubject.complete();
     this.reconnectSubject.complete();
   }
 
@@ -292,8 +449,9 @@ export class TelemetrySubscriber {
     let keys: string[];
     const cmd = this.subscriptionCommands.find((command) => command.cmdId === cmdId);
     if (cmd) {
-      if (cmd.keys && cmd.keys.length) {
-        keys = cmd.keys.split(',');
+      const telemetryPluginCmd = cmd as TelemetryPluginCmd;
+      if (telemetryPluginCmd.keys && telemetryPluginCmd.keys.length) {
+        keys = telemetryPluginCmd.keys.split(',');
       }
     }
     message.prepareData(keys);
@@ -305,6 +463,30 @@ export class TelemetrySubscriber {
      );
     } else {
       this.dataSubject.next(message);
+    }
+  }
+
+  public onEntityData(message: EntityDataUpdate) {
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.entityDataSubject.next(message);
+        }
+      );
+    } else {
+      this.entityDataSubject.next(message);
+    }
+  }
+
+  public onAlarmData(message: AlarmDataUpdate) {
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.alarmDataSubject.next(message);
+        }
+      );
+    } else {
+      this.alarmDataSubject.next(message);
     }
   }
 

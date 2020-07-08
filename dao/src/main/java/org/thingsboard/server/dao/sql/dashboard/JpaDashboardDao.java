@@ -24,6 +24,8 @@ import org.thingsboard.server.dao.model.sql.DashboardEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.UUID;
+
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
@@ -40,7 +42,7 @@ public class JpaDashboardDao extends JpaAbstractSearchTextDao<DashboardEntity, D
     }
 
     @Override
-    protected CrudRepository<DashboardEntity, String> getCrudRepository() {
+    protected CrudRepository<DashboardEntity, UUID> getCrudRepository() {
         return dashboardRepository;
     }
 }

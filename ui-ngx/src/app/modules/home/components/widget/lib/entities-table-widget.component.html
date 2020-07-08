@@ -39,7 +39,7 @@
     </mat-toolbar>
     <div fxFlex class="table-container">
       <table mat-table [dataSource]="entityDatasource"
-                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
           <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
           <mat-cell *matCellDef="let entity;"
@@ -86,9 +86,12 @@
                  *matRowDef="let entity; columns: displayedColumns;"
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </table>
-      <span [fxShow]="entityDatasource.isEmpty() | async"
+      <span [fxShow]="(entityDatasource.isEmpty() | async) && !entityDatasource.dataLoading"
             fxLayoutAlign="center center"
             class="no-data-found" translate>entity.no-entities-prompt</span>
+      <span [fxShow]="entityDatasource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider *ngIf="displayPagination"></mat-divider>
     <mat-paginator *ngIf="displayPagination"

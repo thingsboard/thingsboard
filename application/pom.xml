@@ -304,6 +304,11 @@
             <groupId>com.github.ua-parser</groupId>
             <artifactId>uap-java</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

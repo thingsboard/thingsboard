@@ -31,7 +31,12 @@
         </div>
         <div class="tb-chip-labels">
           <div class="tb-chip-label">
-            <span *ngIf="datasourceType !== datasourceTypes.function && widgetType !== widgetTypes.alarm">
+            <span *ngIf="datasourceType !== datasourceTypes.function">
+              <span *ngIf="key.type === dataKeyTypes.alarm"
+                    matTooltip="{{'datakey.alarm' | translate }}"
+                    matTooltipPosition="above">
+                  <mat-icon class="tb-mat-20">notifications</mat-icon>
+              </span>
               <span *ngIf="key.type === dataKeyTypes.attribute"
                     matTooltip="{{'datakey.attributes' | translate }}"
                     matTooltipPosition="above">
@@ -86,7 +91,12 @@
                     [displayWith]="displayKeyFn">
     <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
       <span style="white-space: nowrap;">
-        <span *ngIf="datasourceType !== datasourceTypes.function && widgetType !== widgetTypes.alarm">
+        <span *ngIf="datasourceType !== datasourceTypes.function">
+          <span *ngIf="key.type === dataKeyTypes.alarm"
+                matTooltip="{{'datakey.alarm' | translate }}"
+                matTooltipPosition="above">
+              <mat-icon class="tb-mat-16">notifications</mat-icon>
+          </span>
           <span *ngIf="key.type === dataKeyTypes.attribute"
                 matTooltip="{{'datakey.attributes' | translate }}"
                 matTooltipPosition="above">
@@ -118,11 +128,17 @@
             {{ translate.get('entity.no-key-matching',
               {key: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
           </span>
-          <span *ngIf="datasourceType === datasourceTypes.function || widgetType === widgetTypes.alarm; else createEntityKey">
+          <span *ngIf="datasourceType === datasourceTypes.function; else createEntityKey">
             <a translate (click)="createKey(searchText)">entity.create-new-key</a>
           </span>
           <ng-template #createEntityKey>
             <span>{{'entity.create-new-key' | translate }}  </span>
+            <span *ngIf="widgetType == widgetTypes.alarm"
+                  matTooltip="{{'datakey.alarm' | translate }}"
+                  matTooltipPosition="above">
+              <mat-icon (click)="createKey(searchText, dataKeyTypes.alarm)"
+                        class="tb-mat-16">notifications</mat-icon>
+            </span>
             <span *ngIf="widgetType == widgetTypes.latest"
                   matTooltip="{{'datakey.attributes' | translate }}"
                   matTooltipPosition="above">
