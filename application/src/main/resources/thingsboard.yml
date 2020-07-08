@@ -189,6 +189,8 @@ cassandra:
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
   url: "${CASSANDRA_URL:127.0.0.1:9042}"
+  # Specify local datacenter name
+  local_datacenter: "${CASSANDRA_LOCAL_DATACENTER:datacenter1}"
   # Enable/disable secure connection
   ssl: "${CASSANDRA_USE_SSL:false}"
   # Enable/disable JMX

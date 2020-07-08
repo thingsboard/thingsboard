@@ -9,7 +9,7 @@
         "refresh-token-failed": "No se puede actualizar la sesión"
     },
     "action": {
-        "activate": "Activar", 
+        "activate": "Activar",
         "suspend": "Suspender",
         "save": "Guardar",
         "saveAs": "Guardar como",
@@ -965,7 +965,7 @@
     },
     "extension": {
         "extensions": "Extensiones",
-        "selected-extensions": "{ count, plural, 1 {1 extension} de {# extensions} } seleccionadas",
+        "selected-extensions": "{ count, plural, 1 {1 extension} other {# extensions} } seleccionadas",
         "type": "Tipo",
         "key": "Clave",
         "value": "Valor",
