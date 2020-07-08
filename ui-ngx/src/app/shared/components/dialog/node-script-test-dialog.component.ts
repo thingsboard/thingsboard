@@ -174,8 +174,8 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
       const inputParams: TestScriptInputParams = {
         argNames: this.data.argNames,
         scriptType: this.data.scriptType,
-        msgType: this.nodeScriptTestFormGroup.get('payload').get('msgType').value,
-        msg: this.nodeScriptTestFormGroup.get('payload').get('msg').value,
+        msgType: this.nodeScriptTestFormGroup.get('payload.msgType').value,
+        msg: this.nodeScriptTestFormGroup.get('payload.msg').value,
         metadata: this.nodeScriptTestFormGroup.get('metadata').value,
         script: this.nodeScriptTestFormGroup.get('script').value
       };
