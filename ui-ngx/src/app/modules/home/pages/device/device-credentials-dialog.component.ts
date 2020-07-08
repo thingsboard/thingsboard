@@ -28,10 +28,6 @@ import {
   DeviceCredentialsDialogLwm2mComponent,
   DeviceCredentialsDialogLwm2mData
 } from "@home/pages/device/device-credentials-dialog-lwm2m.component";
-import {
-  JsonObjectEditDialogComponent,
-  JsonObjectEditDialogData
-} from "@shared/components/dialog/json-object-edit-dialog.component";
 
 import {TranslateService} from "@ngx-translate/core";
 
@@ -173,30 +169,6 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
         if (res) {
           this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
           this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
-        }
-      }
-    );
-  }
-
-  openSecurityInfoDialog($event: Event, value: string, id: string): void {
-    if ($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
-    }
-    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, object>(JsonObjectEditDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        jsonValue: (value !== null && value.length === 0) ? JSON.parse("{}") : JSON.parse(value),
-        title: this.translate.instant('device.lwm2m-security-info', {typeName: id}) + " for " +
-          this.translate.instant('device.lwm2m-endpoint', {typeName: id}) + ": " + id
-      }
-    }).afterClosed().subscribe(
-      (res) => {
-        debugger
-        if (res) {
-            this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
-            this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
         }
       }
     );
