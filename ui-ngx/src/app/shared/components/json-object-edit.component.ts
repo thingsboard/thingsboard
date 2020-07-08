@@ -194,7 +194,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   beautifyJSON() {
-    if (this.jsonEditor) {
+    if (this.jsonEditor && this.objectValid) {
       const res = JSON.stringify(this.modelValue, null, 2);
       this.jsonEditor.setValue(res ? res : '', -1);
       this.updateView();
@@ -202,7 +202,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   minifyJSON() {
-    if (this.jsonEditor) {
+    if (this.jsonEditor && this.objectValid) {
       const res = JSON.stringify(this.modelValue);
       this.jsonEditor.setValue(res ? res : '', -1);
       this.updateView();
