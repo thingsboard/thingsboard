@@ -13,13 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.queue.stats;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+public interface QueueStats {
+    default void incrementTotal() {
+        incrementTotal(1);
+    }
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+    void incrementTotal(int amount);
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${database.ts.type}'=='sql' && '${spring.jpa.database-platform}'=='org.hibernate.dialect.PostgreSQLDialect'")
-public @interface PsqlTsDao { }
+    default void incrementSuccessful() {
+        incrementSuccessful(1);
+    }
+
+    void incrementSuccessful(int amount);
+
+
+    default void incrementFailed() {
+        incrementFailed(1);
+    }
+
+    void incrementFailed(int amount);
+}

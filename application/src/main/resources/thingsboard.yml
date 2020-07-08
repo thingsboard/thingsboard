@@ -754,3 +754,13 @@ service:
   id: "${TB_SERVICE_ID:}"
   tenant_id: "${TB_SERVICE_TENANT_ID:}" # empty or specific tenant id.
 
+metrics:
+  # Enable/disable actuator metrics.
+  enabled: "${METRICS_ENABLED:false}"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
+        include: '${METRICS_ENDPOINTS_EXPOSE:info}'

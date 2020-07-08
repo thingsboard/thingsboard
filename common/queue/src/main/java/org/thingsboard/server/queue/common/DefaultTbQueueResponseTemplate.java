@@ -23,6 +23,7 @@ import org.thingsboard.server.queue.TbQueueHandler;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
+import org.thingsboard.server.queue.stats.QueueStats;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +45,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
     private final ExecutorService loopExecutor;
     private final ScheduledExecutorService timeoutExecutor;
     private final ExecutorService callbackExecutor;
+    private final QueueStats stats;
     private final int maxPendingRequests;
     private final long requestTimeout;
 
@@ -58,7 +60,8 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                                           long pollInterval,
                                           long requestTimeout,
                                           int maxPendingRequests,
-                                          ExecutorService executor) {
+                                          ExecutorService executor,
+                                          QueueStats stats) {
         this.requestTemplate = requestTemplate;
         this.responseTemplate = responseTemplate;
         this.pendingRequests = new ConcurrentHashMap<>();
@@ -66,6 +69,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
         this.pollInterval = pollInterval;
         this.requestTimeout = requestTimeout;
         this.callbackExecutor = executor;
+        this.stats = stats;
         this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
         this.loopExecutor = Executors.newSingleThreadExecutor();
     }
@@ -108,11 +112,13 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                             String responseTopic = bytesToString(responseTopicHeader);
                             try {
                                 pendingRequestCount.getAndIncrement();
+                                stats.incrementTotal();
                                 AsyncCallbackTemplate.withCallbackAndTimeout(handler.handle(request),
                                         response -> {
                                             pendingRequestCount.decrementAndGet();
                                             response.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
                                             responseTemplate.send(TopicPartitionInfo.builder().topic(responseTopic).build(), response, null);
+                                            stats.incrementSuccessful();
                                         },
                                         e -> {
                                             pendingRequestCount.decrementAndGet();
@@ -121,6 +127,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                                             } else {
                                                 log.trace("[{}] Failed to process the request: {}", requestId, request, e);
                                             }
+                                            stats.incrementFailed();
                                         },
                                         requestTimeout,
                                         timeoutExecutor,
@@ -128,6 +135,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                             } catch (Throwable e) {
                                 pendingRequestCount.decrementAndGet();
                                 log.warn("[{}] Failed to process the request: {}", requestId, request, e);
+                                stats.incrementFailed();
                             }
                         }
                     });

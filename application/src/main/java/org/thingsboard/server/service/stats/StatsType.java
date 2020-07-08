@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.service.stats;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+public enum StatsType {
+    RULE_ENGINE("ruleEngine"), CORE("core"), TRANSPORT("transport"), JS_INVOKE("jsInvoke");
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+    private String name;
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${database.ts.type}'=='sql' && '${spring.jpa.database-platform}'=='org.hibernate.dialect.PostgreSQLDialect'")
-public @interface PsqlTsDao { }
+    StatsType(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+}
