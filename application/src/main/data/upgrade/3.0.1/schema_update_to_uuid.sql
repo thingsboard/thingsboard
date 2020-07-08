@@ -14,6 +14,14 @@
 -- limitations under the License.
 --
 
+CREATE OR REPLACE FUNCTION to_uuid(IN entity_id varchar, OUT uuid_id uuid) AS
+$$
+BEGIN
+    uuid_id := substring(entity_id, 8, 8) || '-' || substring(entity_id, 4, 4) || '-1' || substring(entity_id, 1, 3) ||
+               '-' || substring(entity_id, 16, 4) || '-' || substring(entity_id, 20, 12);
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION extract_ts(uuid UUID) RETURNS BIGINT AS
 $$
 DECLARE
@@ -826,3 +834,23 @@ BEGIN
     END IF;
 END;
 $$;
+
+CREATE TABLE IF NOT EXISTS ts_kv_latest
+(
+    entity_id uuid   NOT NULL,
+    key       int    NOT NULL,
+    ts        bigint NOT NULL,
+    bool_v    boolean,
+    str_v     varchar(10000000),
+    long_v    bigint,
+    dbl_v     double precision,
+    json_v    json,
+    CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
+);
+
+CREATE TABLE IF NOT EXISTS ts_kv_dictionary
+(
+    key    varchar(255) NOT NULL,
+    key_id serial UNIQUE,
+    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+);
