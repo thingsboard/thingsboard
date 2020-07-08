@@ -25,9 +25,14 @@ import {credentialTypeNames, DeviceCredentials, DeviceCredentialsType} from '@sh
 import {DialogComponent} from '@shared/components/dialog.component';
 import {Router} from '@angular/router';
 import {
+  DeviceCredentialsDialogLwm2mComponent,
+  DeviceCredentialsDialogLwm2mData
+} from "@home/pages/device/device-credentials-dialog-lwm2m.component";
+import {
   JsonObjectEditDialogComponent,
   JsonObjectEditDialogData
 } from "@shared/components/dialog/json-object-edit-dialog.component";
+
 import {TranslateService} from "@ngx-translate/core";
 
 export interface DeviceCredentialsDialogData {
@@ -149,6 +154,30 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
     );
   }
 
+  openSecurityInfoLwM2mDialog($event: Event, value: string, id: string): void {
+    if ($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+    }
+    this.dialog.open<DeviceCredentialsDialogLwm2mComponent, DeviceCredentialsDialogLwm2mData, object>(DeviceCredentialsDialogLwm2mComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonValue: (value !== null && value.length === 0) ? JSON.parse("{}") : JSON.parse(value),
+        title: this.translate.instant('device.lwm2m-security-info', {typeName: id}) + " for " +
+          this.translate.instant('device.lwm2m-endpoint', {typeName: id}) + ": " + id
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        debugger
+        if (res) {
+          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
+          this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
+        }
+      }
+    );
+  }
+
   openSecurityInfoDialog($event: Event, value: string, id: string): void {
     if ($event) {
       $event.stopPropagation();
@@ -163,10 +192,11 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
           this.translate.instant('device.lwm2m-endpoint', {typeName: id}) + ": " + id
       }
     }).afterClosed().subscribe(
-
       (res) => {
+        debugger
         if (res) {
-          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
+            this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
+            this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
         }
       }
     );
