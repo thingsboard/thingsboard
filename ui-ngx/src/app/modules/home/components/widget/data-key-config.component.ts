@@ -187,6 +187,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     if (this.displayAdvanced) {
       this.modelValue.settings = this.dataKeySettingsFormGroup.get('settings').value.model;
     }
+    if (this.modelValue.name) {
+      this.modelValue.name = this.modelValue.name.trim();
+    }
     this.propagateChange(this.modelValue);
   }
 

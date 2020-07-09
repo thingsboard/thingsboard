@@ -398,7 +398,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   }
 
   createKey(name: string, dataKeyType: DataKeyType = this.dataKeyType) {
-    this.addFromChipValue({name, type: dataKeyType});
+    this.addFromChipValue({name: name ? name.trim() : '', type: dataKeyType});
   }
 
   displayKeyFn(key?: DataKey): string | undefined {

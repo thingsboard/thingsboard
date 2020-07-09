@@ -139,14 +139,14 @@
               <mat-icon (click)="createKey(searchText, dataKeyTypes.alarm)"
                         class="tb-mat-16">notifications</mat-icon>
             </span>
-            <span *ngIf="widgetType == widgetTypes.latest"
+            <span *ngIf="widgetType == widgetTypes.latest || widgetType == widgetTypes.alarm"
                   matTooltip="{{'datakey.attributes' | translate }}"
                   matTooltipPosition="above">
               <mat-icon (click)="createKey(searchText, dataKeyTypes.attribute)"
                       class="tb-mat-16"
                       svgIcon="alpha-a-circle-outline"></mat-icon>
             </span>
-            <span *ngIf="widgetType == widgetTypes.latest"
+            <span *ngIf="widgetType == widgetTypes.latest || widgetType == widgetTypes.alarm"
                   matTooltip="{{'datakey.entity-field' | translate }}"
                   matTooltipPosition="above">
               <mat-icon (click)="createKey(searchText, dataKeyTypes.entityField)"
