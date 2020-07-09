@@ -91,6 +91,11 @@ export class AlarmDataSubscription {
       this.subscriber = new TelemetrySubscriber(this.telemetryService);
       this.alarmDataCommand = new AlarmDataCmd();
 
+      const alarmFields: Array<EntityKey> =
+        this.alarmDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.alarm).map(
+          dataKey => ({ type: EntityKeyType.ALARM_FIELD, key: dataKey.name })
+        );
+
       const entityFields: Array<EntityKey> =
         this.alarmDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.entityField).map(
           dataKey => ({ type: EntityKeyType.ENTITY_FIELD, key: dataKey.name })
@@ -116,6 +121,7 @@ export class AlarmDataSubscription {
         entityFilter: this.alarmDataSubscriptionOptions.entityFilter,
         pageLink: deepClone(this.alarmDataSubscriptionOptions.pageLink),
         keyFilters,
+        alarmFields,
         entityFields,
         latestValues
       };

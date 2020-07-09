@@ -556,6 +556,7 @@ export interface EntityDataQuery extends AbstractDataQuery<EntityDataPageLink> {
 }
 
 export interface AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
+  alarmFields?: Array<EntityKey>;
 }
 
 export interface TsValue {
