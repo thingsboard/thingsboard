@@ -38,42 +38,42 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
     public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, TenantId parentTenantId, OAuth2MapperConfig config) {
         OAuth2User oauth2User = new OAuth2User();
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
-        String email = getStringAttributeByKey(attributes, config.getBasicConfig().getEmailAttributeKey());
+        String email = getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
         oauth2User.setEmail(email);
         oauth2User.setTenantName(getTenantName(attributes, config));
-        if (!StringUtils.isEmpty(config.getBasicConfig().getLastNameAttributeKey())) {
-            String lastName = getStringAttributeByKey(attributes, config.getBasicConfig().getLastNameAttributeKey());
+        if (!StringUtils.isEmpty(config.getBasic().getLastNameAttributeKey())) {
+            String lastName = getStringAttributeByKey(attributes, config.getBasic().getLastNameAttributeKey());
             oauth2User.setLastName(lastName);
         }
-        if (!StringUtils.isEmpty(config.getBasicConfig().getFirstNameAttributeKey())) {
-            String firstName = getStringAttributeByKey(attributes, config.getBasicConfig().getFirstNameAttributeKey());
+        if (!StringUtils.isEmpty(config.getBasic().getFirstNameAttributeKey())) {
+            String firstName = getStringAttributeByKey(attributes, config.getBasic().getFirstNameAttributeKey());
             oauth2User.setFirstName(firstName);
         }
-        if (!StringUtils.isEmpty(config.getBasicConfig().getCustomerNamePattern())) {
+        if (!StringUtils.isEmpty(config.getBasic().getCustomerNamePattern())) {
             StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
-            String customerName = sub.replace(config.getBasicConfig().getCustomerNamePattern());
+            String customerName = sub.replace(config.getBasic().getCustomerNamePattern());
             oauth2User.setCustomerName(customerName);
         }
-        oauth2User.setAlwaysFullScreen(config.getBasicConfig().isAlwaysFullScreen());
-        if (!StringUtils.isEmpty(config.getBasicConfig().getDefaultDashboardName())) {
-            oauth2User.setDefaultDashboardName(config.getBasicConfig().getDefaultDashboardName());
+        oauth2User.setAlwaysFullScreen(config.getBasic().isAlwaysFullScreen());
+        if (!StringUtils.isEmpty(config.getBasic().getDefaultDashboardName())) {
+            oauth2User.setDefaultDashboardName(config.getBasic().getDefaultDashboardName());
         }
 
         return getOrCreateSecurityUserFromOAuth2User(parentTenantId, oauth2User, config.isAllowUserCreation(), config.isActivateUser());
     }
 
     private String getTenantName(Map<String, Object> attributes, OAuth2MapperConfig config) {
-        switch (config.getBasicConfig().getTenantNameStrategy()) {
+        switch (config.getBasic().getTenantNameStrategy()) {
             case EMAIL:
-                return getStringAttributeByKey(attributes, config.getBasicConfig().getEmailAttributeKey());
+                return getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
             case DOMAIN:
-                String email = getStringAttributeByKey(attributes, config.getBasicConfig().getEmailAttributeKey());
+                String email = getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
                 return email.substring(email .indexOf("@") + 1);
             case CUSTOM:
                 StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
-                return sub.replace(config.getBasicConfig().getTenantNamePattern());
+                return sub.replace(config.getBasic().getTenantNamePattern());
             default:
-                throw new RuntimeException("Tenant Name Strategy with type " + config.getBasicConfig().getTenantNameStrategy() + " is not supported!");
+                throw new RuntimeException("Tenant Name Strategy with type " + config.getBasic().getTenantNameStrategy() + " is not supported!");
         }
     }
 

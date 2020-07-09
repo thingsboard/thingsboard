@@ -15,19 +15,14 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
-@Builder(toBuilder = true)
-@EqualsAndHashCode
 @Data
 @ToString
-public class OAuth2MapperConfig {
-    private boolean allowUserCreation;
-    private boolean activateUser;
-    private MapperType type;
-    private OAuth2BasicMapperConfig basic;
-    private OAuth2CustomMapperConfig custom;
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class ExtendedOAuth2ClientRegistration {
+    private String redirectUriTemplate;
+    private OAuth2ClientRegistration clientRegistration;
 }

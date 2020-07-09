@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2020 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,10 +39,8 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -76,27 +74,40 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public Pair<TenantId, OAuth2ClientRegistration> getClientRegistrationWithTenant(String registrationId) {
-        return getAllOAuth2ClientsParams().entrySet().stream()
-                .map(entry -> {
-                    TenantId tenantId = entry.getKey();
-                    OAuth2ClientRegistration clientRegistration = toClientRegistrationStream(entry.getValue())
-                            .filter(registration -> registrationId.equals(registration.getRegistrationId()))
-                            .findFirst()
-                            .orElse(null);
-                    return clientRegistration != null ?
-                            ImmutablePair.of(tenantId, clientRegistration) : null;
-                })
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElse(null)
-                ;
+        return getExtendedOAuth2ClientRegistrationWithTenant(registrationId)
+                .map(pair -> ImmutablePair.of(pair.getLeft(), pair.getRight().getClientRegistration()))
+                .orElse(null);
     }
 
     @Override
-    public OAuth2ClientRegistration getClientRegistration(String registrationId) {
-        Pair<TenantId, OAuth2ClientRegistration> clientRegistrationPair = getClientRegistrationWithTenant(registrationId);
-        return clientRegistrationPair != null ? clientRegistrationPair.getRight() : null;
+    public ExtendedOAuth2ClientRegistration getExtendedClientRegistration(String registrationId) {
+        return getExtendedOAuth2ClientRegistrationWithTenant(registrationId)
+                .map(Pair::getValue)
+                .orElse(null);
+
     }
+
+    private Optional<Pair<TenantId, ExtendedOAuth2ClientRegistration>> getExtendedOAuth2ClientRegistrationWithTenant(String registrationId) {
+        return getAllOAuth2ClientsParams().entrySet().stream()
+                .map(entry -> {
+                    TenantId tenantId = entry.getKey();
+                    return entry.getValue().getClientsDomainsParams().stream()
+                            .flatMap(domainParams ->
+                                    domainParams.getClientRegistrations().stream()
+                                            .map(clientRegistration -> new ExtendedOAuth2ClientRegistration(domainParams.getRedirectUriTemplate(), clientRegistration))
+                            )
+                            .filter(registration -> registrationId.equals(registration.getClientRegistration().getRegistrationId()))
+                            .findFirst()
+                            .map(extendedClientRegistration -> ImmutablePair.of(tenantId, extendedClientRegistration))
+                            .orElse(null);
+
+                })
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(entry -> ImmutablePair.of(entry.getKey(), entry.getValue()))
+                ;
+    }
+
 
     @Override
     public List<OAuth2ClientInfo> getOAuth2Clients(String domainName) {
@@ -249,6 +260,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     private void validate(OAuth2ClientsParams oAuth2ClientsParams) {
+        validateRedirectUris(oAuth2ClientsParams);
         validateDomainNames(oAuth2ClientsParams);
 
         toClientRegistrationStream(oAuth2ClientsParams)
@@ -271,6 +283,15 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         if (duplicateDomainNames) {
             throw new DataValidationException("All domain names should be unique!");
         }
+    }
+
+    private void validateRedirectUris(OAuth2ClientsParams oAuth2ClientsParams) {
+        oAuth2ClientsParams.getClientsDomainsParams().stream()
+                .forEach(oAuth2ClientsDomainParams -> {
+                    if (StringUtils.isEmpty(oAuth2ClientsDomainParams.getRedirectUriTemplate())) {
+                        throw new DataValidationException("Redirect uri template should be specified!");
+                    }
+                });
     }
 
     @Override
@@ -482,11 +503,8 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         if (StringUtils.isEmpty(clientRegistration.getAuthorizationUri())) {
             throw new DataValidationException("Authorization uri should be specified!");
         }
-        if (StringUtils.isEmpty(clientRegistration.getTokenUri())) {
+        if (StringUtils.isEmpty(clientRegistration.getAccessTokenUri())) {
             throw new DataValidationException("Token uri should be specified!");
-        }
-        if (StringUtils.isEmpty(clientRegistration.getRedirectUriTemplate())) {
-            throw new DataValidationException("Redirect uri template should be specified!");
         }
         if (StringUtils.isEmpty(clientRegistration.getScope())) {
             throw new DataValidationException("Scope should be specified!");
@@ -517,7 +535,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             throw new DataValidationException("Mapper config type should be specified!");
         }
         if (mapperConfig.getType() == MapperType.BASIC) {
-            OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasicConfig();
+            OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
             if (basicConfig == null) {
                 throw new DataValidationException("Basic config should be specified!");
             }
@@ -533,18 +551,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             }
         }
         if (mapperConfig.getType() == MapperType.CUSTOM) {
-            OAuth2CustomMapperConfig customConfig = mapperConfig.getCustomConfig();
+            OAuth2CustomMapperConfig customConfig = mapperConfig.getCustom();
             if (customConfig == null) {
                 throw new DataValidationException("Custom config should be specified!");
             }
             if (StringUtils.isEmpty(customConfig.getUrl())) {
                 throw new DataValidationException("Custom mapper URL should be specified!");
-            }
-            if (StringUtils.isEmpty(customConfig.getUsername())) {
-                throw new DataValidationException("Custom mapper username should be specified!");
-            }
-            if (StringUtils.isEmpty(customConfig.getPassword())) {
-                throw new DataValidationException("Custom mapper password should be specified!");
             }
         }
     };

@@ -16,12 +16,12 @@
 package org.thingsboard.server.dao.oauth2;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.oauth2.ExtendedOAuth2ClientRegistration;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 
 @Component
@@ -32,19 +32,19 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        OAuth2ClientRegistration localClientRegistration = oAuth2Service.getClientRegistration(registrationId);
-        return localClientRegistration == null ?
-                null : toSpringClientRegistration(localClientRegistration);
+        ExtendedOAuth2ClientRegistration localExtendedClientRegistration = oAuth2Service.getExtendedClientRegistration(registrationId);
+        return localExtendedClientRegistration == null ?
+                null : toSpringClientRegistration(localExtendedClientRegistration.getRedirectUriTemplate(), localExtendedClientRegistration.getClientRegistration());
     }
 
-    private ClientRegistration toSpringClientRegistration(OAuth2ClientRegistration localClientRegistration){
+    private ClientRegistration toSpringClientRegistration(String redirectUriTemplate, OAuth2ClientRegistration localClientRegistration){
         return ClientRegistration.withRegistrationId(localClientRegistration.getRegistrationId())
                 .clientId(localClientRegistration.getClientId())
                 .authorizationUri(localClientRegistration.getAuthorizationUri())
                 .clientSecret(localClientRegistration.getClientSecret())
-                .tokenUri(localClientRegistration.getTokenUri())
-                .redirectUriTemplate(localClientRegistration.getRedirectUriTemplate())
-                .scope(localClientRegistration.getScope().split(","))
+                .tokenUri(localClientRegistration.getAccessTokenUri())
+                .redirectUriTemplate(redirectUriTemplate)
+                .scope(localClientRegistration.getScope())
                 .clientName(localClientRegistration.getClientName())
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .userInfoUri(localClientRegistration.getUserInfoUri())

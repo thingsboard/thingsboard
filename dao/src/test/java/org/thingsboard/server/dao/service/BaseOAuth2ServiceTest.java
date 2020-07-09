@@ -273,7 +273,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testGetClientRegistration() {
+    public void testGetExtendedClientRegistration() {
         OAuth2ClientsParams tenantClientsParams = validClientsParams();
         OAuth2ClientsParams sysAdminClientsParams = validClientsParams();
 
@@ -285,9 +285,9 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 OAuth2Utils.toClientRegistrationStream(sysAdminClientsParams)
         )
                 .forEach(clientRegistration -> {
-                    OAuth2ClientRegistration foundClientRegistration = oAuth2Service.getClientRegistration(clientRegistration.getRegistrationId());
-                    Assert.assertNotNull(foundClientRegistration);
-                    Assert.assertEquals(clientRegistration.getRegistrationId(), foundClientRegistration.getRegistrationId());
+                    ExtendedOAuth2ClientRegistration foundExtendedClientRegistration = oAuth2Service.getExtendedClientRegistration(clientRegistration.getRegistrationId());
+                    Assert.assertNotNull(foundExtendedClientRegistration);
+                    Assert.assertEquals(clientRegistration, foundExtendedClientRegistration.getClientRegistration());
                 });
 
     }
@@ -401,6 +401,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 .clientsDomainsParams(Collections.singletonList(
                         OAuth2ClientsDomainParams.builder()
                                 .domainName(UUID.randomUUID().toString())
+                                .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
                                 .clientRegistrations(Arrays.asList(first, second))
                                 .build()
                 ))
@@ -415,10 +416,12 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 .clientsDomainsParams(Arrays.asList(
                         OAuth2ClientsDomainParams.builder()
                                 .domainName(UUID.randomUUID().toString())
+                                .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
                                 .clientRegistrations(Arrays.asList(first, second))
                                 .build(),
                         OAuth2ClientsDomainParams.builder()
                                 .domainName(UUID.randomUUID().toString())
+                                .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
                                 .clientRegistrations(Arrays.asList(third))
                                 .build()
                 ))
@@ -434,14 +437,17 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 .clientsDomainsParams(Arrays.asList(
                         OAuth2ClientsDomainParams.builder()
                                 .domainName("domain")
+                                .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
                                 .clientRegistrations(Collections.singletonList(first))
                                 .build(),
                         OAuth2ClientsDomainParams.builder()
                                 .domainName("domain")
+                                .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
                                 .clientRegistrations(Collections.singletonList(second))
                                 .build(),
                         OAuth2ClientsDomainParams.builder()
                                 .domainName(UUID.randomUUID().toString())
+                                .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
                                 .clientRegistrations(Collections.singletonList(third))
                                 .build()
                 ))
@@ -458,6 +464,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 .clientsDomainsParams(Arrays.asList(
                         OAuth2ClientsDomainParams.builder()
                                 .domainName(UUID.randomUUID().toString())
+                                .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
                                 .clientRegistrations(Arrays.asList(first, second, third))
                                 .build()
                 ))
@@ -471,20 +478,17 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                         .allowUserCreation(true)
                         .activateUser(true)
                         .type(MapperType.CUSTOM)
-                        .customConfig(
+                        .custom(
                                 OAuth2CustomMapperConfig.builder()
                                         .url("localhost:8082")
-                                        .username("test")
-                                        .password("test")
                                         .build()
                         )
                         .build())
                 .clientId("clientId")
                 .clientSecret("clientSecret")
                 .authorizationUri("authorizationUri")
-                .tokenUri("tokenUri")
-                .redirectUriTemplate("http://localhost:8080/login/oauth2/code/")
-                .scope("scope")
+                .accessTokenUri("tokenUri")
+                .scope(Arrays.asList("scope1", "scope2"))
                 .userInfoUri("userInfoUri")
                 .userNameAttributeName("userNameAttributeName")
                 .jwkSetUri("jwkSetUri")

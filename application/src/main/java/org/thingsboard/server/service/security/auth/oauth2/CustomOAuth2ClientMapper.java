@@ -39,7 +39,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
 
     @Override
     public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, TenantId parentTenantId, OAuth2MapperConfig config) {
-        OAuth2User oauth2User = getOAuth2User(token, config.getCustomConfig());
+        OAuth2User oauth2User = getOAuth2User(token, config.getCustom());
         return getOrCreateSecurityUserFromOAuth2User(parentTenantId, oauth2User, config.isAllowUserCreation(), config.isActivateUser());
     }
 

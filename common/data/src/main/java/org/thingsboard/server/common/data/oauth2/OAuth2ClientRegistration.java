@@ -19,6 +19,8 @@ import lombok.*;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.OAuth2IntegrationId;
 
+import java.util.List;
+
 @EqualsAndHashCode
 @Data
 @ToString(exclude = {"clientSecret"})
@@ -32,9 +34,8 @@ public class OAuth2ClientRegistration {
     private String clientId;
     private String clientSecret;
     private String authorizationUri;
-    private String tokenUri;
-    private String redirectUriTemplate;
-    private String scope;
+    private String accessTokenUri;
+    private List<String> scope;
     private String userInfoUri;
     private String userNameAttributeName;
     private String jwkSetUri;
