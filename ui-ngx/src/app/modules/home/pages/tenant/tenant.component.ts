@@ -23,6 +23,7 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { TranslateService } from '@ngx-translate/core';
 import { ContactBasedComponent } from '../../components/entity/contact-based.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-tenant',
@@ -55,7 +56,9 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
         additionalInfo: this.fb.group(
           {
-            description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
+            description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
+            allowOAuth2Configuration: [isDefined(entity?.additionalInfo?.allowOAuth2Configuration) ?
+              entity.additionalInfo.allowOAuth2Configuration : true]
           }
         )
       }
@@ -66,7 +69,11 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
     this.entityForm.patchValue({title: entity.title});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
-    this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
+    this.entityForm.patchValue({additionalInfo: {
+      description: entity.additionalInfo ? entity.additionalInfo.description : '',
+      allowOAuth2Configuration: isDefined(entity?.additionalInfo?.allowOAuth2Configuration) ?
+        entity.additionalInfo.allowOAuth2Configuration : true
+    }});
   }
 
   updateFormState() {

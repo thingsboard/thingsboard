@@ -23,6 +23,10 @@ export interface AdminSettings<T> {
 
 export declare type SmtpProtocol = 'smtp' | 'smtps';
 
+export declare type ClientAuthenticationMethod = 'basic' | 'post';
+export declare type MapperConfigType = 'BASIC' | 'CUSTOM';
+export declare type TenantNameStrategy = 'DOMAIN' | 'EMAIL' | 'CUSTOM';
+
 export interface MailServerSettings {
   mailFrom: string;
   smtpProtocol: SmtpProtocol;
@@ -59,4 +63,56 @@ export interface SecuritySettings {
 export interface UpdateMessage {
   message: string;
   updateAvailable: boolean;
+}
+
+export interface OAuth2Settings {
+  clientsDomainsParams: DomainParams[];
+}
+
+export interface DomainParams {
+  domainName: string;
+  redirectUriTemplate: string;
+  clientRegistrations: ClientRegistration[];
+}
+
+export interface ClientRegistration {
+  registrationId: string;
+  clientName: string;
+  loginButtonLabel: string;
+  loginButtonIcon: string;
+  clientId: string;
+  clientSecret: string;
+  accessTokenUri: string;
+  authorizationUri: string;
+  scope: string[];
+  jwkSetUri: string;
+  userInfoUri: string;
+  clientAuthenticationMethod: ClientAuthenticationMethod
+  userNameAttributeName: string;
+  mapperConfig: MapperConfig
+}
+
+export interface MapperConfig {
+  allowUserCreation: boolean;
+  activateUser: boolean;
+  type: MapperConfigType;
+  basic?: MapperConfigBasic;
+  custom?: MapperConfigCustom;
+}
+
+export interface MapperConfigBasic {
+  emailAttributeKey: string;
+  firstNameAttributeKey?: string;
+  lastNameAttributeKey?: string;
+  tenantNameStrategy: TenantNameStrategy;
+  tenantNamePattern?: string;
+  customerNamePattern?: string;
+  defaultDashboardName?: string;
+  alwaysFullScreen?: boolean;
+}
+
+export interface MapperConfigCustom {
+  url: string;
+  username?: string;
+  password?: string;
 }

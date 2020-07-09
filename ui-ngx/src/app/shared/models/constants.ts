@@ -58,6 +58,7 @@ export const HelpLinks = {
   linksMap: {
     outgoingMailSettings: helpBaseUrl + '/docs/user-guide/ui/mail-settings',
     securitySettings: helpBaseUrl + '/docs/user-guide/ui/security-settings',
+    oauth2Settings: helpBaseUrl + '/docs/user-guide/oauth-2-support/',
     ruleEngine: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/overview/',
     ruleNodeCheckRelation: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-relation-filter-node',
     ruleNodeCheckExistenceFields: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-existence-fields-node',
@@ -108,7 +109,7 @@ export const HelpLinks = {
     widgetsConfigLatest: helpBaseUrl +  '/docs/user-guide/ui/dashboards#latest',
     widgetsConfigRpc: helpBaseUrl +  '/docs/user-guide/ui/dashboards#rpc',
     widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/dashboards#alarm',
-    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static'
+    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static',
   }
 };
 

@@ -18,7 +18,13 @@ import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { AdminSettings, MailServerSettings, SecuritySettings, UpdateMessage } from '@shared/models/settings.models';
+import {
+  AdminSettings,
+  MailServerSettings,
+  OAuth2Settings,
+  SecuritySettings,
+  UpdateMessage
+} from '@shared/models/settings.models';
 
 @Injectable({
   providedIn: 'root'
@@ -50,6 +56,16 @@ export class AdminService {
   public saveSecuritySettings(securitySettings: SecuritySettings,
                               config?: RequestConfig): Observable<SecuritySettings> {
     return this.http.post<SecuritySettings>('/api/admin/securitySettings', securitySettings,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getOAuth2Settings(config?: RequestConfig): Observable<OAuth2Settings> {
+    return this.http.get<OAuth2Settings>(`/api/oauth2/config`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveOAuth2Settings(OAuth2Setting: OAuth2Settings,
+                              config?: RequestConfig): Observable<OAuth2Settings> {
+    return this.http.post<OAuth2Settings>('/api/oauth2/config', OAuth2Setting,
       defaultHttpOptionsFromConfig(config));
   }
 
