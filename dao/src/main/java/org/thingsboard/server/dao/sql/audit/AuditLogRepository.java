@@ -33,7 +33,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "a.tenantId = :tenantId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
+            "AND ((:actionTypes) IS NULL OR a.actionType in (:actionTypes)) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.userName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -53,7 +53,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "AND a.entityType = :entityType AND a.entityId = :entityId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
+            "AND ((:actionTypes) IS NULL OR a.actionType in (:actionTypes)) " +
             "AND (LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.userName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.actionType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -73,7 +73,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
+            "AND ((:actionTypes) IS NULL OR a.actionType in (:actionTypes)) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.userName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -93,7 +93,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "AND a.userId = :userId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
+            "AND ((:actionTypes) IS NULL OR a.actionType in (:actionTypes)) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.actionType) LIKE LOWER(CONCAT(:textSearch, '%'))" +

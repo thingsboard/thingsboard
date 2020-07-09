@@ -57,7 +57,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
             "AND (a.originatorId = :affectedEntityId or re.fromId IS NOT NULL) " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND (:alarmStatuses IS NULL OR a.status in :alarmStatuses) " +
+            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))",
@@ -71,7 +71,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                     "AND (a.originatorId = :affectedEntityId or re.fromId IS NOT NULL) " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-                    "AND (:alarmStatuses IS NULL OR a.status in :alarmStatuses) " +
+                    "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
                     "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
                     "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))")
@@ -80,7 +80,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("affectedEntityType") String affectedEntityType,
                                      @Param("startTime") Long startTime,
                                      @Param("endTime") Long endTime,
-                                     @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                     @Param("alarmStatuses") List<AlarmStatus> alarmStatuses,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 

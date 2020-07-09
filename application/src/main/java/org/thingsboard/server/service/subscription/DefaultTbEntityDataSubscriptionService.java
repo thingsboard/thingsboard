@@ -164,7 +164,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
             if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null || cmd.getHistoryCmd() != null) {
-                clearSubs(ctx);
+                ctx.clearSubscriptions();
             }
         } else {
             log.debug("[{}][{}] Creating new subscription using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
@@ -259,19 +259,19 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         EntityDataQuery edq = new EntityDataQuery(adq.getEntityFilter(), edpl, adq.getEntityFields(), adq.getLatestValues(), adq.getKeyFilters());
         PageData<EntityData> entitiesData = entityService.findEntityDataByQuery(ctx.getTenantId(), ctx.getCustomerId(), edq);
         List<EntityData> entities = entitiesData.getData();
-        ctx.setEntitiesData(entitiesData);
+        ctx.setData(entitiesData);
         ctx.cancelTasks();
+        ctx.clearSubscriptions();
         if (entities.isEmpty()) {
             AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), new PageData<>(Collections.emptyList(), 1, 0, false), null);
             wsService.sendWsMsg(ctx.getSessionId(), update);
         } else {
             ctx.fetchAlarms();
+            ctx.createSubscriptions(cmd.getQuery().getLatestValues(), true);
             if (adq.getPageLink().getTimeWindow() > 0) {
-                ctx.createSubscriptions();
                 TbAlarmDataSubCtx finalCtx = ctx;
                 ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
-                        finalCtx::cleanupOldAlarms,
-                        dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+                        finalCtx::cleanupOldAlarms, dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
                 finalCtx.setRefreshTask(task);
             }
         }
@@ -280,12 +280,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private void refreshDynamicQuery(TenantId tenantId, CustomerId customerId, TbEntityDataSubCtx finalCtx) {
         try {
             long start = System.currentTimeMillis();
-            TbEntityDataSubCtx.TbEntityDataSubCtxUpdateResult result = finalCtx.update(entityService.findEntityDataByQuery(tenantId, customerId, finalCtx.getQuery()));
+            finalCtx.update(entityService.findEntityDataByQuery(tenantId, customerId, finalCtx.getQuery()));
             long end = System.currentTimeMillis();
             dynamicQueryInvocationCnt.incrementAndGet();
             dynamicQueryTimeSpent.addAndGet(end - start);
-            result.getSubsToCancel().forEach(subId -> localSubscriptionService.cancelSubscription(finalCtx.getSessionId(), subId));
-            result.getSubsToAdd().forEach(localSubscriptionService::addSubscription);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to refresh query", finalCtx.getSessionId(), finalCtx.getCmdId(), e);
         }
@@ -302,10 +300,6 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             log.info("Stats: regularQueryInvocationCnt = [{}], regularQueryInvocationTime = [{}], dynamicQueryCnt = [{}] dynamicQueryInvocationCnt = [{}], dynamicQueryInvocationTime = [{}]",
                     regularQueryInvocationCntValue, regularQueryInvocationTimeValue, dynamicQueryCnt, dynamicQueryInvocationCntValue, dynamicQueryInvocationTimeValue);
         }
-    }
-
-    private void clearSubs(TbAbstractDataSubCtx ctx) {
-        ctx.clearSubscriptions();
     }
 
     private TbEntityDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
@@ -391,7 +385,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             }
             wsService.sendWsMsg(ctx.getSessionId(), update);
             if (subscribe) {
-                createTelemetrySubscriptions(ctx, keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), false);
+                ctx.createSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), false);
             }
             ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;
@@ -440,7 +434,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
                     }
                     wsService.sendWsMsg(ctx.getSessionId(), update);
-                    createTelemetrySubscriptions(ctx, latestCmd.getKeys());
+                    ctx.createSubscriptions(latestCmd.getKeys(), true);
                 }
 
                 @Override
@@ -456,17 +450,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 wsService.sendWsMsg(ctx.getSessionId(), update);
                 ctx.setInitialDataSent(true);
             }
-            createTelemetrySubscriptions(ctx, latestCmd.getKeys());
+            ctx.createSubscriptions(latestCmd.getKeys(), true);
         }
-    }
-
-    private void createTelemetrySubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys) {
-        createTelemetrySubscriptions(ctx, keys, true);
-    }
-
-    private void createTelemetrySubscriptions(TbEntityDataSubCtx ctx, List<EntityKey> keys, boolean latest) {
-        List<TbSubscription> tbSubs = ctx.createSubscriptions(keys, latest);
-        tbSubs.forEach(sub -> localSubscriptionService.addSubscription(sub));
     }
 
     private Map<String, TsValue> toTsValue(List<TsKvEntry> data) {
@@ -481,7 +466,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private void cleanupAndCancel(TbAbstractDataSubCtx ctx) {
         if (ctx != null) {
             ctx.cancelTasks();
-            clearSubs(ctx);
+            ctx.clearSubscriptions();
         }
     }
 

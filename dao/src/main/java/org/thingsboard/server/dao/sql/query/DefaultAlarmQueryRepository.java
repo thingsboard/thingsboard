@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -29,16 +30,20 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
+import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,6 +53,7 @@ import java.util.stream.Collectors;
 public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     private static final Map<String, String> alarmFieldColumnMap = new HashMap<>();
+    private static final List<String> uniqueAlarmFields = new ArrayList<>();
 
     static {
         alarmFieldColumnMap.put("createdTime", ModelConstants.CREATED_TIME_PROPERTY);
@@ -66,6 +72,8 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put("originator_id", ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);
         alarmFieldColumnMap.put("originator_type", ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY);
         alarmFieldColumnMap.put("originator", "originator_name");
+
+        uniqueAlarmFields.addAll(new HashSet<>(alarmFieldColumnMap.values()));
     }
 
     public static final String SELECT_ORIGINATOR_NAME = " CASE" +
@@ -109,7 +117,8 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     @Override
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
-                                                               AlarmDataPageLink pageLink, Collection<EntityId> orderedEntityIds) {
+                                                               AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        AlarmDataPageLink pageLink = query.getPageLink();
         QueryContext ctx = new QueryContext();
         ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
 
@@ -208,10 +217,15 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
         }
 
-        String countQuery = fromPart.toString() + wherePart.toString();
-        int totalElements = jdbcTemplate.queryForObject(String.format("select count(*) %s", countQuery), ctx, Integer.class);
+        String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
+        String mainQuery = selectPart.toString() + fromPart.toString() + wherePart.toString();
+        if (!textSearchQuery.isEmpty()) {
+            mainQuery = String.format("select * from (%s) a WHERE %s", mainQuery, textSearchQuery);
+        }
+        String countQuery = mainQuery;
+        int totalElements = jdbcTemplate.queryForObject(String.format("select count(*) from (%s) result", countQuery), ctx, Integer.class);
 
-        String dataQuery = selectPart.toString() + countQuery + sortPart;
+        String dataQuery = mainQuery + sortPart;
 
         int startIndex = pageLink.getPageSize() * pageLink.getPage();
         if (pageLink.getPageSize() > 0) {
@@ -219,6 +233,24 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         }
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
         return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
+    }
+
+    private String buildTextSearchQuery(QueryContext ctx, List<EntityKey> selectionMapping, String searchText) {
+        if (!StringUtils.isEmpty(searchText) && selectionMapping != null && !selectionMapping.isEmpty()) {
+            String lowerSearchText = searchText.toLowerCase() + "%";
+            List<String> searchPredicates = selectionMapping.stream()
+                    .map(mapping -> alarmFieldColumnMap.get(mapping.getKey()))
+                    .filter(Objects::nonNull)
+                    .map(mapping -> {
+                                String paramName = mapping + "_lowerSearchText";
+                                ctx.addStringParameter(paramName, lowerSearchText);
+                                return String.format("LOWER(cast(%s as varchar)) LIKE concat('%%', :%s, '%%')", mapping, paramName);
+                            }
+                    ).collect(Collectors.toList());
+            return String.format("%s", String.join(" or ", searchPredicates));
+        } else {
+            return "";
+        }
     }
 
     private String buildPermissionsQuery(TenantId tenantId, CustomerId customerId, QueryContext ctx) {

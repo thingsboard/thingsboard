@@ -27,16 +27,23 @@ import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -50,6 +57,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     @Getter
     @Setter
     private final HashMap<AlarmId, AlarmData> alarmsMap;
+
+    private final List<Integer> alarmSubscriptions;
     @Getter
     @Setter
     private PageData<AlarmData> alarms;
@@ -65,20 +74,22 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         this.alarmService = alarmService;
         this.entitiesMap = new LinkedHashMap<>();
         this.alarmsMap = new HashMap<>();
+        this.alarmSubscriptions = new ArrayList<>();
     }
 
     public void fetchAlarms() {
         PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(),
-                query.getPageLink(), getOrderedEntityIds());
+                query, getOrderedEntityIds());
         alarms = setAndMergeAlarmsData(alarms);
         AlarmDataUpdate update = new AlarmDataUpdate(cmdId, alarms, null);
         wsService.sendWsMsg(getSessionId(), update);
     }
 
-    public void setEntitiesData(PageData<EntityData> entitiesData) {
+    public void setData(PageData<EntityData> data) {
+        super.setData(data);
         entitiesMap.clear();
-        tooManyEntities = entitiesData.hasNext();
-        for (EntityData entityData : entitiesData.getData()) {
+        tooManyEntities = data.hasNext();
+        for (EntityData entityData : data.getData()) {
             entitiesMap.put(entityData.getEntityId(), entityData);
         }
     }
@@ -103,9 +114,13 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         return this.alarms;
     }
 
-    public void createSubscriptions() {
-        clearSubscriptions();
-        this.subToEntityIdMap = new HashMap<>();
+    @Override
+    public void createSubscriptions(List<EntityKey> keys, boolean resultToLatestValues) {
+        super.createSubscriptions(keys, resultToLatestValues);
+        createAlarmSubscriptions();
+    }
+
+    public void createAlarmSubscriptions() {
         AlarmDataPageLink pageLink = query.getPageLink();
         long startTs = System.currentTimeMillis() - pageLink.getTimeWindow();
         for (EntityData entityData : entitiesMap.values()) {
@@ -126,6 +141,28 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         }
     }
 
+    @Override
+    void sendWsMsg(String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType, boolean resultToLatestValues) {
+        EntityId entityId = subToEntityIdMap.get(subscriptionUpdate.getSubscriptionId());
+        if (entityId != null) {
+            Map<String, TsValue> latestUpdate = new HashMap<>();
+            subscriptionUpdate.getData().forEach((k, v) -> {
+                Object[] data = (Object[]) v.get(0);
+                latestUpdate.put(k, new TsValue((Long) data[0], (String) data[1]));
+            });
+            EntityData entityData = entitiesMap.get(entityId);
+            entityData.getLatest().computeIfAbsent(keyType, tmp -> new HashMap<>()).putAll(latestUpdate);
+            log.trace("[{}][{}][{}][{}] Received subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
+            List<AlarmData> update = alarmsMap.values().stream().filter(alarm -> entityId.equals(alarm.getEntityId())).map(alarm -> {
+                alarm.getLatest().computeIfAbsent(keyType, tmp -> new HashMap<>()).putAll(latestUpdate);
+                return alarm;
+            }).collect(Collectors.toList());
+            wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, update));
+        } else {
+            log.trace("[{}][{}][{}][{}] Received stale subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
+        }
+    }
+
     private void sendWsMsg(String sessionId, AlarmSubscriptionUpdate subscriptionUpdate) {
         Alarm alarm = subscriptionUpdate.getAlarm();
         AlarmId alarmId = alarm.getId();
@@ -141,6 +178,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             if (onCurrentPage) {
                 if (matchesFilter) {
                     AlarmData updated = new AlarmData(alarm, current.getOriginatorName(), current.getEntityId());
+                    updated.getLatest().putAll(current.getLatest());
                     alarmsMap.put(alarmId, updated);
                     wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated)));
                 } else {

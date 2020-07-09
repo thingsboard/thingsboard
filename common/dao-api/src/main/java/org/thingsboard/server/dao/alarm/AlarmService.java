@@ -59,5 +59,5 @@ public interface AlarmService {
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
-                                                        AlarmDataPageLink pageLink, Collection<EntityId> orderedEntityIds);
+                                                        AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 }

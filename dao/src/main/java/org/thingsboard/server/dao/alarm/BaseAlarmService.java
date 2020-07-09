@@ -133,10 +133,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
-                                                               AlarmDataPageLink pageLink, Collection<EntityId> orderedEntityIds) {
+                                                               AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        return alarmDao.findAlarmDataByQueryForEntities(tenantId, customerId, pageLink, orderedEntityIds);
+        return alarmDao.findAlarmDataByQueryForEntities(tenantId, customerId, query, orderedEntityIds);
     }
 
     @Override
