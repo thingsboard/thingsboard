@@ -962,18 +962,18 @@ public final class EdgeGrpcSession implements Closeable {
                 switch (alarmUpdateMsg.getMsgType()) {
                     case ENTITY_CREATED_RPC_MESSAGE:
                     case ENTITY_UPDATED_RPC_MESSAGE:
-                        if (existentAlarm == null) {
+                        if (existentAlarm == null || existentAlarm.getStatus().isCleared()) {
                             existentAlarm = new Alarm();
                             existentAlarm.setTenantId(edge.getTenantId());
                             existentAlarm.setType(alarmUpdateMsg.getName());
                             existentAlarm.setOriginator(originatorId);
                             existentAlarm.setSeverity(AlarmSeverity.valueOf(alarmUpdateMsg.getSeverity()));
-                            existentAlarm.setStatus(AlarmStatus.valueOf(alarmUpdateMsg.getStatus()));
                             existentAlarm.setStartTs(alarmUpdateMsg.getStartTs());
-                            existentAlarm.setAckTs(alarmUpdateMsg.getAckTs());
                             existentAlarm.setClearTs(alarmUpdateMsg.getClearTs());
                             existentAlarm.setPropagate(alarmUpdateMsg.getPropagate());
                         }
+                        existentAlarm.setStatus(AlarmStatus.valueOf(alarmUpdateMsg.getStatus()));
+                        existentAlarm.setAckTs(alarmUpdateMsg.getAckTs());
                         existentAlarm.setEndTs(alarmUpdateMsg.getEndTs());
                         existentAlarm.setDetails(mapper.readTree(alarmUpdateMsg.getDetails()));
                         ctx.getAlarmService().createOrUpdateAlarm(existentAlarm);
