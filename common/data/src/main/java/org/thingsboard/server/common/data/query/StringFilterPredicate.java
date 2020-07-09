@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.query;
 import lombok.Data;
 
 @Data
-public class StringFilterPredicate implements KeyFilterPredicate {
+public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
 
     private StringOperation operation;
     private FilterPredicateValue<String> value;

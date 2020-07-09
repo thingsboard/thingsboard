@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.ToString;
 

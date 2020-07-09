@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
@@ -62,10 +64,10 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
     private TimeSeriesCmd curTsCmd;
     private LatestValueCmd latestValueCmd;
 
-    public TbEntityDataSubCtx(String serviceId, TelemetryWebSocketService wsService,
-                              TbLocalSubscriptionService localSubscriptionService,
+    public TbEntityDataSubCtx(String serviceId, TelemetryWebSocketService wsService, EntityService entityService,
+                              TbLocalSubscriptionService localSubscriptionService, AttributesService attributesService,
                               TelemetryWebSocketSessionRef sessionRef, int cmdId) {
-        super(serviceId, wsService, localSubscriptionService, sessionRef, cmdId);
+        super(serviceId, wsService, entityService, localSubscriptionService, attributesService, sessionRef, cmdId);
     }
 
     @Override
@@ -169,7 +171,8 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         return data.getData().stream().filter(item -> item.getEntityId().equals(entityId)).findFirst().orElse(null);
     }
 
-    public void update(PageData<EntityData> newData) {
+    public synchronized void update() {
+        PageData<EntityData> newData = findEntityData();
         Map<EntityId, EntityData> oldDataMap;
         if (data != null && !data.getData().isEmpty()) {
             oldDataMap = data.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
@@ -225,5 +228,10 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
     public void setCurrentCmd(EntityDataCmd cmd) {
         curTsCmd = cmd.getTsCmd();
         latestValueCmd = cmd.getLatestCmd();
+    }
+
+    @Override
+    protected EntityDataQuery buildEntityDataQuery() {
+        return query;
     }
 }

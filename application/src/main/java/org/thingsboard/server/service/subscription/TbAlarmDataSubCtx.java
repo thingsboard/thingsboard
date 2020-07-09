@@ -27,17 +27,22 @@ import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,7 +63,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     @Setter
     private final HashMap<AlarmId, AlarmData> alarmsMap;
 
-    private final List<Integer> alarmSubscriptions;
+    private final int maxEntitiesPerAlarmSubscription;
+
     @Getter
     @Setter
     private PageData<AlarmData> alarms;
@@ -67,14 +73,14 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     private boolean tooManyEntities;
 
     public TbAlarmDataSubCtx(String serviceId, TelemetryWebSocketService wsService,
-                             TbLocalSubscriptionService localSubscriptionService,
-                             AlarmService alarmService,
-                             TelemetryWebSocketSessionRef sessionRef, int cmdId) {
-        super(serviceId, wsService, localSubscriptionService, sessionRef, cmdId);
+                             EntityService entityService, TbLocalSubscriptionService localSubscriptionService,
+                             AttributesService attributesService, AlarmService alarmService,
+                             TelemetryWebSocketSessionRef sessionRef, int cmdId, int maxEntitiesPerAlarmSubscription) {
+        super(serviceId, wsService, entityService, localSubscriptionService, attributesService, sessionRef, cmdId);
+        this.maxEntitiesPerAlarmSubscription = maxEntitiesPerAlarmSubscription;
         this.alarmService = alarmService;
         this.entitiesMap = new LinkedHashMap<>();
         this.alarmsMap = new HashMap<>();
-        this.alarmSubscriptions = new ArrayList<>();
     }
 
     public void fetchAlarms() {
@@ -85,8 +91,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         wsService.sendWsMsg(getSessionId(), update);
     }
 
-    public void setData(PageData<EntityData> data) {
-        super.setData(data);
+    public void fetchData() {
+        super.fetchData();
         entitiesMap.clear();
         tooManyEntities = data.hasNext();
         for (EntityData entityData : data.getData()) {
@@ -232,5 +238,23 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             }
         }
         return true;
+    }
+
+    @Override
+    protected void update() {
+
+    }
+
+    @Override
+    protected EntityDataQuery buildEntityDataQuery() {
+        EntityDataSortOrder sortOrder = query.getPageLink().getSortOrder();
+        EntityDataSortOrder entitiesSortOrder;
+        if (sortOrder == null || sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
+            entitiesSortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.CREATED_TIME_PROPERTY));
+        } else {
+            entitiesSortOrder = sortOrder;
+        }
+        EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
+        return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters());
     }
 }
