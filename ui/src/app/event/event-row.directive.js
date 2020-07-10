@@ -26,10 +26,12 @@ import eventRowEdgeEventTemplate from './event-row-edge-event.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, $translate,
-                                          types, toast, entityService, ruleChainService) {
+export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, $translate, $log,
+                                          types, toast, entityService, ruleChainService, userService, attributeService) {
 
     var linker = function (scope, element, attrs) {
+
+        var lastDisconnectTime;
 
         var getTemplate = function(eventType) {
             var template = '';
@@ -50,6 +52,7 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                     template = eventRowDebugRuleNodeTemplate;
                     break;
                 case types.eventType.edgeEvent.value:
+                    getLastDisconnectTime();
                     template = eventRowEdgeEventTemplate;
                     break;
             }
@@ -133,6 +136,27 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                     onShowingCallback.onShowing(scope, element);
                 }
             });
+        }
+
+        function getLastDisconnectTime() {
+            let params = {
+                entityType: types.entityType.edge,
+                entityId: scope.entityId,
+                attributeScope: types.attributesScope.server.value,
+                query: {order: '', limit: 1, page: 1, search: "active"}
+            };
+            attributeService.getEntityAttributes(params.entityType, params.entityId, params.attributeScope, params.query,
+                function (attribute) {
+                    if (attribute && attribute.data) {
+                        $log.log("attribute", attribute);
+                        lastDisconnectTime = attribute.data[0].lastUpdateTs;
+                        $log.log("lastDisconnectTime", lastDisconnectTime, typeof(lastDisconnectTime));
+                    }
+                });
+        }
+
+        scope.receiveStatus = function(eventCreatedTime) {
+            return (eventCreatedTime <= lastDisconnectTime) ? $translate.instant('event.success') : $translate.instant('event.failed');
         }
 
         scope.checkTooltip = function($event) {
