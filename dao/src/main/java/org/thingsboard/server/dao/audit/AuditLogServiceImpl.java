@@ -298,7 +298,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         AuditLog result = new AuditLog();
         UUID id = Uuids.timeBased();
         result.setId(new AuditLogId(id));
-        result.setCreatedTime(id.timestamp());
+        result.setCreatedTime(Uuids.unixTimestamp(id));
         result.setTenantId(tenantId);
         result.setEntityId(entityId);
         result.setEntityName(entityName);

@@ -1272,8 +1272,16 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-  private alarmsLoaded(alarms: PageData<AlarmData>) {
+  private alarmsLoaded(alarms: PageData<AlarmData>, allowedEntities: number, totalEntities: number) {
     this.alarms = alarms;
+    if (totalEntities > allowedEntities) {
+      const message = this.ctx.translate.instant('widget.alarm-data-overflow',
+        { allowedEntities, totalEntities });
+      this.onSubscriptionMessage({
+        severity: 'warn',
+        message
+      });
+    }
     if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
       this.updateTimewindow();
     }
@@ -1281,7 +1289,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private alarmsUpdated(_updated: Array<AlarmData>, alarms: PageData<AlarmData>) {
-    this.alarmsLoaded(alarms);
+    this.alarmsLoaded(alarms, 0, 0);
   }
 
   private updateLegend(dataIndex: number, data: DataSet, detectChanges: boolean) {

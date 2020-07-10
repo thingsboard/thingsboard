@@ -136,7 +136,7 @@ export class AlarmDataSubscription {
 
       this.subscriber.alarmData$.subscribe((alarmDataUpdate) => {
         if (alarmDataUpdate.data) {
-          this.onPageData(alarmDataUpdate.data);
+          this.onPageData(alarmDataUpdate.data, alarmDataUpdate.allowedEntities, alarmDataUpdate.totalEntities);
         } else if (alarmDataUpdate.update) {
           this.onDataUpdate(alarmDataUpdate.update);
         }
@@ -151,7 +151,7 @@ export class AlarmDataSubscription {
         totalElements: 1,
         totalPages: 1
       };
-      this.onPageData(pageData);
+      this.onPageData(pageData, 1024, 1);
     }
   }
 
@@ -163,10 +163,10 @@ export class AlarmDataSubscription {
     }
   }
 
-  private onPageData(pageData: PageData<AlarmData>) {
+  private onPageData(pageData: PageData<AlarmData>, allowedEntities: number, totalEntities: number) {
     this.pageData = pageData;
     this.resetData();
-    this.listener.alarmsLoaded(pageData, this.alarmDataSubscriptionOptions.pageLink);
+    this.listener.alarmsLoaded(pageData, this.alarmDataSubscriptionOptions.pageLink, allowedEntities, totalEntities);
   }
 
   private onDataUpdate(update: Array<AlarmData>) {

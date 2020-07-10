@@ -336,11 +336,9 @@ export class TelemetryWebsocketService implements TelemetryService {
   }
 
   private showWsError(errorCode: number, errorMsg: string) {
-    let message = 'WebSocket Error: ';
-    if (errorMsg) {
-      message += errorMsg;
-    } else {
-      message += `error code - ${errorCode}.`;
+    let message = errorMsg;
+    if (!message) {
+      message += `WebSocket Error: error code - ${errorCode}.`;
     }
     this.store.dispatch(new ActionNotificationShow(
       {

@@ -284,6 +284,8 @@ export interface EntityDataUpdateMsg extends DataUpdateMsg<EntityData> {
 
 export interface AlarmDataUpdateMsg extends DataUpdateMsg<AlarmData> {
   dataUpdateType: DataUpdateType.ALARM_DATA;
+  allowedEntities: number;
+  totalEntities: number;
 }
 
 export type WebsocketDataMsg = AlarmDataUpdateMsg | EntityDataUpdateMsg | SubscriptionUpdateMsg;
@@ -372,8 +374,13 @@ export class EntityDataUpdate extends DataUpdate<EntityData> {
 }
 
 export class AlarmDataUpdate extends DataUpdate<AlarmData> {
+  allowedEntities: number;
+  totalEntities: number;
+
   constructor(msg: AlarmDataUpdateMsg) {
     super(msg);
+    this.allowedEntities = msg.allowedEntities;
+    this.totalEntities = msg.totalEntities;
   }
 }
 
