@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
@@ -62,6 +63,9 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     private AggregationRepository aggregationRepository;
 
     @Autowired
+    private StatsFactory statsFactory;
+
+    @Autowired
     protected InsertTsRepository<TimescaleTsKvEntity> insertRepository;
 
     protected TbSqlBlockingQueueWrapper<TimescaleTsKvEntity> tsQueue;
@@ -74,6 +78,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 .batchSize(tsBatchSize)
                 .maxDelay(tsMaxDelay)
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
+                .stats(statsFactory.createMessagesStats("ts.timescale"))
                 .build();
 
         Function<TimescaleTsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();

@@ -30,8 +30,10 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
@@ -44,7 +46,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -57,6 +58,8 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     protected InsertTsRepository<TsKvEntity> insertRepository;
 
     protected TbSqlBlockingQueueWrapper<TsKvEntity> tsQueue;
+    @Autowired
+    private StatsFactory statsFactory;
 
     @PostConstruct
     protected void init() {
@@ -66,6 +69,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 .batchSize(tsBatchSize)
                 .maxDelay(tsMaxDelay)
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
+                .stats(statsFactory.createMessagesStats("ts"))
                 .build();
 
         Function<TsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();

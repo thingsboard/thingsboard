@@ -17,6 +17,7 @@ package org.thingsboard.server.common.msg.stats;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,21 @@ public class DefaultStatsFactory implements StatsFactory {
                         : STUB_COUNTER,
                 statsName
         );
+    }
+
+    @Override
+    public DefaultCounter createDefaultCounter(String key, String... tags) {
+        return new DefaultCounter(
+                new AtomicInteger(0),
+                metricsEnabled ?
+                        meterRegistry.counter(key, tags)
+                        : STUB_COUNTER
+        );
+    }
+
+    @Override
+    public <T extends Number> T createGauge(String key, T number, String... tags) {
+        return meterRegistry.gauge(key, Tags.of(tags), number);
     }
 
     @Override
