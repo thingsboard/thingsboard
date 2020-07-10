@@ -493,7 +493,6 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 .userNameAttributeName("userNameAttributeName")
                 .jwkSetUri("jwkSetUri")
                 .clientAuthenticationMethod("clientAuthenticationMethod")
-                .clientName("clientName")
                 .loginButtonLabel("loginButtonLabel")
                 .build();
     }

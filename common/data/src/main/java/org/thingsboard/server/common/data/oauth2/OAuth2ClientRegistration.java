@@ -40,7 +40,6 @@ public class OAuth2ClientRegistration {
     private String userNameAttributeName;
     private String jwkSetUri;
     private String clientAuthenticationMethod;
-    private String clientName;
     private String loginButtonLabel;
     private String loginButtonIcon;
 }

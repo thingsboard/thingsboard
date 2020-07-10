@@ -521,9 +521,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         if (StringUtils.isEmpty(clientRegistration.getClientAuthenticationMethod())) {
             throw new DataValidationException("Client authentication method should be specified!");
         }
-        if (StringUtils.isEmpty(clientRegistration.getClientName())) {
-            throw new DataValidationException("Client name should be specified!");
-        }
         if (StringUtils.isEmpty(clientRegistration.getLoginButtonLabel())) {
             throw new DataValidationException("Login button label should be specified!");
         }

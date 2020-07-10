@@ -39,13 +39,13 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
 
     private ClientRegistration toSpringClientRegistration(String redirectUriTemplate, OAuth2ClientRegistration localClientRegistration){
         return ClientRegistration.withRegistrationId(localClientRegistration.getRegistrationId())
+                .clientName(localClientRegistration.getRegistrationId())
                 .clientId(localClientRegistration.getClientId())
                 .authorizationUri(localClientRegistration.getAuthorizationUri())
                 .clientSecret(localClientRegistration.getClientSecret())
                 .tokenUri(localClientRegistration.getAccessTokenUri())
                 .redirectUriTemplate(redirectUriTemplate)
                 .scope(localClientRegistration.getScope())
-                .clientName(localClientRegistration.getClientName())
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .userInfoUri(localClientRegistration.getUserInfoUri())
                 .userNameAttributeName(localClientRegistration.getUserNameAttributeName())
