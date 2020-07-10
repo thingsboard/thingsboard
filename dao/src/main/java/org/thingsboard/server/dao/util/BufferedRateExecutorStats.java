@@ -18,16 +18,15 @@ package org.thingsboard.server.dao.util;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.stats.DefaultCounter;
-import org.thingsboard.server.common.msg.stats.StatsCounter;
-import org.thingsboard.server.common.msg.stats.StatsFactory;
-import org.thingsboard.server.common.msg.stats.StatsType;
+import org.thingsboard.server.common.stats.DefaultCounter;
+import org.thingsboard.server.common.stats.StatsCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Getter
