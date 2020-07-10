@@ -27,8 +27,11 @@ import java.util.List;
 
 public class AlarmDataUpdate extends DataUpdate<AlarmData> {
 
-    public AlarmDataUpdate(int cmdId, PageData<AlarmData> data, List<AlarmData> update) {
+    private boolean tooManyEntities;
+
+    public AlarmDataUpdate(int cmdId, PageData<AlarmData> data, List<AlarmData> update, boolean tooManyEntities) {
         super(cmdId, data, update, SubscriptionErrorCode.NO_ERROR.getCode(), null);
+        this.tooManyEntities = tooManyEntities;
     }
 
     public AlarmDataUpdate(int cmdId, int errorCode, String errorMsg) {
@@ -45,7 +48,9 @@ public class AlarmDataUpdate extends DataUpdate<AlarmData> {
                            @JsonProperty("data") PageData<AlarmData> data,
                            @JsonProperty("update") List<AlarmData> update,
                            @JsonProperty("errorCode") int errorCode,
-                           @JsonProperty("errorMsg") String errorMsg) {
+                           @JsonProperty("errorMsg") String errorMsg,
+                           @JsonProperty("tooManyEntities") boolean tooManyEntities) {
         super(cmdId, data, update, errorCode, errorMsg);
+        this.tooManyEntities = tooManyEntities;
     }
 }

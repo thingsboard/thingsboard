@@ -66,8 +66,8 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     public TbEntityDataSubCtx(String serviceId, TelemetryWebSocketService wsService, EntityService entityService,
                               TbLocalSubscriptionService localSubscriptionService, AttributesService attributesService,
-                              TelemetryWebSocketSessionRef sessionRef, int cmdId) {
-        super(serviceId, wsService, entityService, localSubscriptionService, attributesService, sessionRef, cmdId);
+                              SubscriptionServiceStatistics stats, TelemetryWebSocketSessionRef sessionRef, int cmdId) {
+        super(serviceId, wsService, entityService, localSubscriptionService, attributesService, stats, sessionRef, cmdId);
     }
 
     @Override
@@ -171,58 +171,45 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         return data.getData().stream().filter(item -> item.getEntityId().equals(entityId)).findFirst().orElse(null);
     }
 
-    public synchronized void update() {
-        PageData<EntityData> newData = findEntityData();
-        Map<EntityId, EntityData> oldDataMap;
-        if (data != null && !data.getData().isEmpty()) {
-            oldDataMap = data.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
-        } else {
-            oldDataMap = Collections.emptyMap();
-        }
-        Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
-        if (oldDataMap.size() == newDataMap.size() && oldDataMap.keySet().equals(newDataMap.keySet())) {
-            log.trace("[{}][{}] No updates to entity data found", sessionRef.getSessionId(), cmdId);
-        } else {
-            this.data = newData;
-            List<Integer> subIdsToCancel = new ArrayList<>();
-            List<TbSubscription> subsToAdd = new ArrayList<>();
-            Set<EntityId> currentSubs = new HashSet<>();
-            subToEntityIdMap.forEach((subId, entityId) -> {
-                if (!newDataMap.containsKey(entityId)) {
-                    subIdsToCancel.add(subId);
-                } else {
-                    currentSubs.add(entityId);
-                }
-            });
-            log.trace("[{}][{}] Subscriptions that are invalid: {}", sessionRef.getSessionId(), cmdId, subIdsToCancel);
-            subIdsToCancel.forEach(subToEntityIdMap::remove);
-            List<EntityData> newSubsList = newDataMap.entrySet().stream().filter(entry -> !currentSubs.contains(entry.getKey())).map(Map.Entry::getValue).collect(Collectors.toList());
-            if (!newSubsList.isEmpty()) {
-                boolean resultToLatestValues;
-                List<EntityKey> keys = null;
-                if (curTsCmd != null) {
-                    resultToLatestValues = false;
-                    keys = curTsCmd.getKeys().stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList());
-                } else if (latestValueCmd != null) {
-                    resultToLatestValues = true;
-                    keys = latestValueCmd.getKeys();
-                } else {
-                    resultToLatestValues = true;
-                }
-                if (keys != null && !keys.isEmpty()) {
-                    Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
-                    newSubsList.forEach(
-                            entity -> {
-                                log.trace("[{}][{}] Found new subscription for entity: {}", sessionRef.getSessionId(), cmdId, entity.getEntityId());
-                                subsToAdd.addAll(addSubscriptions(entity, keysByType, resultToLatestValues));
-                            }
-                    );
-                }
+    public synchronized void doUpdate(Map<EntityId, EntityData> newDataMap) {
+        List<Integer> subIdsToCancel = new ArrayList<>();
+        List<TbSubscription> subsToAdd = new ArrayList<>();
+        Set<EntityId> currentSubs = new HashSet<>();
+        subToEntityIdMap.forEach((subId, entityId) -> {
+            if (!newDataMap.containsKey(entityId)) {
+                subIdsToCancel.add(subId);
+            } else {
+                currentSubs.add(entityId);
             }
-            wsService.sendWsMsg(sessionRef.getSessionId(), new EntityDataUpdate(cmdId, data, null));
-            subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getSessionId(), subId));
-            subsToAdd.forEach(localSubscriptionService::addSubscription);
+        });
+        log.trace("[{}][{}] Subscriptions that are invalid: {}", sessionRef.getSessionId(), cmdId, subIdsToCancel);
+        subIdsToCancel.forEach(subToEntityIdMap::remove);
+        List<EntityData> newSubsList = newDataMap.entrySet().stream().filter(entry -> !currentSubs.contains(entry.getKey())).map(Map.Entry::getValue).collect(Collectors.toList());
+        if (!newSubsList.isEmpty()) {
+            boolean resultToLatestValues;
+            List<EntityKey> keys = null;
+            if (curTsCmd != null) {
+                resultToLatestValues = false;
+                keys = curTsCmd.getKeys().stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList());
+            } else if (latestValueCmd != null) {
+                resultToLatestValues = true;
+                keys = latestValueCmd.getKeys();
+            } else {
+                resultToLatestValues = true;
+            }
+            if (keys != null && !keys.isEmpty()) {
+                Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
+                newSubsList.forEach(
+                        entity -> {
+                            log.trace("[{}][{}] Found new subscription for entity: {}", sessionRef.getSessionId(), cmdId, entity.getEntityId());
+                            subsToAdd.addAll(addSubscriptions(entity, keysByType, resultToLatestValues));
+                        }
+                );
+            }
         }
+        wsService.sendWsMsg(sessionRef.getSessionId(), new EntityDataUpdate(cmdId, data, null));
+        subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getSessionId(), subId));
+        subsToAdd.forEach(localSubscriptionService::addSubscription);
     }
 
     public void setCurrentCmd(EntityDataCmd cmd) {

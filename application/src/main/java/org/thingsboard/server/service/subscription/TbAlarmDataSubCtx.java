@@ -43,12 +43,15 @@ import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,9 +77,9 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
 
     public TbAlarmDataSubCtx(String serviceId, TelemetryWebSocketService wsService,
                              EntityService entityService, TbLocalSubscriptionService localSubscriptionService,
-                             AttributesService attributesService, AlarmService alarmService,
+                             AttributesService attributesService, SubscriptionServiceStatistics stats, AlarmService alarmService,
                              TelemetryWebSocketSessionRef sessionRef, int cmdId, int maxEntitiesPerAlarmSubscription) {
-        super(serviceId, wsService, entityService, localSubscriptionService, attributesService, sessionRef, cmdId);
+        super(serviceId, wsService, entityService, localSubscriptionService, attributesService, stats, sessionRef, cmdId);
         this.maxEntitiesPerAlarmSubscription = maxEntitiesPerAlarmSubscription;
         this.alarmService = alarmService;
         this.entitiesMap = new LinkedHashMap<>();
@@ -84,10 +87,14 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     public void fetchAlarms() {
+        long start = System.currentTimeMillis();
         PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(),
                 query, getOrderedEntityIds());
+        long end = System.currentTimeMillis();
+        stats.getAlarmQueryInvocationCnt().incrementAndGet();
+        stats.getAlarmQueryTimeSpent().addAndGet(end - start);
         alarms = setAndMergeAlarmsData(alarms);
-        AlarmDataUpdate update = new AlarmDataUpdate(cmdId, alarms, null);
+        AlarmDataUpdate update = new AlarmDataUpdate(cmdId, alarms, null, tooManyEntities);
         wsService.sendWsMsg(getSessionId(), update);
     }
 
@@ -130,21 +137,25 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         AlarmDataPageLink pageLink = query.getPageLink();
         long startTs = System.currentTimeMillis() - pageLink.getTimeWindow();
         for (EntityData entityData : entitiesMap.values()) {
-            int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
-            subToEntityIdMap.put(subIdx, entityData.getEntityId());
-            log.trace("[{}][{}][{}] Creating alarms subscription for [{}] with query: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), pageLink);
-            TbAlarmsSubscription subscription = TbAlarmsSubscription.builder()
-                    .type(TbSubscriptionType.ALARMS)
-                    .serviceId(serviceId)
-                    .sessionId(sessionRef.getSessionId())
-                    .subscriptionId(subIdx)
-                    .tenantId(sessionRef.getSecurityCtx().getTenantId())
-                    .entityId(entityData.getEntityId())
-                    .updateConsumer(this::sendWsMsg)
-                    .ts(startTs)
-                    .build();
-            localSubscriptionService.addSubscription(subscription);
+            createAlarmSubscriptionForEntity(pageLink, startTs, entityData);
         }
+    }
+
+    private void createAlarmSubscriptionForEntity(AlarmDataPageLink pageLink, long startTs, EntityData entityData) {
+        int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
+        subToEntityIdMap.put(subIdx, entityData.getEntityId());
+        log.trace("[{}][{}][{}] Creating alarms subscription for [{}] with query: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), pageLink);
+        TbAlarmsSubscription subscription = TbAlarmsSubscription.builder()
+                .type(TbSubscriptionType.ALARMS)
+                .serviceId(serviceId)
+                .sessionId(sessionRef.getSessionId())
+                .subscriptionId(subIdx)
+                .tenantId(sessionRef.getSecurityCtx().getTenantId())
+                .entityId(entityData.getEntityId())
+                .updateConsumer(this::sendWsMsg)
+                .ts(startTs)
+                .build();
+        localSubscriptionService.addSubscription(subscription);
     }
 
     @Override
@@ -163,7 +174,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                 alarm.getLatest().computeIfAbsent(keyType, tmp -> new HashMap<>()).putAll(latestUpdate);
                 return alarm;
             }).collect(Collectors.toList());
-            wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, update));
+            wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, update, tooManyEntities));
         } else {
             log.trace("[{}][{}][{}][{}] Received stale subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
         }
@@ -186,7 +197,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                     AlarmData updated = new AlarmData(alarm, current.getOriginatorName(), current.getEntityId());
                     updated.getLatest().putAll(current.getLatest());
                     alarmsMap.put(alarmId, updated);
-                    wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated)));
+                    wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated), tooManyEntities));
                 } else {
                     fetchAlarms();
                 }
@@ -241,8 +252,42 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     @Override
-    protected void update() {
-
+    protected synchronized void doUpdate(Map<EntityId, EntityData> newDataMap) {
+        entitiesMap.clear();
+        tooManyEntities = data.hasNext();
+        for (EntityData entityData : data.getData()) {
+            entitiesMap.put(entityData.getEntityId(), entityData);
+        }
+        fetchAlarms();
+        List<Integer> subIdsToCancel = new ArrayList<>();
+        List<TbSubscription> subsToAdd = new ArrayList<>();
+        Set<EntityId> currentSubs = new HashSet<>();
+        subToEntityIdMap.forEach((subId, entityId) -> {
+            if (!newDataMap.containsKey(entityId)) {
+                subIdsToCancel.add(subId);
+            } else {
+                currentSubs.add(entityId);
+            }
+        });
+        log.trace("[{}][{}] Subscriptions that are invalid: {}", sessionRef.getSessionId(), cmdId, subIdsToCancel);
+        subIdsToCancel.forEach(subToEntityIdMap::remove);
+        List<EntityData> newSubsList = newDataMap.entrySet().stream().filter(entry -> !currentSubs.contains(entry.getKey())).map(Map.Entry::getValue).collect(Collectors.toList());
+        if (!newSubsList.isEmpty()) {
+            List<EntityKey> keys = query.getLatestValues();
+            if (keys != null && !keys.isEmpty()) {
+                Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
+                newSubsList.forEach(
+                        entity -> {
+                            log.trace("[{}][{}] Found new subscription for entity: {}", sessionRef.getSessionId(), cmdId, entity.getEntityId());
+                            subsToAdd.addAll(addSubscriptions(entity, keysByType, true));
+                        }
+                );
+            }
+            long startTs = System.currentTimeMillis() - query.getPageLink().getTimeWindow();
+            newSubsList.forEach(entity -> createAlarmSubscriptionForEntity(query.getPageLink(), startTs, entity));
+        }
+        subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getSessionId(), subId));
+        subsToAdd.forEach(localSubscriptionService::addSubscription);
     }
 
     @Override

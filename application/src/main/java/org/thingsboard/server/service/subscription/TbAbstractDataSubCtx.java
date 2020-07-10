@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +50,7 @@ import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,12 +59,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Data
 public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends EntityDataPageLink>> {
 
     protected final String serviceId;
+    protected final SubscriptionServiceStatistics stats;
     protected final TelemetryWebSocketService wsService;
     protected final EntityService entityService;
     protected final TbLocalSubscriptionService localSubscriptionService;
@@ -84,12 +88,14 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
 
     public TbAbstractDataSubCtx(String serviceId, TelemetryWebSocketService wsService,
                                 EntityService entityService, TbLocalSubscriptionService localSubscriptionService,
-                                AttributesService attributesService, TelemetryWebSocketSessionRef sessionRef, int cmdId) {
+                                AttributesService attributesService, SubscriptionServiceStatistics stats,
+                                TelemetryWebSocketSessionRef sessionRef, int cmdId) {
         this.serviceId = serviceId;
         this.wsService = wsService;
         this.entityService = entityService;
         this.localSubscriptionService = localSubscriptionService;
         this.attributesService = attributesService;
+        this.stats = stats;
         this.sessionRef = sessionRef;
         this.cmdId = cmdId;
         this.subToEntityIdMap = new HashMap<>();
@@ -151,8 +157,6 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
                 subToDynamicValueKeySet.add(subIdx);
                 localSubscriptionService.addSubscription(sub);
             }
-
-
         } catch (InterruptedException | ExecutionException e) {
             log.info("[{}][{}][{}] Failed to resolve dynamic values: {}", tenantId, customerId, userId, dynamicValues.keySet());
         }
@@ -197,7 +201,28 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         return result;
     }
 
-    protected abstract void update();
+    protected synchronized void update(){
+        long start = System.currentTimeMillis();
+        PageData<EntityData> newData = findEntityData();
+        long end = System.currentTimeMillis();
+        stats.getRegularQueryInvocationCnt().incrementAndGet();
+        stats.getRegularQueryTimeSpent().addAndGet(end - start);
+        Map<EntityId, EntityData> oldDataMap;
+        if (data != null && !data.getData().isEmpty()) {
+            oldDataMap = data.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
+        } else {
+            oldDataMap = Collections.emptyMap();
+        }
+        Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
+        if (oldDataMap.size() == newDataMap.size() && oldDataMap.keySet().equals(newDataMap.keySet())) {
+            log.trace("[{}][{}] No updates to entity data found", sessionRef.getSessionId(), cmdId);
+        } else {
+            this.data = newData;
+            doUpdate(newDataMap);
+        }
+    }
+
+    protected abstract void doUpdate(Map<EntityId, EntityData> newDataMap);
 
     protected abstract EntityDataQuery buildEntityDataQuery();
 
@@ -312,6 +337,15 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         }
     }
 
+    public void clearDynamicValueSubscriptions(){
+        if (subToDynamicValueKeySet != null) {
+            for (Integer subId : subToDynamicValueKeySet) {
+                localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), subId);
+            }
+            subToDynamicValueKeySet.clear();
+        }
+    }
+
     public void setRefreshTask(ScheduledFuture<?> task) {
         this.refreshTask = task;
     }
@@ -322,7 +356,6 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
             this.refreshTask.cancel(true);
         }
     }
-
 
     public void createSubscriptions(List<EntityKey> keys, boolean resultToLatestValues) {
         Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
