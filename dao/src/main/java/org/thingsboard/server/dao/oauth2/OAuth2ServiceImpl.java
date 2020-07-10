@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2020 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.*;
@@ -36,13 +37,14 @@ import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.lock.LockKey;
+import org.thingsboard.server.dao.lock.LockService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -51,10 +53,7 @@ import static org.thingsboard.server.dao.oauth2.OAuth2Utils.*;
 @Slf4j
 @Service
 public class OAuth2ServiceImpl implements OAuth2Service {
-
     private static final ObjectMapper mapper = new ObjectMapper();
-
-    private final ReentrantLock clientRegistrationSaveLock = new ReentrantLock();
 
     @Autowired
     private Environment environment;
@@ -67,6 +66,9 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private LockService lockService;
 
     private boolean isInstall() {
         return environment.acceptsProfiles("install");
@@ -123,52 +125,59 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     @Override
     public OAuth2ClientsParams saveSystemOAuth2ClientsParams(OAuth2ClientsParams oAuth2ClientsParams) {
         validate(oAuth2ClientsParams);
-
         validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
-        clientRegistrationSaveLock.lock();
-        try {
-            validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
-            AdminSettings oauth2SystemAdminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
-            if (oauth2SystemAdminSettings == null) {
-                oauth2SystemAdminSettings = createSystemAdminSettings();
-            }
-            String json = toJson(oAuth2ClientsParams);
-            ((ObjectNode) oauth2SystemAdminSettings.getJsonValue()).put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
-            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, oauth2SystemAdminSettings);
-        } finally {
-            clientRegistrationSaveLock.unlock();
-        }
+
+        transactionalSaveSystemOAuth2ClientsParams(oAuth2ClientsParams);
 
         return getSystemOAuth2ClientsParams();
+    }
+
+    @Transactional
+    private void transactionalSaveSystemOAuth2ClientsParams(OAuth2ClientsParams oAuth2ClientsParams) {
+        long acquireStart = System.currentTimeMillis();
+        lockService.transactionLock(LockKey.OAUTH2_CONFIG);
+        log.trace("[{}] Waited for lock {} ms.", TenantId.SYS_TENANT_ID, System.currentTimeMillis() - acquireStart);
+
+        validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
+        AdminSettings oauth2SystemAdminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
+        if (oauth2SystemAdminSettings == null) {
+            oauth2SystemAdminSettings = createSystemAdminSettings();
+        }
+        String json = toJson(oAuth2ClientsParams);
+        ((ObjectNode) oauth2SystemAdminSettings.getJsonValue()).put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, oauth2SystemAdminSettings);
     }
 
     @Override
     public OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams) {
         validate(oAuth2ClientsParams);
-
         validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
-        clientRegistrationSaveLock.lock();
-        try {
-            validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
 
-            Set<String> domainNames = oAuth2ClientsParams.getClientsDomainsParams().stream()
-                    .map(OAuth2ClientsDomainParams::getDomainName)
-                    .collect(Collectors.toSet());
-            processTenantAdminSettings(tenantId, domainNames);
-
-            List<AttributeKvEntry> attributes = createOAuth2ClientsParamsAttributes(oAuth2ClientsParams);
-            try {
-                attributesService.save(tenantId, tenantId, DataConstants.SERVER_SCOPE, attributes).get();
-            } catch (Exception e) {
-                log.error("Unable to save OAuth2 Client Registration Params to attributes!", e);
-                throw new IncorrectParameterException("Unable to save OAuth2 Client Registration Params to attributes!");
-            }
-
-        } finally {
-            clientRegistrationSaveLock.unlock();
-        }
+        transactionalSaveTenantOAuth2ClientsParams(tenantId, oAuth2ClientsParams);
 
         return getTenantOAuth2ClientsParams(tenantId);
+    }
+
+    @Transactional
+    private void transactionalSaveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams) {
+        long acquireStart = System.currentTimeMillis();
+        lockService.transactionLock(LockKey.OAUTH2_CONFIG);
+        log.trace("[{}] Waited for lock {} ms.", tenantId, System.currentTimeMillis() - acquireStart);
+
+        validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
+
+        Set<String> domainNames = oAuth2ClientsParams.getClientsDomainsParams().stream()
+                .map(OAuth2ClientsDomainParams::getDomainName)
+                .collect(Collectors.toSet());
+        processTenantAdminSettings(tenantId, domainNames);
+
+        List<AttributeKvEntry> attributes = createOAuth2ClientsParamsAttributes(oAuth2ClientsParams);
+        try {
+            attributesService.save(tenantId, tenantId, DataConstants.SERVER_SCOPE, attributes).get();
+        } catch (Exception e) {
+            log.error("Unable to save OAuth2 Client Registration Params to attributes!", e);
+            throw new IncorrectParameterException("Unable to save OAuth2 Client Registration Params to attributes!");
+        }
     }
 
     private List<AttributeKvEntry> createOAuth2ClientsParamsAttributes(OAuth2ClientsParams oAuth2ClientsParams) {

@@ -43,7 +43,6 @@ public class OAuth2Controller extends BaseController {
     @Autowired
     private OAuth2Service oauth2Service;
 
-    // TODO ask why POST
     @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
     @ResponseBody
     public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request) throws ThingsboardException {
