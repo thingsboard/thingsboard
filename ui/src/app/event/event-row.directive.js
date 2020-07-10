@@ -26,7 +26,7 @@ import eventRowEdgeEventTemplate from './event-row-edge-event.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, $translate, $log,
+export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, $translate,
                                           types, toast, entityService, ruleChainService, userService, attributeService) {
 
     var linker = function (scope, element, attrs) {
@@ -148,9 +148,7 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             attributeService.getEntityAttributes(params.entityType, params.entityId, params.attributeScope, params.query,
                 function (attribute) {
                     if (attribute && attribute.data) {
-                        $log.log("attribute", attribute);
                         lastDisconnectTime = attribute.data[0].lastUpdateTs;
-                        $log.log("lastDisconnectTime", lastDisconnectTime, typeof(lastDisconnectTime));
                     }
                 });
         }
