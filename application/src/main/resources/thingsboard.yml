@@ -340,28 +340,28 @@ caffeine:
   specs:
     relations:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     deviceCredentials:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     devices:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     sessions:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     assets:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     entityViews:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     claimDevices:
       timeToLiveInMinutes: 1
-      maxSize: 100000
+      maxSize: 0
     securitySettings:
       timeToLiveInMinutes: 1440
-      maxSize: 1
+      maxSize: 0
 
 redis:
   # standalone or cluster

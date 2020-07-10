@@ -33,8 +33,8 @@ public class TbAlarmsSubscription extends TbSubscription<AlarmSubscriptionUpdate
 
     @Builder
     public TbAlarmsSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
-                                TbSubscriptionType type, BiConsumer<String, AlarmSubscriptionUpdate> updateConsumer, long ts) {
-        super(serviceId, sessionId, subscriptionId, tenantId, entityId, type, updateConsumer);
+                                BiConsumer<String, AlarmSubscriptionUpdate> updateConsumer, long ts) {
+        super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.ALARMS, updateConsumer);
         this.ts = ts;
     }
 

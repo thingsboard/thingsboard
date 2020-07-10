@@ -251,9 +251,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         ctx.cancelTasks();
         ctx.clearEntitySubscriptions();
         if (entities.isEmpty()) {
-            AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(),
-                    new PageData<>(Collections.emptyList(), 1, 0, false),
-                    null, false);
+            AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), new PageData<>(), null, false);
             wsService.sendWsMsg(ctx.getSessionId(), update);
         } else {
             ctx.fetchAlarms();

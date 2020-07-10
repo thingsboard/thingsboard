@@ -277,12 +277,26 @@ message TbAttributeSubscriptionProto {
   string scope = 4;
 }
 
+message TbAlarmSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+  int64 ts = 2;
+}
+
 message TbSubscriptionUpdateProto {
   string sessionId = 1;
   int32 subscriptionId = 2;
   int32 errorCode = 3;
   string errorMsg = 4;
   repeated TbSubscriptionUpdateValueListProto data = 5;
+}
+
+message TbAlarmSubscriptionUpdateProto {
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  string alarm = 5;
+  bool deleted = 6;
 }
 
 message TbAttributeUpdateProto {
@@ -293,6 +307,24 @@ message TbAttributeUpdateProto {
   int64 tenantIdLSB = 5;
   string scope = 6;
   repeated TsKvProto data = 7;
+}
+
+message TbAlarmUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string alarm = 6;
+}
+
+message TbAlarmDeleteProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string alarm = 6;
 }
 
 message TbAttributeDeleteProto {
@@ -351,10 +383,14 @@ message SubscriptionMgrMsgProto {
   TbTimeSeriesUpdateProto tsUpdate = 4;
   TbAttributeUpdateProto attrUpdate = 5;
   TbAttributeDeleteProto attrDelete = 6;
+  TbAlarmSubscriptionProto alarmSub = 7;
+  TbAlarmUpdateProto alarmUpdate = 8;
+  TbAlarmDeleteProto alarmDelete = 9;
 }
 
 message LocalSubscriptionServiceMsgProto {
   TbSubscriptionUpdateProto subUpdate = 1;
+  TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2;
 }
 
 message FromDeviceRPCResponseProto {

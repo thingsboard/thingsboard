@@ -39,6 +39,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateProto;
@@ -189,7 +190,11 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
             removedPartitions.forEach(partition -> {
                 Set<TbSubscription> subs = partitionedSubscriptions.remove(partition);
                 if (subs != null) {
-                    subs.forEach(this::removeSubscriptionFromEntityMap);
+                    subs.forEach(sub -> {
+                        if (!serviceId.equals(sub.getServiceId())) {
+                            removeSubscriptionFromEntityMap(sub);
+                        }
+                    });
                 }
             });
         }
@@ -355,7 +360,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                         localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                     } else {
                         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
-                        toCoreNotificationsProducer.send(tpi, toProto(s, alarm), null);
+                        toCoreNotificationsProducer.send(tpi, toProto(s, alarm, deleted), null);
                     }
                 }
             });
@@ -471,19 +476,19 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
         return new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg);
     }
 
-    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, Alarm alarm) {
-        TbSubscriptionUpdateProto.Builder builder = TbSubscriptionUpdateProto.newBuilder();
+    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, Alarm alarm, boolean deleted) {
+        TbAlarmSubscriptionUpdateProto.Builder builder = TbAlarmSubscriptionUpdateProto.newBuilder();
 
         builder.setSessionId(subscription.getSessionId());
         builder.setSubscriptionId(subscription.getSubscriptionId());
+        builder.setAlarm(JacksonUtil.toString(alarm));
+        builder.setDeleted(deleted);
 
-        //TODO 3.1
-        throw new RuntimeException("Not implemented!");
-//
-//        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(
-//                LocalSubscriptionServiceMsgProto.newBuilder().setSubUpdate(builder.build()).build())
-//                .build();
-//        return new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg);
+        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(
+                LocalSubscriptionServiceMsgProto.newBuilder()
+                        .setAlarmSubUpdate(builder.build()).build())
+                .build();
+        return new TbProtoQueueMsg<>(subscription.getEntityId().getId(), toCoreMsg);
     }
 
 }

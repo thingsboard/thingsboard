@@ -87,14 +87,19 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     public void fetchAlarms() {
-        long start = System.currentTimeMillis();
-        PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(),
-                query, getOrderedEntityIds());
-        long end = System.currentTimeMillis();
-        stats.getAlarmQueryInvocationCnt().incrementAndGet();
-        stats.getAlarmQueryTimeSpent().addAndGet(end - start);
-        alarms = setAndMergeAlarmsData(alarms);
-        AlarmDataUpdate update = new AlarmDataUpdate(cmdId, alarms, null, tooManyEntities);
+        AlarmDataUpdate update;
+        if(!entitiesMap.isEmpty()) {
+            long start = System.currentTimeMillis();
+            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(),
+                    query, getOrderedEntityIds());
+            long end = System.currentTimeMillis();
+            stats.getAlarmQueryInvocationCnt().incrementAndGet();
+            stats.getAlarmQueryTimeSpent().addAndGet(end - start);
+            alarms = setAndMergeAlarmsData(alarms);
+            update = new AlarmDataUpdate(cmdId, alarms, null, tooManyEntities);
+        } else {
+            update = new AlarmDataUpdate(cmdId, new PageData<>(), null, false);
+        }
         wsService.sendWsMsg(getSessionId(), update);
     }
 
@@ -146,7 +151,6 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         subToEntityIdMap.put(subIdx, entityData.getEntityId());
         log.trace("[{}][{}][{}] Creating alarms subscription for [{}] with query: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), pageLink);
         TbAlarmsSubscription subscription = TbAlarmsSubscription.builder()
-                .type(TbSubscriptionType.ALARMS)
                 .serviceId(serviceId)
                 .sessionId(sessionRef.getSessionId())
                 .subscriptionId(subIdx)
