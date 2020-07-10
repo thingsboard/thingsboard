@@ -108,6 +108,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     private static final String FAILED_TO_FETCH_DATA = "Failed to fetch data!";
     private static final String FAILED_TO_FETCH_ATTRIBUTES = "Failed to fetch attributes!";
     private static final String SESSION_META_DATA_NOT_FOUND = "Session meta-data not found!";
+    private static final String FAILED_TO_PARSE_WS_COMMAND = "Failed to parse websocket command!";
 
     private final ConcurrentMap<String, WsSessionMetaData> wsSessionsMap = new ConcurrentHashMap<>();
 
@@ -224,8 +225,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             }
         } catch (IOException e) {
             log.warn("Failed to decode subscription cmd: {}", e.getMessage(), e);
-            TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(UNKNOWN_SUBSCRIPTION_ID, SubscriptionErrorCode.INTERNAL_ERROR, SESSION_META_DATA_NOT_FOUND);
-            sendWsMsg(sessionRef, update);
+            sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(UNKNOWN_SUBSCRIPTION_ID, SubscriptionErrorCode.BAD_REQUEST, FAILED_TO_PARSE_WS_COMMAND));
         }
     }
 

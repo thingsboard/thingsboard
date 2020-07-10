@@ -88,7 +88,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
 
     public void fetchAlarms() {
         AlarmDataUpdate update;
-        if(!entitiesMap.isEmpty()) {
+        if (!entitiesMap.isEmpty()) {
             long start = System.currentTimeMillis();
             PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(),
                     query, getOrderedEntityIds());
@@ -96,9 +96,9 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             stats.getAlarmQueryInvocationCnt().incrementAndGet();
             stats.getAlarmQueryTimeSpent().addAndGet(end - start);
             alarms = setAndMergeAlarmsData(alarms);
-            update = new AlarmDataUpdate(cmdId, alarms, null, tooManyEntities);
+            update = new AlarmDataUpdate(cmdId, alarms, null, maxEntitiesPerAlarmSubscription, data.getTotalElements());
         } else {
-            update = new AlarmDataUpdate(cmdId, new PageData<>(), null, false);
+            update = new AlarmDataUpdate(cmdId, new PageData<>(), null, maxEntitiesPerAlarmSubscription, data.getTotalElements());
         }
         wsService.sendWsMsg(getSessionId(), update);
     }
@@ -178,7 +178,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                 alarm.getLatest().computeIfAbsent(keyType, tmp -> new HashMap<>()).putAll(latestUpdate);
                 return alarm;
             }).collect(Collectors.toList());
-            wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, update, tooManyEntities));
+            wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, update, maxEntitiesPerAlarmSubscription, data.getTotalElements()));
         } else {
             log.trace("[{}][{}][{}][{}] Received stale subscription update: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), keyType, subscriptionUpdate);
         }
@@ -201,7 +201,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                     AlarmData updated = new AlarmData(alarm, current.getOriginatorName(), current.getEntityId());
                     updated.getLatest().putAll(current.getLatest());
                     alarmsMap.put(alarmId, updated);
-                    wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated), tooManyEntities));
+                    wsService.sendWsMsg(sessionId, new AlarmDataUpdate(cmdId, null, Collections.singletonList(updated), maxEntitiesPerAlarmSubscription, data.getTotalElements()));
                 } else {
                     fetchAlarms();
                 }
