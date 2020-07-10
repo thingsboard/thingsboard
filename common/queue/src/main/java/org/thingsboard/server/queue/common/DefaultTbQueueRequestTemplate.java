@@ -28,6 +28,7 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
+import org.thingsboard.server.common.msg.stats.MessagesStats;
 
 import java.util.List;
 import java.util.UUID;
@@ -53,6 +54,8 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     private volatile long tickTs = 0L;
     private volatile long tickSize = 0L;
     private volatile boolean stopped = false;
+
+    private MessagesStats messagesStats;
 
     @Builder
     public DefaultTbQueueRequestTemplate(TbQueueAdmin queueAdmin,
@@ -154,6 +157,11 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     }
 
     @Override
+    public void setMessagesStats(MessagesStats messagesStats) {
+        this.messagesStats = messagesStats;
+    }
+
+    @Override
     public ListenableFuture<Response> send(Request request) {
         if (tickSize > maxPendingRequests) {
             return Futures.immediateFailedFuture(new RuntimeException("Pending request map is full!"));
@@ -166,14 +174,17 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
         pendingRequests.putIfAbsent(requestId, responseMetaData);
         log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, request.getKey(), responseMetaData.expTime);
+        if (messagesStats != null) messagesStats.incrementTotal();
         requestTemplate.send(TopicPartitionInfo.builder().topic(requestTemplate.getDefaultTopic()).build(), request, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
+                if (messagesStats != null) messagesStats.incrementSuccessful();
                 log.trace("[{}] Request sent: {}", requestId, metadata);
             }
 
             @Override
             public void onFailure(Throwable t) {
+                if (messagesStats != null) messagesStats.incrementFailed();
                 pendingRequests.remove(requestId);
                 future.setException(t);
             }

@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.stats;
+package org.thingsboard.server.common.msg.stats;
 
-public enum StatsType {
-    RULE_ENGINE("ruleEngine"), CORE("core"), TRANSPORT("transport"), JS_INVOKE("jsInvoke");
-
-    private String name;
-
-    StatsType(String name) {
-        this.name = name;
+public interface MessagesStats {
+    default void incrementTotal() {
+        incrementTotal(1);
     }
 
-    public String getName() {
-        return name;
+    void incrementTotal(int amount);
+
+    default void incrementSuccessful() {
+        incrementSuccessful(1);
     }
+
+    void incrementSuccessful(int amount);
+
+
+    default void incrementFailed() {
+        incrementFailed(1);
+    }
+
+    void incrementFailed(int amount);
 }
