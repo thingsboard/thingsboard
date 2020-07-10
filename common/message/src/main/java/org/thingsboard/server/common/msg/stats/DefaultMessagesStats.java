@@ -40,4 +40,26 @@ public class DefaultMessagesStats implements MessagesStats {
     public void incrementFailed(int amount) {
         failedCounter.add(amount);
     }
+
+    @Override
+    public int getTotal() {
+        return totalCounter.get();
+    }
+
+    @Override
+    public int getSuccessful() {
+        return successfulCounter.get();
+    }
+
+    @Override
+    public int getFailed() {
+        return failedCounter.get();
+    }
+
+    @Override
+    public void reset() {
+        totalCounter.clear();
+        successfulCounter.clear();
+        failedCounter.clear();
+    }
 }
