@@ -615,7 +615,12 @@ export function entityDataToEntityInfo(entityData: EntityData): EntityInfo {
 }
 
 export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: EntityInfo, createFilter = false) {
-  datasource.entity = {};
+  datasource.entity = {
+    id: {
+      entityType: entity.entityType,
+      id: entity.id
+    }
+  };
   datasource.entityId = entity.id;
   datasource.entityType = entity.entityType;
   if (datasource.type === DatasourceType.entity) {
@@ -623,6 +628,8 @@ export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: E
     datasource.entityLabel = entity.label;
     datasource.name = entity.name;
     datasource.entityDescription = entity.entityDescription;
+    datasource.entity.label = entity.label;
+    datasource.entity.name = entity.name;
     if (createFilter) {
       datasource.entityFilter = {
         type: AliasFilterType.singleEntity,
