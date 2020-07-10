@@ -22,5 +22,5 @@ import java.util.UUID;
 @Data
 public class TsKey {
     private final UUID entityId;
-    private final String key;
+    private final int key;
 }

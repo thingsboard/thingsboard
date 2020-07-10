@@ -52,7 +52,8 @@ import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -129,16 +130,15 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads);
 
         tsLatestQueue.init(logExecutor, v -> {
-            Map<TsKey, List<TsKvLatestEntity>> tsMap =
-                    v.stream().collect(Collectors.groupingBy(ts -> new TsKey(ts.getEntityId(), ts.getStrKey())));
-
-            List<TsKvLatestEntity> latestEntities =
-                    tsMap.keySet()
-                            .stream()
-                            .map(tsMap::get)
-                            .map(list -> list.stream().max(Comparator.comparing(TsKvLatestEntity::getTs)).get())
-                            .collect(Collectors.toList());
-
+            Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
+            v.forEach(ts -> {
+                TsKey key = new TsKey(ts.getEntityId(), ts.getKey());
+                TsKvLatestEntity old = trueLatest.get(key);
+                if (old == null || old.getTs() < ts.getTs()) {
+                    trueLatest.put(key, ts);
+                }
+            });
+            List<TsKvLatestEntity> latestEntities = new ArrayList<>(trueLatest.values());
             insertLatestTsRepository.saveOrUpdate(latestEntities);
         });
     }
