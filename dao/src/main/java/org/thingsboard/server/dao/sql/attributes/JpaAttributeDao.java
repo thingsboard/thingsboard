@@ -32,8 +32,8 @@ import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
-import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.PostConstruct;
@@ -41,6 +41,7 @@ import javax.annotation.PreDestroy;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -68,7 +69,10 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Value("${sql.attributes.stats_print_interval_ms:1000}")
     private long statsPrintIntervalMs;
 
-    private TbSqlBlockingQueue<AttributeKvEntity> queue;
+    @Value("${sql.attributes.batch_threads:4}")
+    private int batchThreads;
+
+    private TbSqlBlockingQueueWrapper<AttributeKvEntity> queue;
 
     @PostConstruct
     private void init() {
@@ -78,7 +82,9 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .maxDelay(maxDelay)
                 .statsPrintIntervalMs(statsPrintIntervalMs)
                 .build();
-        queue = new TbSqlBlockingQueue<>(params);
+
+        Function<AttributeKvEntity, Integer> hashcodeFunction = entity -> entity.getId().getEntityId().hashCode();
+        queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads);
         queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v));
     }
 

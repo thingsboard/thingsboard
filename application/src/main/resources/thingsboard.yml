@@ -252,14 +252,17 @@ sql:
       batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
       batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
+      batch_threads: "${SQL_ATTRIBUTES_BATCH_THREADS:4}"
     ts:
       batch_size: "${SQL_TS_BATCH_SIZE:10000}"
       batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
+      batch_threads: "${SQL_TS_BATCH_THREADS:4}"
     ts_latest:
       batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
       batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
+      batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:4}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
     remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
     postgres:
@@ -268,6 +271,7 @@ sql:
     timescale:
       # Specify Interval size for new data chunks storage.
       chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
+      batch_threads: "${SQL_TIMESCALE_BATCH_THREADS:4}"
     ttl:
       ts:
         enabled: "${SQL_TTL_TS_ENABLED:true}"

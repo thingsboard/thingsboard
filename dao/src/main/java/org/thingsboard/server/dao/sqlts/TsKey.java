@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.dao.sqlts;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
 
-import java.util.List;
-import java.util.function.Consumer;
+import java.util.UUID;
 
-public interface TbSqlQueue<E> {
-
-    void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, int queueIndex);
-
-    void destroy();
-
-    ListenableFuture<Void> add(E element);
+@Data
+public class TsKey {
+    private final UUID entityId;
+    private final int key;
 }
