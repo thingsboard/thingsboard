@@ -41,8 +41,8 @@ import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
-import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
@@ -52,7 +52,9 @@ import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,7 +84,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Autowired
     private TsKvDictionaryRepository dictionaryRepository;
 
-    private TbSqlBlockingQueue<TsKvLatestEntity> tsLatestQueue;
+    private TbSqlBlockingQueueWrapper<TsKvLatestEntity> tsLatestQueue;
 
     @Value("${sql.ts_latest.batch_size:1000}")
     private int tsLatestBatchSize;
@@ -92,6 +94,9 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
 
     @Value("${sql.ts_latest.stats_print_interval_ms:1000}")
     private long tsLatestStatsPrintIntervalMs;
+
+    @Value("${sql.ts_latest.batch_threads:4}")
+    private int tsLatestBatchThreads;
 
     @Autowired
     protected ScheduledLogExecutorComponent logExecutor;
@@ -105,6 +110,12 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Value("${sql.ts.stats_print_interval_ms:1000}")
     protected long tsStatsPrintIntervalMs;
 
+    @Value("${sql.ts.batch_threads:4}")
+    protected int tsBatchThreads;
+
+    @Value("${sql.timescale.batch_threads:4}")
+    protected int timescaleBatchThreads;
+
     @PostConstruct
     protected void init() {
         TbSqlBlockingQueueParams tsLatestParams = TbSqlBlockingQueueParams.builder()
@@ -113,8 +124,23 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 .maxDelay(tsLatestMaxDelay)
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
                 .build();
-        tsLatestQueue = new TbSqlBlockingQueue<>(tsLatestParams);
-        tsLatestQueue.init(logExecutor, v -> insertLatestTsRepository.saveOrUpdate(v));
+
+        java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity != null ? entity.getEntityId().hashCode() : 0;
+        tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads);
+
+        tsLatestQueue.init(logExecutor, v -> {
+            Map<TsKey, List<TsKvLatestEntity>> tsMap =
+                    v.stream().collect(Collectors.groupingBy(ts -> new TsKey(ts.getEntityId(), ts.getStrKey())));
+
+            List<TsKvLatestEntity> latestEntities =
+                    tsMap.keySet()
+                            .stream()
+                            .map(tsMap::get)
+                            .map(list -> list.stream().max(Comparator.comparing(TsKvLatestEntity::getTs)).get())
+                            .collect(Collectors.toList());
+
+            insertLatestTsRepository.saveOrUpdate(latestEntities);
+        });
     }
 
     @PreDestroy

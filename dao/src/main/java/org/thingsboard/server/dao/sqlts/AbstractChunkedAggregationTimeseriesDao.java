@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +32,8 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
-import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
 import org.thingsboard.server.dao.sqlts.ts.TsKvRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -54,7 +56,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     @Autowired
     protected InsertTsRepository<TsKvEntity> insertRepository;
 
-    protected TbSqlBlockingQueue<TsKvEntity> tsQueue;
+    protected TbSqlBlockingQueueWrapper<TsKvEntity> tsQueue;
 
     @PostConstruct
     protected void init() {
@@ -65,7 +67,9 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 .maxDelay(tsMaxDelay)
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
                 .build();
-        tsQueue = new TbSqlBlockingQueue<>(tsParams);
+
+        Function<TsKvEntity, Integer> hashcodeFunction = entity -> entity != null ? entity.getEntityId().hashCode() : 0;
+        tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, tsBatchThreads);
         tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
     }
 
