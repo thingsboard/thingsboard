@@ -58,7 +58,7 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
             allowOAuth2Configuration: [isDefined(entity?.additionalInfo?.allowOAuth2Configuration) ?
-              entity.additionalInfo.allowOAuth2Configuration : true]
+              entity.additionalInfo.allowOAuth2Configuration : false]
           }
         )
       }
@@ -72,7 +72,7 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
     this.entityForm.patchValue({additionalInfo: {
       description: entity.additionalInfo ? entity.additionalInfo.description : '',
       allowOAuth2Configuration: isDefined(entity?.additionalInfo?.allowOAuth2Configuration) ?
-        entity.additionalInfo.allowOAuth2Configuration : true
+        entity.additionalInfo.allowOAuth2Configuration : false
     }});
   }
 

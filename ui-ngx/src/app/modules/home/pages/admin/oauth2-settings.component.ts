@@ -112,14 +112,44 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   private buildOAuth2SettingsForm(): void {
     this.oauth2SettingsForm = this.fb.group({
-      clientsDomainsParams: this.fb.array([])
+      clientsDomainsParams: this.fb.array([], Validators.required)
     });
   }
 
   private initOAuth2Settings(oauth2Settings: OAuth2Settings): void {
-    oauth2Settings.clientsDomainsParams.forEach((domaindomain) => {
-      this.clientsDomainsParams.push(this.buildSettingsDomain(domaindomain));
-    });
+    if(oauth2Settings.clientsDomainsParams) {
+      oauth2Settings.clientsDomainsParams.forEach((domaindomain) => {
+        this.clientsDomainsParams.push(this.buildSettingsDomain(domaindomain));
+      });
+    }
+  }
+
+  private uniqueDomainValidator(control: AbstractControl): { [key: string]: boolean } | null {
+    if (control.value !== null && control?.root) {
+      const listDomainName = [];
+      control.root.value.clientsDomainsParams.forEach((domain) => {
+        listDomainName.push(domain.domainName);
+      })
+      if (listDomainName.indexOf(control.value) > -1) {
+        return {unique: true};
+      }
+    }
+    return null;
+  }
+
+  private uniqueRegistrationIdValidator(control: AbstractControl): { [key: string]: boolean } | null {
+    if (control.value !== null && control?.root) {
+      const listRegistration = [];
+      control.root.value.clientsDomainsParams.forEach((domain) => {
+        domain.clientRegistrations.forEach((client) => {
+          listRegistration.push(client.registrationId);
+        })
+      })
+      if (listRegistration.indexOf(control.value) > -1) {
+        return {unique: true};
+      }
+    }
+    return null;
   }
 
   private buildSettingsDomain(domainParams?: DomainParams): FormGroup {
@@ -130,9 +160,9 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     }
     url += '/login/oauth2/code/';
     const formDomain = this.fb.group({
-      domainName: ['', [Validators.required, Validators.pattern('((?![:/]).)*$')]],
+      domainName: [null, [Validators.required, Validators.pattern('((?![:/]).)*$'), this.uniqueDomainValidator]],
       redirectUriTemplate: [url, [Validators.required, Validators.pattern(this.URL_REGEXP)]],
-      clientRegistrations: this.fb.array([])
+      clientRegistrations: this.fb.array([], Validators.required)
     });
 
     this.subscriptions.push(formDomain.get('domainName').valueChanges.subscribe((domain) => {
@@ -156,7 +186,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   private buildSettingsRegistration(registrationData?: ClientRegistration): FormGroup {
     const clientRegistration = this.fb.group({
-      registrationId: [null, [Validators.required]],
+      registrationId: [null, [Validators.required, this.uniqueRegistrationIdValidator]],
       clientName: [null, [Validators.required]],
       loginButtonLabel: [null, [Validators.required]],
       loginButtonIcon: [null],
@@ -202,7 +232,6 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   }
 
   save(): void {
-    console.log(this.oauth2SettingsForm.value);
     this.adminService.saveOAuth2Settings(this.oauth2SettingsForm.value).subscribe(
       (oauth2Settings) => {
         this.oauth2Settings = oauth2Settings;
@@ -246,7 +275,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
     const domainName = this.clientsDomainsParams.at(index).get('domainName').value;
     this.dialogService.confirm(
-      this.translate.instant('admin.oauth2.delete-domain-title', {domainName}),
+      this.translate.instant('admin.oauth2.delete-domain-title', {domainName: domainName || ''}),
       this.translate.instant('admin.oauth2.delete-domain-text'), null,
       this.translate.instant('action.delete')
     ).subscribe((data) => {
@@ -272,7 +301,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
     const registrationId = this.clientDomainRegistrations(controler).at(index).get('registrationId').value;
     this.dialogService.confirm(
-      this.translate.instant('admin.oauth2.delete-registration-title', {name: registrationId}),
+      this.translate.instant('admin.oauth2.delete-registration-title', {name: registrationId || ''}),
       this.translate.instant('admin.oauth2.delete-registration-text'), null,
       this.translate.instant('action.delete')
     ).subscribe((data) => {

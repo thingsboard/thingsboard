@@ -28,7 +28,7 @@ const routes: Routes = [
   {
     path: 'settings',
     data: {
-      auth: [Authority.SYS_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
         label: 'admin.system-settings',
         icon: 'settings'
@@ -37,7 +37,7 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'general',
+        redirectTo: Authority.TENANT_ADMIN ? 'oauth2-settings' : 'general',
         pathMatch: 'full'
       },
       {
@@ -84,7 +84,7 @@ const routes: Routes = [
         component: OAuth2SettingsComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.SYS_ADMIN],
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
           title: 'admin.oauth2.settings',
           breadcrumb: {
             label: 'admin.oauth2.settings',

@@ -52,6 +52,9 @@
                       <mat-error *ngIf="domain.get('domainName').hasError('pattern')">
                         {{ 'admin.error-verification-url' | translate }}
                       </mat-error>
+                      <mat-error *ngIf="domain.get('domainName').hasError('unique')">
+                        {{ 'admin.domain-name-unique' | translate }}
+                      </mat-error>
                     </mat-form-field>
 
                     <mat-form-field fxFlex class="mat-block">
@@ -83,6 +86,9 @@
                                 <input matInput formControlName="registrationId" required>
                                 <mat-error *ngIf="registration.get('registrationId').hasError('required')">
                                   {{ 'admin.oauth2.registration-id-required' | translate }}
+                                </mat-error>
+                                <mat-error *ngIf="registration.get('registrationId').hasError('unique')">
+                                  {{ 'admin.oauth2.registration-id-unique' | translate }}
                                 </mat-error>
                               </mat-form-field>
 
@@ -140,10 +146,8 @@
                             <mat-form-field fxFlex class="mat-block">
                               <mat-label translate>admin.oauth2.scope</mat-label>
                               <mat-chip-list #scopeList>
-                                <mat-chip
-                                  *ngFor="let scope of registration.get('scope').value; let k = index;"
-                                  removable
-                                  (removed)="removeScope(k, registration)">
+                                <mat-chip *ngFor="let scope of registration.get('scope').value; let k = index;"
+                                          removable (removed)="removeScope(k, registration)">
                                   {{scope}}
                                   <mat-icon matChipRemove>cancel</mat-icon>
                                 </mat-chip>
@@ -152,6 +156,9 @@
                                        matChipInputAddOnBlur
                                        (matChipInputTokenEnd)="addScope($event, registration)">
                               </mat-chip-list>
+                              <mat-error *ngIf="registration.get('scope').hasError('required')">
+                                {{ 'admin.oauth2.jwk-set-uri-required' | translate }}
+                              </mat-error>
                             </mat-form-field>
 
                             <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">

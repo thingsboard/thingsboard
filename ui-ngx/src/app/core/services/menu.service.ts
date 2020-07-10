@@ -18,12 +18,13 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { selectAuthUser, selectIsAuthenticated } from '../auth/auth.selectors';
+import { getCurrentAuthState, selectAuthUser, selectIsAuthenticated } from '../auth/auth.selectors';
 import { take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { AuthUser } from '@shared/models/user.model';
+import { AuthState } from '@core/auth/auth.models';
 
 @Injectable({
   providedIn: 'root'
@@ -42,6 +43,8 @@ export class MenuService {
       }
     );
   }
+
+  authState: AuthState = getCurrentAuthState(this.store);
 
   private buildMenu() {
     this.store.pipe(select(selectAuthUser), take(1)).subscribe(
@@ -233,6 +236,25 @@ export class MenuService {
         icon: 'track_changes'
       }
     );
+
+    if (this.authState.allowOAuth2Configuration) {
+      sections.push({
+        name: 'admin.system-settings',
+        type: 'toggle',
+        path: '/settings',
+        height: '40px',
+        icon: 'settings',
+        pages: [
+          {
+            name: 'admin.oauth2.settings',
+            type: 'link',
+            path: '/settings/oauth2-settings',
+            icon: 'security'
+          }
+        ]
+      })
+    }
+
     return sections;
   }
 

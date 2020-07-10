@@ -425,15 +425,25 @@ export class AuthService {
     }
   }
 
+  private loadIsOAuth2ConfigurationAllow(authUser: AuthUser): Observable<boolean> {
+    if (authUser.authority === Authority.TENANT_ADMIN) {
+      return this.http.get<boolean>('/api/oauth2/config/isAllowed', defaultHttpOptions());
+    } else {
+      return of(false);
+    }
+  }
+
   private loadSystemParams(authPayload: AuthPayload): Observable<any> {
     const sources: Array<Observable<any>> = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
                                              this.fetchAllowedDashboardIds(authPayload),
+                                             this.loadIsOAuth2ConfigurationAllow(authPayload.authUser),
                                              this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
         const userTokenAccessEnabled: boolean = data[0];
         const allowedDashboardIds: string[] = data[1];
-        return {userTokenAccessEnabled, allowedDashboardIds};
+        const allowOAuth2Configuration: boolean = data[2];
+        return {userTokenAccessEnabled, allowedDashboardIds, allowOAuth2Configuration};
       }));
   }
 
