@@ -71,12 +71,13 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-timeout"));
         this.perTenantLimitsEnabled = perTenantLimitsEnabled;
         this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;
-        for (int i = 0; i < dispatcherThreads; i++) {
-            dispatcherExecutor.submit(this::dispatch);
-        }
         this.stats = new BufferedRateExecutorStats(statsFactory);
         String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL;
         this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0));
+
+        for (int i = 0; i < dispatcherThreads; i++) {
+            dispatcherExecutor.submit(this::dispatch);
+        }
     }
 
     @Override
