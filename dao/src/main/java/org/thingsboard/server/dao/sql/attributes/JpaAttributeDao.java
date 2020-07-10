@@ -83,7 +83,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .statsPrintIntervalMs(statsPrintIntervalMs)
                 .build();
 
-        Function<AttributeKvEntity, Integer> hashcodeFunction = entity -> entity != null ? entity.getId().getEntityId().hashCode() : 0;
+        Function<AttributeKvEntity, Integer> hashcodeFunction = entity -> entity.getId().getEntityId().hashCode();
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads);
         queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v));
     }

@@ -125,7 +125,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
                 .build();
 
-        java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity != null ? entity.getEntityId().hashCode() : 0;
+        java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads);
 
         tsLatestQueue.init(logExecutor, v -> {

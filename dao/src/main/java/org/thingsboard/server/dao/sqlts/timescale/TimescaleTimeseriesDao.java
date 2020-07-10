@@ -76,7 +76,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
                 .build();
 
-        Function<TimescaleTsKvEntity, Integer> hashcodeFunction = entity -> entity != null ? entity.getEntityId().hashCode() : 0;
+        Function<TimescaleTsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, timescaleBatchThreads);
 
         tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
@@ -281,4 +281,5 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 startTs,
                 endTs);
     }
+
 }

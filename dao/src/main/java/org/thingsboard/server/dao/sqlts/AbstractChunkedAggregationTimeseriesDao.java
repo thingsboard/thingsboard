@@ -68,7 +68,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
                 .build();
 
-        Function<TsKvEntity, Integer> hashcodeFunction = entity -> entity != null ? entity.getEntityId().hashCode() : 0;
+        Function<TsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, tsBatchThreads);
         tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
     }

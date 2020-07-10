@@ -42,8 +42,7 @@ public class TbSqlBlockingQueueWrapper<E> {
     }
 
     public ListenableFuture<Void> add(E element) {
-        int hash = hashCodeFunction.apply(element);
-        int queueIndex = (hash & 0x7FFFFFFF) % maxThreads;
+        int queueIndex = element != null ? (hashCodeFunction.apply(element) & 0x7FFFFFFF) % maxThreads : 0;
         return queues.get(queueIndex).add(element);
     }
 
