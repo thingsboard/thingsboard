@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.stats;
+package org.thingsboard.server.common.stats;
 
-public enum StatsType {
-    RULE_ENGINE("ruleEngine"), CORE("core"), TRANSPORT("transport"), JS_INVOKE("jsInvoke"), RATE_EXECUTOR("rateExecutor");
+public interface StatsFactory {
+    StatsCounter createStatsCounter(String key, String statsName);
 
-    private String name;
+    DefaultCounter createDefaultCounter(String key, String... tags);
 
-    StatsType(String name) {
-        this.name = name;
-    }
+    <T extends Number> T createGauge(String key, T number, String... tags);
 
-    public String getName() {
-        return name;
-    }
+    MessagesStats createMessagesStats(String key);
 }
