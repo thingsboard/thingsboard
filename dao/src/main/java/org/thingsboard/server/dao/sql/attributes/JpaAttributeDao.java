@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
@@ -59,6 +60,9 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Autowired
     private AttributeKvInsertRepository attributeKvInsertRepository;
 
+    @Autowired
+    private StatsFactory statsFactory;
+
     @Value("${sql.attributes.batch_size:1000}")
     private int batchSize;
 
@@ -77,6 +81,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .batchSize(batchSize)
                 .maxDelay(maxDelay)
                 .statsPrintIntervalMs(statsPrintIntervalMs)
+                .stats(statsFactory.createMessagesStats("attributes"))
                 .build();
         queue = new TbSqlBlockingQueue<>(params);
         queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v));

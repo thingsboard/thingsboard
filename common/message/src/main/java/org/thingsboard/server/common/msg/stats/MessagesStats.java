@@ -28,10 +28,17 @@ public interface MessagesStats {
 
     void incrementSuccessful(int amount);
 
-
     default void incrementFailed() {
         incrementFailed(1);
     }
 
     void incrementFailed(int amount);
+
+    int getTotal();
+
+    int getSuccessful();
+
+    int getFailed();
+
+    void reset();
 }

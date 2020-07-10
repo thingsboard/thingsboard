@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.msg.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
@@ -54,6 +55,9 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     @Autowired
     protected InsertTsRepository<TsKvEntity> insertRepository;
 
+    @Autowired
+    private StatsFactory statsFactory;
+
     protected TbSqlBlockingQueue<TsKvEntity> tsQueue;
 
     @PostConstruct
@@ -64,6 +68,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 .batchSize(tsBatchSize)
                 .maxDelay(tsMaxDelay)
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
+                .stats(statsFactory.createMessagesStats("ts"))
                 .build();
         tsQueue = new TbSqlBlockingQueue<>(tsParams);
         tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));

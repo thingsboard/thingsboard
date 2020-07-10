@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.msg.stats.MessagesStats;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,16 +36,15 @@ import java.util.stream.Collectors;
 public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
 
     private final BlockingQueue<TbSqlQueueElement<E>> queue = new LinkedBlockingQueue<>();
-    private final AtomicInteger addedCount = new AtomicInteger();
-    private final AtomicInteger savedCount = new AtomicInteger();
-    private final AtomicInteger failedCount = new AtomicInteger();
     private final TbSqlBlockingQueueParams params;
 
     private ExecutorService executor;
     private ScheduledLogExecutorComponent logExecutor;
+    private MessagesStats stats;
 
     public TbSqlBlockingQueue(TbSqlBlockingQueueParams params) {
         this.params = params;
+        this.stats = params.getStats();
     }
 
     @Override
@@ -70,7 +70,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
                     log.debug("[{}] Going to save {} entities", logName, entities.size());
                     saveFunction.accept(entities.stream().map(TbSqlQueueElement::getEntity).collect(Collectors.toList()));
                     entities.forEach(v -> v.getFuture().set(null));
-                    savedCount.addAndGet(entities.size());
+                    stats.incrementSuccessful(entities.size());
                     if (!fullPack) {
                         long remainingDelay = maxDelay - (System.currentTimeMillis() - currentTs);
                         if (remainingDelay > 0) {
@@ -78,7 +78,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
                         }
                     }
                 } catch (Exception e) {
-                    failedCount.addAndGet(entities.size());
+                    stats.incrementFailed(entities.size());
                     entities.forEach(entityFutureWrapper -> entityFutureWrapper.getFuture().setException(e));
                     if (e instanceof InterruptedException) {
                         log.info("[{}] Queue polling was interrupted", logName);
@@ -93,9 +93,10 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
         });
 
         logExecutor.scheduleAtFixedRate(() -> {
-            if (queue.size() > 0 || addedCount.get() > 0 || savedCount.get() > 0 || failedCount.get() > 0) {
+            if (queue.size() > 0 || stats.getTotal() > 0 || stats.getSuccessful() > 0 || stats.getFailed() > 0) {
                 log.info("[{}] queueSize [{}] totalAdded [{}] totalSaved [{}] totalFailed [{}]",
-                        params.getLogName(), queue.size(), addedCount.getAndSet(0), savedCount.getAndSet(0), failedCount.getAndSet(0));
+                        params.getLogName(), queue.size(), stats.getTotal(), stats.getSuccessful(), stats.getFailed());
+                stats.reset();
             }
         }, params.getStatsPrintIntervalMs(), params.getStatsPrintIntervalMs(), TimeUnit.MILLISECONDS);
     }
@@ -111,7 +112,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
     public ListenableFuture<Void> add(E element) {
         SettableFuture<Void> future = SettableFuture.create();
         queue.add(new TbSqlQueueElement<>(future, element));
-        addedCount.incrementAndGet();
+        params.getStats().incrementTotal();
         return future;
     }
 }
