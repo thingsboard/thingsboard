@@ -25,11 +25,12 @@ import {credentialTypeNames, DeviceCredentials, DeviceCredentialsType} from '@sh
 import {DialogComponent} from '@shared/components/dialog.component';
 import {Router} from '@angular/router';
 import {
-  DeviceCredentialsDialogLwm2mComponent,
+  SecurityConfigComponent,
   DeviceCredentialsDialogLwm2mData
-} from "@home/pages/device/device-credentials-dialog-lwm2m.component";
+} from "@home/pages/device/lwm2m/security-config.component";
 
 import {TranslateService} from "@ngx-translate/core";
+import {END_POINT, JSON_ALL_CONFIG} from "@home/pages/device/lwm2m/security-config.models";
 
 export interface DeviceCredentialsDialogData {
   isReadOnly: boolean;
@@ -155,19 +156,19 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
       $event.stopPropagation();
       $event.preventDefault();
     }
-    this.dialog.open<DeviceCredentialsDialogLwm2mComponent, DeviceCredentialsDialogLwm2mData, object>(DeviceCredentialsDialogLwm2mComponent, {
+    this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonValue: (value !== null && value.length === 0) ? JSON.parse("{}") : JSON.parse(value),
-        title: this.translate.instant('device.lwm2m-security-info', {typeName: id}) + " for " +
-          this.translate.instant('device.lwm2m-endpoint', {typeName: id}) + ": " + id
+        jsonAllConfig: (value !== null && value.length === 0) ? JSON.parse("{}") : JSON.parse(value),
+        title: this.translate.instant('device.lwm2m-security-info', {typeName: id}),
+        endPoint: id
       }
     }).afterClosed().subscribe(
       (res) => {
-        debugger
         if (res) {
-          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res).length === 0 || JSON.stringify(res) === "[{}]") ? null : JSON.stringify(res));
+          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res[JSON_ALL_CONFIG]).length === 0 || JSON.stringify(res[JSON_ALL_CONFIG]) === "[{}]") ? null : JSON.stringify(res[JSON_ALL_CONFIG]));
+          this.deviceCredentialsFormGroup.get('credentialsId').patchValue((Object.keys(res[END_POINT]).length === 0 || JSON.stringify(res[END_POINT]) === "[{}]") ? null : JSON.stringify(res[END_POINT]));
           this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
         }
       }
