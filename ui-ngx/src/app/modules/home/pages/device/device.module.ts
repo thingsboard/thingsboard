@@ -21,7 +21,7 @@ import { DeviceComponent } from '@modules/home/pages/device/device.component';
 import { DeviceRoutingModule } from './device-routing.module';
 import { DeviceTableHeaderComponent } from '@modules/home/pages/device/device-table-header.component';
 import { DeviceCredentialsDialogComponent } from '@modules/home/pages/device/device-credentials-dialog.component';
-import { DeviceCredentialsDialogLwm2mComponent } from '@home/pages/device/device-credentials-dialog-lwm2m.component';
+import { SecurityConfigComponent } from '@home/pages/device/lwm2m/security-config.component';
 import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
@@ -32,7 +32,7 @@ import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
     DeviceTabsComponent,
     DeviceTableHeaderComponent,
     DeviceCredentialsDialogComponent,
-    DeviceCredentialsDialogLwm2mComponent
+    SecurityConfigComponent
   ],
   imports: [
     CommonModule,
