@@ -27,11 +27,9 @@ import eventRowEdgeEventTemplate from './event-row-edge-event.tpl.html';
 
 /*@ngInject*/
 export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, $translate,
-                                          types, toast, entityService, ruleChainService, userService, attributeService) {
+                                          types, toast, entityService, ruleChainService) {
 
     var linker = function (scope, element, attrs) {
-
-        var lastDisconnectTime;
 
         var getTemplate = function(eventType) {
             var template = '';
@@ -52,7 +50,6 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                     template = eventRowDebugRuleNodeTemplate;
                     break;
                 case types.eventType.edgeEvent.value:
-                    getLastDisconnectTime();
                     template = eventRowEdgeEventTemplate;
                     break;
             }
@@ -138,25 +135,6 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             });
         }
 
-        function getLastDisconnectTime() {
-            let params = {
-                entityType: types.entityType.edge,
-                entityId: scope.entityId,
-                attributeScope: types.attributesScope.server.value,
-                query: {order: '', limit: 1, page: 1, search: "active"}
-            };
-            attributeService.getEntityAttributes(params.entityType, params.entityId, params.attributeScope, params.query,
-                function (attribute) {
-                    if (attribute && attribute.data) {
-                        lastDisconnectTime = attribute.data[0].lastUpdateTs;
-                    }
-                });
-        }
-
-        scope.receiveStatus = function(eventCreatedTime) {
-            return (eventCreatedTime <= lastDisconnectTime) ? $translate.instant('event.success') : $translate.instant('event.failed');
-        }
-
         scope.checkTooltip = function($event) {
             var el = $event.target;
             var $el = angular.element(el);
@@ -166,6 +144,12 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
         }
 
         $compile(element.contents())(scope);
+
+        scope.updateStatus = function(eventCreatedTime) {
+            if (scope.queueStartTs) {
+                return (eventCreatedTime < scope.queueStartTs) ? $translate.instant('event.success') : $translate.instant('event.failed');
+            }
+        }
     }
 
     return {
