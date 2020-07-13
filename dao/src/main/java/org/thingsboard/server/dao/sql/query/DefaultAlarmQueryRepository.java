@@ -20,6 +20,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -53,7 +56,6 @@ import java.util.stream.Collectors;
 public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     private static final Map<String, String> alarmFieldColumnMap = new HashMap<>();
-    private static final List<String> uniqueAlarmFields = new ArrayList<>();
 
     static {
         alarmFieldColumnMap.put("createdTime", ModelConstants.CREATED_TIME_PROPERTY);
@@ -72,11 +74,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put("originator_id", ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);
         alarmFieldColumnMap.put("originator_type", ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY);
         alarmFieldColumnMap.put("originator", "originator_name");
-
-        uniqueAlarmFields.addAll(new HashSet<>(alarmFieldColumnMap.values()));
     }
 
-    public static final String SELECT_ORIGINATOR_NAME = " CASE" +
+    private static final String SELECT_ORIGINATOR_NAME = " CASE" +
             " WHEN a.originator_type = " + EntityType.TENANT.ordinal() +
             " THEN (select title from tenant where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.CUSTOMER.ordinal() +
@@ -93,7 +93,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " THEN (select name from entity_view where id = a.originator_id)" +
             " END as originator_name";
 
-    public static final String FIELDS_SELECTION = "select a.id as id," +
+    private static final String FIELDS_SELECTION = "select a.id as id," +
             " a.created_time as created_time," +
             " a.ack_ts as ack_ts," +
             " a.clear_ts as clear_ts," +
@@ -109,130 +109,136 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.propagate_relation_types as propagate_relation_types, " +
             " a.type as type," + SELECT_ORIGINATOR_NAME + ", ";
 
-    public static final String JOIN_RELATIONS = "left join relation r on r.relation_type_group = 'ALARM' and r.relation_type = 'ANY' and a.id = r.to_id and r.from_id in (:entity_ids)";
+    private static final String JOIN_RELATIONS = "left join relation r on r.relation_type_group = 'ALARM' and r.relation_type = 'ANY' and a.id = r.to_id and r.from_id in (:entity_ids)";
 
-    @Autowired
-    protected NamedParameterJdbcTemplate jdbcTemplate;
+    protected final NamedParameterJdbcTemplate jdbcTemplate;
+    private final TransactionTemplate transactionTemplate;
 
+    public DefaultAlarmQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.transactionTemplate = transactionTemplate;
+    }
 
     @Override
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
                                                                AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
-        AlarmDataPageLink pageLink = query.getPageLink();
-        QueryContext ctx = new QueryContext();
-        ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+        return transactionTemplate.execute(status -> {
+            AlarmDataPageLink pageLink = query.getPageLink();
+            QueryContext ctx = new QueryContext();
+            ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
 
-        StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
-        StringBuilder fromPart = new StringBuilder(" from alarm a ");
-        StringBuilder wherePart = new StringBuilder(" where ");
-        StringBuilder sortPart = new StringBuilder(" order by ");
-        boolean addAnd = false;
-        if (pageLink.isSearchPropagatedAlarms()) {
-            selectPart.append(" CASE WHEN r.from_id IS NULL THEN a.originator_id ELSE r.from_id END as entity_id ");
-            fromPart.append(JOIN_RELATIONS);
-            wherePart.append(buildPermissionsQuery(tenantId, customerId, ctx));
-            addAnd = true;
-        } else {
-            selectPart.append(" a.originator_id as entity_id ");
-        }
-        EntityDataSortOrder sortOrder = pageLink.getSortOrder();
-        if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
-            String sortOrderKey = sortOrder.getKey().getKey();
-            sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
-                    .append(" ").append(sortOrder.getDirection().name());
+            StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
+            StringBuilder fromPart = new StringBuilder(" from alarm a ");
+            StringBuilder wherePart = new StringBuilder(" where ");
+            StringBuilder sortPart = new StringBuilder(" order by ");
+            boolean addAnd = false;
             if (pageLink.isSearchPropagatedAlarms()) {
-                wherePart.append(" and (a.originator_id in (:entity_ids) or r.from_id IS NOT NULL)");
-            } else {
-                addAndIfNeeded(wherePart, addAnd);
+                selectPart.append(" CASE WHEN r.from_id IS NULL THEN a.originator_id ELSE r.from_id END as entity_id ");
+                fromPart.append(JOIN_RELATIONS);
+                wherePart.append(buildPermissionsQuery(tenantId, customerId, ctx));
                 addAnd = true;
-                wherePart.append(" a.originator_id in (:entity_ids)");
+            } else {
+                selectPart.append(" a.originator_id as entity_id ");
             }
-        } else {
-            fromPart.append(" left join (select * from (VALUES");
-            int entityIdIdx = 0;
-            int lastEntityIdIdx = orderedEntityIds.size() - 1;
-            for (EntityId entityId : orderedEntityIds) {
-                fromPart.append("(uuid('").append(entityId.getId().toString()).append("'), ").append(entityIdIdx).append(")");
-                if (entityIdIdx != lastEntityIdIdx) {
-                    fromPart.append(",");
+            EntityDataSortOrder sortOrder = pageLink.getSortOrder();
+            if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
+                String sortOrderKey = sortOrder.getKey().getKey();
+                sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
+                        .append(" ").append(sortOrder.getDirection().name());
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    wherePart.append(" and (a.originator_id in (:entity_ids) or r.from_id IS NOT NULL)");
                 } else {
-                    fromPart.append(")");
+                    addAndIfNeeded(wherePart, addAnd);
+                    addAnd = true;
+                    wherePart.append(" a.originator_id in (:entity_ids)");
                 }
-                entityIdIdx++;
-            }
-            fromPart.append(" as e(id, priority)) e ");
-            if (pageLink.isSearchPropagatedAlarms()) {
-                fromPart.append("on (r.from_id IS NULL and a.originator_id = e.id) or (r.from_id IS NOT NULL and r.from_id = e.id)");
             } else {
-                fromPart.append("on a.originator_id = e.id");
+                fromPart.append(" left join (select * from (VALUES");
+                int entityIdIdx = 0;
+                int lastEntityIdIdx = orderedEntityIds.size() - 1;
+                for (EntityId entityId : orderedEntityIds) {
+                    fromPart.append("(uuid('").append(entityId.getId().toString()).append("'), ").append(entityIdIdx).append(")");
+                    if (entityIdIdx != lastEntityIdIdx) {
+                        fromPart.append(",");
+                    } else {
+                        fromPart.append(")");
+                    }
+                    entityIdIdx++;
+                }
+                fromPart.append(" as e(id, priority)) e ");
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    fromPart.append("on (r.from_id IS NULL and a.originator_id = e.id) or (r.from_id IS NOT NULL and r.from_id = e.id)");
+                } else {
+                    fromPart.append("on a.originator_id = e.id");
+                }
+                sortPart.append("e.priority");
             }
-            sortPart.append("e.priority");
-        }
 
-        long startTs;
-        long endTs;
-        if (pageLink.getTimeWindow() > 0) {
-            endTs = System.currentTimeMillis();
-            startTs = endTs - pageLink.getTimeWindow();
-        } else {
-            startTs = pageLink.getStartTs();
-            endTs = pageLink.getEndTs();
-        }
+            long startTs;
+            long endTs;
+            if (pageLink.getTimeWindow() > 0) {
+                endTs = System.currentTimeMillis();
+                startTs = endTs - pageLink.getTimeWindow();
+            } else {
+                startTs = pageLink.getStartTs();
+                endTs = pageLink.getEndTs();
+            }
 
-        if (startTs > 0) {
-            addAndIfNeeded(wherePart, addAnd);
-            addAnd = true;
-            ctx.addLongParameter("startTime", startTs);
-            wherePart.append("a.created_time >= :startTime");
-        }
-
-        if (endTs > 0) {
-            addAndIfNeeded(wherePart, addAnd);
-            addAnd = true;
-            ctx.addLongParameter("endTime", endTs);
-            wherePart.append("a.created_time <= :endTime");
-        }
-
-        if (pageLink.getTypeList() != null && !pageLink.getTypeList().isEmpty()) {
-            addAndIfNeeded(wherePart, addAnd);
-            addAnd = true;
-            ctx.addStringListParameter("alarmTypes", pageLink.getTypeList());
-            wherePart.append("a.type in (:alarmTypes)");
-        }
-
-        if (pageLink.getSeverityList() != null && !pageLink.getSeverityList().isEmpty()) {
-            addAndIfNeeded(wherePart, addAnd);
-            addAnd = true;
-            ctx.addStringListParameter("alarmSeverities", pageLink.getSeverityList().stream().map(AlarmSeverity::name).collect(Collectors.toList()));
-            wherePart.append("a.severity in (:alarmSeverities)");
-        }
-
-        if (pageLink.getStatusList() != null && !pageLink.getStatusList().isEmpty()) {
-            Set<AlarmStatus> statusSet = toStatusSet(pageLink.getStatusList());
-            if (!statusSet.isEmpty()) {
+            if (startTs > 0) {
                 addAndIfNeeded(wherePart, addAnd);
                 addAnd = true;
-                ctx.addStringListParameter("alarmStatuses", statusSet.stream().map(AlarmStatus::name).collect(Collectors.toList()));
-                wherePart.append(" a.status in (:alarmStatuses)");
+                ctx.addLongParameter("startTime", startTs);
+                wherePart.append("a.created_time >= :startTime");
             }
-        }
 
-        String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
-        String mainQuery = selectPart.toString() + fromPart.toString() + wherePart.toString();
-        if (!textSearchQuery.isEmpty()) {
-            mainQuery = String.format("select * from (%s) a WHERE %s", mainQuery, textSearchQuery);
-        }
-        String countQuery = mainQuery;
-        int totalElements = jdbcTemplate.queryForObject(String.format("select count(*) from (%s) result", countQuery), ctx, Integer.class);
+            if (endTs > 0) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                ctx.addLongParameter("endTime", endTs);
+                wherePart.append("a.created_time <= :endTime");
+            }
 
-        String dataQuery = mainQuery + sortPart;
+            if (pageLink.getTypeList() != null && !pageLink.getTypeList().isEmpty()) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                ctx.addStringListParameter("alarmTypes", pageLink.getTypeList());
+                wherePart.append("a.type in (:alarmTypes)");
+            }
 
-        int startIndex = pageLink.getPageSize() * pageLink.getPage();
-        if (pageLink.getPageSize() > 0) {
-            dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
-        }
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
-        return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
+            if (pageLink.getSeverityList() != null && !pageLink.getSeverityList().isEmpty()) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                ctx.addStringListParameter("alarmSeverities", pageLink.getSeverityList().stream().map(AlarmSeverity::name).collect(Collectors.toList()));
+                wherePart.append("a.severity in (:alarmSeverities)");
+            }
+
+            if (pageLink.getStatusList() != null && !pageLink.getStatusList().isEmpty()) {
+                Set<AlarmStatus> statusSet = toStatusSet(pageLink.getStatusList());
+                if (!statusSet.isEmpty()) {
+                    addAndIfNeeded(wherePart, addAnd);
+                    addAnd = true;
+                    ctx.addStringListParameter("alarmStatuses", statusSet.stream().map(AlarmStatus::name).collect(Collectors.toList()));
+                    wherePart.append(" a.status in (:alarmStatuses)");
+                }
+            }
+
+            String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
+            String mainQuery = selectPart.toString() + fromPart.toString() + wherePart.toString();
+            if (!textSearchQuery.isEmpty()) {
+                mainQuery = String.format("select * from (%s) a WHERE %s", mainQuery, textSearchQuery);
+            }
+            String countQuery = mainQuery;
+            int totalElements = jdbcTemplate.queryForObject(String.format("select count(*) from (%s) result", countQuery), ctx, Integer.class);
+
+            String dataQuery = mainQuery + sortPart;
+
+            int startIndex = pageLink.getPageSize() * pageLink.getPage();
+            if (pageLink.getPageSize() > 0) {
+                dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
+            }
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
+            return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
+        });
     }
 
     private String buildTextSearchQuery(QueryContext ctx, List<EntityKey> selectionMapping, String searchText) {

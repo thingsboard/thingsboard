@@ -82,7 +82,7 @@
           </mat-cell>
         </ng-container>
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-        <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity)}"
+        <mat-row [fxShow]="!entityDatasource.dataLoading" [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity)}"
                  *matRowDef="let entity; columns: displayedColumns;"
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </table>

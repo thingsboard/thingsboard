@@ -286,7 +286,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         int dynamicQueryInvocationCntValue = stats.getDynamicQueryInvocationCnt().getAndSet(0);
         long dynamicQueryInvocationTimeValue = stats.getDynamicQueryTimeSpent().getAndSet(0);
         long dynamicQueryCnt = subscriptionsBySessionId.values().stream().map(Map::values).count();
-        if (regularQueryInvocationCntValue > 0 || dynamicQueryInvocationCntValue > 0 || dynamicQueryCnt > 0) {
+        if (regularQueryInvocationCntValue > 0 || dynamicQueryInvocationCntValue > 0 || dynamicQueryCnt > 0 || alarmQueryInvocationCntValue > 0) {
             log.info("Stats: regularQueryInvocationCnt = [{}], regularQueryInvocationTime = [{}], " +
                             "dynamicQueryCnt = [{}] dynamicQueryInvocationCnt = [{}], dynamicQueryInvocationTime = [{}], " +
                             "alarmQueryInvocationCnt = [{}], alarmQueryInvocationTime = [{}]",
