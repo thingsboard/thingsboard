@@ -84,7 +84,8 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             return deviceCredentialsDao.save(tenantId, deviceCredentials);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key")) {
+            if (e != null && e.getConstraintName() != null
+                    && (e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key") || e.getConstraintName().equalsIgnoreCase("device_credentials_device_id_unq_key"))) {
                 throw new DataValidationException("Specified credentials are already registered!");
             } else {
                 throw t;
@@ -111,13 +112,20 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
+                    DeviceCredentials existingCredentials = deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId());
+                    if (existingCredentials != null) {
+                        throw new DataValidationException("Credentials for this device are already specified!");
+                    }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    DeviceCredentials existingCredentials = deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId());
-                    if (existingCredentials == null) {
+                    if (deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId()) == null) {
                         throw new DataValidationException("Unable to update non-existent device credentials!");
+                    }
+                    DeviceCredentials existingCredentials = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
+                    if (existingCredentials != null && !existingCredentials.getId().equals(deviceCredentials.getId())) {
+                        throw new DataValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 

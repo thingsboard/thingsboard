@@ -142,7 +142,8 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     credentials_type varchar(255),
     credentials_value varchar,
     device_id uuid,
-    CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id)
+    CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id),
+    CONSTRAINT device_credentials_device_id_unq_key UNIQUE (device_id)
 );
 
 CREATE TABLE IF NOT EXISTS event (
