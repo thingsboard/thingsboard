@@ -112,9 +112,11 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    DeviceCredentials existingCredentials = deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId());
-                    if (existingCredentials != null) {
+                    if (deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId()) != null) {
                         throw new DataValidationException("Credentials for this device are already specified!");
+                    }
+                    if (deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId()) != null) {
+                        throw new DataValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 
