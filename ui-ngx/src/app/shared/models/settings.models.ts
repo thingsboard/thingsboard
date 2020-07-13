@@ -23,7 +23,7 @@ export interface AdminSettings<T> {
 
 export declare type SmtpProtocol = 'smtp' | 'smtps';
 
-export declare type ClientAuthenticationMethod = 'basic' | 'post';
+export declare type ClientAuthenticationMethod = 'BASIC' | 'POST';
 export declare type MapperConfigType = 'BASIC' | 'CUSTOM';
 export declare type TenantNameStrategy = 'DOMAIN' | 'EMAIL' | 'CUSTOM';
 
@@ -77,7 +77,6 @@ export interface DomainParams {
 
 export interface ClientRegistration {
   registrationId: string;
-  clientName: string;
   loginButtonLabel: string;
   loginButtonIcon: string;
   clientId: string;

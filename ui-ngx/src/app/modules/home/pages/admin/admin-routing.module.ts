@@ -23,6 +23,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { OAuth2SettingsComponent } from '@home/pages/admin/oauth2-settings.component';
+import { RedirectGuard } from '@core/guards/redirect.guard';
 
 const routes: Routes = [
   {
@@ -37,7 +38,7 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: Authority.TENANT_ADMIN ? 'oauth2-settings' : 'general',
+        canActivate: [RedirectGuard],
         pathMatch: 'full'
       },
       {

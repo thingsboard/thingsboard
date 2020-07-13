@@ -16,7 +16,14 @@
 
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ClientRegistration, DomainParams, OAuth2Settings } from '@shared/models/settings.models';
+import {
+  ClientAuthenticationMethod,
+  ClientRegistration,
+  DomainParams,
+  MapperConfigType,
+  OAuth2Settings,
+  TenantNameStrategy
+} from '@shared/models/settings.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AdminService } from '@core/http/admin.service';
@@ -44,9 +51,9 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   oauth2SettingsForm: FormGroup;
   oauth2Settings: OAuth2Settings;
 
-  clientAuthenticationMethods = ['basic', 'post'];
-  converterTypesExternalUser = ['BASIC', 'CUSTOM'];
-  tenantNameStrategies = ['DOMAIN', 'EMAIL', 'CUSTOM'];
+  clientAuthenticationMethods: ClientAuthenticationMethod[] = ['BASIC', 'POST'];
+  converterTypesExternalUser: MapperConfigType[] = ['BASIC', 'CUSTOM'];
+  tenantNameStrategies: TenantNameStrategy[] = ['DOMAIN', 'EMAIL', 'CUSTOM'];
 
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
@@ -117,7 +124,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   }
 
   private initOAuth2Settings(oauth2Settings: OAuth2Settings): void {
-    if(oauth2Settings.clientsDomainsParams) {
+    if (oauth2Settings.clientsDomainsParams) {
       oauth2Settings.clientsDomainsParams.forEach((domaindomain) => {
         this.clientsDomainsParams.push(this.buildSettingsDomain(domaindomain));
       });
@@ -173,7 +180,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       formDomain.get('redirectUriTemplate').patchValue(uri);
     }));
 
-    if(domainParams){
+    if (domainParams) {
       domainParams.clientRegistrations.forEach((registration) => {
         this.clientDomainRegistrations(formDomain).push(this.buildSettingsRegistration(registration));
       })
@@ -187,7 +194,6 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   private buildSettingsRegistration(registrationData?: ClientRegistration): FormGroup {
     const clientRegistration = this.fb.group({
       registrationId: [null, [Validators.required, this.uniqueRegistrationIdValidator]],
-      clientName: [null, [Validators.required]],
       loginButtonLabel: [null, [Validators.required]],
       loginButtonIcon: [null],
       clientId: ['', [Validators.required]],
@@ -197,7 +203,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       scope: this.fb.array([], [Validators.required]),
       jwkSetUri: ['', [Validators.required, Validators.pattern(this.URL_REGEXP)]],
       userInfoUri: ['', [Validators.required, Validators.pattern(this.URL_REGEXP)]],
-      clientAuthenticationMethod: ['post', [Validators.required]],
+      clientAuthenticationMethod: ['POST', [Validators.required]],
       userNameAttributeName: ['email', [Validators.required]],
       mapperConfig: this.fb.group({
           allowUserCreation: [true],
@@ -219,11 +225,11 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       }
     }));
 
-    if(registrationData){
+    if (registrationData) {
       registrationData.scope.forEach(() => {
         (clientRegistration.get('scope') as FormArray).push(this.fb.control(''))
       })
-      if(registrationData.mapperConfig.type !== 'BASIC'){
+      if (registrationData.mapperConfig.type !== 'BASIC') {
         clientRegistration.get('mapperConfig.type').patchValue('CUSTOM');
       }
     }

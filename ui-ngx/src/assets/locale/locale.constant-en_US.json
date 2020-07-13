@@ -131,8 +131,6 @@
           "registration-id": "Registration ID",
           "registration-id-required": "Registration ID is required.",
           "registration-id-unique": "Registration ID need to unique for the system.",
-          "client-name": "Client name",
-          "client-name-required": "Client name is required.",
           "client-id": "Client ID",
           "client-id-required": "Client ID is required.",
           "client-secret": "Client secret",
