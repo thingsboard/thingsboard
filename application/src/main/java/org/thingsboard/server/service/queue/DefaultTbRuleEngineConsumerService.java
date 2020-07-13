@@ -52,6 +52,7 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrateg
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
+import org.thingsboard.server.service.stats.StatsCounterFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -79,6 +80,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Value("${queue.rule-engine.stats.enabled:true}")
     private boolean statsEnabled;
 
+    private final StatsCounterFactory counterFactory;
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
     private final TbRuleEngineProcessingStrategyFactory processingStrategyFactory;
     private final TbRuleEngineQueueFactory tbRuleEngineQueueFactory;
@@ -95,7 +97,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbQueueRuleEngineSettings ruleEngineSettings,
                                               TbRuleEngineQueueFactory tbRuleEngineQueueFactory, RuleEngineStatisticsService statisticsService,
                                               ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
-                                              TbRuleEngineDeviceRpcService tbDeviceRpcService) {
+                                              TbRuleEngineDeviceRpcService tbDeviceRpcService,
+                                              StatsCounterFactory counterFactory) {
         super(actorContext, encodingService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
         this.ruleEngineSettings = ruleEngineSettings;
@@ -103,6 +106,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         this.submitStrategyFactory = submitStrategyFactory;
         this.processingStrategyFactory = processingStrategyFactory;
         this.tbDeviceRpcService = tbDeviceRpcService;
+        this.counterFactory = counterFactory;
     }
 
     @PostConstruct
@@ -111,7 +115,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         for (TbRuleEngineQueueConfiguration configuration : ruleEngineSettings.getQueues()) {
             consumerConfigurations.putIfAbsent(configuration.getName(), configuration);
             consumers.computeIfAbsent(configuration.getName(), queueName -> tbRuleEngineQueueFactory.createToRuleEngineMsgConsumer(configuration));
-            consumerStats.put(configuration.getName(), new TbRuleEngineConsumerStats(configuration.getName()));
+            consumerStats.put(configuration.getName(), new TbRuleEngineConsumerStats(configuration.getName(), counterFactory));
         }
         submitExecutor = Executors.newSingleThreadExecutor();
     }
@@ -269,6 +273,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             consumerStats.forEach((queue, stats) -> {
                 stats.printStats();
                 statisticsService.reportQueueStats(ts, stats);
+                stats.reset();
             });
         }
     }

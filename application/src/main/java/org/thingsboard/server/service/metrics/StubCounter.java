@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.service.metrics;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import io.micrometer.core.instrument.Counter;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+public class StubCounter implements Counter {
+    @Override
+    public void increment(double amount) {}
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${database.ts.type}'=='sql' && '${spring.jpa.database-platform}'=='org.hibernate.dialect.PostgreSQLDialect'")
-public @interface PsqlTsDao { }
+    @Override
+    public double count() {
+        return 0;
+    }
+
+    @Override
+    public Id getId() {
+        return null;
+    }
+}
