@@ -368,7 +368,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.def = 'def' + this.columns.length;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
-
+        if (dataKey.type === DataKeyType.alarm && !isDefined(keySettings.columnWidth)) {
+          const alarmField = alarmFields[dataKey.name];
+          if (alarmField && alarmField.time) {
+            keySettings.columnWidth = '120px';
+          }
+        }
         this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings);
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, alarm, ctx');
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
@@ -863,7 +868,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
 
   loadAlarms(pageLink: AlarmDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
-    this.clear();
+    // this.clear();
     this.appliedPageLink = pageLink;
     this.appliedSortOrderLabel = sortOrderLabel;
     this.subscription.subscribeForAlarms(pageLink, keyFilters);

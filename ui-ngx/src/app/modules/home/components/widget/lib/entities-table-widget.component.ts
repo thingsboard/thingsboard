@@ -87,6 +87,7 @@ import {
 import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
+import { alarmFields } from '@shared/models/alarm.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -348,6 +349,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.def = 'def' + this.columns.length;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        if (dataKey.type === DataKeyType.entityField &&
+          !isDefined(keySettings.columnWidth) || keySettings.columnWidth === '0px') {
+          const entityField = entityFields[dataKey.name];
+          if (entityField && entityField.time) {
+            keySettings.columnWidth = '120px';
+          }
+        }
 
         this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings);
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, entity, ctx');
@@ -595,7 +603,7 @@ class EntityDatasource implements DataSource<EntityData> {
 
   loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
-    this.clear();
+    // this.clear();
     this.appliedPageLink = pageLink;
     this.appliedSortOrderLabel = sortOrderLabel;
     this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);

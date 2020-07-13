@@ -119,7 +119,7 @@
           </mat-cell>
         </ng-container>
         <mat-header-row [ngClass]="{'mat-row-select': enableSelection}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-        <mat-row [ngClass]="{'mat-row-select': enableSelection,
+        <mat-row [fxShow]="!alarmsDatasource.dataLoading" [ngClass]="{'mat-row-select': enableSelection,
                              'mat-selected': alarmsDatasource.isSelected(alarm),
                              'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm)}"
                  *matRowDef="let alarm; columns: displayedColumns;"
