@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -42,7 +43,13 @@ public class EntityDataMsgConstructor {
                 break;
             case ATTRIBUTES_UPDATED:
                 try {
-                    builder.setPostAttributesMsg(JsonConverter.convertToAttributesProto(entityData));
+                    JsonObject data = entityData.getAsJsonObject();
+                    if (data.has("scope") && data.has("kv")) {
+                        builder.setPostAttributesMsg(JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv")));
+                        builder.setPostAttributeScope(data.getAsJsonPrimitive("scope").getAsString());
+                    } else {
+                        builder.setPostAttributesMsg(JsonConverter.convertToAttributesProto(data));
+                    }
                 } catch (Exception e) {
                     log.warn("Can't convert to attributes proto, entityData [{}]", entityData, e);
                 }

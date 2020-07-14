@@ -133,21 +133,14 @@ public class JsonConverter {
                 .build();
     }
 
-    public static PostAttributeMsg convertToAttributesProto(JsonElement jsonElement) throws JsonSyntaxException {
-        if (jsonElement.isJsonObject()) {
+    public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
+        if (jsonObject.isJsonObject()) {
             PostAttributeMsg.Builder result = PostAttributeMsg.newBuilder();
-            List<KeyValueProto> keyValueList = null;
-            JsonObject jsonObject = jsonElement.getAsJsonObject();
-            if (jsonObject.has("kv") && jsonObject.has("scope")) {
-                keyValueList = parseProtoValues(jsonObject.getAsJsonObject("kv"));
-                result.setScope(jsonObject.getAsJsonPrimitive("scope").getAsString());
-            } else {
-                keyValueList = parseProtoValues(jsonObject);
-            }
+            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject());
             result.addAllKv(keyValueList);
             return result.build();
         } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
         }
     }
 
