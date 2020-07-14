@@ -18,7 +18,7 @@ export const JSON_PROFILE = 'jsonProfile';
 export const JSON_ALL_CONFIG = 'jsonAllConfig';
 export const END_POINT = 'endPoint';
 export const BOOTSTRAP_SERVER = 'bootstrapServer';
-export const LWM2M_SERVER = 'LwM2mServer';
+export const LWM2M_SERVER = 'lwm2mServer';
 export const DEFAULT_ID_SERVER = 123;
 export const DEFAULT_PORT_SERVER = 5686;
 export const DEFAULT_PORT_SERVER_NOSEC = 5685;
@@ -66,7 +66,8 @@ export interface SecurityConfigModels {
     },
     bootstrapServer: ServerSecurityConfig,
     lwm2mServer: ServerSecurityConfig
-  }
+  },
+  observe: ObjectLwM2M[]
 }
 
 function getDefaultBootstrapSecurityConfig(securityConfigMode: SECURITY_CONFIG_MODE): BootstrapSecurityConfig {
@@ -136,7 +137,6 @@ interface ServerSecurityConfig extends SecurityConfig {
 interface BootstrapSecurityConfig extends SecurityConfig {
 }
 
-
 export function gatDefaultSecurityConfig(securityConfigModeIn: SECURITY_CONFIG_MODE, endPoint: string): SecurityConfigModels {
   debugger
   const securityConfigModels = {
@@ -151,7 +151,8 @@ export function gatDefaultSecurityConfig(securityConfigModeIn: SECURITY_CONFIG_M
       },
       bootstrapServer: getDefaultBootstrapSecurityConfig(securityConfigModeIn),
       lwm2mServer: getDefaultServerSecurityConfig(securityConfigModeIn)
-    }
+    },
+    observe: getDefaultProfile()
   };
   return securityConfigModels;
 }
@@ -189,5 +190,184 @@ function getClientSecurityInfo(securityConfigMode: SECURITY_CONFIG_MODE, endPoin
   security.securityModeServer = securityConfigMode.toString();
   return security;
 }
+
+interface ResourceLwM2M {
+  id: number,
+  name: string,
+  isObserv: boolean
+}
+
+interface Instance {
+  id: number,
+  isObserv: boolean,
+  resource: ResourceLwM2M[]
+}
+
+interface ObjectLwM2M {
+  id: string,
+  name: string,
+  instance: Instance []
+}
+
+function getDefaultProfile (): ObjectLwM2M [] {
+  return [
+    {
+      id: "1",
+      name: "LwM2M Server",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Short Server ID",
+            isObserv: false
+          },
+          {
+            id: 1,
+            name: "Lifetime",
+            isObserv: false
+          },
+          {
+            id: 2,
+            name: "Default Minimum Period",
+            isObserv: false
+          },
+          {
+            id: 3,
+            name: "Default Maximum Period",
+            isObserv: false
+          },
+          {
+            id: 5,
+            name: "Disable Timeout",
+            isObserv: false
+          },
+          {
+            id: 6,
+            name: "Notification Storing When Disabled or Offline",
+            isObserv: false
+          },
+          {
+            id: 7,
+            name: "Binding",
+            isObserv: false
+          }
+        ]
+      }]
+    },
+    {
+      id: "3",
+      name: "Device",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Manufacturer",
+            isObserv: false
+          },
+          {
+            id: 1,
+            name: "Model Number",
+            isObserv: false
+          },
+          {
+            id: 2,
+            name: "Serial Number",
+            isObserv: false
+          },
+          {
+            id: 3,
+            name: "Firmware Version",
+            isObserv: false
+          },
+          {
+            id: 6,
+            name: "Available Power Sources",
+            isObserv: false
+          },
+          {
+            id: 7,
+            name: "Power Source Voltage",
+            isObserv: false
+          },
+          {
+            id: 8,
+            name: "Power Source Current",
+            isObserv: false
+          },
+          {
+            id: 9,
+            name: "Battery Level",
+            isObserv: false
+          },
+          {
+            id: 10,
+            name: "Memory Free",
+            isObserv: false
+          },
+          {
+            id: 11,
+            name: "Error Code",
+            isObserv: false
+          },
+          {
+            id: 13,
+            name: "Current Time",
+            isObserv: false
+          },
+          {
+            id: 14,
+            name: "UTC Offset",
+            isObserv: false
+          },
+          {
+            id: 15,
+            name: "Timezone",
+            isObserv: false
+          },
+          {
+            id: 16,
+            name: "Supported Binding and Modes",
+            isObserv: false
+          },
+          {
+            id: 17,
+            name: "Device Type",
+            isObserv: false
+          },
+          {
+            id: 18,
+            name: "Hardware Version",
+            isObserv: false
+          },
+          {
+            id: 19,
+            name: "Software Version",
+            isObserv: false
+          },
+          {
+            id: 20,
+            name: "Battery Status",
+            isObserv: false
+          },
+          {
+            id: 21,
+            name: "Memory Total",
+            isObserv: false
+          },
+          {
+            id: 22,
+            name: "ExtDevInfo",
+            isObserv: false
+          },
+        ]
+      }]
+    }
+  ]
+}
+
 
 

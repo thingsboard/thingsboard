@@ -55,7 +55,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   formControlNameJsonAllConfig: string;
   jsonAllConfig: SecurityConfigModels;
   formControlNameJsonProfile: string;
-  jsonProfile: {};
+  jsonObserveData: {};
   bootstrapServerData: SecurityConfig;
   bootstrapServer: string;
   lwm2mServerData: SecurityConfig;
@@ -75,7 +75,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.formControlNameJsonAllConfig = Object.keys(this.data).entries().next().value[1];
     this.formControlNameJsonProfile = JSON_PROFILE;
     this.title = this.data.title ? this.data.title : this.translate.instant('details.edit-json');
-    this.jsonProfile = this.data.jsonAllConfig;
+    this.jsonObserveData = this.data.jsonAllConfig;
     this.jsonAllConfig = JSON.parse(JSON.stringify(this.data.jsonAllConfig)) as SecurityConfigModels;
     this.bootstrapServer = BOOTSTRAP_SERVER;
     this.bootstrapServerData = (this.jsonAllConfig.bootstrap[this.bootstrapServer]) ? this.jsonAllConfig.bootstrap[this.bootstrapServer] : {} as SecurityConfig;
@@ -83,19 +83,19 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.lwm2mServerData = (this.jsonAllConfig.bootstrap[this.lwm2mServer]) ? this.jsonAllConfig.bootstrap[this.lwm2mServer] : {} as SecurityConfig;
     this.lwm2mConfigFormGroup = this.fb.group({
       jsonAllConfig: [this.jsonAllConfig, []],
-      endPoint: [this.data.endPoint, []],
-      securityConfigClientMode: SECURITY_CONFIG_MODE.NO_SEC,
-      identityPSK: [''],
-      clientKey: [''],
-      clientCertificate: [false],
-      shortId: [],
-      lifetime: [],
-      defaultMinPeriod: [],
-      notifIfDisabled: [true],
-      binding: [''],
       bootstrapServer: [this.bootstrapServerData, []],
       lwm2mServer: [this.lwm2mServerData, []],
-      jsonProfile: [this.jsonProfile, []]
+      jsonProfile: [this.jsonObserveData, []],
+      endPoint: [this.data.endPoint, []],
+      securityConfigClientMode: SECURITY_CONFIG_MODE.NO_SEC,
+      identityPSK: ['', []],
+      clientKey: ['', []],
+      clientCertificate: [false],
+      shortId: [null, Validators.required],
+      lifetime: [null, Validators.required],
+      defaultMinPeriod: [],
+      notifIfDisabled: [true],
+      binding: ['', Validators.required]
     });
     if (this.isReadOnly) {
       this.lwm2mConfigFormGroup.disable({emitEvent: false});
@@ -170,7 +170,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       jsonAllConfig.bootstrap.lwm2mServer.port = 5685;
     }
     this.jsonAllConfig = jsonAllConfig
-    upDatejsonAllConfig(this.lwm2mConfigFormGroup, jsonAllConfig);
+    this.upDatejsonAllConfig ();
   }
 
   loadConfigFromParent(): void {
@@ -217,6 +217,12 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.bootstrapServersUpdateValidators();
   }
 
+  upDatejsonAllConfig(): void {
+    this.lwm2mConfigFormGroup.patchValue({
+      jsonAllConfig: JSON.parse(JSON.stringify(this.jsonAllConfig))
+    }, {emitEvent: false});
+  }
+
   cancel(): void {
     this.dialogRef.close(undefined);
   }
@@ -224,16 +230,10 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   save(): void {
     this.data.endPoint = this.lwm2mConfigFormGroup.get('endPoint').value.split('\"').join('');
     this.data.jsonAllConfig = this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).value;
-    this.jsonProfile = this.lwm2mConfigFormGroup.get(this.formControlNameJsonProfile).value;
+    this.jsonObserveData = this.lwm2mConfigFormGroup.get(this.formControlNameJsonProfile).value;
     this.dialogRef.close(this.data);
   }
 
 }
 
-export function upDatejsonAllConfig (lwm2mConfigFormGroup: FormGroup, jsonAllConfig: SecurityConfigModels) {
-  debugger
-  lwm2mConfigFormGroup.patchValue({
-    jsonAllConfig: JSON.parse(JSON.stringify(jsonAllConfig))
-  }, {emitEvent: false});
-}
 

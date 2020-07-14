@@ -58,20 +58,9 @@
                 <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
               </mat-error>
             </mat-form-field>
-            <mat-form-field class="mat-block">
-              <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
-              <textarea matInput type="text" rows="2" cols="1" formControlName="clientKey" required></textarea>
-              <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('required')">
-                {{ 'device.lwm2m-security-config.client-key' | translate }}
-                <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-              </mat-error>
-              <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('pattern')">
-                {{ 'device.lwm2m-security-config.client-key' | translate }}
-                <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate }}</strong>
-              </mat-error>
-            </mat-form-field>
           </div>
-          <div *ngIf="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK">
+          <div *ngIf="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
+                      lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
             <mat-form-field class="mat-block">
               <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
               <textarea matInput type="text" rows="3" cols="1" formControlName="clientKey" required></textarea>
@@ -158,9 +147,8 @@
               <div class="mat-padding">
                 <fieldset [disabled]="isLoading$ | async">
                   <tb-security-config-server-lwm2m
-                    [server]="bootstrapServer"
-                    [parentFormGroup]="lwm2mConfigFormGroup"
-                    [formControlNameJsonObject]="formControlNameJsonAllConfig">
+                    [formControlName]="bootstrapServer"
+                    [server]="bootstrapServer">
                   </tb-security-config-server-lwm2m>
                 </fieldset>
               </div>
@@ -177,9 +165,8 @@
               <div class="mat-padding">
                 <fieldset [disabled]="isLoading$ | async">
                   <tb-security-config-server-lwm2m
-                    [server]="lwm2mServer"
-                    [parentFormGroup]="lwm2mConfigFormGroup"
-                    [formControlNameJsonObject]="formControlNameJsonAllConfig">
+                    [formControlName]="lwm2mServer"
+                    [server]="lwm2mServer">
                   </tb-security-config-server-lwm2m>
                 </fieldset>
               </div>
@@ -187,17 +174,24 @@
           </mat-accordion>
         </div>
       </mat-tab>
-      <mat-tab label="{{ 'device.lwm2m-security-config.profile-tab' | translate }}">
-        <div class="mat-padding">
-          <fieldset [disabled]="isLoading$ | async">
-            <tb-json-object-edit
-              [formControlName]="formControlNameJsonProfile"
-              label="{{ 'device.lwm2m-security-config.profile-title' | translate }}"
-              validateContent="true"
-              [required]="true"
-              [fillHeight]="false">
-            </tb-json-object-edit>
-          </fieldset>
+      <mat-tab label="{{ 'device.lwm2m-security-config.observe-tab' | translate }}">
+        <div fxLayout="row" fxLayoutGap="8px" flex="">
+          <div fxFlex="50">
+            <mat-checkbox formControlName="clientCertificate" color="primary" disabled="true">
+              {{ 'device.lwm2m-security-config.client-certificate' | translate }}
+            </mat-checkbox>
+          </div>
+          <div fxFlex="50">
+            <fieldset [disabled]="isLoading$ | async">
+              <tb-json-object-edit
+                [formControlName]="formControlNameJsonProfile"
+                label="{{ 'device.lwm2m-security-config.observe-json-title' | translate }}"
+                validateContent="true"
+                [required]="true"
+                [fillHeight]="false">
+              </tb-json-object-edit>
+            </fieldset>
+          </div>
         </div>
       </mat-tab>
       <mat-tab label="{{ 'device.lwm2m-security-config.config-json-tab' | translate }}">

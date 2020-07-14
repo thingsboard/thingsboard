@@ -745,8 +745,9 @@
           "client-hold-off-time-tip": "Client Hold Off Time for use with a Bootstrap-Server only",
           "bootstrap-server-account-timeout": "Account after the timeout",
           "bootstrap-server-account-timeout-tip": "Bootstrap-Server Account after the timeout value given by this resource.",
-          "profile-tab": "Profile Device",
-          "profile-title": "Json Profile Device LwM2M",
+          "observe-tab": "Observe Device",
+          "observe": "Observe Device",
+          "observe-json-title": "Json Observe Device LwM2M",
           "config-json-tab": "Json edit all config device"
         },
         "secret": "Secret",
