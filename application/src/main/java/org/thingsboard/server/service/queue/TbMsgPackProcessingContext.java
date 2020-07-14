@@ -16,8 +16,10 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.Getter;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
@@ -32,7 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TbMsgPackProcessingContext {
 
     private final TbRuleEngineSubmitStrategy submitStrategy;
-
     private final AtomicInteger pendingCount;
     private final CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
     @Getter
@@ -43,6 +44,8 @@ public class TbMsgPackProcessingContext {
     private final ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> failedMap = new ConcurrentHashMap<>();
     @Getter
     private final ConcurrentMap<TenantId, RuleEngineException> exceptionsMap = new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<UUID, RuleNodeInfo> lastRuleNodeMap = new ConcurrentHashMap<>();
 
     public TbMsgPackProcessingContext(TbRuleEngineSubmitStrategy submitStrategy) {
         this.submitStrategy = submitStrategy;
@@ -81,4 +84,13 @@ public class TbMsgPackProcessingContext {
             processingTimeoutLatch.countDown();
         }
     }
+
+    public void visit(UUID id, RuleNodeInfo ruleNodeInfo) {
+        lastRuleNodeMap.put(id, ruleNodeInfo);
+    }
+
+    public RuleNodeInfo getLastVisitedRuleNode(UUID id) {
+        return lastRuleNodeMap.get(id);
+    }
+
 }
