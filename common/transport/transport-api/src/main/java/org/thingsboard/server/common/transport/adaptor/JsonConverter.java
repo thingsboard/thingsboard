@@ -136,8 +136,9 @@ public class JsonConverter {
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
         if (jsonObject.isJsonObject()) {
             PostAttributeMsg.Builder result = PostAttributeMsg.newBuilder();
-            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject());
+            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject().getAsJsonObject("kv"));
             result.addAllKv(keyValueList);
+            result.setScope(jsonObject.getAsJsonObject().getAsJsonPrimitive("scope").getAsString());
             return result.build();
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);

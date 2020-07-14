@@ -115,6 +115,7 @@ message PostTelemetryMsg {
 
 message PostAttributeMsg {
   repeated KeyValueProto kv = 1;
+  string scope = 2;
 }
 
 message GetAttributeRequestMsg {

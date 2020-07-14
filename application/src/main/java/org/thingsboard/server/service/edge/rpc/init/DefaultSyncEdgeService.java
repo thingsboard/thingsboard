@@ -71,7 +71,9 @@ import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -289,25 +291,29 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
                 public void onSuccess(@Nullable List<AttributeKvEntry> ssAttributes) {
                     if (ssAttributes != null && !ssAttributes.isEmpty()) {
                         try {
-                            ObjectNode entityNode = mapper.createObjectNode();
+                            Map<String, Object> entityData = new HashMap<>();
+                            ObjectNode attributes = mapper.createObjectNode();
                             for (AttributeKvEntry attr : ssAttributes) {
                                 if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
-                                    entityNode.put(attr.getKey(), attr.getBooleanValue().get());
+                                    attributes.put(attr.getKey(), attr.getBooleanValue().get());
                                 } else if (attr.getDataType() == DataType.DOUBLE && attr.getDoubleValue().isPresent()) {
-                                    entityNode.put(attr.getKey(), attr.getDoubleValue().get());
+                                    attributes.put(attr.getKey(), attr.getDoubleValue().get());
                                 } else if (attr.getDataType() == DataType.LONG && attr.getLongValue().isPresent()) {
-                                    entityNode.put(attr.getKey(), attr.getLongValue().get());
+                                    attributes.put(attr.getKey(), attr.getLongValue().get());
                                 } else {
-                                    entityNode.put(attr.getKey(), attr.getValueAsString());
+                                    attributes.put(attr.getKey(), attr.getValueAsString());
                                 }
                             }
-                            log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", entityId, entityNode);
+                            entityData.put("kv", attributes);
+                            entityData.put("scope", DataConstants.SERVER_SCOPE);
+                            JsonNode entityBody = mapper.valueToTree(entityData);
+                            log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", entityId, entityBody);
                             saveEdgeEvent(edge.getTenantId(),
                                     edge.getId(),
                                     edgeEventType,
                                     ActionType.ATTRIBUTES_UPDATED,
                                     entityId,
-                                    entityNode);
+                                    entityBody);
                         } catch (Exception e) {
                             log.error("[{}] Failed to send attribute updates to the edge", edge.getName(), e);
                         }
