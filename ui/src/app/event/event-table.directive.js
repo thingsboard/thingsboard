@@ -23,7 +23,7 @@ import eventTableTemplate from './event-table.tpl.html';
 
 /*@ngInject*/
 export default function EventTableDirective($compile, $templateCache, $rootScope, types, eventService, edgeService,
-                                            attributeService) {
+                                            attributeService, $log) {
 
     var linker = function (scope, element, attrs) {
 
@@ -31,11 +31,16 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
 
         element.html(template);
 
+        scope.eventTypeScope = angular.copy(types.eventType);
+        if (scope.entityType !== types.entityType.edge) {
+            delete scope.eventTypeScope.edgeEvent;
+        }
+
         if (attrs.disabledEventTypes) {
             var disabledEventTypes = attrs.disabledEventTypes.split(',');
             scope.eventTypes = {};
-            for (var type in types.eventType) {
-                var eventType = types.eventType[type];
+            for (var type in scope.eventTypeScope) {
+                var eventType = scope.eventTypeScope[type];
                 var enabled = true;
                 for (var i=0;i<disabledEventTypes.length;i++) {
                     if (eventType.value === disabledEventTypes[i]) {
@@ -48,7 +53,7 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                 }
             }
         } else {
-            scope.eventTypes = angular.copy(types.eventType);
+            scope.eventTypes = angular.copy(scope.eventTypeScope);
         }
 
         if (attrs.debugEventTypes) {
@@ -62,6 +67,8 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                 }
             }
         }
+
+        $log.info("scope.entityType", scope.entityType);
 
         scope.eventType = attrs.defaultEventType;
 
