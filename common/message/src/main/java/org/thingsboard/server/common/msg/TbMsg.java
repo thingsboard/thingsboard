@@ -106,7 +106,6 @@ public final class TbMsg implements Serializable {
         if (callback != null) {
             this.callback = callback;
         } else {
-            log.warn("[{}] Created message with empty callback: {}", originator, type);
             this.callback = TbMsgCallback.EMPTY;
         }
     }
