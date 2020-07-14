@@ -14,83 +14,180 @@
 /// limitations under the License.
 ///
 
-import {SecurityConfigComponent} from "@home/pages/device/lwm2m/security-config.component";
-import {GatewayFormConnectorModel, GatewayFormModels} from "@home/components/widget/lib/gateway/gateway-form.models";
-
+export const JSON_PROFILE = 'jsonProfile';
 export const JSON_ALL_CONFIG = 'jsonAllConfig';
 export const END_POINT = 'endPoint';
+export const BOOTSTRAP_SERVER = 'bootstrapServer';
+export const LWM2M_SERVER = 'LwM2mServer';
+export const DEFAULT_ID_SERVER = 123;
+export const DEFAULT_PORT_SERVER = 5686;
+export const DEFAULT_PORT_SERVER_NOSEC = 5685;
+export const DEFAULT_ID_BOOTSTRAP = 111;
+export const DEFAULT_PORT_BOOTSTRAP = 5688;
+export const DEFAULT_PORT_BOOTSTRAP_NOSEC = 5687;
+export const DEFAULT_HOST = 'localhost';
+
+export type ClientSecurityInfo =
+  ClientSecurityInfoPSK
+  | ClientSecurityInfoRPK
+  | ClientSecurityInfoX509
+  | ClientSecurityInfoNoSec;
+
+export interface ClientSecurityInfoPSK {
+  securityModeServer: string,
+  endpoint: string,
+  identity: string,
+  key: string
+}
+
+export interface ClientSecurityInfoRPK {
+  securityModeServer: string,
+  key: string
+}
+
+export interface ClientSecurityInfoX509 {
+  securityModeServer: string,
+  x509: boolean
+}
+
+interface ClientSecurityInfoNoSec {
+  securityModeServer: string
+}
 
 export interface SecurityConfigModels {
-  server: {
-    securityModeServer: string,
-    endpoint?: string,
-    identity?: string,
-    key?: string,
-    x509?: boolean
-  },
+  client: ClientSecurityInfo,
   bootstrap: {
+    servers: {
+      shortId: number,
+      lifetime: number,
+      defaultMinPeriod: number,
+      notifIfDisabled: boolean,
+      binding: string
+    },
     bootstrapServer: ServerSecurityConfig,
     lwm2mServer: ServerSecurityConfig
   }
 }
-const  DefaultServerSecurityConfig: ServerSecurityConfig = {
-  host: null,
-  port: null,
-  bootstrapServer: false,
-  securityMode: null,
-  clientPublicKeyOrId: null,
-  clientSecretKey: null,
-  clientOldOffTime: null,
-  serverId: null,
-  bootstrapServerAccountTimeoutBootstrapBs: null
-}
 
-function getDefaultServerSecurityConfigBootstrap (): ServerSecurityConfig {
-  let conf =  DefaultServerSecurityConfig;
-  conf.bootstrapServer = true;
-  return conf;
-}
-
-export const DefaultSecurityConfigModels: SecurityConfigModels = {
-  server: {
-    securityModeServer: '',
-    endpoint: null,
-    identity: null,
-    key: null,
-    x509: false
-  },
-  bootstrap: {
-    bootstrapServer: DefaultServerSecurityConfig,
-    lwm2mServer: getDefaultServerSecurityConfigBootstrap ()
+function getDefaultBootstrapSecurityConfig(securityConfigMode: SECURITY_CONFIG_MODE): BootstrapSecurityConfig {
+  const DefaultBootstrapSecurityConfig: BootstrapSecurityConfig = {
+    host: '',
+    port: DEFAULT_PORT_BOOTSTRAP,
+    isBootstrapServer: true,
+    securityMode: securityConfigMode.toString(),
+    clientPublicKeyOrId: '',
+    clientSecretKey: '',
+    serverPublicKey: '',
+    clientHoldOffTime: 1,
+    serverId: DEFAULT_ID_BOOTSTRAP,
+    bootstrapServerAccountTimeout: 0
   }
+  return DefaultBootstrapSecurityConfig;
 }
 
-export enum DeviceSecurityConfigLwM2MType {
+function getDefaultServerSecurityConfig(securityConfigMode: SECURITY_CONFIG_MODE): ServerSecurityConfig {
+  const DefaultServerSecurityConfig: ServerSecurityConfig = {
+    host: '',
+    port: DEFAULT_PORT_SERVER,
+    isBootstrapServer: false,
+    securityMode: securityConfigMode.toString(),
+    clientPublicKeyOrId: '',
+    clientSecretKey: '',
+    serverPublicKey: '',
+    clientHoldOffTime: 1,
+    serverId: DEFAULT_ID_SERVER,
+    bootstrapServerAccountTimeout: 0
+  }
+  return DefaultServerSecurityConfig;
+}
+
+export enum SECURITY_CONFIG_MODE {
   PSK = 'PSK',
   RPK = 'RPK',
   X509 = 'X509',
-  NOSEC = 'NOSEC'
+  NO_SEC = 'NO_SEC'
 }
 
-export const credentialTypeLwM2MNames = new Map<DeviceSecurityConfigLwM2MType, string>(
+export const SECURITY_CONFIG_MODE_NAMES = new Map<SECURITY_CONFIG_MODE, string>(
   [
-    [DeviceSecurityConfigLwM2MType.PSK, 'Pre-Shared Key'],
-    [DeviceSecurityConfigLwM2MType.RPK, 'Raw Public Key'],
-    [DeviceSecurityConfigLwM2MType.X509, 'X.509 Certificate'],
-    [DeviceSecurityConfigLwM2MType.NOSEC, 'No Security'],
+    [SECURITY_CONFIG_MODE.PSK, 'Pre-Shared Key'],
+    [SECURITY_CONFIG_MODE.RPK, 'Raw Public Key'],
+    [SECURITY_CONFIG_MODE.X509, 'X.509 Certificate'],
+    [SECURITY_CONFIG_MODE.NO_SEC, 'No Security'],
   ]
 );
 
-interface ServerSecurityConfig {
+export interface SecurityConfig {
   host?: string,
   port?: number,
-  bootstrapServer?: boolean,
+  isBootstrapServer?: boolean,
   securityMode: string,
   clientPublicKeyOrId?: string,
   clientSecretKey?: string,
-  clientOldOffTime?: number,
+  serverPublicKey?: string;
+  clientHoldOffTime?: number,
   serverId?: number,
-  bootstrapServerAccountTimeoutBootstrapBs: number
+  bootstrapServerAccountTimeout: number
+}
+
+interface ServerSecurityConfig extends SecurityConfig {
+}
+
+interface BootstrapSecurityConfig extends SecurityConfig {
+}
+
+
+export function gatDefaultSecurityConfig(securityConfigModeIn: SECURITY_CONFIG_MODE, endPoint: string): SecurityConfigModels {
+  debugger
+  const securityConfigModels = {
+    client: getClientSecurityInfo(securityConfigModeIn, endPoint),
+    bootstrap: {
+      servers: {
+        shortId: DEFAULT_ID_SERVER,
+        lifetime: 300,
+        defaultMinPeriod: 1,
+        notifIfDisabled: true,
+        binding: "U"
+      },
+      bootstrapServer: getDefaultBootstrapSecurityConfig(securityConfigModeIn),
+      lwm2mServer: getDefaultServerSecurityConfig(securityConfigModeIn)
+    }
+  };
+  return securityConfigModels;
+}
+
+function getClientSecurityInfo(securityConfigMode: SECURITY_CONFIG_MODE, endPoint: string): ClientSecurityInfo {
+  debugger
+  let security: ClientSecurityInfo;
+  switch (securityConfigMode) {
+    case SECURITY_CONFIG_MODE.PSK:
+      security = {
+        securityModeServer: '',
+        endpoint: endPoint,
+        identity: '',
+        key: ''
+      }
+      break;
+    case SECURITY_CONFIG_MODE.RPK:
+      security = {
+        securityModeServer: '',
+        key: null
+      }
+      break;
+    case SECURITY_CONFIG_MODE.X509:
+      security = {
+        securityModeServer: '',
+        x509: true
+      }
+      break;
+    case SECURITY_CONFIG_MODE.NO_SEC:
+      security = {
+        securityModeServer: ''
+      }
+      break;
+  }
+  security.securityModeServer = securityConfigMode.toString();
+  return security;
 }
 
 
