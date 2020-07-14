@@ -16,8 +16,10 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.UUID;
@@ -44,5 +46,11 @@ public class TbMsgPackCallback implements TbMsgCallback {
     public void onFailure(RuleEngineException e) {
         log.trace("[{}] ON FAILURE", id, e);
         ctx.onFailure(tenantId, id, e);
+    }
+
+    @Override
+    public void visit(RuleNodeInfo ruleNodeInfo) {
+        log.trace("[{}] ON PROCESS: {}", id, ruleNodeInfo);
+        ctx.visit(id, ruleNodeInfo);
     }
 }

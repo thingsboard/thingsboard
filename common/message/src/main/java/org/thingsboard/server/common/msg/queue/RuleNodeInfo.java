@@ -15,26 +15,17 @@
  */
 package org.thingsboard.server.common.msg.queue;
 
-public interface TbMsgCallback {
+import org.thingsboard.server.common.data.id.RuleNodeId;
 
-    TbMsgCallback EMPTY = new TbMsgCallback() {
+public class RuleNodeInfo {
+    private final String label;
 
-        @Override
-        public void onSuccess() {
-
-        }
-
-        @Override
-        public void onFailure(RuleEngineException e) {
-
-        }
-    };
-
-    void onSuccess();
-
-    void onFailure(RuleEngineException e);
-
-    default void visit(RuleNodeInfo ruleNodeInfo) {
+    public RuleNodeInfo(RuleNodeId id, String ruleChainName, String ruleNodeName) {
+        this.label = "[RuleChain: " + ruleChainName + "|RuleNode: " + ruleNodeName + "(" + id + ")]";
     }
 
+    @Override
+    public String toString() {
+        return label;
+    }
 }
