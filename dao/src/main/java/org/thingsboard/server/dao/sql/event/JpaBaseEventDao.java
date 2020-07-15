@@ -182,24 +182,4 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
         return Optional.of(DaoUtil.getData(eventInsertRepository.saveOrUpdate(entity)));
     }
 
-    private Specification<EventEntity> getEntityFieldsSpec(UUID tenantId, EntityId entityId, String eventType) {
-        return (root, criteriaQuery, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (tenantId != null) {
-                Predicate tenantIdPredicate = criteriaBuilder.equal(root.get("tenantId"), tenantId);
-                predicates.add(tenantIdPredicate);
-            }
-            if (entityId != null) {
-                Predicate entityTypePredicate = criteriaBuilder.equal(root.get("entityType"), entityId.getEntityType());
-                predicates.add(entityTypePredicate);
-                Predicate entityIdPredicate = criteriaBuilder.equal(root.get("entityId"), entityId.getId());
-                predicates.add(entityIdPredicate);
-            }
-            if (eventType != null) {
-                Predicate eventTypePredicate = criteriaBuilder.equal(root.get("eventType"), eventType);
-                predicates.add(eventTypePredicate);
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[]{}));
-        };
-    }
 }

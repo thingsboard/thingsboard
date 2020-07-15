@@ -423,7 +423,7 @@ public abstract class AbstractWebTest {
     }
 
     protected <T> ResultActions doPost(String urlTemplate, T content, String... params) throws Exception {
-        MockHttpServletRequestBuilder postRequest = post(urlTemplate);
+        MockHttpServletRequestBuilder postRequest = post(urlTemplate, params);
         setJwtToken(postRequest);
         String json = json(content);
         postRequest.contentType(contentType).content(json);
@@ -431,7 +431,7 @@ public abstract class AbstractWebTest {
     }
 
     protected <T> ResultActions doPostAsync(String urlTemplate, T content, Long timeout, String... params)  throws Exception {
-        MockHttpServletRequestBuilder postRequest = post(urlTemplate);
+        MockHttpServletRequestBuilder postRequest = post(urlTemplate, params);
         setJwtToken(postRequest);
         String json = json(content);
         postRequest.contentType(contentType).content(json);
