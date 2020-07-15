@@ -46,7 +46,9 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
@@ -137,7 +139,17 @@ public class TbMsgPushToEdgeNode implements TbNode {
             if (edgeEventTypeByEntityType == null) {
                 return null;
             }
-            return buildEdgeEvent(ctx.getTenantId(), getActionTypeByMsgType(msg.getType()), msg.getOriginator().getId(), edgeEventTypeByEntityType, json.readTree(msg.getData()));
+            JsonNode entityBody = null;
+            JsonNode data = json.readTree(msg.getData());
+            if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msg.getType())) {
+                Map<String, Object> entityData = new HashMap<>();
+                entityData.put("kv", data);
+                entityData.put("scope", msg.getMetaData().getData().get("scope"));
+                entityBody = json.valueToTree(entityData);
+            } else {
+                entityBody = data;
+            }
+            return buildEdgeEvent(ctx.getTenantId(), getActionTypeByMsgType(msg.getType()), msg.getOriginator().getId(), edgeEventTypeByEntityType, entityBody);
         }
     }
 
