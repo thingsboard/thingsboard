@@ -72,6 +72,7 @@ public class EntityKeyMapping {
     private static final String PHONE = "phone";
 
     public static final List<String> commonEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME);
+    public static final List<String> dashboardEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, TITLE);
     public static final List<String> labeledEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL);
     public static final List<String> contactBasedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, EMAIL, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE);
 
@@ -89,7 +90,7 @@ public class EntityKeyMapping {
 
         allowedEntityFieldMap.put(EntityType.USER, new HashSet<>(Arrays.asList(CREATED_TIME, FIRST_NAME, LAST_NAME, EMAIL)));
 
-        allowedEntityFieldMap.put(EntityType.DASHBOARD, new HashSet<>(commonEntityFields));
+        allowedEntityFieldMap.put(EntityType.DASHBOARD, new HashSet<>(dashboardEntityFields));
         allowedEntityFieldMap.put(EntityType.RULE_CHAIN, new HashSet<>(commonEntityFields));
         allowedEntityFieldMap.put(EntityType.RULE_NODE, new HashSet<>(commonEntityFields));
         allowedEntityFieldMap.put(EntityType.WIDGET_TYPE, new HashSet<>(commonEntityFields));
@@ -118,12 +119,12 @@ public class EntityKeyMapping {
         contactBasedAliases.put(LABEL, TITLE);
         aliases.put(EntityType.TENANT, contactBasedAliases);
         aliases.put(EntityType.CUSTOMER, contactBasedAliases);
+        aliases.put(EntityType.DASHBOARD, contactBasedAliases);
         Map<String, String> commonEntityAliases = new HashMap<>();
         commonEntityAliases.put(TITLE, NAME);
         aliases.put(EntityType.DEVICE, commonEntityAliases);
         aliases.put(EntityType.ASSET, commonEntityAliases);
         aliases.put(EntityType.ENTITY_VIEW, commonEntityAliases);
-        aliases.put(EntityType.DASHBOARD, commonEntityAliases);
         aliases.put(EntityType.WIDGETS_BUNDLE, commonEntityAliases);
 
         Map<String, String> userEntityAliases = new HashMap<>();

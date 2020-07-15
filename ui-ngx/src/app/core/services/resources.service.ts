@@ -127,33 +127,39 @@ export class ResourcesService {
     }
     SystemJS.import(url).then(
       (module) => {
-        let modules;
         try {
-          modules = this.extractNgModules(module);
-        } catch (e) {}
-        if (modules && modules.length) {
-          const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
-          for (const m of modules) {
-            tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
+          let modules;
+          try {
+            modules = this.extractNgModules(module);
+          } catch (e) {
           }
-          forkJoin(tasks).subscribe((compiled) => {
-              try {
-                for (const c of compiled) {
-                  c.ngModuleFactory.create(this.injector);
+          if (modules && modules.length) {
+            const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
+            for (const m of modules) {
+              tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
+            }
+            forkJoin(tasks).subscribe((compiled) => {
+                try {
+                  for (const c of compiled) {
+                    c.ngModuleFactory.create(this.injector);
+                  }
+                  this.loadedModules[url].next(modules);
+                  this.loadedModules[url].complete();
+                } catch (e) {
+                  this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
+                  delete this.loadedModules[url];
                 }
-                this.loadedModules[url].next(modules);
-                this.loadedModules[url].complete();
-              } catch (e) {
-                this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
+              },
+              (e) => {
+                this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
                 delete this.loadedModules[url];
-              }
-            },
-            (e) => {
-              this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
-              delete this.loadedModules[url];
-            });
-        } else {
-          this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export or not NgModule!`));
+              });
+          } else {
+            this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export or not NgModule!`));
+            delete this.loadedModules[url];
+          }
+        } catch (e) {
+          this.loadedModules[url].error(new Error(`Unable to load module from url: ${url}`));
           delete this.loadedModules[url];
         }
       },
