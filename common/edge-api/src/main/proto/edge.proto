@@ -110,7 +110,13 @@ message EntityDataProto {
   transport.PostTelemetryMsg postTelemetryMsg = 4;
   transport.PostAttributeMsg postAttributesMsg = 5;
   string postAttributeScope = 6;
+  AttributeDeleteMsg attributeDeleteMsg = 7;
   // transport.ToDeviceRpcRequestMsg ???
+}
+
+message AttributeDeleteMsg {
+  string scope = 1;
+  repeated string attributeNames = 2;
 }
 
 message RuleChainUpdateMsg {
