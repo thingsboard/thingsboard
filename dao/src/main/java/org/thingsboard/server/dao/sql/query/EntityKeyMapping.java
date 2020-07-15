@@ -231,15 +231,17 @@ public class EntityKeyMapping {
         } else {
             entityTypeStr = "'" + entityType.name() + "'";
         }
-        String join = hasFilter() ? "left join" : "left outer join";
         ctx.addStringParameter(alias + "_key_id", entityKey.getKey());
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
+            String join = hasFilter() ? "left join" : "left outer join";
             return String.format("%s ts_kv_latest %s ON %s.entity_id=entities.id AND %s.key = (select key_id from ts_kv_dictionary where key = :%s_key_id)",
                     join, alias, alias, alias, alias);
         } else {
-            String query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id",
-                    join, alias, alias, alias, entityTypeStr, alias, alias);
+            String query;
             if (!entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
+                String join = hasFilter() ? "left join" : "left outer join";
+                query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id",
+                        join, alias, alias, alias, entityTypeStr, alias, alias);
                 String scope;
                 if (entityKey.getType().equals(EntityKeyType.CLIENT_ATTRIBUTE)) {
                     scope = DataConstants.CLIENT_SCOPE;
@@ -249,6 +251,11 @@ public class EntityKeyMapping {
                     scope = DataConstants.SERVER_SCOPE;
                 }
                 query = String.format("%s AND %s.attribute_type='%s'", query, alias, scope);
+            } else {
+                String join = hasFilter() ? "join LATERAL" : "left join LATERAL";
+                query = String.format("%s (select * from attribute_kv %s WHERE %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id " +
+                                "ORDER BY %s.last_update_ts DESC limit 1) as %s ON true",
+                        join, alias, alias, alias, entityTypeStr, alias, alias, alias, alias);
             }
             return query;
         }

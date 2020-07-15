@@ -201,7 +201,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         return result;
     }
 
-    protected synchronized void update(){
+    protected synchronized void update() {
         long start = System.currentTimeMillis();
         PageData<EntityData> newData = findEntityData();
         long end = System.currentTimeMillis();
@@ -209,11 +209,11 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         stats.getRegularQueryTimeSpent().addAndGet(end - start);
         Map<EntityId, EntityData> oldDataMap;
         if (data != null && !data.getData().isEmpty()) {
-            oldDataMap = data.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
+            oldDataMap = data.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity(), (a, b) -> a));
         } else {
             oldDataMap = Collections.emptyMap();
         }
-        Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity()));
+        Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity(), (a,b)-> a));
         if (oldDataMap.size() == newDataMap.size() && oldDataMap.keySet().equals(newDataMap.keySet())) {
             log.trace("[{}][{}] No updates to entity data found", sessionRef.getSessionId(), cmdId);
         } else {
@@ -337,7 +337,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         }
     }
 
-    public void clearDynamicValueSubscriptions(){
+    public void clearDynamicValueSubscriptions() {
         if (subToDynamicValueKeySet != null) {
             for (Integer subId : subToDynamicValueKeySet) {
                 localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), subId);
