@@ -114,6 +114,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
     }
 
+    //TODO: 3.1 Remove this from project.
     @Override
     public ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityNameAsync [{}]", entityId);
