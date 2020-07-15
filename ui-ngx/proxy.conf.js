@@ -25,6 +25,10 @@ const PROXY_CONFIG = {
     "target": `http://${ruleNodeUiforwardHost}:${ruleNodeUiforwardPort}`,
     "secure": false,
   },
+  "/static": {
+    "target": "http://localhost:8080",
+    "secure": false,
+  },
   "/api/ws": {
     "target": "ws://localhost:8080",
     "ws": true,

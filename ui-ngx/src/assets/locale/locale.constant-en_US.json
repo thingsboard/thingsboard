@@ -1787,6 +1787,7 @@
         "type": "Widget type",
         "resources": "Resources",
         "resource-url": "JavaScript/CSS URL",
+        "resource-is-module": "Is module",
         "remove-resource": "Remove resource",
         "add-resource": "Add resource",
         "html": "HTML",

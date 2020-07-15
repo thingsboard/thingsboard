@@ -41,6 +41,43 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { SharedModule } from '@shared/shared.module';
+import * as AngularCore from '@angular/core';
+import * as AngularCommon from '@angular/common';
+import * as AngularForms from '@angular/forms';
+import * as AngularRouter from '@angular/router';
+import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
+import * as AngularCdkCoercion from '@angular/cdk/coercion';
+import * as AngularMaterialChips from '@angular/material/chips';
+import * as AngularMaterialAutocomplete from '@angular/material/autocomplete';
+import * as AngularMaterialDialog from '@angular/material/dialog';
+import * as NgrxStore from '@ngrx/store';
+import * as RxJs from 'rxjs';
+import * as RxJsOperators from 'rxjs/operators';
+import * as TranslateCore from '@ngx-translate/core';
+import * as TbCore from '@core/public-api';
+import * as TbShared from '@shared/public-api';
+import * as _moment from 'moment';
+
+declare const SystemJS;
+
+const widgetResourcesModulesMap = {
+  '@angular/core': SystemJS.newModule(AngularCore),
+  '@angular/common': SystemJS.newModule(AngularCommon),
+  '@angular/forms': SystemJS.newModule(AngularForms),
+  '@angular/router': SystemJS.newModule(AngularRouter),
+  '@angular/cdk/keycodes': SystemJS.newModule(AngularCdkKeycodes),
+  '@angular/cdk/coercion': SystemJS.newModule(AngularCdkCoercion),
+  '@angular/material/chips': SystemJS.newModule(AngularMaterialChips),
+  '@angular/material/autocomplete': SystemJS.newModule(AngularMaterialAutocomplete),
+  '@angular/material/dialog': SystemJS.newModule(AngularMaterialDialog),
+  '@ngrx/store': SystemJS.newModule(NgrxStore),
+  rxjs: SystemJS.newModule(RxJs),
+  'rxjs/operators': SystemJS.newModule(RxJsOperators),
+  '@ngx-translate/core': SystemJS.newModule(TranslateCore),
+  '@core/public-api': SystemJS.newModule(TbCore),
+  '@shared/public-api': SystemJS.newModule(TbShared),
+  moment: SystemJS.newModule(_moment)
+};
 
 // @dynamic
 @Injectable()
@@ -105,8 +142,8 @@ export class WidgetComponentService {
       const initSubject = new ReplaySubject();
       this.init$ = initSubject.asObservable();
       const loadDefaultWidgetInfoTasks = [
-        this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type', [SharedModule]),
-        this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type', [SharedModule]),
+        this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type', [SharedModule, WidgetComponentsModule]),
+        this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type', [SharedModule, WidgetComponentsModule]),
       ];
       forkJoin(loadDefaultWidgetInfoTasks).subscribe(
         () => {
@@ -218,31 +255,71 @@ export class WidgetComponentService {
     this.cssParser.cssPreviewNamespace = widgetNamespace;
     this.cssParser.createStyleElement(widgetNamespace, widgetInfo.templateCss);
     const resourceTasks: Observable<string>[] = [];
+    const modulesTasks: Observable<Type<any>[] | string>[] = [];
     if (widgetInfo.resources.length > 0) {
-      widgetInfo.resources.forEach((resource) => {
+      widgetInfo.resources.filter(r => r.isModule).forEach(
+        (resource) => {
+          modulesTasks.push(
+            this.resources.loadModules(resource.url, widgetResourcesModulesMap).pipe(
+              catchError((e: Error) => of(e?.message ? e.message : `Failed to load widget resource module: '${resource.url}'`))
+            )
+          );
+        }
+      );
+    }
+    widgetInfo.resources.filter(r => !r.isModule).forEach(
+      (resource) => {
         resourceTasks.push(
           this.resources.loadResource(resource.url).pipe(
             catchError(e => of(`Failed to load widget resource: '${resource.url}'`))
           )
         );
-      });
-    }
-    resourceTasks.push(
-      this.dynamicComponentFactoryService.createDynamicComponentFactory(
-        class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
-        widgetInfo.templateHtml,
-        modules
-      ).pipe(
-        map((factory) => {
-          widgetInfo.componentFactory = factory;
-          return null;
-        }),
-        catchError(e => {
-          const details = this.utils.parseException(e);
-          const errorMessage = `Failed to compile widget html. \n Error: ${details.message}`;
-          return of(errorMessage);
+      }
+    );
+
+    let modulesObservable: Observable<string | Type<any>[]>;
+    if (modulesTasks.length) {
+      modulesObservable = forkJoin(modulesTasks).pipe(
+        map(res => {
+          const msg = res.find(r => typeof r === 'string');
+          if (msg) {
+            return msg as string;
+          } else {
+            let resModules = (res as Type<any>[][]).flat();
+            if (modules && modules.length) {
+              resModules = resModules.concat(modules);
+            }
+            return resModules;
+          }
         })
-      )
+      );
+    } else {
+      modulesObservable = modules && modules.length ? of(modules) : of([]);
+    }
+
+    resourceTasks.push(
+      modulesObservable.pipe(
+        mergeMap((resolvedModules) => {
+          if (typeof resolvedModules === 'string') {
+            return of(resolvedModules);
+          } else {
+            return this.dynamicComponentFactoryService.createDynamicComponentFactory(
+              class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
+              widgetInfo.templateHtml,
+              resolvedModules
+            ).pipe(
+              map((factory) => {
+                widgetInfo.componentFactory = factory;
+                return null;
+              }),
+              catchError(e => {
+                const details = this.utils.parseException(e);
+                const errorMessage = `Failed to compile widget html. \n Error: ${details.message}`;
+                return of(errorMessage);
+              })
+            )
+          }
+        }))
     );
     return forkJoin(resourceTasks).pipe(
       switchMap(msgs => {
