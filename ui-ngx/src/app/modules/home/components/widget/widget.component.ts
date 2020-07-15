@@ -794,16 +794,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         options.useDashboardTimewindow = true;
       }
     }
-    let datasource: Datasource;
     if (options.type === widgetType.alarm) {
-      datasource = this.entityService.createAlarmSourceFromSubscriptionInfo(subscriptionsInfo[0]);
+      options.alarmSource = this.entityService.createAlarmSourceFromSubscriptionInfo(subscriptionsInfo[0]);
     } else {
-      datasource = this.entityService.createDatasourcesFromSubscriptionsInfo(subscriptionsInfo);
-    }
-    if (options.type === widgetType.alarm) {
-      options.alarmSource = datasource;
-    } else {
-      options.datasources = [datasource];
+      options.datasources = this.entityService.createDatasourcesFromSubscriptionsInfo(subscriptionsInfo);
     }
     this.createSubscription(options, subscribe).subscribe(
       (subscription) => {

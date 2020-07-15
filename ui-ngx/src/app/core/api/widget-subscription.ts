@@ -337,6 +337,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private initDataSubscription(): Observable<any> {
+    this.notifyDataLoading();
     const initDataSubscriptionSubject = new ReplaySubject(1);
     this.loadStDiff().subscribe(() => {
       if (!this.ctx.aliasController) {
@@ -431,6 +432,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         });
         this.configureLoadedData();
         this.hasResolvedData = this.datasources.length > 0;
+        this.updateDataTimewindow();
         this.notifyDataLoaded();
         this.onDataUpdated(true);
       })
@@ -731,6 +733,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       if (this.type === widgetType.alarm) {
         this.updateAlarmDataSubscription();
       } else {
+        this.notifyDataLoading();
         this.dataSubscribe();
       }
     }
@@ -831,13 +834,21 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-  private dataSubscribe() {
+  private updateDataTimewindow() {
     if (!this.hasDataPageLink) {
       if (this.type === widgetType.timeseries && this.timeWindowConfig) {
         this.updateRealtimeSubscription();
         if (this.comparisonEnabled) {
           this.updateSubscriptionForComparison();
         }
+      }
+    }
+  }
+
+  private dataSubscribe() {
+    if (!this.hasDataPageLink) {
+      if (this.type === widgetType.timeseries && this.timeWindowConfig) {
+        this.updateDataTimewindow();
         if (this.subscriptionTimewindow.fixedWindow) {
           this.onDataUpdated();
         }
@@ -1023,6 +1034,11 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.cafs[cafId] = null;
       }
     }
+  }
+
+  private notifyDataLoading() {
+    this.loadingData = true;
+    this.callbacks.dataLoading(this);
   }
 
   private notifyDataLoaded() {
@@ -1268,6 +1284,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       if (this.caulculateLegendData) {
         this.updateLegend(index, data.data, detectChanges);
       }
+      this.notifyDataLoaded();
       this.onDataUpdated(detectChanges);
     }
   }

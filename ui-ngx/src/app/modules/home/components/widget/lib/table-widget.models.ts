@@ -96,7 +96,10 @@ export function entityDataSortOrderFromString(strSortOrder: string, columns: Ent
   if (!property && !property.length) {
     return null;
   }
-  const column = findColumnByLabel(property, columns);
+  let column = findColumnByLabel(property, columns);
+  if (!column) {
+    column = findColumnByName(property, columns);
+  }
   if (column && column.entityKey) {
     return {key: column.entityKey, direction};
   }
@@ -113,11 +116,20 @@ export function findColumnByEntityKey(key: EntityKey, columns: EntityColumn[]): 
 }
 
 export function findEntityKeyByColumnDef(def: string, columns: EntityColumn[]): EntityKey {
-  return findColumnByDef(def, columns).entityKey;
+  if (def) {
+    const column = findColumnByDef(def, columns);
+    return column ? column.entityKey : null;
+  } else {
+    return null;
+  }
 }
 
 export function findColumn(searchProperty: string, searchValue: string, columns: EntityColumn[]): EntityColumn {
   return columns.find(theColumn => theColumn[searchProperty] === searchValue);
+}
+
+export function findColumnByName(name: string, columns: EntityColumn[]): EntityColumn {
+  return findColumn('name', name, columns);
 }
 
 export function findColumnByLabel(label: string, columns: EntityColumn[]): EntityColumn {

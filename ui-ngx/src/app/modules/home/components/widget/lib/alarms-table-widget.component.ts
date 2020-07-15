@@ -330,7 +330,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.defaultPageSize = pageSize;
     }
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
-    this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
+    this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
 
     this.pageLink.searchPropagatedAlarms = isDefined(this.widgetConfig.searchPropagatedAlarms)
       ? this.widgetConfig.searchPropagatedAlarms : true;
@@ -535,10 +535,15 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     } else {
       this.pageLink.page = 0;
     }
-    this.pageLink.sortOrder = {
-      key: findEntityKeyByColumnDef(this.sort.active, this.columns),
-      direction: Direction[this.sort.direction.toUpperCase()]
-    };
+    const key = findEntityKeyByColumnDef(this.sort.active, this.columns);
+    if (key) {
+      this.pageLink.sortOrder = {
+        key,
+        direction: Direction[this.sort.direction.toUpperCase()]
+      };
+    } else {
+      this.pageLink.sortOrder = null;
+    }
     const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
     const keyFilters: KeyFilter[] = null; // TODO:
     this.alarmsDatasource.loadAlarms(this.pageLink, sortOrderLabel, keyFilters);

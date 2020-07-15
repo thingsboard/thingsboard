@@ -53,6 +53,7 @@ export interface NodeScriptTestDialogData {
   msgType?: string;
 }
 
+// @dynamic
 @Component({
   selector: 'tb-node-script-test-dialog',
   templateUrl: './node-script-test-dialog.component.html',
