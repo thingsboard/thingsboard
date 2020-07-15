@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.EntitySearchQueryFilter;
+import org.thingsboard.server.common.data.query.EntityViewSearchQueryFilter;
 import org.thingsboard.server.common.data.query.EntityViewTypeFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
@@ -346,6 +347,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case RELATIONS_QUERY:
             case DEVICE_SEARCH_QUERY:
             case ASSET_SEARCH_QUERY:
+            case ENTITY_VIEW_SEARCH_QUERY:
                 return this.defaultPermissionQuery(ctx, tenantId, customerId, entityType);
             default:
                 if (entityType == EntityType.TENANT) {
@@ -386,6 +388,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case RELATIONS_QUERY:
             case DEVICE_SEARCH_QUERY:
             case ASSET_SEARCH_QUERY:
+            case ENTITY_VIEW_SEARCH_QUERY:
                 return "";
             default:
                 throw new RuntimeException("Not implemented!");
@@ -402,6 +405,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case ASSET_SEARCH_QUERY:
                 AssetSearchQueryFilter assetQuery = (AssetSearchQueryFilter) entityFilter;
                 return entitySearchQuery(ctx, assetQuery, EntityType.ASSET, assetQuery.getAssetTypes());
+            case ENTITY_VIEW_SEARCH_QUERY:
+                EntityViewSearchQueryFilter entityViewQuery = (EntityViewSearchQueryFilter) entityFilter;
+                return entitySearchQuery(ctx, entityViewQuery, EntityType.ENTITY_VIEW, entityViewQuery.getEntityViewTypes());
             default:
                 return entityTableMap.get(entityType);
         }
