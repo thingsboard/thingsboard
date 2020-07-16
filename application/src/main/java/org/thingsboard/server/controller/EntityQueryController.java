@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmData;
+import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -58,6 +60,18 @@ public class EntityQueryController extends BaseController {
         checkNotNull(query);
         try {
             return this.entityQueryService.findEntityDataByQuery(getCurrentUser(), query);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarmsQuery/find", method = RequestMethod.POST)
+    @ResponseBody
+    public PageData<AlarmData> findAlarmDataByQuery(@RequestBody AlarmDataQuery query) throws ThingsboardException {
+        checkNotNull(query);
+        try {
+            return this.entityQueryService.findAlarmDataByQuery(getCurrentUser(), query);
         } catch (Exception e) {
             throw handleException(e);
         }

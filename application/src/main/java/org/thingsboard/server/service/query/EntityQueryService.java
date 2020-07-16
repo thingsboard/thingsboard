@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.query;
 
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmData;
+import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -26,5 +28,7 @@ public interface EntityQueryService {
     long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query);
 
     PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query);
+
+    PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query);
 
 }
