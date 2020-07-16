@@ -47,23 +47,24 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <div *ngIf="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.NO_SEC">
-          </div>
-          <div *ngIf="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
+           <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
             <mat-form-field class="mat-block">
               <mat-label>{{ 'device.lwm2m-security-config.identity' | translate }}</mat-label>
-              <input matInput type="text" formControlName="identityPSK" required>
+              <input matInput type="text" formControlName="identityPSK"
+                     [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
               <mat-error *ngIf="lwm2mConfigFormGroup.get('identityPSK').hasError('required')">
                 {{ 'device.lwm2m-security-config.identity' | translate }}
                 <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
               </mat-error>
             </mat-form-field>
           </div>
-          <div *ngIf="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
+          <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
                       lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
             <mat-form-field class="mat-block">
               <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
-              <textarea matInput type="text" rows="3" cols="1" formControlName="clientKey" required></textarea>
+              <textarea matInput type="text" rows="3" cols="1" formControlName="clientKey"
+                        [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
+              lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK"></textarea>
               <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('required')">
                 {{ 'device.lwm2m-security-config.client-key' | translate }}
                 <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
@@ -74,8 +75,8 @@
               </mat-error>
             </mat-form-field>
           </div>
-          <div *ngIf="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.X509">
-            <mat-checkbox formControlName="clientCertificate" color="primary" disabled="true">
+          <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.X509">
+            <mat-checkbox formControlName="clientCertificate" color="primary">
               {{ 'device.lwm2m-security-config.client-certificate' | translate }}
             </mat-checkbox>
           </div>
@@ -148,6 +149,7 @@
                 <fieldset [disabled]="isLoading$ | async">
                   <tb-security-config-server-lwm2m
                     [formControlName]="bootstrapServer"
+                    [serverFormGroup]="bootstrapFormGroup"
                     [server]="bootstrapServer">
                   </tb-security-config-server-lwm2m>
                 </fieldset>
@@ -166,6 +168,7 @@
                 <fieldset [disabled]="isLoading$ | async">
                   <tb-security-config-server-lwm2m
                     [formControlName]="lwm2mServer"
+                    [serverFormGroup]="lwm2mServerFormGroup"
                     [server]="lwm2mServer">
                   </tb-security-config-server-lwm2m>
                 </fieldset>
@@ -175,22 +178,27 @@
         </div>
       </mat-tab>
       <mat-tab label="{{ 'device.lwm2m-security-config.observe-tab' | translate }}">
-        <div fxLayout="row" fxLayoutGap="8px" flex="">
-          <div fxFlex="50">
-            <mat-checkbox formControlName="clientCertificate" color="primary" disabled="true">
-              {{ 'device.lwm2m-security-config.client-certificate' | translate }}
-            </mat-checkbox>
-          </div>
-          <div fxFlex="50">
-            <fieldset [disabled]="isLoading$ | async">
-              <tb-json-object-edit
-                [formControlName]="formControlNameJsonProfile"
-                label="{{ 'device.lwm2m-security-config.observe-json-title' | translate }}"
-                validateContent="true"
-                [required]="true"
-                [fillHeight]="false">
-              </tb-json-object-edit>
-            </fieldset>
+        <div fxLayout="column">
+          <div fxLayout="row" fxLayoutGap="8px">
+            <div fxFlex="50">
+              <fieldset [disabled]="isLoading$ | async">
+                <tb-security-config-observe-lwm2m
+                  [formControlName]="observe"
+                  [observeFormGroup]="observeFormGroup">
+                </tb-security-config-observe-lwm2m>
+              </fieldset>
+            </div>
+            <div fxFlex="50">
+              <fieldset [disabled]="isLoading$ | async">
+                <tb-json-object-edit
+                  [formControlName]="formControlNameJsonObserve"
+                  label="{{ 'device.lwm2m-security-config.observe-json-title' | translate }}"
+                  validateContent="true"
+                  [required]="true"
+                  [fillHeight]="false">
+                </tb-json-object-edit>
+              </fieldset>
+            </div>
           </div>
         </div>
       </mat-tab>
@@ -213,7 +221,7 @@
     <span fxFlex></span>
     <button mat-button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || lwm2mConfigFormGroup.invalid || !lwm2mConfigFormGroup.dirty">
+            [disabled]="(isLoading$ | async) || lwm2mConfigFormGroup.invalid || lwm2mConfigFormGroup.pristine">
       {{ 'action.save' | translate }}
     </button>
     <button mat-button color="primary"

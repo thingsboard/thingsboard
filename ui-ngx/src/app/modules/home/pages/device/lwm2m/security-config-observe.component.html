@@ -15,3 +15,13 @@
     limitations under the License.
 
 -->
+<form [formGroup]="observeFormGroup" style="min-width: 400px;">
+    <mat-form-field>
+      <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
+      <input matInput type="text" formControlName="name" required>
+      <mat-error *ngIf="observeFormGroup.get('name').hasError('required')">
+        {{ 'device.lwm2m-security-config.client-key' | translate }}
+        <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
+      </mat-error>
+    </mat-form-field>
+</form>

@@ -26,6 +26,7 @@ import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 import {SecurityConfigServerComponent} from "@home/pages/device/lwm2m/security-config-server.component";
+import {SecurityConfigObserveComponent} from "@home/pages/device/lwm2m/security-config-observe.component";
 
 @NgModule({
   declarations: [
@@ -34,7 +35,8 @@ import {SecurityConfigServerComponent} from "@home/pages/device/lwm2m/security-c
     DeviceTableHeaderComponent,
     DeviceCredentialsDialogComponent,
     SecurityConfigComponent,
-    SecurityConfigServerComponent
+    SecurityConfigServerComponent,
+    SecurityConfigObserveComponent
   ],
   imports: [
     CommonModule,

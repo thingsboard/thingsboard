@@ -14,11 +14,13 @@
 /// limitations under the License.
 ///
 
-export const JSON_PROFILE = 'jsonProfile';
+
 export const JSON_ALL_CONFIG = 'jsonAllConfig';
 export const END_POINT = 'endPoint';
 export const BOOTSTRAP_SERVER = 'bootstrapServer';
 export const LWM2M_SERVER = 'lwm2mServer';
+export const OBSERVE = 'observe';
+export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
 export const DEFAULT_PORT_SERVER = 5686;
 export const DEFAULT_PORT_SERVER_NOSEC = 5685;
@@ -203,7 +205,7 @@ interface Instance {
   resource: ResourceLwM2M[]
 }
 
-interface ObjectLwM2M {
+export interface ObjectLwM2M {
   id: string,
   name: string,
   instance: Instance []
