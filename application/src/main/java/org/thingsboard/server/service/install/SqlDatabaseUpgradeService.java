@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -24,6 +26,8 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,6 +40,8 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 
+import static org.thingsboard.server.service.install.AbstractSqlTsDatabaseUpgradeService.PATH_TO_USERS_PUBLIC_FOLDER;
+import static org.thingsboard.server.service.install.AbstractSqlTsDatabaseUpgradeService.THINGSBOARD_WINDOWS_UPGRADE_DIR;
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
 import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
@@ -254,25 +260,34 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
                         conn.createStatement().execute("call drop_all_idx()");
 
-                        log.info("Optimizing alarm relations...");
-                        conn.createStatement().execute("DELETE from relation WHERE relation_type_group = 'ALARM' AND relation_type <> 'ALARM_ANY';");
-                        conn.createStatement().execute("DELETE from relation WHERE relation_type_group = 'ALARM' AND relation_type = 'ALARM_ANY' " +
-                                "AND exists(SELECT * FROM alarm WHERE alarm.id = relation.to_id AND alarm.originator_id = relation.from_id)");
-                        log.info("Alarm relations optimized.");
+                        try {
+                            log.info("Optimizing alarm relations...");
+                            conn.createStatement().execute("DELETE from relation WHERE relation_type_group = 'ALARM' AND relation_type <> 'ALARM_ANY';");
+                            conn.createStatement().execute("DELETE from relation WHERE relation_type_group = 'ALARM' AND relation_type = 'ALARM_ANY' " +
+                                    "AND exists(SELECT * FROM alarm WHERE alarm.id = relation.to_id AND alarm.originator_id = relation.from_id)");
+                            log.info("Alarm relations optimized.");
+                        } catch (Exception e) {
+
+                        }
 
                         for (String table : tables) {
                             log.info("Updating table {}.", table);
-                            Statement statement = conn.createStatement();
-                            statement.execute("call update_" + table + "();");
 
-                            SQLWarning warnings = statement.getWarnings();
-                            if (warnings != null) {
-                                log.info("{}", warnings.getMessage());
-                                SQLWarning nextWarning = warnings.getNextWarning();
-                                while (nextWarning != null) {
-                                    log.info("{}", nextWarning.getMessage());
-                                    nextWarning = nextWarning.getNextWarning();
+                            if (!table.equals("relation")) {
+                                Statement statement = conn.createStatement();
+                                statement.execute("call update_" + table + "();");
+
+                                SQLWarning warnings = statement.getWarnings();
+                                if (warnings != null) {
+                                    log.info("{}", warnings.getMessage());
+                                    SQLWarning nextWarning = warnings.getNextWarning();
+                                    while (nextWarning != null) {
+                                        log.info("{}", nextWarning.getMessage());
+                                        nextWarning = nextWarning.getNextWarning();
+                                    }
                                 }
+                            } else {
+                                updateRelation(conn);
                             }
 
                             conn.createStatement().execute("DROP PROCEDURE update_" + table);
@@ -326,5 +341,57 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
         }
         return isOldSchema;
+    }
+
+
+    private void updateRelation(Connection conn) throws SQLException {
+        Path pathToTempRelationFile = null;
+        if (SystemUtils.IS_OS_WINDOWS) {
+            log.info("Lookup for environment variable: {} ...", THINGSBOARD_WINDOWS_UPGRADE_DIR);
+            Path pathToDir;
+            String thingsboardWindowsUpgradeDir = System.getenv("THINGSBOARD_WINDOWS_UPGRADE_DIR");
+            if (StringUtils.isNotEmpty(thingsboardWindowsUpgradeDir)) {
+                log.info("Environment variable: {} was found!", THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                pathToDir = Paths.get(thingsboardWindowsUpgradeDir);
+            } else {
+                log.info("Failed to lookup environment variable: {}", THINGSBOARD_WINDOWS_UPGRADE_DIR);
+                pathToDir = Paths.get(PATH_TO_USERS_PUBLIC_FOLDER);
+            }
+            log.info("Directory: {} will be used for creation temporary upgrade files!", pathToDir);
+            try {
+                Path relationFile = Files.createTempFile(pathToDir, "relation", ".sql");
+                pathToTempRelationFile = relationFile.toAbsolutePath();
+                conn.createStatement().execute("call update_relation('" + pathToTempRelationFile + "')");
+            } catch (IOException | SecurityException e) {
+                log.warn("Failed to create relation upgrade files due to: {}", e.getMessage());
+                conn.createStatement().execute("call update_relation_insert()");
+            }
+        } else {
+            try {
+                Path tempDirPath = Files.createTempDirectory("relation");
+                File tempDirAsFile = tempDirPath.toFile();
+                boolean writable = tempDirAsFile.setWritable(true, false);
+                boolean readable = tempDirAsFile.setReadable(true, false);
+                boolean executable = tempDirAsFile.setExecutable(true, false);
+                pathToTempRelationFile = tempDirPath.resolve("relation.sql").toAbsolutePath();
+                if (writable && readable && executable) {
+                    conn.createStatement().execute("call update_relation('" + pathToTempRelationFile + "')");
+                } else {
+                    throw new RuntimeException("Failed to grant write permissions for the: " + tempDirPath + "folder!");
+                }
+            } catch (IOException | SecurityException e) {
+                log.warn("Failed to create relation upgrade files due to: {}", e.getMessage());
+                conn.createStatement().execute("call update_relation_insert()");
+            }
+        }
+
+        if (pathToTempRelationFile != null && pathToTempRelationFile.toFile().exists()) {
+            boolean deleteTsKvFile = pathToTempRelationFile.toFile().delete();
+            if (deleteTsKvFile) {
+                log.info("Successfully deleted the temp file for relation table upgrade!");
+            }
+        }
+
+        conn.createStatement().execute("DROP PROCEDURE update_relation_insert()");
     }
 }

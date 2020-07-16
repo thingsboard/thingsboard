@@ -511,35 +511,69 @@ $$;
 
 
 -- relation
-CREATE OR REPLACE PROCEDURE update_relation()
+CREATE OR REPLACE PROCEDURE update_relation_insert()
     LANGUAGE plpgsql AS
 $$
-DECLARE
-    data_type  varchar;
-    table_name varchar := 'relation';
-    column_from_id varchar := 'from_id';
-    column_to_id varchar := 'to_id';
 BEGIN
     ALTER TABLE relation DROP CONSTRAINT relation_pkey;
 
-    data_type := get_column_type(table_name, column_from_id);
-    IF data_type = 'character varying' THEN
-        PERFORM column_type_to_uuid(table_name, column_from_id);
-        RAISE NOTICE 'Table % column % updated!', table_name, column_from_id;
-    ELSE
-        RAISE NOTICE 'Table % column % already updated!', table_name, column_from_id;
-    END IF;
+    ALTER TABLE relation RENAME TO old_relation;
 
-    data_type := get_column_type(table_name, column_to_id);
-    IF data_type = 'character varying' THEN
-        PERFORM column_type_to_uuid(table_name, column_to_id);
-        RAISE NOTICE 'Table % column % updated!', table_name, column_to_id;
-    ELSE
-        RAISE NOTICE 'Table % column % already updated!', table_name, column_to_id;
-    END IF;
+    CREATE TABLE IF NOT EXISTS relation (
+                                            from_id uuid,
+                                            from_type varchar(255),
+                                            to_id uuid,
+                                            to_type varchar(255),
+                                            relation_type_group varchar(255),
+                                            relation_type varchar(255),
+                                            additional_info varchar,
+                                            CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
+    ) PARTITION BY LIST (relation_type_group);
 
-    ALTER TABLE relation ADD CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type);
+    CREATE TABLE IF NOT EXISTS other_relations PARTITION OF relation DEFAULT;
+    CREATE TABLE IF NOT EXISTS common_relations PARTITION OF relation FOR VALUES IN ('COMMON');
+    CREATE TABLE IF NOT EXISTS alarm_relations PARTITION OF relation FOR VALUES IN ('ALARM');
+    CREATE TABLE IF NOT EXISTS dashboard_relations PARTITION OF relation FOR VALUES IN ('DASHBOARD');
+    CREATE TABLE IF NOT EXISTS rule_relations PARTITION OF relation FOR VALUES IN ('RULE_CHAIN', 'RULE_NODE');
+
+
+    INSERT INTO relation (from_id, from_type, to_id, to_type, relation_type_group, relation_type, additional_info)
+    SELECT to_uuid(from_id), from_type, to_uuid(to_id), to_type, relation_type_group, relation_type, additional_info FROM old_relation;
+
+    DROP TABLE IF EXISTS old_relation;
 END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE update_relation(IN path_to_file varchar)
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    ALTER TABLE relation DROP CONSTRAINT relation_pkey;
+
+    EXECUTE format('COPY (SELECT to_uuid(from_id) AS from_id, from_type, to_uuid(to_id) AS to_id, to_type, relation_type_group, relation_type, additional_info FROM relation) TO %L;', path_to_file);
+
+    DROP TABLE IF EXISTS relation;
+
+    CREATE TABLE IF NOT EXISTS relation (
+                                            from_id uuid,
+                                            from_type varchar(255),
+                                            to_id uuid,
+                                            to_type varchar(255),
+                                            relation_type_group varchar(255),
+                                            relation_type varchar(255),
+                                            additional_info varchar,
+                                            CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
+    ) PARTITION BY LIST (relation_type_group);
+
+    CREATE TABLE IF NOT EXISTS other_relations PARTITION OF relation DEFAULT;
+    CREATE TABLE IF NOT EXISTS common_relations PARTITION OF relation FOR VALUES IN ('COMMON');
+    CREATE TABLE IF NOT EXISTS alarm_relations PARTITION OF relation FOR VALUES IN ('ALARM');
+    CREATE TABLE IF NOT EXISTS dashboard_relations PARTITION OF relation FOR VALUES IN ('DASHBOARD');
+    CREATE TABLE IF NOT EXISTS rule_relations PARTITION OF relation FOR VALUES IN ('RULE_CHAIN', 'RULE_NODE');
+
+    EXECUTE format('COPY relation FROM %L', path_to_file);
+END
 $$;
 
 
