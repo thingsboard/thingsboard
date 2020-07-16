@@ -182,7 +182,10 @@ export function getEntityValue(entity: any, key: DataKey): any {
 }
 
 export function getAlarmValue(alarm: AlarmDataInfo, key: EntityColumn) {
-  const alarmField = alarmFields[key.name];
+  let alarmField = null;
+  if (key.type === DataKeyType.alarm) {
+    alarmField = alarmFields[key.name];
+  }
   if (alarmField) {
     return getDescendantProp(alarm, alarmField.value);
   } else {
