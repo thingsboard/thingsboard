@@ -51,6 +51,8 @@ import { Asset } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
 import {
+  AlarmData,
+  AlarmDataQuery,
   createDefaultEntityDataPageLink,
   defaultEntityDataPageLink,
   EntityData,
@@ -371,6 +373,10 @@ export class EntityService {
 
   public findEntityDataByQuery(query: EntityDataQuery, config?: RequestConfig): Observable<PageData<EntityData>> {
     return this.http.post<PageData<EntityData>>('/api/entitiesQuery/find', query, defaultHttpOptionsFromConfig(config));
+  }
+
+  public findAlarmDataByQuery(query: AlarmDataQuery, config?: RequestConfig): Observable<PageData<AlarmData>> {
+    return this.http.post<PageData<AlarmData>>('/api/alarmsQuery/find', query, defaultHttpOptionsFromConfig(config));
   }
 
   public findEntityInfosByFilterAndName(filter: EntityFilter,
