@@ -124,7 +124,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                                                                AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         return transactionTemplate.execute(status -> {
             AlarmDataPageLink pageLink = query.getPageLink();
-            QueryContext ctx = new QueryContext();
+            QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, EntityType.ALARM));
             ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
 
             StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
