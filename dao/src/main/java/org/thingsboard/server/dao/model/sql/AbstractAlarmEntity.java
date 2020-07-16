@@ -136,6 +136,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
 
     public AbstractAlarmEntity(AlarmEntity alarmEntity) {
         this.setId(alarmEntity.getId());
+        this.setCreatedTime(alarmEntity.getCreatedTime());
         this.tenantId = alarmEntity.getTenantId();
         this.type = alarmEntity.getType();
         this.originatorId = alarmEntity.getOriginatorId();
