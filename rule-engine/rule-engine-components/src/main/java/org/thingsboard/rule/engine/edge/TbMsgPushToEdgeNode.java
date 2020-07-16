@@ -46,7 +46,9 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
@@ -137,7 +139,15 @@ public class TbMsgPushToEdgeNode implements TbNode {
             if (edgeEventTypeByEntityType == null) {
                 return null;
             }
-            return buildEdgeEvent(ctx.getTenantId(), getActionTypeByMsgType(msg.getType()), msg.getOriginator().getId(), edgeEventTypeByEntityType, json.readTree(msg.getData()));
+            ActionType actionType = getActionTypeByMsgType(msg.getType());
+            JsonNode entityBody = null;
+            JsonNode data = json.readTree(msg.getData());
+            if (actionType.equals(ActionType.ATTRIBUTES_UPDATED) || actionType.equals(ActionType.ATTRIBUTES_DELETED)) {
+                entityBody = getAttributeEntityBody(actionType, data, msg.getMetaData().getData());
+            } else {
+                entityBody = data;
+            }
+            return buildEdgeEvent(ctx.getTenantId(), actionType, msg.getOriginator().getId(), edgeEventTypeByEntityType, entityBody);
         }
     }
 
@@ -149,6 +159,21 @@ public class TbMsgPushToEdgeNode implements TbNode {
         edgeEvent.setEdgeEventType(edgeEventType);
         edgeEvent.setEntityBody(entityBody);
         return edgeEvent;
+    }
+
+    private JsonNode getAttributeEntityBody(ActionType actionType, JsonNode data, Map<String, String> metadata) throws JsonProcessingException {
+        Map<String, Object> entityData = new HashMap<>();
+        switch (actionType) {
+            case ATTRIBUTES_UPDATED:
+                entityData.put("kv", data);
+                break;
+            case ATTRIBUTES_DELETED:
+                List<String> keys = json.treeToValue(data.get("attributes"), List.class);
+                entityData.put("keys", keys);
+                break;
+        }
+        entityData.put("scope", metadata.get("scope"));
+        return json.valueToTree(entityData);
     }
 
     private UUID getUUIDFromMsgData(TbMsg msg) throws JsonProcessingException {
