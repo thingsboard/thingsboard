@@ -249,8 +249,8 @@ export function parseData(input: DatasourceData[]): FormattedData[] {
         deviceType: null
       };
       entityArray.filter(el => el.data.length).forEach(el => {
-        obj[el?.dataKey?.label] = el?.data[0][1];
-        obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
+        obj[el?.dataKey?.label] = el?.data[0][0] ? el?.data[0][1] : null;
+        obj[el?.dataKey?.label + '|ts'] = el?.data[0][0] || null;
         if (el?.dataKey?.label === 'type') {
           obj.deviceType = el?.data[0][1];
         }

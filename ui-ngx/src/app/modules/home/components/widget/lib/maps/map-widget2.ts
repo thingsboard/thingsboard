@@ -16,7 +16,8 @@
 
 import {
   DEFAULT_MAP_PAGE_SIZE,
-  defaultSettings, FormattedData,
+  defaultSettings,
+  FormattedData,
   hereProviders,
   MapProviders,
   providerSets,
@@ -34,7 +35,7 @@ import {
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
 import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition, parseArray, parseData, parseFunction, parseWithTranslation } from './maps-utils';
+import { getDefCenterPosition, parseData, parseFunction, parseWithTranslation } from './maps-utils';
 import { Datasource, DatasourceData, JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
@@ -65,10 +66,7 @@ export class MapWidgetController implements MapWidgetInterface {
         if (!$element) {
             $element = ctx.$container[0];
         }
-        this.settings = this.initSettings(ctx.settings);
-        if (isEdit) {
-            this.settings.draggableMarker = true;
-        }
+        this.settings = this.initSettings(ctx.settings, isEdit);
         this.settings.tooltipAction = this.getDescriptors('tooltipAction');
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
@@ -241,7 +239,7 @@ export class MapWidgetController implements MapWidgetInterface {
         }
     }
 
-    initSettings(settings: UnitedMapSettings): UnitedMapSettings {
+    initSettings(settings: UnitedMapSettings, isEditMap?: boolean): UnitedMapSettings {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
         if (this.provider === MapProviders.here && !settings.mapProviderHere) {
@@ -268,6 +266,9 @@ export class MapWidgetController implements MapWidgetInterface {
                 url: settings.markerImage,
                 size: settings.markerImageSize || 34
             } : null
+        }
+        if (isEditMap && !settings.hasOwnProperty('draggableMarker')) {
+            settings.draggableMarker = true;
         }
         return { ...defaultSettings, ...settings, ...customOptions, }
     }

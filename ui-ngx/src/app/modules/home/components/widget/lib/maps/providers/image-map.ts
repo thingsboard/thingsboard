@@ -215,6 +215,17 @@ export class ImageMap extends LeafletMap {
             expression.y * this.height);
     }
 
+    convertPositionPolygon(expression: Array<[number, number]>): L.LatLngExpression[] {
+      return expression.map((el) => {
+        if (el.length === 2 && !el.some(isNaN)) {
+          return this.pointToLatLng(
+            el[0] * this.width,
+            el[1] * this.height)
+        }
+        return null;
+      }).filter(el => !!el)
+    }
+
     pointToLatLng(x, y): L.LatLng {
         return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, maxZoom - 1);
     }
