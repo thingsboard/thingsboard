@@ -22,7 +22,7 @@
         <mat-form-field class="mat-block">
           <mat-label translate>device.lwm2m-security-config.mode</mat-label>
           <mat-select formControlName="securityMode"
-                      (ngModelChange)="securityModeChanged()">
+                      (ngModelChange)="securityModeChanged($event)">
             <mat-option *ngFor="let securityMode of securityConfigLwM2MTypes"
                         [value]="securityMode"                       >
               {{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[securityMode]) }}

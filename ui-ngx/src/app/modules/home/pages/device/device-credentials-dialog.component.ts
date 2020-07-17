@@ -25,12 +25,15 @@ import {credentialTypeNames, DeviceCredentials, DeviceCredentialsType} from '@sh
 import {DialogComponent} from '@shared/components/dialog.component';
 import {Router} from '@angular/router';
 import {
-  SecurityConfigComponent,
-  DeviceCredentialsDialogLwm2mData
+  SecurityConfigComponent
 } from "@home/pages/device/lwm2m/security-config.component";
 
 import {TranslateService} from "@ngx-translate/core";
-import {END_POINT, JSON_ALL_CONFIG} from "@home/pages/device/lwm2m/security-config.models";
+import {
+  DeviceCredentialsDialogLwm2mData,
+  END_POINT, getDefaultSecurityConfig,
+  JSON_ALL_CONFIG, SecurityConfigModels
+} from "@home/pages/device/lwm2m/security-config.models";
 
 export interface DeviceCredentialsDialogData {
   isReadOnly: boolean;
@@ -157,12 +160,10 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
       $event.preventDefault();
     }
     this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
-
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonAllConfig: (value !== null && value.length === 0) ? JSON.parse("{}") : JSON.parse(value),
-        title: this.translate.instant('device.lwm2m-security-info', {typeName: id}),
+        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig()  as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
         endPoint: id
       }
     }).afterClosed().subscribe(

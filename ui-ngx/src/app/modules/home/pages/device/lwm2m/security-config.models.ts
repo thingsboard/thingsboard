@@ -14,94 +14,33 @@
 /// limitations under the License.
 ///
 
-
 export const JSON_ALL_CONFIG = 'jsonAllConfig';
 export const END_POINT = 'endPoint';
+export const DEFAULT_END_POINT = 'default_client_lwm2m_end_point_no_sec';
+export const BOOTSTRAP_SERVERS = 'servers';
 export const BOOTSTRAP_SERVER = 'bootstrapServer';
 export const LWM2M_SERVER = 'lwm2mServer';
 export const OBSERVE = 'observe';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
-export const DEFAULT_PORT_SERVER = 5686;
-export const DEFAULT_PORT_SERVER_NOSEC = 5685;
-export const DEFAULT_ID_BOOTSTRAP = 111;
-export const DEFAULT_PORT_BOOTSTRAP = 5688;
-export const DEFAULT_PORT_BOOTSTRAP_NOSEC = 5687;
-export const DEFAULT_HOST = 'localhost';
+const DEFAULT_PORT_SERVER = 5686;
+const DEFAULT_PORT_SERVER_NOSEC = 5685;
+const DEFAULT_ID_BOOTSTRAP = 111;
+const DEFAULT_PORT_BOOTSTRAP = 5688;
+const DEFAULT_PORT_BOOTSTRAP_NOSEC = 5687;
+const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
+export const DEFAULT_LIFE_TIME = 300;
+export const DEFAULT_DEFAULT_MIN_PERIOD =  1;
+const DEFAULT_NOTIF_IF_DESIBLED =  true;
+export const DEFAULT_BINDING = "U";
+const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
+export const KEY_IDENT_REGEXP_PSK =/^[0-9a-fA-F]{64,64}$/;
+export const KEY_PRIVATE_REGEXP =/^[0-9a-fA-F]{134,134}$/;
+export const KEY_PUBLIC_REGEXP =/^[0-9a-fA-F]{182,182}$/;
 
-export type ClientSecurityInfo =
-  ClientSecurityInfoPSK
-  | ClientSecurityInfoRPK
-  | ClientSecurityInfoX509
-  | ClientSecurityInfoNoSec;
-
-export interface ClientSecurityInfoPSK {
-  securityModeServer: string,
-  endpoint: string,
-  identity: string,
-  key: string
-}
-
-export interface ClientSecurityInfoRPK {
-  securityModeServer: string,
-  key: string
-}
-
-export interface ClientSecurityInfoX509 {
-  securityModeServer: string,
-  x509: boolean
-}
-
-interface ClientSecurityInfoNoSec {
-  securityModeServer: string
-}
-
-export interface SecurityConfigModels {
-  client: ClientSecurityInfo,
-  bootstrap: {
-    servers: {
-      shortId: number,
-      lifetime: number,
-      defaultMinPeriod: number,
-      notifIfDisabled: boolean,
-      binding: string
-    },
-    bootstrapServer: ServerSecurityConfig,
-    lwm2mServer: ServerSecurityConfig
-  },
-  observe: ObjectLwM2M[]
-}
-
-function getDefaultBootstrapSecurityConfig(securityConfigMode: SECURITY_CONFIG_MODE): BootstrapSecurityConfig {
-  const DefaultBootstrapSecurityConfig: BootstrapSecurityConfig = {
-    host: '',
-    port: DEFAULT_PORT_BOOTSTRAP,
-    isBootstrapServer: true,
-    securityMode: securityConfigMode.toString(),
-    clientPublicKeyOrId: '',
-    clientSecretKey: '',
-    serverPublicKey: '',
-    clientHoldOffTime: 1,
-    serverId: DEFAULT_ID_BOOTSTRAP,
-    bootstrapServerAccountTimeout: 0
-  }
-  return DefaultBootstrapSecurityConfig;
-}
-
-function getDefaultServerSecurityConfig(securityConfigMode: SECURITY_CONFIG_MODE): ServerSecurityConfig {
-  const DefaultServerSecurityConfig: ServerSecurityConfig = {
-    host: '',
-    port: DEFAULT_PORT_SERVER,
-    isBootstrapServer: false,
-    securityMode: securityConfigMode.toString(),
-    clientPublicKeyOrId: '',
-    clientSecretKey: '',
-    serverPublicKey: '',
-    clientHoldOffTime: 1,
-    serverId: DEFAULT_ID_SERVER,
-    bootstrapServerAccountTimeout: 0
-  }
-  return DefaultServerSecurityConfig;
+export interface DeviceCredentialsDialogLwm2mData {
+  jsonAllConfig?: SecurityConfigModels;
+  endPoint?: string;
 }
 
 export enum SECURITY_CONFIG_MODE {
@@ -120,7 +59,42 @@ export const SECURITY_CONFIG_MODE_NAMES = new Map<SECURITY_CONFIG_MODE, string>(
   ]
 );
 
-export interface SecurityConfig {
+export type ClientSecurityConfigType =
+  ClientSecurityConfigPSK
+  | ClientSecurityConfigRPK
+  | ClientSecurityConfigX509
+  | ClientSecurityConfigNO_SEC;
+
+export interface ClientSecurityConfigPSK {
+  securityConfigClientMode: string,
+  endpoint: string,
+  identity: string,
+  key: string
+}
+
+export interface ClientSecurityConfigRPK {
+  securityConfigClientMode: string,
+  key: string
+}
+
+export interface ClientSecurityConfigX509 {
+  securityConfigClientMode: string,
+  x509: boolean
+}
+
+interface ClientSecurityConfigNO_SEC {
+  securityConfigClientMode: string
+}
+
+interface BootstrapServersSecurityConfig {
+  shortId: number,
+  lifetime: number,
+  defaultMinPeriod: number,
+  notifIfDisabled: boolean,
+  binding: string
+}
+
+export interface ServerSecurityConfig {
   host?: string,
   port?: number,
   isBootstrapServer?: boolean,
@@ -133,39 +107,24 @@ export interface SecurityConfig {
   bootstrapServerAccountTimeout: number
 }
 
-interface ServerSecurityConfig extends SecurityConfig {
+interface BootstrapSecurityConfig {
+  servers: BootstrapServersSecurityConfig,
+  bootstrapServer: ServerSecurityConfig,
+  lwm2mServer: ServerSecurityConfig
 }
 
-interface BootstrapSecurityConfig extends SecurityConfig {
+export interface SecurityConfigModels {
+  client: ClientSecurityConfigType,
+  bootstrap: BootstrapSecurityConfig,
+  observe: ObjectLwM2M[]
 }
 
-export function gatDefaultSecurityConfig(securityConfigModeIn: SECURITY_CONFIG_MODE, endPoint: string): SecurityConfigModels {
-  debugger
-  const securityConfigModels = {
-    client: getClientSecurityInfo(securityConfigModeIn, endPoint),
-    bootstrap: {
-      servers: {
-        shortId: DEFAULT_ID_SERVER,
-        lifetime: 300,
-        defaultMinPeriod: 1,
-        notifIfDisabled: true,
-        binding: "U"
-      },
-      bootstrapServer: getDefaultBootstrapSecurityConfig(securityConfigModeIn),
-      lwm2mServer: getDefaultServerSecurityConfig(securityConfigModeIn)
-    },
-    observe: getDefaultProfile()
-  };
-  return securityConfigModels;
-}
-
-function getClientSecurityInfo(securityConfigMode: SECURITY_CONFIG_MODE, endPoint: string): ClientSecurityInfo {
-  debugger
-  let security: ClientSecurityInfo;
+function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_CONFIG_MODE, endPoint?: string): ClientSecurityConfigType {
+  let security: ClientSecurityConfigType;
   switch (securityConfigMode) {
     case SECURITY_CONFIG_MODE.PSK:
       security = {
-        securityModeServer: '',
+        securityConfigClientMode: '',
         endpoint: endPoint,
         identity: '',
         key: ''
@@ -173,25 +132,81 @@ function getClientSecurityInfo(securityConfigMode: SECURITY_CONFIG_MODE, endPoin
       break;
     case SECURITY_CONFIG_MODE.RPK:
       security = {
-        securityModeServer: '',
-        key: null
+        securityConfigClientMode: '',
+        key: ''
       }
       break;
     case SECURITY_CONFIG_MODE.X509:
       security = {
-        securityModeServer: '',
+        securityConfigClientMode: '',
         x509: true
       }
       break;
     case SECURITY_CONFIG_MODE.NO_SEC:
       security = {
-        securityModeServer: ''
+        securityConfigClientMode: ''
       }
       break;
   }
-  security.securityModeServer = securityConfigMode.toString();
+  security.securityConfigClientMode = securityConfigMode.toString();
   return security;
 }
+
+export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
+  return {
+    shortId: DEFAULT_ID_SERVER,
+    lifetime: DEFAULT_LIFE_TIME,
+    defaultMinPeriod: DEFAULT_DEFAULT_MIN_PERIOD,
+    notifIfDisabled: DEFAULT_NOTIF_IF_DESIBLED,
+    binding: DEFAULT_BINDING
+  }
+}
+
+export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig {
+  return {
+    host: '',
+    port: getDefaultPortBootstrap(),
+    isBootstrapServer: true,
+    securityMode: SECURITY_CONFIG_MODE.NO_SEC.toString(),
+    clientPublicKeyOrId: '',
+    clientSecretKey: '',
+    serverPublicKey: '',
+    clientHoldOffTime: DEFAULT_CLIENT_HOLD_OFF_TIME,
+    serverId: DEFAULT_ID_BOOTSTRAP,
+    bootstrapServerAccountTimeout: DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT
+  }
+}
+
+export function getDefaultLwM2MServerSecurityConfig(): ServerSecurityConfig {
+  const DefaultLwM2MServerSecurityConfig =  getDefaultBootstrapServerSecurityConfig();
+  DefaultLwM2MServerSecurityConfig.isBootstrapServer = false;
+  return DefaultLwM2MServerSecurityConfig;
+}
+
+export function getDefaultPortBootstrap (securityMode?: string): number {
+  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_BOOTSTRAP_NOSEC : DEFAULT_PORT_BOOTSTRAP;
+}
+
+export function getDefaultPortServer (securityMode: string): number {
+  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_SERVER_NOSEC : DEFAULT_PORT_SERVER;
+}
+
+function getDefaultBootstrapSecurityConfig (): BootstrapSecurityConfig {
+  return {
+    servers: getDefaultBootstrapServersSecurityConfig(),
+    bootstrapServer: getDefaultBootstrapServerSecurityConfig(),
+    lwm2mServer: getDefaultLwM2MServerSecurityConfig()
+  }
+}
+export function getDefaultSecurityConfig(): SecurityConfigModels {
+  const securityConfigModels = {
+    client: getDefaultClientSecurityConfigType(SECURITY_CONFIG_MODE.NO_SEC),
+    bootstrap: getDefaultBootstrapSecurityConfig (),
+    observe: getDefaultObserve()
+  };
+  return securityConfigModels;
+}
+
 
 interface ResourceLwM2M {
   id: number,
@@ -211,7 +226,7 @@ export interface ObjectLwM2M {
   instance: Instance []
 }
 
-function getDefaultProfile (): ObjectLwM2M [] {
+export function getDefaultObserve (): ObjectLwM2M [] {
   return [
     {
       id: "1",
@@ -370,6 +385,5 @@ function getDefaultProfile (): ObjectLwM2M [] {
     }
   ]
 }
-
 
 

@@ -20,8 +20,8 @@ import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validat
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
-import {DeviceCredentialsDialogLwm2mData} from "@home/pages/device/lwm2m/security-config.component";
 import {
+  DeviceCredentialsDialogLwm2mData,
   ObjectLwM2M
 } from "@home/pages/device/lwm2m/security-config.models";
 
@@ -42,7 +42,7 @@ import {
 export class SecurityConfigObserveComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
   @Input() observeFormGroup: FormGroup;
-  // @Output() observeDataOut: ObjectLwM2M[];
+  @Input() isDirty: boolean;
   observeValue: ObjectLwM2M[];
 
   constructor(protected store: Store<AppState>,
@@ -54,6 +54,7 @@ export class SecurityConfigObserveComponent extends PageComponent implements OnI
 
 
   ngOnInit(): void {
+
     this.observeFormGroup.addControl('name', this.fb.control('', [Validators.required]));
   }
 
@@ -80,6 +81,10 @@ export class SecurityConfigObserveComponent extends PageComponent implements OnI
     this.observeFormGroup.patchValue({
       name: this.observeValue[0].name
     }, {emitEvent: true});
+    if (this.isDirty) {
+      this.observeFormGroup.get('name').markAsDirty();
+      this.isDirty = false;
+    }
   }
 
 }
