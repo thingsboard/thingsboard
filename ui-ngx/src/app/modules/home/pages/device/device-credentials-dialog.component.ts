@@ -35,6 +35,7 @@ import {
   END_POINT, getDefaultSecurityConfig,
   JSON_ALL_CONFIG, SecurityConfigModels
 } from "@home/pages/device/lwm2m/security-config.models";
+import {WINDOW} from "@core/services/window.service";
 
 export interface DeviceCredentialsDialogData {
   isReadOnly: boolean;
@@ -71,7 +72,8 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
               public dialogRef: MatDialogRef<DeviceCredentialsDialogComponent, DeviceCredentials>,
               public fb: FormBuilder,
               private translate: TranslateService,
-              private dialog: MatDialog,) {
+              private dialog: MatDialog,
+              @Inject(WINDOW) private window: Window) {
     super(store, router, dialogRef);
 
     this.isReadOnly = data.isReadOnly;
@@ -164,7 +166,7 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig()  as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
+        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig(this.window.location.hostname)  as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
         endPoint: (id === null) ? DEFAULT_END_POINT : id,
         isNew: (id === null || value === null || value.length === 0) ? true : false
       }

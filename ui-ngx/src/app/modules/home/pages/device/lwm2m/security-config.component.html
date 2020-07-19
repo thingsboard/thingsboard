@@ -65,7 +65,7 @@
               <textarea matInput #clientKey  maxlength={{lenMinMaxClient}} type="text" rows="3" cols="1" formControlName="clientKey"
                         [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
               lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK"></textarea>
-              <mat-hint align="end">{{clientKey.value?.length || 0}}/{{lenMinMaxClient}}</mat-hint>
+              <mat-hint align="end">{{clientKey.value?.length || 0}}/{{lenMaxKeyClient}}</mat-hint>
               <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('required')">
                 {{ 'device.lwm2m-security-config.client-key' | translate }}
                 <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>

@@ -23,10 +23,10 @@ export const LWM2M_SERVER = 'lwm2mServer';
 export const OBSERVE = 'observe';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
-const DEFAULT_PORT_SERVER = 5686;
+export const DEFAULT_PORT_SERVER = 5686;
 export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
 const DEFAULT_ID_BOOTSTRAP = 111;
-const DEFAULT_PORT_BOOTSTRAP = 5688;
+export const DEFAULT_PORT_BOOTSTRAP = 5688;
 export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5687;
 export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
@@ -130,7 +130,7 @@ export function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_
       security = {
         securityConfigClientMode: '',
         endpoint: endPoint,
-        identity: '',
+        identity: endPoint,
         key: ''
       }
       break;
@@ -168,9 +168,9 @@ export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecu
   }
 }
 
-export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig {
+export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSecurityConfig {
   return {
-    host: '',
+    host: hostname,
     port: getDefaultPortBootstrap(),
     isBootstrapServer: true,
     securityMode: SECURITY_CONFIG_MODE.NO_SEC.toString(),
@@ -183,8 +183,8 @@ export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig 
   }
 }
 
-export function getDefaultLwM2MServerSecurityConfig(): ServerSecurityConfig {
-  const DefaultLwM2MServerSecurityConfig =  getDefaultBootstrapServerSecurityConfig();
+export function getDefaultLwM2MServerSecurityConfig(hostname): ServerSecurityConfig {
+  const DefaultLwM2MServerSecurityConfig =  getDefaultBootstrapServerSecurityConfig(hostname);
   DefaultLwM2MServerSecurityConfig.isBootstrapServer = false;
   return DefaultLwM2MServerSecurityConfig;
 }
@@ -197,17 +197,17 @@ export function getDefaultPortServer (securityMode: string): number {
   return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_SERVER_NO_SEC : DEFAULT_PORT_SERVER;
 }
 
-function getDefaultBootstrapSecurityConfig (): BootstrapSecurityConfig {
+function getDefaultBootstrapSecurityConfig(hostname: any): BootstrapSecurityConfig {
   return {
     servers: getDefaultBootstrapServersSecurityConfig(),
-    bootstrapServer: getDefaultBootstrapServerSecurityConfig(),
-    lwm2mServer: getDefaultLwM2MServerSecurityConfig()
+    bootstrapServer: getDefaultBootstrapServerSecurityConfig(hostname),
+    lwm2mServer: getDefaultLwM2MServerSecurityConfig(hostname)
   }
 }
-export function getDefaultSecurityConfig(): SecurityConfigModels {
+export function getDefaultSecurityConfig(hostname: any): SecurityConfigModels {
   const securityConfigModels = {
     client: getDefaultClientSecurityConfigType(SECURITY_CONFIG_MODE.NO_SEC),
-    bootstrap: getDefaultBootstrapSecurityConfig (),
+    bootstrap: getDefaultBootstrapSecurityConfig (hostname),
     observe: getDefaultObserve()
   };
   return securityConfigModels;
@@ -393,6 +393,6 @@ export function getDefaultObserve (): ObjectLwM2M [] {
 }
 
 // Bootsrap server -> api: bootstrap
-export const bootstarpServerPublicKey = '3059301306072A8648CE3D020106082A8648CE3D03010703420004993EF2B698C6A9C0C1D8BE78B13A9383C0854C7C7C7A504D289B403794648183267412D5FC4E5CEB2257CB7FD7F76EBDAC2FA9AA100AFB162E990074CC0BFAA2';
-export const lwm2mServerPublicKey = '3059301306072A8648CE3D020106082A8648CE3D03010703420004405354EA8893471D9296AFBC8B020A5C6201B0BB25812A53B849D4480FA5F06930C9237E946A3A1692C1CAFAA01A238A077F632C99371348337512363F28212B';
+export const BOOTSTRAP_PUBLIC_KEY_RPK = '3059301306072A8648CE3D020106082A8648CE3D03010703420004993EF2B698C6A9C0C1D8BE78B13A9383C0854C7C7C7A504D289B403794648183267412D5FC4E5CEB2257CB7FD7F76EBDAC2FA9AA100AFB162E990074CC0BFAA2';
+export const LWM2M_SERVER_PUBLIC_KEY_RPK = '3059301306072A8648CE3D020106082A8648CE3D03010703420004405354EA8893471D9296AFBC8B020A5C6201B0BB25812A53B849D4480FA5F06930C9237E946A3A1692C1CAFAA01A238A077F632C99371348337512363F28212B';
 
