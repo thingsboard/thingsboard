@@ -30,6 +30,7 @@ import {
 
 import {TranslateService} from "@ngx-translate/core";
 import {
+  DEFAULT_END_POINT,
   DeviceCredentialsDialogLwm2mData,
   END_POINT, getDefaultSecurityConfig,
   JSON_ALL_CONFIG, SecurityConfigModels
@@ -164,7 +165,8 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig()  as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
-        endPoint: id
+        endPoint: (id === null) ? DEFAULT_END_POINT : id,
+        isNew: (id === null || value === null || value.length === 0) ? true : false
       }
     }).afterClosed().subscribe(
       (res) => {

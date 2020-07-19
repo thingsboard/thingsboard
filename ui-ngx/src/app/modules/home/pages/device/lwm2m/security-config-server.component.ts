@@ -52,7 +52,7 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   securityConfigLwM2MType = SECURITY_CONFIG_MODE;
   securityConfigLwM2MTypes = Object.keys(SECURITY_CONFIG_MODE);
   credentialTypeLwM2MNamesMap = SECURITY_CONFIG_MODE_NAMES;
-  @Input() server: string;
+
   @Input() serverFormGroup: FormGroup;
   serverData: ServerSecurityConfig;
 
@@ -71,27 +71,10 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   }
 
   updateValueFields(): void {
-    if (!this.serverData.host) {
-      // this.serverData.host = DEFAULT_HOST;
-      this.serverFormGroup.get('host').markAsDirty();
-    }
-    if (!this.serverData.port) {
-      this.serverData.port = (this.server === BOOTSTRAP_SERVER) ? getDefaultPortBootstrap(this.serverData.securityMode) : getDefaultPortServer(this.serverData.securityMode);
-      this.serverFormGroup.get('port').markAsDirty();
-    }
-    if (!this.serverData.serverId) {
-      // this.serverData.serverId = (this.server === BOOTSTRAP_SERVER) ? DEFAULT_ID_BOOTSTRAP : DEFAULT_ID_SERVER;
-      this.serverFormGroup.get('serverId').markAsDirty();
-    }
-    if (!this.serverData.securityMode) {
-      this.serverData.securityMode = SECURITY_CONFIG_MODE.NO_SEC;
-      this.serverFormGroup.get('securityMode').markAsDirty();
-    }
     this.serverFormGroup.patchValue(this.serverData, {emitEvent: true});
     const securityMode = this.serverFormGroup.get('securityMode').value as SECURITY_CONFIG_MODE;
     this.updateValidate(securityMode);
   }
-
 
   updateValidate(securityMode: SECURITY_CONFIG_MODE): void {
     switch (securityMode) {

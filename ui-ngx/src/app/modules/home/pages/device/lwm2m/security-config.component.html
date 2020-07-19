@@ -60,12 +60,12 @@
           </div>
           <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
                       lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
-            <mat-form-field class="mat-block"  hintLabel={{charactersMinMax}} appearance="fill">
+            <mat-form-field class="mat-block">
               <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
-              <textarea matInput #clientKey  maxlength={{lenMinMax}} type="text" rows="3" cols="1" formControlName="clientKey"
+              <textarea matInput #clientKey  maxlength={{lenMinMaxClient}} type="text" rows="3" cols="1" formControlName="clientKey"
                         [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
               lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK"></textarea>
-              <mat-hint align="end">{{clientKey.value?.length || 0}}/{{lenMinMax}}</mat-hint>
+              <mat-hint align="end">{{clientKey.value?.length || 0}}/{{lenMinMaxClient}}</mat-hint>
               <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('required')">
                 {{ 'device.lwm2m-security-config.client-key' | translate }}
                 <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
@@ -78,7 +78,7 @@
               <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('pattern') &&
                                 lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK">
                 {{ 'device.lwm2m-security-config.client-key' | translate }}
-                <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_134' | translate }}</strong>
+                <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_182' | translate }}</strong>
               </mat-error>
             </mat-form-field>
           </div>
@@ -156,8 +156,7 @@
                 <fieldset [disabled]="isLoading$ | async">
                   <tb-security-config-server-lwm2m
                     [formControlName]="bootstrapServer"
-                    [serverFormGroup]="bootstrapFormGroup"
-                    [server]="bootstrapServer">
+                    [serverFormGroup]="bootstrapFormGroup">
                   </tb-security-config-server-lwm2m>
                 </fieldset>
               </div>
@@ -175,8 +174,7 @@
                 <fieldset [disabled]="isLoading$ | async">
                   <tb-security-config-server-lwm2m
                     [formControlName]="lwm2mServer"
-                    [serverFormGroup]="lwm2mServerFormGroup"
-                    [server]="lwm2mServer">
+                    [serverFormGroup]="lwm2mServerFormGroup">
                   </tb-security-config-server-lwm2m>
                 </fieldset>
               </div>
@@ -190,7 +188,6 @@
             <div fxFlex="50">
               <fieldset [disabled]="isLoading$ | async">
                 <tb-security-config-observe-lwm2m
-                  [isDirty]="isDirty"
                   [formControlName]="observe"
                   [observeFormGroup]="observeFormGroup">
                 </tb-security-config-observe-lwm2m>
@@ -229,7 +226,7 @@
     <span fxFlex></span>
     <button mat-button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || lwm2mConfigFormGroup.invalid || lwm2mConfigFormGroup.pristine">
+            [disabled]="(isLoading$ | async) || lwm2mConfigFormGroup.invalid || !lwm2mConfigFormGroup.dirty">
       {{ 'action.save' | translate }}
     </button>
     <button mat-button color="primary"

@@ -24,16 +24,19 @@ export const OBSERVE = 'observe';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
 const DEFAULT_PORT_SERVER = 5686;
-const DEFAULT_PORT_SERVER_NOSEC = 5685;
+export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
 const DEFAULT_ID_BOOTSTRAP = 111;
 const DEFAULT_PORT_BOOTSTRAP = 5688;
-const DEFAULT_PORT_BOOTSTRAP_NOSEC = 5687;
-const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
+export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5687;
+export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
 export const DEFAULT_DEFAULT_MIN_PERIOD =  1;
 const DEFAULT_NOTIF_IF_DESIBLED =  true;
 export const DEFAULT_BINDING = "U";
 const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
+export const LEN_MAX_PSK = 64;
+export const LEN_MAX_PRIVATE_KEY = 134;
+export const LEN_MAX_PUBLIC_KEY = 182;
 export const KEY_IDENT_REGEXP_PSK =/^[0-9a-fA-F]{64,64}$/;
 export const KEY_PRIVATE_REGEXP =/^[0-9a-fA-F]{134,134}$/;
 export const KEY_PUBLIC_REGEXP =/^[0-9a-fA-F]{182,182}$/;
@@ -41,6 +44,7 @@ export const KEY_PUBLIC_REGEXP =/^[0-9a-fA-F]{182,182}$/;
 export interface DeviceCredentialsDialogLwm2mData {
   jsonAllConfig?: SecurityConfigModels;
   endPoint?: string;
+  isNew?: boolean;
 }
 
 export enum SECURITY_CONFIG_MODE {
@@ -82,11 +86,11 @@ export interface ClientSecurityConfigX509 {
   x509: boolean
 }
 
-interface ClientSecurityConfigNO_SEC {
+export interface ClientSecurityConfigNO_SEC {
   securityConfigClientMode: string
 }
 
-interface BootstrapServersSecurityConfig {
+export interface BootstrapServersSecurityConfig {
   shortId: number,
   lifetime: number,
   defaultMinPeriod: number,
@@ -119,7 +123,7 @@ export interface SecurityConfigModels {
   observe: ObjectLwM2M[]
 }
 
-function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_CONFIG_MODE, endPoint?: string): ClientSecurityConfigType {
+export function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_CONFIG_MODE, endPoint?: string): ClientSecurityConfigType {
   let security: ClientSecurityConfigType;
   switch (securityConfigMode) {
     case SECURITY_CONFIG_MODE.PSK:
@@ -151,6 +155,8 @@ function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_CONFIG_
   security.securityConfigClientMode = securityConfigMode.toString();
   return security;
 }
+
+
 
 export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
   return {
@@ -184,11 +190,11 @@ export function getDefaultLwM2MServerSecurityConfig(): ServerSecurityConfig {
 }
 
 export function getDefaultPortBootstrap (securityMode?: string): number {
-  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_BOOTSTRAP_NOSEC : DEFAULT_PORT_BOOTSTRAP;
+  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_BOOTSTRAP_NO_SEC : DEFAULT_PORT_BOOTSTRAP;
 }
 
 export function getDefaultPortServer (securityMode: string): number {
-  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_SERVER_NOSEC : DEFAULT_PORT_SERVER;
+  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_SERVER_NO_SEC : DEFAULT_PORT_SERVER;
 }
 
 function getDefaultBootstrapSecurityConfig (): BootstrapSecurityConfig {
@@ -386,4 +392,7 @@ export function getDefaultObserve (): ObjectLwM2M [] {
   ]
 }
 
+// Bootsrap server -> api: bootstrap
+export const bootstarpServerPublicKey = '3059301306072A8648CE3D020106082A8648CE3D03010703420004993EF2B698C6A9C0C1D8BE78B13A9383C0854C7C7C7A504D289B403794648183267412D5FC4E5CEB2257CB7FD7F76EBDAC2FA9AA100AFB162E990074CC0BFAA2';
+export const lwm2mServerPublicKey = '3059301306072A8648CE3D020106082A8648CE3D03010703420004405354EA8893471D9296AFBC8B020A5C6201B0BB25812A53B849D4480FA5F06930C9237E946A3A1692C1CAFAA01A238A077F632C99371348337512363F28212B';
 

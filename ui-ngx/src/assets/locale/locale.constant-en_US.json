@@ -723,7 +723,6 @@
           "client-tab": "Client Security Config",
           "client-certificate": "Client certificate",
           "pattern_hex_dec_64": "must be hex decimal format and 64 characters",
-          "characters64": "Max-Min 64 characters",
           "pattern_hex_dec_134": "must be hex decimal format and 134 characters",
           "pattern_hex_dec_182": "must be hex decimal format and 182 characters",
           "bootstrap-tab": "Bootstrap",
