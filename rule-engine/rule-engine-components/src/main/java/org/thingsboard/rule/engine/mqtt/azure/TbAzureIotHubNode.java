@@ -48,7 +48,6 @@ public class TbAzureIotHubNode extends TbMqttNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         try {
             this.mqttNodeConfiguration = TbNodeUtils.convert(configuration, TbMqttNodeConfiguration.class);
-
             mqttNodeConfiguration.setPort(8883);
             mqttNodeConfiguration.setCleanSession(true);
             MqttClientCredentials credentials = mqttNodeConfiguration.getCredentials();
@@ -76,7 +75,6 @@ public class TbAzureIotHubNode extends TbMqttNode {
                     if (credentials instanceof AzureIotHubSasCredentials) {
                         AzureIotHubSasCredentials sasCredentials = (AzureIotHubSasCredentials) credentials;
                         config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), sasCredentials.getSasKey()));
-//                        config.setPassword("SharedAccessSignature sr=TBIoT2.azure-devices.net%2Fdevices%2Fdevice&sig=gTu9ZBFydojRXpCWC0fq3C6vfC%2FBevULhdsy4CzWa0Y%3D&se=1594986116");
                     }
                 }
             });
