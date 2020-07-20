@@ -15,13 +15,52 @@
     limitations under the License.
 
 -->
-<form [formGroup]="observeFormGroup" style="min-width: 400px;">
-    <mat-form-field>
-      <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
-      <input matInput type="text" formControlName="name" required>
-      <mat-error *ngIf="observeFormGroup.get('name').hasError('required')">
-        {{ 'device.lwm2m-security-config.client-key' | translate }}
-        <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-      </mat-error>
-    </mat-form-field>
+
+<form [formGroup]="observeFormGroup">
+  <div class="mat-padding vertical-padding" fxLayout="column">
+    <div fxLayout="row" fxLayoutGap="8px"
+         formArrayName="clientLwM2M"
+         *ngFor="let objectLwM2M of clientLwM2MFormArray(observeFormGroup).controls; let i = index">
+      <div fxLayout="column" [formGroupName]="i">
+        Object [{{ objectLwM2M.get('id').value}}]   name: {{ objectLwM2M.get('name').value}}
+        <div fxLayout="row" fxLayoutGap="8px"
+             formArrayName="instance"
+             *ngFor="let instance of instanceLwm2mFormArray(objectLwM2M).controls; let y = index">
+          <div fxLayout="column" [formGroupName]="y">
+            <div class="left-padding" fxLayout="row" fxLayoutGap="8px">
+              Instance [{{instance.get('id').value}}]
+                <mat-checkbox formControlName="isObserv" color="primary">
+                  {{ 'device.lwm2m-security-config.is-observe' | translate }}
+                </mat-checkbox>
+            </div>
+            <div class="mat-padding vertical-padding" fxLayout="row" fxLayoutGap="8px"
+                 formArrayName="resource"
+                 *ngFor="let resourceLwM2M of resourceLwm2mFormArray(instance).controls; let z = index">
+              <div class="mat-padding vertical-padding" fxLayout="row" fxLayoutGap="8px" [formGroupName]="z">
+                Resource[{{resourceLwM2M.get('id').value}}]
+                name: {{resourceLwM2M.get('name').value}}
+                <mat-checkbox formControlName="isObserv" color="primary">
+                  {{ 'device.lwm2m-security-config.is-observe' | translate }}
+                </mat-checkbox>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </form>
+
+<!--<mat-checkbox formControlName="isObserv" color="primary">-->
+<!--  {{ 'device.lwm2m-security-config.is-observe' | translate }}-->
+<!--</mat-checkbox>-->
+<!--<form [formGroup]="observeFormGroup" style="min-width: 400px;">-->
+<!--    <mat-form-field>-->
+<!--      <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>-->
+<!--      <input matInput type="text" formControlName="name" required>-->
+<!--      <mat-error *ngIf="observeFormGroup.get('name').hasError('required')">-->
+<!--        {{ 'device.lwm2m-security-config.client-key' | translate }}-->
+<!--        <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>-->
+<!--      </mat-error>-->
+<!--    </mat-form-field>-->
+<!--</form>-->

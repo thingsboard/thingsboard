@@ -98,10 +98,14 @@
             <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
           </mat-error>
           <mat-error *ngIf="serverFormGroup.get('clientPublicKeyOrId').hasError('pattern') &&
-                                (serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK ||
-                                 serverFormGroup.get('securityMode').value === securityConfigLwM2MType.X509)">
+                                serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK">
             {{ 'device.lwm2m-security-config.client-key' | translate }}
             <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_182' | translate }}</strong>
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('clientPublicKeyOrId').hasError('pattern') &&
+                                 serverFormGroup.get('securityMode').value === securityConfigLwM2MType.X509">
+            {{ 'device.lwm2m-security-config.client-key' | translate }}
+            <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate }}</strong>
           </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block">
@@ -139,10 +143,14 @@
               <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
             </mat-error>
             <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('pattern') &&
-                                (serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK ||
-                                 serverFormGroup.get('securityMode').value === securityConfigLwM2MType.X509)">
+                                serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK">
               {{ 'device.lwm2m-security-config.client-key' | translate }}
               <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_182' | translate }}</strong>
+            </mat-error>
+            <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('pattern') &&
+                                 serverFormGroup.get('securityMode').value === securityConfigLwM2MType.X509">
+              {{ 'device.lwm2m-security-config.client-key' | translate }}
+              <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate }}</strong>
             </mat-error>
           </mat-form-field>
         </div>

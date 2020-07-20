@@ -27,11 +27,11 @@ import {
   getDefaultPortBootstrap,
   getDefaultPortServer,
   KEY_IDENT_REGEXP_PSK,
-  KEY_PUBLIC_REGEXP,
+  KEY_PUBLIC_REGEXP_PSK,
   ServerSecurityConfig,
   DeviceCredentialsDialogLwm2mData,
   LEN_MAX_PSK,
-  LEN_MAX_PRIVATE_KEY, LEN_MAX_PUBLIC_KEY, KEY_PRIVATE_REGEXP
+  LEN_MAX_PRIVATE_KEY, LEN_MAX_PUBLIC_KEY_RPK, KEY_PRIVATE_REGEXP, LEN_MAX_PUBLIC_KEY_X509, KEY_PUBLIC_REGEXP_X509
 } from "@home/pages/device/lwm2m/security-config.models";
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
@@ -59,7 +59,7 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   credentialTypeLwM2MNamesMap = SECURITY_CONFIG_MODE_NAMES;
   lenMaxClientPublicKeyOrId = LEN_MAX_PSK;
   lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
-  lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY;
+  lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
 
   @Input() serverFormGroup: FormGroup;
   serverData: ServerSecurityConfig;
@@ -92,21 +92,28 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
         this.serverFormGroup.get('serverPublicKey').setValidators([]);
         break;
       case SECURITY_CONFIG_MODE.PSK:
-        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY;
+        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_RPK;
         this.lenMaxClientSecretKey = LEN_MAX_PSK;
-        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY;
+        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
         this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required]);
         this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_IDENT_REGEXP_PSK)]);
         this.serverFormGroup.get('serverPublicKey').setValidators([]);
         break;
       case SECURITY_CONFIG_MODE.RPK:
-      case SECURITY_CONFIG_MODE.X509:
-        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY;
+        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
         this.lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
-        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY;
-        this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP)]);
+        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_X509;
+        this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_PRIVATE_REGEXP)]);
-        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP)]);
+        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
+        break;
+      case SECURITY_CONFIG_MODE.X509:
+        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
+        this.lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
+        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_X509;
+        this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
+        this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_PRIVATE_REGEXP)]);
+        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         break;
     }
     this.serverFormGroup.updateValueAndValidity();
@@ -124,14 +131,14 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   }
 
   registerOnChange(fn: (value: any) => any): void {
-    console.log('test1')
+
   }
 
   registerOnTouched(fn: any): void {
-    console.log('test2')
+
   }
 
   setDisabledState?(isDisabled: boolean): void {
-    console.log('test3')
+
   }
 }

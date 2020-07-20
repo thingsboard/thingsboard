@@ -16,20 +16,30 @@
 
 import {PageComponent} from "@shared/components/page.component";
 import {Component, forwardRef, Inject, Input, OnInit, Output} from "@angular/core";
-import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from "@angular/forms";
+import {
+  AbstractControl,
+  ControlValueAccessor,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  NG_VALUE_ACCESSOR,
+  Validators
+} from "@angular/forms";
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {
   DeviceCredentialsDialogLwm2mData,
-  ObjectLwM2M
+  ObjectLwM2M,
+  Instance, ResourceLwM2M
 } from "@home/pages/device/lwm2m/security-config.models";
 
 
 @Component({
   selector: 'tb-security-config-observe-lwm2m',
   templateUrl: './security-config-observe.component.html',
-  styleUrls: [],
+  styleUrls: ['./security-config-observe.component.css'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -38,12 +48,16 @@ import {
     }
   ]
 })
-
 export class SecurityConfigObserveComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
+
+  // fruits: Array<string> = ["apple", "pear", "kiwi", "banana", "grape", "strawberry", "grapefruit", "melon", "mango", "plum"];
+  // numChecked: number = 0;
+
   @Input() observeFormGroup: FormGroup;
-  @Input() isDirty: boolean;
   observeValue: ObjectLwM2M[];
+  instance: FormArray;
+  clientLwM2M: FormArray;
 
   constructor(protected store: Store<AppState>,
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
@@ -52,39 +66,66 @@ export class SecurityConfigObserveComponent extends PageComponent implements OnI
     super(store);
   }
 
-
-  ngOnInit(): void {
-
-    this.observeFormGroup.addControl('name', this.fb.control('', [Validators.required]));
-  }
+  ngOnInit(): void {}
 
   registerOnChange(fn: any): void {
-    console.log("registerOnChange");
   }
 
   registerOnTouched(fn: any): void {
-    console.log("registerOnTouched");
   }
 
-  setDisabledState(isDisabled: boolean): void {
-    console.log("setDisabledState");
-  }
-
-  writeValue(value: any): void {
+  writeValue(value: ObjectLwM2M[]): void {
     this.observeValue = value;
-    if (this.observeValue) {
-      this.updateValueFields();
+    if (this.observeValue && this.observeValue.length > 0) {
+      this.buildClientObjectsLwM2M(this.observeValue)
     }
   }
 
-  updateValueFields(): void {
-    this.observeFormGroup.patchValue({
-      name: this.observeValue[0].name
-    }, {emitEvent: true});
-    if (this.isDirty) {
-      this.observeFormGroup.get('name').markAsDirty();
-      this.isDirty = false;
-    }
+  private buildClientObjectsLwM2M(objectsLwM2M: ObjectLwM2M []): void {
+    this.observeFormGroup.addControl('clientLwM2M',
+        this.createObjectsLwM2M(objectsLwM2M)
+    );
   }
 
+  createObjectsLwM2M(objectsLwM2MJson: ObjectLwM2M []): FormArray {
+    return this.fb.array(objectsLwM2MJson.map(objectLwM2M => {
+      return this.fb.group({
+        id: objectLwM2M.id,
+        name: objectLwM2M.name,
+        instance: this.createInstanceLwM2M(objectLwM2M.instance)
+      })
+    }))
+  }
+
+  createInstanceLwM2M(instanceLwM2MJson: Instance []): FormArray {
+    return this.fb.array(instanceLwM2MJson.map(instanceLwM2M => {
+      return this.fb.group({
+        id: instanceLwM2M.id,
+        isObserv: instanceLwM2M.isObserv,
+        resource: this.createResourceLwM2M(instanceLwM2M.resource)
+      })
+    }))
+  }
+
+  createResourceLwM2M(resourcesLwM2MJson: ResourceLwM2M []): FormArray {
+    return this.fb.array(resourcesLwM2MJson.map(resourceLwM2M => {
+      return this.fb.group({
+        id: resourceLwM2M.id,
+        isObserv: resourceLwM2M.isObserv,
+        name: resourceLwM2M.name
+      })
+    }))
+  }
+
+  clientLwM2MFormArray(formGroup: FormGroup): FormArray {
+    return formGroup.get('clientLwM2M') as FormArray;
+  }
+
+  instanceLwm2mFormArray(objectLwM2M: AbstractControl): FormArray {
+    return objectLwM2M.get('instance') as FormArray;
+  }
+
+  resourceLwm2mFormArray(instance: AbstractControl): FormArray {
+    return instance.get('resource') as FormArray;
+  }
 }

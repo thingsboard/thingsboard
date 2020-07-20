@@ -185,25 +185,25 @@
       <mat-tab label="{{ 'device.lwm2m-security-config.observe-tab' | translate }}">
         <div fxLayout="column">
           <div fxLayout="row" fxLayoutGap="8px">
-            <div fxFlex="50">
+<!--            <div fxFlex="50">-->
               <fieldset [disabled]="isLoading$ | async">
                 <tb-security-config-observe-lwm2m
                   [formControlName]="observe"
                   [observeFormGroup]="observeFormGroup">
                 </tb-security-config-observe-lwm2m>
               </fieldset>
-            </div>
-            <div fxFlex="50">
-              <fieldset [disabled]="isLoading$ | async">
-                <tb-json-object-edit
-                  [formControlName]="formControlNameJsonObserve"
-                  label="{{ 'device.lwm2m-security-config.observe-json-title' | translate }}"
-                  validateContent="true"
-                  [required]="true"
-                  [fillHeight]="false">
-                </tb-json-object-edit>
-              </fieldset>
-            </div>
+<!--            </div>-->
+<!--            <div fxFlex="50">-->
+<!--              <fieldset [disabled]="isLoading$ | async">-->
+<!--                <tb-json-object-edit-->
+<!--                  [formControlName]="formControlNameJsonObserve"-->
+<!--                  label="{{ 'device.lwm2m-security-config.observe-json-title' | translate }}"-->
+<!--                  validateContent="true"-->
+<!--                  [required]="true"-->
+<!--                  [fillHeight]="false">-->
+<!--                </tb-json-object-edit>-->
+<!--              </fieldset>-->
+<!--            </div>-->
           </div>
         </div>
       </mat-tab>

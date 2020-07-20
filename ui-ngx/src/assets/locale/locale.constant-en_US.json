@@ -725,6 +725,7 @@
           "pattern_hex_dec_64": "must be hex decimal format and 64 characters",
           "pattern_hex_dec_134": "must be hex decimal format and 134 characters",
           "pattern_hex_dec_182": "must be hex decimal format and 182 characters",
+          "pattern_hex_dec": "must be hex decimal format",
           "bootstrap-tab": "Bootstrap",
           "servers": "Servers",
           "short-id": "Short ID",
@@ -749,6 +750,7 @@
           "observe-tab": "Observe Device",
           "observe": "Observe Device",
           "observe-json-title": "Json Observe Device LwM2M",
+          "is-observe": "Observe",
           "config-json-tab": "Json edit all config device"
         },
         "secret": "Secret",
