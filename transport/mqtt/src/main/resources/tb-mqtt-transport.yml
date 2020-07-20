@@ -226,7 +226,7 @@ queue:
   transport:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
-    poll_interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
+    poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
 
 service:
   type: "${TB_SERVICE_TYPE:tb-transport}"
