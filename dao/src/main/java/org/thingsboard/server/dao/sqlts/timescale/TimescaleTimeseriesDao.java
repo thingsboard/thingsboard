@@ -78,11 +78,11 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 .batchSize(tsBatchSize)
                 .maxDelay(tsMaxDelay)
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
-                .stats(statsFactory.createMessagesStats("ts.timescale"))
+                .statsNamePrefix("ts.timescale")
                 .build();
 
         Function<TimescaleTsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
-        tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, timescaleBatchThreads);
+        tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, timescaleBatchThreads, statsFactory);
 
         tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
     }

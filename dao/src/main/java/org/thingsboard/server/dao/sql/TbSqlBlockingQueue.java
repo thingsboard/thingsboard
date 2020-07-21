@@ -38,10 +38,11 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
     private final TbSqlBlockingQueueParams params;
 
     private ExecutorService executor;
-    private MessagesStats stats;
+    private final MessagesStats stats;
 
-    public TbSqlBlockingQueue(TbSqlBlockingQueueParams params) {
+    public TbSqlBlockingQueue(TbSqlBlockingQueueParams params, MessagesStats stats) {
         this.params = params;
+        this.stats = stats;
     }
 
     @Override
@@ -108,7 +109,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
     public ListenableFuture<Void> add(E element) {
         SettableFuture<Void> future = SettableFuture.create();
         queue.add(new TbSqlQueueElement<>(future, element));
-        params.getStats().incrementTotal();
+        stats.incrementTotal();
         return future;
     }
 }
