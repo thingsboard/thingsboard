@@ -751,6 +751,7 @@
           "observe": "Observe Device",
           "observe-json-title": "Json Observe Device LwM2M",
           "is-observe": "Observe",
+          "is-observe-tip": "Is Observe/No Observe",
           "config-json-tab": "Json edit all config device"
         },
         "secret": "Secret",

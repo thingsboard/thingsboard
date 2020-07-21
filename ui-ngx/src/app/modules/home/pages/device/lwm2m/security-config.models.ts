@@ -390,7 +390,97 @@ export function getDefaultClientObserve (): ObjectLwM2M [] {
           },
         ]
       }]
-    }
+    },
+    {
+      id: 6,
+      name: "Location",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Latitude",
+            isObserv: false
+          },
+          {
+            id: 1,
+            name: "Longitude",
+            isObserv: false
+          },
+          {
+            id: 2,
+            name: "Altitude",
+            isObserv: false
+          },
+          {
+            id: 3,
+            name: "Radius",
+            isObserv: false
+          },
+          {
+            id: 4,
+            name: "Velocity",
+            isObserv: false
+          },
+          {
+            id: 5,
+            name: "Timestamp",
+            isObserv: false
+          },
+          {
+            id: 6,
+            name: "Speed",
+            isObserv: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 3303,
+      name: "Temperature",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 5700,
+            name: "Sensor Value",
+            isObserv: false
+          },
+          {
+            id: 5601,
+            name: "Min Measured Value",
+            isObserv: false
+          },
+          {
+            id: 5602,
+            name: "Max Measured Value",
+            isObserv: false
+          },
+          {
+            id: 5603,
+            name: "Min Range Value",
+            isObserv: false
+          },
+          {
+            id: 5604,
+            name: "Max Range Value",
+            isObserv: false
+          },
+          {
+            id: 5701,
+            name: "Sensor Units",
+            isObserv: false
+          },
+          {
+            id: 5605,
+            name: "Reset Min and Max Measured Values",
+            isObserv: false
+          }
+        ]
+      }]
+    },
   ]
 }
 
