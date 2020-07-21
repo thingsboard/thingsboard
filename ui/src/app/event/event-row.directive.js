@@ -149,13 +149,13 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             if (scope.queueStartTs) {
                 var status;
                 if (eventCreatedTime < scope.queueStartTs) {
-                    status = 'edge.success';
+                    status = $translate.instant('edge.success');
                     scope.isPending = false;
                 } else {
-                    status = 'edge.failed';
+                    status = $translate.instant('edge.failed');
                     scope.isPending = true;
                 }
-                return $translate.instant(status);
+                return status;
             }
         }
     }

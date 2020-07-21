@@ -22,8 +22,8 @@ import eventTableTemplate from './event-table.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventTableDirective($compile, $templateCache, $rootScope, types, eventService, edgeService,
-                                            attributeService, $log) {
+export default function EventTableDirective($compile, $templateCache, $rootScope, types,
+                                            eventService, edgeService, attributeService) {
 
     var linker = function (scope, element, attrs) {
 
@@ -67,8 +67,6 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                 }
             }
         }
-
-        $log.info("scope.entityType", scope.entityType);
 
         scope.eventType = attrs.defaultEventType;
 
