@@ -455,7 +455,25 @@ BEGIN
 
     data_type := get_column_type(table_name, column_device_id);
     IF data_type = 'character varying' THEN
+        ALTER TABLE device_credentials DROP CONSTRAINT IF EXISTS device_credentials_device_id_unq_key;
         PERFORM column_type_to_uuid(table_name, column_device_id);
+        -- remove duplicate credentials with same device_id
+        DELETE from device_credentials where id in (
+            select dc.id
+                from (
+                    SELECT id, device_id,
+                             ROW_NUMBER() OVER (
+                                 PARTITION BY
+                                     device_id
+                                 ORDER BY
+                                     created_time DESC
+                             ) row_num
+                    FROM
+                         device_credentials
+                    ) as dc
+            WHERE dc.row_num > 1
+        );
+        ALTER TABLE device_credentials ADD CONSTRAINT device_credentials_device_id_unq_key UNIQUE (device_id);
         RAISE NOTICE 'Table % column % updated!', table_name, column_device_id;
     ELSE
         RAISE NOTICE 'Table % column % already updated!', table_name, column_device_id;
