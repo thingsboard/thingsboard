@@ -821,7 +821,7 @@
         "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
         "import": "Import edge",
         "label": "Label",
-        "load-entity-error": "Could not load entity info",
+        "load-entity-error": "Entity not found. Failed to load info",
         "assign-new-edge": "Assign new edge",
         "manage-edge-dashboards": "Manage edge dashboards",
         "unassign-from-edge": "Unassign from edge",

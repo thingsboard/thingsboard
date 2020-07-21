@@ -389,6 +389,19 @@ export default angular.module('thingsboard.types', [])
                 customer: "CUSTOMER",
                 relation: "RELATION"
             },
+            edgeEventAction: {
+                updated: "UPDATED",
+                added: "ADDED",
+                assignedToEdge: "ASSIGNED_TO_EDGE",
+                deleted: "DELETED",
+                unassignedFromEdge: "UNASSIGNED_FROM_EDGE",
+                alarmAck: "ALARM_ACK",
+                alarmClear: "ALARM_CLEAR",
+                credentialsUpdated: "CREDENTIALS_UPDATED",
+                attributesUpdated: "ATTRIBUTES_UPDATED",
+                attributesDeleted: "ATTRIBUTES_DELETED",
+                timeseriesUpdated: "TIMESERIES_UPDATED"
+            },
             importEntityColumnType: {
                 name: {
                     name: 'import.column-type.name',

@@ -102,37 +102,45 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             switch(scope.event.edgeEventType) {
                 case types.edgeEventType.relation:
                     content = angular.toJson(scope.event.entityBody);
+                    showDialog();
                     break;
                 case types.edgeEventType.ruleChainMetaData:
-                    content = ruleChainService.getRuleChainMetaData(scope.event.entityId, {}).then(
+                    content = ruleChainService.getRuleChainMetaData(scope.event.entityId, {ignoreErrors: true}).then(
                         function success(info) {
+                            showDialog();
                             return angular.toJson(info);
                         }, function fail() {
-                            toast.showError($translate.instant('edge.load-entity-error'));
+                            showError();
                         });
                     break;
                 default:
-                    content = entityService.getEntity(scope.event.edgeEventType, scope.event.entityId, {}).then(
+                    content = entityService.getEntity(scope.event.edgeEventType, scope.event.entityId, {ignoreLoading: true, ignoreErrors: true}).then(
                         function success(info) {
+                            showDialog();
                             return angular.toJson(info);
                         }, function fail() {
-                            toast.showError($translate.instant('edge.load-entity-error'));
+                            showError();
                         });
                     break;
             }
-            $mdDialog.show({
-                controller: 'EventContentDialogController',
-                controllerAs: 'vm',
-                templateUrl: eventErrorDialogTemplate,
-                locals: {content: content, title: title, contentType: contentType, showingCallback: onShowingCallback},
-                parent: angular.element($document[0].body),
-                fullscreen: true,
-                targetEvent: $event,
-                multiple: true,
-                onShowing: function(scope, element) {
-                    onShowingCallback.onShowing(scope, element);
-                }
-            });
+            function showDialog() {
+                $mdDialog.show({
+                    controller: 'EventContentDialogController',
+                    controllerAs: 'vm',
+                    templateUrl: eventErrorDialogTemplate,
+                    locals: {content: content, title: title, contentType: contentType, showingCallback: onShowingCallback},
+                    parent: angular.element($document[0].body),
+                    fullscreen: true,
+                    targetEvent: $event,
+                    multiple: true,
+                    onShowing: function(scope, element) {
+                        onShowingCallback.onShowing(scope, element);
+                    }
+                });
+            }
+            function showError() {
+                toast.showError($translate.instant('edge.load-entity-error'));
+            }
         }
 
         scope.checkTooltip = function($event) {
