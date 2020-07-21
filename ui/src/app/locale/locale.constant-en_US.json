@@ -843,7 +843,10 @@
         "entity-views": "Edge entity views",
         "set-root-rule-chain-text": "Please select root rule chain for edge(s)",
         "set-root-rule-chain-to-edges": "Set root rule chain for Edge(s)",
-        "set-root-rule-chain-to-edges-text": "Set root rule chain for { count, plural, 1 {1 edge} other {# edges} }"
+        "set-root-rule-chain-to-edges-text": "Set root rule chain for { count, plural, 1 {1 edge} other {# edges} }",
+        "status": "Received by edge",
+        "success": "Deployed",
+        "failed": "Pending"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
