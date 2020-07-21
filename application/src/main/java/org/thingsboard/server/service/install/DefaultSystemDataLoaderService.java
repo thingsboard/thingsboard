@@ -141,6 +141,8 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         Tenant demoTenant = new Tenant();
         demoTenant.setRegion("Global");
         demoTenant.setTitle("Tenant");
+        demoTenant.setIsolatedTbCore(false);
+        demoTenant.setIsolatedTbRuleEngine(false);
         demoTenant = tenantService.saveTenant(demoTenant);
         installScripts.loadDemoRuleChains(demoTenant.getId());
         createUser(Authority.TENANT_ADMIN, demoTenant.getId(), null, "tenant@thingsboard.org", "tenant");
