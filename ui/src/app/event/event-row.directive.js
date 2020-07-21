@@ -114,7 +114,7 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                         });
                     break;
                 default:
-                    content = entityService.getEntity(scope.event.edgeEventType, scope.event.entityId, {ignoreLoading: true, ignoreErrors: true}).then(
+                    content = entityService.getEntity(scope.event.edgeEventType, scope.event.entityId, {ignoreErrors: true}).then(
                         function success(info) {
                             showDialog();
                             return angular.toJson(info);
