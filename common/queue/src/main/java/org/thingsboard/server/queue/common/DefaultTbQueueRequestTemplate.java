@@ -174,17 +174,23 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
         pendingRequests.putIfAbsent(requestId, responseMetaData);
         log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, request.getKey(), responseMetaData.expTime);
-        if (messagesStats != null) messagesStats.incrementTotal();
+        if (messagesStats != null) {
+            messagesStats.incrementTotal();
+        }
         requestTemplate.send(TopicPartitionInfo.builder().topic(requestTemplate.getDefaultTopic()).build(), request, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
-                if (messagesStats != null) messagesStats.incrementSuccessful();
+                if (messagesStats != null) {
+                    messagesStats.incrementSuccessful();
+                }
                 log.trace("[{}] Request sent: {}", requestId, metadata);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                if (messagesStats != null) messagesStats.incrementFailed();
+                if (messagesStats != null) {
+                    messagesStats.incrementFailed();
+                }
                 pendingRequests.remove(requestId);
                 future.setException(t);
             }

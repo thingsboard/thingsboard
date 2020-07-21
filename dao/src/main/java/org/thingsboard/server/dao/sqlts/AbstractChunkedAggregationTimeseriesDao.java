@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -69,11 +70,11 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 .batchSize(tsBatchSize)
                 .maxDelay(tsMaxDelay)
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
-                .stats(statsFactory.createMessagesStats("ts"))
+                .statsNamePrefix("ts")
                 .build();
 
         Function<TsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
-        tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, tsBatchThreads);
+        tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, tsBatchThreads, statsFactory);
         tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
     }
 
