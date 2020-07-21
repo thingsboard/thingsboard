@@ -162,13 +162,17 @@ public class EntityKeyMapping {
 
     public String toSelection(EntityFilterType filterType, EntityType entityType) {
         if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-            Set<String> existingEntityFields = getExistingEntityFields(filterType, entityType);
-            String alias = getEntityFieldAlias(filterType, entityType);
-            if (existingEntityFields.contains(alias)) {
-                String column = entityFieldColumnMap.get(alias);
-                return String.format("e.%s as %s", column, getValueAlias());
+            if (entityKey.getKey().equals("entityType") && !filterType.equals(EntityFilterType.RELATIONS_QUERY)) {
+                return String.format("'%s' as %s", entityType.name(), getValueAlias());
             } else {
-                return String.format("'' as %s", getValueAlias());
+                Set<String> existingEntityFields = getExistingEntityFields(filterType, entityType);
+                String alias = getEntityFieldAlias(filterType, entityType);
+                if (existingEntityFields.contains(alias)) {
+                    String column = entityFieldColumnMap.get(alias);
+                    return String.format("e.%s as %s", column, getValueAlias());
+                } else {
+                    return String.format("'' as %s", getValueAlias());
+                }
             }
         } else if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
             return buildTimeSeriesSelection();
