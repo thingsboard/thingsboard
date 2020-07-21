@@ -207,7 +207,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         try {
             return new JsonParser().parse(payload);
         } catch (JsonSyntaxException ex) {
-            log.error("Payload is in incorrect format: {}", payload);
+            log.warn("Payload is in incorrect format: {}", payload);
             throw new AdaptorException(ex);
         }
     }
