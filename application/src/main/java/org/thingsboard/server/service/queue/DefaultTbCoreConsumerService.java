@@ -21,16 +21,22 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeDeleteProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionCloseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -47,6 +53,7 @@ import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.stats.StatsCounterFactory;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -54,6 +61,7 @@ import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWra
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,18 +89,19 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbLocalSubscriptionService localSubscriptionService;
     private final SubscriptionManagerService subscriptionManagerService;
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
-    private final TbCoreConsumerStats stats = new TbCoreConsumerStats();
+    private final TbCoreConsumerStats stats;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         DeviceStateService stateService, TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
-                                        TbCoreDeviceRpcService tbCoreDeviceRpcService) {
+                                        TbCoreDeviceRpcService tbCoreDeviceRpcService, StatsCounterFactory counterFactory) {
         super(actorContext, encodingService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
         this.subscriptionManagerService = subscriptionManagerService;
         this.tbCoreDeviceRpcService = tbCoreDeviceRpcService;
+        this.stats = new TbCoreConsumerStats(counterFactory);
     }
 
     @PostConstruct
@@ -228,12 +237,15 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     public void printStats() {
         if (statsEnabled) {
             stats.printStats();
+            stats.reset();
         }
     }
 
     private void forwardToLocalSubMgrService(LocalSubscriptionServiceMsgProto msg, TbCallback callback) {
         if (msg.hasSubUpdate()) {
             localSubscriptionService.onSubscriptionUpdate(msg.getSubUpdate().getSessionId(), TbSubscriptionUtils.fromProto(msg.getSubUpdate()), callback);
+        } else if (msg.hasAlarmSubUpdate()) {
+            localSubscriptionService.onSubscriptionUpdate(msg.getAlarmSubUpdate().getSessionId(), TbSubscriptionUtils.fromProto(msg.getAlarmSubUpdate()), callback);
         } else {
             throwNotHandled(msg, callback);
         }
@@ -244,6 +256,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getAttributeSub()), callback);
         } else if (msg.hasTelemetrySub()) {
             subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getTelemetrySub()), callback);
+        } else if (msg.hasAlarmSub()) {
+            subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getAlarmSub()), callback);
         } else if (msg.hasSubClose()) {
             TbSubscriptionCloseProto closeProto = msg.getSubClose();
             subscriptionManagerService.cancelSubscription(closeProto.getSessionId(), closeProto.getSubscriptionId(), callback);
@@ -259,6 +273,24 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     proto.getScope(), TbSubscriptionUtils.toAttributeKvList(proto.getDataList()), callback);
+        } else if (msg.hasAttrDelete()) {
+            TbAttributeDeleteProto proto = msg.getAttrDelete();
+            subscriptionManagerService.onAttributesDelete(
+                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
+                    proto.getScope(), proto.getKeysList(), callback);
+        } else if (msg.hasAlarmUpdate()) {
+            TbAlarmUpdateProto proto = msg.getAlarmUpdate();
+            subscriptionManagerService.onAlarmUpdate(
+                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
+                    JacksonUtil.fromString(proto.getAlarm(), Alarm.class), callback);
+        } else if (msg.hasAlarmDelete()) {
+            TbAlarmDeleteProto proto = msg.getAlarmDelete();
+            subscriptionManagerService.onAlarmDeleted(
+                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
+                    JacksonUtil.fromString(proto.getAlarm(), Alarm.class), callback);
         } else {
             throwNotHandled(msg, callback);
         }

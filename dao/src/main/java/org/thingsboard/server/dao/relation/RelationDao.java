@@ -59,6 +59,4 @@ public interface RelationDao {
 
     ListenableFuture<Boolean> deleteOutboundRelationsAsync(TenantId tenantId, EntityId entity);
 
-    ListenableFuture<PageData<EntityRelation>> findRelations(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType toType, TimePageLink pageLink);
-
 }

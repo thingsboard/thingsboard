@@ -61,38 +61,31 @@ import java.util.function.Consumer;
  */
 @Service
 @Slf4j
-public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptionService {
-
-    private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
+public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionService implements TelemetrySubscriptionService {
 
     private final AttributesService attrService;
     private final TimeseriesService tsService;
-    private final TbClusterService clusterService;
-    private final PartitionService partitionService;
-    private Optional<SubscriptionManagerService> subscriptionManagerService;
 
     private ExecutorService tsCallBackExecutor;
-    private ExecutorService wsCallBackExecutor;
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService) {
+        super(clusterService, partitionService);
         this.attrService = attrService;
         this.tsService = tsService;
-        this.clusterService = clusterService;
-        this.partitionService = partitionService;
-    }
-
-    @Autowired(required = false)
-    public void setSubscriptionManagerService(Optional<SubscriptionManagerService> subscriptionManagerService) {
-        this.subscriptionManagerService = subscriptionManagerService;
     }
 
     @PostConstruct
     public void initExecutor() {
+        super.initExecutor();
         tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-service-ts-callback"));
-        wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-service-ws-callback"));
+    }
+
+    @Override
+    protected String getExecutorPrefix() {
+        return "ts";
     }
 
     @PreDestroy
@@ -100,18 +93,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         if (tsCallBackExecutor != null) {
             tsCallBackExecutor.shutdownNow();
         }
-        if (wsCallBackExecutor != null) {
-            wsCallBackExecutor.shutdownNow();
-        }
-    }
-
-    @Override
-    @EventListener(PartitionChangeEvent.class)
-    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            currentPartitions.clear();
-            currentPartitions.addAll(partitionChangeEvent.getPartitions());
-        }
+        super.shutdownExecutor();
     }
 
     @Override
@@ -131,6 +113,13 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         ListenableFuture<List<Void>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes));
+    }
+
+    @Override
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
+        addMainCallback(deleteFuture, callback);
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
     }
 
     @Override
@@ -171,6 +160,20 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         }
     }
 
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        if (currentPartitions.contains(tpi)) {
+            if (subscriptionManagerService.isPresent()) {
+                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY);
+            } else {
+                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+            }
+        } else {
+            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys);
+            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+        }
+    }
+
     private void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
@@ -197,18 +200,5 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 callback.onFailure(t);
             }
         }, tsCallBackExecutor);
-    }
-
-    private void addWsCallback(ListenableFuture<List<Void>> saveFuture, Consumer<Void> callback) {
-        Futures.addCallback(saveFuture, new FutureCallback<List<Void>>() {
-            @Override
-            public void onSuccess(@Nullable List<Void> result) {
-                callback.accept(null);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-            }
-        }, wsCallBackExecutor);
     }
 }

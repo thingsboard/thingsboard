@@ -220,7 +220,8 @@
               </mat-cell>
             </ng-container>
             <mat-header-row [ngClass]="{'mat-row-select': selectionEnabled}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-            <mat-row [ngClass]="{'mat-row-select': selectionEnabled,
+            <mat-row [fxShow]="!dataSource.dataLoading"
+                     [ngClass]="{'mat-row-select': selectionEnabled,
                                  'mat-selected': dataSource.selection.isSelected(entity),
                                  'tb-current-entity': dataSource.isCurrentEntity(entity)}"
                      *matRowDef="let entity; columns: displayedColumns;" (click)="onRowClick($event, entity)"></mat-row>

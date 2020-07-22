@@ -36,8 +36,8 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
-import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -57,9 +57,6 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
     private final Map<String, Map<Integer, TbSubscription>> subscriptionsBySessionId = new ConcurrentHashMap<>();
-
-    @Autowired
-    private TelemetryWebSocketService wsService;
 
     @Autowired
     private EntityViewService entityViewService;
@@ -141,7 +138,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     @Override
-    public void onSubscriptionUpdate(String sessionId, SubscriptionUpdate update, TbCallback callback) {
+    public void onSubscriptionUpdate(String sessionId, TelemetrySubscriptionUpdate update, TbCallback callback) {
         TbSubscription subscription = subscriptionsBySessionId
                 .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
         if (subscription != null) {
@@ -155,7 +152,17 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     update.getLatestValues().forEach((key, value) -> attrSub.getKeyStates().put(key, value));
                     break;
             }
-            wsService.sendWsMsg(sessionId, update);
+            subscription.getUpdateConsumer().accept(sessionId, update);
+        }
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onSubscriptionUpdate(String sessionId, AlarmSubscriptionUpdate update, TbCallback callback) {
+        TbSubscription subscription = subscriptionsBySessionId
+                .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
+        if (subscription != null && subscription.getType() == TbSubscriptionType.ALARMS) {
+            subscription.getUpdateConsumer().accept(sessionId, update);
         }
         callback.onSuccess();
     }

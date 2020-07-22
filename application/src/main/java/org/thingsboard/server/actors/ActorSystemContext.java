@@ -76,6 +76,7 @@ import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
@@ -169,10 +170,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private AlarmService alarmService;
-
-    @Autowired
-    @Getter
     private RelationService relationService;
 
     @Autowired
@@ -186,6 +183,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;
+
+    @Autowired
+    @Getter
+    private AlarmSubscriptionService alarmService;
 
     @Autowired
     @Getter
@@ -218,6 +219,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private ClaimDevicesService claimDevicesService;
+
+    @Autowired
+    @Getter
+    private JsInvokeStats jsInvokeStats;
 
     //TODO: separate context for TbCore and TbRuleEngine
     @Autowired(required = false)
@@ -272,19 +277,14 @@ public class ActorSystemContext {
     @Getter
     private long statisticsPersistFrequency;
 
-    @Getter
-    private final AtomicInteger jsInvokeRequestsCount = new AtomicInteger(0);
-    @Getter
-    private final AtomicInteger jsInvokeResponsesCount = new AtomicInteger(0);
-    @Getter
-    private final AtomicInteger jsInvokeFailuresCount = new AtomicInteger(0);
 
     @Scheduled(fixedDelayString = "${actors.statistics.js_print_interval_ms}")
     public void printStats() {
         if (statisticsEnabled) {
-            if (jsInvokeRequestsCount.get() > 0 || jsInvokeResponsesCount.get() > 0 || jsInvokeFailuresCount.get() > 0) {
+            if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
                 log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
-                        jsInvokeRequestsCount.getAndSet(0), jsInvokeResponsesCount.getAndSet(0), jsInvokeFailuresCount.getAndSet(0));
+                        jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());
+                jsInvokeStats.reset();
             }
         }
     }

@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -292,21 +293,21 @@ class DefaultTbContext implements TbContext {
     @Override
     public void logJsEvalRequest() {
         if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeRequestsCount().incrementAndGet();
+            mainCtx.getJsInvokeStats().incrementRequests();
         }
     }
 
     @Override
     public void logJsEvalResponse() {
         if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeResponsesCount().incrementAndGet();
+            mainCtx.getJsInvokeStats().incrementResponses();
         }
     }
 
     @Override
     public void logJsEvalFailure() {
         if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeFailuresCount().incrementAndGet();
+            mainCtx.getJsInvokeStats().incrementFailures();
         }
     }
 
@@ -351,7 +352,7 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public AlarmService getAlarmService() {
+    public RuleEngineAlarmService getAlarmService() {
         return mainCtx.getAlarmService();
     }
 

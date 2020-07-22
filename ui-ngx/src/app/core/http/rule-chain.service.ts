@@ -239,7 +239,7 @@ export class RuleChainService {
         });
       }
       if (moduleResource) {
-        tasks.push(this.resourcesService.loadModule(moduleResource, ruleNodeConfigResourcesModulesMap).pipe(
+        tasks.push(this.resourcesService.loadFactories(moduleResource, ruleNodeConfigResourcesModulesMap).pipe(
           map((res) => {
             if (nodeDefinition.configDirective && nodeDefinition.configDirective.length) {
               const selector = snakeCase(nodeDefinition.configDirective, '-');

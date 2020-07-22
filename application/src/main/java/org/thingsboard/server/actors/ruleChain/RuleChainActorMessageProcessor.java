@@ -161,7 +161,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private TbActorRef createRuleNodeActor(TbActorCtx ctx, RuleNode ruleNode) {
         return ctx.getOrCreateChildActor(new TbEntityActorId(ruleNode.getId()),
                 () -> DefaultActorService.RULE_DISPATCHER_NAME,
-                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleNode.getName(), ruleNode.getId()));
+                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId()));
     }
 
     private void initRoutes(RuleChain ruleChain, List<RuleNode> ruleNodeList) {

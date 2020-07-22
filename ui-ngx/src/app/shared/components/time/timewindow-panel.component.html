@@ -48,9 +48,9 @@
                       <tb-timeinterval
                         formControlName="timewindowMs"
                         predefinedName="timewindow.last"
-                        [fxShow]="timewindowForm.get('history').get('historyType').value === historyTypes.LAST_INTERVAL"
+                        [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL"
                         [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                                timewindowForm.get('history').get('historyType').value === historyTypes.LAST_INTERVAL"
+                                timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL"
                         style="padding-top: 8px;"></tb-timeinterval>
                     </section>
                   </mat-radio-button>
@@ -59,9 +59,9 @@
                       <span translate>timewindow.time-period</span>
                       <tb-datetime-period
                         formControlName="fixedTimewindow"
-                        [fxShow]="timewindowForm.get('history').get('historyType').value === historyTypes.FIXED"
+                        [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.FIXED"
                         [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                                timewindowForm.get('history').get('historyType').value === historyTypes.FIXED"
+                                timewindowForm.get('history.historyType').value === historyTypes.FIXED"
                         style="padding-top: 8px;"></tb-datetime-period>
                     </section>
                   </mat-radio-button>
@@ -89,7 +89,7 @@
             </mat-form-field>
           </section>
         </section>
-        <section fxLayout="row" [fxShow]="timewindowForm.get('aggregation').get('type').value === aggregationTypes.NONE">
+        <section fxLayout="row" [fxShow]="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
           <section fxLayout="column" [fxShow]="isEdit">
             <label class="tb-small hide-label" translate>timewindow.hide</label>
             <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideAggInterval"
@@ -101,13 +101,13 @@
               <span translate>aggregation.limit</span>
               <mat-slider fxFlex formControlName="limit"
                           thumbLabel
-                          [value]="timewindowForm.get('aggregation').get('limit').value"
+                          [value]="timewindowForm.get('aggregation.limit').value"
                           min="{{minDatapointsLimit()}}"
                           max="{{maxDatapointsLimit()}}">
               </mat-slider>
               <mat-form-field style="max-width: 80px;">
                 <input matInput formControlName="limit" type="number" step="1"
-                       [value]="timewindowForm.get('aggregation').get('limit').value"
+                       [value]="timewindowForm.get('aggregation.limit').value"
                        min="{{minDatapointsLimit()}}"
                        max="{{maxDatapointsLimit()}}"/>
               </mat-form-field>
@@ -116,7 +116,7 @@
         </section>
       </div>
       <div formGroupName="realtime"
-           *ngIf="aggregation && timewindowForm.get('aggregation').get('type').value !== aggregationTypes.NONE &&
+           *ngIf="aggregation && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE &&
            timewindow.selectedTab === timewindowTypes.REALTIME" class="mat-content mat-padding" fxLayout="column">
         <tb-timeinterval
           formControlName="interval"
@@ -128,7 +128,7 @@
         </tb-timeinterval>
       </div>
       <div formGroupName="history"
-           *ngIf="aggregation && timewindowForm.get('aggregation').get('type').value !== aggregationTypes.NONE &&
+           *ngIf="aggregation && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE &&
            timewindow.selectedTab === timewindowTypes.HISTORY" class="mat-content mat-padding" fxLayout="column">
         <tb-timeinterval
           formControlName="interval"

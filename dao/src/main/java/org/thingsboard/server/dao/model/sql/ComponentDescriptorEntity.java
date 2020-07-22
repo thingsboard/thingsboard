@@ -73,6 +73,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         if (component.getId() != null) {
             this.setUuid(component.getId().getId());
         }
+        this.setCreatedTime(component.getCreatedTime());
         this.actions = component.getActions();
         this.type = component.getType();
         this.scope = component.getScope();
@@ -85,6 +86,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
     @Override
     public ComponentDescriptor toData() {
         ComponentDescriptor data = new ComponentDescriptor(new ComponentDescriptorId(this.getUuid()));
+        data.setCreatedTime(createdTime);
         data.setType(type);
         data.setScope(scope);
         data.setName(this.getName());

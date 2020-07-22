@@ -1,0 +1,90 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section fxLayout="column" [formGroup]="filterListFormGroup">
+  <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <div translate>filter.filters</div>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <div fxLayout="row">
+      <span fxFlex="8"></span>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex="92">
+        <div fxFlex fxLayout="row" fxLayoutGap="8px">
+          <div fxFlex="40" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <label fxFlex translate class="tb-title no-padding">filter.operation.operation</label>
+            <label *ngIf="valueType === valueTypeEnum.STRING"
+                   translate class="tb-title no-padding" style="min-width: 70px;">filter.ignore-case</label>
+          </div>
+          <label fxFlex="60" translate class="tb-title no-padding">filter.value</label>
+        </div>
+        <label translate class="tb-title no-padding" style="width: 60px;">filter.user-parameters</label>
+        <span [fxShow]="!disabled" style="min-width: 40px;">&nbsp;</span>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="predicate-list">
+      <div fxLayout="row" fxLayoutAlign="start center" style="height: 45px;"
+           formArrayName="predicates"
+           *ngFor="let predicateControl of predicatesFormArray().controls; let $index = index">
+        <div fxFlex="8" fxLayout="row" fxLayoutAlign="center" class="filters-operation">
+          <span *ngIf="$index > 0">{{ complexOperationTranslations.get(operation) | translate }}</span>
+        </div>
+        <div fxLayout="column" fxFlex="92">
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex>
+            <tb-filter-predicate
+              fxFlex
+              [valueType]="valueType"
+              [key]="key"
+              [formControl]="predicateControl">
+            </tb-filter-predicate>
+            <button mat-icon-button color="primary"
+                    [fxShow]="!disabled"
+                    type="button"
+                    (click)="removePredicate($index)"
+                    matTooltip="{{ 'filter.remove-filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      <span [fxShow]="!predicatesFormArray().length"
+            fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
+            class="no-data-found" translate>filter.no-filters</span>
+    </div>
+    <div style="margin-top: 16px;" fxLayout="row" fxLayoutGap="8px">
+      <button mat-button mat-raised-button color="primary"
+              [fxShow]="!disabled"
+              (click)="addPredicate(false)"
+              type="button"
+              matTooltip="{{ 'filter.add-filter' | translate }}"
+              matTooltipPosition="above">
+        {{ 'action.add' | translate }}
+      </button>
+      <button mat-button mat-raised-button color="primary"
+              [fxShow]="!disabled"
+              (click)="addPredicate(true)"
+              type="button"
+              matTooltip="{{ 'filter.add-complex-filter' | translate }}"
+              matTooltipPosition="above">
+        {{ 'filter.add-complex' | translate }}
+      </button>
+    </div>
+  </mat-expansion-panel>
+</section>

@@ -93,8 +93,16 @@
     .tb-datasource {
       tb-entity-alias-select {
         .mat-form-field {
-          margin-top: 13px;
+          margin-top: 20px;
         }
+        @media #{$mat-gt-sm} {
+          .mat-form-field {
+            width: 200px;
+            max-width: 200px;
+          }
+        }
+      }
+      tb-filter-select {
         @media #{$mat-gt-sm} {
           .mat-form-field {
             width: 200px;

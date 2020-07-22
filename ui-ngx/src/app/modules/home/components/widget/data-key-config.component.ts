@@ -71,6 +71,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   @Input()
   dataKeySettingsSchema: any;
 
+  @Input()
+  showPostProcessing = true;
+
   @ViewChild('keyInput') keyInput: ElementRef;
 
   @ViewChild('funcBodyEdit') funcBodyEdit: JsFuncComponent;
@@ -183,6 +186,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     this.modelValue = {...this.modelValue, ...this.dataKeyFormGroup.value};
     if (this.displayAdvanced) {
       this.modelValue.settings = this.dataKeySettingsFormGroup.get('settings').value.model;
+    }
+    if (this.modelValue.name) {
+      this.modelValue.name = this.modelValue.name.trim();
     }
     this.propagateChange(this.modelValue);
   }

@@ -46,6 +46,11 @@ server:
       max_subscriptions_per_regular_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_REGULAR_USER:0}"
       max_subscriptions_per_public_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_PUBLIC_USER:0}"
       max_updates_per_session: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_UPDATES_PER_SESSION:300:1,3000:60}"
+    dynamic_page_link:
+      refresh_interval: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_INTERVAL_SEC:60}"
+      refresh_pool_size: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_POOL_SIZE:1}"
+      max_per_user: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_MAX_PER_USER:10}"
+    max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:1000}"
   rest:
     limits:
       tenant:
@@ -184,6 +189,8 @@ cassandra:
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
   url: "${CASSANDRA_URL:127.0.0.1:9042}"
+  # Specify local datacenter name
+  local_datacenter: "${CASSANDRA_LOCAL_DATACENTER:datacenter1}"
   # Enable/disable secure connection
   ssl: "${CASSANDRA_USE_SSL:false}"
   # Enable/disable JMX
@@ -250,14 +257,17 @@ sql:
       batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
       batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
+      batch_threads: "${SQL_ATTRIBUTES_BATCH_THREADS:4}"
     ts:
       batch_size: "${SQL_TS_BATCH_SIZE:10000}"
       batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
+      batch_threads: "${SQL_TS_BATCH_THREADS:4}"
     ts_latest:
       batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
       batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
+      batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:4}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
     remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
     postgres:
@@ -266,6 +276,7 @@ sql:
     timescale:
       # Specify Interval size for new data chunks storage.
       chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
+      batch_threads: "${SQL_TIMESCALE_BATCH_THREADS:4}"
     ttl:
       ts:
         enabled: "${SQL_TTL_TS_ENABLED:true}"
@@ -333,28 +344,28 @@ caffeine:
   specs:
     relations:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     deviceCredentials:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     devices:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     sessions:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     assets:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     entityViews:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     claimDevices:
       timeToLiveInMinutes: 1
-      maxSize: 100000
+      maxSize: 0
     securitySettings:
       timeToLiveInMinutes: 1440
-      maxSize: 1
+      maxSize: 0
 
 redis:
   # standalone or cluster
@@ -444,7 +455,7 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
-      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:5}"
+      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
 
 # Audit log parameters
 audit-log:
@@ -753,3 +764,13 @@ service:
   id: "${TB_SERVICE_ID:}"
   tenant_id: "${TB_SERVICE_TENANT_ID:}" # empty or specific tenant id.
 
+metrics:
+  # Enable/disable actuator metrics.
+  enabled: "${METRICS_ENABLED:false}"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
+        include: '${METRICS_ENDPOINTS_EXPOSE:info}'

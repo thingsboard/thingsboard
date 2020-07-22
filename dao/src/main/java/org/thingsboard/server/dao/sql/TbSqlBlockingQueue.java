@@ -41,16 +41,14 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
     private final TbSqlBlockingQueueParams params;
 
     private ExecutorService executor;
-    private ScheduledLogExecutorComponent logExecutor;
 
     public TbSqlBlockingQueue(TbSqlBlockingQueueParams params) {
         this.params = params;
     }
 
     @Override
-    public void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction) {
-        this.logExecutor = logExecutor;
-        executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("sql-queue-" + params.getLogName().toLowerCase()));
+    public void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, int index) {
+        executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("sql-queue-" + index + "-" + params.getLogName().toLowerCase()));
         executor.submit(() -> {
             String logName = params.getLogName();
             int batchSize = params.getBatchSize();
@@ -94,7 +92,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
 
         logExecutor.scheduleAtFixedRate(() -> {
             if (queue.size() > 0 || addedCount.get() > 0 || savedCount.get() > 0 || failedCount.get() > 0) {
-                log.info("[{}] queueSize [{}] totalAdded [{}] totalSaved [{}] totalFailed [{}]",
+                log.info("Queue-{} [{}] queueSize [{}] totalAdded [{}] totalSaved [{}] totalFailed [{}]", index,
                         params.getLogName(), queue.size(), addedCount.getAndSet(0), savedCount.getAndSet(0), failedCount.getAndSet(0));
             }
         }, params.getStatsPrintIntervalMs(), params.getStatsPrintIntervalMs(), TimeUnit.MILLISECONDS);

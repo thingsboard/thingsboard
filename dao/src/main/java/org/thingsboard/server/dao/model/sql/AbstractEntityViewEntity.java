@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -35,7 +34,10 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.MappedSuperclass;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -53,17 +55,17 @@ import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPER
 public abstract class AbstractEntityViewEntity<T extends EntityView> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
 
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
-    private String entityId;
+    private UUID entityId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_PROPERTY)
     private EntityType entityType;
 
     @Column(name = ModelConstants.ENTITY_VIEW_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = ModelConstants.ENTITY_VIEW_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    private UUID customerId;
 
     @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
     private String type;
@@ -97,15 +99,16 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         if (entityView.getId() != null) {
             this.setUuid(entityView.getId().getId());
         }
+        this.setCreatedTime(entityView.getCreatedTime());
         if (entityView.getEntityId() != null) {
-            this.entityId = toString(entityView.getEntityId().getId());
+            this.entityId = entityView.getEntityId().getId();
             this.entityType = entityView.getEntityId().getEntityType();
         }
         if (entityView.getTenantId() != null) {
-            this.tenantId = toString(entityView.getTenantId().getId());
+            this.tenantId = entityView.getTenantId().getId();
         }
         if (entityView.getCustomerId() != null) {
-            this.customerId = toString(entityView.getCustomerId().getId());
+            this.customerId = entityView.getCustomerId().getId();
         }
         this.type = entityView.getType();
         this.name = entityView.getName();
@@ -122,6 +125,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
 
     public AbstractEntityViewEntity(EntityViewEntity entityViewEntity) {
         this.setId(entityViewEntity.getId());
+        this.setCreatedTime(entityViewEntity.getCreatedTime());
         this.entityId = entityViewEntity.getEntityId();
         this.entityType = entityViewEntity.getEntityType();
         this.tenantId = entityViewEntity.getTenantId();
@@ -147,16 +151,16 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
 
     protected EntityView toEntityView() {
         EntityView entityView = new EntityView(new EntityViewId(getUuid()));
-        entityView.setCreatedTime(Uuids.unixTimestamp(getUuid()));
+        entityView.setCreatedTime(createdTime);
 
         if (entityId != null) {
-            entityView.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));
+            entityView.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType.name(), entityId));
         }
         if (tenantId != null) {
-            entityView.setTenantId(new TenantId(toUUID(tenantId)));
+            entityView.setTenantId(new TenantId(tenantId));
         }
         if (customerId != null) {
-            entityView.setCustomerId(new CustomerId(toUUID(customerId)));
+            entityView.setCustomerId(new CustomerId(customerId));
         }
         entityView.setType(type);
         entityView.setName(name);

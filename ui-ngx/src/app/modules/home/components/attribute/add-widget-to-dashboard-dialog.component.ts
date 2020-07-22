@@ -39,6 +39,7 @@ import { mergeMap } from 'rxjs/operators';
 import { AliasesInfo } from '@shared/models/alias.models';
 import { ItemBufferService } from '@core/services/item-buffer.service';
 import { StateObject } from '@core/api/widget-api.models';
+import { FiltersInfo } from '@shared/models/query/query.models';
 
 export interface AddWidgetToDashboardDialogData {
   entityId: EntityId;
@@ -182,8 +183,11 @@ export class AddWidgetToDashboardDialogComponent extends
       alias: this.data.entityName,
       filter: this.dashboardUtils.createSingleEntityFilter(this.data.entityId)
     };
+    const filtersInfo: FiltersInfo = {
+      datasourceFilters: {}
+    };
     this.itembuffer.addWidgetToDashboard(dashboard, targetState,
-      targetLayout, this.data.widget, aliasesInfo, null,
+      targetLayout, this.data.widget, aliasesInfo, filtersInfo, null, null,
       48, null, -1, -1).pipe(
       mergeMap((theDashboard) => {
         return this.dashboardService.saveDashboard(theDashboard);

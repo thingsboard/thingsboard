@@ -18,14 +18,12 @@ package org.thingsboard.server.service.ttl.timeseries;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.thingsboard.server.dao.util.PsqlTsAnyDao;
 import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-@PsqlTsAnyDao
 @Slf4j
 public abstract class AbstractTimeseriesCleanUpService extends AbstractCleanUpService {
 

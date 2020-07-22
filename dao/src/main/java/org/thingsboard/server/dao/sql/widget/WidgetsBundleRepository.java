@@ -18,38 +18,37 @@ package org.thingsboard.server.dao.sql.widget;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/23/2017.
  */
 @SqlDao
-public interface WidgetsBundleRepository extends PagingAndSortingRepository<WidgetsBundleEntity, String> {
+public interface WidgetsBundleRepository extends PagingAndSortingRepository<WidgetsBundleEntity, UUID> {
 
-    WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(String tenantId, String alias);
+    WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
             "AND LOWER(wb.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<WidgetsBundleEntity> findSystemWidgetsBundles(@Param("systemTenantId") String systemTenantId,
+    Page<WidgetsBundleEntity> findSystemWidgetsBundles(@Param("systemTenantId") UUID systemTenantId,
                                                        @Param("searchText") String searchText,
                                                        Pageable pageable);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :tenantId " +
             "AND LOWER(wb.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantId(@Param("tenantId") String tenantId,
+    Page<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
                                                                  @Param("textSearch") String textSearch,
                                                                  Pageable pageable);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantId, :nullTenantId) " +
             "AND LOWER(wb.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantId(@Param("tenantId") String tenantId,
-                                                                    @Param("nullTenantId") String nullTenantId,
+    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
+                                                                    @Param("nullTenantId") UUID nullTenantId,
                                                                     @Param("textSearch") String textSearch,
                                                                     Pageable pageable);
 }

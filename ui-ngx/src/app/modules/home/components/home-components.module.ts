@@ -65,6 +65,25 @@ import { EventContentDialogComponent } from '@home/components/event/event-conten
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
 import { SelectTargetStateDialogComponent } from '@home/components/dashboard/select-target-state-dialog.component';
+import { AliasesEntityAutocompleteComponent } from '@home/components/alias/aliases-entity-autocomplete.component';
+import { BooleanFilterPredicateComponent } from '@home/components/filter/boolean-filter-predicate.component';
+import { StringFilterPredicateComponent } from '@home/components/filter/string-filter-predicate.component';
+import { NumericFilterPredicateComponent } from '@home/components/filter/numeric-filter-predicate.component';
+import { ComplexFilterPredicateComponent } from '@home/components/filter/complex-filter-predicate.component';
+import { FilterPredicateComponent } from '@home/components/filter/filter-predicate.component';
+import { FilterPredicateListComponent } from '@home/components/filter/filter-predicate-list.component';
+import { KeyFilterListComponent } from '@home/components/filter/key-filter-list.component';
+import { ComplexFilterPredicateDialogComponent } from '@home/components/filter/complex-filter-predicate-dialog.component';
+import { KeyFilterDialogComponent } from '@home/components/filter/key-filter-dialog.component';
+import { FiltersDialogComponent } from '@home/components/filter/filters-dialog.component';
+import { FilterDialogComponent } from '@home/components/filter/filter-dialog.component';
+import { FilterSelectComponent } from './filter/filter-select.component';
+import { FiltersEditComponent } from '@home/components/filter/filters-edit.component';
+import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-panel.component';
+import { UserFilterDialogComponent } from '@home/components/filter/user-filter-dialog.component';
+import { FilterUserInfoComponent } from './filter/filter-user-info.component';
+import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.component';
+import { FilterPredicateValueComponent } from './filter/filter-predicate-value.component';
 
 @NgModule({
   declarations:
@@ -88,6 +107,7 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
       EditAttributeValuePanelComponent,
       AliasesEntitySelectPanelComponent,
       AliasesEntitySelectComponent,
+      AliasesEntityAutocompleteComponent,
       EntityAliasesDialogComponent,
       EntityAliasDialogComponent,
       DashboardComponent,
@@ -112,7 +132,25 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
       SelectTargetLayoutDialogComponent,
       SelectTargetStateDialogComponent,
       AddWidgetToDashboardDialogComponent,
-      TableColumnsAssignmentComponent
+      TableColumnsAssignmentComponent,
+      BooleanFilterPredicateComponent,
+      StringFilterPredicateComponent,
+      NumericFilterPredicateComponent,
+      ComplexFilterPredicateComponent,
+      ComplexFilterPredicateDialogComponent,
+      FilterPredicateComponent,
+      FilterPredicateListComponent,
+      KeyFilterListComponent,
+      KeyFilterDialogComponent,
+      FilterDialogComponent,
+      FiltersDialogComponent,
+      FilterSelectComponent,
+      FiltersEditComponent,
+      FiltersEditPanelComponent,
+      UserFilterDialogComponent,
+      FilterUserInfoComponent,
+      FilterUserInfoDialogComponent,
+      FilterPredicateValueComponent
     ],
   imports: [
     CommonModule,
@@ -131,6 +169,7 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
     AlarmTableComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
+    AliasesEntityAutocompleteComponent,
     EntityAliasesDialogComponent,
     EntityAliasDialogComponent,
     DashboardComponent,
@@ -153,7 +192,21 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
     ImportDialogCsvComponent,
     TableColumnsAssignmentComponent,
     SelectTargetLayoutDialogComponent,
-    SelectTargetStateDialogComponent
+    SelectTargetStateDialogComponent,
+    BooleanFilterPredicateComponent,
+    StringFilterPredicateComponent,
+    NumericFilterPredicateComponent,
+    ComplexFilterPredicateComponent,
+    ComplexFilterPredicateDialogComponent,
+    FilterPredicateComponent,
+    FilterPredicateListComponent,
+    KeyFilterListComponent,
+    KeyFilterDialogComponent,
+    FilterDialogComponent,
+    FiltersDialogComponent,
+    FilterSelectComponent,
+    FiltersEditComponent,
+    UserFilterDialogComponent
   ],
   providers: [
     WidgetComponentService,

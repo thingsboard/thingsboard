@@ -36,10 +36,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
-import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
-
 @Component
 @SqlDao
 public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> implements AuditLogDao {
@@ -53,7 +49,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     }
 
     @Override
-    protected CrudRepository<AuditLogEntity, String> getCrudRepository() {
+    protected CrudRepository<AuditLogEntity, UUID> getCrudRepository() {
         return auditLogRepository;
     }
 
@@ -70,12 +66,12 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
         return DaoUtil.toPageData(
                 auditLogRepository
                         .findAuditLogsByTenantIdAndEntityId(
-                                fromTimeUUID(tenantId),
+                                tenantId,
                                 entityId.getEntityType(),
-                                fromTimeUUID(entityId.getId()),
+                                entityId.getId(),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                startTimeToId(pageLink.getStartTime()),
-                                endTimeToId(pageLink.getEndTime()),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
                                 actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -85,11 +81,11 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
         return DaoUtil.toPageData(
                 auditLogRepository
                         .findAuditLogsByTenantIdAndCustomerId(
-                                fromTimeUUID(tenantId),
-                                fromTimeUUID(customerId.getId()),
+                                tenantId,
+                                customerId.getId(),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                startTimeToId(pageLink.getStartTime()),
-                                endTimeToId(pageLink.getEndTime()),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
                                 actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -99,11 +95,11 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
         return DaoUtil.toPageData(
                 auditLogRepository
                         .findAuditLogsByTenantIdAndUserId(
-                                fromTimeUUID(tenantId),
-                                fromTimeUUID(userId.getId()),
+                                tenantId,
+                                userId.getId(),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                startTimeToId(pageLink.getStartTime()),
-                                endTimeToId(pageLink.getEndTime()),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
                                 actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -112,10 +108,10 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     public PageData<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
         return DaoUtil.toPageData(
                 auditLogRepository.findByTenantId(
-                        fromTimeUUID(tenantId),
+                        tenantId,
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        startTimeToId(pageLink.getStartTime()),
-                        endTimeToId(pageLink.getEndTime()),
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
                         actionTypes,
                         DaoUtil.toPageable(pageLink)));
     }

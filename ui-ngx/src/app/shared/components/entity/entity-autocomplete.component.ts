@@ -68,6 +68,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.dirty = true;
         }
       }
+      this.selectEntityFormGroup.get('entity').updateValueAndValidity();
     }
   }
 
@@ -175,6 +176,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.entityRequiredText = 'customer.customer-required';
           break;
         case EntityType.USER:
+        case AliasEntityType.CURRENT_USER:
           this.entityText = 'user.user';
           this.noEntitiesMatchingText = 'user.no-users-matching';
           this.entityRequiredText = 'user.user-required';
@@ -324,6 +326,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       return EntityType.CUSTOMER;
     } else if (entityType === AliasEntityType.CURRENT_TENANT) {
       return EntityType.TENANT;
+    } else if (entityType === AliasEntityType.CURRENT_USER) {
+      return EntityType.USER;
     }
     return entityType;
   }

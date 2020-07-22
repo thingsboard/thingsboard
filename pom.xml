@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -56,7 +56,6 @@
         <guava.version>28.2-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
         <commons-lang3.version>3.4</commons-lang3.version>
-        <commons-validator.version>1.6</commons-validator.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
         <jackson.version>2.11.0</jackson.version>
@@ -108,6 +107,8 @@
         <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
         <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
         <javax-annotation-api.version>1.3.1</javax-annotation-api.version>
+        <java-websocket.version>1.5.0</java-websocket.version>
+        <micrometer.version>1.5.2</micrometer.version>
     </properties>
 
     <modules>
@@ -1063,11 +1064,6 @@
                 <version>${commons-lang3.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-validator</groupId>
-                <artifactId>commons-validator</artifactId>
-                <version>${commons-validator.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
@@ -1349,7 +1345,6 @@
                 <artifactId>commons-collections</artifactId>
                 <version>${commons-collections.version}</version>
             </dependency>
-
             <!-- API, java.xml.bind module -->
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
@@ -1367,6 +1362,26 @@
                 <groupId>javax.annotation</groupId>
                 <artifactId>javax.annotation-api</artifactId>
                 <version>${javax-annotation-api.version}</version>
+            <dependency>
+                <groupId>org.java-websocket</groupId>
+                <artifactId>Java-WebSocket</artifactId>
+                <version>${java-websocket.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-actuator</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-core</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-registry-prometheus</artifactId>
+                <version>${micrometer.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

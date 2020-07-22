@@ -315,7 +315,7 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
       const keyData = data[0];
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
-        if (attrValue) {
+        if (isDefined(attrValue)) {
           let parsed = null;
           try {
             parsed = this.parseValueFunction(JSON.parse(attrValue));

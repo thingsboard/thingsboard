@@ -16,11 +16,12 @@
 
 import L from 'leaflet';
 import { FormattedData, MarkerSettings, PolygonSettings, PolylineSettings } from './map-models';
-import { Datasource } from '@app/shared/models/widget.models';
+import { Datasource, DatasourceData } from '@app/shared/models/widget.models';
 import _ from 'lodash';
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createLabelFromDatasource, hashCode, isNumber, isUndefined, padValue } from '@core/utils';
+import { Form } from '@angular/forms';
 
 export function createTooltip(target: L.Layer,
     settings: MarkerSettings | PolylineSettings | PolygonSettings,
@@ -158,7 +159,7 @@ function parseTemplate(template: string, data: { $datasource?: Datasource, [key:
     }
     template = createLabelFromDatasource(data.$datasource, template);
 
-    let match = varsRegex.exec(template);
+    let match = /\${([^}]*)}/g.exec(template);
     while (match !== null) {
       const variable = match[0];
       let label = match[1];
@@ -185,7 +186,7 @@ function parseTemplate(template: string, data: { $datasource?: Datasource, [key:
         textValue = value;
       }
       template = template.split(variable).join(textValue);
-      match = varsRegex.exec(template);
+      match = /\${([^}]*)}/g.exec(template);
     }
 
     let actionTags: string;
@@ -236,18 +237,20 @@ export const parseWithTranslation = {
   }
 }
 
-export function parseData(input: any[]): FormattedData[] {
+export function parseData(input: DatasourceData[]): FormattedData[] {
   return _(input).groupBy(el => el?.datasource?.entityName)
     .values().value().map((entityArray, i) => {
-      const obj = {
+      const obj: FormattedData = {
         entityName: entityArray[0]?.datasource?.entityName,
-        $datasource: entityArray[0]?.datasource as Datasource,
+        entityId: entityArray[0]?.datasource?.entityId,
+        entityType: entityArray[0]?.datasource?.entityType,
+        $datasource: entityArray[0]?.datasource,
         dsIndex: i,
         deviceType: null
       };
       entityArray.filter(el => el.data.length).forEach(el => {
-        obj[el?.dataKey?.label] = el?.data[0][1];
-        obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
+        obj[el?.dataKey?.label] = el?.data[0][0] ? el?.data[0][1] : null;
+        obj[el?.dataKey?.label + '|ts'] = el?.data[0][0] || null;
         if (el?.dataKey?.label === 'type') {
           obj.deviceType = el?.data[0][1];
         }
@@ -256,12 +259,14 @@ export function parseData(input: any[]): FormattedData[] {
     });
 }
 
-export function parseArray(input: any[]): any[] {
+export function parseArray(input: DatasourceData[]): FormattedData[][] {
   return _(input).groupBy(el => el?.datasource?.entityName)
     .values().value().map((entityArray, dsIndex) =>
       entityArray[0].data.map((el, i) => {
-        const obj = {
+        const obj: FormattedData = {
           entityName: entityArray[0]?.datasource?.entityName,
+          entityId: entityArray[0]?.datasource?.entityId,
+          entityType: entityArray[0]?.datasource?.entityType,
           $datasource: entityArray[0]?.datasource,
           dsIndex: i,
           time: el[0],

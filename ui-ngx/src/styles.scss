@@ -750,6 +750,9 @@ mat-label {
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
     }
+    &.tb-mat-18 {
+      @include tb-mat-icon-size(18);
+    }
     &.tb-mat-20 {
       @include tb-mat-icon-size(20);
     }
@@ -1055,5 +1058,9 @@ mat-label {
     padding-bottom: 6px;
     line-height: 1.5;
     white-space: pre-line;
+  }
+
+  .tb-toast-panel {
+    pointer-events: none !important;
   }
 }
