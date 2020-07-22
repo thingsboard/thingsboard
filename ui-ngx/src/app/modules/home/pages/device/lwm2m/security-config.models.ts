@@ -103,7 +103,7 @@ export interface BootstrapServersSecurityConfig {
 export interface ServerSecurityConfig {
   host?: string,
   port?: number,
-  isBootstrapServer?: boolean,
+  bootstrapServerIs?: boolean,
   securityMode: string,
   clientPublicKeyOrId?: string,
   clientSecretKey?: string,
@@ -174,7 +174,7 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSe
   return {
     host: hostname,
     port: getDefaultPortBootstrap(),
-    isBootstrapServer: true,
+    bootstrapServerIs: true,
     securityMode: SECURITY_CONFIG_MODE.NO_SEC.toString(),
     clientPublicKeyOrId: '',
     clientSecretKey: '',
@@ -187,7 +187,7 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSe
 
 export function getDefaultLwM2MServerSecurityConfig(hostname): ServerSecurityConfig {
   const DefaultLwM2MServerSecurityConfig =  getDefaultBootstrapServerSecurityConfig(hostname);
-  DefaultLwM2MServerSecurityConfig.isBootstrapServer = false;
+  DefaultLwM2MServerSecurityConfig.bootstrapServerIs = false;
   return DefaultLwM2MServerSecurityConfig;
 }
 

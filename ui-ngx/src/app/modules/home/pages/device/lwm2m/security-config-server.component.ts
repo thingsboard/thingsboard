@@ -74,7 +74,7 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   }
 
   ngOnInit(): void {
-    this.serverFormGroup.get('isBootstrapServer').disable();
+    this.serverFormGroup.get('bootstrapServerIs').disable();
     this.registerDisableOnLoadFormControl(this.serverFormGroup.get('securityMode'));
   }
 
@@ -125,6 +125,7 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
 
   writeValue(value: any): void {
     this.serverData = value;
+    console.log("serverData: ", this.serverData);
     if (this.serverData) {
       this.updateValueFields();
     }

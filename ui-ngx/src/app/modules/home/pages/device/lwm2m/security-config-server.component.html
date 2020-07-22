@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="serverFormGroup" style="min-width: 400px;">
+<section [formGroup]="serverFormGroup" style="min-width: 400px;">
   <div class="mat-padding">
     <div fxLayout="column">
       <div fxLayout="row" fxLayoutGap="8px">
@@ -83,7 +83,7 @@
             <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
           </mat-error>
         </mat-form-field>
-        <mat-checkbox formControlName="isBootstrapServer" color="primary">
+        <mat-checkbox formControlName="bootstrapServerIs" color="primary">
           {{ 'device.lwm2m-security-config.bootstrap-server' | translate }}
         </mat-checkbox>
       </div>
@@ -157,4 +157,4 @@
       </div>
     </div>
   </div>
-</form>
+</section>

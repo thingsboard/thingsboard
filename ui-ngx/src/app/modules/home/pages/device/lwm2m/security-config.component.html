@@ -26,201 +26,198 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <mat-form-field class="mat-block">
-      <mat-label translate>device.lwm2m-security-config.endpoint</mat-label>
-      <input matInput type="text" formControlName="endPoint" required>
-      <mat-error *ngIf="lwm2mConfigFormGroup.get('endPoint').hasError('required')">
-        {{ 'device.lwm2m-security-config.endpoint' | translate }}
-        <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-      </mat-error>
-    </mat-form-field>
-    <mat-tab-group dynamicHeight>
-      <mat-tab label="{{ 'device.lwm2m-security-config.client-tab' | translate }}">
-        <div class="mat-padding">
-          <mat-form-field class="mat-block">
-            <mat-label translate>device.lwm2m-security-config.mode</mat-label>
-            <mat-select formControlName="securityConfigClientMode"
-                        (ngModelChange)="securityConfigClientModeChanged($event)">
-              <mat-option *ngFor="let securityConfigClientMode of securityConfigLwM2MTypes"
-                          [value]="securityConfigClientMode">
-                {{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[securityConfigClientMode]) }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
+    <fieldset [disabled]="isLoading$ | async">
+      <mat-form-field class="mat-block">
+        <mat-label translate>device.lwm2m-security-config.endpoint</mat-label>
+        <input matInput type="text" formControlName="endPoint" required>
+        <mat-error *ngIf="lwm2mConfigFormGroup.get('endPoint').hasError('required')">
+          {{ 'device.lwm2m-security-config.endpoint' | translate }}
+          <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
+        </mat-error>
+      </mat-form-field>
+      <mat-tab-group dynamicHeight>
+        <mat-tab label="{{ 'device.lwm2m-security-config.client-tab' | translate }}">
+          <div class="mat-padding">
             <mat-form-field class="mat-block">
-              <mat-label>{{ 'device.lwm2m-security-config.identity' | translate }}</mat-label>
-              <input matInput type="text" formControlName="identityPSK"
-                     [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
-              <mat-error *ngIf="lwm2mConfigFormGroup.get('identityPSK').hasError('required')">
-                {{ 'device.lwm2m-security-config.identity' | translate }}
-                <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-              </mat-error>
+              <mat-label translate>device.lwm2m-security-config.mode</mat-label>
+              <mat-select formControlName="securityConfigClientMode"
+                          (ngModelChange)="securityConfigClientModeChanged($event)">
+                <mat-option *ngFor="let securityConfigClientMode of securityConfigLwM2MTypes"
+                            [value]="securityConfigClientMode">
+                  {{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[securityConfigClientMode]) }}
+                </mat-option>
+              </mat-select>
             </mat-form-field>
-          </div>
-          <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
+            <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
+              <mat-form-field class="mat-block">
+                <mat-label>{{ 'device.lwm2m-security-config.identity' | translate }}</mat-label>
+                <input matInput type="text" formControlName="identityPSK"
+                       [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
+                <mat-error *ngIf="lwm2mConfigFormGroup.get('identityPSK').hasError('required')">
+                  {{ 'device.lwm2m-security-config.identity' | translate }}
+                  <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
                       lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
-            <mat-form-field class="mat-block">
-              <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
-              <textarea matInput #clientKey  maxlength={{lenMinMaxClient}} type="text" rows="3" cols="1" formControlName="clientKey"
-                        [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
+              <mat-form-field class="mat-block">
+                <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
+                <textarea matInput #clientKey maxlength={{lenMinMaxClient}} type="text" rows="3" cols="1"
+                          formControlName="clientKey"
+                          [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
               lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK"></textarea>
-              <mat-hint align="end">{{clientKey.value?.length || 0}}/{{lenMaxKeyClient}}</mat-hint>
-              <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('required')">
-                {{ 'device.lwm2m-security-config.client-key' | translate }}
-                <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-              </mat-error>
-              <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('pattern') &&
+                <mat-hint align="end">{{clientKey.value?.length || 0}}/{{lenMaxKeyClient}}</mat-hint>
+                <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('required')">
+                  {{ 'device.lwm2m-security-config.client-key' | translate }}
+                  <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
+                </mat-error>
+                <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('pattern') &&
                                 lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
-                {{ 'device.lwm2m-security-config.client-key' | translate }}
-                <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_64' | translate }}</strong>
-              </mat-error>
-              <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('pattern') &&
+                  {{ 'device.lwm2m-security-config.client-key' | translate }}
+                  <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_64' | translate }}</strong>
+                </mat-error>
+                <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('pattern') &&
                                 lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK">
-                {{ 'device.lwm2m-security-config.client-key' | translate }}
-                <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_182' | translate }}</strong>
-              </mat-error>
-            </mat-form-field>
+                  {{ 'device.lwm2m-security-config.client-key' | translate }}
+                  <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_182' | translate }}</strong>
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.X509">
+              <mat-checkbox formControlName="clientCertificate" color="primary">
+                {{ 'device.lwm2m-security-config.client-certificate' | translate }}
+              </mat-checkbox>
+            </div>
           </div>
-          <div [fxShow]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.X509">
-            <mat-checkbox formControlName="clientCertificate" color="primary">
-              {{ 'device.lwm2m-security-config.client-certificate' | translate }}
-            </mat-checkbox>
+        </mat-tab>
+        <mat-tab label="{{ 'device.lwm2m-security-config.bootstrap-tab' | translate }}">
+          <div class="mat-padding">
+            <mat-accordion multi="true" class="mat-body-1">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <div
+                      class="tb-panel-title">{{ 'device.lwm2m-security-config.servers' | translate | uppercase }}</div>
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <div fxLayout="column">
+                  <div fxLayout="row" fxLayoutGap="8px">
+                    <mat-form-field fxFlex>
+                      <mat-label>{{ 'device.lwm2m-security-config.short-id' | translate }}</mat-label>
+                      <input matInput type="number" formControlName="shortId" required>
+                      <mat-error *ngIf="lwm2mConfigFormGroup.get('shortId').hasError('required')" translate>
+                        {{ 'device.lwm2m-security-config.short-id' | translate }}
+                        <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
+                      </mat-error>
+                    </mat-form-field>
+                    <mat-form-field fxFlex>
+                      <mat-label>{{ 'device.lwm2m-security-config.lifetime' | translate }}</mat-label>
+                      <input matInput type="number" formControlName="lifetime" required>
+                      <mat-error *ngIf="lwm2mConfigFormGroup.get('lifetime').hasError('required')" translate>
+                        {{ 'device.lwm2m-security-config.lifetime' | translate }}
+                        <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                  <div fxLayout="row" fxLayoutGap="8px">
+                    <mat-form-field fxFlex>
+                      <mat-label>{{ 'device.lwm2m-security-config.default-min-period' | translate }}</mat-label>
+                      <input matInput type="number" formControlName="defaultMinPeriod" required>
+                      <mat-error *ngIf="lwm2mConfigFormGroup.get('defaultMinPeriod').hasError('required')" translate>
+                        {{ 'device.lwm2m-security-config.default-min-period' | translate }}
+                        <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
+                      </mat-error>
+                    </mat-form-field>
+                    <mat-form-field fxFlex>
+                      <mat-label>{{ 'device.lwm2m-security-config.binding' | translate }}</mat-label>
+                      <input matInput type="text" formControlName="binding" required>
+                      <mat-error *ngIf="lwm2mConfigFormGroup.get('binding').hasError('required')" translate>
+                        {{ 'device.lwm2m-security-config.binding' | translate }}
+                        <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                  <div>
+                    <mat-checkbox formControlName="notifIfDisabled" color="primary">
+                      {{ 'device.lwm2m-security-config.notif-if-disabled' | translate }}
+                    </mat-checkbox>
+                  </div>
+                </div>
+              </mat-expansion-panel>
+            </mat-accordion>
+            <mat-accordion multi="true" class="mat-body-1">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <div
+                      class="tb-panel-title">{{ 'device.lwm2m-security-config.bootstrap-server' | translate | uppercase }}</div>
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <div class="mat-padding">
+                    <tb-security-config-server-lwm2m
+                      [formControlName]="bootstrapServer"
+                      [serverFormGroup]="bootstrapFormGroup">
+                    </tb-security-config-server-lwm2m>
+                </div>
+              </mat-expansion-panel>
+            </mat-accordion>
+            <mat-accordion multi="true" class="mat-body-1">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <div
+                      class="tb-panel-title">{{ 'device.lwm2m-security-config.lwm2m-server' | translate | uppercase }}</div>
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <div class="mat-padding">
+                    <tb-security-config-server-lwm2m
+                      [formControlName]="lwm2mServer"
+                      [serverFormGroup]="lwm2mServerFormGroup">
+                    </tb-security-config-server-lwm2m>
+                </div>
+              </mat-expansion-panel>
+            </mat-accordion>
           </div>
-        </div>
-      </mat-tab>
-      <mat-tab label="{{ 'device.lwm2m-security-config.bootstrap-tab' | translate }}">
-        <div class="mat-padding">
-          <mat-accordion multi="true" class="mat-body-1">
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  <div
-                    class="tb-panel-title">{{ 'device.lwm2m-security-config.servers' | translate | uppercase }}</div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <div fxLayout="column">
-                <div fxLayout="row" fxLayoutGap="8px">
-                  <mat-form-field fxFlex>
-                    <mat-label>{{ 'device.lwm2m-security-config.short-id' | translate }}</mat-label>
-                    <input matInput type="number" formControlName="shortId" required>
-                    <mat-error *ngIf="lwm2mConfigFormGroup.get('shortId').hasError('required')" translate>
-                      {{ 'device.lwm2m-security-config.short-id' | translate }}
-                      <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-form-field fxFlex>
-                    <mat-label>{{ 'device.lwm2m-security-config.lifetime' | translate }}</mat-label>
-                    <input matInput type="number" formControlName="lifetime" required>
-                    <mat-error *ngIf="lwm2mConfigFormGroup.get('lifetime').hasError('required')" translate>
-                      {{ 'device.lwm2m-security-config.lifetime' | translate }}
-                      <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-                <div fxLayout="row" fxLayoutGap="8px">
-                  <mat-form-field fxFlex>
-                    <mat-label>{{ 'device.lwm2m-security-config.default-min-period' | translate }}</mat-label>
-                    <input matInput type="number" formControlName="defaultMinPeriod" required>
-                    <mat-error *ngIf="lwm2mConfigFormGroup.get('defaultMinPeriod').hasError('required')" translate>
-                      {{ 'device.lwm2m-security-config.default-min-period' | translate }}
-                      <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-                    </mat-error>
-                  </mat-form-field>
-                  <mat-form-field fxFlex>
-                    <mat-label>{{ 'device.lwm2m-security-config.binding' | translate }}</mat-label>
-                    <input matInput type="text" formControlName="binding" required>
-                    <mat-error *ngIf="lwm2mConfigFormGroup.get('binding').hasError('required')" translate>
-                      {{ 'device.lwm2m-security-config.binding' | translate }}
-                      <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-                <div>
-                  <mat-checkbox formControlName="notifIfDisabled" color="primary">
-                    {{ 'device.lwm2m-security-config.notif-if-disabled' | translate }}
-                  </mat-checkbox>
-                </div>
-              </div>
-            </mat-expansion-panel>
-          </mat-accordion>
-          <mat-accordion multi="true" class="mat-body-1">
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  <div
-                    class="tb-panel-title">{{ 'device.lwm2m-security-config.bootstrap-server' | translate | uppercase }}</div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <div class="mat-padding">
-                <fieldset [disabled]="isLoading$ | async">
-                  <tb-security-config-server-lwm2m
-                    [formControlName]="bootstrapServer"
-                    [serverFormGroup]="bootstrapFormGroup">
-                  </tb-security-config-server-lwm2m>
-                </fieldset>
-              </div>
-            </mat-expansion-panel>
-          </mat-accordion>
-          <mat-accordion multi="true" class="mat-body-1">
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  <div
-                    class="tb-panel-title">{{ 'device.lwm2m-security-config.lwm2m-server' | translate | uppercase }}</div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <div class="mat-padding">
-                <fieldset [disabled]="isLoading$ | async">
-                  <tb-security-config-server-lwm2m
-                    [formControlName]="lwm2mServer"
-                    [serverFormGroup]="lwm2mServerFormGroup">
-                  </tb-security-config-server-lwm2m>
-                </fieldset>
-              </div>
-            </mat-expansion-panel>
-          </mat-accordion>
-        </div>
-      </mat-tab>
-      <mat-tab label="{{ 'device.lwm2m-security-config.observe-tab' | translate }}">
-        <div fxLayout="column">
-          <div fxLayout="row" fxLayoutGap="8px">
-<!--            <div fxFlex="50">-->
-              <fieldset [disabled]="isLoading$ | async">
-                <tb-security-config-observe-lwm2m
-                  [formControlName]="observe"
-                  [observeFormGroup]="observeFormGroup">
-                </tb-security-config-observe-lwm2m>
-              </fieldset>
+        </mat-tab>
+        <mat-tab label="{{ 'device.lwm2m-security-config.observe-tab' | translate }}">
+<!--          <div fxLayout="column">-->
+<!--            <div fxLayout="row" fxLayoutGap="8px">-->
+              <!--            <div fxFlex="50">-->
+              <tb-security-config-observe-lwm2m
+                                                [formControlName]="observe"
+                                                [observeFormGroup]="observeFormGroup">
+              </tb-security-config-observe-lwm2m>
+              <!--            </div>-->
+              <!--            <div fxFlex="50">-->
+              <!--              <fieldset [disabled]="isLoading$ | async">-->
+              <!--                <tb-json-object-edit-->
+              <!--                  [formControlName]="formControlNameJsonObserve"-->
+              <!--                  label="{{ 'device.lwm2m-security-config.observe-json-title' | translate }}"-->
+              <!--                  validateContent="true"-->
+              <!--                  [required]="true"-->
+              <!--                  [fillHeight]="false">-->
+              <!--                </tb-json-object-edit>-->
+              <!--              </fieldset>-->
+              <!--            </div>-->
 <!--            </div>-->
-<!--            <div fxFlex="50">-->
-<!--              <fieldset [disabled]="isLoading$ | async">-->
-<!--                <tb-json-object-edit-->
-<!--                  [formControlName]="formControlNameJsonObserve"-->
-<!--                  label="{{ 'device.lwm2m-security-config.observe-json-title' | translate }}"-->
-<!--                  validateContent="true"-->
-<!--                  [required]="true"-->
-<!--                  [fillHeight]="false">-->
-<!--                </tb-json-object-edit>-->
-<!--              </fieldset>-->
-<!--            </div>-->
+<!--          </div>-->
+        </mat-tab>
+        <mat-tab label="{{ 'device.lwm2m-security-config.config-json-tab' | translate }}">
+          <div class="mat-padding">
+            <fieldset [disabled]="isLoading$ | async">
+              <tb-json-object-edit
+                [formControlName]="formControlNameJsonAllConfig"
+                label="{{ 'device.lwm2m-value' | translate }}"
+                validateContent="true"
+                [required]="true"
+                [fillHeight]="false">
+              </tb-json-object-edit>
+            </fieldset>
           </div>
-        </div>
-      </mat-tab>
-      <mat-tab label="{{ 'device.lwm2m-security-config.config-json-tab' | translate }}">
-        <div class="mat-padding">
-          <fieldset [disabled]="isLoading$ | async">
-            <tb-json-object-edit
-              [formControlName]="formControlNameJsonAllConfig"
-              label="{{ 'device.lwm2m-value' | translate }}"
-              validateContent="true"
-              [required]="true"
-              [fillHeight]="false">
-            </tb-json-object-edit>
-          </fieldset>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
+        </mat-tab>
+      </mat-tab-group>
+    </fieldset>
   </div>
   <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
     <span fxFlex></span>
