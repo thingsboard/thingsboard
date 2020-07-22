@@ -171,6 +171,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   writeValue(value: DataKey): void {
     this.modelValue = value;
+    if (this.modelValue.postFuncBody && this.modelValue.postFuncBody.length) {
+      this.modelValue.usePostProcessing = true;
+    }
     this.dataKeyFormGroup.patchValue(this.modelValue, {emitEvent: false});
     this.dataKeyFormGroup.get('name').setValidators(this.modelValue.type !== DataKeyType.function ? [Validators.required] : []);
     this.dataKeyFormGroup.get('name').updateValueAndValidity({emitEvent: false});
