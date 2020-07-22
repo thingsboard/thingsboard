@@ -158,7 +158,6 @@ export interface TbFlotCustomLegendSettings {
 export interface TbFlotLabelPatternSettings {
   name: string;
   type: DataKeyType;
-  settings?: object
 }
 
 export interface TbFlotGraphSettings extends TbFlotBaseSettings, TbFlotThresholdsSettings, TbFlotComparisonSettings, TbFlotCustomLegendSettings {
