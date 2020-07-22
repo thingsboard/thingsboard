@@ -169,7 +169,7 @@ public class EntityKeyMapping {
                 String alias = getEntityFieldAlias(filterType, entityType);
                 if (existingEntityFields.contains(alias)) {
                     String column = entityFieldColumnMap.get(alias);
-                    return String.format("e.%s as %s", column, getValueAlias());
+                    return String.format("cast(e.%s as varchar) as %s", column, getValueAlias());
                 } else {
                     return String.format("'' as %s", getValueAlias());
                 }
