@@ -239,7 +239,7 @@ export class MenuService {
 
     if (this.authState.allowOAuth2Configuration) {
       sections.push({
-        name: 'admin.system-settings',
+        name: 'admin.settings',
         type: 'toggle',
         path: '/settings',
         height: '40px',
