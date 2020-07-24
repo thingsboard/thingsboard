@@ -29,13 +29,6 @@
     <fieldset [disabled]="isLoading$ | async" fxLayout="column">
       <section fxLayout="row" fxLayoutGap="8px" class="entity-key">
         <section fxFlex="70" fxLayout="row" formGroupName="key" fxLayoutGap="8px">
-          <mat-form-field fxFlex="60" class="mat-block">
-            <mat-label translate>filter.key-name</mat-label>
-            <input matInput required formControlName="key">
-            <mat-error *ngIf="keyFilterFormGroup.get('key.key').hasError('required')">
-              {{ 'filter.key-name-required' | translate }}
-            </mat-error>
-          </mat-form-field>
           <mat-form-field fxFlex="40" class="mat-block">
             <mat-label translate>filter.key-type.key-type</mat-label>
             <mat-select required formControlName="type">
@@ -44,10 +37,24 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
+          <mat-form-field fxFlex="60" class="mat-block">
+            <mat-label translate>filter.key-name</mat-label>
+            <input matInput required formControlName="key"
+                   [matAutocomplete]="auto"
+                   [matAutocompleteDisabled]="keyFilterFormGroup.get('key.type').value !== entityField">
+            <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
+              <mat-option *ngFor="let option of filteredEntityFields | async" [value]="option">
+                {{option}}
+              </mat-option>
+            </mat-autocomplete>
+            <mat-error *ngIf="keyFilterFormGroup.get('key.key').hasError('required')">
+              {{ 'filter.key-name-required' | translate }}
+            </mat-error>
+          </mat-form-field>
         </section>
         <mat-form-field fxFlex="30" class="mat-block">
           <mat-label translate>filter.value-type.value-type</mat-label>
-          <mat-select matInput formControlName="valueType">
+          <mat-select formControlName="valueType">
             <mat-select-trigger>
               <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.icon }}"></mat-icon>
               <span>{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.name | translate }}</span>
