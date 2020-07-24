@@ -1189,7 +1189,7 @@
            "starts-with": "starts with",
            "ends-with": "ends with",
            "contains": "contains",
-           "not-contain": "not contain",
+           "not-contains": "not contains",
            "greater": "greater than",
            "less": "less than",
            "greater-or-equal": "greater or equal",
