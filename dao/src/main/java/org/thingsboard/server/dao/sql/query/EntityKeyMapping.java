@@ -474,44 +474,21 @@ public class EntityKeyMapping {
                 stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '%%')", operationField, paramName, operationField, paramName);
                 break;
             case CONTAINS:
-                value = "%" + value + "%";
-                stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '%%%%')", operationField, paramName, operationField, paramName);
+                if (value.length()>1) {
+                    value = "%" + value + "%";
+                }
+                stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
                 break;
             case NOT_CONTAINS:
-                value = "%" + value + "%";
-                stringOperationQuery = String.format("%s not like :%s) or (%s is null and :%s != '%%%%')", operationField, paramName, operationField, paramName);
+                if (value.length()>1) {
+                    value = "%" + value + "%";
+                }
+                stringOperationQuery = String.format("%s not like :%s) or (%s is null and :%s != '')", operationField, paramName, operationField, paramName);
                 break;
         }
         ctx.addStringParameter(paramName, value);
         return String.format("((%s is not null and %s)", field, stringOperationQuery);
     }
-
-
-//            case EQUAL:
-//    stringOperationQuery = String.format("%s = :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
-//                break;
-//            case NOT_EQUAL:
-//    stringOperationQuery = String.format("%s != :%s) or (%s is null and :%s != '')", operationField, paramName, operationField, paramName);
-//                break;
-//            case STARTS_WITH:
-//    value += "%";
-//    stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
-//                break;
-//            case ENDS_WITH:
-//    value = "%" + value;
-//    stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
-//                break;
-//            case CONTAINS:
-//    value = "%" + value + "%";
-//    stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
-//                break;
-//            case NOT_CONTAINS:
-//    value = "%" + value + "%";
-//    stringOperationQuery = String.format("%s not like :%s) or (%s is null and :%s != '')", operationField, paramName, operationField, paramName);
-//                break;
-//}
-//        ctx.addStringParameter(paramName, value);
-//                return String.format("((%s is not null and %s)", field, stringOperationQuery);
 
     private String buildNumericPredicateQuery(QueryContext ctx, String field, NumericFilterPredicate numericFilterPredicate) {
         String paramName = getNextParameterName(field);
