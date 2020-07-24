@@ -166,7 +166,7 @@ public class CertPemClientCredentials implements MqttClientCredentials {
 
     private KeySpec getKeySpec(byte[] encodedKey) throws Exception {
         KeySpec keySpec;
-        if (password == null) {
+        if (password == null || password.isEmpty()) {
             keySpec = new PKCS8EncodedKeySpec(encodedKey);
         } else {
             PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray());

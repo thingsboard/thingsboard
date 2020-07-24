@@ -13,21 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.metrics;
+package org.thingsboard.server.common.stats;
 
-import io.micrometer.core.instrument.Counter;
-
-public class StubCounter implements Counter {
-    @Override
-    public void increment(double amount) {}
-
-    @Override
-    public double count() {
-        return 0;
+public interface MessagesStats {
+    default void incrementTotal() {
+        incrementTotal(1);
     }
 
-    @Override
-    public Id getId() {
-        return null;
+    void incrementTotal(int amount);
+
+    default void incrementSuccessful() {
+        incrementSuccessful(1);
     }
+
+    void incrementSuccessful(int amount);
+
+    default void incrementFailed() {
+        incrementFailed(1);
+    }
+
+    void incrementFailed(int amount);
+
+    int getTotal();
+
+    int getSuccessful();
+
+    int getFailed();
+
+    void reset();
 }

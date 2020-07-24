@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.stats;
+package org.thingsboard.server.common.stats;
 
-import org.thingsboard.server.queue.stats.QueueStats;
-
-public class DefaultQueueStats implements QueueStats {
+public class DefaultMessagesStats implements MessagesStats {
     private final StatsCounter totalCounter;
     private final StatsCounter successfulCounter;
     private final StatsCounter failedCounter;
 
-    public DefaultQueueStats(StatsCounter totalCounter, StatsCounter successfulCounter, StatsCounter failedCounter) {
+    public DefaultMessagesStats(StatsCounter totalCounter, StatsCounter successfulCounter, StatsCounter failedCounter) {
         this.totalCounter = totalCounter;
         this.successfulCounter = successfulCounter;
         this.failedCounter = failedCounter;
@@ -41,5 +39,27 @@ public class DefaultQueueStats implements QueueStats {
     @Override
     public void incrementFailed(int amount) {
         failedCounter.add(amount);
+    }
+
+    @Override
+    public int getTotal() {
+        return totalCounter.get();
+    }
+
+    @Override
+    public int getSuccessful() {
+        return successfulCounter.get();
+    }
+
+    @Override
+    public int getFailed() {
+        return failedCounter.get();
+    }
+
+    @Override
+    public void reset() {
+        totalCounter.clear();
+        successfulCounter.clear();
+        failedCounter.clear();
     }
 }

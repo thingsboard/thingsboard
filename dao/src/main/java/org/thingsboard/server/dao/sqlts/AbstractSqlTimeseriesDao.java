@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
@@ -102,6 +103,9 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Autowired
     protected ScheduledLogExecutorComponent logExecutor;
 
+    @Autowired
+    private StatsFactory statsFactory;
+
     @Value("${sql.ts.batch_size:1000}")
     protected int tsBatchSize;
 
@@ -124,10 +128,11 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 .batchSize(tsLatestBatchSize)
                 .maxDelay(tsLatestMaxDelay)
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
+                .statsNamePrefix("ts.latest")
                 .build();
 
         java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
-        tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads);
+        tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads, statsFactory);
 
         tsLatestQueue.init(logExecutor, v -> {
             Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();

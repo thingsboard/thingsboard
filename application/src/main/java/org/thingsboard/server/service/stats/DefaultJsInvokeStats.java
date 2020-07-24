@@ -18,6 +18,9 @@ package org.thingsboard.server.service.stats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.JsInvokeStats;
+import org.thingsboard.server.common.stats.StatsCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 
 import javax.annotation.PostConstruct;
 
@@ -32,14 +35,14 @@ public class DefaultJsInvokeStats implements JsInvokeStats {
     private StatsCounter failuresCounter;
 
     @Autowired
-    private StatsCounterFactory counterFactory;
+    private StatsFactory statsFactory;
 
     @PostConstruct
     public void init() {
         String key = StatsType.JS_INVOKE.getName();
-        this.requestsCounter = counterFactory.createStatsCounter(key, REQUESTS);
-        this.responsesCounter = counterFactory.createStatsCounter(key, RESPONSES);
-        this.failuresCounter = counterFactory.createStatsCounter(key, FAILURES);
+        this.requestsCounter = statsFactory.createStatsCounter(key, REQUESTS);
+        this.responsesCounter = statsFactory.createStatsCounter(key, RESPONSES);
+        this.failuresCounter = statsFactory.createStatsCounter(key, FAILURES);
     }
 
     @Override
