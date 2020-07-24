@@ -427,9 +427,12 @@ public class EntityKeyMapping {
                 } else if (predicate.getType().equals(FilterPredicateType.STRING)) {
                     if (key.getKey().equals("entityType") && !filterType.equals(EntityFilterType.RELATIONS_QUERY)){
                         field = ctx.getEntityType().toString();
+                        return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate)
+                                .replace("lower(" + field, "lower('" + field + "'")
+                                .replace(field + " ","'" + field + "' ");
+                    } else {
+                        return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate);
                     }
-                    return this.buildStringPredicateQuery(ctx, field, (StringFilterPredicate) predicate)
-                            .replace(field + " ","'" + field + "' ");
                 } else {
                     return this.buildBooleanPredicateQuery(ctx, field, (BooleanFilterPredicate) predicate);
                 }
