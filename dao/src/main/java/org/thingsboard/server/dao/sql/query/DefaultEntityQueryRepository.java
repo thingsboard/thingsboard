@@ -201,6 +201,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.TENANT, "tenant");
     }
 
+    public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
+            EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.ASSET, EntityType.DEVICE, EntityType.ENTITY_VIEW};
+
     private static final String HIERARCHICAL_QUERY_TEMPLATE = " FROM (WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, relation_type, lvl) AS (" +
             " SELECT from_id, from_type, to_id, to_type, relation_type, 1 as lvl" +
             " FROM relation" +
@@ -333,8 +336,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             if (pageLink.getPageSize() > 0) {
                 dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
             }
-            log.error("QUERY: {}", dataQuery);
-            Arrays.asList(ctx.getParameterNames()).forEach(param -> log.error("QUERY PARAM: {}->{}", param, ctx.getValue(param)));
+//            log.error("QUERY: {}", dataQuery);
+//            Arrays.asList(ctx.getParameterNames()).forEach(param -> log.error("QUERY PARAM: {}->{}", param, ctx.getValue(param)));
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
             return EntityDataAdapter.createEntityData(pageLink, selectionMapping, rows, totalElements);
         });
@@ -467,20 +470,20 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         ctx.addUuidParameter("relation_root_id", rootId.getId());
         ctx.addStringParameter("relation_root_type", rootId.getEntityType().name());
 
-        StringBuilder whereFilter;
+        StringBuilder whereFilter = new StringBuilder();
+        ;
+        boolean noConditions = true;
         if (entityFilter.getFilters() != null && !entityFilter.getFilters().isEmpty()) {
-            whereFilter = new StringBuilder();
-            boolean first = true;
             boolean single = entityFilter.getFilters().size() == 1;
             int entityTypeFilterIdx = 0;
             for (EntityTypeFilter etf : entityFilter.getFilters()) {
                 String etfCondition = buildEtfCondition(ctx, etf, entityFilter.getDirection(), entityTypeFilterIdx++);
                 if (!etfCondition.isEmpty()) {
-                    if (first) {
+                    if (noConditions) {
                         whereFilter.append(" WHERE ");
-                        first = false;
+                        noConditions = false;
                     } else {
-                        whereFilter.append(" AND ");
+                        whereFilter.append(" OR ");
                     }
                     if (!single) {
                         whereFilter.append(" (");
@@ -491,8 +494,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     }
                 }
             }
-        } else {
-            whereFilter = new StringBuilder();
+        }
+        if (noConditions) {
+            whereFilter.append(" WHERE re.")
+                    .append(entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from")
+                    .append("_type in (:where_entity_types").append(")");
+            ctx.addStringListParameter("where_entity_types", Arrays.stream(RELATION_QUERY_ENTITY_TYPES).map(EntityType::name).collect(Collectors.toList()));
         }
         from = String.format(from, lvlFilter, whereFilter);
         return "( " + selectFields + from + ")";
