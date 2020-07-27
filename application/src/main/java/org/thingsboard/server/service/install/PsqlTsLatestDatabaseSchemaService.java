@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.service.install;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.util.PsqlTsLatestDao;
+import org.thingsboard.server.dao.util.SqlTsLatestDao;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+@Service
+@PsqlTsLatestDao
+@Profile("install")
+public class PsqlTsLatestDatabaseSchemaService extends SqlAbstractDatabaseSchemaService implements TsLatestDatabaseSchemaService {
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${database.ts.type}'=='cassandra' || '${database.ts.type}'=='cassandra'")
-public @interface NoSqlAnyDao {
+    public PsqlTsLatestDatabaseSchemaService() {
+        super("schema-ts-latest-psql.sql", null);
+    }
 }

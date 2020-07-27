@@ -16,7 +16,7 @@
 
 SET DATABASE SQL SYNTAX PGS TRUE;
 
-CREATE TABLE IF NOT EXISTS ts_kv (
+CREATE TABLE IF NOT EXISTS ts_kv_latest (
     entity_id uuid NOT NULL,
     key int NOT NULL,
     ts bigint NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS ts_kv (
     long_v bigint,
     dbl_v double precision,
     json_v varchar(10000000),
-    CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts)
+    CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_dictionary (

@@ -13,14 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.service.install;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${database.ts.type}'=='cassandra' || '${database.ts.type}'=='cassandra'")
-public @interface NoSqlAnyDao {
+public interface TsLatestDatabaseSchemaService extends DatabaseSchemaService {
 }
