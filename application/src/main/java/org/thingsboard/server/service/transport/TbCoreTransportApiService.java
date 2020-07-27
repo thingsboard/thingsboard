@@ -20,6 +20,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.stats.MessagesStats;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
@@ -29,10 +32,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.stats.DefaultQueueStats;
-import org.thingsboard.server.service.stats.StatsCounter;
-import org.thingsboard.server.service.stats.StatsCounterFactory;
-import org.thingsboard.server.service.stats.StatsType;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -45,13 +44,9 @@ import java.util.concurrent.*;
 @Service
 @TbCoreComponent
 public class TbCoreTransportApiService {
-    private static final String TOTAL_MSGS = "totalMsgs";
-    private static final String SUCCESSFUL_MSGS = "successfulMsgs";
-    private static final String FAILED_MSGS = "failedMsgs";
-
     private final TbCoreQueueFactory tbCoreQueueFactory;
     private final TransportApiService transportApiService;
-    private final StatsCounterFactory counterFactory;
+    private final StatsFactory statsFactory;
 
     @Value("${queue.transport_api.max_pending_requests:10000}")
     private int maxPendingRequests;
@@ -66,10 +61,10 @@ public class TbCoreTransportApiService {
     private TbQueueResponseTemplate<TbProtoQueueMsg<TransportApiRequestMsg>,
             TbProtoQueueMsg<TransportApiResponseMsg>> transportApiTemplate;
 
-    public TbCoreTransportApiService(TbCoreQueueFactory tbCoreQueueFactory, TransportApiService transportApiService, StatsCounterFactory counterFactory) {
+    public TbCoreTransportApiService(TbCoreQueueFactory tbCoreQueueFactory, TransportApiService transportApiService, StatsFactory statsFactory) {
         this.tbCoreQueueFactory = tbCoreQueueFactory;
         this.transportApiService = transportApiService;
-        this.counterFactory = counterFactory;
+        this.statsFactory = statsFactory;
     }
 
     @PostConstruct
@@ -79,10 +74,7 @@ public class TbCoreTransportApiService {
         TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> consumer = tbCoreQueueFactory.createTransportApiRequestConsumer();
 
         String key = StatsType.TRANSPORT.getName();
-        StatsCounter totalCounter = counterFactory.createStatsCounter(key, TOTAL_MSGS);
-        StatsCounter successfulCounter = counterFactory.createStatsCounter(key, SUCCESSFUL_MSGS);
-        StatsCounter failedCounter = counterFactory.createStatsCounter(key, FAILED_MSGS);
-        DefaultQueueStats queueStats = new DefaultQueueStats(totalCounter, successfulCounter, failedCounter);
+        MessagesStats queueStats = statsFactory.createMessagesStats(key);
 
         DefaultTbQueueResponseTemplate.DefaultTbQueueResponseTemplateBuilder
                 <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> builder = DefaultTbQueueResponseTemplate.builder();

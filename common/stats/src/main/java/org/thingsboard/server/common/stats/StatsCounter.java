@@ -13,39 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.stats;
+package org.thingsboard.server.common.stats;
 
 import io.micrometer.core.instrument.Counter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StatsCounter {
-    private final AtomicInteger aiCounter;
-    private final Counter micrometerCounter;
+public class StatsCounter extends DefaultCounter {
     private final String name;
 
     public StatsCounter(AtomicInteger aiCounter, Counter micrometerCounter, String name) {
-        this.aiCounter = aiCounter;
-        this.micrometerCounter = micrometerCounter;
+        super(aiCounter, micrometerCounter);
         this.name = name;
-    }
-
-    public void increment() {
-        aiCounter.incrementAndGet();
-        micrometerCounter.increment();
-    }
-
-    public void clear() {
-        aiCounter.set(0);
-    }
-
-    public int get() {
-        return aiCounter.get();
-    }
-
-    public void add(int delta){
-        aiCounter.addAndGet(delta);
-        micrometerCounter.increment(delta);
     }
 
     public String getName() {
