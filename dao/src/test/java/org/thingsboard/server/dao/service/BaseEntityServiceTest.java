@@ -925,7 +925,9 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.DESC
         );
 
-        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "deviceType"));
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"),
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "entityType"));
+
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "attributeString"));
 
         List<KeyFilter> keyFiltersEqualString = createStringKeyFilters("attributeString", EntityKeyType.CLIENT_ATTRIBUTE, StringFilterPredicate.StringOperation.EQUAL, "equal");
@@ -940,7 +942,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
         List<KeyFilter> keyFiltersNotContainsString = createStringKeyFilters("attributeString", EntityKeyType.CLIENT_ATTRIBUTE, StringFilterPredicate.StringOperation.NOT_CONTAINS, "NOT_CONTAINS");
 
-        List<KeyFilter> deviceTypeFilters = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.EQUAL, "EQUAL");
+        List<KeyFilter> deviceTypeFilters = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.NOT_EQUAL, "NOT_EQUAL");
 
         // Equal Operation
 
@@ -1032,7 +1034,124 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testBuildSimplePredicateQueryOperations() throws JsonMappingException, JsonProcessingException, ExecutionException, InterruptedException{
+    public void testBuildStringPredicateQueryOperationsForEntityType() throws ExecutionException, InterruptedException{
+
+        List<Device> devices = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            Device device = new Device();
+            device.setTenantId(tenantId);
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(deviceService.saveDevice(device));
+            //TO make sure devices have different created time
+            Thread.sleep(1);
+        }
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceType("default");
+        filter.setDeviceNameFilter("");
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.DESC
+        );
+
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"),
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "entityType"));
+
+        List<KeyFilter> keyFiltersEqualString = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.EQUAL, "device");
+        List<KeyFilter> keyFiltersNotEqualString = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.NOT_EQUAL, "asset");
+        List<KeyFilter> keyFiltersStartsWithString = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.STARTS_WITH, "dev");
+        List<KeyFilter> keyFiltersEndsWithString = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.ENDS_WITH, "ice");
+        List<KeyFilter> keyFiltersContainsString = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.CONTAINS, "vic");
+        List<KeyFilter> keyFiltersNotContainsString = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.NOT_CONTAINS, "dolphin");
+
+        // Equal Operation
+
+        EntityDataPageLink pageLink = new EntityDataPageLink(100, 0, null, sortOrder);
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, keyFiltersEqualString);
+        PageData<EntityData> data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        List<EntityData> loadedEntities = getLoadedEntities(data, query);
+        Assert.assertEquals(devices.size(), loadedEntities.size());
+
+        List<String> loadedStrings = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+
+        List<String> devicesNames = devices.stream().map(Device::getName).collect(Collectors.toList());
+
+        Assert.assertTrue(listEqualWithoutOrder(devicesNames, loadedStrings));
+
+        // Not equal Operation
+
+        pageLink = new EntityDataPageLink(100, 0, null, sortOrder);
+        query = new EntityDataQuery(filter, pageLink, entityFields, null, keyFiltersNotEqualString);
+        data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        loadedEntities = getLoadedEntities(data, query);
+        Assert.assertEquals(devices.size(), loadedEntities.size());
+
+        loadedStrings = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+
+        Assert.assertTrue(listEqualWithoutOrder(devicesNames, loadedStrings));
+
+        // Starts with Operation
+
+        pageLink = new EntityDataPageLink(100, 0, null, sortOrder);
+        query = new EntityDataQuery(filter, pageLink, entityFields, null, keyFiltersStartsWithString);
+        data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        loadedEntities = getLoadedEntities(data, query);
+        Assert.assertEquals(devices.size(), loadedEntities.size());
+
+        loadedStrings = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+
+        Assert.assertTrue(listEqualWithoutOrder(devicesNames, loadedStrings));
+
+        // Ends with Operation
+
+        pageLink = new EntityDataPageLink(100, 0, null, sortOrder);
+        query = new EntityDataQuery(filter, pageLink, entityFields, null, keyFiltersEndsWithString);
+        data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        loadedEntities = getLoadedEntities(data, query);
+        Assert.assertEquals(devices.size(), loadedEntities.size());
+
+        loadedStrings = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+
+        Assert.assertTrue(listEqualWithoutOrder(devicesNames, loadedStrings));
+
+        // Contains Operation
+
+        pageLink = new EntityDataPageLink(100, 0, null, sortOrder);
+        query = new EntityDataQuery(filter, pageLink, entityFields, null, keyFiltersContainsString);
+        data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        loadedEntities = getLoadedEntities(data, query);
+        Assert.assertEquals(devices.size(), loadedEntities.size());
+
+        loadedStrings = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+
+        Assert.assertTrue(listEqualWithoutOrder(devicesNames, loadedStrings));
+
+        // Not contains Operation
+
+        pageLink = new EntityDataPageLink(100, 0, null, sortOrder);
+        query = new EntityDataQuery(filter, pageLink, entityFields, null, keyFiltersNotContainsString);
+        data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        loadedEntities = getLoadedEntities(data, query);
+        Assert.assertEquals(devices.size(), loadedEntities.size());
+
+        loadedStrings = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+
+        Assert.assertTrue(listEqualWithoutOrder(devicesNames, loadedStrings));
+
+        deviceService.deleteDevicesByTenantId(tenantId);
+    }
+
+    @Test
+    public void testBuildSimplePredicateQueryOperations() throws InterruptedException{
 
         List<Device> devices = new ArrayList<>();
 
@@ -1053,7 +1172,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.DESC);
 
-        List<KeyFilter> deviceTypeFilters = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.EQUAL, "EQUAL");
+        List<KeyFilter> deviceTypeFilters = createStringKeyFilters("type", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.EQUAL, "default");
 
         KeyFilter createdTimeFilter = createNumericKeyFilter("createdTime", EntityKeyType.ENTITY_FIELD, NumericFilterPredicate.NumericOperation.GREATER, 1L);
         List<KeyFilter> createdTimeFilters = Collections.singletonList(createdTimeFilter);
