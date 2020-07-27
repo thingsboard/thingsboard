@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.query;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -82,7 +83,7 @@ public class EntityDataAdapter {
         if (value != null) {
             String strVal = value.toString();
             // check number
-            if (strVal.length() > 0) {
+            if (strVal.length() > 0 && NumberUtils.isParsable(strVal)) {
                 try {
                     long longVal = Long.parseLong(strVal);
                     return Long.toString(longVal);
