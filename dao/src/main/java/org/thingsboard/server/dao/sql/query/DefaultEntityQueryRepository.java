@@ -329,10 +329,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         String entityFieldsQuery = EntityKeyMapping.buildQuery(ctx, entityFieldsFilters, entityFilter.getType());
         String result = permissionQuery;
         if (!entityFilterQuery.isEmpty()) {
-            result += " and " + entityFilterQuery;
+            result += " and (" + entityFilterQuery + ")";
         }
         if (!entityFieldsQuery.isEmpty()) {
-            result += " and " + entityFieldsQuery;
+            result += " and (" + entityFieldsQuery + ")";
         }
         return result;
     }
