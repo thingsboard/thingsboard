@@ -37,3 +37,5 @@ CREATE INDEX IF NOT EXISTS idx_asset_customer_id ON asset(tenant_id, customer_id
 CREATE INDEX IF NOT EXISTS idx_asset_customer_id_and_type ON asset(tenant_id, customer_id, type);
 
 CREATE INDEX IF NOT EXISTS idx_asset_type ON asset(tenant_id, type);
+
+CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribute_kv(entity_id, attribute_key, last_update_ts desc);

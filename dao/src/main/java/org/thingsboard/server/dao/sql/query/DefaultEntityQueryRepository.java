@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityFilterType;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.EntitySearchQueryFilter;
@@ -265,7 +266,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
 
             String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), entityFieldsFiltersMapping);
-            String latestJoins = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings);
+            String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true);
+            String latestJoinsData = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, false);
             String whereClause = DefaultEntityQueryRepository.this.buildWhere(ctx, latestFiltersMapping, query.getEntityFilter().getType());
             String textSearchQuery = DefaultEntityQueryRepository.this.buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
             String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
@@ -286,29 +288,44 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 topSelection = topSelection + ", " + latestSelection;
             }
 
-            String fromClause = String.format("from (select %s from (select %s from %s e where %s) entities %s %s) result %s",
+            String fromClauseCount = String.format("from (select %s from (select %s from %s e where %s) entities %s %s) result %s",
+                    "entities.*",
+                    entityFieldsSelection,
+                    addEntityTableQuery(ctx, query.getEntityFilter()),
+                    entityWhereClause,
+                    latestJoinsCnt,
+                    whereClause,
+                    textSearchQuery);
+
+            String fromClauseData = String.format("from (select %s from (select %s from %s e where %s) entities %s %s) result %s",
                     topSelection,
                     entityFieldsSelection,
                     addEntityTableQuery(ctx, query.getEntityFilter()),
                     entityWhereClause,
-                    latestJoins,
+                    latestJoinsData,
                     whereClause,
                     textSearchQuery);
 
-            int totalElements = jdbcTemplate.queryForObject(String.format("select count(*) %s", fromClause), ctx, Integer.class);
+            if (!StringUtils.isEmpty(pageLink.getTextSearch())) {
+                //Unfortunately, we need to sacrifice performance in case of full text search, because it is applied to all joined records.
+                fromClauseCount = fromClauseData;
+            }
+            String countQuery = String.format("select count(id) %s", fromClauseCount);
+            int totalElements = jdbcTemplate.queryForObject(countQuery, ctx, Integer.class);
 
-            String dataQuery = String.format("select * %s", fromClause);
+            String dataQuery = String.format("select * %s", fromClauseData);
 
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
             if (sortOrder != null) {
                 Optional<EntityKeyMapping> sortOrderMappingOpt = mappings.stream().filter(EntityKeyMapping::isSortOrder).findFirst();
                 if (sortOrderMappingOpt.isPresent()) {
                     EntityKeyMapping sortOrderMapping = sortOrderMappingOpt.get();
-                    dataQuery = String.format("%s order by %s", dataQuery, sortOrderMapping.getValueAlias());
-                    if (sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC) {
-                        dataQuery += " asc";
+                    String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc";
+                    if (sortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
+                        dataQuery = String.format("%s order by %s %s", dataQuery, sortOrderMapping.getValueAlias(), direction);
                     } else {
-                        dataQuery += " desc";
+                        dataQuery = String.format("%s order by %s %s, %s %s", dataQuery,
+                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction);
                     }
                 }
             }
