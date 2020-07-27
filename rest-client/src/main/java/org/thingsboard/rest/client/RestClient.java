@@ -1999,20 +1999,20 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return this.getUrlParams(pageLink);
     }
     private String getUrlParams(TimePageLink pageLink) {
-        return getUrlParams(pageLink, "startTime", "endTime");
+        return getUrlParams(pageLink, "startTs", "endTs");
     }
 
     private String getUrlParamsTs(TimePageLink pageLink) {
         return getUrlParams(pageLink, "startTs", "endTs");
     }
 
-    private String getUrlParams(TimePageLink pageLink, String startTime, String endTime) {
-        String urlParams = "limit={limit}&ascOrder={ascOrder}";
+    private String getUrlParams(TimePageLink pageLink, String startTs, String endTs) {
+        String urlParams = "limit=" + pageLink.getLimit();
         if (pageLink.getStartTime() != null) {
-            urlParams += "&" + startTime + "={startTime}";
+            urlParams += "&" + startTs + "=" + pageLink.getStartTime();
         }
         if (pageLink.getEndTime() != null) {
-            urlParams += "&" + endTime + "={endTime}";
+            urlParams += "&" + endTs + "=" + pageLink.getEndTime();
         }
         return urlParams;
     }
@@ -2031,10 +2031,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     private void addTimePageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         this.addPageLinkToParam(params, pageLink);
         if (pageLink.getStartTime() != null) {
-            params.put("startTime", String.valueOf(pageLink.getStartTime()));
+            params.put("startTs", String.valueOf(pageLink.getStartTime()));
         }
         if (pageLink.getEndTime() != null) {
-            params.put("endTime", String.valueOf(pageLink.getEndTime()));
+            params.put("endTs", String.valueOf(pageLink.getEndTime()));
         }
     }
 

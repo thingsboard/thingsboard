@@ -23,6 +23,7 @@ public class TimePageLink extends PageLink {
 
     private final Long startTime;
     private final Long endTime;
+    private int limit;
 
     public TimePageLink(PageLink pageLink, Long startTime, Long endTime) {
         super(pageLink);
@@ -50,6 +51,12 @@ public class TimePageLink extends PageLink {
         super(pageSize, page, textSearch, sortOrder);
         this.startTime = startTime;
         this.endTime = endTime;
+    }
+    public TimePageLink(int pageSize, int page, int limit, String textSearch, SortOrder sortOrder, Long startTime, Long endTime) {
+        super(pageSize, page, textSearch, sortOrder);
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.limit = limit;
     }
 
     @JsonIgnore
