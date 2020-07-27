@@ -115,8 +115,7 @@ export function isEmpty(obj: any): boolean {
 }
 
 export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
-  if (isDefined(value) &&
-    value !== null && isNumeric(value)) {
+  if (isDefinedAndNotNull(value) && isNumeric(value) && (isDefined(dec) || isDefined(units) || Number(value).toString() === value)) {
     let formatted: string | number = Number(value);
     if (isDefined(dec)) {
       formatted = formatted.toFixed(dec);
