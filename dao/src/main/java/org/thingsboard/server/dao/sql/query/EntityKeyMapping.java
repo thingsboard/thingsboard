@@ -481,13 +481,13 @@ public class EntityKeyMapping {
                 stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '%%')", operationField, paramName, operationField, paramName);
                 break;
             case CONTAINS:
-                if (value.length()>1) {
+                if (value.length()>0) {
                     value = "%" + value + "%";
                 }
                 stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
                 break;
             case NOT_CONTAINS:
-                if (value.length()>1) {
+                if (value.length()>0) {
                     value = "%" + value + "%";
                 }
                 stringOperationQuery = String.format("%s not like :%s) or (%s is null and :%s != '')", operationField, paramName, operationField, paramName);
