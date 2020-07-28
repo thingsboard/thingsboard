@@ -25,7 +25,7 @@ import {
 } from './schemes';
 import { EntityType } from '@shared/models/entity-type.models';
 
-export const DEFAULT_MAP_PAGE_SIZE = 1024;
+export const DEFAULT_MAP_PAGE_SIZE = 2 ** 14;
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
@@ -68,6 +68,7 @@ export type MapSettings = {
     removeOutsideVisibleBounds: boolean,
     useCustomProvider: boolean,
     customProviderTileUrl: string;
+    mapPageSize: number;
 }
 
 export enum MapProviders {
@@ -267,7 +268,8 @@ export const defaultSettings: any = {
     credentials: '',
     markerClusteringSetting: null,
     draggableMarker: false,
-    fitMapBounds: true
+    fitMapBounds: true,
+    mapPageSize: DEFAULT_MAP_PAGE_SIZE
 };
 
 export const hereProviders = [

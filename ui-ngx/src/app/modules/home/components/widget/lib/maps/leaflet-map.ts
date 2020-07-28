@@ -42,7 +42,7 @@ import { Polygon } from './polygon';
 import { createTooltip, parseArray, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DatasourceData } from '@shared/models/widget.models';
-import { deepClone } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 
 export default abstract class LeafletMap {
 
@@ -249,8 +249,9 @@ export default abstract class LeafletMap {
         if (!expression) return null;
         const lat = expression[this.options.latKeyName];
         const lng = expression[this.options.lngKeyName];
-        if (isNaN(lat) || isNaN(lng))
-            return null;
+        if (!isDefinedAndNotNull(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isNaN(lng)){
+          return null;
+        }
         else
             return L.latLng(lat, lng) as L.LatLng;
     }
