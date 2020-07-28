@@ -245,13 +245,13 @@ public class EntityKeyMapping {
             filterQuery = " AND (" + filterQuery + ")";
         }
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
-            String join = hasFilter() ? "left join" : "left outer join";
+            String join = hasFilter() ? "inner join" : "left join";
             return String.format("%s ts_kv_latest %s ON %s.entity_id=entities.id AND %s.key = (select key_id from ts_kv_dictionary where key = :%s_key_id) %s",
                     join, alias, alias, alias, alias, filterQuery);
         } else {
             String query;
             if (!entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
-                String join = hasFilter() ? "left join" : "left outer join";
+                String join = hasFilter() ? "inner join" : "left join";
                 query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id ",
                         join, alias, alias, alias, entityTypeStr, alias, alias);
                 String scope;
