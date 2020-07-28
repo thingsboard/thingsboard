@@ -16,14 +16,12 @@
 package org.thingsboard.server.dao.audit;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -50,4 +48,5 @@ public interface AuditLogService {
             ActionType actionType,
             Exception e, Object... additionalInfo);
 
+    void removeAuditLogs(TenantId tenantId, EntityId entityId);
 }

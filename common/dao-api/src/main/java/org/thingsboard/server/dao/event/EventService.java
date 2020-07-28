@@ -41,4 +41,6 @@ public interface EventService {
 
     List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit);
 
+    void removeEvents(TenantId tenantId, EntityId entityId);
+
 }

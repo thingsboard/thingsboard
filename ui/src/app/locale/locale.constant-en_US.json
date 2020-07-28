@@ -356,7 +356,9 @@
         "action-data": "Action data",
         "failure-details": "Failure details",
         "search": "Search audit logs",
-        "clear-search": "Clear search"
+        "clear-search": "Clear search",
+        "type-swapped-from-tenant": "Swapped from Tenant",
+        "type-swapped-to-tenant": "Swapped to Tenant"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
