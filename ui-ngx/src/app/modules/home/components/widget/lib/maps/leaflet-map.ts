@@ -249,11 +249,10 @@ export default abstract class LeafletMap {
         if (!expression) return null;
         const lat = expression[this.options.latKeyName];
         const lng = expression[this.options.lngKeyName];
-        if (!isDefinedAndNotNull(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isNaN(lng)){
+        if (!isDefinedAndNotNull(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isNaN(lng)) {
           return null;
         }
-        else
-            return L.latLng(lat, lng) as L.LatLng;
+        return L.latLng(lat, lng) as L.LatLng;
     }
 
     convertPositionPolygon(expression: Array<[number, number]>): L.LatLngExpression[] {
