@@ -25,7 +25,7 @@ import {
 } from './schemes';
 import { EntityType } from '@shared/models/entity-type.models';
 
-export const DEFAULT_MAP_PAGE_SIZE = 2 ** 14;
+export const DEFAULT_MAP_PAGE_SIZE = 16384;
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
