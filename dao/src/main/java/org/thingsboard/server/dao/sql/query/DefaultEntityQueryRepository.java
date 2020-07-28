@@ -261,8 +261,6 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .collect(Collectors.toList());
             List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest())
                     .collect(Collectors.toList());
-            List<EntityKeyMapping> latestFiltersMapping = filterMapping.stream().filter(EntityKeyMapping::isLatest)
-                    .collect(Collectors.toList());
 
             List<EntityKeyMapping> allLatestMappings = mappings.stream().filter(EntityKeyMapping::isLatest)
                     .collect(Collectors.toList());
@@ -271,7 +269,6 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), entityFieldsFiltersMapping);
             String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true);
             String latestJoinsData = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, false);
-            String whereClause = DefaultEntityQueryRepository.this.buildWhere(ctx, latestFiltersMapping, query.getEntityFilter().getType());
             String textSearchQuery = DefaultEntityQueryRepository.this.buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
             String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
             String entityTypeStr;
@@ -291,22 +288,20 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 topSelection = topSelection + ", " + latestSelection;
             }
 
-            String fromClauseCount = String.format("from (select %s from (select %s from %s e where %s) entities %s %s) result %s",
+            String fromClauseCount = String.format("from (select %s from (select %s from %s e where %s) entities %s ) result %s",
                     "entities.*",
                     entityFieldsSelection,
                     addEntityTableQuery(ctx, query.getEntityFilter()),
                     entityWhereClause,
                     latestJoinsCnt,
-                    whereClause,
                     textSearchQuery);
 
-            String fromClauseData = String.format("from (select %s from (select %s from %s e where %s) entities %s %s) result %s",
+            String fromClauseData = String.format("from (select %s from (select %s from %s e where %s) entities %s ) result %s",
                     topSelection,
                     entityFieldsSelection,
                     addEntityTableQuery(ctx, query.getEntityFilter()),
                     entityWhereClause,
                     latestJoinsData,
-                    whereClause,
                     textSearchQuery);
 
             if (!StringUtils.isEmpty(pageLink.getTextSearch())) {
@@ -545,15 +540,6 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             from = HIERARCHICAL_TO_QUERY_TEMPLATE;
         }
         return from;
-    }
-
-    private String buildWhere(QueryContext ctx, List<EntityKeyMapping> latestFiltersMapping, EntityFilterType filterType) {
-        String latestFilters = EntityKeyMapping.buildQuery(ctx, latestFiltersMapping, filterType);
-        if (!StringUtils.isEmpty(latestFilters)) {
-            return String.format("where %s", latestFilters);
-        } else {
-            return "";
-        }
     }
 
     private String buildTextSearchQuery(QueryContext ctx, List<EntityKeyMapping> selectionMapping, String searchText) {
