@@ -243,8 +243,8 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
             if (logSqlQueries) {
-                log.error("QUERY: {}", dataQuery);
-                Arrays.asList(ctx.getParameterNames()).forEach(param -> log.error("QUERY PARAM: {}->{}", param, ctx.getValue(param)));
+                log.info("QUERY: {}", dataQuery);
+                Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {}->{}", param, ctx.getValue(param)));
             }
             return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
         });
