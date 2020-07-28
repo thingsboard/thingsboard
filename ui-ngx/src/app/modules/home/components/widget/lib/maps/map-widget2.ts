@@ -81,7 +81,7 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.saveMarkerLocation = this.setMarkerLocation;
         this.pageLink = {
           page: 0,
-          pageSize: DEFAULT_MAP_PAGE_SIZE,
+          pageSize: this.settings.mapPageSize,
           textSearch: null,
           dynamic: true
         };

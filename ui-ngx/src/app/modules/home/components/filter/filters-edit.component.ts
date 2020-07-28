@@ -22,13 +22,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { deepClone } from '@core/utils';
-import { FilterInfo, isFilterEditable } from '@shared/models/query/query.models';
+import { Filter, FilterInfo, isFilterEditable } from '@shared/models/query/query.models';
 import {
   FILTER_EDIT_PANEL_DATA,
   FiltersEditPanelComponent,
   FiltersEditPanelData
 } from '@home/components/filter/filters-edit-panel.component';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { UserFilterDialogComponent, UserFilterDialogData } from '@home/components/filter/user-filter-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'tb-filters-edit',
@@ -65,7 +67,8 @@ export class FiltersEditComponent implements OnInit, OnDestroy {
   constructor(private translate: TranslateService,
               private overlay: Overlay,
               private breakpointObserver: BreakpointObserver,
-              private viewContainerRef: ViewContainerRef) {
+              private viewContainerRef: ViewContainerRef,
+              private dialog: MatDialog) {
   }
 
   private setupAliasController(aliasController: IAliasController) {
@@ -101,33 +104,53 @@ export class FiltersEditComponent implements OnInit, OnDestroy {
     if (this.disabled || !this.hasEditableFilters) {
       return;
     }
-    const position = this.overlay.position();
-    const config = new OverlayConfig({
-      panelClass: 'tb-filters-edit-panel',
-      backdropClass: 'cdk-overlay-transparent-backdrop',
-      hasBackdrop: true,
-    });
-    const connectedPosition: ConnectedPosition = {
-      originX: 'start',
-      originY: 'bottom',
-      overlayX: 'start',
-      overlayY: 'top'
-    };
-    config.positionStrategy = position.flexibleConnectedTo(this.filtersEditPanelOrigin.elementRef)
-      .withPositions([connectedPosition]);
-    const overlayRef = this.overlay.create(config);
-    overlayRef.backdropClick().subscribe(() => {
-      overlayRef.dispose();
-    });
+    const filteredArray = Object.entries(this.filtersInfo);
 
-    const injector = this._createFiltersEditPanelInjector(
-      overlayRef,
-      {
-        aliasController: this.aliasController,
-        filtersInfo: deepClone(this.filtersInfo)
-      }
-    );
-    overlayRef.attach(new ComponentPortal(FiltersEditPanelComponent, this.viewContainerRef, injector));
+    if (filteredArray.length === 1) {
+      const singleFilter: Filter = {id: filteredArray[0][0], ...filteredArray[0][1]};
+      this.dialog.open<UserFilterDialogComponent, UserFilterDialogData,
+        Filter>(UserFilterDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          filter: singleFilter
+        }
+      }).afterClosed().subscribe(
+        (result) => {
+          if (result) {
+            this.filtersInfo[result.id] = result;
+            this.aliasController.updateUserFilter(result);
+          }
+        });
+    } else {
+      const position = this.overlay.position();
+      const config = new OverlayConfig({
+        panelClass: 'tb-filters-edit-panel',
+        backdropClass: 'cdk-overlay-transparent-backdrop',
+        hasBackdrop: true,
+      });
+      const connectedPosition: ConnectedPosition = {
+        originX: 'start',
+        originY: 'bottom',
+        overlayX: 'start',
+        overlayY: 'top'
+      };
+      config.positionStrategy = position.flexibleConnectedTo(this.filtersEditPanelOrigin.elementRef)
+        .withPositions([connectedPosition]);
+      const overlayRef = this.overlay.create(config);
+      overlayRef.backdropClick().subscribe(() => {
+        overlayRef.dispose();
+      });
+
+      const injector = this._createFiltersEditPanelInjector(
+        overlayRef,
+        {
+          aliasController: this.aliasController,
+          filtersInfo: deepClone(this.filtersInfo)
+        }
+      );
+      overlayRef.attach(new ComponentPortal(FiltersEditPanelComponent, this.viewContainerRef, injector));
+    }
   }
 
   private _createFiltersEditPanelInjector(overlayRef: OverlayRef, data: FiltersEditPanelData): PortalInjector {
