@@ -27,10 +27,14 @@ import {
   entityKeyTypeTranslationMap,
   EntityKeyValueType,
   entityKeyValueTypesMap,
-  KeyFilterInfo, KeyFilterPredicate
+  KeyFilterInfo,
+  KeyFilterPredicate
 } from '@shared/models/query/query.models';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityField, entityFields } from '@shared/models/entity.models';
+import { Observable } from 'rxjs';
+import { filter, map, startWith } from 'rxjs/operators';
 
 export interface KeyFilterDialogData {
   keyFilter: KeyFilterInfo;
@@ -60,6 +64,14 @@ export class KeyFilterDialogComponent extends
   entityKeyValueTypes = entityKeyValueTypesMap;
 
   submitted = false;
+
+  entityFields: { [fieldName: string]: EntityField };
+
+  entityFieldsList: string[];
+
+  readonly entityField = EntityKeyType.ENTITY_FIELD;
+
+  filteredEntityFields: Observable<string[]>;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -99,9 +111,28 @@ export class KeyFilterDialogComponent extends
         );
       }
     });
+
+    this.keyFilterFormGroup.get('key.key').valueChanges.pipe(
+      filter((keyName) => this.keyFilterFormGroup.get('key.type').value === this.entityField && this.entityFields.hasOwnProperty(keyName))
+    ).subscribe((keyName: string) => {
+      const prevValueType: EntityKeyValueType = this.keyFilterFormGroup.value.valueType;
+      const newValueType = this.entityFields[keyName]?.time ? EntityKeyValueType.DATE_TIME : EntityKeyValueType.STRING;
+      if (prevValueType !== newValueType) {
+        this.keyFilterFormGroup.get('valueType').patchValue(newValueType, {emitEvent: false});
+      }
+    });
+
+    this.entityFields = entityFields;
+    this.entityFieldsList = Object.values(entityFields).map(entityField => entityField.keyName).sort();
   }
 
   ngOnInit(): void {
+    this.filteredEntityFields = this.keyFilterFormGroup.get('key.key').valueChanges.pipe(
+      startWith(''),
+      map(value => {
+        return this.entityFieldsList.filter(option => option.startsWith(value));
+      })
+    );
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
