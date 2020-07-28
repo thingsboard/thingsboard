@@ -27,7 +27,6 @@ import java.sql.Statement;
 
 
 @Slf4j
-@PsqlDao
 public abstract class AbstractCleanUpService {
 
     @Value("${spring.datasource.url}")

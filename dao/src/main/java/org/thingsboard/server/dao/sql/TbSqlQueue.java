@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 public interface TbSqlQueue<E> {
 
-    void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction);
+    void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, int queueIndex);
 
     void destroy();
 

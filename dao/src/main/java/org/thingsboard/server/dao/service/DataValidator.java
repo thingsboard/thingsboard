@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public abstract class DataValidator<D extends BaseData<?>> {
     private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
 
     public void validate(D data, Function<D, TenantId> tenantIdFunction) {
         try {
@@ -64,7 +64,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
         return actualData.getId() != null && existentData.getId().equals(actualData.getId());
     }
 
-    protected static void validateEmail(String email) {
+    public static void validateEmail(String email) {
         if (!doValidateEmail(email)) {
             throw new DataValidationException("Invalid email address format '" + email + "'!");
         }
