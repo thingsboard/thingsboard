@@ -57,6 +57,8 @@ public class DataConstants {
     public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
+    public static final String ENTITY_SWAPPED_FROM = "ENTITY_SWAPPED_FROM";
+    public static final String ENTITY_SWAPPED_TO = "ENTITY_SWAPPED_TO";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 

@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionStatus;
@@ -38,7 +37,6 @@ import org.thingsboard.server.common.data.id.AuditLogId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -53,6 +51,8 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.thingsboard.server.dao.service.Validator.validateEntityId;
@@ -117,8 +117,8 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Override
     public <E extends HasName, I extends EntityId> ListenableFuture<List<Void>>
-        logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity,
-                               ActionType actionType, Exception e, Object... additionalInfo) {
+    logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity,
+                    ActionType actionType, Exception e, Object... additionalInfo) {
         if (canLog(entityId.getEntityType(), actionType)) {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
             ActionStatus actionStatus = ActionStatus.SUCCESS;
@@ -129,7 +129,8 @@ public class AuditLogServiceImpl implements AuditLogService {
             } else {
                 try {
                     entityName = entityService.fetchEntityNameAsync(tenantId, entityId).get();
-                } catch (Exception ex) {}
+                } catch (Exception ex) {
+                }
             }
             if (e != null) {
                 actionStatus = ActionStatus.FAILURE;
@@ -157,16 +158,36 @@ public class AuditLogServiceImpl implements AuditLogService {
         }
     }
 
+    @Override
+    public void removeAuditLogs(TenantId tenantId, EntityId entityId) {
+        List<AuditLog> auditLogs = new ArrayList<>();
+        TimePageData<AuditLog> auditLogPageData;
+        TimePageLink auditLogPageLink = new TimePageLink(1000);
+        do {
+            auditLogPageData = findAuditLogsByTenantIdAndEntityId(tenantId, entityId,
+                    new ArrayList<>(Arrays.asList(ActionType.values())), auditLogPageLink);
+            auditLogs.addAll(auditLogPageData.getData());
+            if (auditLogPageData.hasNext()) {
+                auditLogPageLink = auditLogPageData.getNextPageLink();
+            }
+        } while (auditLogPageData.hasNext());
+
+        for (AuditLog auditLog : auditLogs) {
+            auditLogDao.removeById(tenantId, auditLog.getUuidId());
+        }
+    }
+
     private <E extends HasName, I extends EntityId> JsonNode constructActionData(I entityId, E entity,
-                                                                                                           ActionType actionType,
-                                                                                                           Object... additionalInfo) {
+                                                                                 ActionType actionType,
+                                                                                 Object... additionalInfo) {
         ObjectNode actionData = objectMapper.createObjectNode();
-        switch(actionType) {
+        switch (actionType) {
             case ADDED:
             case UPDATED:
             case ALARM_ACK:
             case ALARM_CLEAR:
             case RELATIONS_DELETED:
+            case SWAPPED_TO_TENANT:
                 if (entity != null) {
                     ObjectNode entityNode = objectMapper.valueToTree(entity);
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
@@ -208,7 +229,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 scope = extractParameter(String.class, 0, additionalInfo);
                 actionData.put("scope", scope);
                 List<String> keys = extractParameter(List.class, 1, additionalInfo);
-                ArrayNode attrsArrayNode =  actionData.putArray("attributes");
+                ArrayNode attrsArrayNode = actionData.putArray("attributes");
                 if (keys != null) {
                     keys.forEach(attrsArrayNode::add);
                 }

@@ -28,6 +28,8 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -46,9 +48,11 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -97,18 +101,32 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Autowired
     private CacheManager cacheManager;
 
+    @Autowired
+    private EventService eventService;
+
+    @Autowired
+    private AuditLogService auditLogService;
+
     @Override
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
-        return deviceDao.findById(tenantId, deviceId.getId());
+        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            return deviceDao.findById(tenantId, deviceId.getId());
+        } else {
+            return deviceDao.findDeviceByTenantIdAndId(tenantId, deviceId.getId());
+        }
     }
 
     @Override
     public ListenableFuture<Device> findDeviceByIdAsync(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
-        return deviceDao.findByIdAsync(tenantId, deviceId.getId());
+        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            return deviceDao.findByIdAsync(tenantId, deviceId.getId());
+        } else {
+            return deviceDao.findDeviceByTenantIdAndIdAsync(tenantId, deviceId.getId());
+        }
     }
 
     @Cacheable(cacheNames = DEVICE_CACHE, key = "{#tenantId, #name}")
@@ -315,6 +333,33 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return deviceTypes;
                 }, MoreExecutors.directExecutor());
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
+    @Override
+    public Device swapDevice(TenantId tenantId, Device device) {
+        log.trace("Executing swapDevice [{}]", device);
+
+        try {
+            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), device.getId()).get();
+            if (!CollectionUtils.isEmpty(entityViews)) {
+                throw new DataValidationException("Can't swap device that is assigned to entity views!");
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Exception while finding entity views for deviceId [{}]", device.getId(), e);
+            throw new RuntimeException("Exception while finding entity views for deviceId [" + device.getId() + "]", e);
+        }
+
+        eventService.removeEvents(device.getTenantId(), device.getId());
+
+        relationService.removeRelations(device.getTenantId(), device.getId());
+
+        auditLogService.removeAuditLogs(device.getTenantId(), device.getId());
+
+        device.setTenantId(tenantId);
+        device.setCustomerId(null);
+        return doSaveDevice(device, null);
     }
 
     private DataValidator<Device> deviceValidator =

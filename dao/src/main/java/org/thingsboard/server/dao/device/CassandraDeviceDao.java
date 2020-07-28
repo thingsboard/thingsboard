@@ -189,4 +189,14 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
         }, MoreExecutors.directExecutor());
     }
 
+    @Override
+    public Device findDeviceByTenantIdAndId(TenantId tenantId, UUID id) {
+        return findById(tenantId, id);
+    }
+
+    @Override
+    public ListenableFuture<Device> findDeviceByTenantIdAndIdAsync(TenantId tenantId, UUID id) {
+        return findByIdAsync(tenantId, id);
+    }
+
 }
