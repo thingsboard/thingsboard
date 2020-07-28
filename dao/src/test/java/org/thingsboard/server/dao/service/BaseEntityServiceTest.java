@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -45,6 +46,8 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.util.DaoTestUtil;
+import org.thingsboard.server.dao.util.SqlDbType;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -59,6 +62,9 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     private TimeseriesService timeseriesService;
 
     private TenantId tenantId;
+
+    @Autowired
+    private JdbcTemplate template;
 
     @Before
     public void before() {
@@ -821,6 +827,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
                     .getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
         }
         List<String> deviceTemperatures = temperatures.stream().map(aDouble -> Double.toString(aDouble)).collect(Collectors.toList());
+        if (DaoTestUtil.getSqlDbType(template) == SqlDbType.H2) {
+            // in H2 double values are stored with E0 in the end of the string
+            loadedTemperatures = loadedTemperatures.stream().map(s -> s.substring(0, s.length() - 2)).collect(Collectors.toList());
+        }
         Assert.assertEquals(deviceTemperatures, loadedTemperatures);
 
         pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
@@ -848,6 +858,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
                 entityData.getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).collect(Collectors.toList());
         List<String> deviceHighTemperatures = highTemperatures.stream().map(aDouble -> Double.toString(aDouble)).collect(Collectors.toList());
 
+        if (DaoTestUtil.getSqlDbType(template) == SqlDbType.H2) {
+            // in H2 double values are stored with E0 in the end of the string
+            loadedHighTemperatures = loadedHighTemperatures.stream().map(s -> s.substring(0, s.length() - 2)).collect(Collectors.toList());
+        }
         Assert.assertEquals(deviceHighTemperatures, loadedHighTemperatures);
 
         deviceService.deleteDevicesByTenantId(tenantId);
