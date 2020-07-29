@@ -23,7 +23,7 @@ import org.thingsboard.server.dao.util.PsqlTsLatestAnyDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsLatestDao;
 
 @Service
-@PsqlTsLatestAnyDao
+@TimescaleDBTsLatestDao
 @Profile("install")
 @Slf4j
 public class TimescaleTsLatestDatabaseSchemaService extends SqlAbstractDatabaseSchemaService implements TsLatestDatabaseSchemaService {

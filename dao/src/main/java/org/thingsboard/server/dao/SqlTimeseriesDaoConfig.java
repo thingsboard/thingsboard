@@ -17,21 +17,19 @@ package org.thingsboard.server.dao;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.thingsboard.server.dao.util.HsqlDao;
-import org.thingsboard.server.dao.util.SqlTsDao;
+import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.util.SqlTsOrTsLatestAnyDao;
 
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan({"org.thingsboard.server.dao.sqlts.hsql"})
-@EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.ts", "org.thingsboard.server.dao.sqlts.insert.hsql"})
-@EntityScan({"org.thingsboard.server.dao.model.sqlts.ts"})
+@EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.dictionary"})
+@EntityScan({"org.thingsboard.server.dao.model.sqlts.dictionary"})
 @EnableTransactionManagement
-@SqlTsDao
-@HsqlDao
-public class HsqlTsDaoConfig {
+@SqlTsOrTsLatestAnyDao
+@PsqlDao
+public class SqlTimeseriesDaoConfig {
 
 }
