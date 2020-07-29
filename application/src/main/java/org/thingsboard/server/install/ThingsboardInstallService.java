@@ -28,6 +28,7 @@ import org.thingsboard.server.service.install.DatabaseTsUpgradeService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
+import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
 import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
 
@@ -50,6 +51,9 @@ public class ThingsboardInstallService {
 
     @Autowired
     private TsDatabaseSchemaService tsDatabaseSchemaService;
+
+    @Autowired
+    private TsLatestDatabaseSchemaService tsLatestDatabaseSchemaService;
 
     @Autowired
     private DatabaseEntitiesUpgradeService databaseEntitiesUpgradeService;
@@ -180,6 +184,8 @@ public class ThingsboardInstallService {
                 log.info("Installing DataBase schema for timeseries...");
 
                 tsDatabaseSchemaService.createDatabaseSchema();
+
+                tsLatestDatabaseSchemaService.createDatabaseSchema();
 
                 log.info("Loading system data...");
 

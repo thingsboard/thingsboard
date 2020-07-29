@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.dictionary;
+package org.thingsboard.server.dao.util;
 
-import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
-import org.thingsboard.server.dao.util.SqlTsOrTsLatestAnyDao;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import java.util.Optional;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-@SqlTsOrTsLatestAnyDao
-public interface TsKvDictionaryRepository extends CrudRepository<TsKvDictionary, TsKvDictionaryCompositeKey> {
-
-    Optional<TsKvDictionary> findByKeyId(int keyId);
-
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("'${database.ts.type}'=='sql' || '${database.ts.type}'=='timescale' || '${database.ts_latest.type}'=='sql' || '${database.ts_latest.type}'=='timescale'")
+public @interface SqlTsOrTsLatestAnyDao {
 }

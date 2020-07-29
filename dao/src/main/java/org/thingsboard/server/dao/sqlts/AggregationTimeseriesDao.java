@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.dictionary;
+package org.thingsboard.server.dao.sqlts;
 
-import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
-import org.thingsboard.server.dao.util.SqlTsOrTsLatestAnyDao;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 
-import java.util.Optional;
+import java.util.List;
 
-@SqlTsOrTsLatestAnyDao
-public interface TsKvDictionaryRepository extends CrudRepository<TsKvDictionary, TsKvDictionaryCompositeKey> {
+public interface AggregationTimeseriesDao {
 
-    Optional<TsKvDictionary> findByKeyId(int keyId);
-
+    ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query);
 }

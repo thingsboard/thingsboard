@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.thingsboard.server.dao.util.PsqlDao;
-import org.thingsboard.server.dao.util.TimescaleDBTsDao;
+import org.thingsboard.server.dao.util.TimescaleDBTsOrTsLatestDao;
 
 @Configuration
 @EnableAutoConfiguration
@@ -30,7 +30,7 @@ import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 @EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.timescale", "org.thingsboard.server.dao.sqlts.insert.latest.psql", "org.thingsboard.server.dao.sqlts.insert.timescale", "org.thingsboard.server.dao.sqlts.dictionary", "org.thingsboard.server.dao.sqlts.latest"})
 @EntityScan({"org.thingsboard.server.dao.model.sqlts.timescale", "org.thingsboard.server.dao.model.sqlts.dictionary", "org.thingsboard.server.dao.model.sqlts.latest"})
 @EnableTransactionManagement
-@TimescaleDBTsDao
+@TimescaleDBTsOrTsLatestDao
 @PsqlDao
 public class TimescaleDaoConfig {
 
