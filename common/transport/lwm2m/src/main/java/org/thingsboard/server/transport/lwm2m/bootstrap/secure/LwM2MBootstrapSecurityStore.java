@@ -65,7 +65,11 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         }
         if (store.getBootstrapJson() != null) {
             /** add value to store  from BootstrapJson */
-            setBootstrapConfig_ScurityInfo(store);
+            if (endpoint.substring(0, 6).equals("client")) {
+                setBootstrapConfigScurityInfo(store);
+            } else {
+
+            }
             BootstrapConfig bsConfigNew = store.getBootstrapConfig();
             if (bsConfigNew != null) {
                 try {
@@ -88,7 +92,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     public SecurityInfo getByIdentity(String identity) {
         ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(identity, TypeServer.BOOTSTRAP);
         /** add value to store  from BootstrapJson */
-        setBootstrapConfig_ScurityInfo(store);
+        setBootstrapConfigScurityInfo(store);
         if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             BootstrapConfig bsConfig = store.getBootstrapConfig();
             if (bsConfig.security != null) {
@@ -103,52 +107,59 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         return null;
     }
 
-    private void setBootstrapConfig_ScurityInfo(ReadResultSecurityStore store) {
+    private void setBootstrapConfigScurityInfo(ReadResultSecurityStore store) {
         try {
             /** BootstrapConfig */
             JsonObject object = store.getBootstrapJson();
             ObjectMapper mapper = new ObjectMapper();
-            LwM2MBootstrapConfig lwM2MBootstrapConfig = mapper.readValue(object.toString(), LwM2MBootstrapConfig.class);
-            /** Security info */
-            switch (SecurityMode.valueOf(lwM2MBootstrapConfig.getSecurityModeBootstrapBs())) {
-                /** Use RPK only */
-                case PSK:
-                    lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
-                    lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePort());
-                    lwM2MBootstrapConfig.setServerPublicBootstrapBs("");
-                    store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndPoint(),
-                            lwM2MBootstrapConfig.getClientPublicKeyOrIdBootstrapBs(),
-                            Hex.decodeHex(lwM2MBootstrapConfig.getClientSecretKeyServerBs().toCharArray())));
-                    store.setSecurityMode(SecurityMode.PSK.code);
-                    break;
-                case RPK:
-                    lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
-                    lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePort());
-                    lwM2MBootstrapConfig.setServerPublicBootstrapBs(Hex.encodeHexString(lwM2MGetSecurityInfo.contextBS.getBootstrapPublicKey().getEncoded()));
-                    try {
-                        store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndPoint(),
-                                SecurityUtil.publicKey.decode(Hex.decodeHex(lwM2MBootstrapConfig.getClientPublicKeyOrIdBootstrapBs().toCharArray()))));
-                        store.setSecurityMode(SecurityMode.RPK.code);
+            BootstrapConfig bootstrapConfig = null;
+            if ((store.getEndPoint().substring(0, 6).equals("client"))) {
+                LwM2MBootstrapConfig_old lwM2MBootstrapConfigOld = mapper.readValue(object.toString(), LwM2MBootstrapConfig_old.class);
+                /** Security info */
+                switch (SecurityMode.valueOf(lwM2MBootstrapConfigOld.getSecurityModeBootstrapBs())) {
+                    /** Use RPK only */
+                    case PSK:
+                        lwM2MBootstrapConfigOld.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
+                        lwM2MBootstrapConfigOld.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePort());
+                        lwM2MBootstrapConfigOld.setServerPublicBootstrapBs("");
+                        store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndPoint(),
+                                lwM2MBootstrapConfigOld.getClientPublicKeyOrIdBootstrapBs(),
+                                Hex.decodeHex(lwM2MBootstrapConfigOld.getClientSecretKeyServerBs().toCharArray())));
+                        store.setSecurityMode(SecurityMode.PSK.code);
                         break;
-                    } catch (IOException | GeneralSecurityException e) {
-                        log.error("Unable to decode Client public key for [{}]  [{}]", store.getEndPoint(), e.getMessage());
-                    }
-                case X509:
-                    lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
-                    lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePort());
-                    lwM2MBootstrapConfig.setServerPublicBootstrapBs(Hex.encodeHexString(lwM2MGetSecurityInfo.contextBS.getBootstrapCertificate().getEncoded()));
-                    store.setSecurityInfo(SecurityInfo.newX509CertInfo(store.getEndPoint()));
-                    store.setSecurityMode(SecurityMode.X509.code);
-                    break;
-                case NO_SEC:
-                    lwM2MBootstrapConfig.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapHost());
-                    lwM2MBootstrapConfig.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapPort());
-                    store.setSecurityMode(SecurityMode.NO_SEC.code);
-                    store.setSecurityInfo(null);
-                    break;
-                default:
+                    case RPK:
+                        lwM2MBootstrapConfigOld.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
+                        lwM2MBootstrapConfigOld.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePort());
+                        lwM2MBootstrapConfigOld.setServerPublicBootstrapBs(Hex.encodeHexString(lwM2MGetSecurityInfo.contextBS.getBootstrapPublicKey().getEncoded()));
+                        try {
+                            store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndPoint(),
+                                    SecurityUtil.publicKey.decode(Hex.decodeHex(lwM2MBootstrapConfigOld.getClientPublicKeyOrIdBootstrapBs().toCharArray()))));
+                            store.setSecurityMode(SecurityMode.RPK.code);
+                            break;
+                        } catch (IOException | GeneralSecurityException e) {
+                            log.error("Unable to decode Client public key for [{}]  [{}]", store.getEndPoint(), e.getMessage());
+                        }
+                    case X509:
+                        lwM2MBootstrapConfigOld.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecureHost());
+                        lwM2MBootstrapConfigOld.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapSecurePortCert());
+                        lwM2MBootstrapConfigOld.setServerPublicBootstrapBs(Hex.encodeHexString(lwM2MGetSecurityInfo.contextBS.getBootstrapCertificate().getEncoded()));
+                        store.setSecurityInfo(SecurityInfo.newX509CertInfo(store.getEndPoint()));
+                        store.setSecurityMode(SecurityMode.X509.code);
+                        break;
+                    case NO_SEC:
+                        lwM2MBootstrapConfigOld.setHostBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapHost());
+                        lwM2MBootstrapConfigOld.setPortBootstrapBs(lwM2MGetSecurityInfo.contextBS.getBootstrapPort());
+                        store.setSecurityMode(SecurityMode.NO_SEC.code);
+                        store.setSecurityInfo(null);
+                        break;
+                    default:
+                }
+                bootstrapConfig = lwM2MBootstrapConfigOld.getLwM2MBootstrapConfig();
+            } else {
+                
             }
-            store.setBootstrapConfig(lwM2MBootstrapConfig.getLwM2MBootstrapConfig());
+            
+            store.setBootstrapConfig(bootstrapConfig);
         } catch (JsonProcessingException | CertificateEncodingException e) {
             log.error("Unable to decode Json or Certificate for [{}]  [{}]", store.getEndPoint(), e.getMessage());
         }

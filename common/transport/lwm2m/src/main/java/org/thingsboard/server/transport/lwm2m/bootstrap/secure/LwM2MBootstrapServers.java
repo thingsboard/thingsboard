@@ -13,28 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.utils;
+package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
-public enum TypeServer {
-    BOOTSTRAP(0, "bootstrap"),
-    CLIENT(1, "client"),
-    SERVER(2, "server");
+import lombok.Builder;
+import lombok.Data;
+import org.eclipse.leshan.core.request.BindingMode;
 
-
-    public int code;
-    public String type;
-
-    TypeServer(int code, String type) {
-        this.code = code;
-        this.type = type;
-    }
-
-    public static TypeServer fromTypeServer(int code) {
-        for (TypeServer sm : TypeServer.values()) {
-            if (sm.code == code) {
-                return sm;
-            }
-        }
-        throw new IllegalArgumentException(String.format("Unsupported type server : %d", code));
-    }
+@Data
+public class LwM2MBootstrapServers {
+    @Builder.Default
+    private Integer shortId = 123;
+    @Builder.Default
+    private Integer lifetime = 300;
+    @Builder.Default
+    private Integer defaultMinPeriod = 1;
+    @Builder.Default
+    private boolean notifIfDisabled = true;
+    @Builder.Default
+    private String binding = "U";
 }

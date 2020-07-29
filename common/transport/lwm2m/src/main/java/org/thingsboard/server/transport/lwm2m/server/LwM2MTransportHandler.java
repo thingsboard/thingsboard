@@ -25,6 +25,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationListener;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
@@ -108,86 +109,96 @@ public class LwM2MTransportHandler {
     public static final String PUT_TYPE_OPER_WRIGHT = "wright";
 
     @Autowired
-    private LeshanServer lhServer;
+    @Qualifier("leshanServerCert")
+    private LeshanServer lhServerCert;
+
+    @Autowired
+    @Qualifier("leshanServerRPK")
+    private LeshanServer lhServerRPK;
 
     @Autowired
     private LwM2MTransportService service;
 
     @PostConstruct
     public void init() {
-        this.lhServer.getRegistrationService().addListener(this.registrationListener);
-        this.lhServer.getPresenceService().addListener(this.presenceListener);
-        this.lhServer.getObservationService().addListener(this.observationListener);
+        LwM2mServerListener lwM2mServerListener = new LwM2mServerListener(lhServerCert, service);
+        this.lhServerCert.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
+        this.lhServerCert.getPresenceService().addListener(lwM2mServerListener.presenceListener);
+        this.lhServerCert.getObservationService().addListener(lwM2mServerListener.observationListener);
+        lwM2mServerListener = new LwM2mServerListener(lhServerRPK, service);
+        this.lhServerRPK.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
+        this.lhServerRPK.getPresenceService().addListener(lwM2mServerListener.presenceListener);
+        this.lhServerRPK.getObservationService().addListener(lwM2mServerListener.observationListener);
 
     }
-
-    private final RegistrationListener registrationListener = new RegistrationListener() {
-
-        /**
-         * Register – запрос, представленный в виде POST /rd?…
-         */
-        @Override
-        public void registered(Registration registration, Registration previousReg,
-                               Collection<Observation> previousObsersations) {
-           service.onRegistered(registration);
-        }
-
-        /**
-         * Update – представляет из себя CoAP POST запрос на URL, полученный в ответ на Register.
-         */
-        @Override
-        public void updated(RegistrationUpdate update, Registration updatedRegistration,
-                            Registration previousRegistration) {
-            service.updatedReg(updatedRegistration);
-        }
-
-        /**
-         * De-register (CoAP DELETE) – отправляется клиентом в случае инициирования процедуры выключения.
-         */
-        @Override
-        public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
-                                 Registration newReg) {
-            service.unReg(registration);
-        }
-
-    };
-
-    public final PresenceListener presenceListener = new PresenceListener() {
-
-        @Override
-        public void onSleeping(Registration registration) {
-            service.onSleepingDev (registration);
-        }
-
-        @Override
-        public void onAwake(Registration registration) {
-            service.onAwakeDev (registration);
-        }
-    };
-
-    private final ObservationListener observationListener = new ObservationListener() {
-
-        @Override
-        public void cancelled(Observation observation) {
-            log.debug("Received notification cancelled from [{}] ", observation.getPath());
-        }
-
-        @Override
-        public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
-            log.debug("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
-            if (registration != null) {
-                service.observOnResponse(observation, registration,response);
-            }
-        }
-
-        @Override
-        public void onError(Observation observation, Registration registration, Exception error) {
-            log.info(String.format("Unable to handle notification of [%s:%s]", observation.getRegistrationId(), observation.getPath()), error);
-        }
-
-        @Override
-        public void newObservation(Observation observation, Registration registration) {
-            log.debug("Received notification cancelled from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
-        }
-    };
+//
+//    private final RegistrationListener registrationListener = new RegistrationListener() {
+//
+//        /**
+//         * Register – запрос, представленный в виде POST /rd?…
+//         */
+//        @Override
+//        public void registered(Registration registration, Registration previousReg,
+//                               Collection<Observation> previousObsersations) {
+//           service.onRegistered(registration);
+//        }
+//
+//        /**
+//         * Update – представляет из себя CoAP POST запрос на URL, полученный в ответ на Register.
+//         */
+//        @Override
+//        public void updated(RegistrationUpdate update, Registration updatedRegistration,
+//                            Registration previousRegistration) {
+//            service.updatedReg(updatedRegistration);
+//        }
+//
+//        /**
+//         * De-register (CoAP DELETE) – отправляется клиентом в случае инициирования процедуры выключения.
+//         */
+//        @Override
+//        public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
+//                                 Registration newReg) {
+//            service.unReg(registration);
+//        }
+//
+//    };
+//
+//    public final PresenceListener presenceListener = new PresenceListener() {
+//
+//        @Override
+//        public void onSleeping(Registration registration) {
+//            service.onSleepingDev (registration);
+//        }
+//
+//        @Override
+//        public void onAwake(Registration registration) {
+//            service.onAwakeDev (registration);
+//        }
+//    };
+//
+//    private final ObservationListener observationListener = new ObservationListener() {
+//
+//        @Override
+//        public void cancelled(Observation observation) {
+//            log.debug("Received notification cancelled from [{}] ", observation.getPath());
+//        }
+//
+//        @Override
+//        public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
+//            log.debug("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
+//            if (registration != null) {
+//                service.observOnResponse(observation, registration,response);
+//            }
+//        }
+//
+//        @Override
+//        public void onError(Observation observation, Registration registration, Exception error) {
+//            log.info(String.format("Unable to handle notification of [%s:%s]", observation.getRegistrationId(), observation.getPath()), error);
+//        }
+//
+//        @Override
+//        public void newObservation(Observation observation, Registration registration) {
+//            log.debug("Received notification cancelled from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
+//        }
+//    };
 }

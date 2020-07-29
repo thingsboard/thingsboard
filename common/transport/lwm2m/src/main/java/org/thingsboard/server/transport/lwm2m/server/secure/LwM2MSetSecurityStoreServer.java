@@ -56,17 +56,17 @@ public class LwM2MSetSecurityStoreServer {
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
     private LeshanServerBuilder builder;
-    private int dtlsMode;
     EditableSecurityStore securityStore;
 
-    public LwM2MSetSecurityStoreServer(LeshanServerBuilder builder, LwM2MTransportContextServer context, LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore) {
+    public LwM2MSetSecurityStoreServer(LeshanServerBuilder builder, LwM2MTransportContextServer context, LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore, LwM2MSecurityMode dtlsMode) {
         this.builder = builder;
         this.context = context;
         this.lwM2mInMemorySecurityStore = lwM2mInMemorySecurityStore;
-        this.dtlsMode =  (this.context.getServerDtlsMode() == REDIS.code && context.getRedisUrl().isEmpty()) ? DEFAULT_MODE.code : this.context.getServerDtlsMode();
+//        this.dtlsMode =  (this.context.getServerDtlsMode() == REDIS.code && context.getRedisUrl().isEmpty()) ? DEFAULT_MODE.code : this.context.getServerDtlsMode();
         /** Set securityStore with new registrationStore */
 
-        switch (LwM2MSecurityMode.fromSecurityMode(this.dtlsMode)) {
+//        switch (LwM2MSecurityMode.fromSecurityMode(this.dtlsMode)) {
+        switch (dtlsMode) {
             /** Use PSK only */
             case PSK:
                 generatePSK_RPK();
@@ -117,9 +117,9 @@ public class LwM2MSetSecurityStoreServer {
         }
 
         /** Set securityStore with new registrationStore (if not redis)*/
-        if (this.dtlsMode < REDIS.code) {
+        if (dtlsMode.code < REDIS.code) {
             securityStore = lwM2mInMemorySecurityStore;
-            if (this.dtlsMode == X509.code) {
+            if (dtlsMode == X509) {
                 builder.setAuthorizer(new DefaultAuthorizer(securityStore, new SecurityChecker() {
                     @Override
                     protected boolean matchX509Identity(String endpoint, String receivedX509CommonName,

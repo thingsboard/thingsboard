@@ -32,13 +32,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSetSecurityStoreServer;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import java.io.*;
-import java.net.URISyntaxException;
 import java.util.List;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 
 
 @Slf4j
@@ -53,12 +55,24 @@ public class LwM2MTransportServerConfiguration {
     @Autowired
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
-    @Bean
-    public LeshanServer getLeshanServer() throws URISyntaxException {
-        log.info("Starting LwM2M transport Server... PostConstruct");
+    @Primary
+    @Bean(name = "leshanServerCert")
+    public LeshanServer getLeshanServerCert()  {
+        log.info("Starting LwM2M transport ServerCert... PostConstruct");
+        return getLeshanServer(context.getServerPort(), context.getServerSecurePortCert(), X509);
+    }
+
+    @Bean(name = "leshanServerRPK")
+    public LeshanServer getLeshanServerRPK()  {
+        log.info("Starting LwM2M transport ServerRPK... PostConstruct");
+        return getLeshanServer(context.getServerPort(), context.getServerSecurePort(), RPK);
+    }
+
+    private LeshanServer getLeshanServer(Integer serverPort, Integer serverSecurePort, LwM2MSecurityMode dtlsMode)  {
+
         LeshanServerBuilder builder = new LeshanServerBuilder();
-        builder.setLocalAddress(context.getServerHost(), context.getServerPort());
-        builder.setLocalSecureAddress(context.getServerSecureHost(), context.getServerSecurePort());
+        builder.setLocalAddress(context.getServerHost(), serverPort);
+        builder.setLocalSecureAddress(context.getServerSecureHost(), serverSecurePort);
         builder.setEncoder(new DefaultLwM2mNodeEncoder());
         LwM2mNodeDecoder decoder = new DefaultLwM2mNodeDecoder();
         builder.setDecoder(decoder);
@@ -92,13 +106,13 @@ public class LwM2MTransportServerConfiguration {
         /** Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
 
+        /** Use a magic converter to support bad type send by the UI. */
+        builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
+
         /**  Create DTLS security mode
          * There can be only one DTLS security mode
          */
-        new LwM2MSetSecurityStoreServer(builder, context, lwM2mInMemorySecurityStore);
-
-        /** Use a magic converter to support bad type send by the UI. */
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
+        new LwM2MSetSecurityStoreServer(builder, context, lwM2mInMemorySecurityStore, dtlsMode);
 
         /** Create LWM2M server */
         return builder.build();

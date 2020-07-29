@@ -23,7 +23,7 @@ import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import java.nio.charset.StandardCharsets;
 
 @Data
-public class LwM2MBootstrapConfig {
+public class LwM2MBootstrapConfig_old {
     /** -bootstrap */
     /** --serverBs */
     @Builder.Default

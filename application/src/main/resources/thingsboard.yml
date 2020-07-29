@@ -594,18 +594,20 @@ transport:
     server:
       bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
       bind_port: "${LWM2M_BIND_PORT:5685}"
+      bind_port_cert: "${LWM2M_BIND_PORT_CERT:5687}"
       secure:
-        #leshan.core (V1_1)
-        #DTLS security modes:
-        #0: Pre-Shared Key mode
-        #1: Raw Public Key mode
-        #2: Certificate mode X509
-        #3: NoSec mode  *
-        #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
-        #4: Certificate mode X509 with EST
-        dtls_mode: "${LWM2M_SECURITY_MODE:2}"
+#        #leshan.core (V1_1)
+#        #DTLS security modes:
+#        #0: Pre-Shared Key mode
+#        #1: Raw Public Key mode
+#        #2: Certificate mode X509
+#        #3: NoSec mode  *
+#        #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
+#        #4: Certificate mode X509 with EST
+#        dtls_mode: "${LWM2M_SECURITY_MODE:2}"
         bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
-        bind_port: "${LWM2M_BIND_PORT:5686}"
+        bind_port: "${LWM2M_BIND_PORT_SEC:5686}"
+        bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT:5688}"
         # Only RPK: Public & Private Key
         create_rpk: "${CREATE_RPK:}"
         public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
@@ -615,16 +617,18 @@ transport:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
     bootstrap:
       enable: "${BOOTSTRAP:true}"
-      bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
-      bind_port: "${LWM2M_BIND_PORT:5687}"
+      bind_address: "${LWM2M_BIND_ADDRESS_BS:'0.0.0.0'}"
+      bind_port: "${LWM2M_BIND_PORT_BS:5689}"
+      bind_port_cert: "${LWM2M_BIND_PORT_SER_BS:5691}"
       secure:
-        dtls_mode: "${LWM2M_SECURITY_MODE:2}"
-        bind_address: "${LWM2M_BIND_ADDRESS:'0.0.0.0'}"
-        bind_port: "${LWM2M_BIND_PORT:5688}"
+        dtls_mode: "${LWM2M_SECURITY_MODE_BS:2}"
+        bind_address: "${LWM2M_BIND_ADDRESS_BS:'0.0.0.0'}"
+        bind_port: "${LWM2M_BIND_PORT_SEC_BS:5690}"
+        bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT_BS:5692}"
         # Only RPK: Public & Private Key
-        public_x: "${LWM2M_SERVER_PUBLIC_X:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
-        public_y: "${LWM2M_SERVER_PUBLIC_Y:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
-        private_s: "${LWM2M_SERVER_PRIVATE_S:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
+        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
+        private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
       # Redis

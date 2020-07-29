@@ -61,9 +61,6 @@ public class LwM2MTransportService {
     private TransportService transportService;
 
     @Autowired
-    private LeshanServer lwServer;
-
-    @Autowired
     private LwM2MTransportContextServer context;
 
     @Autowired
@@ -72,17 +69,17 @@ public class LwM2MTransportService {
     @Autowired
     LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
-    public void onRegistered(Registration registration) {
+    public void onRegistered(LeshanServer lwServer, Registration registration) {
         String endpointId = registration.getEndpoint();
         String lwm2mVersion = registration.getLwM2mVersion();
-        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(endpointId, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(lwServer, endpointId, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
         log.info("cResponse1: [{}]", cResponse);
         String target = "/1/0/8";
-       cResponse = doTrigerServer(endpointId, target, null);
+        cResponse = doTrigerServer(lwServer, endpointId, target, null);
         log.info("cResponse2: [{}]", cResponse);
         if (cResponse == null|| cResponse.getCode().getCode() == 500) {
             target = "/3/0/5";
-            cResponse = doTrigerServer(endpointId, target, null);
+            cResponse = doTrigerServer(lwServer, endpointId, target, null);
             log.info("cResponse3: [{}]", cResponse);
         }
 
@@ -145,12 +142,12 @@ public class LwM2MTransportService {
         return sessionInfo;
     }
 
-    public void updatedReg(Registration registration) {
+    public void updatedReg(LeshanServer lwServer, Registration registration) {
         String endpointId = registration.getEndpoint();
         String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
         log.info("[{}] [{}] Received endpoint updated registration version event", endpointId, lwm2mVersion);
-        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetry(endpointId);
+        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetry(lwServer, endpointId);
         processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
         processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
     }
@@ -185,17 +182,17 @@ public class LwM2MTransportService {
     /**
      * /clients/endPoint/LWRequest/discover : do LightWeight M2M discover request on a given client.
      */
-    public DiscoverResponse getDiscover(String target, String clientEndpoint, String timeoutParam) throws InterruptedException {
+    public DiscoverResponse getDiscover(LeshanServer lwServer, String target, String clientEndpoint, String timeoutParam) throws InterruptedException {
         DiscoverRequest request = new DiscoverRequest(target);
-        return this.lwServer.send(getRegistration(clientEndpoint), request, this.context.getTimeout());
+        return lwServer.send(getRegistration(lwServer, clientEndpoint), request, this.context.getTimeout());
     }
 
-    public Registration getRegistration(String clientEndpoint) {
-        return this.lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
+    public Registration getRegistration(LeshanServer lwServer, String clientEndpoint) {
+        return lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
     }
 
     @SneakyThrows
-    public ReadResultAttrTel doGetAttributsTelemetry(String clientEndpoint) {
+    public ReadResultAttrTel doGetAttributsTelemetry(LeshanServer lwServer, String clientEndpoint) {
         ReadResultAttrTel readResultAttrTel = new ReadResultAttrTel();
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
@@ -204,7 +201,7 @@ public class LwM2MTransportService {
         });
         lwServer.getModelProvider().getObjectModel(registration).getObjectModels().forEach(om -> {
             String idObj = String.valueOf(om.id);
-            LwM2mResponse cResponse = lwM2MTransportRequest.doGet(clientEndpoint, "/" + idObj, GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+            LwM2mResponse cResponse = lwM2MTransportRequest.doGet(lwServer, clientEndpoint, "/" + idObj, GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
             if (cResponse != null) {
                 LwM2mNode content = ((ReadResponse) cResponse).getContent();
                 ((LwM2mObject) content).getInstances().entrySet().stream().forEach(instance -> {
@@ -241,9 +238,9 @@ public class LwM2MTransportService {
         return readResultAttrTel;
     }
 
-    public LwM2mResponse doTrigerServer(String clientEndpoint, String target, String param) {
+    public LwM2mResponse doTrigerServer(LeshanServer lwServer, String clientEndpoint, String target, String param) {
         param = param != null  ? param : "";
-        return lwM2MTransportRequest.doPost(clientEndpoint, target, POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
+        return lwM2MTransportRequest.doPost(lwServer, clientEndpoint, target, POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
    }
 
 

@@ -37,8 +37,12 @@ public class LwM2MTransportContextBootstrap extends TransportContext {
     private String bootstrapHost;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.bind_port} ?: 5687}")
+    @Value("#{${transport.lwm2m.bootstrap.bind_port} ?: 5689}")
     private Integer bootstrapPort;
+
+    @Getter
+    @Value("#{${transport.lwm2m.bootstrap.bind_port_cert} ?: 5691}")
+    private Integer bootstrapPortCert;
 
     @Getter
     @Value("#{${transport.lwm2m.bootstrap.secure.dtls_mode} ?: 3}")
@@ -49,8 +53,12 @@ public class LwM2MTransportContextBootstrap extends TransportContext {
     private String bootstrapSecureHost;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.secure.bind_port} ?: 5688}")
+    @Value("#{${transport.lwm2m.bootstrap.secure.bind_port} ?: 5690}")
     private Integer bootstrapSecurePort;
+
+    @Getter
+    @Value("#{${transport.lwm2m.bootstrap.secure.bind_port_cert} ?: 5692}")
+    private Integer bootstrapSecurePortCert;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.public_x:}")

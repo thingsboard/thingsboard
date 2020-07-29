@@ -29,13 +29,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MSetSecurityStoreBootstrap;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 import java.io.File;
-import java.net.URISyntaxException;
 import java.util.List;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 
 @Slf4j
 @ComponentScan("org.thingsboard.server.transport.lwm2m.server")
@@ -56,12 +58,26 @@ public class LwM2MTransportBootstrapServerConfiguration {
     @Autowired
     private LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
 
-    @Bean
-    public LeshanBootstrapServer getLeshanBootstrapServer() throws URISyntaxException {
-            log.info("Prepare and start BootstrapServer... PostConstruct");
+    @Primary
+    @Bean(name = "leshanBootstrapCert")
+    public LeshanBootstrapServer getLeshanBootstrapServerCert() {
+        log.info("Prepare and start BootstrapServerCert... PostConstruct");
+        return getLeshanBootstrapServer(contextBs.getBootstrapPortCert(), contextBs.getBootstrapSecurePortCert(), X509);
+    }
+
+    @Bean(name = "leshanBootstrapRPK")
+    public LeshanBootstrapServer getLeshanBootstrapServerRPK() {
+        log.info("Prepare and start BootstrapServerRPK... PostConstruct");
+        return getLeshanBootstrapServer(contextBs.getBootstrapPort(), contextBs.getBootstrapSecurePort(), RPK);
+    }
+
+    public LeshanBootstrapServer getLeshanBootstrapServer(Integer bootstrapPort, Integer bootstrapSecurePort, LwM2MSecurityMode dtlsMode){
+
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
-        builder.setLocalAddress(contextBs.getBootstrapHost(), contextBs.getBootstrapPort());
-        builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), contextBs.getBootstrapSecurePort());
+//        builder.setLocalAddress(contextBs.getBootstrapHost(), contextBs.getBootstrapPortCert());
+//        builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), contextBs.getBootstrapSecurePortCert());
+       builder.setLocalAddress(contextBs.getBootstrapHost(), bootstrapPort);
+        builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), bootstrapSecurePort);
 
         /**  ConfigStore */
         builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
@@ -82,7 +98,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setDtlsConfig(dtlsConfig);
 
         /**  Create credentials */
-        new LwM2MSetSecurityStoreBootstrap(builder, contextBs, contextS);
+        new LwM2MSetSecurityStoreBootstrap(builder, contextBs, contextS, dtlsMode);
 
         /** Create CoAP Config */
         NetworkConfig coapConfig;

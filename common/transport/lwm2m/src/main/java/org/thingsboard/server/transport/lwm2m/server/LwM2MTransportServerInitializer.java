@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
@@ -32,7 +33,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LwM2MTransportServerInitializer {
 
     @Autowired
-    private LeshanServer lhServer;
+    @Qualifier("leshanServerCert")
+    private LeshanServer lhServerCert;
+
+    @Autowired
+    @Qualifier("leshanServerRPK")
+    private LeshanServer lhServerRPK;
 
     @Autowired
     private LwM2MTransportContextServer context;
@@ -41,14 +47,16 @@ public class LwM2MTransportServerInitializer {
     public void init() {
         if (context.getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
         this.context.setSessions(new ConcurrentHashMap<>());
-        this.lhServer.start();
+        this.lhServerCert.start();
+        this.lhServerRPK.start();
     }
 
     @PreDestroy
     public void shutdown() {
         log.info("Stopping LwM2M transport Server!");
         try {
-            lhServer.destroy();
+            lhServerCert.destroy();
+            lhServerRPK.destroy();
         } finally {
         }
         log.info("LwM2M transport Server stopped!");

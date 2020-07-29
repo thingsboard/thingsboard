@@ -42,8 +42,8 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportRequest {
 
-    @Autowired
-    private LeshanServer lwServer;
+//    @Autowired
+//    private LeshanServer lwServer;
 
     @Autowired
     private LwM2MTransportContextServer context;
@@ -53,7 +53,7 @@ public class LwM2MTransportRequest {
     public void init() {
     }
 
-    public Collection<Registration> doGetRegistrations() {
+    public Collection<Registration> doGetRegistrations(LeshanServer lwServer) {
         Collection<Registration> registrations = new ArrayList<>();
         for (Iterator<Registration> iterator = lwServer.getRegistrationService().getAllRegistrations(); iterator
                 .hasNext(); ) {
@@ -63,7 +63,7 @@ public class LwM2MTransportRequest {
     }
 
     @SneakyThrows
-    public LwM2mResponse doGet(String clientEndpoint, String target, String typeOper, String contentFormatParam) {
+    public LwM2mResponse doGet(LeshanServer lwServer, String clientEndpoint, String target, String typeOper, String contentFormatParam) {
         /** all registered clients */
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         if (registration != null) {
@@ -94,7 +94,7 @@ public class LwM2MTransportRequest {
     }
 
     @SneakyThrows
-    public LwM2mResponse doPost(String clientEndpoint, String target, String typeOper, String contentFormatParam, String params) {
+    public LwM2mResponse doPost(LeshanServer lwServer, String clientEndpoint, String target, String typeOper, String contentFormatParam, String params) {
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         if (registration != null) {
             /** Execute */
@@ -107,7 +107,7 @@ public class LwM2MTransportRequest {
     }
 
     @SneakyThrows
-    public LwM2mResponse doPut(String clientEndpoint, String target, String typeOper, String contentFormatParam, String params) {
+    public LwM2mResponse doPut(LeshanServer lwServer, String clientEndpoint, String target, String typeOper, String contentFormatParam, String params) {
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         if (registration != null) {
             /** Update */

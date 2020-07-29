@@ -23,6 +23,7 @@ import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -49,24 +50,28 @@ public class LwM2MSetSecurityStoreBootstrap {
 
 
     private LeshanBootstrapServerBuilder builder;
-    private int dtlsMode;
+    //    private int dtlsMode;
     EditableSecurityStore securityStore;
 
-    public LwM2MSetSecurityStoreBootstrap(LeshanBootstrapServerBuilder builder, LwM2MTransportContextBootstrap contextBS, LwM2MTransportContextServer contextS) {
+    public LwM2MSetSecurityStoreBootstrap(LeshanBootstrapServerBuilder builder, LwM2MTransportContextBootstrap contextBS, LwM2MTransportContextServer contextS, LwM2MSecurityMode dtlsMode) {
         this.builder = builder;
         this.contextBS = contextBS;
         this.contextS = contextS;
-        this.dtlsMode = (this.contextBS.getBootStrapDtlsMode() == REDIS.code && contextS.getRedisUrl().isEmpty()) ? DEFAULT_MODE.code : this.contextBS.getBootStrapDtlsMode();
+//        this.dtlsMode = (this.contextBS.getBootStrapDtlsMode() == REDIS.code && contextS.getRedisUrl().isEmpty()) ? DEFAULT_MODE.code : this.contextBS.getBootStrapDtlsMode();
         /** Set securityStore with new registrationStore */
 
-        switch (LwM2MSecurityMode.fromSecurityMode(this.dtlsMode)) {
+        switch (dtlsMode) {
             /** Use No_Sec only */
             case NO_SEC:
                 setServerWithX509Cert(NO_SEC.code);
                 break;
-            /** Use RPK only */
+            /** Use PSK/RPK  */
+            case PSK:
             case RPK:
                 setRPK();
+                break;
+            case X509:
+                setServerWithX509Cert(X509.code);;
                 break;
             /** Use X509_EST only */
             case X509_EST:
@@ -74,7 +79,7 @@ public class LwM2MSetSecurityStoreBootstrap {
                 break;
             /** Use ather X509, PSK,  No_Sec ?? */
             default:
-                setServerWithX509Cert(X509.code);
+                break;
         }
     }
 
