@@ -29,7 +29,6 @@ import org.thingsboard.server.dao.util.SqlTsOrTsLatestAnyDao;
 @EntityScan({"org.thingsboard.server.dao.model.sqlts.dictionary"})
 @EnableTransactionManagement
 @SqlTsOrTsLatestAnyDao
-@PsqlDao
 public class SqlTimeseriesDaoConfig {
 
 }
