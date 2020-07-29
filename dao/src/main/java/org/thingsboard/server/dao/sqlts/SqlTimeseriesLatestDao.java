@@ -96,9 +96,6 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Autowired
     private StatsFactory statsFactory;
 
-    @Value("${sql.ts.stats_print_interval_ms:1000}")
-    protected long tsStatsPrintIntervalMs;
-
     @PostConstruct
     protected void init() {
         TbSqlBlockingQueueParams tsLatestParams = TbSqlBlockingQueueParams.builder()
@@ -153,7 +150,19 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return getFindAllLatestFuture(entityId);
     }
 
-    protected ListenableFuture<List<TsKvEntry>> findNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+    private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+        ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(tenantId, entityId, query);
+        return Futures.transformAsync(future, entryList -> {
+            if (entryList.size() == 1) {
+                return getSaveLatestFuture(entityId, entryList.get(0));
+            } else {
+                log.trace("Could not find new latest value for [{}], key - {}", entityId, query.getKey());
+            }
+            return Futures.immediateFuture(null);
+        }, service);
+    }
+
+    private ListenableFuture<List<TsKvEntry>> findNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         long startTs = 0;
         long endTs = query.getStartTs() - 1;
         ReadTsKvQuery findNewLatestQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
@@ -247,18 +256,6 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         latestEntity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
 
         return tsLatestQueue.add(latestEntity);
-    }
-
-    private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(tenantId, entityId, query);
-        return Futures.transformAsync(future, entryList -> {
-            if (entryList.size() == 1) {
-                return getSaveLatestFuture(entityId, entryList.get(0));
-            } else {
-                log.trace("Could not find new latest value for [{}], key - {}", entityId, query.getKey());
-            }
-            return Futures.immediateFuture(null);
-        }, service);
     }
 
 }
