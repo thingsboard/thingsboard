@@ -87,7 +87,6 @@ import {
 import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
-import { alarmFields } from '@shared/models/alarm.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -659,7 +658,9 @@ class EntityDatasource implements DataSource<EntityData> {
     this.dataKeys.forEach((dataKey, index) => {
       const keyData = data[index].data;
       if (keyData && keyData.length && keyData[0].length > 1) {
-        entity[dataKey.label] = keyData[0][1];
+        if (data[index].dataKey.type !== DataKeyType.entityField || !entity.hasOwnProperty(dataKey.label)) {
+          entity[dataKey.label] = keyData[0][1];
+        }
       } else {
         entity[dataKey.label] = '';
       }
