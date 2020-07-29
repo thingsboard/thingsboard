@@ -42,7 +42,7 @@ import {
   flotSettingsSchema,
   TbFlotAxisOptions,
   TbFlotHoverInfo,
-  TbFlotKeySettings, TbFlotLabelPatternSettings,
+  TbFlotKeySettings,
   TbFlotPlotAxis,
   TbFlotPlotDataSeries,
   TbFlotPlotItem,
