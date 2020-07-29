@@ -238,7 +238,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         private String lastUpdateValue;
 
         boolean updateValue(TsValue value) {
-            if (value.getTs() > lastUpdateTs && !lastUpdateValue.equals(value.getValue())) {
+            if (value.getTs() > lastUpdateTs && (lastUpdateValue == null || !lastUpdateValue.equals(value.getValue()))) {
                 this.lastUpdateTs = value.getTs();
                 this.lastUpdateValue = value.getValue();
                 return true;
