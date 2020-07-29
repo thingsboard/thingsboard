@@ -402,6 +402,12 @@ export default angular.module('thingsboard.types', [])
                 attributesDeleted: "ATTRIBUTES_DELETED",
                 timeseriesUpdated: "TIMESERIES_UPDATED"
             },
+            edgeAttributeKeys: {
+                active: "active",
+                lastConnectTime: "lastConnectTime",
+                lastDisconnectTime: "lastDisconnectTime",
+                queueStartTs: "queueStartTs"
+            },
             importEntityColumnType: {
                 name: {
                     name: 'import.column-type.name',

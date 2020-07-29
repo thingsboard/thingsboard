@@ -225,7 +225,7 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
 
         scope.loadEdgeInfo = function() {
             attributeService.getEntityAttributesValues(scope.entityType, scope.entityId, types.attributesScope.server.value,
-                ["queueStartTs"], {})
+                types.edgeAttributeKeys.queueStartTs, {})
                 .then(function success(attributes) {
                     scope.onUpdate(attributes);
                 });
