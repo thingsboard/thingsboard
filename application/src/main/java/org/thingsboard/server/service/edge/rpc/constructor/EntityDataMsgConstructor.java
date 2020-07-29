@@ -15,13 +15,19 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.gen.edge.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.EntityDataProto;
+
+import java.util.List;
 
 @Component
 @Slf4j
@@ -42,13 +48,26 @@ public class EntityDataMsgConstructor {
                 break;
             case ATTRIBUTES_UPDATED:
                 try {
-                    builder.setPostAttributesMsg(JsonConverter.convertToAttributesProto(entityData));
+                    JsonObject data = entityData.getAsJsonObject();
+                    builder.setPostAttributesMsg(JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv")));
+                    builder.setPostAttributeScope(data.getAsJsonPrimitive("scope").getAsString());
                 } catch (Exception e) {
                     log.warn("Can't convert to attributes proto, entityData [{}]", entityData, e);
                 }
                 break;
-            // TODO: voba - add support for attribute delete
-            // case ATTRIBUTES_DELETED:
+            case ATTRIBUTES_DELETED:
+                try {
+                    AttributeDeleteMsg.Builder attributeDeleteMsg = AttributeDeleteMsg.newBuilder();
+                    attributeDeleteMsg.setScope(entityData.getAsJsonObject().getAsJsonPrimitive("scope").getAsString());
+                    JsonArray jsonArray = entityData.getAsJsonObject().getAsJsonArray("keys");
+                    List<String> keys = new Gson().fromJson(jsonArray.toString(), List.class);
+                    attributeDeleteMsg.addAllAttributeNames(keys);
+                    attributeDeleteMsg.build();
+                    builder.setAttributeDeleteMsg(attributeDeleteMsg);
+                } catch (Exception e) {
+                    log.warn("Can't convert to AttributeDeleteMsg proto, entityData [{}]", entityData, e);
+                }
+                break;
         }
         return builder.build();
     }

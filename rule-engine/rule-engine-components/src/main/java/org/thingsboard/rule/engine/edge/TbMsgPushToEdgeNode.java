@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.edge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -45,7 +46,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
@@ -84,30 +88,33 @@ public class TbMsgPushToEdgeNode implements TbNode {
                 Futures.addCallback(getEdgeIdFuture, new FutureCallback<EdgeId>() {
                     @Override
                     public void onSuccess(@Nullable EdgeId edgeId) {
-                        EdgeEventType edgeEventTypeByEntityType = EdgeUtils.getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
-                        if (edgeEventTypeByEntityType == null) {
-                            log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
-                            ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
-                        }
-                        EdgeEvent edgeEvent = null;
                         try {
-                            edgeEvent = buildEdgeEvent(ctx, msg, edgeId, edgeEventTypeByEntityType);
+                            EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
+                            if (edgeEvent == null) {
+                                log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
+                                ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
+                            } else {
+                                edgeEvent.setEdgeId(edgeId);
+                                ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
+                                Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
+                                    @Override
+                                    public void onSuccess(@Nullable EdgeEvent event) {
+                                        ctx.tellNext(msg, SUCCESS);
+                                    }
+
+                                    @Override
+                                    public void onFailure(Throwable th) {
+                                        log.error("Could not save edge event", th);
+                                        ctx.tellFailure(msg, th);
+                                    }
+                                }, ctx.getDbCallbackExecutor());
+                            }
                         } catch (JsonProcessingException e) {
                             log.error("Failed to build edge event", e);
+                            ctx.tellFailure(msg, e);
                         }
-                        ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
-                        Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
-                            @Override
-                            public void onSuccess(@Nullable EdgeEvent event) {
-                                ctx.tellNext(msg, SUCCESS);
-                            }
-                            @Override
-                            public void onFailure(Throwable th) {
-                                log.error("Could not save edge event", th);
-                                ctx.tellFailure(msg, th);
-                            }
-                        }, ctx.getDbCallbackExecutor());
                     }
+
                     @Override
                     public void onFailure(Throwable t) {
                         ctx.tellFailure(msg, t);
@@ -124,15 +131,55 @@ public class TbMsgPushToEdgeNode implements TbNode {
         }
     }
 
-    private EdgeEvent buildEdgeEvent(TbContext ctx, TbMsg msg, EdgeId edgeId, EdgeEventType edgeEventTypeByEntityType) throws JsonProcessingException {
+    private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) throws JsonProcessingException {
+        if (DataConstants.ALARM.equals(msg.getType())) {
+            return buildEdgeEvent(ctx.getTenantId(), ActionType.ADDED, getUUIDFromMsgData(msg), EdgeEventType.ALARM, null);
+        } else {
+            EdgeEventType edgeEventTypeByEntityType = EdgeUtils.getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
+            if (edgeEventTypeByEntityType == null) {
+                return null;
+            }
+            ActionType actionType = getActionTypeByMsgType(msg.getType());
+            JsonNode entityBody = null;
+            JsonNode data = json.readTree(msg.getData());
+            if (actionType.equals(ActionType.ATTRIBUTES_UPDATED) || actionType.equals(ActionType.ATTRIBUTES_DELETED)) {
+                entityBody = getAttributeEntityBody(actionType, data, msg.getMetaData().getData());
+            } else {
+                entityBody = data;
+            }
+            return buildEdgeEvent(ctx.getTenantId(), actionType, msg.getOriginator().getId(), edgeEventTypeByEntityType, entityBody);
+        }
+    }
+
+    private EdgeEvent buildEdgeEvent(TenantId tenantId, ActionType edgeEventAction, UUID entityId, EdgeEventType edgeEventType, JsonNode entityBody) {
         EdgeEvent edgeEvent = new EdgeEvent();
-        edgeEvent.setTenantId(ctx.getTenantId());
-        edgeEvent.setEdgeId(edgeId);
-        edgeEvent.setEdgeEventAction(getActionTypeByMsgType(msg.getType()).name());
-        edgeEvent.setEntityId(msg.getOriginator().getId());
-        edgeEvent.setEdgeEventType(edgeEventTypeByEntityType);
-        edgeEvent.setEntityBody(json.readTree(msg.getData()));
+        edgeEvent.setTenantId(tenantId);
+        edgeEvent.setEdgeEventAction(edgeEventAction.name());
+        edgeEvent.setEntityId(entityId);
+        edgeEvent.setEdgeEventType(edgeEventType);
+        edgeEvent.setEntityBody(entityBody);
         return edgeEvent;
+    }
+
+    private JsonNode getAttributeEntityBody(ActionType actionType, JsonNode data, Map<String, String> metadata) throws JsonProcessingException {
+        Map<String, Object> entityData = new HashMap<>();
+        switch (actionType) {
+            case ATTRIBUTES_UPDATED:
+                entityData.put("kv", data);
+                break;
+            case ATTRIBUTES_DELETED:
+                List<String> keys = json.treeToValue(data.get("attributes"), List.class);
+                entityData.put("keys", keys);
+                break;
+        }
+        entityData.put("scope", metadata.get("scope"));
+        return json.valueToTree(entityData);
+    }
+
+    private UUID getUUIDFromMsgData(TbMsg msg) throws JsonProcessingException {
+        JsonNode data = json.readTree(msg.getData()).get("id");
+        String id = json.treeToValue(data.get("id"), String.class);
+        return UUID.fromString(id);
     }
 
     private ActionType getActionTypeByMsgType(String msgType) {
@@ -161,14 +208,11 @@ public class TbMsgPushToEdgeNode implements TbNode {
     }
 
     private boolean isSupportedMsgType(String msgType) {
-        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
+        return SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
                 || SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)
                 || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)
-                || DataConstants.ATTRIBUTES_DELETED.equals(msgType)) {
-            return true;
-        } else {
-            return false;
-        }
+                || DataConstants.ATTRIBUTES_DELETED.equals(msgType)
+                || DataConstants.ALARM.equals(msgType);
     }
 
     private ListenableFuture<EdgeId> getEdgeIdByOriginatorId(TbContext ctx, TenantId tenantId, EntityId originatorId) {

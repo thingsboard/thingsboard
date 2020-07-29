@@ -16,8 +16,6 @@
 package org.thingsboard.rule.engine.mqtt;
 
 import io.netty.buffer.Unpooled;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -37,7 +35,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import javax.net.ssl.SSLException;
 import java.nio.charset.Charset;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -58,14 +55,14 @@ public class TbMqttNode implements TbNode {
 
     private static final String ERROR = "error";
 
-    private TbMqttNodeConfiguration config;
+    protected TbMqttNodeConfiguration mqttNodeConfiguration;
 
-    private MqttClient mqttClient;
+    protected MqttClient mqttClient;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         try {
-            this.config = TbNodeUtils.convert(configuration, TbMqttNodeConfiguration.class);
+            this.mqttNodeConfiguration = TbNodeUtils.convert(configuration, TbMqttNodeConfiguration.class);
             this.mqttClient = initClient(ctx);
         } catch (Exception e) {
             throw new TbNodeException(e);
@@ -74,7 +71,7 @@ public class TbMqttNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        String topic = TbNodeUtils.processPattern(this.config.getTopicPattern(), msg.getMetaData());
+        String topic = TbNodeUtils.processPattern(this.mqttNodeConfiguration.getTopicPattern(), msg.getMetaData());
         this.mqttClient.publish(topic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE)
                 .addListener(future -> {
                     if (future.isSuccess()) {
@@ -100,38 +97,38 @@ public class TbMqttNode implements TbNode {
         }
     }
 
-    private MqttClient initClient(TbContext ctx) throws Exception {
+    protected MqttClient initClient(TbContext ctx) throws Exception {
         Optional<SslContext> sslContextOpt = initSslContext();
         MqttClientConfig config = sslContextOpt.isPresent() ? new MqttClientConfig(sslContextOpt.get()) : new MqttClientConfig();
-        if (!StringUtils.isEmpty(this.config.getClientId())) {
-            config.setClientId(this.config.getClientId());
+        if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
+            config.setClientId(this.mqttNodeConfiguration.getClientId());
         }
-        config.setCleanSession(this.config.isCleanSession());
-        this.config.getCredentials().configure(config);
+        config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
+        this.mqttNodeConfiguration.getCredentials().configure(config);
         MqttClient client = MqttClient.create(config, null);
         client.setEventLoop(ctx.getSharedEventLoop());
-        Future<MqttConnectResult> connectFuture = client.connect(this.config.getHost(), this.config.getPort());
+        Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
         MqttConnectResult result;
         try {
-            result = connectFuture.get(this.config.getConnectTimeoutSec(), TimeUnit.SECONDS);
+            result = connectFuture.get(this.mqttNodeConfiguration.getConnectTimeoutSec(), TimeUnit.SECONDS);
         } catch (TimeoutException ex) {
             connectFuture.cancel(true);
             client.disconnect();
-            String hostPort = this.config.getHost() + ":" + this.config.getPort();
+            String hostPort = this.mqttNodeConfiguration.getHost() + ":" + this.mqttNodeConfiguration.getPort();
             throw new RuntimeException(String.format("Failed to connect to MQTT broker at %s.", hostPort));
         }
         if (!result.isSuccess()) {
             connectFuture.cancel(true);
             client.disconnect();
-            String hostPort = this.config.getHost() + ":" + this.config.getPort();
+            String hostPort = this.mqttNodeConfiguration.getHost() + ":" + this.mqttNodeConfiguration.getPort();
             throw new RuntimeException(String.format("Failed to connect to MQTT broker at %s. Result code is: %s", hostPort, result.getReturnCode()));
         }
         return client;
     }
 
     private Optional<SslContext> initSslContext() throws SSLException {
-        Optional<SslContext> result = this.config.getCredentials().initSslContext();
-        if (this.config.isSsl() && !result.isPresent()) {
+        Optional<SslContext> result = this.mqttNodeConfiguration.getCredentials().initSslContext();
+        if (this.mqttNodeConfiguration.isSsl() && !result.isPresent()) {
             result = Optional.of(SslContextBuilder.forClient().build());
         }
         return result;

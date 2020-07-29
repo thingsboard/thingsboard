@@ -45,8 +45,8 @@ public class EntityViewUpdateMsgConstructor {
                 .setIdLSB(entityView.getId().getId().getLeastSignificantBits())
                 .setName(entityView.getName())
                 .setType(entityView.getType())
-                .setIdMSB(entityView.getEntityId().getId().getMostSignificantBits())
-                .setIdLSB(entityView.getEntityId().getId().getLeastSignificantBits())
+                .setEntityIdMSB(entityView.getEntityId().getId().getMostSignificantBits())
+                .setEntityIdLSB(entityView.getEntityId().getId().getLeastSignificantBits())
                 .setEntityType(entityType);
         return builder.build();
     }
