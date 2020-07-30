@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
@@ -68,7 +69,11 @@ public class WidgetsBundleController extends BaseController {
             }
 
             checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
-            return checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
+            WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+
+            sendNotificationMsgToEdgeService(savedWidgetsBundle.getTenantId(), savedWidgetsBundle.getId(), ActionType.UPDATED);
+
+            return checkNotNull(savedWidgetsBundle);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -83,6 +88,9 @@ public class WidgetsBundleController extends BaseController {
             WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
             checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
             widgetsBundleService.deleteWidgetsBundle(getTenantId(), widgetsBundleId);
+
+            sendNotificationMsgToEdgeService(getTenantId(), widgetsBundleId, ActionType.DELETED);
+
         } catch (Exception e) {
             throw handleException(e);
         }

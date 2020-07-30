@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -66,6 +67,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -99,6 +101,7 @@ import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
@@ -334,6 +337,9 @@ public final class EdgeGrpcSession implements Closeable {
                 break;
             case RELATION:
                 processRelation(edgeEvent, msgType);
+                break;
+            case WIDGETS_BUNDLE:
+                processWidgetsBundle(edgeEvent, msgType, edgeEventAction);
                 break;
         }
     }
@@ -585,6 +591,36 @@ public final class EdgeGrpcSession implements Closeable {
             }
         } catch (Exception e) {
             log.error("Can't process alarm msg [{}] [{}]", edgeEvent, msgType, e);
+        }
+    }
+
+    private void processWidgetsBundle(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeActionType) {
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
+        EntityUpdateMsg entityUpdateMsg = null;
+        switch (edgeActionType) {
+            case ADDED:
+            case UPDATED:
+                WidgetsBundle widgetsBundle = ctx.getWidgetsBundleService().findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
+                if (widgetsBundle != null) {
+                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
+                            ctx.getWidgetsBundleUpdateMsgConstructor().constructWidgetsBundleUpdateMsg(msgType, widgetsBundle);
+                    entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                            .build();
+                }
+                break;
+            case DELETED:
+                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
+                        ctx.getWidgetsBundleUpdateMsgConstructor().constructWidgetsBundleDeleteMsg(widgetsBundleId);
+                entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                        .build();
+                break;
+        }
+        if (entityUpdateMsg != null) {
+            outputStream.onNext(ResponseMsg.newBuilder()
+                    .setEntityUpdateMsg(entityUpdateMsg)
+                    .build());
         }
     }
 

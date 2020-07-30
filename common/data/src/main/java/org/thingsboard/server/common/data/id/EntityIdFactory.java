@@ -87,6 +87,8 @@ public class EntityIdFactory {
                 return new RuleChainId(uuid);
             case ENTITY_VIEW:
                 return new EntityViewId(uuid);
+            case WIDGETS_BUNDLE:
+                return new WidgetsBundleId(uuid);
             case EDGE:
                 return new EdgeId(uuid);
         }

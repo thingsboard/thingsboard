@@ -33,19 +33,12 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
-import org.thingsboard.server.service.edge.rpc.constructor.AlarmUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.AssetUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DashboardUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DeviceUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.EntityViewUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RelationUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RuleChainUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.UserUpdateMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.*;
 import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.queue.TbClusterService;
@@ -121,6 +114,10 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
+    private WidgetsBundleService widgetsBundleService;
+
+    @Lazy
+    @Autowired
     private DeviceStateService deviceStateService;
 
     @Lazy
@@ -162,6 +159,10 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private RelationUpdateMsgConstructor relationUpdateMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private WidgetsBundleUpdateMsgConstructor widgetsBundleUpdateMsgConstructor;
 
     @Lazy
     @Autowired
