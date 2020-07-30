@@ -355,7 +355,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
         relationService.removeRelations(device.getTenantId(), device.getId());
 
-        auditLogService.removeAuditLogs(device.getTenantId(), device.getId());
+        // TODO: 30/07/2020 implement for Cassandra
+        if (sqlDatabaseUsed) {
+            auditLogService.removeAuditLogs(device.getTenantId(), device.getId());
+        }
 
         device.setTenantId(tenantId);
         device.setCustomerId(null);
