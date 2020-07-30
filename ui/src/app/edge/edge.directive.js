@@ -96,6 +96,11 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
             onAssignToCustomer: '&',
             onMakePublic: '&',
             onUnassignFromCustomer: '&',
+            onManageEdgeAssets: '&',
+            onManageEdgeDevices: '&',
+            onManageEdgeEntityViews: '&',
+            onManageEdgeDashboards: '&',
+            onManageEdgeRuleChains: '&',
             onDeleteEdge: '&'
         }
     };

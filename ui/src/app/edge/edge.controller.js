@@ -129,6 +129,11 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
     vm.assignToCustomer = assignToCustomer;
     vm.makePublic = makePublic;
     vm.unassignFromCustomer = unassignFromCustomer;
+    vm.openEdgeAssets = openEdgeAssets;
+    vm.openEdgeDevices = openEdgeDevices;
+    vm.openEdgeEntityViews = openEdgeEntityViews;
+    vm.openEdgeDashboards = openEdgeDashboards;
+    vm.openEdgeRuleChains = openEdgeRuleChains;
 
     initController();
 
