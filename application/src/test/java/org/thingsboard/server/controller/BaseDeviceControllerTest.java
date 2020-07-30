@@ -844,5 +844,9 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundDevice1);
 
         doGet("/api/relation?fromId=" + savedDevice.getId().getId() + "&fromType=DEVICE&relationType=Contains&toId=" + savedAnotherDevice.getId().getId() + "&toType=DEVICE", EntityRelation.class, status().isNotFound());
+
+        loginSysAdmin();
+        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 }
