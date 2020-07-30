@@ -15,27 +15,18 @@
  */
 package org.thingsboard.server.mqtt.attributes.request;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
@@ -47,7 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -61,7 +51,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest();
+        processBeforeTest("Test Request attribute values from the server", "Gateway Test Request attribute values from the server");
     }
 
     @After
@@ -69,81 +59,60 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         processAfterTest();
     }
 
-//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV1Json() throws Exception {
         processTestRequestAttributesValuesFromTheServer(
-                "Test Request attribute values from the server V1 Json",
                 MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V1_JSON,
                 MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V1_JSON,
                 MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V1_JSON);
     }
 
-//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV2Json() throws Exception {
         processTestRequestAttributesValuesFromTheServer(
-                "Test Request attribute values from the server V2 Json",
                 MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_JSON,
                 MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V2_JSON,
                 MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_JSON);
     }
 
-//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV2Proto() throws Exception {
         processTestRequestAttributesValuesFromTheServer(
-                "Test Request attribute values from the server V2 Proto",
                 MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO,
                 MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V2_PROTO,
                 MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_PROTO);
     }
 
-//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV1GatewayJson() throws Exception {
         processTestGatewayRequestAttributesValuesFromTheServer(
-                "Gateway Test Request attribute values from the server V1 Json",
-                "Gateway Device V1 Json",
+                "Gateway Device Request Attributes V1 Json",
                 MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V1_JSON,
                 MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V1_JSON,
                 MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V1_JSON);
     }
 
-//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV2GatewayJson() throws Exception {
         processTestGatewayRequestAttributesValuesFromTheServer(
-                "Gateway Test Request attribute values from the server V2 Json",
-                "Gateway Device V2 Json",
+                "Gateway Device Request Attributes V2 Json",
                 MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_JSON,
                 MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V2_JSON,
                 MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V2_JSON);
     }
 
-//    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServerV2GatewayProto() throws Exception {
         processTestGatewayRequestAttributesValuesFromTheServer(
-                "Gateway Test Request attribute values from the server V2 Proto",
-                "Gateway Device V2 Proto",
+                "Gateway Device Request Attributes V2 Proto",
                 MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_PROTO,
                 MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V2_PROTO,
                 MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V2_PROTO);
     }
 
-    private void processTestRequestAttributesValuesFromTheServer(String deviceName,
-                                                                 String topicToPostAttributes,
+    private void processTestRequestAttributesValuesFromTheServer(String topicToPostAttributes,
                                                                  String topicToSubscribeForAttributesValues,
                                                                  String topicToRequestAttributesValues) throws Exception {
-        Device device = new Device();
-        device.setName(deviceName);
-        device.setType("default");
-        Device savedDevice = getSavedDevice(device);
-        DeviceCredentials deviceCredentials = getDeviceCredentials(savedDevice);
-        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-        String accessToken = deviceCredentials.getCredentialsId();
-        assertNotNull(accessToken);
 
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
 
@@ -158,21 +127,10 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         validateResponse(client, latch, callback, topicToRequestAttributesValues);
     }
 
-    private void processTestGatewayRequestAttributesValuesFromTheServer(String gatewayName, String deviceName,
+    private void processTestGatewayRequestAttributesValuesFromTheServer(String deviceName,
                                                                         String topicToPostAttributes,
                                                                         String topicToSubscribeForAttributesValues,
                                                                         String topicToRequestAttributesValues) throws Exception {
-        Device gateway = new Device();
-        gateway.setName(gatewayName);
-        gateway.setType("gateway");
-        ObjectNode additionalInfo = mapper.createObjectNode();
-        additionalInfo.put("gateway", true);
-        gateway.setAdditionalInfo(additionalInfo);
-        Device savedGateway = getSavedDevice(gateway);
-        DeviceCredentials gatewayCredentials = getDeviceCredentials(savedGateway);
-        assertEquals(savedGateway.getId(), gatewayCredentials.getDeviceId());
-        String gatewayAccessToken = gatewayCredentials.getCredentialsId();
-        assertNotNull(gatewayAccessToken);
 
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
 

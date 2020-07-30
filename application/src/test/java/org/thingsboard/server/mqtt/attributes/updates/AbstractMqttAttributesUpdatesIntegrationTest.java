@@ -21,31 +21,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
-import org.thingsboard.server.mqtt.attributes.request.AbstractMqttAttributesRequestIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTopics;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -57,11 +48,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
-    private static final String POST_ATTRIBUTES_PAYLOAD_DELETED = "{\"deleted\":[\"attribute5\"]}";
+    private static final String RESPONSE_ATTRIBUTES_PAYLOAD_DELETED = "{\"deleted\":[\"attribute5\"]}";
+
+    private static String getResponseGatewayAttributesUpdatedPayload(String deviceName) {
+        return "{\"device\":\"" + deviceName + "\"," +
+                "\"data\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
+    }
+
+    private static String getResponseGatewayAttributesDeletedPayload(String deviceName) {
+        return "{\"device\":\"" + deviceName + "\",\"data\":{\"deleted\":[\"attribute5\"]}}";
+    }
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest();
+        processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates");
     }
 
     @After
@@ -72,38 +72,46 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServerV1Json() throws Exception {
         processTestSubscribeToAttributesUpdates(
-                "Test Subscribe to attribute updates V1 Json",
                 MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V1_JSON);
     }
 
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServerV2Json() throws Exception {
         processTestSubscribeToAttributesUpdates(
-                "Test Subscribe to attribute updates V2 Json",
                 MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_JSON);
     }
 
-//    @Ignore
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServerV2Proto() throws Exception {
         processTestSubscribeToAttributesUpdates(
-                "Test Subscribe to attribute updates V2 Proto",
                 MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO);
     }
 
-    private void processTestSubscribeToAttributesUpdates(String deviceName, String topicToSubscribeForAttributesUpdates) throws Exception {
-        Device device = new Device();
-        device.setName(deviceName);
-        device.setType("default");
-        Device savedDevice = getSavedDevice(device);
-        DeviceCredentials deviceCredentials = getDeviceCredentials(savedDevice);
-        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-        String accessToken = deviceCredentials.getCredentialsId();
-        assertNotNull(accessToken);
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerV1GatewayJson() throws Exception {
+        processGatewayTestSubscribeToAttributesUpdates(
+                "Gateway Device Subscribe to attribute updates V1 Json",
+                MqttTopics.GATEWAY_CONNECT_TOPIC_V1_JSON,
+                MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V1_JSON);
+    }
 
-//        doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-//
-//        Thread.sleep(1000);
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerV2GatewayJson() throws Exception {
+        processGatewayTestSubscribeToAttributesUpdates(
+                "Gateway Device Subscribe to attribute updates V2 Json",
+                MqttTopics.GATEWAY_CONNECT_TOPIC_V2_JSON,
+                MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_JSON);
+    }
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerV2GatewayProto() throws Exception {
+        processGatewayTestSubscribeToAttributesUpdates(
+                "Gateway Device Subscribe to attribute updates V2 Proto",
+                MqttTopics.GATEWAY_CONNECT_TOPIC_V2_PROTO,
+                MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_PROTO);
+    }
+
+    private void processTestSubscribeToAttributesUpdates(String topicToSubscribeForAttributesUpdates) throws Exception {
 
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
 
@@ -113,7 +121,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
         client.subscribe(topicToSubscribeForAttributesUpdates, MqttQoS.AT_MOST_ONCE.value());
 
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-        onUpdateCallback.getLatch().await(20, TimeUnit.SECONDS);
+        onUpdateCallback.getLatch().await(5, TimeUnit.SECONDS);
 
         validateUpdateAttributesResponse(topicToSubscribeForAttributesUpdates, onUpdateCallback);
 
@@ -121,11 +129,9 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
         client.setCallback(onDeleteCallback);
 
         doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=attribute5", String.class);
-        onDeleteCallback.getLatch().await(3, TimeUnit.SECONDS);
+        onDeleteCallback.getLatch().await(5, TimeUnit.SECONDS);
 
         validateDeleteAttributesResponse(topicToSubscribeForAttributesUpdates, onDeleteCallback);
-
-
     }
 
     private void validateUpdateAttributesResponse(String topicToSubscribeForAttributesUpdates, TestMqttCallback callback) throws InvalidProtocolBufferException {
@@ -153,7 +159,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
         assertNotNull(callback.getPayloadBytes());
         if (topicToSubscribeForAttributesUpdates.startsWith(MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V1_JSON) || topicToSubscribeForAttributesUpdates.startsWith(MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_JSON)) {
             String s = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
-            assertEquals(s, POST_ATTRIBUTES_PAYLOAD_DELETED);
+            assertEquals(s, RESPONSE_ATTRIBUTES_PAYLOAD_DELETED);
         } else {
             TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
             attributeUpdateNotificationMsgBuilder.addSharedDeleted("attribute5");
@@ -166,9 +172,120 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
         }
     }
 
+    private void processGatewayTestSubscribeToAttributesUpdates(String deviceName, String topicToConnectDevice, String topicToSubscribeForAttributesUpdates) throws Exception {
+
+        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+
+        TestMqttCallback onUpdateCallback = getTestMqttCallback();
+        client.setCallback(onUpdateCallback);
+
+        Device device = new Device();
+        device.setName(deviceName);
+        device.setType("default");
+
+        byte[] connectPayloadBytes;
+        if (topicToConnectDevice.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V2_PROTO)) {
+            TransportApiProtos.ConnectMsg connectProto = getConnectProto(deviceName);
+            connectPayloadBytes = connectProto.toByteArray();
+        } else {
+            String connectPayload = "{\"device\":\"" + deviceName + "\"}";
+            connectPayloadBytes = connectPayload.getBytes();
+        }
+
+        publishMqttMsg(client, connectPayloadBytes, topicToConnectDevice);
+
+        Thread.sleep(1000);
+
+        Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
+        assertNotNull(savedDevice);
+
+        client.subscribe(topicToSubscribeForAttributesUpdates, MqttQoS.AT_MOST_ONCE.value());
+
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
+        onUpdateCallback.getLatch().await(3, TimeUnit.SECONDS);
+
+        validateGatewayUpdateAttributesResponse(topicToSubscribeForAttributesUpdates, onUpdateCallback, deviceName);
+
+        TestMqttCallback onDeleteCallback = getTestMqttCallback();
+        client.setCallback(onDeleteCallback);
+
+        doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=attribute5", String.class);
+        onDeleteCallback.getLatch().await(3, TimeUnit.SECONDS);
+
+        validateGatewayDeleteAttributesResponse(topicToSubscribeForAttributesUpdates, onDeleteCallback, deviceName);
+
+    }
+
+    private void validateGatewayUpdateAttributesResponse(String topicToSubscribeForAttributesUpdates, TestMqttCallback callback, String expectedDeviceName) throws InvalidProtocolBufferException {
+        assertNotNull(callback.getPayloadBytes());
+        if (topicToSubscribeForAttributesUpdates.startsWith(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V1_JSON) || topicToSubscribeForAttributesUpdates.startsWith(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_JSON)) {
+            String s = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
+            assertEquals(getResponseGatewayAttributesUpdatedPayload(expectedDeviceName), s);
+        } else {
+            TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
+            List<TransportProtos.TsKvProto> tsKvProtoList = getTsKvProtoList();
+            attributeUpdateNotificationMsgBuilder.addAllSharedUpdated(tsKvProtoList);
+            TransportProtos.AttributeUpdateNotificationMsg expectedAttributeUpdateNotificationMsg = attributeUpdateNotificationMsgBuilder.build();
+
+            TransportApiProtos.GatewayAttributeUpdateNotificationMsg.Builder gatewayAttributeUpdateNotificationMsgBuilder = TransportApiProtos.GatewayAttributeUpdateNotificationMsg.newBuilder();
+            gatewayAttributeUpdateNotificationMsgBuilder.setDeviceName(expectedDeviceName);
+            gatewayAttributeUpdateNotificationMsgBuilder.setNotificationMsg(expectedAttributeUpdateNotificationMsg);
+
+            TransportApiProtos.GatewayAttributeUpdateNotificationMsg expectedGatewayAttributeUpdateNotificationMsg = gatewayAttributeUpdateNotificationMsgBuilder.build();
+            TransportApiProtos.GatewayAttributeUpdateNotificationMsg actualGatewayAttributeUpdateNotificationMsg = TransportApiProtos.GatewayAttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
+
+            assertEquals(expectedGatewayAttributeUpdateNotificationMsg.getDeviceName(), actualGatewayAttributeUpdateNotificationMsg.getDeviceName());
+
+            List<TransportProtos.KeyValueProto> actualSharedUpdatedList = actualGatewayAttributeUpdateNotificationMsg.getNotificationMsg().getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
+            List<TransportProtos.KeyValueProto> expectedSharedUpdatedList = expectedGatewayAttributeUpdateNotificationMsg.getNotificationMsg().getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
+
+            assertEquals(expectedSharedUpdatedList.size(), actualSharedUpdatedList.size());
+            assertTrue(actualSharedUpdatedList.containsAll(expectedSharedUpdatedList));
+        }
+    }
+
+    private void validateGatewayDeleteAttributesResponse(String topicToSubscribeForAttributesUpdates, TestMqttCallback callback, String expectedDeviceName) throws InvalidProtocolBufferException {
+        assertNotNull(callback.getPayloadBytes());
+        if (topicToSubscribeForAttributesUpdates.startsWith(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V1_JSON) || topicToSubscribeForAttributesUpdates.startsWith(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_JSON)) {
+            String s = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
+            assertEquals(s, getResponseGatewayAttributesDeletedPayload(expectedDeviceName));
+        } else {
+            TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
+            attributeUpdateNotificationMsgBuilder.addSharedDeleted("attribute5");
+            TransportProtos.AttributeUpdateNotificationMsg attributeUpdateNotificationMsg = attributeUpdateNotificationMsgBuilder.build();
+
+            TransportApiProtos.GatewayAttributeUpdateNotificationMsg.Builder gatewayAttributeUpdateNotificationMsgBuilder = TransportApiProtos.GatewayAttributeUpdateNotificationMsg.newBuilder();
+            gatewayAttributeUpdateNotificationMsgBuilder.setDeviceName(expectedDeviceName);
+            gatewayAttributeUpdateNotificationMsgBuilder.setNotificationMsg(attributeUpdateNotificationMsg);
+
+            TransportApiProtos.GatewayAttributeUpdateNotificationMsg expectedGatewayAttributeUpdateNotificationMsg = gatewayAttributeUpdateNotificationMsgBuilder.build();
+            TransportApiProtos.GatewayAttributeUpdateNotificationMsg actualGatewayAttributeUpdateNotificationMsg = TransportApiProtos.GatewayAttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
+
+            assertEquals(expectedGatewayAttributeUpdateNotificationMsg.getDeviceName(), actualGatewayAttributeUpdateNotificationMsg.getDeviceName());
+
+            TransportProtos.AttributeUpdateNotificationMsg expectedAttributeUpdateNotificationMsg = expectedGatewayAttributeUpdateNotificationMsg.getNotificationMsg();
+            TransportProtos.AttributeUpdateNotificationMsg actualAttributeUpdateNotificationMsg = actualGatewayAttributeUpdateNotificationMsg.getNotificationMsg();
+
+            assertEquals(expectedAttributeUpdateNotificationMsg.getSharedDeletedList().size(), actualAttributeUpdateNotificationMsg.getSharedDeletedList().size());
+            assertEquals("attribute5", actualAttributeUpdateNotificationMsg.getSharedDeletedList().get(0));
+        }
+    }
+
     private TestMqttCallback getTestMqttCallback() {
         CountDownLatch latch = new CountDownLatch(1);
         return new TestMqttCallback(latch);
+    }
+
+    private void publishMqttMsg(MqttAsyncClient client, byte[] payload, String topic) throws MqttException {
+        MqttMessage message = new MqttMessage();
+        message.setPayload(payload);
+        client.publish(topic, message);
+    }
+
+    private TransportApiProtos.ConnectMsg getConnectProto(String deviceName) {
+        TransportApiProtos.ConnectMsg.Builder builder = TransportApiProtos.ConnectMsg.newBuilder();
+        builder.setDeviceName(deviceName);
+        return builder.build();
     }
 
     private static class TestMqttCallback implements MqttCallback {

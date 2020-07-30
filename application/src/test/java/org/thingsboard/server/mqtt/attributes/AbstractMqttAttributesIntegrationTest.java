@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.mqtt.attributes;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -32,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
@@ -44,9 +47,15 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractCont
     private Tenant savedTenant;
     private User tenantAdmin;
 
+    protected Device savedDevice;
+    protected String accessToken;
+
+    protected Device savedGateway;
+    protected String gatewayAccessToken;
+
     private static final AtomicInteger atomicInteger = new AtomicInteger(2);
 
-    protected void processBeforeTest() throws Exception {
+    protected void processBeforeTest(String deviceName, String gatewayName) throws Exception {
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -62,6 +71,34 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractCont
         tenantAdmin.setLastName("Downs");
 
         createUserAndLogin(tenantAdmin, "testPassword1");
+
+        Device device = new Device();
+        device.setName(deviceName);
+        device.setType("default");
+        savedDevice = doPost("/api/device", device, Device.class);
+
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+
+        Device gateway = new Device();
+        gateway.setName(gatewayName);
+        gateway.setType("default");
+        ObjectNode additionalInfo = mapper.createObjectNode();
+        additionalInfo.put("gateway", true);
+        gateway.setAdditionalInfo(additionalInfo);
+        savedGateway = doPost("/api/device", gateway, Device.class);
+
+        DeviceCredentials gatewayCredentials =
+                doGet("/api/device/" + savedGateway.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+
+        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+        accessToken = deviceCredentials.getCredentialsId();
+        assertNotNull(accessToken);
+
+        assertEquals(savedGateway.getId(), gatewayCredentials.getDeviceId());
+        gatewayAccessToken = gatewayCredentials.getCredentialsId();
+        assertNotNull(gatewayAccessToken);
+
     }
 
     protected void processAfterTest() throws Exception {
@@ -128,11 +165,4 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractCont
         return keyValueProtoBuilder.build();
     }
 
-    protected Device getSavedDevice(Device device) throws Exception {
-        return doPost("/api/device", device, Device.class);
-    }
-
-    protected DeviceCredentials getDeviceCredentials(Device savedDevice) throws Exception {
-        return doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-    }
 }
