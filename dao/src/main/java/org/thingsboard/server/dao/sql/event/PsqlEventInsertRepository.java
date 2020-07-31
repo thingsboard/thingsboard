@@ -19,10 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.util.PsqlDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 @Slf4j
-@SqlDao
 @PsqlDao
 @Repository
 public class PsqlEventInsertRepository extends AbstractEventInsertRepository {

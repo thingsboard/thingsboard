@@ -18,9 +18,7 @@ package org.thingsboard.server.dao.sql.component;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.util.PsqlDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
-@SqlDao
 @PsqlDao
 @Repository
 public class PsqlComponentDescriptorInsertRepository extends AbstractComponentDescriptorInsertRepository {

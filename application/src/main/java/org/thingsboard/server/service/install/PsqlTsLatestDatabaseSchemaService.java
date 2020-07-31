@@ -18,11 +18,12 @@ package org.thingsboard.server.service.install;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.util.PsqlTsLatestAnyDao;
 import org.thingsboard.server.dao.util.PsqlTsLatestDao;
 import org.thingsboard.server.dao.util.SqlTsLatestDao;
 
 @Service
-@PsqlTsLatestDao
+@PsqlTsLatestAnyDao
 @Profile("install")
 public class PsqlTsLatestDatabaseSchemaService extends SqlAbstractDatabaseSchemaService implements TsLatestDatabaseSchemaService {
 
