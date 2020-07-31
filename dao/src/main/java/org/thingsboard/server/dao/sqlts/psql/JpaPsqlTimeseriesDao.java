@@ -28,7 +28,8 @@ import org.thingsboard.server.dao.sqlts.AbstractChunkedAggregationTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.insert.psql.PsqlPartitioningRepository;
 import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
-import org.thingsboard.server.dao.util.PsqlTsDao;
+import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.util.SqlTsDao;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -42,7 +43,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 @Slf4j
-@PsqlTsDao
+@PsqlDao
+@SqlTsDao
 public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao {
 
     private final Map<Long, PsqlPartition> partitions = new ConcurrentHashMap<>();

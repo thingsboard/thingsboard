@@ -52,7 +52,7 @@ public class ThingsboardInstallService {
     @Autowired
     private TsDatabaseSchemaService tsDatabaseSchemaService;
 
-    @Autowired
+    @Autowired(required = false)
     private TsLatestDatabaseSchemaService tsLatestDatabaseSchemaService;
 
     @Autowired
@@ -185,7 +185,9 @@ public class ThingsboardInstallService {
 
                 tsDatabaseSchemaService.createDatabaseSchema();
 
-                tsLatestDatabaseSchemaService.createDatabaseSchema();
+                if (tsLatestDatabaseSchemaService != null) {
+                    tsLatestDatabaseSchemaService.createDatabaseSchema();
+                }
 
                 log.info("Loading system data...");
 
