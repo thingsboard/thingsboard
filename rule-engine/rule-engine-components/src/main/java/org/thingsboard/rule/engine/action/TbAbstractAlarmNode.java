@@ -41,7 +41,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
     static final String IS_EXISTING_ALARM = "isExistingAlarm";
     static final String IS_CLEARED_ALARM = "isClearedAlarm";
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    protected final ObjectMapper mapper = new ObjectMapper();
 
     protected C config;
     private ScriptEngine buildDetailsJsEngine;

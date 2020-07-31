@@ -197,15 +197,15 @@ public class DefaultDeviceStateService implements DeviceStateService {
         if (lastReportedActivity > 0 && lastReportedActivity > lastSavedActivity) {
             DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
             if (stateData != null) {
-                DeviceState state = stateData.getState();
-                stateData.getState().setLastActivityTime(lastReportedActivity);
-                stateData.getMetaData().putValue("scope", SERVER_SCOPE);
-                pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
                 save(deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
                 deviceLastSavedActivity.put(deviceId, lastReportedActivity);
+                DeviceState state = stateData.getState();
                 if (!state.isActive()) {
                     state.setActive(true);
                     save(deviceId, ACTIVITY_STATE, state.isActive());
+                    state.setLastActivityTime(lastReportedActivity);
+                    stateData.getMetaData().putValue("scope", SERVER_SCOPE);
+                    pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
                 }
             }
         }
