@@ -200,10 +200,10 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 save(deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
                 deviceLastSavedActivity.put(deviceId, lastReportedActivity);
                 DeviceState state = stateData.getState();
+                state.setLastActivityTime(lastReportedActivity);
                 if (!state.isActive()) {
                     state.setActive(true);
                     save(deviceId, ACTIVITY_STATE, state.isActive());
-                    state.setLastActivityTime(lastReportedActivity);
                     stateData.getMetaData().putValue("scope", SERVER_SCOPE);
                     pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
                 }
