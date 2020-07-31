@@ -18,15 +18,16 @@ package org.thingsboard.rule.engine.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -56,10 +57,35 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
     @Override
     protected ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         String alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData());
-        ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
-        return Futures.transformAsync(latest, a -> {
-            if (a != null && !a.getStatus().isCleared()) {
-                return clearAlarm(ctx, msg, a);
+        if (msg.getOriginator().getEntityType().equals(EntityType.ALARM)) {
+            return clearAlarmFromOriginator(ctx, msg);
+        } else {
+            ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
+            return Futures.transformAsync(latest, a -> {
+                if (a != null && !a.getStatus().isCleared()) {
+                    return clearAlarm(ctx, msg, a);
+                }
+                return Futures.immediateFuture(new AlarmResult(false, false, false, null));
+            }, ctx.getDbCallbackExecutor());
+        }
+    }
+
+    private ListenableFuture<AlarmResult> clearAlarmFromOriginator(TbContext ctx, TbMsg msg) {
+        ListenableFuture<Alarm> alarmByIdAsync = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), new AlarmId(msg.getOriginator().getId()));
+        return Futures.transformAsync(alarmByIdAsync, alarm -> {
+            if (alarm != null && !alarm.getStatus().isCleared()) {
+                long clearTs = System.currentTimeMillis();
+                ListenableFuture<Boolean> clearAlarmFuture = ctx.getAlarmService().clearAlarm(ctx.getTenantId(), alarm.getId(), alarm.getDetails(), clearTs);
+                return Futures.transformAsync(clearAlarmFuture, cleared -> {
+                    if (cleared) {
+                        alarm.setClearTs(clearTs);
+                        AlarmStatus oldStatus = alarm.getStatus();
+                        AlarmStatus newStatus = oldStatus.isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
+                        alarm.setStatus(newStatus);
+                        return Futures.immediateFuture(new AlarmResult(false, false, true, alarm));
+                    }
+                    return Futures.immediateFuture(new AlarmResult(false, false, false, alarm));
+                }, ctx.getDbCallbackExecutor());
             }
             return Futures.immediateFuture(new AlarmResult(false, false, false, null));
         }, ctx.getDbCallbackExecutor());
