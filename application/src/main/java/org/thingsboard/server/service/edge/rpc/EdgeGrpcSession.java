@@ -192,6 +192,20 @@ public final class EdgeGrpcSession implements Closeable {
         };
     }
 
+    void onConfigurationUpdate(Edge edge) {
+        try {
+            this.edge = edge;
+            // TODO: voba - push edge configuration update to edge
+//            outputStream.onNext(org.thingsboard.server.gen.integration.ResponseMsg.newBuilder()
+//                    .setIntegrationUpdateMsg(IntegrationUpdateMsg.newBuilder()
+//                            .setConfiguration(constructIntegrationConfigProto(configuration, defaultConverterProto, downLinkConverterProto))
+//                            .build())
+//                    .build());
+        } catch (Exception e) {
+            log.error("Failed to construct proto objects!", e);
+        }
+    }
+
     void processHandleMessages() throws ExecutionException, InterruptedException {
         Long queueStartTs = getQueueStartTs().get();
         TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), queueStartTs, null, true);
