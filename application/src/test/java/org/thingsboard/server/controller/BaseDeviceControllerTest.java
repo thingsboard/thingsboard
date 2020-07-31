@@ -800,7 +800,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSwapDeviceFromOneTenantToAnother() throws Exception {
+    public void testAssignDeviceToTenant() throws Exception {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
@@ -816,7 +816,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         relation.setTo(savedAnotherDevice.getId());
         relation.setTypeGroup(RelationTypeGroup.COMMON);
         relation.setType("Contains");
-        doPost("/api/relation", relation);
+        doPost("/api/relation", relation).andExpect(status().isOk());
 
         loginSysAdmin();
         Tenant tenant = new Tenant();
@@ -834,13 +834,13 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         createUserAndLogin(user, "testPassword1");
 
         login("tenant2@thingsboard.org", "testPassword1");
-        Device swappedDevice = doPost("/api/tenant/" + savedDifferentTenant.getId().getId() + "/device/" + savedDevice.getId().getId(), Device.class);
+        Device assignedDevice = doPost("/api/tenant/" + savedDifferentTenant.getId().getId() + "/device/" + savedDevice.getId().getId(), Device.class);
 
-        doGet("/api/device/" + swappedDevice.getId().getId().toString(), Device.class, status().isNotFound());
+        doGet("/api/device/" + assignedDevice.getId().getId().toString(), Device.class, status().isNotFound());
 
         login("tenant9@thingsboard.org", "testPassword1");
 
-        Device foundDevice1 = doGet("/api/device/" + swappedDevice.getId().getId().toString(), Device.class);
+        Device foundDevice1 = doGet("/api/device/" + assignedDevice.getId().getId().toString(), Device.class);
         Assert.assertNotNull(foundDevice1);
 
         doGet("/api/relation?fromId=" + savedDevice.getId().getId() + "&fromType=DEVICE&relationType=Contains&toId=" + savedAnotherDevice.getId().getId() + "&toType=DEVICE", EntityRelation.class, status().isNotFound());

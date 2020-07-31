@@ -491,13 +491,13 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
-    public Device swapDevice(@PathVariable(TENANT_ID) String strTenantId,
-                             @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public Device assignDeviceToTenant(@PathVariable(TENANT_ID) String strTenantId,
+                                       @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            Device device = checkDeviceId(deviceId, Operation.WRITE);
+            Device device = checkDeviceId(deviceId, Operation.ASSIGN_TO_TENANT);
 
             TenantId newTenantId = new TenantId(toUUID(strTenantId));
             Tenant newTenant = tenantService.findTenantById(newTenantId);
@@ -505,36 +505,36 @@ public class DeviceController extends BaseController {
                 throw new ThingsboardException("Could not find the specified Tenant!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
 
-            Device swappedDevice = deviceService.swapDevice(newTenantId, device);
+            Device assignedDevice = deviceService.assignDeviceToTenant(newTenantId, device);
 
-            logEntityAction(getCurrentUser(), deviceId, swappedDevice,
-                    swappedDevice.getCustomerId(),
-                    ActionType.SWAPPED_TO_TENANT, null, strTenantId, newTenant.getName());
+            logEntityAction(getCurrentUser(), deviceId, assignedDevice,
+                    assignedDevice.getCustomerId(),
+                    ActionType.ASSIGNED_TO_TENANT, null, strTenantId, newTenant.getName());
 
             Tenant currentTenant = tenantService.findTenantById(getTenantId());
-            pushSwappedFromNotification(currentTenant, newTenantId, swappedDevice);
+            pushAssignedFromNotification(currentTenant, newTenantId, assignedDevice);
 
-            return swappedDevice;
+            return assignedDevice;
         } catch (Exception e) {
             logEntityAction(getCurrentUser(), emptyId(EntityType.DEVICE), null,
                     null,
-                    ActionType.SWAPPED_TO_TENANT, e, strTenantId);
+                    ActionType.ASSIGNED_TO_TENANT, e, strTenantId);
             throw handleException(e);
         }
     }
 
-    private void pushSwappedFromNotification(Tenant currentTenant, TenantId newTenantId, Device swappedDevice) {
-        String data = entityToStr(swappedDevice);
+    private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {
+        String data = entityToStr(assignedDevice);
         if (data != null) {
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_SWAPPED_FROM, swappedDevice.getId(), getMetaDataForSwappedFrom(currentTenant), TbMsgDataType.JSON, data);
-            tbClusterService.pushMsgToRuleEngine(newTenantId, swappedDevice.getId(), tbMsg, null);
+            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_ASSIGNED_FROM_TENANT, assignedDevice.getId(), getMetaDataForAssignedFrom(currentTenant), TbMsgDataType.JSON, data);
+            tbClusterService.pushMsgToRuleEngine(newTenantId, assignedDevice.getId(), tbMsg, null);
         }
     }
 
-    private TbMsgMetaData getMetaDataForSwappedFrom(Tenant tenant) {
+    private TbMsgMetaData getMetaDataForAssignedFrom(Tenant tenant) {
         TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("swappedFromTenantId", tenant.getId().getId().toString());
-        metaData.putValue("swappedFromTenantName", tenant.getName());
+        metaData.putValue("assignedFromTenantId", tenant.getId().getId().toString());
+        metaData.putValue("assignedFromTenantName", tenant.getName());
         return metaData;
     }
 }

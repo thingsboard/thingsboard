@@ -41,8 +41,8 @@ public enum ActionType {
     LOGIN(false),
     LOGOUT(false),
     LOCKOUT(false),
-    SWAPPED_FROM_TENANT(false),
-    SWAPPED_TO_TENANT(false);
+    ASSIGNED_FROM_TENANT(false),
+    ASSIGNED_TO_TENANT(false);
 
     private final boolean isRead;
 

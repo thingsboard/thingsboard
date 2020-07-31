@@ -58,8 +58,4 @@ public class DummyAuditLogServiceImpl implements AuditLogService {
     public <E extends HasName, I extends EntityId> ListenableFuture<List<Void>> logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity, ActionType actionType, Exception e, Object... additionalInfo) {
         return null;
     }
-
-    @Override
-    public void removeAuditLogs(TenantId tenantId, EntityId entityId) {
-    }
 }
