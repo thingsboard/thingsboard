@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -52,7 +53,7 @@ import java.util.concurrent.Executors;
 @Service
 @Slf4j
 @ConditionalOnProperty(prefix = "edges.rpc", value = "enabled", havingValue = "true")
-public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
+public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
 
     private final Map<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -115,6 +116,23 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
     @Override
     public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> outputStream) {
         return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, mapper).getInputStream();
+    }
+
+    @Override
+    public void updateEdge(Edge edge) {
+        EdgeGrpcSession session = sessions.get(edge.getId());
+        if (session != null && session.isConnected()) {
+            session.onConfigurationUpdate(edge);
+        }
+    }
+
+    @Override
+    public void deleteEdge(EdgeId edgeId) {
+        EdgeGrpcSession session = sessions.get(edgeId);
+        if (session != null && session.isConnected()) {
+            session.close();
+            sessions.remove(edgeId);
+        }
     }
 
     private void onEdgeConnect(EdgeId edgeId, EdgeGrpcSession edgeGrpcSession) {

@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -101,6 +102,9 @@ public class EdgeController extends BaseController {
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, savedEdge.getId());
             }
 
+            tbClusterService.onEntityStateChange(savedEdge.getTenantId(), savedEdge.getId(),
+                    created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(savedEdge.getId(), savedEdge, null, created ? ActionType.ADDED : ActionType.UPDATED, null);
             return savedEdge;
         } catch (Exception e) {
@@ -119,6 +123,9 @@ public class EdgeController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             Edge edge = checkEdgeId(edgeId, Operation.DELETE);
             edgeService.deleteEdge(getTenantId(), edgeId);
+
+            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+                    ComponentLifecycleEvent.DELETED);
 
             logEntityAction(edgeId, edge,
                     null,
@@ -283,6 +290,8 @@ public class EdgeController extends BaseController {
                     edge.getId(), edge);
 
             Edge updatedEdge = edgeNotificationService.setEdgeRootRuleChain(getTenantId(), edge, ruleChainId);
+
+            tbClusterService.onEntityStateChange(updatedEdge.getTenantId(), updatedEdge.getId(), ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(updatedEdge.getId(), updatedEdge, null, ActionType.UPDATED, null);
 
