@@ -595,11 +595,11 @@ public abstract class BaseController {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
-            case SWAPPED_FROM_TENANT:
-                msgType = DataConstants.ENTITY_SWAPPED_FROM;
+            case ASSIGNED_FROM_TENANT:
+                msgType = DataConstants.ENTITY_ASSIGNED_FROM_TENANT;
                 break;
-            case SWAPPED_TO_TENANT:
-                msgType = DataConstants.ENTITY_SWAPPED_TO;
+            case ASSIGNED_TO_TENANT:
+                msgType = DataConstants.ENTITY_ASSIGNED_TO_TENANT;
                 break;
         }
         if (!StringUtils.isEmpty(msgType)) {
@@ -620,16 +620,16 @@ public abstract class BaseController {
                     String strCustomerName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedCustomerId", strCustomerId);
                     metaData.putValue("unassignedCustomerName", strCustomerName);
-                } else if (actionType == ActionType.SWAPPED_FROM_TENANT) {
+                } else if (actionType == ActionType.ASSIGNED_FROM_TENANT) {
                     String strTenantId = extractParameter(String.class, 0, additionalInfo);
                     String strTenantName = extractParameter(String.class, 1, additionalInfo);
-                    metaData.putValue("swappedFromTenantId", strTenantId);
-                    metaData.putValue("swappedFromTenantName", strTenantName);
-                } else if (actionType == ActionType.SWAPPED_TO_TENANT) {
+                    metaData.putValue("assignedFromTenantId", strTenantId);
+                    metaData.putValue("assignedFromTenantName", strTenantName);
+                } else if (actionType == ActionType.ASSIGNED_TO_TENANT) {
                     String strTenantId = extractParameter(String.class, 0, additionalInfo);
                     String strTenantName = extractParameter(String.class, 1, additionalInfo);
-                    metaData.putValue("swappedToTenantId", strTenantId);
-                    metaData.putValue("swappedToTenantName", strTenantName);
+                    metaData.putValue("assignedToTenantId", strTenantId);
+                    metaData.putValue("assignedToTenantName", strTenantName);
                 }
                 ObjectNode entityNode;
                 if (entity != null) {

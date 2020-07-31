@@ -47,6 +47,4 @@ public interface AuditLogService {
             E entity,
             ActionType actionType,
             Exception e, Object... additionalInfo);
-
-    void removeAuditLogs(TenantId tenantId, EntityId entityId);
 }

@@ -357,8 +357,8 @@
         "failure-details": "Failure details",
         "search": "Search audit logs",
         "clear-search": "Clear search",
-        "type-swapped-from-tenant": "Swapped from Tenant",
-        "type-swapped-to-tenant": "Swapped to Tenant"
+        "type-assigned-from-tenant": "Assigned from Tenant",
+        "type-assigned-to-tenant": "Assigned to Tenant"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",

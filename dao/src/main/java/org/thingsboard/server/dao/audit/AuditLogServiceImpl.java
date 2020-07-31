@@ -51,8 +51,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.thingsboard.server.dao.service.Validator.validateEntityId;
@@ -158,25 +156,6 @@ public class AuditLogServiceImpl implements AuditLogService {
         }
     }
 
-    @Override
-    public void removeAuditLogs(TenantId tenantId, EntityId entityId) {
-        List<AuditLog> auditLogs = new ArrayList<>();
-        TimePageData<AuditLog> auditLogPageData;
-        TimePageLink auditLogPageLink = new TimePageLink(1000);
-        do {
-            auditLogPageData = findAuditLogsByTenantIdAndEntityId(tenantId, entityId,
-                    new ArrayList<>(Arrays.asList(ActionType.values())), auditLogPageLink);
-            auditLogs.addAll(auditLogPageData.getData());
-            if (auditLogPageData.hasNext()) {
-                auditLogPageLink = auditLogPageData.getNextPageLink();
-            }
-        } while (auditLogPageData.hasNext());
-
-        for (AuditLog auditLog : auditLogs) {
-            auditLogDao.removeById(tenantId, auditLog.getUuidId());
-        }
-    }
-
     private <E extends HasName, I extends EntityId> JsonNode constructActionData(I entityId, E entity,
                                                                                  ActionType actionType,
                                                                                  Object... additionalInfo) {
@@ -187,7 +166,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             case ALARM_ACK:
             case ALARM_CLEAR:
             case RELATIONS_DELETED:
-            case SWAPPED_TO_TENANT:
+            case ASSIGNED_TO_TENANT:
                 if (entity != null) {
                     ObjectNode entityNode = objectMapper.valueToTree(entity);
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {

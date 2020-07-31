@@ -35,7 +35,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
         configClazz = EmptyNodeConfiguration.class,
         relationTypes = {"Post attributes", "Post telemetry", "RPC Request from Device", "RPC Request to Device", "Activity Event", "Inactivity Event",
                 "Connect Event", "Disconnect Event", "Entity Created", "Entity Updated", "Entity Deleted", "Entity Assigned",
-                "Entity Unassigned", "Attributes Updated", "Attributes Deleted", "Alarm Acknowledged", "Alarm Cleared", "Other", "Entity Swapped From", "Entity Swapped To"},
+                "Entity Unassigned", "Attributes Updated", "Attributes Deleted", "Alarm Acknowledged", "Alarm Cleared", "Other", "Entity Assigned From Tenant", "Entity Assigned To Tenant"},
         nodeDescription = "Route incoming messages by Message Type",
         nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b> etc. via corresponding chain, otherwise <b>Other</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -86,10 +86,10 @@ public class TbMsgTypeSwitchNode implements TbNode {
             relationType = "Alarm Cleared";
         } else if (msg.getType().equals(DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE)) {
             relationType = "RPC Request to Device";
-        } else if (msg.getType().equals(DataConstants.ENTITY_SWAPPED_FROM)) {
-            relationType = "Entity Swapped From";
-        } else if (msg.getType().equals(DataConstants.ENTITY_SWAPPED_TO)) {
-            relationType = "Entity Swapped To";
+        } else if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED_FROM_TENANT)) {
+            relationType = "Entity Assigned From Tenant";
+        } else if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED_TO_TENANT)) {
+            relationType = "Entity Assigned To Tenant";
         } else {
             relationType = "Other";
         }

@@ -48,7 +48,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -103,9 +102,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Autowired
     private EventService eventService;
-
-    @Autowired
-    private AuditLogService auditLogService;
 
     @Override
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
@@ -201,7 +197,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         try {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), deviceId).get();
             if (entityViews != null && !entityViews.isEmpty()) {
-                throw new DataValidationException("Can't delete device that is assigned to entity views!");
+                throw new DataValidationException("Can't delete device that has entity views!");
             }
         } catch (ExecutionException | InterruptedException e) {
             log.error("Exception while finding entity views for deviceId [{}]", deviceId, e);
@@ -338,13 +334,13 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Transactional
     @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
     @Override
-    public Device swapDevice(TenantId tenantId, Device device) {
-        log.trace("Executing swapDevice [{}]", device);
+    public Device assignDeviceToTenant(TenantId tenantId, Device device) {
+        log.trace("Executing assignDeviceToTenant [{}][{}]", tenantId, device);
 
         try {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), device.getId()).get();
             if (!CollectionUtils.isEmpty(entityViews)) {
-                throw new DataValidationException("Can't swap device that is assigned to entity views!");
+                throw new DataValidationException("Can't assign device that has entity views to another tenant!");
             }
         } catch (ExecutionException | InterruptedException e) {
             log.error("Exception while finding entity views for deviceId [{}]", device.getId(), e);
@@ -354,11 +350,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         eventService.removeEvents(device.getTenantId(), device.getId());
 
         relationService.removeRelations(device.getTenantId(), device.getId());
-
-        // TODO: 30/07/2020 implement for Cassandra
-        if (sqlDatabaseUsed) {
-            auditLogService.removeAuditLogs(device.getTenantId(), device.getId());
-        }
 
         device.setTenantId(tenantId);
         device.setCustomerId(null);

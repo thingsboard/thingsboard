@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -97,20 +96,17 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId) {
-        List<Event> events = new ArrayList<>();
         TimePageData<Event> eventPageData;
         TimePageLink eventPageLink = new TimePageLink(1000);
         do {
             eventPageData = findEvents(tenantId, entityId, eventPageLink);
-            events.addAll(eventPageData.getData());
+            for (Event event : eventPageData.getData()) {
+                eventDao.removeById(tenantId, event.getUuidId());
+            }
             if (eventPageData.hasNext()) {
                 eventPageLink = eventPageData.getNextPageLink();
             }
         } while (eventPageData.hasNext());
-
-        for (Event event : events) {
-            eventDao.removeById(tenantId, event.getUuidId());
-        }
     }
 
     private DataValidator<Event> eventValidator =
