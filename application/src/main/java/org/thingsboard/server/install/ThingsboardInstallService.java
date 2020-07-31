@@ -30,6 +30,7 @@ import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
 import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
 import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
+import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
 
 @Service
@@ -76,6 +77,9 @@ public class ThingsboardInstallService {
     @Autowired(required = false)
     private EntitiesMigrateService entitiesMigrateService;
 
+    @Autowired(required = false)
+    private TsLatestMigrateService latestMigrateService;
+
     public void performInstall() {
         try {
             if (isUpgrade) {
@@ -86,6 +90,10 @@ public class ThingsboardInstallService {
                     entitiesMigrateService.migrate();
                     log.info("Updating system data...");
                     systemDataLoaderService.updateSystemWidgets();
+                } else if ("3.0.1-cassandra".equals(upgradeFromVersion)) {
+                    log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
+                    latestMigrateService.migrate();
+                    log.info("Updating system data...");
                 } else {
                     switch (upgradeFromVersion) {
                         case "1.2.3": //NOSONAR, Need to execute gradual upgrade starting from upgradeFromVersion
