@@ -44,11 +44,6 @@ public class BaseEdgeEventService implements EdgeEventService {
     }
 
     @Override
-    public TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
-        return findEdgeEvents(tenantId, edgeId, pageLink, true);
-    }
-
-    @Override
     public TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
         List<EdgeEvent> events = edgeEventDao.findEdgeEvents(tenantId.getId(), edgeId, pageLink, withTsUpdate);
         return new TimePageData<>(events, pageLink);

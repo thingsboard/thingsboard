@@ -82,7 +82,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         EdgeEvent savedEdgeEvent3 = saveEdgeEventWithProvidedTime(eventTime + 2, edgeId, deviceId, tenantId);
         saveEdgeEventWithProvidedTime(timeAfterEndTime, edgeId, deviceId, tenantId);
 
-        TimePageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, new TimePageLink(2, startTime, endTime, false));
+        TimePageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, new TimePageLink(2, startTime, endTime, false), true);
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertTrue(edgeEvents.getData().size() == 2);
@@ -91,7 +91,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertTrue(edgeEvents.hasNext());
         Assert.assertNotNull(edgeEvents.getNextPageLink());
 
-        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, edgeEvents.getNextPageLink());
+        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, edgeEvents.getNextPageLink(), true);
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertTrue(edgeEvents.getData().size() == 1);

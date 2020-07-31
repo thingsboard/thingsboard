@@ -26,7 +26,5 @@ public interface EdgeEventService {
 
     ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent);
 
-    TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
-
     TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
 }
