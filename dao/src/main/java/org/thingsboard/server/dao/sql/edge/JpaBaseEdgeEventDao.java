@@ -26,6 +26,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -75,9 +76,9 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTimeDao<EdgeEventEntit
     }
 
     @Override
-    public List<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink) {
+    public List<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
         Specification<EdgeEventEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "id");
-        Specification<EdgeEventEntity> fieldsSpec = getEntityFieldsSpec(tenantId, edgeId);
+        Specification<EdgeEventEntity> fieldsSpec = getEntityFieldsSpec(tenantId, edgeId, withTsUpdate);
         Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(0, pageLink.getLimit(), sortDirection, ID_PROPERTY);
         return DaoUtil.convertDataList(edgeEventRepository.findAll(Specification.where(timeSearchSpec).and(fieldsSpec), pageable).getContent());
@@ -95,7 +96,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTimeDao<EdgeEventEntit
         return Optional.of(DaoUtil.getData(edgeEventRepository.save(entity)));
     }
 
-    private Specification<EdgeEventEntity> getEntityFieldsSpec(UUID tenantId, EdgeId edgeId) {
+    private Specification<EdgeEventEntity> getEntityFieldsSpec(UUID tenantId, EdgeId edgeId, boolean withTsUpdate) {
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (tenantId != null) {
@@ -105,6 +106,10 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTimeDao<EdgeEventEntit
             if (edgeId != null) {
                 Predicate entityIdPredicate = criteriaBuilder.equal(root.get("edgeId"), UUIDConverter.fromTimeUUID(edgeId.getId()));
                 predicates.add(entityIdPredicate);
+            }
+            if (!withTsUpdate) {
+                Predicate edgeEventActionPredicate = criteriaBuilder.notEqual(root.get("edgeEventAction"), ActionType.TIMESERIES_UPDATED.name());
+                predicates.add(edgeEventActionPredicate);
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[]{}));
         };

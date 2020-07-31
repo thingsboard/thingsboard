@@ -53,7 +53,7 @@ public class CassandraEdgeEventDao extends CassandraAbstractSearchTimeDao<EdgeEv
     }
 
     @Override
-    public List<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink) {
+    public List<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
         return null;
     }
 }
