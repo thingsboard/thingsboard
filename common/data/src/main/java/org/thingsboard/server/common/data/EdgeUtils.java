@@ -38,6 +38,8 @@ public final class EdgeUtils {
                 return EdgeEventType.ALARM;
             case WIDGETS_BUNDLE:
                 return EdgeEventType.WIDGETS_BUNDLE;
+            case WIDGET_TYPE:
+                return EdgeEventType.WIDGET_TYPE;
             default:
                 return null;
         }

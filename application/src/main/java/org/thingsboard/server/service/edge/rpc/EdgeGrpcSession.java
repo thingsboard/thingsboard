@@ -43,18 +43,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -67,6 +56,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -74,34 +64,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.util.JsonUtils;
-import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
-import org.thingsboard.server.gen.edge.AssetUpdateMsg;
-import org.thingsboard.server.gen.edge.AttributesRequestMsg;
-import org.thingsboard.server.gen.edge.ConnectRequestMsg;
-import org.thingsboard.server.gen.edge.ConnectResponseCode;
-import org.thingsboard.server.gen.edge.ConnectResponseMsg;
-import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
-import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
-import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
-import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
-import org.thingsboard.server.gen.edge.DownlinkMsg;
-import org.thingsboard.server.gen.edge.EdgeConfiguration;
-import org.thingsboard.server.gen.edge.EntityDataProto;
-import org.thingsboard.server.gen.edge.EntityUpdateMsg;
-import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
-import org.thingsboard.server.gen.edge.RelationRequestMsg;
-import org.thingsboard.server.gen.edge.RequestMsg;
-import org.thingsboard.server.gen.edge.RequestMsgType;
-import org.thingsboard.server.gen.edge.ResponseMsg;
-import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
-import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
-import org.thingsboard.server.gen.edge.UplinkMsg;
-import org.thingsboard.server.gen.edge.UplinkResponseMsg;
-import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
-import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
-import org.thingsboard.server.gen.edge.WidgetsBundleUpdateMsg;
+import org.thingsboard.server.gen.edge.*;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
@@ -340,6 +303,9 @@ public final class EdgeGrpcSession implements Closeable {
                 break;
             case WIDGETS_BUNDLE:
                 processWidgetsBundle(edgeEvent, msgType, edgeEventAction);
+                break;
+            case WIDGET_TYPE:
+                processWidgetType(edgeEvent, msgType, edgeEventAction);
                 break;
         }
     }
@@ -615,6 +581,36 @@ public final class EdgeGrpcSession implements Closeable {
                 entityUpdateMsg = EntityUpdateMsg.newBuilder()
                         .setWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                         .build();
+                break;
+        }
+        if (entityUpdateMsg != null) {
+            outputStream.onNext(ResponseMsg.newBuilder()
+                    .setEntityUpdateMsg(entityUpdateMsg)
+                    .build());
+        }
+    }
+
+    private void processWidgetType(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeActionType) {
+        WidgetTypeId widgetTypeId = new WidgetTypeId(edgeEvent.getEntityId());
+        EntityUpdateMsg entityUpdateMsg = null;
+        switch (edgeActionType) {
+            case ADDED:
+            case UPDATED:
+                WidgetType widgetType = ctx.getWidgetTypeService().findWidgetTypeById(edgeEvent.getTenantId(), widgetTypeId);
+                if (widgetType != null) {
+                    WidgetTypeUpdateMsg widgetTypeUpdateMsg =
+                            ctx.getWidgetTypeUpdateMsgConstructor().constructWidgetTypeUpdateMsg(msgType, widgetType);
+                    entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
+                            .build();
+                }
+                break;
+            case DELETED:
+                WidgetTypeUpdateMsg widgetTypeUpdateMsg =
+                        ctx.getWidgetTypeUpdateMsgConstructor().constructWidgetTypeUpdateMsg(widgetTypeId);
+               entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                       .setWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
+                       .build();
                 break;
         }
         if (entityUpdateMsg != null) {

@@ -158,6 +158,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 case DASHBOARD:
                 case RULE_CHAIN:
                 case WIDGETS_BUNDLE:
+                case WIDGET_TYPE:
                     processEntity(tenantId, edgeNotificationMsg);
                     break;
                 case ALARM:
@@ -186,7 +187,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             // case ADDED:
             case UPDATED:
             case CREDENTIALS_UPDATED:
-                if (edgeEventType.equals(EdgeEventType.WIDGETS_BUNDLE)) {
+                if (edgeEventType.equals(EdgeEventType.WIDGETS_BUNDLE) || edgeEventType.equals(EdgeEventType.WIDGET_TYPE)) {
                     TextPageData<Edge> edgesByTenantId = edgeService.findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
                     if (edgesByTenantId != null && edgesByTenantId.getData() != null && !edgesByTenantId.getData().isEmpty()) {
                         for (Edge edge : edgesByTenantId.getData()) {

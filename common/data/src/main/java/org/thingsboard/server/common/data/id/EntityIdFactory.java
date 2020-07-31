@@ -89,6 +89,8 @@ public class EntityIdFactory {
                 return new EntityViewId(uuid);
             case WIDGETS_BUNDLE:
                 return new WidgetsBundleId(uuid);
+            case WIDGET_TYPE:
+                return new WidgetTypeId(uuid);
             case EDGE:
                 return new EdgeId(uuid);
         }

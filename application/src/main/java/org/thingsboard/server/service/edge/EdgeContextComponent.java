@@ -33,6 +33,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -118,6 +119,10 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
+    private WidgetTypeService widgetTypeService;
+
+    @Lazy
+    @Autowired
     private DeviceStateService deviceStateService;
 
     @Lazy
@@ -163,6 +168,10 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private WidgetsBundleUpdateMsgConstructor widgetsBundleUpdateMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private WidgetTypeUpdateMsgConstructor widgetTypeUpdateMsgConstructor;
 
     @Lazy
     @Autowired

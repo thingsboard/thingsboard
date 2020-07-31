@@ -60,6 +60,7 @@ message EntityUpdateMsg {
   CustomerUpdateMsg customerUpdateMsg = 11;
   RelationUpdateMsg relationUpdateMsg = 12;
   WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 13;
+  WidgetTypeUpdateMsg widgetTypeUpdateMsg = 14;
 }
 
 enum RequestMsgType {
@@ -274,6 +275,16 @@ message WidgetsBundleUpdateMsg {
   string title = 4;
   string alias = 5;
   bytes image = 6;
+}
+
+message WidgetTypeUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string bundleAlias = 4;
+  string alias = 5;
+  string name = 6;
+  string descriptorJson = 7;
 }
 
 message UserCredentialsUpdateMsg {
