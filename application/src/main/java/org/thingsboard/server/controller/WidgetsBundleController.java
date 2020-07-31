@@ -71,7 +71,7 @@ public class WidgetsBundleController extends BaseController {
             checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
             WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
 
-            sendNotificationMsgToEdgeService(savedWidgetsBundle.getTenantId(), savedWidgetsBundle.getId(), ActionType.UPDATED);
+            sendNotificationMsgToEdgeService(savedWidgetsBundle.getTenantId(), savedWidgetsBundle.getId(), savedWidgetsBundle.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
 
             return checkNotNull(savedWidgetsBundle);
         } catch (Exception e) {

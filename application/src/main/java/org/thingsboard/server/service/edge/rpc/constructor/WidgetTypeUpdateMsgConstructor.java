@@ -47,7 +47,7 @@ public class WidgetTypeUpdateMsgConstructor {
                 return builder.build();
     }
 
-    public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(WidgetTypeId widgetTypeId) {
+    public WidgetTypeUpdateMsg constructWidgetTypeDeleteMsg(WidgetTypeId widgetTypeId) {
         return WidgetTypeUpdateMsg.newBuilder()
                 .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
                 .setIdMSB(widgetTypeId.getId().getMostSignificantBits())
