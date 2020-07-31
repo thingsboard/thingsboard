@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { DEFAULT_MAP_PAGE_SIZE } from '@home/components/widget/lib/maps/map-models';
+
 export const googleMapSettingsSchema =
 {
     schema: {
@@ -198,10 +200,6 @@ export const openstreetMapSettingsSchema =
                     label: 'OpenStreetMap.Mapnik (Default)'
                 },
                 {
-                    value: 'OpenStreetMap.BlackAndWhite',
-                    label: 'OpenStreetMap.BlackAndWhite'
-                },
-                {
                     value: 'OpenStreetMap.HOT',
                     label: 'OpenStreetMap.HOT'
                 },
@@ -245,6 +243,11 @@ export const commonMapSettingsSchema =
                 title: 'Use default map center position',
                 type: 'boolean',
                 default: false
+            },
+            mapPageSize: {
+                title: 'Map page size load entities',
+                type: 'number',
+                default: DEFAULT_MAP_PAGE_SIZE
             },
             defaultCenterPosition: {
                 title: 'Default map center position (0,0)',
@@ -408,6 +411,7 @@ export const commonMapSettingsSchema =
             key: 'fitMapBounds',
             condition: 'model.provider !== "image-map"'
         },
+        'mapPageSize',
         'draggableMarker',
         {
             key: 'disableScrollZooming',
