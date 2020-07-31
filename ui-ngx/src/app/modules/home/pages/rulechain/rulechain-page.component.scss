@@ -171,11 +171,26 @@
 
     .fc-edit {
       .fc-nodeedit,
-      .fc-nodedelete {
+      .fc-nodedelete,
+      .fc-nodeopen {
         box-sizing: content-box;
         border: solid 2px #fff;
         background: #f83e05;
         outline: none;
+      }
+
+      .fc-nodeopen{
+        top: 30px;
+        right: -14px;
+
+        mat-icon{
+          width: 20px;
+          min-width: 20px;
+          height: 20px;
+          min-height: 20px;
+          font-size: 18px;
+          line-height: 18px;
+        }
       }
     }
 

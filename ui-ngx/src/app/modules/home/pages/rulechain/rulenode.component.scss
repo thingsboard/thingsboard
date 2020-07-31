@@ -40,7 +40,8 @@
 
   :host-context(.fc-edit) {
     .fc-nodeedit,
-    .fc-nodedelete {
+    .fc-nodedelete,
+    .fc-nodeopen {
       box-sizing: content-box;
       border: solid 2px #fff;
       background: #f83e05;
