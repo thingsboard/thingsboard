@@ -62,9 +62,9 @@ public class LwM2MTransportServerConfiguration {
         return getLeshanServer(context.getServerPort(), context.getServerSecurePortCert(), X509);
     }
 
-    @Bean(name = "leshanServerRPK")
-    public LeshanServer getLeshanServerRPK()  {
-        log.info("Starting LwM2M transport ServerRPK... PostConstruct");
+    @Bean(name = "leshanServerNoSecPskRpk")
+    public LeshanServer getLeshanServerNoSecPskRpk()  {
+        log.info("Starting LwM2M transport ServerNoSecPskRpk... PostConstruct");
         return getLeshanServer(context.getServerPort(), context.getServerSecurePort(), RPK);
     }
 

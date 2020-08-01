@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -37,11 +38,23 @@ public class LwM2MTransportBootstrapServerInitializer {
     @Qualifier("leshanBootstrapRPK")
     private LeshanBootstrapServer lhBServerRPK;
 
+    @Autowired
+    private LwM2MTransportContextBootstrap contextBS;
+
     @PostConstruct
     public void init() {
-        // TODO ??    this.context.setSessions(new ConcurrentHashMap<>()); ??
-        this.lhBServerCert.start();
-        this.lhBServerRPK.start();
+        if (this.contextBS.isBootstrapStartAll()) {
+            this.lhBServerCert.start();
+            this.lhBServerRPK.start();
+        }
+        else {
+            if (this.contextBS.getBootStrapDtlsMode() == LwM2MSecurityMode.X509.code) {
+                this.lhBServerCert.start();
+            }
+            else {
+                this.lhBServerRPK.start();
+            }
+        }
     }
 
     @PreDestroy

@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -37,8 +38,8 @@ public class LwM2MTransportServerInitializer {
     private LeshanServer lhServerCert;
 
     @Autowired
-    @Qualifier("leshanServerRPK")
-    private LeshanServer lhServerRPK;
+    @Qualifier("leshanServerNoSecPskRpk")
+    private LeshanServer lhServerNoSecPskRpk;
 
     @Autowired
     private LwM2MTransportContextServer context;
@@ -47,8 +48,18 @@ public class LwM2MTransportServerInitializer {
     public void init() {
         if (context.getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
         this.context.setSessions(new ConcurrentHashMap<>());
-        this.lhServerCert.start();
-        this.lhServerRPK.start();
+        if (this.context.isServerStartAll()) {
+            this.lhServerCert.start();
+            this.lhServerNoSecPskRpk.start();
+        }
+        else {
+            if (this.context.getServerDtlsMode() == LwM2MSecurityMode.X509.code) {
+                this.lhServerCert.start();
+            }
+            else {
+                this.lhServerNoSecPskRpk.start();
+            }
+        }
     }
 
     @PreDestroy
@@ -56,7 +67,7 @@ public class LwM2MTransportServerInitializer {
         log.info("Stopping LwM2M transport Server!");
         try {
             lhServerCert.destroy();
-            lhServerRPK.destroy();
+            lhServerNoSecPskRpk.destroy();
         } finally {
         }
         log.info("LwM2M transport Server stopped!");

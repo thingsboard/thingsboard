@@ -44,9 +44,14 @@ public class LwM2MTransportContextBootstrap extends TransportContext {
     @Value("#{${transport.lwm2m.bootstrap.bind_port_cert} ?: 5691}")
     private Integer bootstrapPortCert;
 
+
+    @Getter
+    @Value("#{${transport.lwm2m.bootstrap.secure.start_all} ?: true}")
+    private boolean bootstrapStartAll;
+
     @Getter
     @Value("#{${transport.lwm2m.bootstrap.secure.dtls_mode} ?: 3}")
-    private int bootStrapDtlsMode;
+    private Integer bootStrapDtlsMode;
 
     @Getter
     @Value("#{${transport.lwm2m.bootstrap.secure.bind_address} ?: localhost}")

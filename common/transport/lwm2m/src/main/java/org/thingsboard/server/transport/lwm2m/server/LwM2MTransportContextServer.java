@@ -80,6 +80,14 @@ public class LwM2MTransportContextServer extends TransportContext {
     private Integer serverPortCert;
 
     @Getter
+    @Value("#{${transport.lwm2m.server.secure.start_all} ?: true}")
+    private boolean serverStartAll;
+
+    @Getter
+    @Value("#{${transport.lwm2m.server.secure.dtls_mode} ?: 3}")
+    private Integer serverDtlsMode;
+
+    @Getter
     @Value("#{${transport.lwm2m.server.secure.bind_address} ?: localhost}")
     private String serverSecureHost;
 

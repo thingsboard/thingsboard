@@ -105,8 +105,8 @@ public class LwM2MTransportHandler {
     private LeshanServer lhServerCert;
 
     @Autowired
-    @Qualifier("leshanServerRPK")
-    private LeshanServer lhServerRPK;
+    @Qualifier("leshanServerNoSecPskRpk")
+    private LeshanServer lhServerNoSecPskRpk;
 
     @Autowired
     private LwM2MTransportService service;
@@ -117,9 +117,9 @@ public class LwM2MTransportHandler {
         this.lhServerCert.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
         this.lhServerCert.getPresenceService().addListener(lwM2mServerListener.presenceListener);
         this.lhServerCert.getObservationService().addListener(lwM2mServerListener.observationListener);
-        lwM2mServerListener = new LwM2mServerListener(lhServerRPK, service);
-        this.lhServerRPK.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
-        this.lhServerRPK.getPresenceService().addListener(lwM2mServerListener.presenceListener);
-        this.lhServerRPK.getObservationService().addListener(lwM2mServerListener.observationListener);
+        lwM2mServerListener = new LwM2mServerListener(lhServerNoSecPskRpk, service);
+        this.lhServerNoSecPskRpk.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
+        this.lhServerNoSecPskRpk.getPresenceService().addListener(lwM2mServerListener.presenceListener);
+        this.lhServerNoSecPskRpk.getObservationService().addListener(lwM2mServerListener.observationListener);
     }
 }
