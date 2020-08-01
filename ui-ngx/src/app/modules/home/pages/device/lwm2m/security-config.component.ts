@@ -54,10 +54,14 @@ import {
   LEN_MAX_PUBLIC_KEY_RPK,
   BOOTSTRAP_PUBLIC_KEY_RPK,
   LWM2M_SERVER_PUBLIC_KEY_RPK,
-  DEFAULT_PORT_BOOTSTRAP,
-  DEFAULT_PORT_SERVER,
+  DEFAULT_PORT_BOOTSTRAP_SEC,
+  DEFAULT_PORT_SERVER_SEC,
   DEFAULT_PORT_BOOTSTRAP_NO_SEC,
-  DEFAULT_PORT_SERVER_NO_SEC, BOOTSTRAP_PUBLIC_KEY_X509, LWM2M_SERVER_PUBLIC_KEY_X509, getDefaultClientObserve,
+  DEFAULT_PORT_SERVER_NO_SEC,
+  BOOTSTRAP_PUBLIC_KEY_X509,
+  LWM2M_SERVER_PUBLIC_KEY_X509,
+  getDefaultClientObserve,
+  DEFAULT_PORT_BOOTSTRAP_SEC_CERT, DEFAULT_PORT_SERVER_SEC_CERT,
 } from "./security-config.models";
 import {WINDOW} from "@core/services/window.service";
 
@@ -235,8 +239,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   updateServerPublicKey(mode: SECURITY_CONFIG_MODE): void {
     this.jsonAllConfig.bootstrap.bootstrapServer.securityMode = mode.toString();
     this.jsonAllConfig.bootstrap.lwm2mServer.securityMode = mode.toString();
-    this.jsonAllConfig.bootstrap.bootstrapServer.port = DEFAULT_PORT_BOOTSTRAP;
-    this.jsonAllConfig.bootstrap.lwm2mServer.port = DEFAULT_PORT_SERVER;
+    this.jsonAllConfig.bootstrap.bootstrapServer.port = DEFAULT_PORT_BOOTSTRAP_SEC;
+    this.jsonAllConfig.bootstrap.lwm2mServer.port = DEFAULT_PORT_SERVER_SEC;
     switch (mode) {
       case SECURITY_CONFIG_MODE.NO_SEC:
         this.jsonAllConfig.bootstrap.bootstrapServer.port = DEFAULT_PORT_BOOTSTRAP_NO_SEC;
@@ -253,6 +257,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
         this.jsonAllConfig.bootstrap.lwm2mServer.serverPublicKey = this.lwM2mPublikKeyRPK;
         break;
       case SECURITY_CONFIG_MODE.X509:
+        this.jsonAllConfig.bootstrap.bootstrapServer.port = DEFAULT_PORT_BOOTSTRAP_SEC_CERT;
+        this.jsonAllConfig.bootstrap.lwm2mServer.port = DEFAULT_PORT_SERVER_SEC_CERT;
         this.jsonAllConfig.bootstrap.bootstrapServer.serverPublicKey = this.bsPublikKeyX509;
         this.jsonAllConfig.bootstrap.lwm2mServer.serverPublicKey = this.lwM2mPublikKeyX509;
         break;
@@ -302,6 +308,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
 
     this.bootstrapFormGroup.valueChanges.subscribe(val => {
       if (!this.bootstrapFormGroup.pristine && this.bootstrapFormGroup.valid) {
+        val["bootstrapServerIs"] = true;
         this.jsonAllConfig.bootstrap.bootstrapServer = val;
         this.upDateJsonAllConfig();
       }
@@ -309,6 +316,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
 
     this.lwm2mServerFormGroup.valueChanges.subscribe(val => {
       if (!this.lwm2mServerFormGroup.pristine && this.lwm2mServerFormGroup.valid) {
+        val["bootstrapServerIs"] = false;
         this.jsonAllConfig.bootstrap.lwm2mServer = val;
         this.upDateJsonAllConfig();
       }
@@ -438,10 +446,10 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     let idIns: number;
     let idRes: number;
     isObserve.forEach(observe => {
-      pathObserve = Array.from(observe.substring(1).split('/'),Number);
+      pathObserve = Array.from(observe.substring(1).split('/'), Number);
       idObj = pathObserve[0];
       idIns = pathObserve[1];
-      idRes = (pathObserve[2]) ? pathObserve[2] : (pathObserve.length===3) ? 0 : null;
+      idRes = (pathObserve[2]) ? pathObserve[2] : (pathObserve.length === 3) ? 0 : null;
       clientObserve.forEach(obj => {
         if (obj.id === idObj) {
           obj.instance.forEach(inst => {

@@ -24,7 +24,6 @@ import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationListener;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
 

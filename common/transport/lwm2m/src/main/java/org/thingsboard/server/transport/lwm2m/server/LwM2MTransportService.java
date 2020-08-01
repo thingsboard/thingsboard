@@ -209,7 +209,6 @@ public class LwM2MTransportService {
                     om.resources.entrySet().stream().forEach(resOm -> {
                         String attrTelName = om.name + "_" + instanceId + "_" + resOm.getValue().name;
                         /** Attributs: om.id: Security, Server, ACL & 'R' ? */
-//                        if (resOm.getValue().operations.name().equals("R") || om.id <= 2 ) {
                         if (om.id <= 2 ) {
                             readResultAttrTel.getPostAttribute().addProperty(attrTelName, "");
                         } else {
@@ -242,7 +241,6 @@ public class LwM2MTransportService {
         param = param != null  ? param : "";
         return lwM2MTransportRequest.doPost(lwServer, clientEndpoint, target, POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
    }
-
 
     private String getResourceValueToString(LwM2mResource resource) {
         Object resValue;

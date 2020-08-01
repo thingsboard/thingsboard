@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,9 +28,6 @@ import javax.annotation.PreDestroy;
 @Service("LwM2MTransportBootstrapServerInitializer")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true' && '${transport.lwm2m.bootstrap.enable}'=='true')")
 public class LwM2MTransportBootstrapServerInitializer {
-
-//    @Autowired
-//    private LeshanBootstrapServer lhBServerCert;
 
     @Autowired
     @Qualifier("leshanBootstrapCert")
@@ -58,5 +54,4 @@ public class LwM2MTransportBootstrapServerInitializer {
         }
         log.info("LwM2M transport Bootstrap Server stopped!");
     }
-
 }

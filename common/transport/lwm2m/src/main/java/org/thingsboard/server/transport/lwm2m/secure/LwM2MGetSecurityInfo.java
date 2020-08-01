@@ -50,17 +50,18 @@ public class LwM2MGetSecurityInfo {
     @Autowired
     public LwM2MTransportContextBootstrap contextBS;
 
-    public ReadResultSecurityStore getSecurityInfo(String identity, TypeServer keyValue) {
+    public ReadResultSecurityStore getSecurityInfo(String endPoint, TypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
-        contextS.getTransportService().process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(identity).build(),
+        contextS.getTransportService().process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endPoint).build(),
                 new TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg>() {
                     @Override
                     public void onSuccess(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
                         String ingfosStr = msg.getCredentialsBody();
-                        resultSecurityStore[0] = putSecurityInfo(msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
-                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code && (keyValue.equals(TypeServer.SERVER) || keyValue.equals(TypeServer.CLIENT))) {
-                            String endpoint = (resultSecurityStore[0].getSecurityMode()== PSK.code) ? resultSecurityStore[0].getSecurityInfo().getEndpoint(): identity;
+
+                        resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
+                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code && keyValue.equals(TypeServer.CLIENT)) {
+                            String endpoint = (resultSecurityStore[0].getSecurityMode()== PSK.code) ? resultSecurityStore[0].getSecurityInfo().getEndpoint(): endPoint;
                             contextS.getSessions().put(endpoint, msg);
                         }
                         latch.countDown();
@@ -68,9 +69,8 @@ public class LwM2MGetSecurityInfo {
 
                     @Override
                     public void onError(Throwable e) {
-                        log.trace("[{}] Failed to process credentials PSK: {}", identity, e);
-//                        resultSecurityStore[0]  = credentials.getSecurityInfo(identity, null);
-                        resultSecurityStore[0] = putSecurityInfo(identity, null, null);
+                        log.trace("[{}] Failed to process credentials PSK: {}", endPoint, e);
+                        resultSecurityStore[0] = putSecurityInfo(endPoint, null,null, null);
                         latch.countDown();
                     }
                 });
@@ -82,107 +82,42 @@ public class LwM2MGetSecurityInfo {
         return resultSecurityStore[0];
     }
 
-    private ReadResultSecurityStore putSecurityInfo(String endpoint, String jsonStr, TypeServer keyValue) {
+    private ReadResultSecurityStore putSecurityInfo(String endPoint, String deviceName, String jsonStr, TypeServer keyValue) {
         ReadResultSecurityStore result = new ReadResultSecurityStore();
         JsonObject objectMsg = validateJson(jsonStr);
         if (objectMsg != null && !objectMsg.isJsonNull()) {
             JsonObject object = (objectMsg.has(keyValue.type) && !objectMsg.get(keyValue.type).isJsonNull()) ? objectMsg.get(keyValue.type).getAsJsonObject() : null;
+            /**
+             * Only PSK
+             */
+            String endPointPsk = (objectMsg.has("client")
+                    && objectMsg.get("client").getAsJsonObject().has("endpoint")
+                    && objectMsg.get("client").getAsJsonObject().get("endpoint").isJsonPrimitive()) ? objectMsg.get("client").getAsJsonObject().get("endpoint").getAsString() : null;
+            endPoint = (endPointPsk == null || endPointPsk.isEmpty()) ? endPoint : endPointPsk;
             if (object != null && !object.isJsonNull()) {
                 if (keyValue.equals(TypeServer.BOOTSTRAP)) {
                     result.setBootstrapJson(object);
-                    result.setEndPoint(endpoint);
+                    result.setEndPoint(endPoint);
                 }
-
-                else if (keyValue.equals(TypeServer.CLIENT)) {
+                else {
                     LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(object.get("securityConfigClientMode").getAsString().toLowerCase());
                     switch (lwM2MSecurityMode) {
                         case NO_SEC:
                             getClientSecurityInfoNoSec(result);
                             break;
                         case PSK:
-                            getClientSecurityInfoPSK(result, object);
+                            getClientSecurityInfoPSK(result, endPoint, object);
                             break;
                         case RPK:
-                            getClientSecurityInfoRPK(result, endpoint, object);
+                            getClientSecurityInfoRPK(result, endPoint, object);
                             break;
                         case X509:
-                            getClientSecurityInfoX509(result, endpoint);
+                            getClientSecurityInfoX509(result, endPoint);
                             break;
                         default:
                             break;
                     }
 
-                }
-                else if (keyValue.equals(TypeServer.SERVER)) {
-                    if (!object.isJsonNull()) {
-                        boolean isX509 = (object.has("x509") && !object.get("x509").isJsonNull() && object.get("x509").isJsonPrimitive()) ? object.get("x509").getAsBoolean() : false;
-                        boolean isPsk = (object.has("psk") && !object.get("psk").isJsonNull()) ? true : false;
-                        boolean isRpk = (!isX509 && object.has("rpk") && !object.get("rpk").isJsonNull()) ? true : false;
-                        boolean isNoSec = (!isX509 && object.has("no_sec") && !object.get("no_sec").isJsonNull()) ? true : false;
-                        if (isX509) {
-                            result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
-                            result.setSecurityMode(X509.code);
-                        } else if (isPsk) {
-                            /** PSK Deserialization */
-                            JsonObject psk = (object.get("psk").isJsonObject()) ? object.get("psk").getAsJsonObject() : null;
-                            if (!psk.isJsonNull()) {
-                                String identity = null;
-                                if (psk.has("identity") && psk.get("identity").isJsonPrimitive()) {
-                                    identity = psk.get("identity").getAsString();
-                                } else {
-                                    log.error("Missing PSK identity");
-                                }
-                                if (identity != null && !identity.isEmpty()) {
-                                    byte[] key = new byte[0];
-                                    try {
-                                        if (psk.has("key") && psk.get("key").isJsonPrimitive()) {
-                                            key = Hex.decodeHex(psk.get("key").getAsString().toCharArray());
-                                        } else {
-                                            log.error("Missing PSK key");
-                                        }
-                                    } catch (IllegalArgumentException e) {
-                                        log.error("Missing PSK key: " + e.getMessage());
-                                    }
-                                    if (key.length > 0) {
-                                        if (psk.has("endpoint") && psk.get("endpoint").isJsonPrimitive()) {
-                                            endpoint = psk.get("endpoint").getAsString();
-                                            result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, identity, key));
-                                            result.setSecurityMode(PSK.code);
-                                        }
-                                    }
-                                }
-                            }
-                        } else if (isRpk) {
-                            JsonObject rpk = (object.get("rpk").isJsonObject()) ? object.get("rpk").getAsJsonObject() : null;
-                            if (!rpk.isJsonNull()) {
-                                PublicKey key = null;
-                                try {
-                                    if (rpk.has("key") && rpk.get("key").isJsonPrimitive()) {
-                                        byte[] rpkkey = Hex.decodeHex(rpk.get("key").getAsString().toLowerCase().toCharArray());
-                                        key = SecurityUtil.publicKey.decode(rpkkey);
-//                                        ECPublicKey ecPublicKey = (ECPublicKey) key;
-//                                        log.info("params : [{}]", ecPublicKey.getParams().toString());
-//                                        log.info("x : [{}]", Hex.encodeHexString(ecPublicKey.getW().getAffineX().toByteArray()));
-//                                        log.info("y : [{}]", Hex.encodeHexString(ecPublicKey.getW().getAffineY().toByteArray()));
-                                    } else {
-                                        log.error("Missing RPK key");
-                                    }
-                                } catch (IllegalArgumentException | IOException | GeneralSecurityException e) {
-                                    log.error("RPK: Invalid security info content: " + e.getMessage());
-                                }
-                                result.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(endpoint, key));
-                                result.setSecurityMode(RPK.code);
-                            }
-                        } else if (isNoSec) {
-                            JsonObject noSec = (object.isJsonObject()) ? object.getAsJsonObject() : null;
-                            if (noSec.has("no_sec") && noSec.get("no_sec").isJsonPrimitive() && noSec.get("no_sec").getAsBoolean()) {
-                                result.setSecurityInfo(null);
-                                result.setSecurityMode(NO_SEC.code);
-                            } else {
-                                log.error("[{}] no sec error", endpoint);
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -195,16 +130,15 @@ public class LwM2MGetSecurityInfo {
         result.setSecurityMode(NO_SEC.code);
     }
 
-    private void getClientSecurityInfoPSK(ReadResultSecurityStore result, JsonObject object) {
+    private void getClientSecurityInfoPSK(ReadResultSecurityStore result, String endPoint, JsonObject object) {
         /** PSK Deserialization */
         String identity = (object.has("identity") && object.get("identity").isJsonPrimitive()) ? object.get("identity").getAsString() : null;
         if (identity != null  && !identity.isEmpty()) {
             try {
                 byte[] key =  (object.has("key") && object.get("key").isJsonPrimitive()) ? Hex.decodeHex(object.get("key").getAsString().toCharArray()) : null;
                 if (key!= null && key.length > 0) {
-                    String endpoint = (object.has("endpoint") && object.get("endpoint").isJsonPrimitive()) ? object.get("endpoint").getAsString() : null;
-                    if (endpoint != null && !endpoint.isEmpty()) {
-                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, identity, key));
+                    if (endPoint != null && !endPoint.isEmpty()) {
+                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endPoint, identity, key));
                         result.setSecurityMode(PSK.code);
                     }
                 }
@@ -218,22 +152,6 @@ public class LwM2MGetSecurityInfo {
     }
 
     private void getClientSecurityInfoRPK(ReadResultSecurityStore result, String endpoint, JsonObject object) {
-//        JsonObject rpk = (object.get("rpk").isJsonObject()) ? object.get("rpk").getAsJsonObject() : null;
-//        if (!rpk.isJsonNull()) {
-//            PublicKey key = null;
-//            try {
-//                if (rpk.has("key") && rpk.get("key").isJsonPrimitive()) {
-//                    byte[] rpkkey = Hex.decodeHex(rpk.get("key").getAsString().toLowerCase().toCharArray());
-//                    key = SecurityUtil.publicKey.decode(rpkkey);
-//                } else {
-//                    log.error("Missing RPK key");
-//                }
-//            } catch (IllegalArgumentException | IOException | GeneralSecurityException e) {
-//                log.error("RPK: Invalid security info content: " + e.getMessage());
-//            }
-//            result.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(endpoint, key));
-//            result.setSecurityMode(RPK.code);
-//        }
         try {
             if (object.has("key") && object.get("key").isJsonPrimitive()) {
                 byte[] rpkkey = Hex.decodeHex(object.get("key").getAsString().toLowerCase().toCharArray());
@@ -269,5 +187,4 @@ public class LwM2MGetSecurityInfo {
         }
         return object;
     }
-
 }

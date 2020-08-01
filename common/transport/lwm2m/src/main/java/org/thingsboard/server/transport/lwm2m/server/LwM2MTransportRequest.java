@@ -42,9 +42,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportRequest {
 
-//    @Autowired
-//    private LeshanServer lwServer;
-
     @Autowired
     private LwM2MTransportContextServer context;
 
@@ -122,25 +119,4 @@ public class LwM2MTransportRequest {
         }
         return null;
     }
-
-
-//    private LwM2mNode createLwM2mNode(String target, HttpServletRequest req) throws IOException {
-//        String contentType = StringUtils.substringBefore(req.getContentType(), ";");
-//        if ("application/json".equals(contentType)) {
-//            String content = IOUtils.toString(req.getInputStream(), req.getCharacterEncoding());
-//            LwM2mNode node;
-//            try {
-//                node = gson.fromJson(content, LwM2mNode.class);
-//            } catch (JsonSyntaxException e) {
-//                throw new InvalidRequestException(e, "unable to parse json to tlv:%s", e.getMessage());
-//            }
-//            return node;
-//        } else if ("text/plain".equals(contentType)) {
-//            String content = IOUtils.toString(req.getInputStream(), req.getCharacterEncoding());
-//            int rscId = Integer.valueOf(target.substring(target.lastIndexOf("/") + 1));
-//            return LwM2mSingleResource.newStringResource(rscId, content);
-//        }
-//        throw new InvalidRequestException("content type %s not supported", req.getContentType());
-//    }
-
 }

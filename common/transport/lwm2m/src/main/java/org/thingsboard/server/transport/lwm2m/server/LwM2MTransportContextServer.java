@@ -67,20 +67,6 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Value("${transport.lwm2m.secure.enable_gen_psk_rpk:}")
     private Boolean enableGenPskRpk;
 
-//    /**
-//     * leshan.core (V1_1)
-//     * DTLS security modes:
-//     * 0: Pre-Shared Key mode
-//     * 1: Raw Public Key mode
-//     * 2: Certificate mode X509
-//     * 3: NoSec mode  *
-//     * OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
-//     * 4: Certificate mode X509 with EST
-//     */
-//    @Getter
-//    @Value("#{${transport.lwm2m.server.secure.dtls_mode} ?: 3}")
-//    private int serverDtlsMode;
-
     @Getter
     @Value("#{${transport.lwm2m.server.bind_address} ?: localhost}")
     private String serverHost;

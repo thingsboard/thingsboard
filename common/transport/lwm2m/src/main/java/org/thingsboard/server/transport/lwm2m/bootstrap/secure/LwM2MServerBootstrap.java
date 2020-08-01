@@ -20,26 +20,30 @@ import lombok.Data;
 import org.eclipse.leshan.core.SecurityMode;
 
 @Data
-public class LwM2MBootstrapServer {
+public class LwM2MServerBootstrap {
+
     @Builder.Default
-    private String host = "0.0.0.0";
+    String clientPublicKeyOrId = "";
     @Builder.Default
-    private Integer port = 0;
+    String clientSecretKey = "";
     @Builder.Default
-    private boolean bootstrapServerIs = false;
+    String serverPublicKey = "";
     @Builder.Default
-    private String securityMode = SecurityMode.NO_SEC.name();
+    Integer clientHoldOffTime = 1;
     @Builder.Default
-    private String clientPublicKeyOrId;
+    Integer bootstrapServerAccountTimeout = 0;
+
     @Builder.Default
-    private String clientSecretKey;
+    String host = "0.0.0.0";
     @Builder.Default
-    private String serverPublicKey;
+    Integer port = 0;
+
     @Builder.Default
-    private Integer clientHoldOffTime = 1;
+    String securityMode = SecurityMode.NO_SEC.name();
+
     @Builder.Default
-    private Integer serverId = 123;
+    Integer serverId = 123;
     @Builder.Default
-    private Integer bootstrapServerAccountTimeout = 0;
+    boolean bootstrapServerIs = false;
 
 }

@@ -17,9 +17,7 @@ package org.thingsboard.server.transport.lwm2m.utils;
 
 public enum TypeServer {
     BOOTSTRAP(0, "bootstrap"),
-    CLIENT(1, "client"),
-    SERVER(2, "server");
-
+    CLIENT(1, "client");
 
     public int code;
     public String type;
@@ -27,14 +25,5 @@ public enum TypeServer {
     TypeServer(int code, String type) {
         this.code = code;
         this.type = type;
-    }
-
-    public static TypeServer fromTypeServer(int code) {
-        for (TypeServer sm : TypeServer.values()) {
-            if (sm.code == code) {
-                return sm;
-            }
-        }
-        throw new IllegalArgumentException(String.format("Unsupported type server : %d", code));
     }
 }

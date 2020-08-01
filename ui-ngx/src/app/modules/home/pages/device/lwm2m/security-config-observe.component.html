@@ -27,32 +27,46 @@
             name: <b><i>{{ objectLwM2M.get('name').value}}</i></b></div>
         </mat-panel-title>
       </mat-expansion-panel-header>
-      <div fxLayout="column">
+      <div fxLayout="column" fxLayoutGap="8px">
         <mat-accordion multi="true" class="mat-body-1" formArrayName="instance">
           <mat-expansion-panel *ngFor="let instance of instanceLwm2mFormArray(objectLwM2M).controls; let y = index"
                                [formGroupName]="y">
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <div class="tb-panel-title-height">Instance [<b>{{instance.get('id').value}}</b>]
-                  <mat-checkbox formControlName="isObserv" color="primary"  (click)="$event.stopPropagation()"
-                                (keydown)="$event.stopPropagation()"
+                <div class="tb-panel-title-height"  fxFlex="100">
+                  <div fxLayout="row" fxFill>
+                    <div fxFlex="88">
+                      Instance [<b>{{instance.get('id').value}}</b>]
+                    </div>
+                    <div class="checkbox-padding" fxFlex="10">
+                      <mat-checkbox formControlName="isObserv" color="primary"
+                                    (click)="$event.stopPropagation()"
+                                    (keydown)="$event.stopPropagation()"
+                                    matTooltip="{{'device.lwm2m-security-config.is-observe-tip' | translate}}"
+                                    matTooltipPosition="above">
+                      </mat-checkbox>
+                    </div>
+                  </div>
+                </div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div fxLayout="row" fxFill
+                 formArrayName="resource"
+                 *ngFor="let resourceLwM2M of resourceLwm2mFormArray(instance).controls; let z = index">
+              <div class="vertical-padding" fxLayout="row" fxFill [formGroupName]="z">
+                <div fxFlex="85">
+                  Resource[<b>{{resourceLwM2M.get('id').value}}</b>]
+                  name:<b><i>{{resourceLwM2M.get('name').value}}</i></b>
+                </div>
+                <div fxFlex="5">
+                  <mat-checkbox formControlName="isObserv" color="primary"
                                 matTooltip="{{'device.lwm2m-security-config.is-observe-tip' | translate}}"
                                 matTooltipPosition="above">
                   </mat-checkbox>
                 </div>
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <div fxLayout="row" fxLayoutGap="8px"
-                 formArrayName="resource"
-                 *ngFor="let resourceLwM2M of resourceLwm2mFormArray(instance).controls; let z = index">
-              <div class="vertical-padding" fxLayout="row" fxLayoutGap="8px" [formGroupName]="z">
-                Resource[<b>{{resourceLwM2M.get('id').value}}</b>]
-                name:<b><i>{{resourceLwM2M.get('name').value}}</i></b>
-                <mat-checkbox formControlName="isObserv" color="primary"
-                              matTooltip="{{'device.lwm2m-security-config.is-observe-tip' | translate}}"
-                              matTooltipPosition="above">
-                </mat-checkbox>
               </div>
+
+
             </div>
           </mat-expansion-panel>
         </mat-accordion>

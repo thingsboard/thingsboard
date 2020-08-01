@@ -17,13 +17,17 @@
 .vertical-padding {
   padding: 0 0 10px 20px;
 }
+
 .left-padding {
   padding-left: 5px;
 }
 
 .tb-panel-title-height {
-  min-width: 140px;
   user-select: none;
   min-height: 32px;
+}
+
+.checkbox-padding {
+  padding-left: 3px;
 }
 

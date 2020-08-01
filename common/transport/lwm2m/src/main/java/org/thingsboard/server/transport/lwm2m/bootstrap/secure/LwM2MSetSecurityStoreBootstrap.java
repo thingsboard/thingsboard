@@ -50,14 +50,12 @@ public class LwM2MSetSecurityStoreBootstrap {
 
 
     private LeshanBootstrapServerBuilder builder;
-    //    private int dtlsMode;
     EditableSecurityStore securityStore;
 
     public LwM2MSetSecurityStoreBootstrap(LeshanBootstrapServerBuilder builder, LwM2MTransportContextBootstrap contextBS, LwM2MTransportContextServer contextS, LwM2MSecurityMode dtlsMode) {
         this.builder = builder;
         this.contextBS = contextBS;
         this.contextS = contextS;
-//        this.dtlsMode = (this.contextBS.getBootStrapDtlsMode() == REDIS.code && contextS.getRedisUrl().isEmpty()) ? DEFAULT_MODE.code : this.contextBS.getBootStrapDtlsMode();
         /** Set securityStore with new registrationStore */
 
         switch (dtlsMode) {

@@ -21,6 +21,7 @@ import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
+import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Primary;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MSetSecurityStoreBootstrap;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 import java.io.File;
@@ -72,10 +74,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
     }
 
     public LeshanBootstrapServer getLeshanBootstrapServer(Integer bootstrapPort, Integer bootstrapSecurePort, LwM2MSecurityMode dtlsMode){
-
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
-//        builder.setLocalAddress(contextBs.getBootstrapHost(), contextBs.getBootstrapPortCert());
-//        builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), contextBs.getBootstrapSecurePortCert());
        builder.setLocalAddress(contextBs.getBootstrapHost(), bootstrapPort);
         builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), bootstrapSecurePort);
 
@@ -111,6 +110,12 @@ public class LwM2MTransportBootstrapServerConfiguration {
             coapConfig.store(configFile);
         }
         builder.setCoapConfig(coapConfig);
+
+        /**
+         *
+         */
+        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore);
+        builder.setSessionManager(sessionManager);
 
         /** Create BootstrapServer */
         return builder.build();

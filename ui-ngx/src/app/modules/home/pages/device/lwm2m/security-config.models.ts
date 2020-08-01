@@ -23,11 +23,13 @@ export const LWM2M_SERVER = 'lwm2mServer';
 export const OBSERVE = 'observe';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
-export const DEFAULT_PORT_SERVER = 5686;
-export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
 const DEFAULT_ID_BOOTSTRAP = 111;
-export const DEFAULT_PORT_BOOTSTRAP = 5688;
-export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5687;
+export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
+export const DEFAULT_PORT_SERVER_SEC = 5686;
+export const DEFAULT_PORT_SERVER_SEC_CERT = 5688;
+export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5689;
+export const DEFAULT_PORT_BOOTSTRAP_SEC = 5690;
+export const DEFAULT_PORT_BOOTSTRAP_SEC_CERT = 5692;
 export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
 export const DEFAULT_DEFAULT_MIN_PERIOD =  1;
@@ -188,15 +190,19 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSe
 export function getDefaultLwM2MServerSecurityConfig(hostname): ServerSecurityConfig {
   const DefaultLwM2MServerSecurityConfig =  getDefaultBootstrapServerSecurityConfig(hostname);
   DefaultLwM2MServerSecurityConfig.bootstrapServerIs = false;
+  DefaultLwM2MServerSecurityConfig.port = getDefaultPortServer();
+  DefaultLwM2MServerSecurityConfig.serverId = DEFAULT_ID_SERVER;
   return DefaultLwM2MServerSecurityConfig;
 }
 
 export function getDefaultPortBootstrap (securityMode?: string): number {
-  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_BOOTSTRAP_NO_SEC : DEFAULT_PORT_BOOTSTRAP;
+  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_BOOTSTRAP_NO_SEC :
+    (securityMode === SECURITY_CONFIG_MODE.X509.toString()) ? DEFAULT_PORT_BOOTSTRAP_SEC_CERT : DEFAULT_PORT_BOOTSTRAP_SEC;
 }
 
-export function getDefaultPortServer (securityMode: string): number {
-  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_SERVER_NO_SEC : DEFAULT_PORT_SERVER;
+export function getDefaultPortServer (securityMode?: string): number {
+  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_SERVER_NO_SEC :
+    (securityMode === SECURITY_CONFIG_MODE.X509.toString()) ?  DEFAULT_PORT_SERVER_SEC_CERT : DEFAULT_PORT_SERVER_SEC;
 }
 
 function getDefaultBootstrapSecurityConfig(hostname: any): BootstrapSecurityConfig {

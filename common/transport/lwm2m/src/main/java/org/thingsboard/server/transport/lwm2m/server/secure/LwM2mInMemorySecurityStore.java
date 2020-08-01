@@ -54,8 +54,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     }
 
     private SecurityInfo addNew(String identity) {
-        TypeServer typeServer = (identity.substring(0, 6).equals("client")) ? TypeServer.SERVER : TypeServer.CLIENT;
-        ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(identity, typeServer);
+        ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(identity, TypeServer.CLIENT);
         if (store.getSecurityInfo() != null) {
             try {
                 add(store.getSecurityInfo());

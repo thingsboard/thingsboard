@@ -62,10 +62,7 @@ public class LwM2MSetSecurityStoreServer {
         this.builder = builder;
         this.context = context;
         this.lwM2mInMemorySecurityStore = lwM2mInMemorySecurityStore;
-//        this.dtlsMode =  (this.context.getServerDtlsMode() == REDIS.code && context.getRedisUrl().isEmpty()) ? DEFAULT_MODE.code : this.context.getServerDtlsMode();
         /** Set securityStore with new registrationStore */
-
-//        switch (LwM2MSecurityMode.fromSecurityMode(this.dtlsMode)) {
         switch (dtlsMode) {
             /** Use PSK only */
             case PSK:

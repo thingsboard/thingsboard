@@ -116,6 +116,10 @@ export class SecurityConfigObserveComponent extends PageComponent implements OnI
       })
     }))
   }
+  //
+  // checkboxInstanceChange(event, index){
+  //   console.log(event.source.checked, index);
+  // }
 
   clientLwM2MFormArray(formGroup: FormGroup): FormArray {
     return formGroup.get('clientLwM2M') as FormArray;
