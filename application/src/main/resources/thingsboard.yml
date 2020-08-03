@@ -548,6 +548,8 @@ transport:
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
   client_side_rpc:
     timeout:  "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
+  # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
+  api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   # Local HTTP transport parameters
   http:
     enabled: "${HTTP_ENABLED:true}"

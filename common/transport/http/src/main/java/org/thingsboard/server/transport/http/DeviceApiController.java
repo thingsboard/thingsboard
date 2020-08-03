@@ -62,7 +62,7 @@ import java.util.function.Consumer;
  * @author Andrew Shvayka
  */
 @RestController
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.http.enabled}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.http.enabled}'=='true')")
 @RequestMapping("/api/v1")
 @Slf4j
 public class DeviceApiController {
