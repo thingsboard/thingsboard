@@ -38,6 +38,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.security.AlgorithmParameters;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -142,7 +143,9 @@ public class CertPemClientCredentials implements MqttClientCredentials {
                     .replaceAll("\\s", "");
             byte[] decoded = Base64.decodeBase64(fileContent);
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            certificate = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(decoded));
+            try (InputStream inStream = new ByteArrayInputStream(decoded)) {
+                certificate = (X509Certificate) certFactory.generateCertificate(inStream);
+            }
         }
         return certificate;
     }
@@ -163,7 +166,7 @@ public class CertPemClientCredentials implements MqttClientCredentials {
 
     private KeySpec getKeySpec(byte[] encodedKey) throws Exception {
         KeySpec keySpec;
-        if (password == null) {
+        if (password == null || password.isEmpty()) {
             keySpec = new PKCS8EncodedKeySpec(encodedKey);
         } else {
             PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray());

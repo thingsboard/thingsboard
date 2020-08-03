@@ -159,7 +159,8 @@ export class AuthService {
   }
 
   public resendEmailActivation(email: string) {
-    return this.http.post(`/api/noauth/resendEmailActivation?email=${email}`,
+    const encodeEmail = encodeURIComponent(email);
+    return this.http.post(`/api/noauth/resendEmailActivation?email=${encodeEmail}`,
       null, defaultHttpOptions());
   }
 

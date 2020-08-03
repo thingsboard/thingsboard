@@ -114,7 +114,6 @@ public class Validator {
      * <code>IncorrectParameterException</code> exception
      *
      * @param pageLink     the page link
-     * @param errorMessage the error message for exception
      */
     public static void validatePageLink(PageLink pageLink) {
         if (pageLink == null) {

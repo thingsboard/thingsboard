@@ -26,16 +26,15 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.TenantEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
+import java.util.UUID;
 
 
 /**
  * Created by Valerii Sosliuk on 4/30/2017.
  */
 @Component
-@SqlDao
 public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant> implements TenantDao {
 
     @Autowired
@@ -47,7 +46,7 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    protected CrudRepository<TenantEntity, String> getCrudRepository() {
+    protected CrudRepository<TenantEntity, UUID> getCrudRepository() {
         return tenantRepository;
     }
 

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -32,6 +31,7 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -39,11 +39,11 @@ import javax.persistence.MappedSuperclass;
 @MappedSuperclass
 public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
 
-    @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY)
-    private String tenantId;
+    @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID tenantId;
 
-    @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID customerId;
 
     @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
     private String type;
@@ -67,13 +67,14 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
 
     public AbstractDeviceEntity(Device device) {
         if (device.getId() != null) {
-            this.setUuid(device.getId().getId());
+            this.setUuid(device.getUuidId());
         }
+        this.setCreatedTime(device.getCreatedTime());
         if (device.getTenantId() != null) {
-            this.tenantId = toString(device.getTenantId().getId());
+            this.tenantId = device.getTenantId().getId();
         }
         if (device.getCustomerId() != null) {
-            this.customerId = toString(device.getCustomerId().getId());
+            this.customerId = device.getCustomerId().getId();
         }
         this.name = device.getName();
         this.type = device.getType();
@@ -83,6 +84,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
 
     public AbstractDeviceEntity(DeviceEntity deviceEntity) {
         this.setId(deviceEntity.getId());
+        this.setCreatedTime(deviceEntity.getCreatedTime());
         this.tenantId = deviceEntity.getTenantId();
         this.customerId = deviceEntity.getCustomerId();
         this.type = deviceEntity.getType();
@@ -104,12 +106,12 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
 
     protected Device toDevice() {
         Device device = new Device(new DeviceId(getUuid()));
-        device.setCreatedTime(Uuids.unixTimestamp(getUuid()));
+        device.setCreatedTime(createdTime);
         if (tenantId != null) {
-            device.setTenantId(new TenantId(toUUID(tenantId)));
+            device.setTenantId(new TenantId(tenantId));
         }
         if (customerId != null) {
-            device.setCustomerId(new CustomerId(toUUID(customerId)));
+            device.setCustomerId(new CustomerId(customerId));
         }
         device.setName(name);
         device.setType(type);

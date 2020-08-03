@@ -133,7 +133,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
   }
 
   private validate(): Observable<any> {
-    return this.entityService.resolveAliasFilter(this.alias.filter, null, 1, true);
+    return this.entityService.resolveAliasFilter(this.alias.filter, null);
   }
 
   save(): void {

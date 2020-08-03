@@ -21,11 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,15 +32,13 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
-import org.thingsboard.server.dao.util.SqlDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
-import javax.persistence.criteria.Predicate;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
-import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
@@ -50,8 +46,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
  */
 @Slf4j
 @Component
-@SqlDao
-public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event> implements EventDao {
+public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implements EventDao {
 
     private final UUID systemTenantId = NULL_UUID;
 
@@ -67,7 +62,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
 
     @Override
-    protected CrudRepository<EventEntity, String> getCrudRepository() {
+    protected CrudRepository<EventEntity, UUID> getCrudRepository() {
         return eventRepository;
     }
 
@@ -75,7 +70,16 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     public Event save(TenantId tenantId, Event event) {
         log.debug("Save event [{}] ", event);
         if (event.getId() == null) {
-            event.setId(new EventId(Uuids.timeBased()));
+            UUID timeBased = Uuids.timeBased();
+            event.setId(new EventId(timeBased));
+            event.setCreatedTime(Uuids.unixTimestamp(timeBased));
+        } else if (event.getCreatedTime() == 0L) {
+            UUID eventId = event.getId().getId();
+            if (eventId.version() == 1) {
+                event.setCreatedTime(Uuids.unixTimestamp(eventId));
+            } else {
+                event.setCreatedTime(System.currentTimeMillis());
+            }
         }
         if (StringUtils.isEmpty(event.getUid())) {
             event.setUid(event.getId().toString());
@@ -87,7 +91,16 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     public ListenableFuture<Event> saveAsync(Event event) {
         log.debug("Save event [{}] ", event);
         if (event.getId() == null) {
-            event.setId(new EventId(Uuids.timeBased()));
+            UUID timeBased = Uuids.timeBased();
+            event.setId(new EventId(timeBased));
+            event.setCreatedTime(Uuids.unixTimestamp(timeBased));
+        } else if (event.getCreatedTime() == 0L) {
+            UUID eventId = event.getId().getId();
+            if (eventId.version() == 1) {
+                event.setCreatedTime(Uuids.unixTimestamp(eventId));
+            } else {
+                event.setCreatedTime(System.currentTimeMillis());
+            }
         }
         if (StringUtils.isEmpty(event.getUid())) {
             event.setUid(event.getId().toString());
@@ -103,7 +116,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     @Override
     public Event findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
         return DaoUtil.getData(eventRepository.findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
-                UUIDConverter.fromTimeUUID(tenantId), entityId.getEntityType(), UUIDConverter.fromTimeUUID(entityId.getId()), eventType, eventUid));
+                tenantId, entityId.getEntityType(), entityId.getId(), eventType, eventUid));
     }
 
     @Override
@@ -111,12 +124,12 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
         return DaoUtil.toPageData(
                 eventRepository
                         .findEventsByTenantIdAndEntityId(
-                                fromTimeUUID(tenantId),
+                                tenantId,
                                 entityId.getEntityType(),
-                                fromTimeUUID(entityId.getId()),
+                                entityId.getId(),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                startTimeToId(pageLink.getStartTime()),
-                                endTimeToId(pageLink.getEndTime()),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
                                 DaoUtil.toPageable(pageLink)));
     }
 
@@ -125,21 +138,21 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
         return DaoUtil.toPageData(
                 eventRepository
                         .findEventsByTenantIdAndEntityIdAndEventType(
-                                fromTimeUUID(tenantId),
+                                tenantId,
                                 entityId.getEntityType(),
-                                fromTimeUUID(entityId.getId()),
+                                entityId.getId(),
                                 eventType,
-                                startTimeToId(pageLink.getStartTime()),
-                                endTimeToId(pageLink.getEndTime()),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public List<Event> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit) {
         List<EventEntity> latest = eventRepository.findLatestByTenantIdAndEntityTypeAndEntityIdAndEventType(
-                UUIDConverter.fromTimeUUID(tenantId),
+                tenantId,
                 entityId.getEntityType(),
-                UUIDConverter.fromTimeUUID(entityId.getId()),
+                entityId.getId(),
                 eventType,
                 PageRequest.of(0, limit));
         return DaoUtil.convertDataList(latest);
@@ -149,7 +162,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
         log.debug("Save event [{}] ", entity);
         if (entity.getTenantId() == null) {
             log.trace("Save system event with predefined id {}", systemTenantId);
-            entity.setTenantId(UUIDConverter.fromTimeUUID(systemTenantId));
+            entity.setTenantId(systemTenantId);
         }
         if (entity.getUuid() == null) {
             entity.setUuid(Uuids.timeBased());
@@ -164,24 +177,4 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
         return Optional.of(DaoUtil.getData(eventInsertRepository.saveOrUpdate(entity)));
     }
 
-    private Specification<EventEntity> getEntityFieldsSpec(UUID tenantId, EntityId entityId, String eventType) {
-        return (root, criteriaQuery, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (tenantId != null) {
-                Predicate tenantIdPredicate = criteriaBuilder.equal(root.get("tenantId"), UUIDConverter.fromTimeUUID(tenantId));
-                predicates.add(tenantIdPredicate);
-            }
-            if (entityId != null) {
-                Predicate entityTypePredicate = criteriaBuilder.equal(root.get("entityType"), entityId.getEntityType());
-                predicates.add(entityTypePredicate);
-                Predicate entityIdPredicate = criteriaBuilder.equal(root.get("entityId"), UUIDConverter.fromTimeUUID(entityId.getId()));
-                predicates.add(entityIdPredicate);
-            }
-            if (eventType != null) {
-                Predicate eventTypePredicate = criteriaBuilder.equal(root.get("eventType"), eventType);
-                predicates.add(eventTypePredicate);
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[]{}));
-        };
-    }
 }

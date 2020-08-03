@@ -30,12 +30,22 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 
@@ -44,6 +54,8 @@ import java.util.regex.Matcher;
  */
 @Slf4j
 public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extends ListenableFuture<V>, V> implements BufferedRateExecutor<T, F> {
+
+    public static final String CONCURRENCY_LEVEL = "currBuffer";
 
     private final long maxWaitTime;
     private final long pollMs;
@@ -56,20 +68,14 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final boolean perTenantLimitsEnabled;
     private final String perTenantLimitsConfiguration;
     private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
-    protected final ConcurrentMap<TenantId, AtomicInteger> rateLimitedTenants = new ConcurrentHashMap<>();
 
-    protected final AtomicInteger concurrencyLevel = new AtomicInteger();
-    protected final AtomicInteger totalAdded = new AtomicInteger();
-    protected final AtomicInteger totalLaunched = new AtomicInteger();
-    protected final AtomicInteger totalReleased = new AtomicInteger();
-    protected final AtomicInteger totalFailed = new AtomicInteger();
-    protected final AtomicInteger totalExpired = new AtomicInteger();
-    protected final AtomicInteger totalRejected = new AtomicInteger();
-    protected final AtomicInteger totalRateLimited = new AtomicInteger();
-    protected final AtomicInteger printQueriesIdx = new AtomicInteger();
+    private final AtomicInteger printQueriesIdx = new AtomicInteger(0);
+
+    protected final AtomicInteger concurrencyLevel;
+    protected final BufferedRateExecutorStats stats;
 
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs,
-                                        boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration, int printQueriesFreq) {
+                                        boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration, int printQueriesFreq, StatsFactory statsFactory) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
@@ -80,6 +86,10 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-timeout"));
         this.perTenantLimitsEnabled = perTenantLimitsEnabled;
         this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;
+        this.stats = new BufferedRateExecutorStats(statsFactory);
+        String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL;
+        this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0));
+
         for (int i = 0; i < dispatcherThreads; i++) {
             dispatcherExecutor.submit(this::dispatch);
         }
@@ -96,8 +106,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             } else if (!task.getTenantId().isNullUid()) {
                 TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(task.getTenantId(), id -> new TbRateLimits(perTenantLimitsConfiguration));
                 if (!rateLimits.tryConsume()) {
-                    rateLimitedTenants.computeIfAbsent(task.getTenantId(), tId -> new AtomicInteger(0)).incrementAndGet();
-                    totalRateLimited.incrementAndGet();
+                    stats.incrementRateLimitedTenant(task.getTenantId());
+                    stats.getTotalRateLimited().increment();
                     settableFuture.setException(new TenantRateLimitException());
                     perTenantLimitReached = true;
                 }
@@ -105,10 +115,10 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         }
         if (!perTenantLimitReached) {
             try {
-                totalAdded.incrementAndGet();
+                stats.getTotalAdded().increment();
                 queue.add(new AsyncTaskContext<>(UUID.randomUUID(), task, settableFuture, System.currentTimeMillis()));
             } catch (IllegalStateException e) {
-                totalRejected.incrementAndGet();
+                stats.getTotalRejected().increment();
                 settableFuture.setException(e);
             }
         }
@@ -153,14 +163,14 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                     concurrencyLevel.incrementAndGet();
                     long timeout = finalTaskCtx.getCreateTime() + maxWaitTime - System.currentTimeMillis();
                     if (timeout > 0) {
-                        totalLaunched.incrementAndGet();
+                        stats.getTotalLaunched().increment();
                         ListenableFuture<V> result = execute(finalTaskCtx);
                         result = Futures.withTimeout(result, timeout, TimeUnit.MILLISECONDS, timeoutExecutor);
                         Futures.addCallback(result, new FutureCallback<V>() {
                             @Override
                             public void onSuccess(@Nullable V result) {
                                 logTask("Releasing", finalTaskCtx);
-                                totalReleased.incrementAndGet();
+                                stats.getTotalReleased().increment();
                                 concurrencyLevel.decrementAndGet();
                                 finalTaskCtx.getFuture().set(result);
                             }
@@ -172,7 +182,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                                 } else {
                                     logTask("Failed", finalTaskCtx);
                                 }
-                                totalFailed.incrementAndGet();
+                                stats.getTotalFailed().increment();
                                 concurrencyLevel.decrementAndGet();
                                 finalTaskCtx.getFuture().setException(t);
                                 log.debug("[{}] Failed to execute task: {}", finalTaskCtx.getId(), finalTaskCtx.getTask(), t);
@@ -180,7 +190,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                         }, callbackExecutor);
                     } else {
                         logTask("Expired Before Execution", finalTaskCtx);
-                        totalExpired.incrementAndGet();
+                        stats.getTotalExpired().increment();
                         concurrencyLevel.decrementAndGet();
                         taskCtx.getFuture().setException(new TimeoutException());
                     }
@@ -192,7 +202,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             } catch (Throwable e) {
                 if (taskCtx != null) {
                     log.debug("[{}] Failed to execute task: {}", taskCtx.getId(), taskCtx, e);
-                    totalFailed.incrementAndGet();
+                    stats.getTotalFailed().increment();
                     concurrencyLevel.decrementAndGet();
                 } else {
                     log.debug("Failed to queue task:", e);

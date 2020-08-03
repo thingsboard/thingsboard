@@ -23,19 +23,18 @@ import { DatasourceData, DatasourceType, WidgetConfig, widgetType } from '@share
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import cssjs from '@core/css/css';
-import { forkJoin, fromEvent, Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, mergeMap, tap } from 'rxjs/operators';
+import { fromEvent } from 'rxjs';
+import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { constructTableCssString } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
 import {
   LoadNodesCallback,
   NavTreeEditCallbacks,
+  NodesCallback,
   NodeSearchCallback,
   NodeSelectedCallback,
   NodesInsertedCallback
 } from '@shared/components/nav-tree.component';
-import { BaseData } from '@shared/models/base-data';
-import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 import { deepClone, hashCode } from '@core/utils';
 import {
@@ -58,10 +57,9 @@ import {
   NodesSortFunction,
   NodeTextFunction
 } from '@home/components/widget/lib/entities-hierarchy-widget.models';
-import { EntityService } from '@core/http/entity.service';
-import { EntityRelationsQuery, EntitySearchDirection } from '@shared/models/relation.models';
-import { EntityRelationService } from '@core/http/entity-relation.service';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { EntityRelationsQuery } from '@shared/models/relation.models';
+import { AliasFilterType, RelationsQueryFilter } from '@shared/models/alias.models';
+import { EntityFilter } from '@shared/models/query/query.models';
 
 @Component({
   selector: 'tb-entities-hierarchy-widget',
@@ -86,6 +84,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private datasources: Array<HierarchyNodeDatasource>;
+  private data: Array<Array<DatasourceData>>;
 
   private nodesMap: {[nodeId: string]: HierarchyNavTreeNode} = {};
   private pendingUpdateNodeTasks: {[nodeId: string]: () => void} = {};
@@ -108,14 +107,11 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     }
   };
 
-
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private utils: UtilsService,
-              private entityService: EntityService,
-              private entityRelationService: EntityRelationService) {
+              private utils: UtilsService) {
     super(store);
   }
 
@@ -125,6 +121,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
     this.datasources = this.subscription.datasources as Array<HierarchyNodeDatasource>;
+    this.data = this.subscription.dataPages[0].data;
     this.initializeConfig();
     this.ctx.updateWidgetParams();
   }
@@ -254,33 +251,15 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
 
   public loadNodes: LoadNodesCallback = (node, cb) => {
     if (node.id === '#') {
-      const tasks: Observable<HierarchyNavTreeNode>[] = [];
-      this.datasources.forEach((datasource) => {
-        tasks.push(this.datasourceToNode(datasource));
+      const childNodes: HierarchyNavTreeNode[] = [];
+      this.datasources.forEach((childDatasource, index) => {
+        childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, this.data[index]));
       });
-      forkJoin(tasks).subscribe((nodes) => {
-        cb(this.prepareNodes(nodes));
-        this.updateNodeData(this.subscription.data);
-      });
+      cb(this.prepareNodes(childNodes));
     } else {
       if (node.data && node.data.nodeCtx.entity && node.data.nodeCtx.entity.id && node.data.nodeCtx.entity.id.entityType !== 'function') {
-        const relationQuery = this.prepareNodeRelationQuery(node.data.nodeCtx);
-        this.entityRelationService.findByQuery(relationQuery, {ignoreErrors: true, ignoreLoading: true}).subscribe(
-          (entityRelations) => {
-            if (entityRelations.length) {
-              const tasks: Observable<HierarchyNavTreeNode>[] = [];
-              entityRelations.forEach((relation) => {
-                const targetId = relationQuery.parameters.direction === EntitySearchDirection.FROM ? relation.to : relation.from;
-                tasks.push(this.entityIdToNode(targetId.entityType as EntityType, targetId.id, node.data.datasource, node.data.nodeCtx));
-              });
-              forkJoin(tasks).subscribe((nodes) => {
-                cb(this.prepareNodes(nodes));
-              });
-            } else {
-              cb([]);
-            }
-          },
-          (error) => {
+        this.loadChildren(node, node.data.datasource, cb);
+        /* (error) => { // TODO:
             let errorText = 'Failed to get relations!';
             if (error && error.status === 400) {
               errorText = 'Invalid relations query returned by \'Node relations query function\'! Please check widget configuration!';
@@ -288,6 +267,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
             this.showError(errorText);
           }
         );
+        */
       } else {
         cb([]);
       }
@@ -313,7 +293,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     }
   }
 
-  public onNodesInserted: NodesInsertedCallback = (nodes, parent) => {
+  public onNodesInserted: NodesInsertedCallback = (nodes) => {
     if (nodes) {
       nodes.forEach((nodeId) => {
         const task = this.pendingUpdateNodeTasks[nodeId];
@@ -355,17 +335,6 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     }
   }
 
-  private showError(errorText: string) {
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message: errorText,
-        type: 'error',
-        target: this.toastTargetId,
-        verticalPosition: 'bottom',
-        horizontalPosition: 'left'
-      }));
-  }
-
   private prepareNodes(nodes: HierarchyNavTreeNode[]): HierarchyNavTreeNode[] {
     nodes = nodes.filter((node) => node !== null);
     nodes.sort((node1, node2) => this.nodesSortFunction(node1.data.nodeCtx, node2.data.nodeCtx));
@@ -399,85 +368,88 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     }
   }
 
-  private datasourceToNode(datasource: HierarchyNodeDatasource, parentNodeCtx?: HierarchyNodeContext): Observable<HierarchyNavTreeNode> {
-    return this.resolveEntity(datasource).pipe(
-      map(entity => {
-        if (entity !== null) {
-          const node: HierarchyNavTreeNode = {
-            id: (++this.nodeIdCounter) + ''
-          };
-          this.nodesMap[node.id] = node;
-          datasource.nodeId = node.id;
-          node.icon = false;
-          const nodeCtx: HierarchyNodeContext = {
-            parentNodeCtx,
-            entity,
-            data: {}
-          };
-          nodeCtx.level = parentNodeCtx ? parentNodeCtx.level + 1 : 1;
-          node.data = {
-            datasource,
-            nodeCtx
-          };
-          node.state = {
-            disabled: this.nodeDisabledFunction(node.data.nodeCtx),
-            opened: this.nodeOpenedFunction(node.data.nodeCtx)
-          };
-          node.text = this.prepareNodeText(node);
-          node.children = this.nodeHasChildrenFunction(node.data.nodeCtx);
-          return node;
-        } else {
-          return null;
-        }
-      })
-    );
-  }
-
-  private entityIdToNode(entityType: EntityType, entityId: string,
-                         parentDatasource: HierarchyNodeDatasource,
-                         parentNodeCtx: HierarchyNodeContext): Observable<HierarchyNavTreeNode> {
-    const datasource = {
-      dataKeys: parentDatasource.dataKeys,
-      type: DatasourceType.entity,
-      entityType,
-      entityId
-    } as HierarchyNodeDatasource;
-    return this.datasourceToNode(datasource, parentNodeCtx).pipe(
-      mergeMap((node) => {
-        if (node != null) {
-          const subscriptionOptions: WidgetSubscriptionOptions = {
-            type: widgetType.latest,
-            datasources: [datasource],
-            callbacks: {
-              onDataUpdated: subscription => {
-                this.updateNodeData(subscription.data);
-              }
-            }
-          };
-          return this.ctx.subscriptionApi.
-                      createSubscription(subscriptionOptions, true).pipe(
-                        map(() => node));
-        } else {
-          return of(node);
-        }
-      })
-    );
-  }
-
-  private resolveEntity(datasource: HierarchyNodeDatasource): Observable<BaseData<EntityId>> {
-    if (datasource.type === DatasourceType.function) {
-      const entity = {
+  private datasourceToNode(datasource: HierarchyNodeDatasource,
+                             data: DatasourceData[],
+                             parentNodeCtx?: HierarchyNodeContext): HierarchyNavTreeNode {
+    const node: HierarchyNavTreeNode = {
+      id: (++this.nodeIdCounter) + ''
+    };
+    this.nodesMap[node.id] = node;
+    datasource.nodeId = node.id;
+    node.icon = false;
+    const nodeCtx: HierarchyNodeContext = {
+      parentNodeCtx,
+      entity: {
         id: {
-          entityType: 'function'
+          id: datasource.entityId,
+          entityType: datasource.entityType
         },
-        name: datasource.name
-      };
-      return of(entity as BaseData<EntityId>);
-    } else {
-      return this.entityService.getEntity(datasource.entityType, datasource.entityId, {ignoreLoading: true}).pipe(
-        catchError(err => of(null))
-      );
-    }
+        name: datasource.entityName,
+        label: datasource.entityLabel ? datasource.entityLabel : datasource.entityName
+      },
+      data: {}
+    };
+    datasource.dataKeys.forEach((dataKey, index) => {
+      const keyData = data[index].data;
+      if (keyData && keyData.length && keyData[0].length > 1) {
+        nodeCtx.data[dataKey.label] = keyData[0][1];
+      } else {
+        nodeCtx.data[dataKey.label] = '';
+      }
+    });
+    nodeCtx.level = parentNodeCtx ? parentNodeCtx.level + 1 : 1;
+    node.data = {
+      datasource,
+      nodeCtx
+    };
+    node.state = {
+      disabled: this.nodeDisabledFunction(node.data.nodeCtx),
+      opened: this.nodeOpenedFunction(node.data.nodeCtx)
+    };
+    node.text = this.prepareNodeText(node);
+    node.children = this.nodeHasChildrenFunction(node.data.nodeCtx);
+    return node;
+  }
+
+  private loadChildren(parentNode: HierarchyNavTreeNode, datasource: HierarchyNodeDatasource, childrenNodesLoadCb: NodesCallback) {
+    const nodeCtx = parentNode.data.nodeCtx;
+    nodeCtx.childrenNodesLoaded = false;
+    const entityFilter = this.prepareNodeRelationsQueryFilter(nodeCtx);
+    const childrenDatasource = {
+      dataKeys: datasource.dataKeys,
+      type: DatasourceType.entity,
+      filterId: datasource.filterId,
+      entityFilter
+    } as HierarchyNodeDatasource;
+    const subscriptionOptions: WidgetSubscriptionOptions = {
+      type: widgetType.latest,
+      datasources: [childrenDatasource],
+      callbacks: {
+        onSubscriptionMessage: (subscription, message) => {
+          this.ctx.showToast(message.severity, message.message, undefined,
+            'bottom', 'left', this.toastTargetId);
+        },
+        onInitialPageDataChanged: (subscription) => {
+          this.ctx.subscriptionApi.removeSubscription(subscription.id);
+          this.nodeEditCallbacks.refreshNode(parentNode.id);
+        },
+        onDataUpdated: subscription => {
+          if (nodeCtx.childrenNodesLoaded) {
+            this.updateNodeData(subscription.data);
+          } else {
+            const datasourcesPageData = subscription.datasourcePages[0];
+            const dataPageData = subscription.dataPages[0];
+            const childNodes: HierarchyNavTreeNode[] = [];
+            datasourcesPageData.data.forEach((childDatasource, index) => {
+              childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, dataPageData.data[index]));
+            });
+            nodeCtx.childrenNodesLoaded = true;
+            childrenNodesLoadCb(this.prepareNodes(childNodes));
+          }
+        }
+      }
+    };
+    this.ctx.subscriptionApi.createSubscription(subscriptionOptions, true);
   }
 
   private prepareNodeRelationQuery(nodeCtx: HierarchyNodeContext): EntityRelationsQuery {
@@ -486,5 +458,20 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
       relationQuery = defaultNodeRelationQueryFunction(nodeCtx);
     }
     return relationQuery as EntityRelationsQuery;
+  }
+
+  private prepareNodeRelationsQueryFilter(nodeCtx: HierarchyNodeContext): EntityFilter {
+    const relationQuery = this.prepareNodeRelationQuery(nodeCtx);
+    return {
+      rootEntity: {
+        id: relationQuery.parameters.rootId,
+        entityType: relationQuery.parameters.rootType
+      },
+      direction: relationQuery.parameters.direction,
+      filters: relationQuery.filters,
+      maxLevel: relationQuery.parameters.maxLevel,
+      fetchLastLevelOnly: relationQuery.parameters.fetchLastLevelOnly,
+      type: AliasFilterType.relationsQuery
+    } as RelationsQueryFilter;
   }
 }

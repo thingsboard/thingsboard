@@ -50,6 +50,9 @@ export class DatetimeComponent implements OnInit, ControlValueAccessor {
   @Input()
   timeText: string;
 
+  @Input()
+  showLabel = true;
+
   minDateValue: Date | null;
 
   @Input()

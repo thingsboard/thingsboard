@@ -60,6 +60,9 @@ public class BaseTimeseriesService implements TimeseriesService {
     private TimeseriesDao timeseriesDao;
 
     @Autowired
+    private TimeseriesLatestDao timeseriesLatestDao;
+
+    @Autowired
     private EntityViewService entityViewService;
 
     @Override
@@ -103,7 +106,7 @@ public class BaseTimeseriesService implements TimeseriesService {
                 return Futures.immediateFuture(new ArrayList<>());
             }
         }
-        keys.forEach(key -> futures.add(timeseriesDao.findLatest(tenantId, entityId, key)));
+        keys.forEach(key -> futures.add(timeseriesLatestDao.findLatest(tenantId, entityId, key)));
         return Futures.allAsList(futures);
     }
 
@@ -119,7 +122,7 @@ public class BaseTimeseriesService implements TimeseriesService {
                 return Futures.immediateFuture(new ArrayList<>());
             }
         } else {
-            return timeseriesDao.findAllLatest(tenantId, entityId);
+            return timeseriesLatestDao.findAllLatest(tenantId, entityId);
         }
     }
 
@@ -151,7 +154,7 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("Telemetry data can't be stored for entity view. Read only");
         }
         futures.add(timeseriesDao.savePartition(tenantId, entityId, tsKvEntry.getTs(), tsKvEntry.getKey(), ttl));
-        futures.add(timeseriesDao.saveLatest(tenantId, entityId, tsKvEntry));
+        futures.add(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry));
         futures.add(timeseriesDao.save(tenantId, entityId, tsKvEntry, ttl));
     }
 
@@ -170,7 +173,7 @@ public class BaseTimeseriesService implements TimeseriesService {
             } else {
                 endTs = query.getEndTs();
             }
-            return new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation(), query.getOrderBy());
+            return new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation(), query.getOrder());
         }).collect(Collectors.toList());
     }
 
@@ -187,7 +190,7 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     private void deleteAndRegisterFutures(TenantId tenantId, List<ListenableFuture<Void>> futures, EntityId entityId, DeleteTsKvQuery query) {
         futures.add(timeseriesDao.remove(tenantId, entityId, query));
-        futures.add(timeseriesDao.removeLatest(tenantId, entityId, query));
+        futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
         futures.add(timeseriesDao.removePartition(tenantId, entityId, query));
     }
 

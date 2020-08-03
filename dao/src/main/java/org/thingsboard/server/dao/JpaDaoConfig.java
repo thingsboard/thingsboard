@@ -21,7 +21,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.thingsboard.server.dao.util.SqlDao;
 
 /**
  * @author Valerii Sosliuk
@@ -32,7 +31,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 @EnableJpaRepositories("org.thingsboard.server.dao.sql")
 @EntityScan("org.thingsboard.server.dao.model.sql")
 @EnableTransactionManagement
-@SqlDao
 public class JpaDaoConfig {
 
 }

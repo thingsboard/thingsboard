@@ -109,7 +109,7 @@ export class DeviceCredentialsDialogComponent extends
     const crendetialsType = this.deviceCredentialsFormGroup.get('credentialsType').value as DeviceCredentialsType;
     switch (crendetialsType) {
       case DeviceCredentialsType.ACCESS_TOKEN:
-        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([Validators.max(20), Validators.pattern(/^.{1,20}$/)]);
+        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([Validators.required, Validators.pattern(/^.{1,20}$/)]);
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();

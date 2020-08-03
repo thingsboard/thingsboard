@@ -23,18 +23,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.UUID;
 
-@SqlDao
 public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity, AttributeKvCompositeKey> {
 
     @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.entityType = :entityType " +
             "AND a.id.entityId = :entityId " +
             "AND a.id.attributeType = :attributeType")
     List<AttributeKvEntity> findAllByEntityTypeAndEntityIdAndAttributeType(@Param("entityType") EntityType entityType,
-                                                                           @Param("entityId") String entityId,
+                                                                           @Param("entityId") UUID entityId,
                                                                            @Param("attributeType") String attributeType);
 
 
@@ -48,7 +47,7 @@ public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity,
             "AND a.id.attributeType = :attributeType " +
             "AND a.id.attributeKey = :attributeKey")
     void delete(@Param("entityType") EntityType entityType,
-                @Param("entityId") String entityId,
+                @Param("entityId") UUID entityId,
                 @Param("attributeType") String attributeType,
                 @Param("attributeKey") String attributeKey);
 }

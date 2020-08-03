@@ -23,6 +23,7 @@ import { AppState } from '@core/core.state';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { PageLink } from '@shared/models/page/page-link';
+import { isObject, isString } from '@core/utils';
 
 // @dynamic
 @Directive()
@@ -115,7 +116,20 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   }
 
   prepareFormValue(formValue: any): any {
-    return formValue;
+    return this.deepTrim(formValue);
+  }
+
+  private deepTrim(obj: object): object {
+    return Object.keys(obj).reduce((acc, curr) => {
+      if (isString(obj[curr])) {
+        acc[curr] = obj[curr].trim();
+      } else if (isObject(obj[curr])) {
+        acc[curr] = this.deepTrim(obj[curr])
+      } else {
+        acc[curr] = obj[curr];
+      }
+      return acc;
+    }, Array.isArray(obj) ? [] : {});
   }
 
   protected setEntitiesTableConfig(entitiesTableConfig: C) {

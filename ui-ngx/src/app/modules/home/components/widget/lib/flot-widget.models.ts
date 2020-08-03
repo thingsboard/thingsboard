@@ -19,6 +19,7 @@
 
 import { DataKey, Datasource, DatasourceData, JsonSettingsSchema } from '@shared/models/widget.models';
 import * as moment_ from 'moment';
+import { DataKeyType } from "@shared/models/telemetry/telemetry.models";
 
 export declare type ChartType = 'line' | 'pie' | 'bar' | 'state' | 'graph';
 
@@ -149,13 +150,24 @@ export interface TbFlotThresholdsSettings {
   thresholdsLineWidth: number;
 }
 
-export interface TbFlotGraphSettings extends TbFlotBaseSettings, TbFlotThresholdsSettings, TbFlotComparisonSettings {
+export interface TbFlotCustomLegendSettings {
+  customLegendEnabled: boolean;
+  dataKeysListForLabels: Array<TbFlotLabelPatternSettings>;
+}
+
+export interface TbFlotLabelPatternSettings {
+  name: string;
+  type: DataKeyType;
+  settings?: any;
+}
+
+export interface TbFlotGraphSettings extends TbFlotBaseSettings, TbFlotThresholdsSettings, TbFlotComparisonSettings, TbFlotCustomLegendSettings {
   smoothLines: boolean;
 }
 
 export declare type BarAlignment = 'left' | 'right' | 'center';
 
-export interface TbFlotBarSettings extends TbFlotBaseSettings, TbFlotThresholdsSettings, TbFlotComparisonSettings {
+export interface TbFlotBarSettings extends TbFlotBaseSettings, TbFlotThresholdsSettings, TbFlotComparisonSettings, TbFlotCustomLegendSettings {
   defaultBarWidth: number;
   barAlignment: BarAlignment;
 }
@@ -503,12 +515,16 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
       GroupTitle: 'Common Settings'
     }];
     schema.form = [schema.form];
-    schema.schema.properties = {...schema.schema.properties, ...chartSettingsSchemaForComparison.schema.properties};
-    schema.schema.required = schema.schema.required.concat(chartSettingsSchemaForComparison.schema.required);
-    schema.form.push(chartSettingsSchemaForComparison.form);
+    schema.schema.properties = {...schema.schema.properties, ...chartSettingsSchemaForComparison.schema.properties, ...chartSettingsSchemaForCustomLegend.schema.properties};
+    schema.schema.required = schema.schema.required.concat(chartSettingsSchemaForComparison.schema.required, chartSettingsSchemaForCustomLegend.schema.required);
+    schema.form.push(chartSettingsSchemaForComparison.form, chartSettingsSchemaForCustomLegend.form);
     schema.groupInfoes.push({
       formIndex: schema.groupInfoes.length,
       GroupTitle:'Comparison Settings'
+    });
+    schema.groupInfoes.push({
+      formIndex: schema.groupInfoes.length,
+      GroupTitle:'Custom Legend Settings'
     });
   }
   return schema;
@@ -598,6 +614,67 @@ const chartSettingsSchemaForComparison: JsonSettingsSchema = {
         },
         'xaxisSecond.showLabels',
         'xaxisSecond.title',
+      ]
+    }
+  ]
+};
+
+const chartSettingsSchemaForCustomLegend: JsonSettingsSchema = {
+  schema: {
+    title: 'Custom Legend Settings',
+    type: 'object',
+    properties: {
+      customLegendEnabled: {
+        title: 'Enable custom legend (this will allow you to use attribute/timeseries values in key labels)',
+        type: 'boolean',
+        default: false
+      },
+      dataKeysListForLabels: {
+        title: 'Datakeys list to use in labels',
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            name: {
+              title: 'Key name',
+              type: 'string'
+            },
+            type: {
+              title: 'Key type',
+              type: 'string',
+              default: 'attribute'
+            }
+          },
+          required: [
+            'name'
+          ]
+        }
+      }
+    },
+    required: []
+  },
+  form: [
+    'customLegendEnabled',
+    {
+      key: 'dataKeysListForLabels',
+      condition: 'model.customLegendEnabled === true',
+      items: [
+        {
+          key: 'dataKeysListForLabels[].type',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'attribute',
+              label: 'Attribute'
+            },
+            {
+              value: 'timeseries',
+              label: 'Timeseries'
+            }
+          ]
+        },
+        'dataKeysListForLabels[].name'
       ]
     }
   ]

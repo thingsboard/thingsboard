@@ -174,11 +174,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   }
 
   minRealtimeAggInterval() {
-    return this.timeService.minIntervalLimit(this.timewindowForm.get('realtime').get('timewindowMs').value);
+    return this.timeService.minIntervalLimit(this.timewindowForm.get('realtime.timewindowMs').value);
   }
 
   maxRealtimeAggInterval() {
-    return this.timeService.maxIntervalLimit(this.timewindowForm.get('realtime').get('timewindowMs').value);
+    return this.timeService.maxIntervalLimit(this.timewindowForm.get('realtime.timewindowMs').value);
   }
 
   minHistoryAggInterval() {
@@ -203,31 +203,31 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   onHideIntervalChanged() {
     if (this.timewindow.hideInterval) {
-      this.timewindowForm.get('history').get('historyType').disable({emitEvent: false});
-      this.timewindowForm.get('history').get('timewindowMs').disable({emitEvent: false});
-      this.timewindowForm.get('history').get('fixedTimewindow').disable({emitEvent: false});
+      this.timewindowForm.get('history.historyType').disable({emitEvent: false});
+      this.timewindowForm.get('history.timewindowMs').disable({emitEvent: false});
+      this.timewindowForm.get('history.fixedTimewindow').disable({emitEvent: false});
     } else {
-      this.timewindowForm.get('history').get('historyType').enable({emitEvent: false});
-      this.timewindowForm.get('history').get('timewindowMs').enable({emitEvent: false});
-      this.timewindowForm.get('history').get('fixedTimewindow').enable({emitEvent: false});
+      this.timewindowForm.get('history.historyType').enable({emitEvent: false});
+      this.timewindowForm.get('history.timewindowMs').enable({emitEvent: false});
+      this.timewindowForm.get('history.fixedTimewindow').enable({emitEvent: false});
     }
     this.timewindowForm.markAsDirty();
   }
 
   onHideAggregationChanged() {
     if (this.timewindow.hideAggregation) {
-      this.timewindowForm.get('aggregation').get('type').disable({emitEvent: false});
+      this.timewindowForm.get('aggregation.type').disable({emitEvent: false});
     } else {
-      this.timewindowForm.get('aggregation').get('type').enable({emitEvent: false});
+      this.timewindowForm.get('aggregation.type').enable({emitEvent: false});
     }
     this.timewindowForm.markAsDirty();
   }
 
   onHideAggIntervalChanged() {
     if (this.timewindow.hideAggInterval) {
-      this.timewindowForm.get('aggregation').get('limit').disable({emitEvent: false});
+      this.timewindowForm.get('aggregation.limit').disable({emitEvent: false});
     } else {
-      this.timewindowForm.get('aggregation').get('limit').enable({emitEvent: false});
+      this.timewindowForm.get('aggregation.limit').enable({emitEvent: false});
     }
     this.timewindowForm.markAsDirty();
   }

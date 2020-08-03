@@ -91,10 +91,20 @@
                          aggregation="true"
                          [(ngModel)]="dashboardCtx.dashboardTimewindow">
           </tb-timewindow>
+          <tb-filters-edit [fxShow]="!isEdit && displayFilters()"
+                           tooltipPosition="below"
+                           [aliasController]="dashboardCtx.aliasController">
+          </tb-filters-edit>
           <tb-aliases-entity-select [fxShow]="!isEdit && displayEntitiesSelect()"
                                     tooltipPosition="below"
                                     [aliasController]="dashboardCtx.aliasController">
           </tb-aliases-entity-select>
+          <button [fxShow]="isEdit" mat-icon-button
+                  matTooltip="{{ 'filter.filters' | translate }}"
+                  matTooltipPosition="below"
+                  (click)="openFilters($event)">
+            <mat-icon>filter_list</mat-icon>
+          </button>
           <button [fxShow]="isEdit" mat-icon-button
                   matTooltip="{{ 'entity.aliases' | translate }}"
                   matTooltipPosition="below"

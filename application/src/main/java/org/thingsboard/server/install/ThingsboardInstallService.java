@@ -28,7 +28,9 @@ import org.thingsboard.server.service.install.DatabaseTsUpgradeService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
+import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
 import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
+import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
 
 @Service
@@ -51,6 +53,9 @@ public class ThingsboardInstallService {
     @Autowired
     private TsDatabaseSchemaService tsDatabaseSchemaService;
 
+    @Autowired(required = false)
+    private TsLatestDatabaseSchemaService tsLatestDatabaseSchemaService;
+
     @Autowired
     private DatabaseEntitiesUpgradeService databaseEntitiesUpgradeService;
 
@@ -72,6 +77,9 @@ public class ThingsboardInstallService {
     @Autowired(required = false)
     private EntitiesMigrateService entitiesMigrateService;
 
+    @Autowired(required = false)
+    private TsLatestMigrateService latestMigrateService;
+
     public void performInstall() {
         try {
             if (isUpgrade) {
@@ -82,6 +90,10 @@ public class ThingsboardInstallService {
                     entitiesMigrateService.migrate();
                     log.info("Updating system data...");
                     systemDataLoaderService.updateSystemWidgets();
+                } else if ("3.0.1-cassandra".equals(upgradeFromVersion)) {
+                    log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
+                    latestMigrateService.migrate();
+                    log.info("Updating system data...");
                 } else {
                     switch (upgradeFromVersion) {
                         case "1.2.3": //NOSONAR, Need to execute gradual upgrade starting from upgradeFromVersion
@@ -156,6 +168,9 @@ public class ThingsboardInstallService {
                             }
                         case "2.5.1":
                             log.info("Upgrading ThingsBoard from version 2.5.1 to 3.0.0 ...");
+                        case "3.0.1":
+                            log.info("Upgrading ThingsBoard from version 3.0.1 to 3.1.0 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.0.1");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
@@ -177,6 +192,10 @@ public class ThingsboardInstallService {
                 log.info("Installing DataBase schema for timeseries...");
 
                 tsDatabaseSchemaService.createDatabaseSchema();
+
+                if (tsLatestDatabaseSchemaService != null) {
+                    tsLatestDatabaseSchemaService.createDatabaseSchema();
+                }
 
                 log.info("Loading system data...");
 

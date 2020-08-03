@@ -34,4 +34,7 @@ public interface TbMsgCallback {
 
     void onFailure(RuleEngineException e);
 
+    default void visit(RuleNodeInfo ruleNodeInfo) {
+    }
+
 }

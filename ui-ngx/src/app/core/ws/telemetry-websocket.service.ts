@@ -16,8 +16,10 @@
 
 import { Inject, Injectable, NgZone } from '@angular/core';
 import {
-  AttributesSubscriptionCmd,
-  GetHistoryCmd,
+  AlarmDataCmd, AlarmDataUnsubscribeCmd,
+  AlarmDataUpdate,
+  AttributesSubscriptionCmd, EntityDataCmd, EntityDataUnsubscribeCmd, EntityDataUpdate,
+  GetHistoryCmd, isAlarmDataUpdateMsg, isEntityDataUpdateMsg,
   SubscriptionCmd,
   SubscriptionUpdate,
   SubscriptionUpdateMsg,
@@ -25,7 +27,7 @@ import {
   TelemetryPluginCmdsWrapper,
   TelemetryService,
   TelemetrySubscriber,
-  TimeseriesSubscriptionCmd
+  TimeseriesSubscriptionCmd, WebsocketDataMsg
 } from '@app/shared/models/telemetry/telemetry.models';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -63,7 +65,7 @@ export class TelemetryWebsocketService implements TelemetryService {
   cmdsWrapper = new TelemetryPluginCmdsWrapper();
   telemetryUri: string;
 
-  dataStream: WebSocketSubject<TelemetryPluginCmdsWrapper | SubscriptionUpdateMsg>;
+  dataStream: WebSocketSubject<TelemetryPluginCmdsWrapper | WebsocketDataMsg>;
 
   constructor(private store: Store<AppState>,
               private authService: AuthService,
@@ -105,11 +107,28 @@ export class TelemetryWebsocketService implements TelemetryService {
           }
         } else if (subscriptionCommand instanceof GetHistoryCmd) {
           this.cmdsWrapper.historyCmds.push(subscriptionCommand);
+        } else if (subscriptionCommand instanceof EntityDataCmd) {
+          this.cmdsWrapper.entityDataCmds.push(subscriptionCommand);
+        } else if (subscriptionCommand instanceof AlarmDataCmd) {
+          this.cmdsWrapper.alarmDataCmds.push(subscriptionCommand);
         }
       }
     );
     this.subscribersCount++;
     this.publishCommands();
+  }
+
+  public update(subscriber: TelemetrySubscriber) {
+    if (!this.isReconnect) {
+      subscriber.subscriptionCommands.forEach(
+        (subscriptionCommand) => {
+          if (subscriptionCommand.cmdId && subscriptionCommand instanceof EntityDataCmd) {
+            this.cmdsWrapper.entityDataCmds.push(subscriptionCommand);
+          }
+        }
+      );
+      this.publishCommands();
+    }
   }
 
   public unsubscribe(subscriber: TelemetrySubscriber) {
@@ -123,6 +142,14 @@ export class TelemetryWebsocketService implements TelemetryService {
             } else {
               this.cmdsWrapper.attrSubCmds.push(subscriptionCommand as AttributesSubscriptionCmd);
             }
+          } else if (subscriptionCommand instanceof EntityDataCmd) {
+            const entityDataUnsubscribeCmd = new EntityDataUnsubscribeCmd();
+            entityDataUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
+            this.cmdsWrapper.entityDataUnsubscribeCmds.push(entityDataUnsubscribeCmd);
+          } else if (subscriptionCommand instanceof AlarmDataCmd) {
+            const alarmDataUnsubscribeCmd = new AlarmDataUnsubscribeCmd();
+            alarmDataUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
+            this.cmdsWrapper.alarmDataUnsubscribeCmds.push(alarmDataUnsubscribeCmd);
           }
           const cmdId = subscriptionCommand.cmdId;
           if (cmdId) {
@@ -223,7 +250,7 @@ export class TelemetryWebsocketService implements TelemetryService {
 
     this.dataStream.subscribe((message) => {
         this.ngZone.runOutsideAngular(() => {
-          this.onMessage(message as SubscriptionUpdateMsg);
+          this.onMessage(message as WebsocketDataMsg);
         });
     },
     (error) => {
@@ -252,13 +279,26 @@ export class TelemetryWebsocketService implements TelemetryService {
     }
   }
 
-  private onMessage(message: SubscriptionUpdateMsg) {
+  private onMessage(message: WebsocketDataMsg) {
     if (message.errorCode) {
       this.showWsError(message.errorCode, message.errorMsg);
-    } else if (message.subscriptionId) {
-      const subscriber = this.subscribersMap.get(message.subscriptionId);
-      if (subscriber) {
-        subscriber.onData(new SubscriptionUpdate(message));
+    } else {
+      let subscriber: TelemetrySubscriber;
+      if (isEntityDataUpdateMsg(message)) {
+        subscriber = this.subscribersMap.get(message.cmdId);
+        if (subscriber) {
+          subscriber.onEntityData(new EntityDataUpdate(message));
+        }
+      } else if (isAlarmDataUpdateMsg(message)) {
+        subscriber = this.subscribersMap.get(message.cmdId);
+        if (subscriber) {
+          subscriber.onAlarmData(new AlarmDataUpdate(message));
+        }
+      } else if (message.subscriptionId) {
+        subscriber = this.subscribersMap.get(message.subscriptionId);
+        if (subscriber) {
+          subscriber.onData(new SubscriptionUpdate(message));
+        }
       }
     }
     this.checkToClose();
@@ -272,7 +312,7 @@ export class TelemetryWebsocketService implements TelemetryService {
   }
 
   private onClose(closeEvent: CloseEvent) {
-    if (closeEvent && closeEvent.code > 1000 && closeEvent.code !== 1006) {
+    if (closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006) {
       this.showWsError(closeEvent.code, closeEvent.reason);
     }
     this.isOpening = false;
@@ -296,11 +336,9 @@ export class TelemetryWebsocketService implements TelemetryService {
   }
 
   private showWsError(errorCode: number, errorMsg: string) {
-    let message = 'WebSocket Error: ';
-    if (errorMsg) {
-      message += errorMsg;
-    } else {
-      message += `error code - ${errorCode}.`;
+    let message = errorMsg;
+    if (!message) {
+      message += `WebSocket Error: error code - ${errorCode}.`;
     }
     this.store.dispatch(new ActionNotificationShow(
       {

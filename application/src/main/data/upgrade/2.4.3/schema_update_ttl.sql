@@ -22,37 +22,37 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_device_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+CREATE OR REPLACE FUNCTION delete_device_records_from_ts_kv(tenant_id uuid, customer_id uuid, ttl bigint,
                                                             OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
-            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(device.id) as entity_id FROM device WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT device.id as entity_id FROM device WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
             tenant_id, customer_id, ttl) into deleted;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_asset_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+CREATE OR REPLACE FUNCTION delete_asset_records_from_ts_kv(tenant_id uuid, customer_id uuid, ttl bigint,
                                                            OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
-            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(asset.id) as entity_id FROM asset WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT asset.id as entity_id FROM asset WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
             tenant_id, customer_id, ttl) into deleted;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_customer_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+CREATE OR REPLACE FUNCTION delete_customer_records_from_ts_kv(tenant_id uuid, customer_id uuid, ttl bigint,
                                                               OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
-            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(customer.id) as entity_id FROM customer WHERE tenant_id = %L and id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT customer.id as entity_id FROM customer WHERE tenant_id = %L and id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
             tenant_id, customer_id, ttl) into deleted;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE cleanup_timeseries_by_ttl(IN null_uuid varchar(31),
+CREATE OR REPLACE PROCEDURE cleanup_timeseries_by_ttl(IN null_uuid uuid,
                                                       IN system_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS
 $$

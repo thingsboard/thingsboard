@@ -198,10 +198,6 @@ export const openstreetMapSettingsSchema =
                     label: 'OpenStreetMap.Mapnik (Default)'
                 },
                 {
-                    value: 'OpenStreetMap.BlackAndWhite',
-                    label: 'OpenStreetMap.BlackAndWhite'
-                },
-                {
                     value: 'OpenStreetMap.HOT',
                     label: 'OpenStreetMap.HOT'
                 },
@@ -245,6 +241,11 @@ export const commonMapSettingsSchema =
                 title: 'Use default map center position',
                 type: 'boolean',
                 default: false
+            },
+            mapPageSize: {
+                title: 'Map page size load entities',
+                type: 'number',
+                default: 16384
             },
             defaultCenterPosition: {
                 title: 'Default map center position (0,0)',
@@ -408,6 +409,7 @@ export const commonMapSettingsSchema =
             key: 'fitMapBounds',
             condition: 'model.provider !== "image-map"'
         },
+        'mapPageSize',
         'draggableMarker',
         {
             key: 'disableScrollZooming',

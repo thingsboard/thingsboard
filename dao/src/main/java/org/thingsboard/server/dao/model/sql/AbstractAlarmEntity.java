@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,11 +23,10 @@ import org.hibernate.annotations.TypeDef;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
@@ -42,6 +40,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ACK_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CLEAR_TS_PROPERTY;
@@ -63,10 +62,10 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_TYPE_PROPERT
 public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity<T> implements BaseEntity<T> {
 
     @Column(name = ALARM_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = ALARM_ORIGINATOR_ID_PROPERTY)
-    private String originatorId;
+    private UUID originatorId;
 
     @Column(name = ALARM_ORIGINATOR_TYPE_PROPERTY)
     private EntityType originatorType;
@@ -110,13 +109,14 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
 
     public AbstractAlarmEntity(Alarm alarm) {
         if (alarm.getId() != null) {
-            this.setUuid(alarm.getId().getId());
+            this.setUuid(alarm.getUuidId());
         }
+        this.setCreatedTime(alarm.getCreatedTime());
         if (alarm.getTenantId() != null) {
-            this.tenantId = UUIDConverter.fromTimeUUID(alarm.getTenantId().getId());
+            this.tenantId = alarm.getTenantId().getId();
         }
         this.type = alarm.getType();
-        this.originatorId = UUIDConverter.fromTimeUUID(alarm.getOriginator().getId());
+        this.originatorId = alarm.getOriginator().getId();
         this.originatorType = alarm.getOriginator().getEntityType();
         this.type = alarm.getType();
         this.severity = alarm.getSeverity();
@@ -136,6 +136,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
 
     public AbstractAlarmEntity(AlarmEntity alarmEntity) {
         this.setId(alarmEntity.getId());
+        this.setCreatedTime(alarmEntity.getCreatedTime());
         this.tenantId = alarmEntity.getTenantId();
         this.type = alarmEntity.getType();
         this.originatorId = alarmEntity.getOriginatorId();
@@ -153,12 +154,12 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
     }
 
     protected Alarm toAlarm() {
-        Alarm alarm = new Alarm(new AlarmId(UUIDConverter.fromString(id)));
-        alarm.setCreatedTime(Uuids.unixTimestamp(UUIDConverter.fromString(id)));
+        Alarm alarm = new Alarm(new AlarmId(id));
+        alarm.setCreatedTime(createdTime);
         if (tenantId != null) {
-            alarm.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
+            alarm.setTenantId(new TenantId(tenantId));
         }
-        alarm.setOriginator(EntityIdFactory.getByTypeAndUuid(originatorType, UUIDConverter.fromString(originatorId)));
+        alarm.setOriginator(EntityIdFactory.getByTypeAndUuid(originatorType, originatorId));
         alarm.setType(type);
         alarm.setSeverity(severity);
         alarm.setStatus(status);

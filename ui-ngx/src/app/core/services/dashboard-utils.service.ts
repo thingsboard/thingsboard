@@ -129,6 +129,9 @@ export class DashboardUtilsService {
     }
 
     dashboard.configuration = this.validateAndUpdateEntityAliases(dashboard.configuration, datasourcesByAliasId, targetDevicesByAliasId);
+    if (!dashboard.configuration.filters) {
+      dashboard.configuration.filters = {};
+    }
 
     if (isUndefined(dashboard.configuration.timewindow)) {
       dashboard.configuration.timewindow = this.timeService.defaultTimewindow();

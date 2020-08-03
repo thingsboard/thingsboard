@@ -24,6 +24,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 const maxZoom = 4;// ?
 
@@ -184,6 +185,7 @@ export class ImageMap extends LeafletMap {
                     this.updateBounds(updateImage, lastCenterPos);
                     this.map.invalidateSize(true);
                     this.updateMarkers(this.markersData);
+                    this.updatePolygons(this.polygonsData);
                 }
             }
         }
@@ -208,11 +210,26 @@ export class ImageMap extends LeafletMap {
     }
 
     convertPosition(expression): L.LatLng {
-        if (isNaN(expression[this.options.xPosKeyName]) || isNaN(expression[this.options.yPosKeyName])) return null;
-        Object.assign(expression, this.posFunction(expression[this.options.xPosKeyName], expression[this.options.yPosKeyName]));
-        return this.pointToLatLng(
-            expression.x * this.width,
-            expression.y * this.height);
+      const xPos = expression[this.options.xPosKeyName];
+      const yPos = expression[this.options.yPosKeyName];
+      if (!isDefinedAndNotNull(xPos) || isNaN(xPos) || !isDefinedAndNotNull(yPos) || isNaN(yPos)) {
+        return null;
+      }
+      Object.assign(expression, this.posFunction(xPos, yPos));
+      return this.pointToLatLng(
+        expression.x * this.width,
+        expression.y * this.height);
+    }
+
+    convertPositionPolygon(expression: Array<[number, number]>): L.LatLngExpression[] {
+      return expression.map((el) => {
+        if (el.length === 2 && !el.some(isNaN)) {
+          return this.pointToLatLng(
+            el[0] * this.width,
+            el[1] * this.height)
+        }
+        return null;
+      }).filter(el => !!el)
     }
 
     pointToLatLng(x, y): L.LatLng {

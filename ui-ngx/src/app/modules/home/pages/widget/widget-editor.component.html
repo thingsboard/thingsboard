@@ -129,6 +129,10 @@
                                (ngModelChange)="isDirty = true"
                                placeholder="{{ 'widget.resource-url' | translate }}"/>
                       </mat-form-field>
+                      <mat-checkbox [(ngModel)]="resource.isModule"
+                                    (ngModelChange)="isDirty = true">
+                        {{ 'widget.resource-is-module' | translate }}
+                      </mat-checkbox>
                       <button mat-icon-button color="primary"
                               [disabled]="isLoading$ | async"
                               (click)="removeResource(i)"

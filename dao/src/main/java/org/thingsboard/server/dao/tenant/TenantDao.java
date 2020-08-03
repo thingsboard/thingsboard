@@ -21,8 +21,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
-
 public interface TenantDao extends Dao<Tenant> {
 
     /**

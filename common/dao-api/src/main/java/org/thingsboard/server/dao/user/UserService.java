@@ -52,8 +52,10 @@ public interface UserService {
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
 	void deleteUser(TenantId tenantId, UserId userId);
-	
-	PageData<User> findTenantAdmins(TenantId tenantId, PageLink pageLink);
+
+    PageData<User> findUsersByTenantId(TenantId tenantId, PageLink pageLink);
+
+    PageData<User> findTenantAdmins(TenantId tenantId, PageLink pageLink);
 	
 	void deleteTenantAdmins(TenantId tenantId);
 

@@ -104,7 +104,6 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                 }
             }
         });
-        ruleEngineStats.reset();
     }
 
     private AssetId getServiceAssetId(TenantId tenantId, String queueName) {

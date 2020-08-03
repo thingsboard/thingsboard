@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.sqlts.timescale;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
-import org.thingsboard.server.dao.util.TimescaleDBTsDao;
+import org.thingsboard.server.dao.util.TimescaleDBTsOrTsLatestDao;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -27,7 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Repository
-@TimescaleDBTsDao
+@TimescaleDBTsOrTsLatestDao
 public class AggregationRepository {
 
     public static final String FIND_AVG = "findAvg";

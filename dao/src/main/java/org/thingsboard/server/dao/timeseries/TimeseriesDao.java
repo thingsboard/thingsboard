@@ -31,19 +31,11 @@ public interface TimeseriesDao {
 
     ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries);
 
-    ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key);
-
-    ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId);
-
     ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl);
 
     ListenableFuture<Void> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl);
 
-    ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry);
-
     ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query);
-
-    ListenableFuture<Void> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query);
 
     ListenableFuture<Void> removePartition(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query);
 }

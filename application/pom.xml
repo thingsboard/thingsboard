@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.0.1-SNAPSHOT</version>
+        <version>3.1.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>application</artifactId>
@@ -96,6 +96,10 @@
         <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>queue</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>stats</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
@@ -304,6 +308,11 @@
             <groupId>com.github.ua-parser</groupId>
             <artifactId>uap-java</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -373,7 +382,7 @@
         <repository>
             <id>jenkins</id>
             <name>Jenkins Repository</name>
-            <url>http://repo.jenkins-ci.org/releases</url>
+            <url>https://repo.jenkins-ci.org/releases</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>

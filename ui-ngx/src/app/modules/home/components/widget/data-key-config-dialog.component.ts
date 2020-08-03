@@ -30,6 +30,7 @@ export interface DataKeyConfigDialogData {
   dataKey: DataKey;
   dataKeySettingsSchema: any;
   entityAliasId?: string;
+  showPostProcessing?: boolean;
   callbacks?: DataKeysCallbacks;
 }
 
