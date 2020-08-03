@@ -166,4 +166,21 @@ public interface DeviceDao extends Dao<Device> {
      * @return the list of tenant device type objects
      */
     ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId);
+
+    /**
+     * Find devices by tenantId and device id.
+     * @param tenantId the tenant Id
+     * @param id the device Id
+     * @return the device object
+     */
+    Device findDeviceByTenantIdAndId(TenantId tenantId, UUID id);
+
+    /**
+     * Find devices by tenantId and device id.
+     * @param tenantId tenantId the tenantId
+     * @param id the deviceId
+     * @return the device object
+     */
+    ListenableFuture<Device> findDeviceByTenantIdAndIdAsync(TenantId tenantId, UUID id);
+
 }

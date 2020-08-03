@@ -218,6 +218,7 @@ public abstract class AbstractWebTest {
     }
 
     private Tenant savedDifferentTenant;
+
     protected void loginDifferentTenant() throws Exception {
         loginSysAdmin();
         Tenant tenant = new Tenant();
@@ -313,6 +314,10 @@ public abstract class AbstractWebTest {
         return readResponse(doGet(urlTemplate, urlVariables).andExpect(status().isOk()), responseClass);
     }
 
+    protected <T> T doGet(String urlTemplate, Class<T> responseClass, ResultMatcher resultMatcher, Object... urlVariables) throws Exception {
+        return readResponse(doGet(urlTemplate, urlVariables).andExpect(resultMatcher), responseClass);
+    }
+
     protected <T> T doGetAsync(String urlTemplate, Class<T> responseClass, Object... urlVariables) throws Exception {
         return readResponse(doGetAsync(urlTemplate, urlVariables).andExpect(status().isOk()), responseClass);
     }
@@ -352,9 +357,9 @@ public abstract class AbstractWebTest {
         return readResponse(doGet(urlTemplate, vars).andExpect(status().isOk()), responseType);
     }
 
-    protected <T> T  doGetTypedWithTimePageLink(String urlTemplate, TypeReference<T> responseType,
-                                                TimePageLink pageLink,
-                                                Object... urlVariables) throws Exception {
+    protected <T> T doGetTypedWithTimePageLink(String urlTemplate, TypeReference<T> responseType,
+                                               TimePageLink pageLink,
+                                               Object... urlVariables) throws Exception {
         List<Object> pageLinkVariables = new ArrayList<>();
         urlTemplate += "pageSize={pageSize}&page={page}";
         pageLinkVariables.add(pageLink.getPageSize());
@@ -395,11 +400,11 @@ public abstract class AbstractWebTest {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
 
-    protected <T,R> R doPostWithResponse(String urlTemplate, T content, Class<R> responseClass, String... params) throws Exception {
+    protected <T, R> R doPostWithResponse(String urlTemplate, T content, Class<R> responseClass, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
 
-    protected <T,R> R doPostWithTypedResponse(String urlTemplate, T content, TypeReference<R> responseType, String... params) throws Exception {
+    protected <T, R> R doPostWithTypedResponse(String urlTemplate, T content, TypeReference<R> responseType, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseType);
     }
 
@@ -430,7 +435,7 @@ public abstract class AbstractWebTest {
         return mockMvc.perform(postRequest);
     }
 
-    protected <T> ResultActions doPostAsync(String urlTemplate, T content, Long timeout, String... params)  throws Exception {
+    protected <T> ResultActions doPostAsync(String urlTemplate, T content, Long timeout, String... params) throws Exception {
         MockHttpServletRequestBuilder postRequest = post(urlTemplate, params);
         setJwtToken(postRequest);
         String json = json(content);

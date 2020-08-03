@@ -100,6 +100,7 @@ export const HelpLinks = {
     ruleNodeAwsSqs: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#aws-sqs-node',
     ruleNodeKafka: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#kafka-node',
     ruleNodeMqtt: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#mqtt-node',
+    ruleNodeAzureIotHub: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#azure-iot-hub-node',
     ruleNodeRabbitMq: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rabbitmq-node',
     ruleNodeRestApiCall: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node',
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',

@@ -14,6 +14,13 @@
 -- limitations under the License.
 --
 
+CREATE TABLE IF NOT EXISTS tb_schema_settings
+(
+    schema_version bigint NOT NULL,
+    CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
+);
+
+INSERT INTO tb_schema_settings (schema_version) VALUES (3001000) ON CONFLICT (schema_version) DO UPDATE SET schema_version = 3001000;
 
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
@@ -331,3 +338,4 @@ BEGIN
                '-' || substring(entity_id, 16, 4) || '-' || substring(entity_id, 20, 12);
 END;
 $$ LANGUAGE plpgsql;
+

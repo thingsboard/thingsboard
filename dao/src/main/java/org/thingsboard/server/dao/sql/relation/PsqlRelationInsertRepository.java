@@ -19,10 +19,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.util.PsqlDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 @PsqlDao
-@SqlDao
 @Repository
 @Transactional
 public class PsqlRelationInsertRepository extends AbstractRelationInsertRepository implements RelationInsertRepository {

@@ -40,7 +40,8 @@ public class NoSqlDaoServiceTestSuite {
     public static CustomCassandraCQLUnit cassandraUnit =
             new CustomCassandraCQLUnit(
                     Arrays.asList(
-                            new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false)
+                            new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/schema-ts-latest.cql", false, false)
                     ),
                     "cassandra-test.yaml", 30000L);
 

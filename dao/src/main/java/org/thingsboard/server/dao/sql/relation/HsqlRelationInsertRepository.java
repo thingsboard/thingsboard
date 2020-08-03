@@ -20,12 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.util.HsqlDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.persistence.Query;
 
 @HsqlDao
-@SqlDao
 @Repository
 @Transactional
 public class HsqlRelationInsertRepository extends AbstractRelationInsertRepository implements RelationInsertRepository {

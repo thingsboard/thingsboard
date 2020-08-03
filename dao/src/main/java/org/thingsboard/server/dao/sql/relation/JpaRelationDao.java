@@ -30,7 +30,6 @@ import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
@@ -41,7 +40,6 @@ import java.util.List;
  */
 @Slf4j
 @Component
-@SqlDao
 public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService implements RelationDao {
 
     @Autowired

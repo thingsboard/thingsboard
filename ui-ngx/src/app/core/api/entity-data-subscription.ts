@@ -74,6 +74,7 @@ export interface EntityDataSubscriptionOptions {
 
 export class EntityDataSubscription {
 
+  private entityDataSubscriptionOptions = this.listener.subscriptionOptions;
   private datasourceType: DatasourceType = this.entityDataSubscriptionOptions.datasourceType;
   private history: boolean;
   private realtime: boolean;
@@ -103,8 +104,7 @@ export class EntityDataSubscription {
   private dataResolved = false;
   private started = false;
 
-  constructor(public entityDataSubscriptionOptions: EntityDataSubscriptionOptions,
-              private listener: EntityDataListener,
+  constructor(private listener: EntityDataListener,
               private telemetryService: TelemetryService,
               private utils: UtilsService) {
     this.initializeSubscription();

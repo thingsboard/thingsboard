@@ -50,7 +50,6 @@ import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.EntityTypeFilter;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,7 +60,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@SqlDao
 @Repository
 @Slf4j
 public class DefaultEntityQueryRepository implements EntityQueryRepository {

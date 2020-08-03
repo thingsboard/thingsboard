@@ -735,8 +735,12 @@ export class WidgetSubscription implements IWidgetSubscription {
       if (this.type === widgetType.alarm) {
         this.updateAlarmDataSubscription();
       } else {
-        this.notifyDataLoading();
-        this.dataSubscribe();
+        if (this.hasDataPageLink) {
+          this.updateDataSubscriptions();
+        } else {
+          this.notifyDataLoading();
+          this.dataSubscribe();
+        }
       }
     }
   }
@@ -1017,8 +1021,8 @@ export class WidgetSubscription implements IWidgetSubscription {
     for (let datasourceIndex = 0; datasourceIndex < this.entityDataListeners.length; datasourceIndex++) {
       const entityDataListener = this.entityDataListeners[datasourceIndex];
       if (entityDataListener) {
-        const pageLink = entityDataListener.subscription.entityDataSubscriptionOptions.pageLink;
-        const keyFilters = entityDataListener.subscription.entityDataSubscriptionOptions.additionalKeyFilters;
+        const pageLink = entityDataListener.subscriptionOptions.pageLink;
+        const keyFilters = entityDataListener.subscriptionOptions.additionalKeyFilters;
         this.subscribeForPaginatedData(datasourceIndex, pageLink, keyFilters);
       }
     }

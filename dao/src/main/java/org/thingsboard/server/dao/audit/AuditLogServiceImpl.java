@@ -163,6 +163,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             case ALARM_ACK:
             case ALARM_CLEAR:
             case RELATIONS_DELETED:
+            case ASSIGNED_TO_TENANT:
                 if (entity != null) {
                     ObjectNode entityNode = objectMapper.valueToTree(entity);
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {

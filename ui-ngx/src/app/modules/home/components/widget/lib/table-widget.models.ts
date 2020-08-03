@@ -189,7 +189,7 @@ export function getAlarmValue(alarm: AlarmDataInfo, key: EntityColumn) {
   if (alarmField) {
     return getDescendantProp(alarm, alarmField.value);
   } else {
-    return getDescendantProp(alarm, key.label);
+    return getDescendantProp(alarm, key.name);
   }
 }
 

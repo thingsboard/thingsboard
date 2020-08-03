@@ -22,14 +22,12 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.sql.UserEntity;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
 /**
  * @author Valerii Sosliuk
  */
-@SqlDao
 public interface UserRepository extends PagingAndSortingRepository<UserEntity, UUID> {
 
     UserEntity findByEmail(String email);
