@@ -321,6 +321,8 @@ export class RuleChainPageComponent extends PageComponent
     if (this.ruleChainCanvas) {
       this.ruleChainCanvas.adjustCanvasSize(true);
     }
+    this.isEditingRuleNode = false;
+    this.isEditingRuleNodeLink = false;
     this.updateRuleNodesHighlight();
   }
 
@@ -1423,6 +1425,7 @@ export class RuleChainPageComponent extends PageComponent
             scroll: true
           },
           side: 'right',
+          distance: 12,
           trackOrigin: true
         }
       );
