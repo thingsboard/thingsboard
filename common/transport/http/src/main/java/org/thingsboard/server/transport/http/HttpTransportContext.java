@@ -29,7 +29,7 @@ import javax.annotation.PostConstruct;
  * Created by ashvayka on 04.10.18.
  */
 @Slf4j
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.http.enabled}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.http.enabled}'=='true')")
 @Component
 public class HttpTransportContext extends TransportContext {
 
