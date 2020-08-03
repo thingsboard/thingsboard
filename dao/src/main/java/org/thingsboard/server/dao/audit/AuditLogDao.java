@@ -22,11 +22,12 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface AuditLogDao {
+public interface AuditLogDao extends Dao<AuditLog> {
 
     ListenableFuture<Void> saveByTenantId(AuditLog auditLog);
 

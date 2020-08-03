@@ -159,7 +159,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         try {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(asset.getTenantId(), assetId).get();
             if (entityViews != null && !entityViews.isEmpty()) {
-                throw new DataValidationException("Can't delete asset that is assigned to entity views!");
+                throw new DataValidationException("Can't delete asset that has entity views!");
             }
         } catch (ExecutionException | InterruptedException e) {
             log.error("Exception while finding entity views for assetId [{}]", assetId, e);

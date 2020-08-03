@@ -222,6 +222,12 @@ export default angular.module('thingsboard.types', [])
                 },
                 "LOCKOUT": {
                     name: "audit-log.type-lockout"
+                },
+                "ASSIGNED_FROM_TENANT": {
+                    name: "audit-log.type-assigned-from-tenant"
+                },
+                "ASSIGNED_TO_TENANT": {
+                    name: "audit-log.type-assigned-to-tenant"
                 }
             },
             auditLogActionStatus: {
