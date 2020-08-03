@@ -16,8 +16,10 @@
 package org.thingsboard.server.queue.sqs;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -26,7 +28,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -39,7 +40,6 @@ import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 
 @Slf4j
 public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueueProducer<T> {
@@ -54,15 +54,18 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
         this.admin = admin;
         this.defaultTopic = defaultTopic;
 
-        AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
-        AWSStaticCredentialsProvider credProvider = new AWSStaticCredentialsProvider(awsCredentials);
+        AWSCredentialsProvider credentialsProvider;
+        if (sqsSettings.getUseDefaultCredentialProviderChain()) {
+            credentialsProvider = new DefaultAWSCredentialsProviderChain();
+        } else {
+            AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
+            credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
+        }
 
-        this.sqsClient = AmazonSQSClientBuilder.standard()
-                .withCredentials(credProvider)
+        sqsClient = AmazonSQSClientBuilder.standard()
+                .withCredentials(credentialsProvider)
                 .withRegion(sqsSettings.getRegion())
                 .build();
-
-        producerExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
     @Override
