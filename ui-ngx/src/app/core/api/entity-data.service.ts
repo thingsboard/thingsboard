@@ -17,7 +17,7 @@
 import { DataSetHolder, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { SubscriptionTimewindow } from '@shared/models/time/time.models';
 import { EntityData, EntityDataPageLink, KeyFilter } from '@shared/models/query/query.models';
-import { PageData } from '@shared/models/page/page-data';
+import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { Injectable } from '@angular/core';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { UtilsService } from '@core/services/utils.service';
@@ -41,6 +41,7 @@ export interface EntityDataListener {
   initialPageDataChanged?: (nextPageData: PageData<EntityData>) => void;
   updateRealtimeSubscription?: () => SubscriptionTimewindow;
   setRealtimeSubscription?: (subscriptionTimewindow: SubscriptionTimewindow) => void;
+  subscriptionOptions?: EntityDataSubscriptionOptions;
   subscription?: EntityDataSubscription;
 }
 
@@ -61,19 +62,24 @@ export class EntityDataService {
 
   public prepareSubscription(listener: EntityDataListener): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
+    listener.subscriptionOptions = this.createSubscriptionOptions(
+      datasource,
+      listener.subscriptionType,
+      datasource.pageLink,
+      datasource.keyFilters,
+      null,
+      false);
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !datasource.pageLink)) {
       return of(null);
     }
-    listener.subscription = this.createSubscription(listener,
-      datasource.pageLink, datasource.keyFilters, null,
-      false);
+    listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils);
     return listener.subscription.subscribe();
   }
 
   public startSubscription(listener: EntityDataListener) {
     if (listener.subscription) {
       if (listener.subscriptionType === widgetType.timeseries) {
-        listener.subscription.entityDataSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+        listener.subscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
       }
       listener.subscription.start();
     }
@@ -83,13 +89,21 @@ export class EntityDataService {
                                    pageLink: EntityDataPageLink,
                                    keyFilters: KeyFilter[]): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
+    listener.subscriptionOptions = this.createSubscriptionOptions(
+      datasource,
+      listener.subscriptionType,
+      pageLink,
+      datasource.keyFilters,
+      keyFilters,
+      true);
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
+      listener.dataLoaded(emptyPageData<EntityData>(), [],
+        listener.configDatasourceIndex, listener.subscriptionOptions.pageLink);
       return of(null);
     }
-    listener.subscription = this.createSubscription(listener,
-      pageLink, datasource.keyFilters,  keyFilters,true);
+    listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils);
     if (listener.subscriptionType === widgetType.timeseries) {
-      listener.subscription.entityDataSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+      listener.subscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
     }
     return listener.subscription.subscribe();
   }
@@ -100,12 +114,12 @@ export class EntityDataService {
     }
   }
 
-  private createSubscription(listener: EntityDataListener,
-                             pageLink: EntityDataPageLink,
-                             keyFilters: KeyFilter[],
-                             additionalKeyFilters: KeyFilter[],
-                             isPaginatedDataSubscription: boolean): EntityDataSubscription {
-    const datasource = listener.configDatasource;
+  private createSubscriptionOptions(datasource: Datasource,
+                                    subscriptionType: widgetType,
+                                    pageLink: EntityDataPageLink,
+                                    keyFilters: KeyFilter[],
+                                    additionalKeyFilters: KeyFilter[],
+                                    isPaginatedDataSubscription: boolean): EntityDataSubscriptionOptions {
     const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
     datasource.dataKeys.forEach((dataKey) => {
       const subscriptionDataKey: SubscriptionDataKey = {
@@ -119,7 +133,7 @@ export class EntityDataService {
     const entityDataSubscriptionOptions: EntityDataSubscriptionOptions = {
       datasourceType: datasource.type,
       dataKeys: subscriptionDataKeys,
-      type: listener.subscriptionType
+      type: subscriptionType
     };
     if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {
       entityDataSubscriptionOptions.entityFilter = datasource.entityFilter;
@@ -128,8 +142,6 @@ export class EntityDataService {
       entityDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
     }
     entityDataSubscriptionOptions.isPaginatedDataSubscription = isPaginatedDataSubscription;
-    return new EntityDataSubscription(entityDataSubscriptionOptions,
-      listener, this.telemetryService, this.utils);
+    return entityDataSubscriptionOptions;
   }
-
 }
