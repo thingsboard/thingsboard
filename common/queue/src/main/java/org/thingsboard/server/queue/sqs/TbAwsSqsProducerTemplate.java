@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -40,6 +41,7 @@ import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueueProducer<T> {
@@ -66,6 +68,7 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                 .withCredentials(credentialsProvider)
                 .withRegion(sqsSettings.getRegion())
                 .build();
+        producerExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
     @Override
