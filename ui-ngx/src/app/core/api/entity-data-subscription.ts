@@ -624,7 +624,7 @@ export class EntityDataSubscription {
   }
 
   private convertValue(val: string): any {
-    if (val && this.isNumeric(val)) {
+    if (val && this.isNumeric(val) && Number(val).toString() === val) {
       return Number(val);
     } else {
       return val;
