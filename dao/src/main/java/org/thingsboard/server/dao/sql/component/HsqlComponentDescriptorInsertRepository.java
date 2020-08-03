@@ -18,11 +18,9 @@ package org.thingsboard.server.dao.sql.component;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.util.HsqlDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.persistence.Query;
 
-@SqlDao
 @HsqlDao
 @Repository
 public class HsqlComponentDescriptorInsertRepository extends AbstractComponentDescriptorInsertRepository {

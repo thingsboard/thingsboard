@@ -17,14 +17,12 @@ package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/22/2017.
  */
-@SqlDao
 public interface UserCredentialsRepository extends CrudRepository<UserCredentialsEntity, UUID> {
 
     UserCredentialsEntity findByUserId(UUID userId);

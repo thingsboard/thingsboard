@@ -46,14 +46,6 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest (
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 
-CREATE TABLE IF NOT EXISTS tb_schema_settings
-(
-    schema_version bigint NOT NULL,
-    CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
-);
-
-INSERT INTO tb_schema_settings (schema_version) VALUES (2005001) ON CONFLICT (schema_version) DO UPDATE SET schema_version = 2005001;
-
 CREATE OR REPLACE FUNCTION to_uuid(IN entity_id varchar, OUT uuid_id uuid) AS
 $$
 BEGIN

@@ -21,14 +21,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
-@SqlDao
 public interface DashboardInfoRepository extends PagingAndSortingRepository<DashboardInfoEntity, UUID> {
 
     @Query("SELECT di FROM DashboardInfoEntity di WHERE di.tenantId = :tenantId " +
