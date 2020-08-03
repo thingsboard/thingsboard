@@ -57,38 +57,15 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
     @Override
     protected ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         String alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData());
+        ListenableFuture<Alarm> alarmFuture;
         if (msg.getOriginator().getEntityType().equals(EntityType.ALARM)) {
-            return clearAlarmByAlarmOriginator(ctx, msg);
+            alarmFuture = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), new AlarmId(msg.getOriginator().getId()));
         } else {
-            ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
-            return Futures.transformAsync(latest, a -> {
-                if (a != null && !a.getStatus().isCleared()) {
-                    return clearAlarm(ctx, msg, a);
-                }
-                return Futures.immediateFuture(new AlarmResult(false, false, false, null));
-            }, ctx.getDbCallbackExecutor());
+            alarmFuture = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
         }
-    }
-
-    private ListenableFuture<AlarmResult> clearAlarmByAlarmOriginator(TbContext ctx, TbMsg msg) {
-        ListenableFuture<Alarm> alarmByIdAsync = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), new AlarmId(msg.getOriginator().getId()));
-        return Futures.transformAsync(alarmByIdAsync, alarm -> {
-            if (alarm != null && !alarm.getStatus().isCleared()) {
-                ctx.logJsEvalRequest();
-                ListenableFuture<JsonNode> asyncDetails = buildAlarmDetails(ctx, msg, alarm.getDetails());
-                return Futures.transformAsync(asyncDetails, details -> {
-                    ctx.logJsEvalRequest();
-                    long clearTs = System.currentTimeMillis();
-                    ListenableFuture<Boolean> clearAlarmFuture = ctx.getAlarmService().clearAlarm(ctx.getTenantId(), alarm.getId(), details, clearTs);
-                    return Futures.transformAsync(clearAlarmFuture, cleared -> {
-                        if (cleared) {
-                            alarm.setClearTs(clearTs);
-                            alarm.setDetails(details);
-                        }
-                        alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
-                        return Futures.immediateFuture(new AlarmResult(false, false, true, alarm));
-                    }, ctx.getDbCallbackExecutor());
-                }, ctx.getDbCallbackExecutor());
+        return Futures.transformAsync(alarmFuture, a -> {
+            if (a != null && !a.getStatus().isCleared()) {
+                return clearAlarm(ctx, msg, a);
             }
             return Futures.immediateFuture(new AlarmResult(false, false, false, null));
         }, ctx.getDbCallbackExecutor());
