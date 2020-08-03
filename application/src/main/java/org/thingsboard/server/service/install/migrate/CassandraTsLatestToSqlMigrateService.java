@@ -55,6 +55,8 @@ import static org.thingsboard.server.service.install.migrate.CassandraToSqlColum
 @Slf4j
 public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateService {
 
+    private static final int LATEST_KEY_LENGTH = 255;
+
     @Autowired
     private EntityDatabaseSchemaService entityDatabaseSchemaService;
 
@@ -168,6 +170,11 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     }
 
     protected Integer getOrSaveKeyId(String strKey) {
+        if (strKey.length() > LATEST_KEY_LENGTH) {
+            log.warn("Key is long. Max key length is 255\n{}", strKey);
+            strKey = strKey.substring(0, LATEST_KEY_LENGTH);
+        }
+
         Integer keyId = tsKvDictionaryMap.get(strKey);
         if (keyId == null) {
             Optional<TsKvDictionary> tsKvDictionaryOptional;
