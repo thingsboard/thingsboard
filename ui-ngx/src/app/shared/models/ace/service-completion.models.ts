@@ -101,6 +101,7 @@ export const importEntityDataHref = '<a href="https://github.com/thingsboard/thi
 
 export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L42">Import entities result info</a>'
 
+export const customDialogComponentHref = '<a href="ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts:48">CustomDialogComponent</a>'
 
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
@@ -1366,7 +1367,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'template', type:'string', description: 'Template'},
-          {name: 'controller', type:'void', description: 'Controller'},
+          {name: 'controller', type:customDialogComponentHref, description: 'Controller'},
           {name: 'data', type:'any', description: 'Data'},
         ],
         return:observableReturnTypeVariable('any')
