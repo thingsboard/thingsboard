@@ -76,4 +76,6 @@ public interface DeviceService {
 
     ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
 
+    Device assignDeviceToTenant(TenantId tenantId, Device device);
+
 }
