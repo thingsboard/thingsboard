@@ -59,8 +59,8 @@
       &times;
     </div>
   </section>
-  <section class="fc-edit" *ngIf="node.component.type === RuleNodeType.RULE_CHAIN">
-    <div class="fc-nodeedit fc-nodeopen" (click)="openRuleChain($event, node)">
+  <section *ngIf="node.component.type === RuleNodeType.RULE_CHAIN && modelservice.isEditable()">
+    <div class="fc-nodeopen" (click)="openRuleChain($event, node)">
       <mat-icon class="material-icons" svgIcon="mdi:login"></mat-icon>
     </div>
   </section>

@@ -44,6 +44,14 @@
         </div>
       </section>
       <section *ngIf="ruleNode.component.type === ruleNodeType.RULE_CHAIN">
+        <div class="tb-details-buttons" fxLayout.xs="column">
+          <button mat-raised-button color="primary"
+                  [disabled]="(isLoading$ | async)"
+                  (click)="onEntityAction($event, 'disableAccount')"
+                  [fxShow]="!isEdit && isUserCredentialsEnabled()">
+            {{'user.disable-account' | translate }}
+          </button>
+        </div>
         <tb-entity-autocomplete required
                                 [excludeEntityIds]="[ruleChainId]"
                                 [entityType]="entityType.RULE_CHAIN"

@@ -171,26 +171,40 @@
 
     .fc-edit {
       .fc-nodeedit,
-      .fc-nodedelete,
-      .fc-nodeopen {
+      .fc-nodedelete {
         box-sizing: content-box;
         border: solid 2px #fff;
         background: #f83e05;
         outline: none;
       }
+    }
 
-      .fc-nodeopen{
-        top: 30px;
-        right: -14px;
+    .fc-nodeopen{
+      display: block;
+      position: absolute;
+      top: 11px;
+      right: -12px;
+      border: 1px solid #FFFFFF;
+      border-radius: 4px;
+      line-height: 18px;
+      height: 22px;
+      width: 22px;
+      background: #886CB1;
+      color: #fff;
+      text-align: center;
+      cursor: pointer;
+      box-sizing: border-box;
 
-        mat-icon{
-          width: 20px;
-          min-width: 20px;
-          height: 20px;
-          min-height: 20px;
-          font-size: 18px;
-          line-height: 18px;
-        }
+      mat-icon{
+        width: 16px;
+        min-width: 16px;
+        height: 16px;
+        min-height: 16px;
+        font-size: 16px;
+      }
+
+      &:hover{
+        background-color: #4E2D7E;
       }
     }
 
