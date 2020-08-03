@@ -15,10 +15,9 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import org.thingsboard.server.common.data.EntityType;
+import java.util.UUID;
 
 public interface EntityAttributeKvEntry extends AttributeKvEntry {
 
-    EntityType getEntityType();
-    String getEntityId();
+    UUID getEntityId();
 }

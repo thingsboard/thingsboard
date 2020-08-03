@@ -31,7 +31,9 @@ public class LockServiceImpl implements LockService {
 
     @PostConstruct
     public void init(){
-        log.warn("Locking with DB is not enabled.");
+        if (lockRepository == null) {
+            log.warn("Locking with DB is not enabled.");
+        }
     }
 
     @Override

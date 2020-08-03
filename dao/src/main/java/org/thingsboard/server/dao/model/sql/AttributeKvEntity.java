@@ -89,6 +89,6 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
             kvEntry = new JsonDataEntry(id.getAttributeKey(), jsonValue);
         }
 
-        return new BaseEntityAttributeKvEntry(id.getEntityType(), id.getEntityId(), lastUpdateTs, kvEntry);
+        return new BaseEntityAttributeKvEntry(id.getEntityId(), lastUpdateTs, kvEntry);
     };
 }

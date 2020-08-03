@@ -333,14 +333,14 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     @Override
     public Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
         OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams();
-        ListenableFuture<Map<String, String>> jsonFuture = getAllOAuth2ClientsParamsAttribute();
+        ListenableFuture<Map<UUID, String>> jsonFuture = getAllOAuth2ClientsParamsAttribute();
         try {
             return Futures.transform(jsonFuture,
                     clientsParamsByKvEntryKey -> {
                         Map<TenantId, OAuth2ClientsParams> tenantClientParams = clientsParamsByKvEntryKey != null ?
                                 clientsParamsByKvEntryKey.entrySet().stream()
                                         .collect(Collectors.toMap(
-                                                entry -> new TenantId(UUIDConverter.fromString(entry.getKey())),
+                                                entry -> new TenantId(entry.getKey()),
                                                 entry -> constructOAuth2ClientsParams(entry.getValue())
                                         ))
                                 : new HashMap<>();
@@ -405,7 +405,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     // TODO maybe it's better to load all tenants and get attribute for each one
-    private ListenableFuture<Map<String, String>> getAllOAuth2ClientsParamsAttribute() {
+    private ListenableFuture<Map<UUID, String>> getAllOAuth2ClientsParamsAttribute() {
         ListenableFuture<List<EntityAttributeKvEntry>> entityAttributeKvEntriesFuture;
         try {
             entityAttributeKvEntriesFuture = attributesService.findAllByAttributeKey(OAUTH2_CLIENT_REGISTRATIONS_PARAMS);

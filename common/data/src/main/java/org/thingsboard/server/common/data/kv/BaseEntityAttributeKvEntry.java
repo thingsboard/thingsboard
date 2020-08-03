@@ -19,26 +19,21 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
 
+import java.util.UUID;
+
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class BaseEntityAttributeKvEntry extends BaseAttributeKvEntry implements EntityAttributeKvEntry {
 
-    private final EntityType entityType;
-    private final String entityId;
+    private final UUID entityId;
 
-    public BaseEntityAttributeKvEntry(EntityType entityType, String entityId, long lastUpdateTs, KvEntry kv) {
+    public BaseEntityAttributeKvEntry(UUID entityId, long lastUpdateTs, KvEntry kv) {
         super(kv, lastUpdateTs);
-        this.entityType = entityType;
         this.entityId = entityId;
     }
 
     @Override
-    public EntityType getEntityType() {
-        return entityType;
-    }
-
-    @Override
-    public String getEntityId() {
+    public UUID getEntityId() {
         return entityId;
     }
 }
