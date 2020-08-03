@@ -39,6 +39,10 @@ public final class EdgeUtils {
                 return EdgeEventType.USER;
             case ALARM:
                 return EdgeEventType.ALARM;
+            case TENANT:
+                return EdgeEventType.TENANT;
+            case CUSTOMER:
+                return EdgeEventType.CUSTOMER;
             default:
                 return null;
         }

@@ -298,6 +298,12 @@ public final class EdgeGrpcSession implements Closeable {
             case DASHBOARD:
                 entityId = new DashboardId(edgeEvent.getEntityId());
                 break;
+            case TENANT:
+                entityId = new TenantId(edgeEvent.getEntityId());
+                break;
+            case CUSTOMER:
+                entityId = new CustomerId(edgeEvent.getEntityId());
+                break;
         }
         if (entityId != null) {
             log.debug("Sending telemetry data msg, entityId [{}], body [{}]", edgeEvent.getEntityId(), edgeEvent.getEntityBody());
@@ -748,6 +754,10 @@ public final class EdgeGrpcSession implements Closeable {
                 return new EntityViewId(new UUID(entityData.getEntityIdMSB(), entityData.getEntityIdLSB()));
             case DASHBOARD:
                 return new DashboardId(new UUID(entityData.getEntityIdMSB(), entityData.getEntityIdLSB()));
+            case TENANT:
+                return new TenantId(new UUID(entityData.getEntityIdMSB(), entityData.getEntityIdLSB()));
+            case CUSTOMER:
+                return new CustomerId(new UUID(entityData.getEntityIdMSB(), entityData.getEntityIdLSB()));
             default:
                 log.warn("Unsupported entity type [{}] during construct of entity id. EntityDataProto [{}]", entityData.getEntityType(), entityData);
                 return null;

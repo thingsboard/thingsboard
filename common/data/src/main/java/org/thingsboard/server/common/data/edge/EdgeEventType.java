@@ -26,5 +26,6 @@ public enum EdgeEventType {
     EDGE,
     USER,
     CUSTOMER,
-    RELATION
+    RELATION,
+    TENANT
 }
