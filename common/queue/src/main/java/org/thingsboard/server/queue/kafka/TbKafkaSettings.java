@@ -16,10 +16,12 @@
 package org.thingsboard.server.queue.kafka;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,6 +32,7 @@ import java.util.Properties;
  */
 @Slf4j
 @ConditionalOnExpression("'${queue.type:null}'=='kafka'")
+@ConfigurationProperties(prefix = "queue.kafka")
 @Component
 public class TbKafkaSettings {
 
@@ -67,7 +70,7 @@ public class TbKafkaSettings {
     @Getter
     private  int fetchMaxBytes;
 
-    @Value("${kafka.other:#{null}}")
+    @Setter
     private List<TbKafkaProperty> other;
 
     public Properties toProps() {
