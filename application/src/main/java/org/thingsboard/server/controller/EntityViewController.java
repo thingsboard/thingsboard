@@ -116,7 +116,7 @@ public class EntityViewController extends BaseController {
                 accessControlService
                         .checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.CREATE, null, entityView);
             } else {
-                EntityView existingEntityView = checkNotNull(entityViewService.findEntityViewById(getCurrentUser().getTenantId(), entityView.getId()));
+                EntityView existingEntityView = checkEntityViewId(entityView.getId(), Operation.READ);
                 if (existingEntityView.getKeys() != null) {
                     if (existingEntityView.getKeys().getAttributes() != null) {
                         futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.CLIENT_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), getCurrentUser()));
