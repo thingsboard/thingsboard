@@ -275,6 +275,7 @@ message WidgetsBundleUpdateMsg {
   string title = 4;
   string alias = 5;
   bytes image = 6;
+  bool isSystem = 7;
 }
 
 message WidgetTypeUpdateMsg {
@@ -285,6 +286,7 @@ message WidgetTypeUpdateMsg {
   string alias = 5;
   string name = 6;
   string descriptorJson = 7;
+  bool isSystem = 8;
 }
 
 message UserCredentialsUpdateMsg {

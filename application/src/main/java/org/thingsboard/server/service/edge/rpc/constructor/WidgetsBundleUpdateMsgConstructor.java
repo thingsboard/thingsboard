@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
@@ -36,6 +37,9 @@ public class WidgetsBundleUpdateMsgConstructor {
                 .setAlias(widgetsBundle.getAlias());
         if (widgetsBundle.getImage() != null) {
             builder.setImage(ByteString.copyFrom(widgetsBundle.getImage()));
+        }
+        if (widgetsBundle.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
+            builder.setIsSystem(true);
         }
         return builder.build();
     }

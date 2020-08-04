@@ -54,6 +54,8 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.widget.WidgetType;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -63,6 +65,8 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.edge.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.RelationRequestMsg;
@@ -110,6 +114,12 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private UserService userService;
 
     @Autowired
+    private WidgetsBundleService widgetsBundleService;
+
+    @Autowired
+    private WidgetTypeService widgetTypeService;
+
+    @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
 
     @Override
@@ -121,6 +131,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             syncAssets(edge);
             syncEntityViews(edge);
             syncDashboards(edge);
+            syncWidgetsBundleAndWidgetTypes(edge);
         } catch (Exception e) {
             log.error("Exception during sync process", e);
         }
@@ -258,6 +269,24 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             }
         } catch (Exception e) {
             log.error("Exception during loading edge user(s) on sync!", e);
+        }
+    }
+
+    private void syncWidgetsBundleAndWidgetTypes(Edge edge) {
+        List<WidgetsBundle> widgetsBundlesToPush = new ArrayList<>();
+        List<WidgetType> widgetTypesToPush = new ArrayList<>();
+        widgetsBundlesToPush.addAll(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(edge.getTenantId()));
+        widgetsBundlesToPush.addAll(widgetsBundleService.findSystemWidgetsBundles(edge.getTenantId()));
+        try {
+            for (WidgetsBundle widgetsBundle: widgetsBundlesToPush) {
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.WIDGETS_BUNDLE, ActionType.ADDED, widgetsBundle.getId(), null);
+                widgetTypesToPush.addAll(widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(widgetsBundle.getTenantId(), widgetsBundle.getAlias()));
+            }
+            for (WidgetType widgetType: widgetTypesToPush) {
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.WIDGET_TYPE, ActionType.ADDED, widgetType.getId(), null);
+            }
+        } catch (Exception e) {
+            log.error("Exception during loading widgets bundle(s) and widget type(s) on sync!", e);
         }
     }
 

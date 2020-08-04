@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
@@ -44,7 +45,10 @@ public class WidgetTypeUpdateMsgConstructor {
                 if (widgetType.getDescriptor() != null) {
                     builder.setDescriptorJson(JacksonUtil.toString(widgetType.getDescriptor()));
                 }
-                return builder.build();
+                if (widgetType.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
+                   builder.setIsSystem(true);
+                }
+        return builder.build();
     }
 
     public WidgetTypeUpdateMsg constructWidgetTypeDeleteMsg(WidgetTypeId widgetTypeId) {
