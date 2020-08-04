@@ -747,11 +747,10 @@
           "client-hold-off-time-tip": "Client Hold Off Time for use with a Bootstrap-Server only",
           "bootstrap-server-account-timeout": "Account after the timeout",
           "bootstrap-server-account-timeout-tip": "Bootstrap-Server Account after the timeout value given by this resource.",
-          "observe-tab": "Observe Device",
-          "observe": "Observe Device",
+          "model-tab": "Model Device",
           "observe-json-title": "Json Observe Device LwM2M",
-          "is-observe": "Observe",
           "is-observe-tip": "Is Observe/No Observe",
+          "is-attr-tip": "Is Attribute/No Attribute",
           "config-json-tab": "Json edit all config device"
         },
         "secret": "Secret",

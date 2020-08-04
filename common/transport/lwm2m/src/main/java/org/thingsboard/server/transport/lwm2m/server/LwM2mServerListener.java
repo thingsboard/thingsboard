@@ -45,7 +45,7 @@ public class LwM2mServerListener {
         public void registered(Registration registration, Registration previousReg,
                                Collection<Observation> previousObsersations) {
 
-            service.onRegistered(lhServer, registration);
+            service.onRegistered(lhServer, registration, previousObsersations);
         }
 
         /**
@@ -90,9 +90,9 @@ public class LwM2mServerListener {
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
-            log.debug("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
+//            log.debug("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
             if (registration != null) {
-                service.observOnResponse(observation, registration, response);
+                service.observOnResponse(lhServer, observation, registration, response);
             }
         }
 

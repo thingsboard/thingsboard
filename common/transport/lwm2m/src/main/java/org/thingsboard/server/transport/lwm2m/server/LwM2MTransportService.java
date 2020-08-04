@@ -15,16 +15,20 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.node.LwM2mNode;
-import org.eclipse.leshan.core.node.LwM2mObject;
-import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.*;
 import org.eclipse.leshan.core.observation.Observation;
-import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.request.DiscoverRequest;
+import org.eclipse.leshan.core.request.*;
 import org.eclipse.leshan.core.response.*;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,15 +39,19 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
+import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
+import org.thingsboard.server.transport.lwm2m.server.client.ModelObject;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
 
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
+
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
 
@@ -69,40 +77,15 @@ public class LwM2MTransportService {
     @Autowired
     LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
-    public void onRegistered(LeshanServer lwServer, Registration registration) {
-        String endpointId = registration.getEndpoint();
+    public void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations) {
+        String endPoint = registration.getEndpoint();
         String lwm2mVersion = registration.getLwM2mVersion();
-        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(lwServer, endpointId, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
-        log.info("cResponse1: [{}]", cResponse);
-        String target = "/1/0/8";
-        cResponse = doTrigerServer(lwServer, endpointId, target, null);
-        log.info("cResponse2: [{}]", cResponse);
-        if (cResponse == null|| cResponse.getCode().getCode() == 500) {
-            target = "/3/0/5";
-            cResponse = doTrigerServer(lwServer, endpointId, target, null);
-            log.info("cResponse3: [{}]", cResponse);
-        }
-
-        log.info("[{}] [{}] Received endpoint registration version event", endpointId, lwm2mVersion);
-    }
-
-    public void processDevicePublish(JsonElement msg, String topicName, int msgId, String clientEndpoint) {
-        TransportProtos.SessionInfoProto sessionInfo = getValidateSessionInfo(clientEndpoint);
-        if (sessionInfo != null) {
-            try {
-                if (topicName.equals(DEVICE_TELEMETRY_TOPIC)) {
-                    TransportProtos.PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
-                    transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(msgId, postTelemetryMsg));
-                } else if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
-                    TransportProtos.PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
-                    transportService.process(sessionInfo, postAttributeMsg, getPubAckCallback(msgId, postAttributeMsg));
-                }
-            } catch (AdaptorException e) {
-                log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-                log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
-
-            }
-        }
+//        lwM2MTransportRequest.doPutResource(lwServer, registration, 1, 0, 1, "400");
+        log.info("[{}] [{}] Received endpoint registration version event", endPoint, lwm2mVersion);
+//        log.info("[{}] Received endpoint registration previousObsersations", previousObsersations);
+        ModelClient modelClient = getClientModelWithValue(lwServer, registration);
+//        log.info("[{}] Received endpoint registration modelClient", modelClient);
+//        startTriggerServer(lwServer, endPoint);
     }
 
     private <T> TransportServiceCallback<Void> getPubAckCallback(final int msgId, final T msg) {
@@ -144,12 +127,17 @@ public class LwM2MTransportService {
 
     public void updatedReg(LeshanServer lwServer, Registration registration) {
         String endpointId = registration.getEndpoint();
-        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
+//        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
         log.info("[{}] [{}] Received endpoint updated registration version event", endpointId, lwm2mVersion);
-        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetry(lwServer, endpointId);
-        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
-        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
+//        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+//        log.info("[{}] [{}] Received endpoint observations updatedReg", registration.getEndpoint(), observations);
+
+//        getObservResource(lwServer, registration);
+//
+//        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetry(lwServer, endpointId);
+//        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
+//        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
     }
 
     public void unReg(Registration registration) {
@@ -169,14 +157,126 @@ public class LwM2MTransportService {
 
     public void onAwakeDev(Registration registration) {
         String endpointId = registration.getEndpoint();
-        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
         log.info("[{}] [{}] Received endpoint Awake version event", endpointId, lwm2mVersion);
         //TODO: associate endpointId with device information.
     }
 
-    public void observOnResponse(Observation observation, Registration registration, ObserveResponse response) {
-        //TODO: associate endpointId with device information.
+    private ObserveResponse setObservResource(LeshanServer lwServer, Registration registration, Integer objectId, Integer instanceId, Integer resourceId) {
+        log.info("Endpoint: [{}] Object: [{}] Instnce: [{}] Resoutce: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), objectId, instanceId, resourceId);
+
+        ObserveResponse observeResponse = null;
+        try {
+            // observe device timezone
+            observeResponse = lwServer.send(registration, new ObserveRequest(objectId, instanceId, resourceId));
+            Observation observation = observeResponse.getObservation();
+            Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+            LwM2mSingleResource resource = (LwM2mSingleResource) observeResponse.getContent();
+            Object value = (resource != null) ? resource.getValue() : null;
+            LwM2mPath path = (observeResponse.getObservation() != null) ? observeResponse.getObservation().getPath() : null;
+            log.info("Endpoint: [{}] Path: [{}] Value: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), path, value);
+//            log.info("[{}] [{}] Received endpoint observation", registration.getEndpoint(), observation);
+//            log.info("[{}] [{}] Received endpoint observations", registration.getEndpoint(), observations);
+
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return observeResponse;
+    }
+
+    private ObserveResponse setObservInstance(LeshanServer lwServer, Registration registration, Integer objectId, Integer instanceId, Integer resourceId) {
+        log.info("Endpoint: [{}] Object: [{}] Instnce: [{}] Resoutce: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), objectId, instanceId, resourceId);
+
+        ObserveResponse observeResponse = null;
+        try {
+            // observe device timezone
+            observeResponse = lwServer.send(registration, new ObserveRequest(objectId, instanceId));
+            Observation observation = observeResponse.getObservation();
+            Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+//            log.info("Endpoint: [{}] Path: [{}] Value: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), path, value);
+//            log.info("[{}] [{}] Received endpoint observation", registration.getEndpoint(), observation);
+            log.info("[{}] [{}] Received endpoint observations", registration.getEndpoint(), observations);
+
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return observeResponse;
+    }
+
+    private ModelClient getClientModelWithValue(LeshanServer lwServer, Registration registration) {
+        ModelClient modelClient = new ModelClient(registration.getAdditionalRegistrationAttributes());
+        String credentials = context.getSessions().get(registration.getEndpoint()).getCredentialsBody();
+        JsonObject objectMsg = adaptor.validateJson(credentials);
+        JsonArray clientObserves = (objectMsg != null &&
+                !objectMsg.isJsonNull() &&
+                objectMsg.has("observe") &&
+                objectMsg.get("observe").isJsonArray() &&
+                !objectMsg.get("observe").isJsonNull()) ? objectMsg.get("observe").getAsJsonArray() : null;
+        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+            String[] objects = url.getUrl().split("/");
+            try {
+                if (objects.length > 2) {
+                    int objectId = Integer.parseInt(objects[1]);
+                    ObserveResponse observeResponse = lwServer.send(registration, new ObserveRequest(objectId));
+                    LwM2mNode content = observeResponse.getContent();
+                    Map<Integer, LwM2mObjectInstance> instances = ((LwM2mObject) content).getInstances();
+                    ObjectModel objectModel = lwServer.getModelProvider().getObjectModel(registration).getObjectModel(objectId);
+                    ModelObject modelObject = new ModelObject(objectModel.id, instances, objectModel, null);
+                    modelClient.getModelObjects().add(modelObject);
+                    if (clientObserves != null && clientObserves.size() > 0) {
+                        clientObserves.forEach(val -> {
+                            if (Integer.valueOf(val.getAsString().split("/")[1])==objectId && val.getAsString().split("/").length > 3) {
+//                                log.info("{}", val);
+                                modelObject.getObjectObserves().add(val.getAsString());
+                            }
+                        });
+                    }
+                    //  cancel observation : active way
+                    Observation observation = observeResponse.getObservation();
+                    CancelObservationResponse cancelResponse = lwServer.send(registration,
+                            new CancelObservationRequest(observation));
+//                    log.info("cancelResponse: {}", cancelResponse);
+                    /**
+                     * active cancellation does not remove observation from store : it should be done manually using
+                     */
+                    lwServer.getObservationService().cancelObservation(observation);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        return modelClient;
+    }
+
+    private LwM2mNode getLvM2mNodeToObject(LwM2mNode content) {
+        if (content instanceof LwM2mObject) {
+            return (LwM2mObject) content;
+        } else if (content instanceof LwM2mObjectInstance) {
+            return (LwM2mObjectInstance) content;
+        } else if (content instanceof LwM2mSingleResource) {
+            return (LwM2mSingleResource) content;
+        } else if (content instanceof LwM2mMultipleResource) {
+            return (LwM2mMultipleResource) content;
+        }
+        return null;
+    }
+
+    public void observOnResponse(LeshanServer lhServer, Observation observation, Registration registration, ObserveResponse response) {
+        if (response.getContent() instanceof LwM2mObject) {
+            LwM2mObject content = (LwM2mObject) response.getContent();
+            log.info("[{}] \nobject: {}", registration.getEndpoint(), content.getId());
+        } else if (response.getContent() instanceof LwM2mObjectInstance) {
+            LwM2mObjectInstance content = (LwM2mObjectInstance) response.getContent();
+            log.info("[{}] \ninstanve: {}", registration.getEndpoint(), content.getId());
+        } else if (response.getContent() instanceof LwM2mSingleResource) {
+            LwM2mSingleResource content = (LwM2mSingleResource) response.getContent();
+            log.info("[{}] \n LwM2mSingleResource: {}", registration.getEndpoint(), content.getId());
+        } else if (response.getContent() instanceof LwM2mMultipleResource) {
+            LwM2mMultipleResource content = (LwM2mMultipleResource) response.getContent();
+            log.info("[{}] \n LwM2mMultipleResource: {}", registration.getEndpoint(), content.getId());
+        }
     }
 
     /**
@@ -184,12 +284,32 @@ public class LwM2MTransportService {
      */
     public DiscoverResponse getDiscover(LeshanServer lwServer, String target, String clientEndpoint, String timeoutParam) throws InterruptedException {
         DiscoverRequest request = new DiscoverRequest(target);
-        return lwServer.send(getRegistration(lwServer, clientEndpoint), request, this.context.getTimeout());
+        return lwServer.send(lwServer.getRegistrationService().getByEndpoint(clientEndpoint), request, this.context.getTimeout());
     }
 
-    public Registration getRegistration(LeshanServer lwServer, String clientEndpoint) {
-        return lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
+
+    public void processDevicePublish(JsonElement msg, String topicName, int msgId, String clientEndpoint) {
+        TransportProtos.SessionInfoProto sessionInfo = getValidateSessionInfo(clientEndpoint);
+        if (sessionInfo != null) {
+            try {
+                if (topicName.equals(DEVICE_TELEMETRY_TOPIC)) {
+                    TransportProtos.PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
+                    transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(msgId, postTelemetryMsg));
+                } else if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
+                    TransportProtos.PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
+                    transportService.process(sessionInfo, postAttributeMsg, getPubAckCallback(msgId, postAttributeMsg));
+                }
+            } catch (AdaptorException e) {
+                log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+                log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
+
+            }
+        }
     }
+//
+//    public Registration getRegistration(LeshanServer lwServer, String clientEndpoint) {
+//        return lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
+//    }
 
     @SneakyThrows
     public ReadResultAttrTel doGetAttributsTelemetry(LeshanServer lwServer, String clientEndpoint) {
@@ -209,7 +329,7 @@ public class LwM2MTransportService {
                     om.resources.entrySet().stream().forEach(resOm -> {
                         String attrTelName = om.name + "_" + instanceId + "_" + resOm.getValue().name;
                         /** Attributs: om.id: Security, Server, ACL & 'R' ? */
-                        if (om.id <= 2 ) {
+                        if (om.id <= 2) {
                             readResultAttrTel.getPostAttribute().addProperty(attrTelName, "");
                         } else {
                             readResultAttrTel.getPostTelemetry().addProperty(attrTelName, "");
@@ -224,8 +344,7 @@ public class LwM2MTransportService {
                         if (readResultAttrTel.getPostAttribute().has(attrTelName)) {
                             readResultAttrTel.getPostAttribute().remove(attrTelName);
                             readResultAttrTel.getPostAttribute().addProperty(attrTelName, resourceValue);
-                        }
-                        else if (readResultAttrTel.getPostTelemetry().has(attrTelName))  {
+                        } else if (readResultAttrTel.getPostTelemetry().has(attrTelName)) {
                             readResultAttrTel.getPostTelemetry().remove(attrTelName);
                             readResultAttrTel.getPostTelemetry().addProperty(attrTelName, resourceValue);
                         }
@@ -237,10 +356,27 @@ public class LwM2MTransportService {
         return readResultAttrTel;
     }
 
-    public LwM2mResponse doTrigerServer(LeshanServer lwServer, String clientEndpoint, String target, String param) {
-        param = param != null  ? param : "";
+
+    /**
+     * Trigger
+     */
+    private void startTriggerServer(LeshanServer lwServer, String endPoint) {
+        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(lwServer, endPoint, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+        log.info("cResponse1: [{}]", cResponse);
+        String target = "/1/0/8";
+        cResponse = doTriggerServer(lwServer, endPoint, target, null);
+        log.info("cResponse2: [{}]", cResponse);
+        if (cResponse == null || cResponse.getCode().getCode() == 500) {
+            target = "/3/0/5";
+            cResponse = doTriggerServer(lwServer, endPoint, target, null);
+            log.info("cResponse3: [{}]", cResponse);
+        }
+    }
+
+    public LwM2mResponse doTriggerServer(LeshanServer lwServer, String clientEndpoint, String target, String param) {
+        param = param != null ? param : "";
         return lwM2MTransportRequest.doPost(lwServer, clientEndpoint, target, POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
-   }
+    }
 
     private String getResourceValueToString(LwM2mResource resource) {
         Object resValue;

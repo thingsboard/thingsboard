@@ -180,20 +180,20 @@
             </mat-accordion>
           </div>
         </mat-tab>
-        <mat-tab label="{{ 'device.lwm2m-security-config.observe-tab' | translate }}">
+        <mat-tab label="{{ 'device.lwm2m-security-config.model-tab' | translate }}">
 <!--          <div fxLayout="column">-->
 <!--            <div fxLayout="row" fxLayoutGap="8px">-->
               <!--            <div fxFlex="50">-->
-              <tb-security-config-observe-lwm2m
-                                                [formControlName]="observe"
-                                                [observeFormGroup]="observeFormGroup">
-              </tb-security-config-observe-lwm2m>
+              <tb-security-config-observe-attr-lwm2m
+                                                [formControlName]="observeAttr"
+                                                [observeFormGroup]="observeAttrFormGroup">
+              </tb-security-config-observe-attr-lwm2m>
               <!--            </div>-->
               <!--            <div fxFlex="50">-->
               <!--              <fieldset [disabled]="isLoading$ | async">-->
               <!--                <tb-json-object-edit-->
               <!--                  [formControlName]="formControlNameJsonObserve"-->
-              <!--                  label="{{ 'device.lwm2m-security-config.observe-json-title' | translate }}"-->
+              <!--                  label="{{ 'device.lwm2m-security-config.observeAttr-json-title' | translate }}"-->
               <!--                  validateContent="true"-->
               <!--                  [required]="true"-->
               <!--                  [fillHeight]="false">-->

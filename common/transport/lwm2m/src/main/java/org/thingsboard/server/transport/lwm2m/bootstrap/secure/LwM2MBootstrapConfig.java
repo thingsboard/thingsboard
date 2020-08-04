@@ -90,6 +90,7 @@ public class LwM2MBootstrapConfig {
         serverSecurity.secretKey = (secretKey != null && !secretKey.isEmpty()) ? Hex.decodeHex(secretKey.toCharArray())  : new byte[] {};
         serverSecurity.serverId = serverId;
 
+
         return serverSecurity;
     }
 

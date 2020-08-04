@@ -20,7 +20,9 @@ export const DEFAULT_END_POINT = 'default_client_lwm2m_end_point_no_sec';
 export const BOOTSTRAP_SERVERS = 'servers';
 export const BOOTSTRAP_SERVER = 'bootstrapServer';
 export const LWM2M_SERVER = 'lwm2mServer';
+export const OBSERVE_ATTR = 'observeAttr';
 export const OBSERVE = 'observe';
+export const ATTR = 'attribute';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
 const DEFAULT_ID_BOOTSTRAP = 111;
@@ -124,7 +126,7 @@ interface BootstrapSecurityConfig {
 export interface SecurityConfigModels {
   client: ClientSecurityConfigType,
   bootstrap: BootstrapSecurityConfig,
-  observe: ObjectLwM2M[]
+  observeAttr: ObjectLwM2M[]
 }
 
 export function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_CONFIG_MODE, endPoint?: string): ClientSecurityConfigType {
@@ -216,7 +218,7 @@ export function getDefaultSecurityConfig(hostname: any): SecurityConfigModels {
   const securityConfigModels = {
     client: getDefaultClientSecurityConfigType(SECURITY_CONFIG_MODE.NO_SEC),
     bootstrap: getDefaultBootstrapSecurityConfig (hostname),
-    observe: []
+    observeAttr: []
   };
   return securityConfigModels;
 }
@@ -225,7 +227,8 @@ export function getDefaultSecurityConfig(hostname: any): SecurityConfigModels {
 export interface ResourceLwM2M {
   id: number,
   name: string,
-  isObserv: boolean
+  isObserv: boolean,
+  isAttr: boolean
 }
 
 export interface Instance {
@@ -240,7 +243,7 @@ export interface ObjectLwM2M {
   instance: Instance []
 }
 
-export function getDefaultClientObserve (): ObjectLwM2M [] {
+export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
   return [
     {
       id: 1,
@@ -252,37 +255,44 @@ export function getDefaultClientObserve (): ObjectLwM2M [] {
           {
             id: 0,
             name: "Short Server ID",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 1,
             name: "Lifetime",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 2,
             name: "Default Minimum Period",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 3,
             name: "Default Maximum Period",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 5,
             name: "Disable Timeout",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 6,
             name: "Notification Storing When Disabled or Offline",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 7,
             name: "Binding",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           }
         ]
       }]
@@ -297,102 +307,122 @@ export function getDefaultClientObserve (): ObjectLwM2M [] {
           {
             id: 0,
             name: "Manufacturer",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 1,
             name: "Model Number",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 2,
             name: "Serial Number",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 3,
             name: "Firmware Version",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 6,
             name: "Available Power Sources",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 7,
             name: "Power Source Voltage",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 8,
             name: "Power Source Current",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 9,
             name: "Battery Level",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 10,
             name: "Memory Free",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 11,
             name: "Error Code",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 13,
             name: "Current Time",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 14,
             name: "UTC Offset",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 15,
             name: "Timezone",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 16,
             name: "Supported Binding and Modes",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 17,
             name: "Device Type",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 18,
             name: "Hardware Version",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 19,
             name: "Software Version",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 20,
             name: "Battery Status",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 21,
             name: "Memory Total",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 22,
             name: "ExtDevInfo",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
         ]
       }]
@@ -407,37 +437,44 @@ export function getDefaultClientObserve (): ObjectLwM2M [] {
           {
             id: 0,
             name: "Latitude",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 1,
             name: "Longitude",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 2,
             name: "Altitude",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 3,
             name: "Radius",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 4,
             name: "Velocity",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 5,
             name: "Timestamp",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 6,
             name: "Speed",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           }
         ]
       }]
@@ -452,37 +489,44 @@ export function getDefaultClientObserve (): ObjectLwM2M [] {
           {
             id: 5700,
             name: "Sensor Value",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 5601,
             name: "Min Measured Value",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 5602,
             name: "Max Measured Value",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 5603,
             name: "Min Range Value",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 5604,
             name: "Max Range Value",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 5701,
             name: "Sensor Units",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           },
           {
             id: 5605,
             name: "Reset Min and Max Measured Values",
-            isObserv: false
+            isObserv: false,
+            isAttr: false
           }
         ]
       }]

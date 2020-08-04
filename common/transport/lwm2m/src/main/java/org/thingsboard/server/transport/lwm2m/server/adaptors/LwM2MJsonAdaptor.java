@@ -16,6 +16,8 @@
 package org.thingsboard.server.transport.lwm2m.server.adaptors;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -45,5 +47,23 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
         }
+    }
+
+
+    public JsonObject validateJson(String jsonStr) {
+        JsonObject object = null;
+        if (jsonStr != null && !jsonStr.isEmpty()) {
+            String jsonValidFlesh = jsonStr.replaceAll("\\\\", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll("\n", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll("\t", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll(" ", "");
+            String jsonValid = (jsonValidFlesh.substring(0, 1).equals("\"") && jsonValidFlesh.substring(jsonValidFlesh.length() - 1).equals("\"")) ? jsonValidFlesh.substring(1, jsonValidFlesh.length() - 1) : jsonValidFlesh;
+            try {
+                object = new JsonParser().parse(jsonValid).getAsJsonObject();
+            } catch (JsonSyntaxException e) {
+                log.error("[{}] Fail validateJson [{}]", jsonStr, e.getMessage());
+            }
+        }
+        return object;
     }
 }

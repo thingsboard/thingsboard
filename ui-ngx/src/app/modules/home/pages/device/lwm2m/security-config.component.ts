@@ -31,7 +31,7 @@ import {
   ClientSecurityConfigRPK,
   JSON_OBSERVE,
   ServerSecurityConfig,
-  OBSERVE,
+  OBSERVE_ATTR,
   ObjectLwM2M,
   JSON_ALL_CONFIG,
   KEY_IDENT_REGEXP_PSK,
@@ -60,8 +60,8 @@ import {
   DEFAULT_PORT_SERVER_NO_SEC,
   BOOTSTRAP_PUBLIC_KEY_X509,
   LWM2M_SERVER_PUBLIC_KEY_X509,
-  getDefaultClientObserve,
-  DEFAULT_PORT_BOOTSTRAP_SEC_CERT, DEFAULT_PORT_SERVER_SEC_CERT,
+  getDefaultClientObserveAttr,
+  DEFAULT_PORT_BOOTSTRAP_SEC_CERT, DEFAULT_PORT_SERVER_SEC_CERT, ATTR, OBSERVE,
 } from "./security-config.models";
 import {WINDOW} from "@core/services/window.service";
 
@@ -88,10 +88,12 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   formControlNameJsonObserve: string;
   observeData: ObjectLwM2M[];
   jsonObserveData: {};
+  observeAttr: string;
   observe: string;
+  attr: string;
   bootstrapFormGroup: FormGroup;
   lwm2mServerFormGroup: FormGroup;
-  observeFormGroup: FormGroup;
+  observeAttrFormGroup: FormGroup;
   lenMaxKeyClient = LEN_MAX_PSK;
   bsPublikKeyRPK: string
   lwM2mPublikKeyRPK: string
@@ -125,14 +127,16 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.bootstrapServers = BOOTSTRAP_SERVERS;
     this.bootstrapServer = BOOTSTRAP_SERVER;
     this.lwm2mServer = LWM2M_SERVER;
+    this.observeAttr = OBSERVE_ATTR;
     this.observe = OBSERVE;
+    this.attr = ATTR;
     this.formControlNameJsonObserve = JSON_OBSERVE;
   }
 
   initChildesFormGroup(): void {
     this.bootstrapFormGroup = this.lwm2mConfigFormGroup.get('bootstrapFormGroup') as FormGroup;
     this.lwm2mServerFormGroup = this.lwm2mConfigFormGroup.get('lwm2mServerFormGroup') as FormGroup;
-    this.observeFormGroup = this.lwm2mConfigFormGroup.get('observeFormGroup') as FormGroup;
+    this.observeAttrFormGroup = this.lwm2mConfigFormGroup.get('observeFormGroup') as FormGroup;
   }
 
   initClientSecurityConfig(jsonAllConfig: SecurityConfigModels): void {
@@ -328,9 +332,9 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       }
     })
 
-    this.observeFormGroup.valueChanges.subscribe(val => {
-      if (!this.observeFormGroup.pristine && this.observeFormGroup.valid) {
-        this.upDateObserveFromGroup(val);
+    this.observeAttrFormGroup.valueChanges.subscribe(val => {
+      if (!this.observeAttrFormGroup.pristine && this.observeAttrFormGroup.valid) {
+        this.upDateObserveAttrFromGroup(val);
       }
     })
   }
@@ -385,43 +389,49 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.lwm2mConfigFormGroup.markAsDirty();
   }
 
-  upDateObserveFromGroup(val: any): void {
+  upDateObserveAttrFromGroup(val: any): void {
     let isObserve = [] as Array<string>;
+    let isAttr = [] as Array<string>;
     let observeJson = JSON.parse(JSON.stringify(val['clientLwM2M'])) as [];
     // target = "/3/0/5";
+    debugger
     let pathObj;
     let pathInst;
-    let pathIsIns;
-    let pathRes;
-    let pathIsRes
+    // let pathIsIns;
+    // let pathRes;
+    let pathRes
     observeJson.forEach(obj => {
       Object.entries(obj).forEach(([key, value]) => {
         if (key === 'id') {
           pathObj = value;
         }
         if (key === 'instance') {
-          let instanceJson = JSON.parse(JSON.stringify(value)) as [];
-          if (instanceJson.length > 0) {
-            instanceJson.forEach(obj => {
-              Object.entries(obj).forEach(([key, value]) => {
+          let instancesJson = JSON.parse(JSON.stringify(value)) as [];
+          if (instancesJson.length > 0) {
+            instancesJson.forEach(instance => {
+              Object.entries(instance).forEach(([key, value]) => {
                 if (key === 'id') {
                   pathInst = value;
                 }
+                let pathInstObserve;
                 if (key === 'isObserv' && value) {
-                  pathIsIns = '/' + pathObj + '/' + pathInst;
-                  isObserve.push(pathIsIns)
+                  pathInstObserve = '/' + pathObj + '/' + pathInst;
+                  isObserve.push(pathInstObserve)
                 }
                 if (key === 'resource') {
-                  let resourceJson = JSON.parse(JSON.stringify(value)) as [];
-                  if (resourceJson.length > 0) {
-                    resourceJson.forEach(obj => {
-                      Object.entries(obj).forEach(([key, value]) => {
+                  let resourcesJson = JSON.parse(JSON.stringify(value)) as [];
+                  if (resourcesJson.length > 0) {
+                    resourcesJson.forEach(res => {
+                      Object.entries(res).forEach(([key, value]) => {
                         if (key === 'id') {
-                          pathRes = value
+                          // pathRes = value
+                          pathRes = '/' + pathObj + '/' + pathInst + '/' + value;
                         }
                         if (key === 'isObserv' && value) {
-                          pathIsRes = '/' + pathObj + '/' + pathInst + '/' + pathRes;
-                          isObserve.push(pathIsRes)
+                          isObserve.push(pathRes)
+                        }
+                        if (key === 'isAttr' && value) {
+                          isAttr.push(pathRes)
                         }
                       });
                     });
@@ -433,39 +443,48 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
         }
       });
     });
-    this.jsonAllConfig[this.observe] = isObserve;
+    this.jsonAllConfig[this.observeAttr][this.observe] = isObserve;
+    this.jsonAllConfig[this.observeAttr][this.attr] = isAttr;
     this.upDateJsonAllConfig();
   }
 
   getObservFormGroup(): ObjectLwM2M [] {
-    let isObserve = this.jsonAllConfig[this.observe] as Array<string>;
+    debugger
+    let isObserve = this.jsonAllConfig[this.observeAttr][this.observe] as Array<string>;
+    let isAttr = this.jsonAllConfig[this.observeAttr][this.attr] as Array<string>;
     // "/3/0/1"
-    let clientObserve = getDefaultClientObserve() as ObjectLwM2M[];
-    let pathObserve: number[] = [];
-    let idObj: number;
-    let idIns: number;
-    let idRes: number;
+    let clientObserveAttr = getDefaultClientObserveAttr() as ObjectLwM2M[];
     isObserve.forEach(observe => {
-      pathObserve = Array.from(observe.substring(1).split('/'), Number);
-      idObj = pathObserve[0];
-      idIns = pathObserve[1];
-      idRes = (pathObserve[2]) ? pathObserve[2] : (pathObserve.length === 3) ? 0 : null;
-      clientObserve.forEach(obj => {
-        if (obj.id === idObj) {
+      let pathObserve = Array.from(observe.substring(1).split('/'), Number);
+      let idResObserve = (pathObserve[2]) ? pathObserve[2] : (pathObserve.length === 3) ? 0 : null;
+      clientObserveAttr.forEach(obj => {
+        if (obj.id === pathObserve[0]) {
           obj.instance.forEach(inst => {
-            if (inst.id === idIns) {
-              if (idRes === null) inst.isObserv = true;
-              else {
-                inst.resource.forEach(res => {
-                  if (res.id === idRes) res.isObserv = true;
-                })
-              }
+            if (inst.id === pathObserve[1]) {
+              if (idResObserve === null) inst.isObserv = true;
+              inst.resource.forEach(res => {
+                if (inst.isObserv || res.id === idResObserve) res.isObserv = true;
+              })
             }
           })
         }
       });
     });
-    return clientObserve;
+    isAttr.forEach(attr => {
+      let pathAttr = Array.from(attr.substring(1).split('/'), Number);
+      clientObserveAttr.forEach(obj => {
+        if (obj.id === pathAttr[0]) {
+          obj.instance.forEach(inst => {
+            if (inst.id === pathAttr[1]) {
+              inst.resource.forEach(res => {
+                if (res.id === pathAttr[2]) res.isAttr = true;
+              })
+            }
+          })
+        }
+      });
+    });
+    return clientObserveAttr;
   }
 
   initLwm2mConfigFormGroup(): FormGroup {
@@ -476,8 +495,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       jsonAllConfig: [this.jsonAllConfig, []],
       bootstrapServer: [this.jsonAllConfig.bootstrap[this.bootstrapServer], []],
       lwm2mServer: [this.jsonAllConfig.bootstrap[this.lwm2mServer], []],
-      observe: [this.getObservFormGroup(), []],
-      jsonObserve: [this.jsonAllConfig[this.observe], []],
+      observeAttr: [this.getObservFormGroup(), []],
+      jsonObserve: [this.jsonAllConfig[this.observeAttr], []],
       bootstrapFormGroup: this.getServerGroup(true),
       lwm2mServerFormGroup: this.getServerGroup(false),
       observeFormGroup: this.fb.group({}),

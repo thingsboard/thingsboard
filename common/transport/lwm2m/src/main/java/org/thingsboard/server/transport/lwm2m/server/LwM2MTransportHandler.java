@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +35,7 @@ public class LwM2MTransportHandler {
     private static final String EVENT_DEREGISTRATION = "DEREGISTRATION";
     private static final String EVENT_UPDATED = "UPDATED";
     private static final String EVENT_REGISTRATION = "REGISTRATION";
-    private static final String EVENT_AWAKE = "AWAKE";
+
     private static final String EVENT_SLEEPING = "SLEEPING";
     private static final String EVENT_NOTIFICATION = "NOTIFICATION";
     private static final String EVENT_COAP_LOG = "COAPLOG";
@@ -100,6 +103,8 @@ public class LwM2MTransportHandler {
     public static final String PUT_TYPE_OPER_UPDATE = "update";
     public static final String PUT_TYPE_OPER_WRIGHT = "wright";
 
+    public static final String EVENT_AWAKE = "AWAKE";
+
     @Autowired
     @Qualifier("leshanServerCert")
     private LeshanServer lhServerCert;
@@ -121,5 +126,23 @@ public class LwM2MTransportHandler {
         this.lhServerNoSecPskRpk.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
         this.lhServerNoSecPskRpk.getPresenceService().addListener(lwM2mServerListener.presenceListener);
         this.lhServerNoSecPskRpk.getObservationService().addListener(lwM2mServerListener.observationListener);
+    }
+
+
+    public JsonObject validateJson(String jsonStr) {
+        JsonObject object = null;
+        if (jsonStr != null && !jsonStr.isEmpty()) {
+            String jsonValidFlesh = jsonStr.replaceAll("\\\\", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll("\n", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll("\t", "");
+            jsonValidFlesh = jsonValidFlesh.replaceAll(" ", "");
+            String jsonValid = (jsonValidFlesh.substring(0, 1).equals("\"") && jsonValidFlesh.substring(jsonValidFlesh.length() - 1).equals("\"")) ? jsonValidFlesh.substring(1, jsonValidFlesh.length() - 1) : jsonValidFlesh;
+            try {
+                object = new JsonParser().parse(jsonValid).getAsJsonObject();
+            } catch (JsonSyntaxException e) {
+                log.error("[{}] Fail validateJson [{}]", jsonStr, e.getMessage());
+            }
+        }
+        return object;
     }
 }

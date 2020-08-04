@@ -33,7 +33,7 @@
                                [formGroupName]="y">
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <div class="tb-panel-title-height"  fxFlex="100">
+                <div class="tb-panel-title-height" fxFlex="100">
                   <div fxLayout="row" fxFill>
                     <div fxFlex="88">
                       Instance [<b>{{instance.get('id').value}}</b>]
@@ -42,7 +42,7 @@
                       <mat-checkbox formControlName="isObserv" color="primary"
                                     (click)="$event.stopPropagation()"
                                     (keydown)="$event.stopPropagation()"
-                                    matTooltip="{{'device.lwm2m-security-config.is-observe-tip' | translate}}"
+                                    matTooltip="{{'device.lwm2m-security-config.is-observeAttr-tip' | translate}}"
                                     matTooltipPosition="above">
                       </mat-checkbox>
                     </div>
@@ -60,7 +60,13 @@
                 </div>
                 <div fxFlex="5">
                   <mat-checkbox formControlName="isObserv" color="primary"
-                                matTooltip="{{'device.lwm2m-security-config.is-observe-tip' | translate}}"
+                                matTooltip="{{'device.lwm2m-security-config.is-observeAttr-tip' | translate}}"
+                                matTooltipPosition="above">
+                  </mat-checkbox>
+                </div>
+                <div fxFlex="5">
+                  <mat-checkbox formControlName="isAttr" color="primary"
+                                matTooltip="{{'device.lwm2m-security-config.is-attr-tip' | translate}}"
                                 matTooltipPosition="above">
                   </mat-checkbox>
                 </div>

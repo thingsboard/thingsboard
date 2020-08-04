@@ -37,22 +37,18 @@ import {
 
 
 @Component({
-  selector: 'tb-security-config-observe-lwm2m',
-  templateUrl: './security-config-observe.component.html',
-  styleUrls: ['./security-config-observe.component.css'],
+  selector: 'tb-security-config-observe-attr-lwm2m',
+  templateUrl: './security-config-observe-attr.component.html',
+  styleUrls: ['./security-config-observe-attr.component.css'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SecurityConfigObserveComponent),
+      useExisting: forwardRef(() => SecurityConfigObserveAttrComponent),
       multi: true
     }
   ]
 })
-export class SecurityConfigObserveComponent extends PageComponent implements OnInit, ControlValueAccessor {
-
-
-  // fruits: Array<string> = ["apple", "pear", "kiwi", "banana", "grape", "strawberry", "grapefruit", "melon", "mango", "plum"];
-  // numChecked: number = 0;
+export class SecurityConfigObserveAttrComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
   @Input() observeFormGroup: FormGroup;
   observeValue: ObjectLwM2M[];
@@ -61,7 +57,7 @@ export class SecurityConfigObserveComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
-              public dialogRef: MatDialogRef<SecurityConfigObserveComponent, object>,
+              public dialogRef: MatDialogRef<SecurityConfigObserveAttrComponent, object>,
               public fb: FormBuilder) {
     super(store);
   }
@@ -112,14 +108,11 @@ export class SecurityConfigObserveComponent extends PageComponent implements OnI
       return this.fb.group({
         id: resourceLwM2M.id,
         isObserv: resourceLwM2M.isObserv,
+        isAttr: resourceLwM2M.isAttr,
         name: resourceLwM2M.name
       })
     }))
   }
-  //
-  // checkboxInstanceChange(event, index){
-  //   console.log(event.source.checked, index);
-  // }
 
   clientLwM2MFormArray(formGroup: FormGroup): FormArray {
     return formGroup.get('clientLwM2M') as FormArray;

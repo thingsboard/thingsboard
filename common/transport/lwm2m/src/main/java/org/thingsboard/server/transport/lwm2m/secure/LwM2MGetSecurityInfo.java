@@ -29,6 +29,7 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
+import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.io.IOException;
@@ -50,6 +51,9 @@ public class LwM2MGetSecurityInfo {
     @Autowired
     public LwM2MTransportContextBootstrap contextBS;
 
+    @Autowired
+    private LwM2MJsonAdaptor adaptor;
+
     public ReadResultSecurityStore getSecurityInfo(String endPoint, TypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
@@ -60,7 +64,8 @@ public class LwM2MGetSecurityInfo {
                         String ingfosStr = msg.getCredentialsBody();
 
                         resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
-                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code && keyValue.equals(TypeServer.CLIENT)) {
+//                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code && keyValue.equals(TypeServer.CLIENT)) {
+                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code) {
                             String endpoint = (resultSecurityStore[0].getSecurityMode()== PSK.code) ? resultSecurityStore[0].getSecurityInfo().getEndpoint(): endPoint;
                             contextS.getSessions().put(endpoint, msg);
                         }
@@ -84,7 +89,7 @@ public class LwM2MGetSecurityInfo {
 
     private ReadResultSecurityStore putSecurityInfo(String endPoint, String deviceName, String jsonStr, TypeServer keyValue) {
         ReadResultSecurityStore result = new ReadResultSecurityStore();
-        JsonObject objectMsg = validateJson(jsonStr);
+        JsonObject objectMsg = adaptor.validateJson(jsonStr);
         if (objectMsg != null && !objectMsg.isJsonNull()) {
             JsonObject object = (objectMsg.has(keyValue.type) && !objectMsg.get(keyValue.type).isJsonNull()) ? objectMsg.get(keyValue.type).getAsJsonObject() : null;
             /**
@@ -123,7 +128,6 @@ public class LwM2MGetSecurityInfo {
         }
         return result;
     }
-
 
     private void getClientSecurityInfoNoSec(ReadResultSecurityStore result) {
         result.setSecurityInfo(null);
@@ -171,20 +175,4 @@ public class LwM2MGetSecurityInfo {
         result.setSecurityMode(X509.code);
     }
 
-    private JsonObject validateJson(String jsonStr) {
-        JsonObject object = null;
-        if (jsonStr != null && !jsonStr.isEmpty()) {
-            String jsonValidFlesh = jsonStr.replaceAll("\\\\", "");
-            jsonValidFlesh = jsonValidFlesh.replaceAll("\n", "");
-            jsonValidFlesh = jsonValidFlesh.replaceAll("\t", "");
-            jsonValidFlesh = jsonValidFlesh.replaceAll(" ", "");
-            String jsonValid = (jsonValidFlesh.substring(0, 1).equals("\"") && jsonValidFlesh.substring(jsonValidFlesh.length() - 1).equals("\"")) ? jsonValidFlesh.substring(1, jsonValidFlesh.length() - 1) : jsonValidFlesh;
-            try {
-                object = new JsonParser().parse(jsonValid).getAsJsonObject();
-            } catch (JsonSyntaxException e) {
-                log.error("[{}] Fail validateJson [{}]", jsonStr, e.getMessage());
-            }
-        }
-        return object;
-    }
 }

@@ -18,14 +18,14 @@ package org.thingsboard.server.transport.lwm2m.server;
 import com.google.gson.JsonSyntaxException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
-import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.request.DiscoverRequest;
-import org.eclipse.leshan.core.request.ExecuteRequest;
-import org.eclipse.leshan.core.request.ReadRequest;
+import org.eclipse.leshan.core.node.ObjectLink;
+import org.eclipse.leshan.core.request.*;
 import org.eclipse.leshan.core.request.exception.InvalidRequestException;
 import org.eclipse.leshan.core.response.LwM2mResponse;
+import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,4 +119,40 @@ public class LwM2MTransportRequest {
         }
         return null;
     }
+
+    public LwM2mResponse doPutResource (LeshanServer lwServer, Registration registration, Integer objectId, Integer instanceId, Integer resourceId, String value) {
+        LwM2mResponse writeResponse = null;
+        try {
+            ResourceModel resourceModel = lwServer.getModelProvider().getObjectModel(registration).getObjectModel(objectId).resources.get(resourceId);
+            ResourceModel.Type typeRes = resourceModel.type;
+            WriteRequest writeRequest = getWriteRequestResource(objectId, instanceId, resourceId, value, typeRes);
+            writeResponse = lwServer.send(registration, writeRequest);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        log.info("[{}] [{}] Received endpoint writeResponse", registration.getEndpoint(), writeResponse);
+        return writeResponse;
+    }
+
+    private WriteRequest getWriteRequestResource (Integer objectId, Integer instanceId, Integer resourceId, String value, ResourceModel.Type type) {
+        switch (type) {
+            case STRING:    // String
+                return new WriteRequest(objectId, instanceId, resourceId, value);
+            case INTEGER:   // Long
+                return new WriteRequest(objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value)));
+            case OBJLNK:    // ObjectLink
+                return new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value));
+            case BOOLEAN:   // Boolean
+                return new WriteRequest(objectId, instanceId, resourceId, Boolean.valueOf(value));
+            case FLOAT:     // Double
+                return new WriteRequest(objectId, instanceId, resourceId, Double.valueOf(value));
+            case TIME:      // Date
+                return new WriteRequest(objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value))));
+            case OPAQUE:    // byte[] value, base64
+                return new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toCharArray()));
+            default:
+        }
+        return null;
+    }
+
 }
