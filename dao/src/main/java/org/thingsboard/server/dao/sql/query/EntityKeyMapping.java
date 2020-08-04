@@ -72,6 +72,7 @@ public class EntityKeyMapping {
     private static final String ZIP = "zip";
     private static final String PHONE = "phone";
 
+    public static final List<String> typedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE);
     public static final List<String> commonEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME);
     public static final List<String> dashboardEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, TITLE);
     public static final List<String> labeledEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL);
@@ -83,7 +84,7 @@ public class EntityKeyMapping {
     static {
         allowedEntityFieldMap.put(EntityType.DEVICE, new HashSet<>(labeledEntityFields));
         allowedEntityFieldMap.put(EntityType.ASSET, new HashSet<>(labeledEntityFields));
-        allowedEntityFieldMap.put(EntityType.ENTITY_VIEW, new HashSet<>(labeledEntityFields));
+        allowedEntityFieldMap.put(EntityType.ENTITY_VIEW, new HashSet<>(typedEntityFields));
 
         allowedEntityFieldMap.put(EntityType.TENANT, new HashSet<>(contactBasedEntityFields));
         allowedEntityFieldMap.get(EntityType.TENANT).add(REGION);
