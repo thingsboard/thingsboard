@@ -18,11 +18,14 @@ package org.thingsboard.server.service.telemetry;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -36,6 +39,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
@@ -47,7 +51,9 @@ import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -55,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -65,16 +72,19 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     private final AttributesService attrService;
     private final TimeseriesService tsService;
+    private final EntityViewService entityViewService;
 
     private ExecutorService tsCallBackExecutor;
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
+                                               EntityViewService entityViewService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService) {
         super(clusterService, partitionService);
         this.attrService = attrService;
         this.tsService = tsService;
+        this.entityViewService = entityViewService;
     }
 
     @PostConstruct
@@ -106,6 +116,50 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<Void>> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+        if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
+            Futures.addCallback(this.entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
+                    new FutureCallback<List<EntityView>>() {
+                        @Override
+                        public void onSuccess(@Nullable List<EntityView> result) {
+                            if (result != null) {
+                                for (EntityView entityView : result) {
+                                    if (entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null
+                                        && !entityView.getKeys().getTimeseries().isEmpty()) {
+                                        List<TsKvEntry> entityViewLatest = new ArrayList<>();
+                                        for (String key : entityView.getKeys().getTimeseries()) {
+                                            long startTime = entityView.getStartTimeMs();
+                                            long endTime = entityView.getEndTimeMs();
+                                            long startTs = startTime;
+                                            long endTs = endTime == 0 ? System.currentTimeMillis() : endTime;
+                                            Optional<TsKvEntry> tsKvEntry = ts.stream()
+                                                    .filter(entry -> entry.getKey().equals(key) && entry.getTs() > startTs && entry.getTs() <= endTs)
+                                                    .max(Comparator.comparingLong(TsKvEntry::getTs));
+                                            if (tsKvEntry.isPresent()) {
+                                                entityViewLatest.add(tsKvEntry.get());
+                                            }
+                                        }
+                                        if (!entityViewLatest.isEmpty()) {
+                                            saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<Void>() {
+                                                @Override
+                                                public void onSuccess(@Nullable Void tmp) {
+                                                }
+
+                                                @Override
+                                                public void onFailure(Throwable t) {
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("Error while finding entity views by tenantId and entityId", t);
+                        }
+                    }, MoreExecutors.directExecutor());
+        }
     }
 
     @Override
