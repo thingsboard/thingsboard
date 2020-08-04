@@ -58,6 +58,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -123,10 +124,10 @@ public class EntityViewController extends BaseController {
                         futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SERVER_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), getCurrentUser()));
                         futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SHARED_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), getCurrentUser()));
                     }
-                    if (existingEntityView.getKeys().getTimeseries() != null && !existingEntityView.getKeys().getTimeseries().isEmpty()) {
-                        futures.add(deleteLatestFromEntityView(existingEntityView, existingEntityView.getKeys().getTimeseries(), getCurrentUser()));
-                    }
                 }
+                List<String> tsKeys = existingEntityView.getKeys() != null && existingEntityView.getKeys().getTimeseries() != null ?
+                        existingEntityView.getKeys().getTimeseries() : Collections.emptyList();
+                futures.add(deleteLatestFromEntityView(existingEntityView, tsKeys, getCurrentUser()));
             }
 
             EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
@@ -136,9 +137,7 @@ public class EntityViewController extends BaseController {
                     futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), getCurrentUser()));
                     futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), getCurrentUser()));
                 }
-                if (savedEntityView.getKeys().getTimeseries() != null && !savedEntityView.getKeys().getTimeseries().isEmpty()) {
-                    futures.add(copyLatestFromEntityToEntityView(savedEntityView, getCurrentUser()));
-                }
+                futures.add(copyLatestFromEntityToEntityView(savedEntityView, getCurrentUser()));
             }
             for (ListenableFuture<?> future : futures) {
                 try {
@@ -184,7 +183,27 @@ public class EntityViewController extends BaseController {
                 }
             });
         } else {
-            resultFuture.set(null);
+            tsSubService.deleteAllLatest(entityView.getTenantId(), entityId, new FutureCallback<Collection<String>>() {
+                @Override
+                public void onSuccess(@Nullable Collection<String> keys) {
+                    try {
+                        logTimeseriesDeleted(user, entityId, new ArrayList<>(keys), null);
+                    } catch (ThingsboardException e) {
+                        log.error("Failed to log timeseries delete", e);
+                    }
+                    resultFuture.set(null);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    try {
+                        logTimeseriesDeleted(user, entityId, Collections.emptyList(), t);
+                    } catch (ThingsboardException e) {
+                        log.error("Failed to log timeseries delete", e);
+                    }
+                    resultFuture.setException(t);
+                }
+            });
         }
         return resultFuture;
     }
@@ -222,18 +241,21 @@ public class EntityViewController extends BaseController {
 
     private ListenableFuture<List<Void>> copyLatestFromEntityToEntityView(EntityView entityView, SecurityUser user) {
         EntityViewId entityId = entityView.getId();
-        List<String> keys = entityView.getKeys().getTimeseries();
-        long startTime = entityView.getStartTimeMs();
-        long endTime = entityView.getEndTimeMs();
-        ListenableFuture<List<TsKvEntry>> latestFuture;
-        if (startTime == 0 && endTime == 0) {
-            latestFuture = tsService.findLatest(user.getTenantId(), entityView.getEntityId(), keys);
+        List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
+             entityView.getKeys().getTimeseries() : Collections.emptyList();
+        long startTs = entityView.getStartTimeMs();
+        long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
+        ListenableFuture<List<String>> keysFuture;
+        if (keys.isEmpty()) {
+            keysFuture = Futures.transform(tsService.findAllLatest(user.getTenantId(),
+                    entityView.getEntityId()), latest -> latest.stream().map(TsKvEntry::getKey).collect(Collectors.toList()), MoreExecutors.directExecutor());
         } else {
-            long startTs = startTime;
-            long endTs = endTime == 0 ? System.currentTimeMillis() : endTime;
-            List<ReadTsKvQuery> queries = keys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
-            latestFuture = tsService.findAll(user.getTenantId(), entityView.getEntityId(), queries);
+            keysFuture = Futures.immediateFuture(keys);
         }
+        ListenableFuture<List<TsKvEntry>> latestFuture = Futures.transformAsync(keysFuture, fetchKeys -> {
+            List<ReadTsKvQuery> queries = fetchKeys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
+            return tsService.findAll(user.getTenantId(), entityView.getEntityId(), queries);
+        }, MoreExecutors.directExecutor());
         return Futures.transform(latestFuture, latestValues -> {
             if (latestValues != null && !latestValues.isEmpty()) {
                 tsSubService.saveLatestAndNotify(entityView.getTenantId(), entityId, latestValues, new FutureCallback<Void>() {

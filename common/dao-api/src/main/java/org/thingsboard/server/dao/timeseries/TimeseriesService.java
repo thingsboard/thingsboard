@@ -45,4 +45,6 @@ public interface TimeseriesService {
     ListenableFuture<List<Void>> remove(TenantId tenantId, EntityId entityId, List<DeleteTsKvQuery> queries);
 
     ListenableFuture<List<Void>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys);
+
+    ListenableFuture<Collection<String>> removeAllLatest(TenantId tenantId, EntityId entityId);
 }

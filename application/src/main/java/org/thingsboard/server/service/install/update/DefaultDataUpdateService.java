@@ -43,6 +43,7 @@ import org.thingsboard.server.service.install.InstallScripts;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -145,18 +146,21 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private ListenableFuture<List<Void>> updateEntityViewLatestTelemetry(EntityView entityView) {
         EntityViewId entityId = entityView.getId();
-        List<String> keys = entityView.getKeys().getTimeseries();
-        long startTime = entityView.getStartTimeMs();
-        long endTime = entityView.getEndTimeMs();
-        ListenableFuture<List<TsKvEntry>> latestFuture;
-        if (startTime == 0 && endTime == 0) {
-            latestFuture = tsService.findLatest(TenantId.SYS_TENANT_ID, entityView.getEntityId(), keys);
+        List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
+                entityView.getKeys().getTimeseries() : Collections.emptyList();
+        long startTs = entityView.getStartTimeMs();
+        long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
+        ListenableFuture<List<String>> keysFuture;
+        if (keys.isEmpty()) {
+            keysFuture = Futures.transform(tsService.findAllLatest(TenantId.SYS_TENANT_ID,
+                    entityView.getEntityId()), latest -> latest.stream().map(TsKvEntry::getKey).collect(Collectors.toList()), MoreExecutors.directExecutor());
         } else {
-            long startTs = startTime;
-            long endTs = endTime == 0 ? System.currentTimeMillis() : endTime;
-            List<ReadTsKvQuery> queries = keys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
-            latestFuture = tsService.findAll(TenantId.SYS_TENANT_ID, entityView.getEntityId(), queries);
+            keysFuture = Futures.immediateFuture(keys);
         }
+        ListenableFuture<List<TsKvEntry>> latestFuture = Futures.transformAsync(keysFuture, fetchKeys -> {
+                List<ReadTsKvQuery> queries = fetchKeys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
+                return tsService.findAll(TenantId.SYS_TENANT_ID, entityView.getEntityId(), queries);
+            }, MoreExecutors.directExecutor());
         return Futures.transformAsync(latestFuture, latestValues -> {
             if (latestValues != null && !latestValues.isEmpty()) {
                 ListenableFuture<List<Void>> saveFuture = tsService.saveLatest(TenantId.SYS_TENANT_ID, entityId, latestValues);
