@@ -15,19 +15,37 @@
  */
 package org.thingsboard.server.service.install.update;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.install.InstallScripts;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Service
 @Profile("install")
@@ -43,12 +61,22 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private InstallScripts installScripts;
 
+    @Autowired
+    private EntityViewService entityViewService;
+
+    @Autowired
+    private TimeseriesService tsService;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
             case "1.4.0":
                 log.info("Updating data from version 1.4.0 to 2.0.0 ...");
                 tenantsDefaultRuleChainUpdater.updateEntities(null);
+                break;
+            case "3.0.1":
+                log.info("Updating data from version 3.0.1 to 3.1.0 ...");
+                tenantsEntityViewsUpdater.updateEntities(null);
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -75,5 +103,67 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     }
                 }
             };
+
+    private PaginatedUpdater<String, Tenant> tenantsEntityViewsUpdater =
+            new PaginatedUpdater<String, Tenant>() {
+
+                @Override
+                protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
+                    return tenantService.findTenants(pageLink);
+                }
+
+                @Override
+                protected void updateEntity(Tenant tenant) {
+                    updateTenantEntityViews(tenant.getId());
+                }
+            };
+
+     private void updateTenantEntityViews(TenantId tenantId) {
+         PageLink pageLink = new PageLink(100);
+         PageData<EntityView> pageData = entityViewService.findEntityViewByTenantId(tenantId, pageLink);
+         boolean hasNext = true;
+         while (hasNext) {
+             List<ListenableFuture<List<Void>>> updateFutures = new ArrayList<>();
+             for (EntityView entityView : pageData.getData()) {
+                 updateFutures.add(updateEntityViewLatestTelemetry(entityView));
+             }
+
+             try {
+                 Futures.allAsList(updateFutures).get();
+             } catch (InterruptedException | ExecutionException e) {
+                 log.error("Failed to copy latest telemetry to entity view", e);
+             }
+
+             if (pageData.hasNext()) {
+                 pageLink = pageLink.nextPageLink();
+                 pageData = entityViewService.findEntityViewByTenantId(tenantId, pageLink);
+             } else {
+                 hasNext = false;
+             }
+         }
+     }
+
+    private ListenableFuture<List<Void>> updateEntityViewLatestTelemetry(EntityView entityView) {
+        EntityViewId entityId = entityView.getId();
+        List<String> keys = entityView.getKeys().getTimeseries();
+        long startTime = entityView.getStartTimeMs();
+        long endTime = entityView.getEndTimeMs();
+        ListenableFuture<List<TsKvEntry>> latestFuture;
+        if (startTime == 0 && endTime == 0) {
+            latestFuture = tsService.findLatest(TenantId.SYS_TENANT_ID, entityView.getEntityId(), keys);
+        } else {
+            long startTs = startTime;
+            long endTs = endTime == 0 ? System.currentTimeMillis() : endTime;
+            List<ReadTsKvQuery> queries = keys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
+            latestFuture = tsService.findAll(TenantId.SYS_TENANT_ID, entityView.getEntityId(), queries);
+        }
+        return Futures.transformAsync(latestFuture, latestValues -> {
+            if (latestValues != null && !latestValues.isEmpty()) {
+                ListenableFuture<List<Void>> saveFuture = tsService.saveLatest(TenantId.SYS_TENANT_ID, entityId, latestValues);
+                return saveFuture;
+            }
+            return null;
+        }, MoreExecutors.directExecutor());
+    }
 
 }

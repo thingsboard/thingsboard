@@ -116,10 +116,23 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public void saveLatestAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> saveFuture = tsService.saveLatest(tenantId, entityId, ts);
+        addMainCallback(saveFuture, callback);
+        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+    }
+
+    @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addMainCallback(deleteFuture, callback);
         addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
+    }
+
+    @Override
+    public void deleteLatest(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> deleteFuture = tsService.removeLatest(tenantId, entityId, keys);
+        addMainCallback(deleteFuture, callback);
     }
 
     @Override

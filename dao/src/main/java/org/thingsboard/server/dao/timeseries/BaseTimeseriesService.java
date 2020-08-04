@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -149,6 +150,18 @@ public class BaseTimeseriesService implements TimeseriesService {
         return Futures.allAsList(futures);
     }
 
+    @Override
+    public ListenableFuture<List<Void>> saveLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries) {
+        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size());
+        for (TsKvEntry tsKvEntry : tsKvEntries) {
+            if (tsKvEntry == null) {
+                throw new IncorrectParameterException("Key value entry can't be null");
+            }
+            futures.add(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry));
+        }
+        return Futures.allAsList(futures);
+    }
+
     private void saveAndRegisterFutures(TenantId tenantId, List<ListenableFuture<Void>> futures, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
         if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             throw new IncorrectParameterException("Telemetry data can't be stored for entity view. Read only");
@@ -184,6 +197,17 @@ public class BaseTimeseriesService implements TimeseriesService {
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(deleteTsKvQueries.size() * DELETES_PER_ENTRY);
         for (DeleteTsKvQuery tsKvQuery : deleteTsKvQueries) {
             deleteAndRegisterFutures(tenantId, futures, entityId, tsKvQuery);
+        }
+        return Futures.allAsList(futures);
+    }
+
+    @Override
+    public ListenableFuture<List<Void>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys) {
+        validate(entityId);
+        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(keys.size());
+        for (String key : keys) {
+            DeleteTsKvQuery query = new BaseDeleteTsKvQuery(key, 0, System.currentTimeMillis(), false);
+            futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
         }
         return Futures.allAsList(futures);
     }
