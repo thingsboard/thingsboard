@@ -550,14 +550,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     private String buildTextSearchQuery(QueryContext ctx, List<EntityKeyMapping> selectionMapping, String searchText) {
         if (!StringUtils.isEmpty(searchText) && !selectionMapping.isEmpty()) {
-            String lowerSearchText = searchText.toLowerCase() + "%";
-            List<String> searchPredicates = selectionMapping.stream().map(mapping -> {
-                        String paramName = mapping.getValueAlias() + "_lowerSearchText";
-                        ctx.addStringParameter(paramName, lowerSearchText);
-                        return String.format("LOWER(%s) LIKE concat('%%', :%s, '%%')", mapping.getValueAlias(), paramName);
-                    }
-            ).collect(Collectors.toList());
-            return String.format(" WHERE %s", String.join(" or ", searchPredicates));
+            String lowerSearchText = "%" + searchText.toLowerCase() + "%";
+            ctx.addStringParameter("lowerSearchTextParam", lowerSearchText);
+            List<String> searchAliases = selectionMapping.stream().map(EntityKeyMapping::getValueAlias).collect(Collectors.toList());
+            return String.format(" WHERE LOWER(CONCAT(%s)) LIKE :%s", String.join(" , ", searchAliases), "lowerSearchTextParam");
         } else {
             return "";
         }
