@@ -24,6 +24,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.io.File;
+import java.util.Map;
+import java.util.UUID;
 
 public class MigratorTool {
 
@@ -39,8 +41,10 @@ public class MigratorTool {
             File partitionsSaveDir = new File(cmd.getOptionValue("partitionsOut"));
             boolean castEnable = Boolean.parseBoolean(cmd.getOptionValue("castEnable"));
 
-            PgCaLatestMigrator.migrateLatest(latestSource, latestSaveDir, castEnable);
-            PostgresToCassandraTelemetryMigrator.migrateTs(tsSource, tsSaveDir, partitionsSaveDir, castEnable);
+            Map<Long, String> keyMap = KeyDictionaryReader.read(latestSource);
+            Map<UUID, String> entityMap = EntityDictionaryReader.read(latestSource);
+            PgCaLatestMigrator.migrateLatest(latestSource, latestSaveDir, castEnable, keyMap, entityMap);
+            PostgresToCassandraTelemetryMigrator.migrateTs(tsSource, tsSaveDir, partitionsSaveDir, castEnable, keyMap, entityMap);
 
         } catch (Throwable th) {
             th.printStackTrace();

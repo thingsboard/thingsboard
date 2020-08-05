@@ -13,7 +13,7 @@ Switch to `tools` module in Command Line and execute
 
     mvn clean compile assembly:single
     
-It will generate single jar file with all required dependencies inside `target dir` -> `tools-2.4.1-SNAPSHOT-jar-with-dependencies.jar`.
+It will generate single jar file with all required dependencies inside `target dir` -> `tools-2.5.3-SNAPSHOT-jar-with-dependencies.jar`.
 
 
 # Prepare requred files and run Tool:
@@ -21,15 +21,11 @@ It will generate single jar file with all required dependencies inside `target d
 #### Dump data from the source Postgres Database
 *Do not use compression if possible because Tool can only work with uncompressed file
 
-1. Dump table `ts_kv` table:
+1. Dump `thingsboard` database:
 
-    `pg_dump -h localhost -U postgres -d thingsboard -t ts_kv > ts_kv.dmp`
+    `pg_dump -h localhost -U postgres -d thingsboard > thingsboard_db.dmp`
 
-2. Dump table `ts_kv_latest` table:
-
-    `pg_dump -h localhost -U postgres -d thingsboard -t ts_kv_latest > ts_kv_latest.dmp`
-
-3. [Optional] move table dumps to the instance where cassandra will be hosted
+3. [Optional] move database dump to the instance where cassandra will be hosted
 
 #### Prepare directory structure for SSTables
 Tool use 3 different directories for saving SSTables - `ts_kv_cf`, `ts_kv_latest_cf`, `ts_kv_partitions_cf`
@@ -44,10 +40,10 @@ Create 3 empty directories. For example:
 *Note: if you run this tool on remote instance - don't forget to execute this command in `screen` to avoid unexpected termination
 
 ```
-java -jar ./tools-2.4.1-SNAPSHOT-jar-with-dependencies.jar 
-        -latestFrom ./source/ts_kv_latest.dmp
+java -jar ./tools-2.5.3-SNAPSHOT-jar-with-dependencies.jar 
+        -latestFrom ./source/thingsboard_db.dmp
         -latestOut /home/ubunut/migration/ts_latest 
-        -tsFrom ./source/ts_kv.dmp
+        -tsFrom ./source/thingsboard_db.dmp
         -tsOut /home/ubunut/migration/ts  
         -partitionsOut /home/ubunut/migration/ts_partition
         -castEnable false

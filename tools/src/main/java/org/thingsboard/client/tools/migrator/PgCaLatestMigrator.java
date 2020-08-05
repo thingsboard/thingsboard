@@ -26,14 +26,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class PgCaLatestMigrator {
 
-    private static final long LOG_BATCH = 1000000;
+    private static final long LOG_BATCH = 10000000;
     private static final long rowPerFile = 1000000;
 
 
@@ -45,12 +49,16 @@ public class PgCaLatestMigrator {
     private static long currentWriterCount = 1;
     private static CQLSSTableWriter currentTsWriter = null;
 
-    public static void migrateLatest(File sourceFile, File outDir, boolean castStringsIfPossible) throws IOException {
+    private static Map<Long, AtomicLong> missedKeys = new HashMap<>();
+    private static Map<UUID, AtomicLong> missedEntities = new HashMap<>();
+
+    public static void migrateLatest(File sourceFile, File outDir, boolean castStringsIfPossible,
+                                     Map<Long, String> keyDictionary, Map<UUID, String> entityDictionary) throws IOException {
         long startTs = System.currentTimeMillis();
         long stepLineTs = System.currentTimeMillis();
         long stepOkLineTs = System.currentTimeMillis();
         LineIterator iterator = FileUtils.lineIterator(sourceFile);
-        currentTsWriter = WriterBuilder.getTsWriter(outDir);
+        currentTsWriter = WriterBuilder.getLatestWriter(outDir);
 
         boolean isBlockStarted = false;
         boolean isBlockFinished = false;
@@ -86,9 +94,11 @@ public class PgCaLatestMigrator {
                 try {
                     List<String> raw = Arrays.stream(line.trim().split("\t"))
                             .map(String::trim)
-                            .filter(StringUtils::isNotEmpty)
                             .collect(Collectors.toList());
-                    List<Object> values = toValues(raw);
+                    List<Object> values = toValues(raw, keyDictionary, entityDictionary);
+                    if (values.isEmpty()) {
+                        continue;
+                    }
 
                     if (currentWriterCount == 0) {
                         System.out.println(new Date() + " close writer " + new Date());
@@ -123,6 +133,8 @@ public class PgCaLatestMigrator {
 
         currentTsWriter.close();
         System.out.println();
+        System.out.println("Keys not found " + missedKeys.size());
+        System.out.println("Entities not found " + missedEntities.size());
         System.out.println("Finished migrate Latest Telemetry");
     }
 
@@ -144,29 +156,45 @@ public class PgCaLatestMigrator {
         return values;
     }
 
-    private static List<Object> toValues(List<String> raw) {
+    private static List<Object> toValues(List<String> raw, Map<Long, String> keyDictionary, Map<UUID, String> entityDictionary) {
         //expected Table structure:
-//        COPY public.ts_kv_latest (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) FROM stdin;
+//        COPY public.ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) FROM stdin;
+//        faced370-0cf9-11ea-8814-073abbf077c0    99      1575000676470   \N      \N      0       \N      \N
 
 
         List<Object> result = new ArrayList<>();
-        result.add(raw.get(0));
-        result.add(fromString(raw.get(1)));
-        result.add(raw.get(2));
+        UUID entityId = fromString(raw.get(0));
 
-        long ts = Long.parseLong(raw.get(3));
+        if (!entityDictionary.containsKey(entityId)) {
+            AtomicLong count = missedEntities.computeIfAbsent(entityId, id -> new AtomicLong(0L));
+            count.incrementAndGet();
+            return Collections.emptyList();
+        }
+
+        result.add(entityDictionary.get(entityId));
+        result.add(entityId);
+
+        long keyId = Long.parseLong(raw.get(1));
+        if (!keyDictionary.containsKey(keyId)) {
+            AtomicLong count = missedKeys.computeIfAbsent(keyId, id -> new AtomicLong(0L));
+            count.incrementAndGet();
+            return Collections.emptyList();
+        }
+        result.add(keyDictionary.get(keyId));
+
+        long ts = Long.parseLong(raw.get(2));
         result.add(ts);
 
-        result.add(raw.get(4).equals("\\N") ? null : raw.get(4).equals("t") ? Boolean.TRUE : Boolean.FALSE);
-        result.add(raw.get(5).equals("\\N") ? null : raw.get(5));
-        result.add(raw.get(6).equals("\\N") ? null : Long.parseLong(raw.get(6)));
-        result.add(raw.get(7).equals("\\N") ? null : Double.parseDouble(raw.get(7)));
+        result.add(raw.get(3).equals("\\N") ? null : raw.get(3).equals("t") ? Boolean.TRUE : Boolean.FALSE);
+        result.add(raw.get(4).equals("\\N") ? null : raw.get(4));
+        result.add(raw.get(5).equals("\\N") ? null : Long.parseLong(raw.get(5)));
+        result.add(raw.get(6).equals("\\N") ? null : Double.parseDouble(raw.get(6)));
+        result.add(raw.get(7).equals("\\N") ? null : raw.get(7));
         return result;
     }
 
     public static UUID fromString(String src) {
-        return UUID.fromString(src.substring(7, 15) + "-" + src.substring(3, 7) + "-1"
-                + src.substring(0, 3) + "-" + src.substring(15, 19) + "-" + src.substring(19));
+        return UUID.fromString(src);
     }
 
     private static boolean isBlockStarted(String line) {
