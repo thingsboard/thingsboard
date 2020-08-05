@@ -105,7 +105,7 @@ export const HelpLinks = {
     ruleNodeRestApiCall: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node',
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
-    customers: helpBaseUrl + '/docs/user-guide/customers',
+    customers: helpBaseUrl + '/docs/user-guide/ui/customers',
     users: helpBaseUrl + '/docs/user-guide/ui/users',
     devices: helpBaseUrl + '/docs/user-guide/ui/devices',
     assets: helpBaseUrl + '/docs/user-guide/ui/assets',

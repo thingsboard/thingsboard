@@ -840,6 +840,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
+  isSorting(column: EntityColumn): boolean {
+    return column.type === DataKeyType.alarm && column.name.startsWith('details.');
+  }
 }
 
 class AlarmsDatasource implements DataSource<AlarmDataInfo> {

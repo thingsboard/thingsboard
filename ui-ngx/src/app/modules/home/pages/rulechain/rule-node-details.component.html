@@ -15,6 +15,12 @@
     limitations under the License.
 
 -->
+<div class="tb-details-buttons" *ngIf="!isAdd && ruleNode.component.type === ruleNodeType.RULE_CHAIN">
+  <button mat-raised-button color="primary"
+          (click)="openRuleChain($event)">
+    {{'rulechain.open-rulechain' | translate }}
+  </button>
+</div>
 <div class="mat-padding" fxLayout="column">
   <form [formGroup]="ruleNodeFormGroup">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit || isReadOnly">
