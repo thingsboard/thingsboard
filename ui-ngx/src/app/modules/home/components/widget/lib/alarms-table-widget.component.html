@@ -78,7 +78,9 @@
           </mat-cell>
         </ng-container>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
-          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
+          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="isSorting(column)">
+            {{ column.title }}
+          </mat-header-cell>
           <mat-cell *matCellDef="let alarm;"
                     [innerHTML]="cellContent(alarm, column)"
                     [ngStyle]="cellStyle(alarm, column)">
