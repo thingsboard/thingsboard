@@ -113,5 +113,13 @@ public class TenantAdminPermissions extends AbstractPermissions {
         public boolean hasPermission(SecurityUser user, Operation operation) {
             return oAuth2Service.isOAuth2ClientRegistrationAllowed(user.getTenantId());
         }
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            return hasPermission(user, operation);
+        }
     };
 }

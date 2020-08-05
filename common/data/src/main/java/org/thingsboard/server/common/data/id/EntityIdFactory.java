@@ -62,6 +62,8 @@ public class EntityIdFactory {
                 return new WidgetsBundleId(uuid);
             case WIDGET_TYPE:
                 return new WidgetTypeId(uuid);
+            case OAUTH2_CLIENT_REGISTRATION:
+                return new OAuth2ClientRegistrationId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }

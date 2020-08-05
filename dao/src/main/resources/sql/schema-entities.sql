@@ -306,6 +306,42 @@ CREATE TABLE IF NOT EXISTS ts_kv_dictionary
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
 );
 
+CREATE TABLE IF NOT EXISTS oauth2_client_registration (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    tenant_id uuid,
+    registration_id varchar(255),
+    domain_name varchar(255),
+    client_id varchar(255),
+    client_secret varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    redirect_uri_template varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    login_button_label varchar(255),
+    login_button_icon varchar(255),
+    allow_user_creation boolean,
+    activate_user boolean,
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    custom_url varchar(255),
+    custom_username varchar(255),
+    custom_password varchar(255),
+    CONSTRAINT oauth2_registration_id_unq_key UNIQUE (registration_id)
+);
+
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS
 $$

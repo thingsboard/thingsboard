@@ -32,7 +32,7 @@ public enum Resource {
     USER(EntityType.USER),
     WIDGETS_BUNDLE(EntityType.WIDGETS_BUNDLE),
     WIDGET_TYPE(EntityType.WIDGET_TYPE),
-    OAUTH2_CONFIGURATION(),
+    OAUTH2_CONFIGURATION(EntityType.OAUTH2_CLIENT_REGISTRATION),
     ;
 
     private final EntityType entityType;

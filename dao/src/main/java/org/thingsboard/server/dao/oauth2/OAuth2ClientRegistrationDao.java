@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.oauth2;
+package org.thingsboard.server.dao.oauth2;
 
-import lombok.*;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
+import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
+import java.util.UUID;
 
-@EqualsAndHashCode
-@Data
-@ToString
-@Builder(toBuilder = true)
-@NoArgsConstructor
-@AllArgsConstructor
-public class OAuth2ClientsParams {
-    private List<OAuth2ClientRegistration> clientRegistrations;
+public interface OAuth2ClientRegistrationDao extends Dao<OAuth2ClientRegistration> {
+    OAuth2ClientRegistration findByRegistrationId(String registrationId);
+
+    List<OAuth2ClientRegistration> findAll();
+
+    List<OAuth2ClientRegistration> findByTenantId(UUID tenantId);
+
+    List<OAuth2ClientRegistration> findByDomainName(String domainName);
+
+    boolean removeByRegistrationId(String registrationId);
+
+    int removeByTenantId(UUID tenantId);
 }

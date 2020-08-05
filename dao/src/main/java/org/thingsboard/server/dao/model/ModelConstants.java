@@ -355,22 +355,22 @@ public class ModelConstants {
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";
 
     /**
-     * Cassandra OAuth2 client registration constants.
+     * OAuth2 client registration constants.
      */
+    public static final String OAUTH2_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
     public static final String OAUTH2_CLIENT_REGISTRATION_ID_PROPERTY = "registration_id";
+    public static final String OAUTH2_DOMAIN_NAME_PROPERTY = "domain_name";
     public static final String OAUTH2_CLIENT_ID_PROPERTY = "client_id";
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
     public static final String OAUTH2_TOKEN_URI_PROPERTY = "token_uri";
     public static final String OAUTH2_REDIRECT_URI_TEMPLATE_PROPERTY = "redirect_uri_template";
     public static final String OAUTH2_SCOPE_PROPERTY = "scope";
-    public static final String OAUTH2_AUTHORIZATION_GRANT_TYPE_PROPERTY = "authorization_grant_type";
     public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
     public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
     public static final String OAUTH2_JWK_SET_URI_PROPERTY = "jwk_set_uri";
     public static final String OAUTH2_CLIENT_AUTHENTICATION_METHOD_PROPERTY = "client_authentication_method";
-    public static final String OAUTH2_CLIENT_NAME_PROPERTY = "client_name";
     public static final String OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY = "login_button_label";
     public static final String OAUTH2_LOGIN_BUTTON_ICON_PROPERTY = "login_button_icon";
     public static final String OAUTH2_ALLOW_USER_CREATION_PROPERTY = "allow_user_creation";

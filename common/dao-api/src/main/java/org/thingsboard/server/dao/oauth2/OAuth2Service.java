@@ -15,39 +15,30 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.ExtendedOAuth2ClientRegistration;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
 
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 public interface OAuth2Service {
-    Pair<TenantId, OAuth2ClientRegistration> getClientRegistrationWithTenant(String registrationId);
-
-    ExtendedOAuth2ClientRegistration getExtendedClientRegistration(String registrationId);
-
     List<OAuth2ClientInfo> getOAuth2Clients(String domainName);
 
-    OAuth2ClientsParams saveSystemOAuth2ClientsParams(OAuth2ClientsParams oAuth2ClientsParams);
+    OAuth2ClientRegistration saveClientRegistration(OAuth2ClientRegistration clientRegistration);
 
-    OAuth2ClientsParams saveTenantOAuth2ClientsParams(TenantId tenantId, OAuth2ClientsParams oAuth2ClientsParams);
+    List<OAuth2ClientRegistration> findClientRegistrationsByTenantId(TenantId tenantId);
 
-    OAuth2ClientsParams getSystemOAuth2ClientsParams();
+    OAuth2ClientRegistration findClientRegistrationByRegistrationId(String registrationId);
 
-    OAuth2ClientsParams getTenantOAuth2ClientsParams(TenantId tenantId);
+    OAuth2ClientRegistration findClientRegistrationById(TenantId tenantId, OAuth2ClientRegistrationId id);
 
-    void deleteTenantOAuth2ClientsParams(TenantId tenantId);
+    List<OAuth2ClientRegistration> findAllClientRegistrations();
 
-    void deleteSystemOAuth2ClientsParams();
+    void deleteClientRegistrationsByTenantId(TenantId tenantId);
+
+    void deleteClientRegistrationById(TenantId tenantId, OAuth2ClientRegistrationId id);
 
     boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId);
-
-    Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams();
-
 }

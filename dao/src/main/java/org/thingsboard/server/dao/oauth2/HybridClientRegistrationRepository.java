@@ -32,19 +32,19 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        ExtendedOAuth2ClientRegistration localExtendedClientRegistration = oAuth2Service.getExtendedClientRegistration(registrationId);
-        return localExtendedClientRegistration == null ?
-                null : toSpringClientRegistration(localExtendedClientRegistration.getRedirectUriTemplate(), localExtendedClientRegistration.getClientRegistration());
+        OAuth2ClientRegistration oAuth2ClientRegistration = oAuth2Service.findClientRegistrationByRegistrationId(registrationId);
+        return oAuth2ClientRegistration == null ?
+                null : toSpringClientRegistration(oAuth2ClientRegistration);
     }
 
-    private ClientRegistration toSpringClientRegistration(String redirectUriTemplate, OAuth2ClientRegistration localClientRegistration){
+    private ClientRegistration toSpringClientRegistration(OAuth2ClientRegistration localClientRegistration){
         return ClientRegistration.withRegistrationId(localClientRegistration.getRegistrationId())
                 .clientName(localClientRegistration.getRegistrationId())
                 .clientId(localClientRegistration.getClientId())
                 .authorizationUri(localClientRegistration.getAuthorizationUri())
                 .clientSecret(localClientRegistration.getClientSecret())
                 .tokenUri(localClientRegistration.getAccessTokenUri())
-                .redirectUriTemplate(redirectUriTemplate)
+                .redirectUriTemplate(localClientRegistration.getRedirectUriTemplate())
                 .scope(localClientRegistration.getScope())
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .userInfoUri(localClientRegistration.getUserInfoUri())

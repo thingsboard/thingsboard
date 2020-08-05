@@ -47,22 +47,10 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.id.WidgetTypeId;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -87,6 +75,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -160,6 +149,9 @@ public abstract class BaseController {
 
     @Autowired
     protected DashboardService dashboardService;
+
+    @Autowired
+    protected OAuth2Service oAuth2Service;
 
     @Autowired
     protected ComponentDiscoveryService componentDescriptorService;
@@ -390,6 +382,9 @@ public abstract class BaseController {
                 case WIDGET_TYPE:
                     checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
+                case OAUTH2_CLIENT_REGISTRATION:
+                    checkOAuth2ClientRegistrationId(new OAuth2ClientRegistrationId(entityId.getId()), operation);
+                    return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
             }
@@ -537,6 +532,18 @@ public abstract class BaseController {
             checkNotNull(dashboardInfo);
             accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, operation, dashboardId, dashboardInfo);
             return dashboardInfo;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    OAuth2ClientRegistration checkOAuth2ClientRegistrationId(OAuth2ClientRegistrationId clientRegistrationId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(clientRegistrationId, "Incorrect oAuth2ClientRegistrationId " + clientRegistrationId);
+            OAuth2ClientRegistration clientRegistration = oAuth2Service.findClientRegistrationById(getCurrentUser().getTenantId(), clientRegistrationId);
+            checkNotNull(clientRegistration);
+            accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION, operation, clientRegistrationId, clientRegistration);
+            return clientRegistration;
         } catch (Exception e) {
             throw handleException(e, false);
         }
