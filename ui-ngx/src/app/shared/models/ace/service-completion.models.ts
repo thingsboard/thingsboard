@@ -15,15 +15,6 @@
 ///
 
 import { FunctionArg, FunctionArgType, TbEditorCompletions } from '@shared/models/ace/completion.models';
-import {Asset} from "@shared/models/asset.models";
-import {AttributeData} from "@shared/models/telemetry/telemetry.models";
-import {BaseData} from "@shared/models/base-data";
-import {EntityId} from "@shared/models/id/entity-id";
-import {AliasFilterType, EntityAlias, EntityAliasFilterResult} from "@shared/models/alias.models";
-import {Datasource} from "@shared/models/widget.models";
-import {AliasInfo, StateParams} from "@core/api/widget-api.models";
-import {ImportEntityData} from "@shared/models/entity.models";
-
 
 export const entityIdHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/id/entity-id.ts#L20">EntityId</a>';
 
@@ -101,7 +92,7 @@ export const importEntityDataHref = '<a href="https://github.com/thingsboard/thi
 
 export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L42">Import entities result info</a>'
 
-export const customDialogComponentHref = '<a href="ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts:48">CustomDialogComponent</a>'
+export const customDialogComponentHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts#L48">CustomDialogComponent</a>'
 
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
@@ -1219,7 +1210,7 @@ export const serviceCompletions: TbEditorCompletions = {
           type:`Observable&lt;Array&lt;string&gt;&gt;`,
           description:`An <code>Observable</code> of <code>string</code> variable.`
         }
-        //observableArrayReturnType('string')
+        // observableArrayReturnType('string')
       },
       createDatasourcesFromSubscriptionsInfo: {
         description: 'Create database from subscriptions info',
@@ -1291,7 +1282,7 @@ export const serviceCompletions: TbEditorCompletions = {
         ],
         return:observableReturnTypeVariable('any')
 
-        //observableReturnType('any')
+        // observableReturnType('any')
       },
     }
   },
