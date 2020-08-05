@@ -96,7 +96,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
 
   validateDuplicateFilterName(): ValidatorFn {
     return (c: FormControl) => {
-      const newFilter = c.value;
+      const newFilter = c.value.trim();
       const found = this.filters.find((filter) => filter.filter === newFilter);
       if (found) {
         if (this.isAdd || this.filter.id !== found.id) {
@@ -126,7 +126,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
 
   save(): void {
     this.submitted = true;
-    this.filter.filter = this.filterFormGroup.get('filter').value;
+    this.filter.filter = this.filterFormGroup.get('filter').value.trim();
     this.filter.editable = this.filterFormGroup.get('editable').value;
     this.filter.keyFilters = this.filterFormGroup.get('keyFilters').value;
     if (this.isAdd) {
