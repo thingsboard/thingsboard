@@ -39,7 +39,7 @@ public class SysAdminPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, systemEntityPermissionChecker);
         put(Resource.WIDGET_TYPE, systemEntityPermissionChecker);
-        put(Resource.OAUTH2_CONFIGURATION, PermissionChecker.allowAllPermissionChecker);
+        put(Resource.OAUTH2_CONFIGURATION, sysAdminOAuth2ConfigPermissionChecker);
     }
 
     private static final PermissionChecker systemEntityPermissionChecker = new PermissionChecker() {
@@ -64,6 +64,21 @@ public class SysAdminPermissions extends AbstractPermissions {
             return true;
         }
 
+    };
+
+    private final PermissionChecker sysAdminOAuth2ConfigPermissionChecker = new PermissionChecker() {
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation) {
+            return true;
+        }
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+            if (entity.getTenantId() != null && !entity.getTenantId().isNullUid()) {
+                return false;
+            }
+            return true;
+        }
     };
 
 }
