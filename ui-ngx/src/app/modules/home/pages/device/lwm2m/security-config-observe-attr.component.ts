@@ -34,6 +34,7 @@ import {
   ObjectLwM2M,
   Instance, ResourceLwM2M
 } from "@home/pages/device/lwm2m/security-config.models";
+import {MatCheckboxChange} from "@angular/material/checkbox";
 
 
 @Component({
@@ -54,6 +55,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   observeValue: ObjectLwM2M[];
   instance: FormArray;
   clientLwM2M: FormArray;
+  indeterminate: boolean[][];
 
   constructor(protected store: Store<AppState>,
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
@@ -62,7 +64,9 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     super(store);
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.indeterminate = [];
+  }
 
   registerOnChange(fn: any): void {
   }
@@ -74,27 +78,40 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     this.observeValue = value;
     if (this.observeValue && this.observeValue.length > 0) {
       this.buildClientObjectsLwM2M(this.observeValue)
+      this.initCheckBoxInstance();
     }
+  }
+
+  initCheckBoxInstance(): void {
+    let objects = this.observeFormGroup.get('clientLwM2M') as FormArray;
+    objects.controls.forEach((object, objInd) =>
+      (object.get('instance') as FormArray).controls.forEach((instance, instInd) =>
+        (this.indeterminate[objInd][instInd] = (instance.get('resource') as FormArray).controls.some(resource => {
+          return resource.get('isObserv').value === true;
+        }))))
   }
 
   private buildClientObjectsLwM2M(objectsLwM2M: ObjectLwM2M []): void {
     this.observeFormGroup.addControl('clientLwM2M',
-        this.createObjectsLwM2M(objectsLwM2M)
+      this.createObjectsLwM2M(objectsLwM2M)
     );
   }
 
   createObjectsLwM2M(objectsLwM2MJson: ObjectLwM2M []): FormArray {
-    return this.fb.array(objectsLwM2MJson.map(objectLwM2M => {
+    this.indeterminate = [];
+    return this.fb.array(objectsLwM2MJson.map((objectLwM2M, index) => {
+      this.indeterminate[index] = [];
       return this.fb.group({
         id: objectLwM2M.id,
         name: objectLwM2M.name,
-        instance: this.createInstanceLwM2M(objectLwM2M.instance)
+        instance: this.createInstanceLwM2M(objectLwM2M.instance, index)
       })
     }))
   }
 
-  createInstanceLwM2M(instanceLwM2MJson: Instance []): FormArray {
-    return this.fb.array(instanceLwM2MJson.map(instanceLwM2M => {
+  createInstanceLwM2M(instanceLwM2MJson: Instance [], parentIndex: number): FormArray {
+    return this.fb.array(instanceLwM2MJson.map((instanceLwM2M, index) => {
+      this.indeterminate[parentIndex][index] = false;
       return this.fb.group({
         id: instanceLwM2M.id,
         isObserv: instanceLwM2M.isObserv,
@@ -124,5 +141,25 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
 
   resourceLwm2mFormArray(instance: AbstractControl): FormArray {
     return instance.get('resource') as FormArray;
+  }
+
+  changeAllResources(value: MatCheckboxChange, idObj: number, idInstance: number): void {
+    let resources = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(idObj).get('instance') as FormArray).at(idInstance).get('resource');
+    (resources as FormArray).controls.map(resource => resource.patchValue({isObserv: value.checked}));
+    if (!value.checked) this.indeterminate[idObj][idInstance] = false;
+  }
+
+  changeResourceObserve(value: boolean, idObj: number, idInstance: number): void {
+    console.log(((this.observeFormGroup.get('clientLwM2M') as FormArray).at(idObj).get('instance') as FormArray).at(idInstance))
+    this.indeterminate[idObj][idInstance] = this.someComplete(idObj, idInstance);
+  }
+
+  someComplete(idObj?: number, idInstance?: number): boolean {
+    let indeterm;
+    let resources = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(idObj).get('instance') as FormArray).at(idInstance).get('resource');
+    indeterm = (resources as FormArray).controls.some(resource => {
+      return resource.get('isObserv').value === true
+    });
+    return indeterm;
   }
 }

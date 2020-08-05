@@ -749,8 +749,8 @@
           "bootstrap-server-account-timeout-tip": "Bootstrap-Server Account after the timeout value given by this resource.",
           "model-tab": "Model Device",
           "observe-json-title": "Json Observe Device LwM2M",
-          "is-observe-tip": "Is Observe/No Observe",
-          "is-attr-tip": "Is Attribute/No Attribute",
+          "is-observe-tip": "Is Observe",
+          "is-attr-tip": "Is Attribute",
           "config-json-tab": "Json edit all config device"
         },
         "secret": "Secret",

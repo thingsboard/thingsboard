@@ -64,6 +64,8 @@ import {
   DEFAULT_PORT_BOOTSTRAP_SEC_CERT, DEFAULT_PORT_SERVER_SEC_CERT, ATTR, OBSERVE,
 } from "./security-config.models";
 import {WINDOW} from "@core/services/window.service";
+import {MatTabChangeEvent, MatTabGroup} from "@angular/material/tabs";
+import {MatTab} from "@angular/material/tabs/tab";
 
 
 @Component({
@@ -99,6 +101,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   lwM2mPublikKeyRPK: string
   bsPublikKeyX509: string
   lwM2mPublikKeyX509: string
+  tabIndexPrevious: number
+  tabPrevious: MatTab
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -274,6 +278,20 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.upDateJsonAllConfig();
   }
 
+  tabChanged = (tabChangeEvent: MatTabChangeEvent, tabGroup: MatTabGroup): void => {
+    console.log('tabGroup => ', tabGroup);
+    if (!this.tabIndexPrevious) this.tabIndexPrevious = tabChangeEvent.index;
+    if (!this.tabPrevious) this.tabPrevious = tabChangeEvent.tab;
+    console.log('tabIndexPreviousDo => ', this.tabIndexPrevious);
+    console.log('tabPreviousDo => ', this.tabPrevious);
+    this.tabIndexPrevious = tabChangeEvent.index;
+    this.tabPrevious = tabChangeEvent.tab;
+    console.log('tabIndexPreviousAfter => ', this.tabIndexPrevious);
+    console.log('tabPreviousAfter => ', this.tabPrevious);
+    console.log('indexCur => ', tabChangeEvent.index);
+    console.log('tabCur => ', tabChangeEvent.tab);
+  }
+
   upDateValueFromForm(): void {
     this.lwm2mConfigFormGroup.get('endPoint').valueChanges.subscribe(val => {
       if (!this.lwm2mConfigFormGroup.get('endPoint').pristine && this.lwm2mConfigFormGroup.get('endPoint').valid) {
@@ -289,10 +307,6 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     // only  Client mode == PSK
     this.lwm2mConfigFormGroup.get('identityPSK').valueChanges.subscribe(val => {
       if (!this.lwm2mConfigFormGroup.get('identityPSK').pristine && this.lwm2mConfigFormGroup.get('identityPSK').valid) {
-        // this.data.endPoint = this.lwm2mConfigFormGroup.get('identityPSK').value;
-        // this.lwm2mConfigFormGroup.patchValue({
-        //   endPoint: this.data.endPoint
-        // }, {emitEvent: false});
         this.updateIdentityPSK();
       }
     })
@@ -393,12 +407,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     let isObserve = [] as Array<string>;
     let isAttr = [] as Array<string>;
     let observeJson = JSON.parse(JSON.stringify(val['clientLwM2M'])) as [];
-    // target = "/3/0/5";
-    debugger
     let pathObj;
     let pathInst;
-    // let pathIsIns;
-    // let pathRes;
     let pathRes
     observeJson.forEach(obj => {
       Object.entries(obj).forEach(([key, value]) => {
@@ -449,10 +459,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   }
 
   getObservFormGroup(): ObjectLwM2M [] {
-    debugger
     let isObserve = this.jsonAllConfig[this.observeAttr][this.observe] as Array<string>;
     let isAttr = this.jsonAllConfig[this.observeAttr][this.attr] as Array<string>;
-    // "/3/0/1"
     let clientObserveAttr = getDefaultClientObserveAttr() as ObjectLwM2M[];
     isObserve.forEach(observe => {
       let pathObserve = Array.from(observe.substring(1).split('/'), Number);
@@ -539,6 +547,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     //   DEFAULT_PORT_BOOTSTRAP_NO_SEC,
     //   DEFAULT_PORT_SERVER_NO_SEC
   }
+
+
 
   save(): void {
     this.data.endPoint = this.lwm2mConfigFormGroup.get('endPoint').value.split('\"').join('');

@@ -298,6 +298,40 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       }]
     },
     {
+      id: 2,
+      name: "Access control",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Object ID",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "Object Instance ID",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "ACL",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Access Control Owner",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
       id: 3,
       name: "Device",
       instance:[{
@@ -428,6 +462,134 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       }]
     },
     {
+      id: 4,
+      name: "Connectivity monitoring",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Network Bearer",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "Available Network Bearer",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "Radio Signal Strength",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Link Quality",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 4,
+            name: "IP Addresses",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5,
+            name: "Router IP Addresses",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 6,
+            name: "Link Utilization",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 7,
+            name: "APN",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 8,
+            name: "Cell ID",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 9,
+            name: "SMNC",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 10,
+            name: "SMCC",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 5,
+      name: "Firmware upgrade",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Package",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "Package URI",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "State",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5,
+            name: "Update Result",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 6,
+            name: "PkgName",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 7,
+            name: "PkgVersion",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 8,
+            name: "Firmware Update Protocol Support",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
       id: 6,
       name: "Location",
       instance:[{
@@ -473,6 +635,484 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
           {
             id: 6,
             name: "Speed",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 7,
+      name: "Connectivity Statistics",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "SMS Tx Counter",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "SMS Rx Counter",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "Tx Data",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Rx Data",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 4,
+            name: "Max Message Size",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5,
+            name: "Average Message Size",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 8,
+            name: "Collection Period",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 10,
+      name: "Cellular connectivity",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "SMSC address",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "Disable radio period",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "Module activation code",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Vendor specific extensions",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 4,
+            name: "PSM Timer (1)",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5,
+            name: "Active Timer (1)",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 6,
+            name: "Serving PLMN Rate control",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 7,
+            name: "eDRX parameters for lu mode (1)",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 8,
+            name: "eDRX parameters for WB-S1 mode (1)",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 9,
+            name: "eDRX parameters for NB-S1 mode (1)",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 10,
+            name: "eDRX parameters for A/Gb mode (1)",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 11,
+            name: "Activated Profile Names",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 11,
+      name: "APN Connection Profile",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "SMS Tx Counter",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "SMS Rx Counter",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "Tx Data",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Rx Data",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 4,
+            name: "Max Message Size",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5,
+            name: "Average Message Size",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 8,
+            name: "Collection Period",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 13,
+      name: "Bearer Selection",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "SMS Tx Counter",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "SMS Rx Counter",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "Tx Data",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Rx Data",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 4,
+            name: "Max Message Size",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5,
+            name: "Average Message Size",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 8,
+            name: "Collection Period",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 16,
+      name: "Portfolio",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Identity",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "AuthData",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "AuthStatus",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 18,
+      name: "Stratum (NAS) Configuration",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Identity",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "AuthData",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "AuthStatus",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 19,
+      name: "BinaryAppDataContainer",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Data",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "Data Priority",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "Data Creation Time",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Data Description",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 4,
+            name: "Data Format",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5,
+            name: "App ID ",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 3200,
+      name: "Digital input",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 5500,
+            name: "Digital Input State",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5501,
+            name: "Digital Input Counter",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5502,
+            name: "Digital Input Polarity",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5503,
+            name: "Digital Input Debounce",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5504,
+            name: "Digital Input Edge Selection",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5505,
+            name: "Digital Input Counter Reset",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5750,
+            name: "Application Type",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5751,
+            name: "Sensor Type",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 3201,
+      name: "Digital output",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 5550,
+            name: "Digital Output State",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5551,
+            name: "Digital Output Polarity",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5750,
+            name: "Application Type",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 3202,
+      name: "Analog input",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 5600,
+            name: "Analog Input Current Value",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5601,
+            name: "Min Measured Value",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5602,
+            name: "Max Measured Value",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5603,
+            name: "Min Range Value",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5604,
+            name: "Max Range Value",
+            isObserv: false,
+            isAttr: false,
+          },
+          {
+            id: 5750,
+            name: "Application Type",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5751,
+            name: "Sensor Type",
             isObserv: false,
             isAttr: false
           }
@@ -531,6 +1171,166 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
         ]
       }]
     },
+    {
+      id: 3311,
+      name: "Light Control",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 5701,
+            name: "Sensor Units",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5706,
+            name: "Colour",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5750,
+            name: "Application Type",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5805,
+            name: "Cumulative active power",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5820,
+            name: "Power factor",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5850,
+            name: "On/Off",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5851,
+            name: "Dimmer",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 5852,
+            name: "On time",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 3353,
+      name: "scellID",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 6030,
+            name: "plmnID",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 6031,
+            name: "BandIndicator",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 6032,
+            name: "TrackingAreaCode",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 6033,
+            name: "CellID",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 26241,
+      name: "RTU coil",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Value",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "Slave ID",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "Address",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Status",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    },
+    {
+      id: 26242,
+      name: "RTU Register",
+      instance:[{
+        id: 0,
+        isObserv: false,
+        resource: [
+          {
+            id: 0,
+            name: "Value",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 1,
+            name: "Slave ID",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 2,
+            name: "Address",
+            isObserv: false,
+            isAttr: false
+          },
+          {
+            id: 3,
+            name: "Status",
+            isObserv: false,
+            isAttr: false
+          }
+        ]
+      }]
+    }
   ]
 }
 
