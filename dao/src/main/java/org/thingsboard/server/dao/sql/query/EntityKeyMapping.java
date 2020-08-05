@@ -426,11 +426,15 @@ public class EntityKeyMapping {
 
     private String buildComplexPredicateQuery(QueryContext ctx, String alias, EntityKey key,
                                               ComplexFilterPredicate predicate, EntityFilterType filterType) {
-        return predicate.getPredicates().stream()
+        String result = predicate.getPredicates().stream()
                 .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate, filterType))
                 .filter(Objects::nonNull).collect(Collectors.joining(
                         " " + predicate.getOperation().name() + " "
                 ));
+        if (!result.trim().isEmpty()) {
+            result = "( " + result + " )";
+        }
+        return result;
     }
 
     private String buildSimplePredicateQuery(QueryContext ctx, String alias, EntityKey key,
