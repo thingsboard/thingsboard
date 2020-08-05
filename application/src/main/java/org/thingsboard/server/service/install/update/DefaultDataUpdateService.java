@@ -48,6 +48,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang.StringUtils.isBlank;
+
 @Service
 @Profile("install")
 @Slf4j
@@ -158,8 +160,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
             keysFuture = Futures.immediateFuture(keys);
         }
         ListenableFuture<List<TsKvEntry>> latestFuture = Futures.transformAsync(keysFuture, fetchKeys -> {
-                List<ReadTsKvQuery> queries = fetchKeys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
-                return tsService.findAll(TenantId.SYS_TENANT_ID, entityView.getEntityId(), queries);
+                List<ReadTsKvQuery> queries = fetchKeys.stream().filter(key -> !isBlank(key)).map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
+                if (!queries.isEmpty()) {
+                    return tsService.findAll(TenantId.SYS_TENANT_ID, entityView.getEntityId(), queries);
+                } else {
+                    return Futures.immediateFuture(null);
+                }
             }, MoreExecutors.directExecutor());
         return Futures.transformAsync(latestFuture, latestValues -> {
             if (latestValues != null && !latestValues.isEmpty()) {

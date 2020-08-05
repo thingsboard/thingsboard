@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.thingsboard.server.controller.CustomerController.CUSTOMER_ID;
 
 /**
@@ -253,8 +254,12 @@ public class EntityViewController extends BaseController {
             keysFuture = Futures.immediateFuture(keys);
         }
         ListenableFuture<List<TsKvEntry>> latestFuture = Futures.transformAsync(keysFuture, fetchKeys -> {
-            List<ReadTsKvQuery> queries = fetchKeys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
-            return tsService.findAll(user.getTenantId(), entityView.getEntityId(), queries);
+            List<ReadTsKvQuery> queries = fetchKeys.stream().filter(key -> !isBlank(key)).map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
+            if (!queries.isEmpty()) {
+                return tsService.findAll(user.getTenantId(), entityView.getEntityId(), queries);
+            } else {
+                return Futures.immediateFuture(null);
+            }
         }, MoreExecutors.directExecutor());
         return Futures.transform(latestFuture, latestValues -> {
             if (latestValues != null && !latestValues.isEmpty()) {
