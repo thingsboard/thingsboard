@@ -184,7 +184,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         switch (edgeEventActionType) {
             // TODO: voba - ADDED is not required for CE version ?
-            // case ADDED:
+            case ADDED:
             case UPDATED:
             case CREDENTIALS_UPDATED:
                 if (edgeEventType.equals(EdgeEventType.WIDGETS_BUNDLE) || edgeEventType.equals(EdgeEventType.WIDGET_TYPE)) {

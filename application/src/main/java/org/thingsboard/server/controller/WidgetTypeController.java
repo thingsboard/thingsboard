@@ -72,7 +72,7 @@ public class WidgetTypeController extends BaseController {
             checkEntity(widgetType.getId(), widgetType, Resource.WIDGET_TYPE);
             WidgetType savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
 
-            sendNotificationMsgToEdgeService(savedWidgetType.getTenantId(), savedWidgetType.getId(), savedWidgetType.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+            sendNotificationMsgToEdgeService(getTenantId(), savedWidgetType.getId(), widgetType.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
 
             return checkNotNull(savedWidgetType);
         } catch (Exception e) {
