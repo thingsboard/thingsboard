@@ -553,7 +553,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             String lowerSearchText = "%" + searchText.toLowerCase() + "%";
             ctx.addStringParameter("lowerSearchTextParam", lowerSearchText);
             List<String> searchAliases = selectionMapping.stream().map(EntityKeyMapping::getValueAlias).collect(Collectors.toList());
-            return String.format(" WHERE LOWER(CONCAT(%s)) LIKE :%s", String.join(" , ", searchAliases), "lowerSearchTextParam");
+            String searchAliasesExpression;
+            if (searchAliases.size() > 1) {
+                searchAliasesExpression = "CONCAT(" + String.join(" , ", searchAliases) + ")";
+            } else {
+                searchAliasesExpression = searchAliases.get(0);
+            }
+            return String.format(" WHERE LOWER(%s) LIKE :%s", searchAliasesExpression, "lowerSearchTextParam");
         } else {
             return "";
         }
