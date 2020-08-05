@@ -35,6 +35,11 @@ import { Polygon } from './polygon';
 import { createTooltip, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 
+interface latLng {
+  lat: number,
+  lng: number
+}
+
 export default abstract class LeafletMap {
 
     markers: Map<string, Marker> = new Map();
@@ -49,6 +54,7 @@ export default abstract class LeafletMap {
     markersCluster: MarkerClusterGroup;
     points: FeatureGroup;
     markersData: FormattedData[] = [];
+    lastPoint: latLng;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -322,26 +328,53 @@ export default abstract class LeafletMap {
     }
 
     updatePoints(pointsData: FormattedData[], getTooltip: (point: FormattedData, setTooltip?: boolean) => string) {
-        this.map$.subscribe(map => {
-            if (this.points) {
-                map.removeLayer(this.points);
-            }
-            this.points = new FeatureGroup();
-            pointsData.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
-                const point = L.circleMarker(this.convertPosition(data), {
-                    color: this.options.pointColor,
-                    radius: this.options.pointSize
-                });
-                if (!this.options.pointTooltipOnRightPanel) {
-                    point.on('click', () => getTooltip(data));
-                }
-                else {
-                    createTooltip(point, this.options, data.$datasource, getTooltip(data, false));
-                }
-                this.points.addLayer(point);
+      this.map$.subscribe(map => {
+        if(this.points && this.points.getLayers().length) {
+          const point = L.circleMarker(this.convertPosition(pointsData[(pointsData.length - 1)]), {
+            color: this.options.usePointsColorFunction && this.options.pointsColorFunction
+              ?
+              safeExecute(this.options.pointsColorFunction, [pointsData[(pointsData.length - 1)], pointsData, pointsData[(pointsData.length - 1)].dsIndex])
+              :
+              this.options.pointColor,
+            radius: this.options.pointSize
+          });
+          if (!this.options.pointTooltipOnRightPanel) {
+            point.on('click', () => getTooltip(pointsData[(pointsData.length - 1)]));
+          }
+          else {
+            createTooltip(point, this.options, pointsData, getTooltip(pointsData[(pointsData.length - 1)], false));
+          }
+          if(this.lastPoint.lat !== this.convertPosition(pointsData[(pointsData.length - 1)]).lat && this.lastPoint.lng !== this.convertPosition(pointsData[(pointsData.length - 1)]).lng) {
+            this.points.removeLayer(this.points.getLayers()[0]);
+            this.points.addLayer(point);
+          }
+          this.lastPoint = this.convertPosition(pointsData[(pointsData.length - 1)]);
+        } else {
+          if (this.points) {
+            map.removeLayer(this.points);
+          }
+          this.points = new FeatureGroup();
+          pointsData.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
+            const point = L.circleMarker(this.convertPosition(data), {
+              color: this.options.usePointsColorFunction && this.options.pointsColorFunction
+                ?
+                safeExecute(this.options.pointsColorFunction, [pointsData[(pointsData.length - 1)], pointsData, pointsData[(pointsData.length - 1)].dsIndex])
+                :
+                this.options.pointColor,
+              radius: this.options.pointSize
             });
-            map.addLayer(this.points);
-        });
+            if (!this.options.pointTooltipOnRightPanel) {
+              point.on('click', () => getTooltip(data));
+            }
+            else {
+              createTooltip(point, this.options, pointsData, getTooltip(data, false));
+            }
+            this.points.addLayer(point);
+          });
+          this.lastPoint = this.convertPosition(pointsData[(pointsData.length - 1)]);
+          map.addLayer(this.points);
+        }
+      });
     }
 
     // Polyline

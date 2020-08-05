@@ -848,55 +848,69 @@ export const pathSchema =
 
 export const pointSchema =
 {
-    schema: {
-        title: 'Trip Animation Path Configuration',
-        type: 'object',
-        properties: {
-            showPoints: {
-                title: 'Show points',
-                type: 'boolean',
-                default: false
-            },
-            pointColor: {
-                title: 'Point color',
-                type: 'string'
-            },
-            pointSize: {
-                title: 'Point size (px)',
-                type: 'number',
-                default: 10
-            },
-            usePointAsAnchor: {
-                title: 'Use point as anchor',
-                type: 'boolean',
-                default: false
-            },
-            pointAsAnchorFunction: {
-                title: 'Point as anchor function: f(data, dsData, dsIndex)',
-                type: 'string'
-            },
-            pointTooltipOnRightPanel: {
-                title: 'Independant point tooltip',
-                type: 'boolean',
-                default: true
-            },
-        },
-        required: []
+  schema: {
+    title: 'Trip Animation Path Configuration',
+    type: 'object',
+    properties: {
+      showPoints: {
+        title: 'Show points',
+        type: 'boolean',
+        default: false
+      },
+      pointColor: {
+        title: 'Point color',
+        type: 'string'
+      },
+      usePointsColorFunction: {
+        title: 'Use points color function ?',
+        type: 'boolean',
+        default: false
+      },
+      pointsColorFunction: {
+        title: 'Points color function: f(data, dsData, dsIndex)',
+        type: 'string'
+      },
+      pointSize: {
+        title: 'Point size (px)',
+        type: 'number',
+        default: 10
+      },
+      usePointAsAnchor: {
+        title: 'Use point as anchor',
+        type: 'boolean',
+        default: false
+      },
+      pointAsAnchorFunction: {
+        title: 'Point as anchor function: f(data, dsData, dsIndex)',
+        type: 'string'
+      },
+      pointTooltipOnRightPanel: {
+        title: 'Independant point tooltip',
+        type: 'boolean',
+        default: true
+      },
     },
-    form: [
-        'showPoints',
-        {
-            key: 'pointColor',
-            type: 'color'
-        },
-        'pointSize',
-        'usePointAsAnchor',
-        {
-            key: 'pointAsAnchorFunction',
-            type: 'javascript'
-        },
-        'pointTooltipOnRightPanel',
-    ]
+    required: []
+  },
+  form: [
+    'showPoints',
+    {
+      key: 'pointColor',
+      type: 'color'
+    },
+    'usePointsColorFunction',
+    {
+      key: 'pointsColorFunction',
+      type: 'javascript'
+    },
+    'pointSize',
+    'usePointAsAnchor',
+    {
+      key: 'pointAsAnchorFunction',
+      type: 'javascript'
+    },
+    'pointTooltipOnRightPanel',
+  ]
 };
 
 export const mapProviderSchema =
