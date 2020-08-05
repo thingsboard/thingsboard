@@ -52,9 +52,12 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -122,33 +125,37 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                         @Override
                         public void onSuccess(@Nullable List<EntityView> result) {
                             if (result != null) {
+                                Map<String, List<TsKvEntry>> tsMap = new HashMap<>();
+                                for (TsKvEntry entry : ts) {
+                                    tsMap.computeIfAbsent(entry.getKey(), s -> new ArrayList<>()).add(entry);
+                                }
                                 for (EntityView entityView : result) {
-                                    if (entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null
-                                        && !entityView.getKeys().getTimeseries().isEmpty()) {
-                                        List<TsKvEntry> entityViewLatest = new ArrayList<>();
-                                        for (String key : entityView.getKeys().getTimeseries()) {
-                                            long startTime = entityView.getStartTimeMs();
-                                            long endTime = entityView.getEndTimeMs();
-                                            long startTs = startTime;
-                                            long endTs = endTime == 0 ? System.currentTimeMillis() : endTime;
-                                            Optional<TsKvEntry> tsKvEntry = ts.stream()
-                                                    .filter(entry -> entry.getKey().equals(key) && entry.getTs() > startTs && entry.getTs() <= endTs)
+                                    List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
+                                            entityView.getKeys().getTimeseries() : new ArrayList<>(tsMap.keySet());
+                                    List<TsKvEntry> entityViewLatest = new ArrayList<>();
+                                    long startTs = entityView.getStartTimeMs();
+                                    long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
+                                    for (String key : keys) {
+                                        List<TsKvEntry> entries = tsMap.get(key);
+                                        if (entries != null) {
+                                            Optional<TsKvEntry> tsKvEntry = entries.stream()
+                                                    .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
                                                     .max(Comparator.comparingLong(TsKvEntry::getTs));
                                             if (tsKvEntry.isPresent()) {
                                                 entityViewLatest.add(tsKvEntry.get());
                                             }
                                         }
-                                        if (!entityViewLatest.isEmpty()) {
-                                            saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<Void>() {
-                                                @Override
-                                                public void onSuccess(@Nullable Void tmp) {
-                                                }
+                                    }
+                                    if (!entityViewLatest.isEmpty()) {
+                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<Void>() {
+                                            @Override
+                                            public void onSuccess(@Nullable Void tmp) {
+                                            }
 
-                                                @Override
-                                                public void onFailure(Throwable t) {
-                                                }
-                                            });
-                                        }
+                                            @Override
+                                            public void onFailure(Throwable t) {
+                                            }
+                                        });
                                     }
                                 }
                             }
@@ -187,6 +194,22 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     public void deleteLatest(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> deleteFuture = tsService.removeLatest(tenantId, entityId, keys);
         addMainCallback(deleteFuture, callback);
+    }
+
+    @Override
+    public void deleteAllLatest(TenantId tenantId, EntityId entityId, FutureCallback<Collection<String>> callback) {
+        ListenableFuture<Collection<String>> deleteFuture = tsService.removeAllLatest(tenantId, entityId);
+        Futures.addCallback(deleteFuture, new FutureCallback<Collection<String>>() {
+            @Override
+            public void onSuccess(@Nullable Collection<String> result) {
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        }, tsCallBackExecutor);
     }
 
     @Override
@@ -255,10 +278,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void addMainCallback(ListenableFuture<List<Void>> saveFuture, final FutureCallback<Void> callback) {
-        Futures.addCallback(saveFuture, new FutureCallback<List<Void>>() {
+    private <S, R> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<R> callback) {
+        Futures.addCallback(saveFuture, new FutureCallback<S>() {
             @Override
-            public void onSuccess(@Nullable List<Void> result) {
+            public void onSuccess(@Nullable S result) {
                 callback.onSuccess(null);
             }
 
