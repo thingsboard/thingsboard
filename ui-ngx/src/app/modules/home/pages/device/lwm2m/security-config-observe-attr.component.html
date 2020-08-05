@@ -35,10 +35,10 @@
               <mat-panel-title>
                 <div class="tb-panel-title-height" fxFlex="100">
                   <div fxLayout="row" fxFill>
-                    <div fxFlex="88">
+                    <div fxFlex="55">
                       Instance [<b>{{instance.get('id').value}}</b>]
                     </div>
-                    <div class="checkbox-padding" fxFlex="10" >
+                    <div class="checkbox-padding" fxFlex="45">
                       <mat-checkbox formControlName="isObserv" color="primary"
                                     (click)="$event.stopPropagation()"
                                     (change)="changeAllResources($event, i, y)"
@@ -55,27 +55,56 @@
             <div fxLayout="row" fxFill
                  formArrayName="resource"
                  *ngFor="let resourceLwM2M of resourceLwm2mFormArray(instance).controls; let z = index">
-              <div class="vertical-padding" fxLayout="row" fxFill [formGroupName]="z">
-                <div fxFlex="85">
-                  Resource[<b>{{resourceLwM2M.get('id').value}}</b>]
-                  name:<b><i>{{resourceLwM2M.get('name').value}}</i></b>
+              <div class="vertical-padding" fxLayout="column" fxFill [formGroupName]="z">
+                <div fxLayout="row" fxFill [fxShow]="!z">
+                  <div fxFlex="55">
+                    <!--                    <mat-label translate>device.lwm2m-security-config.resource-label</mat-label>-->
+                  </div>
+                  <div fxFlex="15" class="label-resource" fxLayoutAlign="start center">
+                    <b>
+                      <mat-label translate>device.lwm2m-security-config.observe-label</mat-label>
+                    </b>
+                  </div>
+                  <div fxFlex="15">
+                    <b>
+                      <mat-label translate>device.lwm2m-security-config.attribute-label</mat-label>
+                    </b>
+                  </div>
+                  <div fxFlex="15">
+                    <b>
+                      <mat-label translate>device.lwm2m-security-config.telemetry-label</mat-label>
+                    </b>
+                  </div>
                 </div>
-                <div fxFlex="5">
-                  <mat-checkbox formControlName="isObserv" color="primary"
-                                matTooltip="{{'device.lwm2m-security-config.is-observe-tip' | translate}}"
-                                matTooltipPosition="above"
-                                (change)="changeResourceObserve($event.checked, i, y)">
-                  </mat-checkbox>
-                </div>
-                <div fxFlex="5">
-                  <mat-checkbox formControlName="isAttr" color="accent"
-                                matTooltip="{{'device.lwm2m-security-config.is-attr-tip' | translate}}"
-                                matTooltipPosition="above">
-                  </mat-checkbox>
+                <div fxLayout="row" fxFill>
+                  <div fxFlex="55">
+                    Resource[<b>{{resourceLwM2M.get('id').value}}</b>]
+                    name:<b><i>{{resourceLwM2M.get('name').value}}</i></b>
+                  </div>
+                  <div fxFlex="15" fxLayoutAlign="start center">
+                    <mat-checkbox formControlName="isObserv" color="primary"
+                                  matTooltip="{{'device.lwm2m-security-config.is-observe-tip' | translate}}"
+                                  matTooltipPosition="above"
+                                  (change)="changeResourceObserve($event.checked, i, y)">
+                    </mat-checkbox>
+                  </div>
+                  <div fxFlex="15">
+                    <mat-checkbox formControlName="isAttr" color="warn"
+                                  matTooltip="{{'device.lwm2m-security-config.is-attr-tip' | translate}}"
+                                  (change)="changeResourceAttribute($event.checked, i, y, z)"
+                                  matTooltipPosition="above">
+                    </mat-checkbox>
+                  </div>
+                  <div fxFlex="15">
+                    <mat-checkbox id="isTelemetry" color="accent"
+                                  matTooltip="{{'device.lwm2m-security-config.is-telemetry-tip' | translate}}"
+                                  [checked]="telemetryChecked[i][y][z]"
+                                  [disabled]="true"
+                                  matTooltipPosition="primary">
+                    </mat-checkbox>
+                  </div>
                 </div>
               </div>
-
-
             </div>
           </mat-expansion-panel>
         </mat-accordion>

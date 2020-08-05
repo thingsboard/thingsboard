@@ -56,6 +56,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   instance: FormArray;
   clientLwM2M: FormArray;
   indeterminate: boolean[][];
+  telemetryChecked: boolean[][][];
 
   constructor(protected store: Store<AppState>,
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
@@ -66,6 +67,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
 
   ngOnInit(): void {
     this.indeterminate = [];
+    this.telemetryChecked = [];
   }
 
   registerOnChange(fn: any): void {
@@ -101,6 +103,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     this.indeterminate = [];
     return this.fb.array(objectsLwM2MJson.map((objectLwM2M, index) => {
       this.indeterminate[index] = [];
+      this.telemetryChecked[index] = [];
       return this.fb.group({
         id: objectLwM2M.id,
         name: objectLwM2M.name,
@@ -112,16 +115,18 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   createInstanceLwM2M(instanceLwM2MJson: Instance [], parentIndex: number): FormArray {
     return this.fb.array(instanceLwM2MJson.map((instanceLwM2M, index) => {
       this.indeterminate[parentIndex][index] = false;
+      this.telemetryChecked[parentIndex][index] = [];
       return this.fb.group({
         id: instanceLwM2M.id,
         isObserv: instanceLwM2M.isObserv,
-        resource: this.createResourceLwM2M(instanceLwM2M.resource)
+        resource: this.createResourceLwM2M(instanceLwM2M.resource, parentIndex, index)
       })
     }))
   }
 
-  createResourceLwM2M(resourcesLwM2MJson: ResourceLwM2M []): FormArray {
-    return this.fb.array(resourcesLwM2MJson.map(resourceLwM2M => {
+  createResourceLwM2M(resourcesLwM2MJson: ResourceLwM2M [], parentIndex: number, index: number): FormArray {
+    return this.fb.array(resourcesLwM2MJson.map((resourceLwM2M, resId) => {
+      this.telemetryChecked[parentIndex][index][resId] = !resourceLwM2M.isAttr;
       return this.fb.group({
         id: resourceLwM2M.id,
         isObserv: resourceLwM2M.isObserv,
@@ -150,8 +155,11 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   }
 
   changeResourceObserve(value: boolean, idObj: number, idInstance: number): void {
-    console.log(((this.observeFormGroup.get('clientLwM2M') as FormArray).at(idObj).get('instance') as FormArray).at(idInstance))
+    // console.log(((this.observeFormGroup.get('clientLwM2M') as FormArray).at(idObj).get('instance') as FormArray).at(idInstance))
     this.indeterminate[idObj][idInstance] = this.someComplete(idObj, idInstance);
+  }
+  changeResourceAttribute(value: boolean, idObj: number, idInstance: number, idResource): void {
+    this.telemetryChecked[idObj][idInstance][idResource] = !value;
   }
 
   someComplete(idObj?: number, idInstance?: number): boolean {

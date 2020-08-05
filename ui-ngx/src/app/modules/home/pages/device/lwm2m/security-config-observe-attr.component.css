@@ -28,6 +28,22 @@
 }
 
 .checkbox-padding {
-  padding-left: 3px;
+  padding-left: 22px;
+}
+
+.label-resource {
+  /*padding: 4px;*/
+  color: #002699;
+  /*text-transform: uppercase;*/
+  background: rgba(220, 220, 220, .35);
+  border-radius: 20px;
+  width: inherit;
+  /*margin: 10px 0;*/
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .8;
+  text-align:center;
 }
 
