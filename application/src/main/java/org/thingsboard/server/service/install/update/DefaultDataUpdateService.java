@@ -166,7 +166,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 ListenableFuture<List<Void>> saveFuture = tsService.saveLatest(TenantId.SYS_TENANT_ID, entityId, latestValues);
                 return saveFuture;
             }
-            return null;
+            return Futures.immediateFuture(null);
         }, MoreExecutors.directExecutor());
     }
 
