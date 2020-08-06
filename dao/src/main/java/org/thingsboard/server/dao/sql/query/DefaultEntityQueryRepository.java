@@ -441,7 +441,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             ctx.addStringParameter("where_relation_type", entityFilter.getRelationType());
             whereFilter += " re.relation_type = :where_relation_type AND";
         }
-        whereFilter += " re.to_type = :where_entity_type";
+        whereFilter += " re." + (entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from") + "_type = :where_entity_type";
 
         from = String.format(from, lvlFilter, whereFilter);
         String query = "( " + selectFields + from + ")";
