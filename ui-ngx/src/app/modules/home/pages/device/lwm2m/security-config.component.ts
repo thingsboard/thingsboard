@@ -458,34 +458,24 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.upDateJsonAllConfig();
   }
 
-  getObservFormGroup(): ObjectLwM2M [] {
+  getObservAttrObjectFormGroup(): ObjectLwM2M [] {
     let isObserve = this.jsonAllConfig[this.observeAttr][this.observe] as Array<string>;
     let isAttr = this.jsonAllConfig[this.observeAttr][this.attr] as Array<string>;
     let clientObserveAttr = getDefaultClientObserveAttr() as ObjectLwM2M[];
-    isObserve.forEach(observe => {
-      let pathObserve = Array.from(observe.substring(1).split('/'), Number);
-      let idResObserve = (pathObserve[2]) ? pathObserve[2] : (pathObserve.length === 3) ? 0 : null;
+    clientObserveAttr =  this.getObservAttrFormGroup(isObserve, clientObserveAttr, "isObserv");
+    clientObserveAttr =  this.getObservAttrFormGroup(isAttr, clientObserveAttr, "isAttr");
+    return clientObserveAttr;
+  }
+
+  getObservAttrFormGroup(isParameter: Array<string>, clientObserveAttr: ObjectLwM2M[], nameParameter: string): ObjectLwM2M [] {
+    isParameter.forEach(attr => {
+      let pathParameter = Array.from(attr.substring(1).split('/'), Number);
       clientObserveAttr.forEach(obj => {
-        if (obj.id === pathObserve[0]) {
+        if (obj.id === pathParameter[0]) {
           obj.instance.forEach(inst => {
-            if (inst.id === pathObserve[1]) {
-              if (idResObserve === null) inst.isObserv = true;
+            if (inst.id === pathParameter[1]) {
               inst.resource.forEach(res => {
-                if (inst.isObserv || res.id === idResObserve) res.isObserv = true;
-              })
-            }
-          })
-        }
-      });
-    });
-    isAttr.forEach(attr => {
-      let pathAttr = Array.from(attr.substring(1).split('/'), Number);
-      clientObserveAttr.forEach(obj => {
-        if (obj.id === pathAttr[0]) {
-          obj.instance.forEach(inst => {
-            if (inst.id === pathAttr[1]) {
-              inst.resource.forEach(res => {
-                if (res.id === pathAttr[2]) res.isAttr = true;
+                if (res.id === pathParameter[2]) res[nameParameter] = true;
               })
             }
           })
@@ -495,6 +485,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     return clientObserveAttr;
   }
 
+
   initLwm2mConfigFormGroup(): FormGroup {
     if (SECURITY_CONFIG_MODE[this.jsonAllConfig.client.securityConfigClientMode.toString()] === SECURITY_CONFIG_MODE.PSK) {
       this.data.endPoint = this.jsonAllConfig.client['endpoint'];
@@ -503,7 +494,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       jsonAllConfig: [this.jsonAllConfig, []],
       bootstrapServer: [this.jsonAllConfig.bootstrap[this.bootstrapServer], []],
       lwm2mServer: [this.jsonAllConfig.bootstrap[this.lwm2mServer], []],
-      observeAttr: [this.getObservFormGroup(), []],
+      observeAttr: [this.getObservAttrObjectFormGroup(), []],
       jsonObserve: [this.jsonAllConfig[this.observeAttr], []],
       bootstrapFormGroup: this.getServerGroup(true),
       lwm2mServerFormGroup: this.getServerGroup(false),

@@ -55,8 +55,13 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   observeValue: ObjectLwM2M[];
   instance: FormArray;
   clientLwM2M: FormArray;
-  indeterminate: boolean[][];
-  telemetryChecked: boolean[][][];
+  isObserve = 'isObserv' as string;
+  isAttr = 'isAttr' as string;
+  isTelemetry = 'isTelemetry' as string;
+  indeterminateObserve: boolean[][];
+  indeterminateAttr: boolean[][];
+  indeterminateTelemetry: boolean[][];
+  indeterminate: {};
 
   constructor(protected store: Store<AppState>,
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
@@ -66,8 +71,6 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   }
 
   ngOnInit(): void {
-    this.indeterminate = [];
-    this.telemetryChecked = [];
   }
 
   registerOnChange(fn: any): void {
@@ -80,17 +83,23 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     this.observeValue = value;
     if (this.observeValue && this.observeValue.length > 0) {
       this.buildClientObjectsLwM2M(this.observeValue)
-      this.initCheckBoxInstance();
+      this.initInstancesCheckBoxs();
     }
   }
 
-  initCheckBoxInstance(): void {
+  initInstancesCheckBoxs(): void {
     let objects = this.observeFormGroup.get('clientLwM2M') as FormArray;
-    objects.controls.forEach((object, objInd) =>
-      (object.get('instance') as FormArray).controls.forEach((instance, instInd) =>
-        (this.indeterminate[objInd][instInd] = (instance.get('resource') as FormArray).controls.some(resource => {
-          return resource.get('isObserv').value === true;
-        }))))
+    objects.controls.forEach((object, objInd) => (
+      (object.get('instance') as FormArray).controls.forEach((instance, instInd) => ({
+          function: this.initInstancesCheckBox(objInd, instInd)
+        })
+      )));
+  }
+
+  initInstancesCheckBox(objInd?: number, instInd?: number): void {
+    this.changeInstanceCheckBox(objInd, instInd, this.isObserve);
+    this.changeInstanceCheckBox(objInd, instInd, this.isAttr);
+    this.changeInstanceCheckBox(objInd, instInd, this.isTelemetry);
   }
 
   private buildClientObjectsLwM2M(objectsLwM2M: ObjectLwM2M []): void {
@@ -100,10 +109,18 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   }
 
   createObjectsLwM2M(objectsLwM2MJson: ObjectLwM2M []): FormArray {
-    this.indeterminate = [];
+    this.indeterminateObserve = [];
+    this.indeterminateAttr = [];
+    this.indeterminateTelemetry= [];
+    this.indeterminate = {
+      [this.isObserve] : this.indeterminateObserve,
+      [this.isAttr] : this.indeterminateAttr,
+      [this.isTelemetry] : this.indeterminateTelemetry
+    }
     return this.fb.array(objectsLwM2MJson.map((objectLwM2M, index) => {
-      this.indeterminate[index] = [];
-      this.telemetryChecked[index] = [];
+      this.indeterminateObserve[index] = [];
+      this.indeterminateAttr[index] = [];
+      this.indeterminateTelemetry[index] = [];
       return this.fb.group({
         id: objectLwM2M.id,
         name: objectLwM2M.name,
@@ -114,23 +131,26 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
 
   createInstanceLwM2M(instanceLwM2MJson: Instance [], parentIndex: number): FormArray {
     return this.fb.array(instanceLwM2MJson.map((instanceLwM2M, index) => {
-      this.indeterminate[parentIndex][index] = false;
-      this.telemetryChecked[parentIndex][index] = [];
+      this.indeterminateObserve[parentIndex][index] = false;
+      this.indeterminateAttr[parentIndex][index] = false;
+      this.indeterminateTelemetry[parentIndex][index] = true;
       return this.fb.group({
         id: instanceLwM2M.id,
-        isObserv: instanceLwM2M.isObserv,
-        resource: this.createResourceLwM2M(instanceLwM2M.resource, parentIndex, index)
+        [this.isObserve]: false,
+        [this.isAttr]: false,
+        [this.isTelemetry]: true,
+        resource: this.createResourceLwM2M(instanceLwM2M.resource)
       })
     }))
   }
 
-  createResourceLwM2M(resourcesLwM2MJson: ResourceLwM2M [], parentIndex: number, index: number): FormArray {
-    return this.fb.array(resourcesLwM2MJson.map((resourceLwM2M, resId) => {
-      this.telemetryChecked[parentIndex][index][resId] = !resourceLwM2M.isAttr;
+  createResourceLwM2M(resourcesLwM2MJson: ResourceLwM2M []): FormArray {
+    return this.fb.array(resourcesLwM2MJson.map(resourceLwM2M => {
       return this.fb.group({
         id: resourceLwM2M.id,
-        isObserv: resourceLwM2M.isObserv,
-        isAttr: resourceLwM2M.isAttr,
+        [this.isObserve]: resourceLwM2M.isObserv,
+        [this.isAttr]: resourceLwM2M.isAttr,
+        [this.isTelemetry]: !resourceLwM2M.isAttr,
         name: resourceLwM2M.name
       })
     }))
@@ -148,26 +168,42 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     return instance.get('resource') as FormArray;
   }
 
-  changeAllResources(value: MatCheckboxChange, idObj: number, idInstance: number): void {
-    let resources = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(idObj).get('instance') as FormArray).at(idInstance).get('resource');
-    (resources as FormArray).controls.map(resource => resource.patchValue({isObserv: value.checked}));
-    if (!value.checked) this.indeterminate[idObj][idInstance] = false;
+  changeInstanceResourcesCheckBox(value: MatCheckboxChange, objInd: number, instInd: number, nameFrom?: string, nameTo?: string): void {
+    let instance = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(objInd).get('instance') as FormArray).at(instInd);
+    let resources = instance.get('resource');
+    // let resources = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(objInd).get('instance') as FormArray).at(instInd).get('resource');
+    (resources as FormArray).controls.map(resource => resource.patchValue({[nameFrom]: value.checked}));
+    this.indeterminate[nameFrom][objInd][instInd] = false;
+    if (nameTo) {
+      (resources as FormArray).controls.map(resource => resource.patchValue({[nameTo]: !value.checked}));
+      this.indeterminate[nameTo][objInd][instInd] = false;
+      instance.patchValue({[nameTo]: !value.checked});
+    }
   }
 
-  changeResourceObserve(value: boolean, idObj: number, idInstance: number): void {
-    // console.log(((this.observeFormGroup.get('clientLwM2M') as FormArray).at(idObj).get('instance') as FormArray).at(idInstance))
-    this.indeterminate[idObj][idInstance] = this.someComplete(idObj, idInstance);
-  }
-  changeResourceAttribute(value: boolean, idObj: number, idInstance: number, idResource): void {
-    this.telemetryChecked[idObj][idInstance][idResource] = !value;
-  }
-
-  someComplete(idObj?: number, idInstance?: number): boolean {
-    let indeterm;
-    let resources = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(idObj).get('instance') as FormArray).at(idInstance).get('resource');
-    indeterm = (resources as FormArray).controls.some(resource => {
-      return resource.get('isObserv').value === true
+  changeInstanceCheckBox(objInd?: number, instInd?: number, nameParameter?: string): void {
+    let instance = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(objInd).get('instance') as FormArray).at(instInd);
+    let indeterm = (instance.get('resource') as FormArray).controls.some(resource => {
+      return resource.get(nameParameter).value === true;
     });
-    return indeterm;
+    let isAllObserve = (instance.get('resource') as FormArray).controls.some(resource => {
+      return resource.get(nameParameter).value === false;
+    });
+    if (!isAllObserve && indeterm) {
+      instance.patchValue({[nameParameter]: true});
+      indeterm = false;
+    } else if (isAllObserve) {
+      instance.patchValue({[nameParameter]: false});
+    }
+    this.indeterminate[nameParameter][objInd][instInd] = indeterm;
+  }
+
+  changeResourceAttrTelemetry(value: boolean, objInd: number, instInd: number, resInd: number, nameFrom?: string, nameTo?: string): void {
+    (((this.observeFormGroup.get('clientLwM2M') as FormArray)
+      .at(objInd).get('instance') as FormArray)
+      .at(instInd).get('resource') as FormArray)
+      .at(resInd).patchValue({[nameTo]: !value});
+    this.changeInstanceCheckBox(objInd, instInd,  nameFrom);
+    this.changeInstanceCheckBox(objInd, instInd,  nameTo);
   }
 }

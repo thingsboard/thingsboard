@@ -233,7 +233,6 @@ export interface ResourceLwM2M {
 
 export interface Instance {
   id: number,
-  isObserv: boolean,
   resource: ResourceLwM2M[]
 }
 
@@ -250,7 +249,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "LwM2M Server",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -302,7 +300,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Access control",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -336,7 +333,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Device",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -466,7 +462,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Connectivity monitoring",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -542,7 +537,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Firmware upgrade",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -594,7 +588,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Location",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -646,7 +639,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Connectivity Statistics",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -698,7 +690,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Cellular connectivity",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -780,7 +771,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "APN Connection Profile",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -832,7 +822,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Bearer Selection",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -884,7 +873,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Portfolio",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -912,7 +900,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Stratum (NAS) Configuration",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -940,7 +927,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "BinaryAppDataContainer",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -986,7 +972,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Digital input",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 5500,
@@ -1044,7 +1029,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Digital output",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 5550,
@@ -1072,7 +1056,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Analog input",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 5600,
@@ -1124,7 +1107,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Temperature",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 5700,
@@ -1176,7 +1158,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "Light Control",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 5701,
@@ -1234,7 +1215,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "scellID",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 6030,
@@ -1268,7 +1248,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "RTU coil",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
@@ -1302,7 +1281,6 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
       name: "RTU Register",
       instance:[{
         id: 0,
-        isObserv: false,
         resource: [
           {
             id: 0,
