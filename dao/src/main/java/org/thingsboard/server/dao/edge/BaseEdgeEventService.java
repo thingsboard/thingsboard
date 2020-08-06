@@ -35,7 +35,7 @@ import java.util.List;
 public class BaseEdgeEventService implements EdgeEventService {
 
     @Autowired
-    public EdgeEventDao edgeEventDao;
+    private EdgeEventDao edgeEventDao;
 
     @Override
     public ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent) {
@@ -44,8 +44,8 @@ public class BaseEdgeEventService implements EdgeEventService {
     }
 
     @Override
-    public TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
-        List<EdgeEvent> events = edgeEventDao.findEdgeEvents(tenantId.getId(), edgeId, pageLink);
+    public TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
+        List<EdgeEvent> events = edgeEventDao.findEdgeEvents(tenantId.getId(), edgeId, pageLink, withTsUpdate);
         return new TimePageData<>(events, pageLink);
     }
 

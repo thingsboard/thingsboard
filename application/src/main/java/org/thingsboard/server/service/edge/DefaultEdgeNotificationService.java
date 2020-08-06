@@ -111,7 +111,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Override
     public TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
-        return edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink);
+        return edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
     }
 
     @Override

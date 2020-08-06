@@ -29,6 +29,11 @@
                      on-assign-to-customer="vm.assignToCustomer(event, [ vm.grid.detailsConfig.currentItem.id.id ])"
                      on-make-public="vm.makePublic(event, vm.grid.detailsConfig.currentItem)"
                      on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, isPublic)"
+                     on-manage-edge-assets="vm.openEdgeAssets(event, vm.grid.detailsConfig.currentItem)"
+                     on-manage-edge-devices="vm.openEdgeDevices(event, vm.grid.detailsConfig.currentItem)"
+                     on-manage-edge-entity-views="vm.openEdgeEntityViews(event, vm.grid.detailsConfig.currentItem)"
+                     on-manage-edge-dashboards="vm.openEdgeDashboards(event, vm.grid.detailsConfig.currentItem)"
+                     on-manage-edge-rule-chains="vm.openEdgeRuleChains(event, vm.grid.detailsConfig.currentItem)"
                      on-delete-edge="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-edge>
         </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">

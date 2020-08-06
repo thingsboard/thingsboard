@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.edge;
+package org.thingsboard.server.service.edge.rpc;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 
-public interface EdgeEventService {
+public interface EdgeRpcService {
 
-    ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent);
+    void updateEdge(Edge edge);
 
-    TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
+    void deleteEdge(EdgeId edgeId);
 }

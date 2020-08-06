@@ -56,7 +56,7 @@ function EdgeService($http, $q, customerService) {
             deferred.reject();
         });
         return deferred.promise;
-    } // TODO: deaflynx: check usage in UI
+    }
 
     function getEdgesByIds(edgeIds, config) {
         var deferred = $q.defer();
