@@ -15,12 +15,14 @@
  */
 package org.thingsboard.rule.engine.rest;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.Collections;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestApiCallNodeConfiguration> {
 
