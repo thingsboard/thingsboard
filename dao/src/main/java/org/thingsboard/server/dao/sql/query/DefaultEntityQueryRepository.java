@@ -437,7 +437,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         //TODO: fetch last level only.
         //TODO: fetch distinct records.
         String lvlFilter = getLvlFilter(entityFilter.getMaxLevel());
-        String selectFields = "SELECT tenant_id, customer_id, id, created_time, type, name, label FROM " + entityType.name() + " WHERE id in ( SELECT entity_id";
+        String selectFields = "SELECT tenant_id, customer_id, id, created_time, type, name "
+                + (entityType.equals(EntityType.ENTITY_VIEW) ? "" : ", label ")
+                + "FROM " + entityType.name() + " WHERE id in ( SELECT entity_id";
         String from = getQueryTemplate(entityFilter.getDirection());
         String whereFilter = " WHERE";
         if (!StringUtils.isEmpty(entityFilter.getRelationType())) {
