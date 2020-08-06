@@ -25,10 +25,26 @@
             "assets": [
               "src/thingsboard.ico",
               "src/assets",
-              { "glob": "worker-html.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
-              { "glob": "worker-css.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
-              { "glob": "worker-json.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
-              { "glob": "worker-javascript.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" }
+              {
+                "glob": "worker-html.js",
+                "input": "./node_modules/ace-builds/src-min/",
+                "output": "/"
+              },
+              {
+                "glob": "worker-css.js",
+                "input": "./node_modules/ace-builds/src-min/",
+                "output": "/"
+              },
+              {
+                "glob": "worker-json.js",
+                "input": "./node_modules/ace-builds/src-min/",
+                "output": "/"
+              },
+              {
+                "glob": "worker-javascript.js",
+                "input": "./node_modules/ace-builds/src-min/",
+                "output": "/"
+              }
             ],
             "styles": [
               "src/styles.scss",
@@ -45,7 +61,7 @@
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                  "src/scss"
+                "src/scss"
               ]
             },
             "scripts": [
@@ -196,5 +212,8 @@
       }
     }
   },
-  "defaultProject": "thingsboard"
+  "defaultProject": "thingsboard",
+  "cli": {
+    "analytics": "8dae534f-2753-43b1-b196-1c91bbbbfe1c"
+  }
 }
