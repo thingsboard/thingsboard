@@ -104,7 +104,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
 
   validateDuplicateAliasName(): ValidatorFn {
     return (c: FormControl) => {
-      const newAlias = c.value;
+      const newAlias = c.value.trim();
       const found = this.entityAliases.find((entityAlias) => entityAlias.alias === newAlias);
       if (found) {
         if (this.isAdd || this.alias.id !== found.id) {
@@ -138,7 +138,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
 
   save(): void {
     this.submitted = true;
-    this.alias.alias = this.entityAliasFormGroup.get('alias').value;
+    this.alias.alias = this.entityAliasFormGroup.get('alias').value.trim();
     this.alias.filter = this.entityAliasFormGroup.get('filter').value;
     this.alias.filter.resolveMultiple = this.entityAliasFormGroup.get('resolveMultiple').value;
     this.validate().subscribe(() => {
