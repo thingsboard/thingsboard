@@ -107,6 +107,11 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
     }
   }
 
+  public pushAndOpenState(states: Array<StateObject>, openRightLayout?: boolean): void {
+    const state = states[states.length - 1];
+    this.openState(state.id, state.params, openRightLayout);
+  }
+
   public updateState(id: string, params?: StateParams, openRightLayout?: boolean): void {
     if (!id) {
       id = this.getStateId();
