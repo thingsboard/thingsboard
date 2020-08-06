@@ -17,7 +17,7 @@
 import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { StateControllerState } from './state-controller.models';
 import { StateControllerComponent } from './state-controller.component';
 import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
@@ -109,6 +109,23 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
             params
           };
           this.stateObject.push(newState);
+          this.selectedStateIndex = this.stateObject.length - 1;
+          this.gotoState(this.stateObject[this.stateObject.length - 1].id, true, openRightLayout);
+        }
+      );
+    }
+  }
+
+  public pushAndOpenState(states: Array<StateObject>, openRightLayout?: boolean): void {
+    if (this.states) {
+      for (const state of states) {
+        if (!this.states[state.id]) {
+          return;
+        }
+      }
+      forkJoin(states.map(state => this.resolveEntity(state.params))).subscribe(
+        () => {
+          this.stateObject.push(...states);
           this.selectedStateIndex = this.stateObject.length - 1;
           this.gotoState(this.stateObject[this.stateObject.length - 1].id, true, openRightLayout);
         }
