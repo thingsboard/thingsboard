@@ -155,6 +155,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
             @Override
             public void onCompleted() {
                 log.debug("[{}] The rpc session was closed!", edgeKey);
+                onError.accept(new EdgeConnectionException("[" + edgeKey + "] The rpc session was closed!"));
             }
         };
     }
