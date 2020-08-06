@@ -16,9 +16,6 @@
 package org.thingsboard.server.common.data;
 
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.EdgeId;
-
-import java.util.Set;
 
 public final class EdgeUtils {
 
@@ -43,6 +40,10 @@ public final class EdgeUtils {
                 return EdgeEventType.TENANT;
             case CUSTOMER:
                 return EdgeEventType.CUSTOMER;
+            case WIDGETS_BUNDLE:
+                return EdgeEventType.WIDGETS_BUNDLE;
+            case WIDGET_TYPE:
+                return EdgeEventType.WIDGET_TYPE;
             default:
                 return null;
         }
