@@ -26,6 +26,10 @@ kafka:
     servers: "localhost:9092"
   replication_factor: "1"
   topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600"
+  use_confluent_cloud: "false"
+  confluent:
+    sasl:
+      mechanism: "PLAIN"
 
 pubsub:
   queue_properties: "ackDeadlineInSec:30;messageRetentionInSec:604800"

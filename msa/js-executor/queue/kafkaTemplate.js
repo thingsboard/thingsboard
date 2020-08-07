@@ -61,15 +61,30 @@ function KafkaProducer() {
 
         const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
         const requestTopic = config.get('request_topic');
+        const useConfluent = config.get('kafka.use_confluent_cloud');
+        const saslMechanism = config.get('kafka.confluent.sasl.mechanism');
+        const username = config.get('kafka.confluent.username');
+        const password = config.get('kafka.confluent.password');
 
         logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
         logger.info('Kafka Requests Topic: %s', requestTopic);
 
-        kafkaClient = new Kafka({
+        let kafkaConfig = {
             brokers: kafkaBootstrapServers.split(','),
-            logLevel: logLevel.INFO,
-            logCreator: KafkaJsWinstonLogCreator
-        });
+                logLevel: logLevel.INFO,
+                logCreator: KafkaJsWinstonLogCreator
+        };
+
+        if (useConfluent) {
+            kafkaConfig['sasl'] = {
+                mechanism: saslMechanism,
+                username: username,
+                password: password
+            };
+            kafkaConfig['ssl'] = true;
+        }
+
+        kafkaClient = new Kafka(kafkaConfig);
 
         parseTopicProperties();
 

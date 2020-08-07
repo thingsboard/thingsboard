@@ -18,6 +18,7 @@ package org.thingsboard.server.queue.kafka;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -68,7 +69,22 @@ public class TbKafkaSettings {
 
     @Value("${queue.kafka.fetch_max_bytes:134217728}")
     @Getter
-    private  int fetchMaxBytes;
+    private int fetchMaxBytes;
+
+    @Value("${queue.kafka.use_confluent_cloud:false}")
+    private boolean useConfluent;
+
+    @Value("${queue.kafka.confluent.ssl.algorithm}")
+    private String sslAlgorithm;
+
+    @Value("${queue.kafka.confluent.sasl.mechanism}")
+    private String saslMechanism;
+
+    @Value("${queue.kafka.confluent.sasl.config}")
+    private String saslConfig;
+
+    @Value("${queue.kafka.confluent.security.protocol}")
+    private String securityProtocol;
 
     @Setter
     private List<TbKafkaProperty> other;
@@ -76,12 +92,21 @@ public class TbKafkaSettings {
     public Properties toProps() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
-        props.put(ProducerConfig.ACKS_CONFIG, acks);
         props.put(ProducerConfig.RETRIES_CONFIG, retries);
-        props.put(ProducerConfig.BATCH_SIZE_CONFIG, batchSize);
-        props.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs);
-        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, bufferMemory);
-        if(other != null){
+
+        if (useConfluent) {
+            props.put("ssl.endpoint.identification.algorithm", sslAlgorithm);
+            props.put("sasl.mechanism", saslMechanism);
+            props.put("sasl.jaas.config", saslConfig);
+            props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+        } else {
+            props.put(ProducerConfig.ACKS_CONFIG, acks);
+            props.put(ProducerConfig.BATCH_SIZE_CONFIG, batchSize);
+            props.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs);
+            props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, bufferMemory);
+        }
+
+        if (other != null) {
             other.forEach(kv -> props.put(kv.getKey(), kv.getValue()));
         }
         return props;
