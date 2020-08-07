@@ -16,7 +16,15 @@
 
 import L, { LeafletMouseEvent } from 'leaflet';
 import { FormattedData, MarkerSettings } from './map-models';
-import { aspectCache, bindPopupActions, createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
+import {
+  aspectCache,
+  bindPopupActions,
+  createTooltip,
+  fillPattern,
+  parseWithTranslation,
+  processPattern,
+  safeExecute
+} from './maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined } from '@core/utils';
 import LeafletMap from './leaflet-map';
@@ -74,9 +82,13 @@ export class Marker {
     }
 
     updateMarkerTooltip(data: FormattedData) {
+      if(!this.map.markerTooltipText || this.settings.useTooltipFunction) {
         const pattern = this.settings.useTooltipFunction ?
-            safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
-        this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
+          safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
+        this.map.markerTooltipText = parseWithTranslation.prepareProcessPattern(pattern, true);
+        this.map.replaceInfoTooltipMarker = processPattern(this.map.markerTooltipText, data);
+      }
+      this.tooltip.setContent(fillPattern(this.map.markerTooltipText, this.map.replaceInfoTooltipMarker, data));
       if (this.tooltip.isOpen() && this.tooltip.getElement()) {
         bindPopupActions(this.tooltip, this.settings, data.$datasource);
       }
@@ -89,9 +101,13 @@ export class Marker {
     updateMarkerLabel(settings: MarkerSettings) {
         this.leafletMarker.unbindTooltip();
         if (settings.showLabel) {
-            const pattern = settings.useLabelFunction ?
+            if(!this.map.markerLabelText || settings.useLabelFunction) {
+              const pattern = settings.useLabelFunction ?
                 safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.label;
-            settings.labelText = parseWithTranslation.parseTemplate(pattern, this.data, true);
+              this.map.markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
+              this.map.replaceInfoLabelMarker = processPattern(this.map.markerLabelText, this.data);
+            }
+            settings.labelText = fillPattern(this.map.markerLabelText, this.map.replaceInfoLabelMarker, this.data);
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
                 { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.tooltipOffset });
         }
