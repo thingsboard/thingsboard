@@ -31,7 +31,6 @@ import {
 } from '@shared/models/query/query.models';
 import { SubscriptionTimewindow } from '@shared/models/time/time.models';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
-import { UtilsService } from '@core/services/utils.service';
 import { PageData } from '@shared/models/page/page-data';
 import { deepClone, isDefined, isDefinedAndNotNull, isObject } from '@core/utils';
 import { simulatedAlarm } from '@shared/models/alarm.models';
@@ -68,8 +67,7 @@ export class AlarmDataSubscription {
 
   constructor(public alarmDataSubscriptionOptions: AlarmDataSubscriptionOptions,
               private listener: AlarmDataListener,
-              private telemetryService: TelemetryService,
-              private utils: UtilsService) {
+              private telemetryService: TelemetryService) {
   }
 
   public unsubscribe() {
@@ -166,7 +164,7 @@ export class AlarmDataSubscription {
   private onPageData(pageData: PageData<AlarmData>, allowedEntities: number, totalEntities: number) {
     this.pageData = pageData;
     this.resetData();
-    this.listener.alarmsLoaded(pageData, this.alarmDataSubscriptionOptions.pageLink, allowedEntities, totalEntities);
+    this.listener.alarmsLoaded(pageData, allowedEntities, totalEntities);
   }
 
   private onDataUpdate(update: Array<AlarmData>) {

@@ -19,6 +19,7 @@ import { FormattedData, MarkerSettings } from './map-models';
 import { aspectCache, bindPopupActions, createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined } from '@core/utils';
+import LeafletMap from './leaflet-map';
 
 export class Marker {
     leafletMarker: L.Marker;
@@ -29,7 +30,7 @@ export class Marker {
     data: FormattedData;
     dataSources: FormattedData[];
 
-  constructor(location: L.LatLngExpression, public settings: MarkerSettings,
+  constructor(private map: LeafletMap, location: L.LatLngExpression, public settings: MarkerSettings,
               data?: FormattedData, dataSources?, onDragendListener?) {
         this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
@@ -158,23 +159,23 @@ export class Marker {
     }
 
     createDefaultMarkerIcon(color, onMarkerIconReady) {
+      if (!this.map.defaultMarkerIconInfo) {
         const icon = L.icon({
-            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + color,
-            iconSize: [21, 34],
-            iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
-            popupAnchor: [0, -34],
-            shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
-            shadowSize: [40, 37],
-            shadowAnchor: [12, 35]
+          iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + color,
+          iconSize: [21, 34],
+          iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
+          popupAnchor: [0, -34],
+          shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+          shadowSize: [40, 37],
+          shadowAnchor: [12, 35]
         });
-        const iconInfo = {
-            size: [21, 34],
-            icon
+        this.map.defaultMarkerIconInfo = {
+          size: [21, 34],
+          icon
         };
-        onMarkerIconReady(iconInfo);
+      }
+      onMarkerIconReady(this.map.defaultMarkerIconInfo);
     }
-
-
 
     removeMarker() {
         /*     this.map$.subscribe(map =>

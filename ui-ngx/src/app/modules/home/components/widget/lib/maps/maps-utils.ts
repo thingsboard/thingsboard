@@ -210,8 +210,9 @@ function parseTemplate(template: string, data: { $datasource?: Datasource, [key:
       match = buttonActionRegex.exec(template);
     }
 
-    const compiled = _.template(template);
-    res = compiled(data);
+    // const compiled = _.template(template);
+    // res = compiled(data);
+    res = template;
   } catch (ex) {
     console.log(ex, template)
   }
