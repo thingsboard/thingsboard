@@ -322,3 +322,28 @@ export function calculateNewPointCoordinate(coordinate: number, imageSize: numbe
   }
   return pointCoordinate;
 }
+
+export function createLoadingDiv(loadingText: string): JQuery<HTMLElement> {
+  return $(`
+    <div style="
+          z-index: 12;
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          flex-direction: column;
+          align-content: center;
+          align-items: center;
+          justify-content: center;
+          display: flex;
+          background: rgba(255,255,255,0.7);
+          font-size: 16px;
+          font-family: Roboto;
+          font-weight: 400;
+          text-transform:  uppercase;
+        ">
+        <span>${loadingText}</span>
+    </div>
+  `);
+}

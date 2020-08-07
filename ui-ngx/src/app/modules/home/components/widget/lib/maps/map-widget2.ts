@@ -85,6 +85,7 @@ export class MapWidgetController implements MapWidgetInterface {
           textSearch: null,
           dynamic: true
         };
+        this.map.setLoading(true);
         this.ctx.defaultSubscription.subscribeAllForPaginatedData(this.pageLink, null);
     }
 
@@ -279,6 +280,7 @@ export class MapWidgetController implements MapWidgetInterface {
         if (this.settings.draggableMarker) {
           this.map.setDataSources(formattedData);
         }
+        this.map.setLoading(false);
     }
 
     resize() {

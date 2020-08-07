@@ -39,7 +39,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
-import { createTooltip, parseArray, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
+import { createLoadingDiv, createTooltip, parseArray, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DatasourceData } from '@shared/models/widget.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
@@ -60,6 +60,8 @@ export default abstract class LeafletMap {
     markersData: FormattedData[] = [];
     polygonsData: FormattedData[] = [];
     defaultMarkerIconInfo: { size: number[], icon: Icon };
+    loadingDiv: JQuery<HTMLElement>;
+    loading = false;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -167,6 +169,24 @@ export default abstract class LeafletMap {
             }
             addMarker = L.control.addMarker({ position: 'topright' }).addTo(this.map);
         }
+    }
+
+    public setLoading(loading: boolean) {
+      if (this.loading !== loading) {
+        this.loading = loading;
+        this.ready$.subscribe(() => {
+          if (this.loading) {
+            if (!this.loadingDiv) {
+              this.loadingDiv = createLoadingDiv(this.ctx.translate.instant('common.loading'));
+            }
+            this.$container.append(this.loadingDiv[0]);
+          } else {
+            if (this.loadingDiv) {
+              this.loadingDiv.remove();
+            }
+          }
+        });
+      }
     }
 
     public setMap(map: L.Map) {
