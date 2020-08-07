@@ -261,7 +261,7 @@ export function processPattern(template: string, data: { $datasource?: Datasourc
 }
 
 export function fillPattern(markerLabelText: string, replaceInfoLabelMarker: Array<ReplaceInfo>, data: FormattedData) {
-  let text = markerLabelText;
+  let text = createLabelFromDatasource(data.$datasource, markerLabelText);
   if (replaceInfoLabelMarker) {
     for(const variableInfo of replaceInfoLabelMarker) {
       let txtVal = '';
