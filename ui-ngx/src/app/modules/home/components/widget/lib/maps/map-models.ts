@@ -121,6 +121,12 @@ export interface FormattedData {
     [key: string]: any
 }
 
+export interface ReplaceInfo {
+  variable: string;
+  valDec?: number;
+  dataKeyName: string
+}
+
 export type PolygonSettings = {
     showPolygon: boolean;
     polygonKeyName: string;
