@@ -341,8 +341,8 @@ export function parseData(input: DatasourceData[]): FormattedData[] {
       };
       entityArray.filter(el => el.data.length).forEach(el => {
         const indexDate = el?.data?.length ? el.data.length - 1 : 0;
-        obj[el?.dataKey?.label] = el?.data[indexDate][0] ? el?.data[indexDate][1] : null;
-        obj[el?.dataKey?.label + '|ts'] = el?.data[indexDate][0] || null;
+        obj[el?.dataKey?.label] = el?.data[indexDate][1];
+        obj[el?.dataKey?.label + '|ts'] = el?.data[indexDate][0];
         if (el?.dataKey?.label === 'type') {
           obj.deviceType = el?.data[indexDate][1];
         }

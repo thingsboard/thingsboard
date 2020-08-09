@@ -106,7 +106,7 @@
     "@types/js-beautify": "^1.8.2",
     "@types/jstree": "^3.3.40",
     "@types/jszip": "^3.4.1",
-    "@types/leaflet": "^1.5.12",
+    "@types/leaflet": "^1.5.17",
     "@types/leaflet-markercluster": "^1.0.3",
     "@types/leaflet-polylinedecorator": "^1.6.0",
     "@types/lodash": "^4.14.151",

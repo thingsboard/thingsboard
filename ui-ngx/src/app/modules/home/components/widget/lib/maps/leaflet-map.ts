@@ -44,7 +44,7 @@ import { Polygon } from './polygon';
 import { createLoadingDiv, createTooltip, parseArray, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DatasourceData } from '@shared/models/widget.models';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotEmptyStr } from '@core/utils';
 
 export default abstract class LeafletMap {
 
@@ -276,7 +276,7 @@ export default abstract class LeafletMap {
         if (!expression) return null;
         const lat = expression[this.options.latKeyName];
         const lng = expression[this.options.lngKeyName];
-        if (!isDefinedAndNotNull(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isNaN(lng)) {
+        if (!isDefinedAndNotEmptyStr(lat) || isNaN(lat) || !isDefinedAndNotEmptyStr(lng) || isNaN(lng)) {
           return null;
         }
         return L.latLng(lat, lng) as L.LatLng;
@@ -524,7 +524,7 @@ export default abstract class LeafletMap {
     const keys: string[] = [];
     this.polygonsData = deepClone(polyData);
     polyData.forEach((data: FormattedData) => {
-      if (data && data.hasOwnProperty(this.options.polygonKeyName) && data[this.options.polygonKeyName] !== null) {
+      if (data && isDefinedAndNotEmptyStr(data[this.options.polygonKeyName])) {
         if (typeof (data[this.options.polygonKeyName]) === 'string') {
           data[this.options.polygonKeyName] = JSON.parse(data[this.options.polygonKeyName]);
         }
