@@ -18,7 +18,7 @@ import L, { PolylineDecoratorOptions } from 'leaflet';
 import 'leaflet-polylinedecorator';
 
 import { FormattedData, PolylineSettings } from './map-models';
-import { safeExecute } from '@home/components/widget/lib/maps/maps-utils';
+import { functionValueCalculator } from '@home/components/widget/lib/maps/maps-utils';
 
 export class Polyline {
 
@@ -72,15 +72,12 @@ export class Polyline {
   getPolyStyle(settings: PolylineSettings): L.PolylineOptions {
     return {
       interactive: false,
-      color: settings.useColorFunction ?
-        safeExecute(settings.colorFunction,
-          [this.data, this.dataSources, this.data.dsIndex]) : settings.color,
-      opacity: settings.useStrokeOpacityFunction ?
-        safeExecute(settings.strokeOpacityFunction,
-          [this.data, this.dataSources, this.data.dsIndex]) : settings.strokeOpacity,
-      weight: settings.useStrokeWeightFunction ?
-        safeExecute(settings.strokeWeightFunction,
-          [this.data, this.dataSources, this.data.dsIndex]) : settings.strokeWeight,
+      color: functionValueCalculator(settings.useColorFunction, settings.colorFunction,
+        [this.data, this.dataSources, this.data.dsIndex], settings.color),
+      opacity: functionValueCalculator(settings.useStrokeOpacityFunction, settings.strokeOpacityFunction,
+        [this.data, this.dataSources, this.data.dsIndex], settings.strokeOpacity),
+      weight: functionValueCalculator(settings.useStrokeWeightFunction, settings.strokeWeightFunction,
+        [this.data, this.dataSources, this.data.dsIndex], settings.strokeWeight)
     }
   }
 
