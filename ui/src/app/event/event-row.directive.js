@@ -25,7 +25,7 @@ import eventRowDebugRuleNodeTemplate from './event-row-debug-rulenode.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, types) {
+export default function EventRowDirective($compile, $templateCache, $mdDialog, $document, types, utils) {
 
     var linker = function (scope, element, attrs) {
 
@@ -71,11 +71,18 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             if (!contentType) {
                 contentType = null;
             }
+            var sortedContent;
+            try {
+                sortedContent = angular.toJson(utils.sortObjectKeys(angular.fromJson(content)));
+            }
+            catch(err) {
+                sortedContent = content;
+            }
             $mdDialog.show({
                 controller: 'EventContentDialogController',
                 controllerAs: 'vm',
                 templateUrl: eventErrorDialogTemplate,
-                locals: {content: content, title: title, contentType: contentType, showingCallback: onShowingCallback},
+                locals: {content: sortedContent, title: title, contentType: contentType, showingCallback: onShowingCallback},
                 parent: angular.element($document[0].body),
                 fullscreen: true,
                 targetEvent: $event,
