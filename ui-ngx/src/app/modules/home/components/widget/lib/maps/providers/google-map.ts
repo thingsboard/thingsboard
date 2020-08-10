@@ -36,7 +36,7 @@ export class GoogleMap extends LeafletMap {
     super(ctx, $container, options);
     this.resource = ctx.$injector.get(ResourcesService);
     this.loadGoogle(() => {
-      const map = L.map($container, {attributionControl: false}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
+      const map = L.map($container, {attributionControl: false, editable: !!options.editablePolygon}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
       (L.gridLayer as any).googleMutant({
         type: options?.gmDefaultMapType || 'roadmap'
       }).addTo(map);

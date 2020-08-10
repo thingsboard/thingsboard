@@ -24,7 +24,9 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import {isDefinedAndNotNull, isNumber} from '@core/utils';
+import "leaflet-editable/src/Leaflet.Editable";
+import {isArray} from "rxjs/internal-compatibility";
 
 const maxZoom = 4;// ?
 
@@ -196,14 +198,15 @@ export class ImageMap extends LeafletMap {
     initMap(updateImage?: boolean) {
         if (!this.map && this.aspect > 0) {
             const center = this.pointToLatLng(this.width / 2, this.height / 2);
-            this.map = L.map(this.$container, {
+          this.map = L.map(this.$container, {
                 minZoom: 1,
                 maxZoom,
                 scrollWheelZoom: !this.options.disableScrollZooming,
                 center,
                 zoom: 1,
                 crs: L.CRS.Simple,
-                attributionControl: false
+                attributionControl: false,
+                editable: !!this.options.editablePolygon
             });
             this.updateBounds(updateImage);
         }
@@ -221,14 +224,17 @@ export class ImageMap extends LeafletMap {
         expression.y * this.height);
     }
 
-    convertPositionPolygon(expression: Array<[number, number]>): L.LatLngExpression[] {
-      return expression.map((el) => {
+    convertPositionPolygon(expression: Array<[number, number]> | Array<Array<[number, number]>>) {
+      return (expression as Array<any>).map((el) => {
         if (el.length === 2 && !el.some(isNaN)) {
           return this.pointToLatLng(
             el[0] * this.width,
             el[1] * this.height)
+        } else if (isArray(el) && el.length) {
+          return this.convertPositionPolygon(el);
+        } else {
+          return null;
         }
-        return null;
       }).filter(el => !!el)
     }
 
@@ -246,5 +252,26 @@ export class ImageMap extends LeafletMap {
             [this.options.xPosKeyName]: calculateNewPointCoordinate(point.x, this.width),
             [this.options.yPosKeyName]: calculateNewPointCoordinate(point.y, this.height)
         }
+    }
+
+    convertToPolygonFormat(points: Array<any>): Array<any> {
+      if (points.length) {
+        return points.map(point=> {
+          if (point.length) {
+            return this.convertToPolygonFormat(point);
+          } else {
+            let pos = this.latLngToPoint(point);
+            return [calculateNewPointCoordinate(pos.x, this.width), calculateNewPointCoordinate(pos.y, this.height)];
+          }
+        })
+      } else {
+        return []
+      }
+    }
+
+    convertPolygonToCustomFormat(expression: Array<Array<any>>): object {
+      return {
+        [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
+      }
     }
 }

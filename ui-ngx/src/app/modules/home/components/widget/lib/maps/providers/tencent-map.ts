@@ -24,7 +24,7 @@ export class TencentMap extends LeafletMap {
   constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
     super(ctx, $container, options);
     const txUrl = 'http://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0';
-    const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
+    const map = L.map($container, {editable: !!options.editablePolygon}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
     const txLayer = L.tileLayer(txUrl, {
       subdomains: '0123',
       tms: true,

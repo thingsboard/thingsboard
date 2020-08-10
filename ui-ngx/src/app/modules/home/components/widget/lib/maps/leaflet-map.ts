@@ -43,6 +43,8 @@ import { createTooltip, parseArray, safeExecute } from '@home/components/widget/
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DatasourceData } from '@shared/models/widget.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import {newArray} from "@angular/compiler/src/util";
+import {isArray} from "rxjs/internal-compatibility";
 
 export default abstract class LeafletMap {
 
@@ -168,6 +170,75 @@ export default abstract class LeafletMap {
         }
     }
 
+  addPolygonControl() {
+    if (this.options.editablePolygon) {
+      let mousePositionOnMap: L.LatLng[];
+      let addPolygon: L.Control;
+      this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
+        let latlng1 = e.latlng;
+        let latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + 10);
+        let latlng3 = L.latLng(e.latlng.lat-10, e.latlng.lng);
+        mousePositionOnMap = [latlng1,latlng2, latlng3 ];
+      });
+      const dragListener = (e: L.DragEndEvent) => {
+        if (e.type === 'dragend' && mousePositionOnMap) {
+          const icon = new L.Icon.Default();
+          icon.options.shadowSize = [0, 0];
+          const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
+          const datasourcesList = document.createElement('div');
+          const customLatLng = {coordinates: this.convertToPolygonFormat(mousePositionOnMap)};
+          this.datasources.forEach(ds => {
+            const dsItem = document.createElement('p');
+            dsItem.appendChild(document.createTextNode(ds.entityName));
+            dsItem.setAttribute('style', 'font-size: 14px');
+            dsItem.onclick = () => {
+              const updatedEnttity = { ...ds, ...customLatLng };
+              this.savePolygonLocation(updatedEnttity).subscribe(() => {
+                this.map.removeLayer(newPolygon);
+                this.deletePolygon(ds.entityName);
+                // this.createPolygon(ds, this.datasources, this.options);
+              });
+            }
+            datasourcesList.append(dsItem);
+          });
+          const deleteBtn = document.createElement('a');
+          deleteBtn.appendChild(document.createTextNode('Delete position'));
+          deleteBtn.setAttribute('color', 'red');
+          deleteBtn.onclick = () => {
+            this.map.removeLayer(newPolygon);
+          }
+          datasourcesList.append(deleteBtn);
+          const popup = L.popup();
+          popup.setContent(datasourcesList);
+          newPolygon.bindPopup(popup).openPopup();
+        }
+        addPolygon.setPosition('topright')
+      }
+      L.Control.AddPolygon = L.Control.extend({
+        onAdd() {
+          const img = L.DomUtil.create('img') as any;
+          img.src = `assets/add_polygon.svg`;
+          img.style.width = '32px';
+          img.style.height = '32px';
+          img.title = 'Drag and drop to add Polygon';
+          img.onclick = this.dragPolygonVertex;
+          img.draggable = true;
+          const draggableImg = new L.Draggable(img);
+          draggableImg.enable();
+          draggableImg.on('dragend', dragListener)
+          return img;
+        },
+        onRemove() {
+        },
+        dragPolygonVertex: this.dragPolygonVertex
+      } as any);
+      L.control.addPolygon = (opts) => {
+        return new L.Control.AddPolygon(opts);
+      }
+      addPolygon = L.control.addPolygon({ position: 'topright' }).addTo(this.map);
+    }
+  }
+
     public setMap(map: L.Map) {
         this.map = map;
         if (this.options.useDefaultCenterPosition) {
@@ -178,6 +249,9 @@ export default abstract class LeafletMap {
         if (this.options.draggableMarker) {
             this.addMarkerControl();
         }
+        if (this.options.editablePolygon) {
+          this.addPolygonControl();
+        }
         this.map$.next(this.map);
     }
 
@@ -186,6 +260,10 @@ export default abstract class LeafletMap {
     }
 
     public saveMarkerLocation(_e: FormattedData, lat?: number, lng?: number): Observable<any> {
+      return of(null);
+    }
+
+    public savePolygonLocation(_e: FormattedData, coordinates?: Array<[number, number]>): Observable<any> {
       return of(null);
     }
 
@@ -255,16 +333,42 @@ export default abstract class LeafletMap {
         return L.latLng(lat, lng) as L.LatLng;
     }
 
-    convertPositionPolygon(expression: Array<[number, number]>): L.LatLngExpression[] {
-      return expression.map((el) => {
-        return el.length === 2 && !el.some(isNaN) ? el : null
-      }).filter(el => !!el)
+    convertPositionPolygon(expression: Array<[number, number]> | Array<Array<[number, number]>>) {
+          return (expression as Array<any>).map((el) => {
+            if (el.length === 2 && !el.some(isNaN)) {
+              return el;
+            } else if (isArray(el) && el.length) {
+              return this.convertPositionPolygon(el);
+            } else {
+              return null;
+            }
+        }).filter(el => !!el)
     }
 
     convertToCustomFormat(position: L.LatLng): object {
         return {
             [this.options.latKeyName]: position.lat % 90,
             [this.options.lngKeyName]: position.lng % 180
+        }
+    }
+
+    convertToPolygonFormat(points: Array<any>): Array<any> {
+        if (points.length) {
+            return points.map(point=> {
+                if (point.length) {
+                    return this.convertToPolygonFormat(point);
+                } else {
+                    return [point.lat, point.lng];
+                }
+            })
+        } else {
+          return []
+        }
+    }
+
+    convertPolygonToCustomFormat(expression: Array<Array<any>>): object {
+        return {
+          [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
         }
     }
 
@@ -394,6 +498,15 @@ export default abstract class LeafletMap {
         }
     }
 
+    deletePolygon(key: string) {
+      let polygon = this.polygons.get(key)?.leafletPoly;
+      if (polygon) {
+        this.map.removeLayer(polygon);
+        this.polygons.delete(key);
+        polygon = null;
+      }
+    }
+
     updatePoints(pointsData: FormattedData[], getTooltip: (point: FormattedData, setTooltip?: boolean) => string) {
         this.map$.subscribe(map => {
             if (this.points) {
@@ -509,9 +622,14 @@ export default abstract class LeafletMap {
     });
   }
 
-    createPolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings, updateBounds = true) {
+  dragPolygonVertex = (e?, data = {} as FormattedData) => {
+    if (e == undefined || (e.type !== 'editable:vertex:dragend' && e.type !== 'editable:vertex:deleted')) return;
+    this.savePolygonLocation({ ...data, ...this.convertPolygonToCustomFormat(e.layer._latlngs) }).subscribe();
+  }
+
+  createPolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings, updateBounds = true) {
         this.ready$.subscribe(() => {
-            const polygon = new Polygon(this.map, polyData, dataSources, settings);
+            const polygon = new Polygon(this.map, polyData, dataSources, settings, this.dragPolygonVertex);
             if (updateBounds) {
               const bounds = polygon.leafletPoly.getBounds();
               this.fitBounds(bounds);
