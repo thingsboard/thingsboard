@@ -20,7 +20,15 @@ import { Datasource, DatasourceData } from '@app/shared/models/widget.models';
 import _ from 'lodash';
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { createLabelFromDatasource, hashCode, isDefinedAndNotNull, isNumber, isUndefined, padValue } from '@core/utils';
+import {
+  createLabelFromDatasource,
+  hashCode,
+  isDefined,
+  isDefinedAndNotNull, isFunction,
+  isNumber,
+  isUndefined,
+  padValue
+} from '@core/utils';
 
 export function createTooltip(target: L.Layer,
     settings: MarkerSettings | PolylineSettings | PolygonSettings,
@@ -399,6 +407,24 @@ export function safeExecute(func: (...args: any[]) => any, params = []) {
       console.log('error in external function:', err);
       res = null;
     }
+  }
+  return res;
+}
+
+export function functionValueCalculator(useFunction: boolean, func: (...args: any[]) => any, params = [], defaultValue: any) {
+  let res;
+  if (useFunction && isDefined(func) && isFunction(func)) {
+    try {
+      res = func(...params);
+      if (!isDefinedAndNotNull(res) || res === '') {
+        res = defaultValue;
+      }
+    } catch (err) {
+      res = defaultValue;
+      console.log('error in external function:', err);
+    }
+  } else {
+    res = defaultValue;
   }
   return res;
 }
