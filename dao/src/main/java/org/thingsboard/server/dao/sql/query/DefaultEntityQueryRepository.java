@@ -17,12 +17,8 @@ package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -237,13 +233,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
+    private final DefaultQueryLogComponent queryLog;
 
-    @Value("${sql.log_entity_queries:false}")
-    private boolean logSqlQueries;
-
-    public DefaultEntityQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
+    public DefaultEntityQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate, DefaultQueryLogComponent queryLog) {
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
+        this.queryLog = queryLog;
     }
 
     @Override
@@ -254,11 +249,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         ctx.append(addEntityTableQuery(ctx, query.getEntityFilter()));
         ctx.append(" e where ");
         ctx.append(buildEntityWhere(ctx, query.getEntityFilter(), Collections.emptyList()));
-        if (logSqlQueries) {
-            log.info("QUERY: {}", ctx.getQuery());
-            Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {}->{}", param, ctx.getValue(param)));
-        }
-        return transactionTemplate.execute(status -> jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class));
+        return transactionTemplate.execute(status -> {
+            long startTs = System.currentTimeMillis();
+            try {
+                return jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class);
+            } finally {
+                queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - startTs);
+            }
+        });
     }
 
     @Override
@@ -329,7 +327,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 fromClauseCount = fromClauseData;
             }
             String countQuery = String.format("select count(id) %s", fromClauseCount);
-            int totalElements = jdbcTemplate.queryForObject(countQuery, ctx, Integer.class);
+
+            long startTs = System.currentTimeMillis();
+            int totalElements;
+            try {
+                totalElements = jdbcTemplate.queryForObject(countQuery, ctx, Integer.class);
+            } finally {
+                queryLog.logQuery(ctx, countQuery, System.currentTimeMillis() - startTs);
+            }
 
             if (totalElements == 0) {
                 return new PageData<>();
@@ -354,11 +359,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             if (pageLink.getPageSize() > 0) {
                 dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
             }
-            if (logSqlQueries) {
-                log.info("QUERY: {}", dataQuery);
-                Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {}->{}", param, ctx.getValue(param)));
+            startTs = System.currentTimeMillis();
+            List<Map<String, Object>> rows;
+            try {
+                rows = jdbcTemplate.queryForList(dataQuery, ctx);
+            } finally {
+                queryLog.logQuery(ctx, countQuery, System.currentTimeMillis() - startTs);
             }
-            List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
             return EntityDataAdapter.createEntityData(pageLink, selectionMapping, rows, totalElements);
         });
     }
@@ -486,7 +493,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 + SELECT_TYPE + ", " + SELECT_NAME + ", " + SELECT_LABEL + ", " +
                 SELECT_FIRST_NAME + ", " + SELECT_LAST_NAME + ", " + SELECT_EMAIL + ", " + SELECT_REGION + ", " +
                 SELECT_TITLE + ", " + SELECT_COUNTRY + ", " + SELECT_STATE + ", " + SELECT_CITY + ", " +
-                SELECT_ADDRESS + ", " + SELECT_ADDRESS_2 + ", " + SELECT_ZIP + ", " + SELECT_PHONE + ", "  + SELECT_ADDITIONAL_INFO +
+                SELECT_ADDRESS + ", " + SELECT_ADDRESS_2 + ", " + SELECT_ZIP + ", " + SELECT_PHONE + ", " + SELECT_ADDITIONAL_INFO +
                 ", entity.entity_type as entity_type";
         String from = getQueryTemplate(entityFilter.getDirection());
         ctx.addUuidParameter("relation_root_id", rootId.getId());

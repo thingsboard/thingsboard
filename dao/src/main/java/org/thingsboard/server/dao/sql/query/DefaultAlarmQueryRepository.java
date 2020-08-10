@@ -43,6 +43,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -114,12 +115,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     protected final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
 
-    @Value("${sql.log_entity_queries:false}")
-    private boolean logSqlQueries;
+    private final DefaultQueryLogComponent queryLog;
 
-    public DefaultAlarmQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
+    public DefaultAlarmQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate, DefaultQueryLogComponent queryLog) {
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
+        this.queryLog = queryLog;
     }
 
     @Override
@@ -230,8 +231,17 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             if (!textSearchQuery.isEmpty()) {
                 mainQuery = String.format("select * from (%s) a WHERE %s", mainQuery, textSearchQuery);
             }
-            String countQuery = mainQuery;
-            int totalElements = jdbcTemplate.queryForObject(String.format("select count(*) from (%s) result", countQuery), ctx, Integer.class);
+            String countQuery = String.format("select count(*) from (%s) result", mainQuery);
+            long queryTs = System.currentTimeMillis();
+            int totalElements;
+            try {
+                totalElements = jdbcTemplate.queryForObject(countQuery, ctx, Integer.class);
+            } finally {
+                queryLog.logQuery(ctx, countQuery, System.currentTimeMillis() - queryTs);
+            }
+            if (totalElements == 0) {
+                return AlarmDataAdapter.createAlarmData(pageLink, Collections.emptyList(), totalElements, orderedEntityIds);
+            }
 
             String dataQuery = mainQuery + sortPart;
 
@@ -239,10 +249,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             if (pageLink.getPageSize() > 0) {
                 dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
             }
-            List<Map<String, Object>> rows = jdbcTemplate.queryForList(dataQuery, ctx);
-            if (logSqlQueries) {
-                log.info("QUERY: {}", dataQuery);
-                Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {}->{}", param, ctx.getValue(param)));
+            queryTs = System.currentTimeMillis();
+            List<Map<String, Object>> rows;
+            try {
+                rows = jdbcTemplate.queryForList(dataQuery, ctx);
+            } finally {
+                queryLog.logQuery(ctx, dataQuery, System.currentTimeMillis() - queryTs);
             }
             return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
         });
