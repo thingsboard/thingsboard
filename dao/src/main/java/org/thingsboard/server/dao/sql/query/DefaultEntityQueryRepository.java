@@ -189,6 +189,22 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
             " THEN (select name from entity_view where id = entity_id)" +
             " END as label";
+    private static final String SELECT_ADDITIONAL_INFO = " CASE" +
+            " WHEN entity.entity_type = 'TENANT'" +
+            " THEN (select additional_info from tenant where id = entity_id)" +
+            " WHEN entity.entity_type = 'CUSTOMER' " +
+            " THEN (select additional_info from customer where id = entity_id)" +
+            " WHEN entity.entity_type = 'USER'" +
+            " THEN (select additional_info from tb_user where id = entity_id)" +
+            " WHEN entity.entity_type = 'DASHBOARD'" +
+            " THEN (select '' from dashboard where id = entity_id)" +
+            " WHEN entity.entity_type = 'ASSET'" +
+            " THEN (select additional_info from asset where id = entity_id)" +
+            " WHEN entity.entity_type = 'DEVICE'" +
+            " THEN (select additional_info from device where id = entity_id)" +
+            " WHEN entity.entity_type = 'ENTITY_VIEW'" +
+            " THEN (select additional_info from entity_view where id = entity_id)" +
+            " END as label";
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -470,7 +486,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 + SELECT_TYPE + ", " + SELECT_NAME + ", " + SELECT_LABEL + ", " +
                 SELECT_FIRST_NAME + ", " + SELECT_LAST_NAME + ", " + SELECT_EMAIL + ", " + SELECT_REGION + ", " +
                 SELECT_TITLE + ", " + SELECT_COUNTRY + ", " + SELECT_STATE + ", " + SELECT_CITY + ", " +
-                SELECT_ADDRESS + ", " + SELECT_ADDRESS_2 + ", " + SELECT_ZIP + ", " + SELECT_PHONE +
+                SELECT_ADDRESS + ", " + SELECT_ADDRESS_2 + ", " + SELECT_ZIP + ", " + SELECT_PHONE + ", "  + SELECT_ADDITIONAL_INFO +
                 ", entity.entity_type as entity_type";
         String from = getQueryTemplate(entityFilter.getDirection());
         ctx.addUuidParameter("relation_root_id", rootId.getId());
@@ -557,7 +573,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         if (!StringUtils.isEmpty(searchText) && !selectionMapping.isEmpty()) {
             String lowerSearchText = "%" + searchText.toLowerCase() + "%";
             ctx.addStringParameter("lowerSearchTextParam", lowerSearchText);
-            List<String> searchAliases = selectionMapping.stream().map(EntityKeyMapping::getValueAlias).collect(Collectors.toList());
+            List<String> searchAliases = selectionMapping.stream().filter(EntityKeyMapping::isSearchable).map(EntityKeyMapping::getValueAlias).collect(Collectors.toList());
             String searchAliasesExpression;
             if (searchAliases.size() > 1) {
                 searchAliasesExpression = "CONCAT(" + String.join(" , ", searchAliases) + ")";
