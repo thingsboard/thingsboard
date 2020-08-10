@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { LeafletMouseEvent } from 'leaflet';
+import L, { Icon, LeafletMouseEvent } from 'leaflet';
 import { FormattedData, MarkerSettings } from './map-models';
 import {
   aspectCache,
@@ -26,7 +26,7 @@ import {
   safeExecute
 } from './maps-utils';
 import tinycolor from 'tinycolor2';
-import { isDefined } from '@core/utils';
+import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import LeafletMap from './leaflet-map';
 
 export class Marker {
@@ -138,8 +138,14 @@ export class Marker {
         const currentImage = this.settings.useMarkerImageFunction ?
             safeExecute(this.settings.markerImageFunction,
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
-        const currentColor = tinycolor(this.settings.useColorFunction ? safeExecute(this.settings.colorFunction,
-            [this.data, this.dataSources, this.data.dsIndex]) : this.settings.color).toHex();
+        let currentColor = this.settings.tinyColor;
+        if (this.settings.useColorFunction) {
+          const functionColor = safeExecute(this.settings.colorFunction,
+            [this.data, this.dataSources, this.data.dsIndex]);
+          if (isDefinedAndNotNull(functionColor)) {
+            currentColor = tinycolor(functionColor);
+          }
+        }
         if (currentImage && currentImage.url) {
             aspectCache(currentImage.url).subscribe(
                 (aspect) => {
@@ -174,23 +180,32 @@ export class Marker {
         }
     }
 
-    createDefaultMarkerIcon(color, onMarkerIconReady) {
-      if (!this.map.defaultMarkerIconInfo) {
-        const icon = L.icon({
-          iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + color,
-          iconSize: [21, 34],
-          iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
-          popupAnchor: [0, -34],
-          shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
-          shadowSize: [40, 37],
-          shadowAnchor: [12, 35]
-        });
-        this.map.defaultMarkerIconInfo = {
-          size: [21, 34],
-          icon
-        };
+    createDefaultMarkerIcon(color: tinycolor.Instance, onMarkerIconReady) {
+      let icon: { size: number[], icon: Icon };
+      if (!tinycolor.equals(color, this.settings.tinyColor)) {
+        icon = this.createColoredMarkerIcon(color);
+      } else {
+        if (!this.map.defaultMarkerIconInfo) {
+          this.map.defaultMarkerIconInfo = this.createColoredMarkerIcon(color);
+        }
+        icon = this.map.defaultMarkerIconInfo;
       }
-      onMarkerIconReady(this.map.defaultMarkerIconInfo);
+      onMarkerIconReady(icon);
+    }
+
+    createColoredMarkerIcon(color: tinycolor.Instance): { size: number[], icon: Icon } {
+      return {
+            size: [21, 34],
+            icon: L.icon({
+              iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + color.toHex(),
+              iconSize: [21, 34],
+              iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
+              popupAnchor: [0, -34],
+              shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+              shadowSize: [40, 37],
+              shadowAnchor: [12, 35]
+        })
+      };
     }
 
     removeMarker() {

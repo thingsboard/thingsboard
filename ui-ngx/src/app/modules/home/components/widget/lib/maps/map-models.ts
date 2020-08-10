@@ -24,6 +24,7 @@ import {
     googleMapSettingsSchema, hereMapSettingsSchema, imageMapSettingsSchema
 } from './schemes';
 import { EntityType } from '@shared/models/entity-type.models';
+import tinycolor from 'tinycolor2';
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
 
@@ -93,6 +94,7 @@ export type MarkerSettings = {
     useTooltipFunction: boolean;
     useColorFunction: boolean;
     color?: string;
+    tinyColor?: tinycolor.Instance;
     autocloseTooltip: boolean;
     showTooltipAction: string;
     useClusterMarkers: boolean;

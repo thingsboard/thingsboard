@@ -23,11 +23,12 @@ import L, {
   MarkerClusterGroup,
   MarkerClusterGroupOptions
 } from 'leaflet';
-
+import tinycolor from 'tinycolor2';
 import 'leaflet-providers';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 
 import {
+  defaultSettings,
   FormattedData,
   MapSettings,
   MarkerSettings,
@@ -76,6 +77,7 @@ export default abstract class LeafletMap {
     }
 
     public initSettings(options: MapSettings) {
+        this.options.tinyColor = tinycolor(this.options.color || defaultSettings.color);
         const { initCallback,
             disableScrollZooming,
             useClusterMarkers,

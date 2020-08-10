@@ -242,6 +242,7 @@ export interface SubscriptionEntityInfo {
   entityId: EntityId;
   entityName: string;
   entityLabel: string;
+  entityDescription: string;
 }
 
 export interface IWidgetSubscription {

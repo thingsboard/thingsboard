@@ -300,7 +300,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
             id: datasource.entityId
           },
           entityName: datasource.entityName,
-          entityLabel: datasource.entityLabel
+          entityLabel: datasource.entityLabel,
+          entityDescription: datasource.entityDescription
         };
       }
     }
