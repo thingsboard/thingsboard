@@ -205,9 +205,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             this.noEntitiesMatchingText = 'tenant.no-tenants-matching';
             this.entityRequiredText = 'tenant.tenant-required';
           } else {
-            this.entityText = 'customer.default-customer';
+            this.entityText = 'customer.customer';
             this.noEntitiesMatchingText = 'customer.no-customers-matching';
-            this.entityRequiredText = 'customer.default-customer-required';
+            this.entityRequiredText = 'customer.customer-required';
           }
           break;
       }
