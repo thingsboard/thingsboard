@@ -937,16 +937,20 @@ export class EntityService {
       );
       observables.push(observable);
     }
-    return forkJoin(observables).pipe(
-      map((response) => {
-        const hasError = response.filter((status) => status === 'error').length > 0;
-        if (hasError) {
-          throw Error();
-        } else {
-          return response;
-        }
-      })
-    );
+    if (observables.length) {
+      return forkJoin(observables).pipe(
+        map((response) => {
+          const hasError = response.filter((status) => status === 'error').length > 0;
+          if (hasError) {
+            throw Error();
+          } else {
+            return response;
+          }
+        })
+      );
+    } else {
+      return of(null);
+    }
   }
 
   private getStateEntityInfo(filter: EntityAliasFilter, stateParams: StateParams): {entityId: EntityId} {
