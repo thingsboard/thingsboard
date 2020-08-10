@@ -15,12 +15,10 @@
 ///
 
 import {
-  DEFAULT_MAP_PAGE_SIZE,
   defaultSettings,
   FormattedData,
   hereProviders,
   MapProviders,
-  providerSets,
   UnitedMapSettings
 } from './map-models';
 import LeafletMap from './leaflet-map';
@@ -46,6 +44,7 @@ import _ from 'lodash';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { isDefined } from '@core/utils';
 import { forkJoin, Observable, of } from 'rxjs';
+import { providerSets } from '@home/components/widget/lib/maps/providers';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
@@ -275,11 +274,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     update() {
-        const formattedData = parseData(this.data);
-        this.map.updateData(this.data, formattedData, this.drawRoutes, this.settings.showPolygon);
-        if (this.settings.draggableMarker) {
-          this.map.setDataSources(formattedData);
-        }
+        this.map.updateData(this.drawRoutes, this.settings.showPolygon);
         this.map.setLoading(false);
     }
 

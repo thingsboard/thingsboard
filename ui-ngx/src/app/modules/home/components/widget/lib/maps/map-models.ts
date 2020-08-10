@@ -15,14 +15,7 @@
 ///
 
 import { LatLngTuple } from 'leaflet';
-import { Datasource, JsonSettingsSchema } from '@app/shared/models/widget.models';
-import { Type } from '@angular/core';
-import LeafletMap from './leaflet-map';
-import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import {
-    openstreetMapSettingsSchema, tencentMapSettingsSchema,
-    googleMapSettingsSchema, hereMapSettingsSchema, imageMapSettingsSchema
-} from './schemes';
+import { Datasource } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import tinycolor from 'tinycolor2';
 
@@ -30,12 +23,10 @@ export const DEFAULT_MAP_PAGE_SIZE = 16384;
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
-export type GetTooltip = (point: FormattedData, setTooltip?: boolean) => string;
 export type PosFuncton = (origXPos, origYPos) => { x, y };
 
 export type MapSettings = {
     draggableMarker: boolean;
-    initCallback?: () => any;
     posFunction: PosFuncton;
     defaultZoomLevel?: number;
     disableScrollZooming?: boolean;
@@ -208,40 +199,6 @@ export type TripAnimationSettings = {
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;
 
 export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings & TripAnimationSettings;
-
-interface IProvider {
-    MapClass: Type<LeafletMap>,
-    schema: JsonSettingsSchema,
-    name: string
-}
-
-export const providerSets: { [key: string]: IProvider } = {
-    'openstreet-map': {
-        MapClass: OpenStreetMap,
-        schema: openstreetMapSettingsSchema,
-        name: 'openstreet-map',
-    },
-    'tencent-map': {
-        MapClass: TencentMap,
-        schema: tencentMapSettingsSchema,
-        name: 'tencent-map'
-    },
-    'google-map': {
-        MapClass: GoogleMap,
-        schema: googleMapSettingsSchema,
-        name: 'google-map'
-    },
-    here: {
-        MapClass: HEREMap,
-        schema: hereMapSettingsSchema,
-        name: 'here'
-    },
-    'image-map': {
-        MapClass: ImageMap,
-        schema: imageMapSettingsSchema,
-        name: 'image-map'
-    }
-};
 
 export const defaultSettings: any = {
     xPosKeyName: 'xPos',

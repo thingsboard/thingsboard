@@ -34,11 +34,10 @@ export class Marker {
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
-    location: L.LatLngExpression;
     data: FormattedData;
     dataSources: FormattedData[];
 
-  constructor(private map: LeafletMap, location: L.LatLngExpression, public settings: MarkerSettings,
+  constructor(private map: LeafletMap, private location: L.LatLng, public settings: MarkerSettings,
               data?: FormattedData, dataSources?, onDragendListener?) {
         this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
@@ -94,8 +93,11 @@ export class Marker {
       }
     }
 
-    updateMarkerPosition(position: L.LatLngExpression) {
+    updateMarkerPosition(position: L.LatLng) {
+      if (!this.location.equals(position)) {
+        this.location = position;
         this.leafletMarker.setLatLng(position);
+      }
     }
 
     updateMarkerLabel(settings: MarkerSettings) {

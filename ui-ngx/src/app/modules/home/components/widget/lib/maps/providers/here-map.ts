@@ -25,7 +25,7 @@ export class HEREMap extends LeafletMap {
         const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
         const tileLayer = (L.tileLayer as any).provider(options.mapProviderHere || 'HERE.normalDay', options.credentials);
         tileLayer.addTo(map);
-        super.setMap(map);
         super.initSettings(options);
+        super.setMap(map);
     }
 }
