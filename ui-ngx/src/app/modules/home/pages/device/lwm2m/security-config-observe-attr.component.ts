@@ -55,7 +55,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   observeValue: ObjectLwM2M[];
   instance: FormArray;
   clientLwM2M: FormArray;
-  isObserve = 'isObserv' as string;
+  isObserve = 'isObserve' as string;
   isAttr = 'isAttr' as string;
   isTelemetry = 'isTelemetry' as string;
   indeterminateObserve: boolean[][];
@@ -148,7 +148,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     return this.fb.array(resourcesLwM2MJson.map(resourceLwM2M => {
       return this.fb.group({
         id: resourceLwM2M.id,
-        [this.isObserve]: resourceLwM2M.isObserv,
+        [this.isObserve]: resourceLwM2M.isObserve,
         [this.isAttr]: resourceLwM2M.isAttr,
         [this.isTelemetry]: !resourceLwM2M.isAttr,
         name: resourceLwM2M.name

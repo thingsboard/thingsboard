@@ -30,7 +30,6 @@ import {
   ClientSecurityConfigPSK,
   ClientSecurityConfigRPK,
   JSON_OBSERVE,
-  ServerSecurityConfig,
   OBSERVE_ATTR,
   ObjectLwM2M,
   JSON_ALL_CONFIG,
@@ -42,13 +41,9 @@ import {
   BOOTSTRAP_SERVERS,
   LWM2M_SERVER,
   DEFAULT_ID_SERVER,
-  DEFAULT_LIFE_TIME,
-  DEFAULT_DEFAULT_MIN_PERIOD,
-  DEFAULT_BINDING,
   ClientSecurityConfigX509,
   ClientSecurityConfigNO_SEC,
   getDefaultClientSecurityConfigType,
-
   DEFAULT_CLIENT_HOLD_OFF_TIME,
   LEN_MAX_PSK,
   LEN_MAX_PUBLIC_KEY_RPK,
@@ -93,16 +88,13 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   observeAttr: string;
   observe: string;
   attr: string;
-  bootstrapFormGroup: FormGroup;
-  lwm2mServerFormGroup: FormGroup;
-  observeAttrFormGroup: FormGroup;
   lenMaxKeyClient = LEN_MAX_PSK;
   bsPublikKeyRPK: string
   lwM2mPublikKeyRPK: string
   bsPublikKeyX509: string
   lwM2mPublikKeyX509: string
-  tabIndexPrevious: number
   tabPrevious: MatTab
+  tabIndexPrevious = 0 as number;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -121,10 +113,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.lwm2mConfigFormGroup = this.initLwm2mConfigFormGroup();
     this.title = this.translate.instant('device.lwm2m-security-info') + ": " + this.data.endPoint
     this.lwm2mConfigFormGroup.get('clientCertificate').disable();
-    this.initChildesFormGroup();
     this.initClientSecurityConfig(this.lwm2mConfigFormGroup.get('jsonAllConfig').value);
     this.registerDisableOnLoadFormControl(this.lwm2mConfigFormGroup.get('securityConfigClientMode'));
-    this.upDateValueFromForm();
   }
 
   initConstants(): void {
@@ -137,10 +127,19 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.formControlNameJsonObserve = JSON_OBSERVE;
   }
 
-  initChildesFormGroup(): void {
-    this.bootstrapFormGroup = this.lwm2mConfigFormGroup.get('bootstrapFormGroup') as FormGroup;
-    this.lwm2mServerFormGroup = this.lwm2mConfigFormGroup.get('lwm2mServerFormGroup') as FormGroup;
-    this.observeAttrFormGroup = this.lwm2mConfigFormGroup.get('observeFormGroup') as FormGroup;
+  /**
+   * initChildesFormGroup
+   */
+  get bootstrapFormGroup(): FormGroup {
+    return this.lwm2mConfigFormGroup.get('bootstrapFormGroup') as FormGroup;
+  }
+
+  get lwm2mServerFormGroup(): FormGroup {
+    return this.lwm2mConfigFormGroup.get('lwm2mServerFormGroup') as FormGroup;
+  }
+
+  get observeAttrFormGroup(): FormGroup {
+    return this.lwm2mConfigFormGroup.get('observeFormGroup') as FormGroup;
   }
 
   initClientSecurityConfig(jsonAllConfig: SecurityConfigModels): void {
@@ -152,19 +151,19 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
         this.lwm2mConfigFormGroup.patchValue({
           identityPSK: clientSecurityConfigPSK.identity,
           clientKey: clientSecurityConfigPSK.key,
-        }, {emitEvent: true});
+        }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.RPK.toString():
         const clientSecurityConfigRPK = jsonAllConfig.client as ClientSecurityConfigRPK;
         this.lwm2mConfigFormGroup.patchValue({
           clientKey: clientSecurityConfigRPK.key,
-        }, {emitEvent: true});
+        }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.X509.toString():
         const clientSecurityConfigX509 = jsonAllConfig.client as ClientSecurityConfigX509;
         this.lwm2mConfigFormGroup.patchValue({
-          X509: clientSecurityConfigX509.x509,
-        }, {emitEvent: true});
+          clientCertificate: clientSecurityConfigX509.x509
+        }, {emitEvent: false});
         break;
     }
     this.securityConfigClientUpdateValidators(this.lwm2mConfigFormGroup.get('securityConfigClientMode').value);
@@ -252,7 +251,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     switch (mode) {
       case SECURITY_CONFIG_MODE.NO_SEC:
         this.jsonAllConfig.bootstrap.bootstrapServer.port = DEFAULT_PORT_BOOTSTRAP_NO_SEC;
-        this.jsonAllConfig.bootstrap.lwm2mServer.securityMode = SECURITY_CONFIG_MODE.NO_SEC.toString();
+        this.jsonAllConfig.bootstrap.lwm2mServer.port = DEFAULT_PORT_SERVER_NO_SEC;
         this.jsonAllConfig.bootstrap.bootstrapServer.serverPublicKey = '';
         this.jsonAllConfig.bootstrap.lwm2mServer.serverPublicKey = '';
         break;
@@ -278,79 +277,137 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.upDateJsonAllConfig();
   }
 
-  tabChanged = (tabChangeEvent: MatTabChangeEvent, tabGroup: MatTabGroup): void => {
-    console.log('tabGroup => ', tabGroup);
-    if (!this.tabIndexPrevious) this.tabIndexPrevious = tabChangeEvent.index;
-    if (!this.tabPrevious) this.tabPrevious = tabChangeEvent.tab;
-    console.log('tabIndexPreviousDo => ', this.tabIndexPrevious);
-    console.log('tabPreviousDo => ', this.tabPrevious);
+  tabChanged = (tabChangeEvent: MatTabChangeEvent): void => {
+    if (this.tabIndexPrevious !== tabChangeEvent.index) this.upDateValueToJson();
     this.tabIndexPrevious = tabChangeEvent.index;
-    this.tabPrevious = tabChangeEvent.tab;
-    console.log('tabIndexPreviousAfter => ', this.tabIndexPrevious);
-    console.log('tabPreviousAfter => ', this.tabPrevious);
-    console.log('indexCur => ', tabChangeEvent.index);
-    console.log('tabCur => ', tabChangeEvent.tab);
   }
 
-  upDateValueFromForm(): void {
-    this.lwm2mConfigFormGroup.get('endPoint').valueChanges.subscribe(val => {
+  upDateValueToJson(): void {
+    switch (this.tabIndexPrevious) {
+      case 0:
+        this.upDateValueToJsonTab_0();
+        break;
+      case 1:
+        this.upDateValueToJsonTab_1();
+        break;
+      case 2:
+        this.upDateValueToJsonTab_2();
+        break;
+      case 3:
+        this.upDateValueToJsonTab_3();
+        break;
+    }
+  }
+
+  upDateValueToJsonTab_0(): void {
+    if (this.lwm2mConfigFormGroup !== null) {
       if (!this.lwm2mConfigFormGroup.get('endPoint').pristine && this.lwm2mConfigFormGroup.get('endPoint').valid) {
         this.data.endPoint = this.lwm2mConfigFormGroup.get('endPoint').value;
         // Client mode == PSK
         if (this.lwm2mConfigFormGroup.get('securityConfigClientMode').value === SECURITY_CONFIG_MODE.PSK) {
           this.jsonAllConfig.client["endpoint"] = this.data.endPoint;
+          this.jsonAllConfig.client["endpoint"].markAsPristine({
+            onlySelf: true
+          });
           this.upDateJsonAllConfig();
+
         }
       }
-    })
-
-    // only  Client mode == PSK
-    this.lwm2mConfigFormGroup.get('identityPSK').valueChanges.subscribe(val => {
+      /** only  Client mode == PSK */
       if (!this.lwm2mConfigFormGroup.get('identityPSK').pristine && this.lwm2mConfigFormGroup.get('identityPSK').valid) {
+        this.lwm2mConfigFormGroup.get('identityPSK').markAsPristine({
+          onlySelf: true
+        });
         this.updateIdentityPSK();
       }
-    })
-
-    // only  Client mode == PSK (len = 64) || RPK (len = 182)
-    this.lwm2mConfigFormGroup.get('clientKey').valueChanges.subscribe(val => {
+      /** only  Client mode == PSK (len = 64) || RPK (len = 182) */
       if (!this.lwm2mConfigFormGroup.get('clientKey').pristine && this.lwm2mConfigFormGroup.get('clientKey').valid) {
+        this.lwm2mConfigFormGroup.get('clientKey').markAsPristine({
+          onlySelf: true
+        });
         this.updateClientKey();
       }
-    })
+    }
+  }
 
-    this.lwm2mConfigFormGroup.get(JSON_ALL_CONFIG).valueChanges.subscribe(val => {
-      if (!this.lwm2mConfigFormGroup.get(JSON_ALL_CONFIG).pristine && this.lwm2mConfigFormGroup.get(JSON_ALL_CONFIG).valid) {
-        this.jsonAllConfig = val;
-      }
-    })
-
-    this.bootstrapFormGroup.valueChanges.subscribe(val => {
-      if (!this.bootstrapFormGroup.pristine && this.bootstrapFormGroup.valid) {
-        val["bootstrapServerIs"] = true;
-        this.jsonAllConfig.bootstrap.bootstrapServer = val;
+  upDateValueToJsonTab_1(): void {
+    if (this.lwm2mConfigFormGroup !== null) {
+      if (!this.lwm2mConfigFormGroup.get('shortId').pristine && this.lwm2mConfigFormGroup.get('shortId').valid) {
+        this.jsonAllConfig.bootstrap.servers.shortId = this.lwm2mConfigFormGroup.get('shortId').value;
+        this.lwm2mConfigFormGroup.get('shortId').markAsPristine({
+          onlySelf: true
+        });
         this.upDateJsonAllConfig();
       }
-    })
 
-    this.lwm2mServerFormGroup.valueChanges.subscribe(val => {
-      if (!this.lwm2mServerFormGroup.pristine && this.lwm2mServerFormGroup.valid) {
-        val["bootstrapServerIs"] = false;
-        this.jsonAllConfig.bootstrap.lwm2mServer = val;
+      if (!this.lwm2mConfigFormGroup.get('lifetime').pristine && this.lwm2mConfigFormGroup.get('lifetime').valid) {
+        this.jsonAllConfig.bootstrap.servers.lifetime = this.lwm2mConfigFormGroup.get('lifetime').value;
+        this.lwm2mConfigFormGroup.get('lifetime').markAsPristine({
+          onlySelf: true
+        });
         this.upDateJsonAllConfig();
       }
-    })
 
-    this.lwm2mConfigFormGroup.get(JSON_OBSERVE).valueChanges.subscribe(val => {
-      if (!this.lwm2mConfigFormGroup.get(JSON_OBSERVE).pristine && this.lwm2mConfigFormGroup.get(JSON_OBSERVE).valid) {
-        console.log(JSON_OBSERVE + ': ', val);
+      if (!this.lwm2mConfigFormGroup.get('defaultMinPeriod').pristine && this.lwm2mConfigFormGroup.get('defaultMinPeriod').valid) {
+        this.jsonAllConfig.bootstrap.servers.defaultMinPeriod = this.lwm2mConfigFormGroup.get('defaultMinPeriod').value;
+        this.lwm2mConfigFormGroup.get('defaultMinPeriod').markAsPristine({
+          onlySelf: true
+        });
+        this.upDateJsonAllConfig();
       }
-    })
 
-    this.observeAttrFormGroup.valueChanges.subscribe(val => {
-      if (!this.observeAttrFormGroup.pristine && this.observeAttrFormGroup.valid) {
-        this.upDateObserveAttrFromGroup(val);
+      if (!this.lwm2mConfigFormGroup.get('notifIfDisabled').pristine && this.lwm2mConfigFormGroup.get('notifIfDisabled').valid) {
+        this.jsonAllConfig.bootstrap.servers.notifIfDisabled = this.lwm2mConfigFormGroup.get('notifIfDisabled').value;
+        this.lwm2mConfigFormGroup.get('notifIfDisabled').markAsPristine({
+          onlySelf: true
+        });
+        this.upDateJsonAllConfig();
       }
-    })
+
+      if (!this.lwm2mConfigFormGroup.get('binding').pristine && this.lwm2mConfigFormGroup.get('binding').valid) {
+        this.jsonAllConfig.bootstrap.servers.binding = this.lwm2mConfigFormGroup.get('binding').value;
+        this.lwm2mConfigFormGroup.get('binding').markAsPristine({
+          onlySelf: true
+        });
+        this.upDateJsonAllConfig();
+      }
+    }
+
+    if (this.bootstrapFormGroup !== null && !this.bootstrapFormGroup.pristine && this.bootstrapFormGroup.valid) {
+      this.jsonAllConfig.bootstrap.bootstrapServer = this.bootstrapFormGroup.value;
+      this.bootstrapFormGroup.markAsPristine({
+        onlySelf: true
+      });
+      this.upDateJsonAllConfig();
+    }
+
+    if (this.lwm2mServerFormGroup !== null && !this.lwm2mServerFormGroup.pristine && this.lwm2mServerFormGroup.valid) {
+      this.jsonAllConfig.bootstrap.lwm2mServer = this.lwm2mServerFormGroup.value;
+      // this.jsonAllConfig.bootstrap.lwm2mServer.bootstrapServerIs = false;
+      this.lwm2mServerFormGroup.markAsPristine({
+        onlySelf: true
+      });
+      this.upDateJsonAllConfig();
+    }
+  }
+
+  upDateValueToJsonTab_2(): void {
+    if (!this.observeAttrFormGroup.pristine && this.observeAttrFormGroup.valid) {
+      this.upDateObserveAttrFromGroup(this.observeAttrFormGroup.value);
+    }
+    this.observeAttrFormGroup.markAsPristine({
+      onlySelf: true
+    });
+    this.upDateJsonAllConfig();
+  }
+
+  upDateValueToJsonTab_3(): void {
+    if (!this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).pristine && this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).valid) {
+      this.jsonAllConfig = this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).value;
+    }
+    this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).markAsPristine({
+      onlySelf: true
+    });
   }
 
   updateIdentityPSK(): void {
@@ -424,7 +481,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
                   pathInst = value;
                 }
                 let pathInstObserve;
-                if (key === 'isObserv' && value) {
+                if (key === 'isObserve' && value) {
                   pathInstObserve = '/' + pathObj + '/' + pathInst;
                   isObserve.push(pathInstObserve)
                 }
@@ -437,7 +494,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
                           // pathRes = value
                           pathRes = '/' + pathObj + '/' + pathInst + '/' + value;
                         }
-                        if (key === 'isObserv' && value) {
+                        if (key === 'isObserve' && value) {
                           isObserve.push(pathRes)
                         }
                         if (key === 'isAttr' && value) {
@@ -455,7 +512,6 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     });
     this.jsonAllConfig[this.observeAttr][this.observe] = isObserve;
     this.jsonAllConfig[this.observeAttr][this.attr] = isAttr;
-    this.upDateJsonAllConfig();
   }
 
   getObservAttrObjectFormGroup(): ObjectLwM2M [] {
@@ -491,7 +547,14 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       this.data.endPoint = this.jsonAllConfig.client['endpoint'];
     }
     return this.fb.group({
-      jsonAllConfig: [this.jsonAllConfig, []],
+      identityPSK: ['', []],
+      clientKey: ['', []],
+      clientCertificate: [false, []],
+      shortId: [this.jsonAllConfig.bootstrap.servers.shortId, Validators.required],
+      lifetime: [this.jsonAllConfig.bootstrap.servers.lifetime, Validators.required],
+      defaultMinPeriod: [this.jsonAllConfig.bootstrap.servers.defaultMinPeriod, Validators.required],
+      notifIfDisabled: [this.jsonAllConfig.bootstrap.servers.notifIfDisabled, []],
+      binding: [this.jsonAllConfig.bootstrap.servers.binding, Validators.required],
       bootstrapServer: [this.jsonAllConfig.bootstrap[this.bootstrapServer], []],
       lwm2mServer: [this.jsonAllConfig.bootstrap[this.lwm2mServer], []],
       observeAttr: [this.getObservAttrObjectFormGroup(), []],
@@ -501,14 +564,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       observeFormGroup: this.fb.group({}),
       endPoint: [this.data.endPoint, []],
       securityConfigClientMode: [SECURITY_CONFIG_MODE[this.jsonAllConfig.client.securityConfigClientMode.toString()], []],
-      identityPSK: ['', []],
-      clientKey: ['', []],
-      clientCertificate: [false, []],
-      shortId: [this.jsonAllConfig.bootstrap.servers.shortId, Validators.required],
-      lifetime: [this.jsonAllConfig.bootstrap.servers.lifetime, Validators.required],
-      defaultMinPeriod: [this.jsonAllConfig.bootstrap.servers.defaultMinPeriod, Validators.required],
-      notifIfDisabled: [this.jsonAllConfig.bootstrap.servers.notifIfDisabled, []],
-      binding: [this.jsonAllConfig.bootstrap.servers.binding, Validators.required]
+      jsonAllConfig: [this.jsonAllConfig, []]
     });
   }
 
@@ -542,6 +598,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
 
 
   save(): void {
+    this.upDateValueToJson();
     this.data.endPoint = this.lwm2mConfigFormGroup.get('endPoint').value.split('\"').join('');
     this.data.jsonAllConfig = this.jsonAllConfig;
     if (this.lwm2mConfigFormGroup.get('securityConfigClientMode').value === SECURITY_CONFIG_MODE.PSK) {
@@ -553,7 +610,6 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   cancel(): void {
     this.dialogRef.close(undefined);
   }
-
 }
 
 
