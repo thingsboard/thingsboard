@@ -322,9 +322,13 @@ export default abstract class LeafletMap {
         bounds.extend(polygon.leafletPoly.getBounds());
       });
     }
-    this.markers.forEach((marker) => {
-      bounds.extend(marker.leafletMarker.getLatLng());
-    });
+    if ((this.options as MarkerSettings).useClusterMarkers) {
+      bounds.extend(this.markersCluster.getBounds());
+    } else {
+      this.markers.forEach((marker) => {
+        bounds.extend(marker.leafletMarker.getLatLng());
+      });
+    }
 
     const mapBounds = this.map.getBounds();
     if (bounds.isValid() && (!this.bounds || !mapBounds.contains(bounds))) {
@@ -398,16 +402,20 @@ export default abstract class LeafletMap {
 
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings,
                          updateBounds = true, callback?): Marker {
-        const newMarker = new Marker(this, this.convertPosition(data), settings, data, dataSources, this.dragMarker);
-        if (callback)
-            newMarker.leafletMarker.on('click', () => { callback(data, true) });
-        if (this.bounds && updateBounds)
-            this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
-        this.markers.set(key, newMarker);
-        if (!this.options.useClusterMarkers) {
-          this.map.addLayer(newMarker.leafletMarker);
-        }
-        return newMarker;
+      const newMarker = new Marker(this, this.convertPosition(data), settings, data, dataSources, this.dragMarker);
+      if (callback) {
+        newMarker.leafletMarker.on('click', () => {
+          callback(data, true)
+        });
+      }
+      if (this.bounds && updateBounds && !(this.options as MarkerSettings).useClusterMarkers) {
+        this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
+      }
+      this.markers.set(key, newMarker);
+      if (!this.options.useClusterMarkers) {
+        this.map.addLayer(newMarker.leafletMarker);
+      }
+      return newMarker;
     }
 
     private updateMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings): Marker {
