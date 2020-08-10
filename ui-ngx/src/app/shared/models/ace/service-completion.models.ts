@@ -1382,5 +1382,11 @@ export const serviceCompletions: TbEditorCompletions = {
       'See <a href="https://angular.io/api/common/http/HttpClient">HttpClient</a> for API reference.',
     meta: 'service',
     type: '<a href="https://angular.io/api/common/http/HttpClient">HttpClient</a>'
+  },
+  sanitizer: {
+    description: 'DomSanitizer Service<br>' +
+      'See <a href="https://angular.io/api/platform-browser/DomSanitizer">DomSanitizer</a> for API reference.',
+    meta: 'service',
+    type: '<a href="https://angular.io/api/platform-browser/DomSanitizer">DomSanitizer</a>'
   }
 }

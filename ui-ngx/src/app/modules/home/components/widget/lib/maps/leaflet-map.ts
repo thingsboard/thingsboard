@@ -16,6 +16,7 @@
 
 import L, {
   FeatureGroup,
+  Icon,
   LatLngBounds,
   LatLngTuple,
   markerClusterGroup,
@@ -32,6 +33,7 @@ import {
   MarkerSettings,
   PolygonSettings,
   PolylineSettings,
+  ReplaceInfo,
   UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
@@ -39,7 +41,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
-import { createTooltip, parseArray, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
+import { createLoadingDiv, createTooltip, parseArray, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DatasourceData } from '@shared/models/widget.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
@@ -59,6 +61,13 @@ export default abstract class LeafletMap {
     points: FeatureGroup;
     markersData: FormattedData[] = [];
     polygonsData: FormattedData[] = [];
+    defaultMarkerIconInfo: { size: number[], icon: Icon };
+    loadingDiv: JQuery<HTMLElement>;
+    loading = false;
+    replaceInfoLabelMarker: Array<ReplaceInfo> = [];
+    markerLabelText: string;
+    replaceInfoTooltipMarker: Array<ReplaceInfo> = [];
+    markerTooltipText: string;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -166,6 +175,24 @@ export default abstract class LeafletMap {
             }
             addMarker = L.control.addMarker({ position: 'topright' }).addTo(this.map);
         }
+    }
+
+    public setLoading(loading: boolean) {
+      if (this.loading !== loading) {
+        this.loading = loading;
+        this.ready$.subscribe(() => {
+          if (this.loading) {
+            if (!this.loadingDiv) {
+              this.loadingDiv = createLoadingDiv(this.ctx.translate.instant('common.loading'));
+            }
+            this.$container.append(this.loadingDiv[0]);
+          } else {
+            if (this.loadingDiv) {
+              this.loadingDiv.remove();
+            }
+          }
+        });
+      }
     }
 
     public setMap(map: L.Map) {
@@ -308,7 +335,11 @@ export default abstract class LeafletMap {
     updateMarkers(markersData: FormattedData[], updateBounds = true, callback?) {
         const rawMarkers = markersData.filter(mdata => !!this.convertPosition(mdata));
         this.ready$.subscribe(() => {
-          const keys: string[] = [];
+          const toDelete = new Set(Array.from(this.markers.keys()));
+          const createdMarkers: Marker[] = [];
+          const updatedMarkers: Marker[] = [];
+          const deletedMarkers: Marker[] = [];
+          let m: Marker;
           rawMarkers.forEach(data => {
             if (data.rotationAngle || data.rotationAngle === 0) {
               const currentImage = this.options.useMarkerImageFunction ?
@@ -325,22 +356,36 @@ export default abstract class LeafletMap {
               this.options.icon = null;
             }
             if (this.markers.get(data.entityName)) {
-              this.updateMarker(data.entityName, data, markersData, this.options)
+              m = this.updateMarker(data.entityName, data, markersData, this.options);
+              if (m) {
+                updatedMarkers.push(m);
+              }
             } else {
-              this.createMarker(data.entityName, data, markersData, this.options as MarkerSettings, updateBounds, callback);
+              m = this.createMarker(data.entityName, data, markersData, this.options as MarkerSettings, updateBounds, callback);
+              if (m) {
+                createdMarkers.push(m);
+              }
             }
-            keys.push(data.entityName);
-          });
-          const toDelete: string[] = [];
-          this.markers.forEach((v, mKey) => {
-            if (!keys.includes(mKey)) {
-              toDelete.push(mKey);
-            }
+            toDelete.delete(data.entityName);
           });
           toDelete.forEach((key) => {
-            this.deleteMarker(key);
+            m = this.deleteMarker(key);
+            if (m) {
+              deletedMarkers.push(m);
+            }
           });
           this.markersData = markersData;
+          if ((this.options as MarkerSettings).useClusterMarkers) {
+            if (createdMarkers.length) {
+              this.markersCluster.addLayers(createdMarkers.map(marker => marker.leafletMarker));
+            }
+            if (updatedMarkers.length) {
+              this.markersCluster.refreshClusters(updatedMarkers.map(marker => marker.leafletMarker))
+            }
+            if (deletedMarkers.length) {
+              this.markersCluster.removeLayers(deletedMarkers.map(marker => marker.leafletMarker));
+            }
+          }
         });
     }
 
@@ -350,22 +395,20 @@ export default abstract class LeafletMap {
     }
 
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings,
-                         updateBounds = true, callback?) {
-        const newMarker = new Marker(this.convertPosition(data), settings, data, dataSources, this.dragMarker);
+                         updateBounds = true, callback?): Marker {
+        const newMarker = new Marker(this, this.convertPosition(data), settings, data, dataSources, this.dragMarker);
         if (callback)
             newMarker.leafletMarker.on('click', () => { callback(data, true) });
         if (this.bounds && updateBounds)
             this.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
         this.markers.set(key, newMarker);
-        if (this.options.useClusterMarkers) {
-            this.markersCluster.addLayer(newMarker.leafletMarker);
+        if (!this.options.useClusterMarkers) {
+          this.map.addLayer(newMarker.leafletMarker);
         }
-        else {
-            this.map.addLayer(newMarker.leafletMarker);
-        }
+        return newMarker;
     }
 
-    private updateMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings) {
+    private updateMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings): Marker {
         const marker: Marker = this.markers.get(key);
         const location = this.convertPosition(data)
         if (!location.equals(marker.location)) {
@@ -374,24 +417,21 @@ export default abstract class LeafletMap {
         if (settings.showTooltip) {
             marker.updateMarkerTooltip(data);
         }
-        if (settings.useClusterMarkers) {
-          this.markersCluster.refreshClusters()
-        }
         marker.setDataSources(data, dataSources);
         marker.updateMarkerIcon(settings);
+        return marker;
     }
 
-    deleteMarker(key: string) {
-        let marker = this.markers.get(key)?.leafletMarker;
-        if (marker) {
-            if (this.options.useClusterMarkers) {
-              this.markersCluster.removeLayer(marker);
-            } else {
-              this.map.removeLayer(marker);
-            }
-            this.markers.delete(key);
-            marker = null;
-        }
+    deleteMarker(key: string): Marker {
+      const marker = this.markers.get(key);
+      const leafletMarker = marker?.leafletMarker;
+      if (leafletMarker) {
+          if (!this.options.useClusterMarkers) {
+            this.map.removeLayer(leafletMarker);
+          }
+          this.markers.delete(key);
+      }
+      return marker;
     }
 
     updatePoints(pointsData: FormattedData[], getTooltip: (point: FormattedData, setTooltip?: boolean) => string) {
