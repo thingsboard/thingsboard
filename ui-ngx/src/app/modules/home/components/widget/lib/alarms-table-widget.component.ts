@@ -150,7 +150,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private settings: AlarmsTableWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
-  private alarmSource: Datasource;
+
+  private alarmsTitlePattern: string;
 
   private displayDetails = true;
   private allowAcknowledgment = true;
@@ -215,7 +216,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.settings = this.ctx.settings;
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
-    this.alarmSource = this.subscription.alarmSource;
     this.initializeConfig();
     this.updateAlarmSource();
     this.ctx.updateWidgetParams();
@@ -248,6 +248,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   public onDataUpdated() {
     this.ngZone.run(() => {
+      this.updateTitle(true);
       this.alarmsDatasource.updateAlarms();
       this.ctx.detectChanges();
     });
@@ -296,15 +297,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
     this.actionCellDescriptors = this.actionCellDescriptors.concat(this.ctx.actionsApi.getActionDescriptors('actionCellButton'));
 
-    let alarmsTitle: string;
-
     if (this.settings.alarmsTitle && this.settings.alarmsTitle.length) {
-      alarmsTitle = this.utils.customTranslation(this.settings.alarmsTitle, this.settings.alarmsTitle);
+      this.alarmsTitlePattern = this.utils.customTranslation(this.settings.alarmsTitle, this.settings.alarmsTitle);
     } else {
-      alarmsTitle = this.translate.instant('alarm.alarms');
+      this.alarmsTitlePattern = this.translate.instant('alarm.alarms');
     }
 
-    this.ctx.widgetTitle = createLabelFromDatasource(this.alarmSource, alarmsTitle);
+    this.updateTitle(false);
 
     this.enableSelection = isDefined(this.settings.enableSelection) ? this.settings.enableSelection : true;
     if (!this.allowAcknowledgment && !this.allowClear) {
@@ -353,6 +352,16 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     $(this.elementRef.nativeElement).addClass(namespace);
   }
 
+  private updateTitle(updateWidgetParams = false) {
+    const newTitle = createLabelFromDatasource(this.subscription.alarmSource, this.alarmsTitlePattern);
+    if (this.ctx.widgetTitle !== newTitle) {
+      this.ctx.widgetTitle = newTitle;
+      if (updateWidgetParams) {
+        this.ctx.updateWidgetParams();
+      }
+    }
+  }
+
   private updateAlarmSource() {
 
     if (this.enableSelection) {
@@ -361,8 +370,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
     const latestDataKeys: Array<DataKey> = [];
 
-    if (this.alarmSource) {
-      this.alarmSource.dataKeys.forEach((alarmDataKey) => {
+    if (this.subscription.alarmSource) {
+      this.subscription.alarmSource.dataKeys.forEach((alarmDataKey) => {
         const dataKey: EntityColumn = deepClone(alarmDataKey) as EntityColumn;
         dataKey.entityKey = dataKeyToEntityKey(alarmDataKey);
         dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
