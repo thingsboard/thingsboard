@@ -511,9 +511,9 @@ export function padValue(val: any, dec: number): string {
   return strVal;
 }
 
-export function sortObjectKeys(obj: object): object{
-  return Object.keys(obj).sort().reduce((acc,key)=>{
-    acc[key]=obj[key];
+export function sortObjectKeys<T>(obj: T): T {
+  return Object.keys(obj).sort().reduce((acc, key) => {
+    acc[key] = obj[key];
     return acc;
-  },{});
+  }, {} as T);
 }

@@ -72,12 +72,12 @@ export class NodeScriptTestService {
     }
     if (!metadata) {
       metadata = {
-        deviceType: 'default',
         deviceName: 'Test Device',
+        deviceType: 'default',
         ts: new Date().getTime() + ''
       };
     } else {
-      metadata = sortObjectKeys(metadata) as {[key: string]: string};
+      metadata = sortObjectKeys(metadata);
     }
     if (!msgType) {
       msgType = 'POST_TELEMETRY_REQUEST';
