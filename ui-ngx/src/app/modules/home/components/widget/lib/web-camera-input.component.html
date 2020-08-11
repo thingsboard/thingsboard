@@ -20,7 +20,7 @@
     <div [fxShow]="!isShowCamera" fxLayout="column" fxLayoutAlign="space-between center" fxFlexFill>
       <div class="tb-web-camera__last-photo" fxFlex>
         <span [fxShow]="!lastPhoto" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
-        <img [fxShow]="lastPhoto" class="tb-web-camera__last-photo_img" [src]="safeLastPhoto" alt="last photo"/>
+        <img [fxShow]="lastPhoto" class="tb-web-camera__last-photo_img" [src]="lastPhoto" alt="last photo"/>
       </div>
       <button mat-raised-button color="primary" (click)="takePhoto()">
         {{ "widgets.input-widgets.take-photo" | translate }}
