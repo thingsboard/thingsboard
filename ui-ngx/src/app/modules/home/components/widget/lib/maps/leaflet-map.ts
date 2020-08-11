@@ -17,7 +17,7 @@
 import L, {
   FeatureGroup,
   Icon,
-  LatLngBounds, LatLngExpression,
+  LatLngBounds,
   LatLngTuple,
   markerClusterGroup,
   MarkerClusterGroup,
@@ -50,8 +50,6 @@ import {
 } from '@home/components/widget/lib/maps/maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { deepClone, isDefinedAndNotEmptyStr } from '@core/utils';
-import {newArray} from "@angular/compiler/src/util";
-import {isArray} from "rxjs/internal-compatibility";
 
 export default abstract class LeafletMap {
 
@@ -186,9 +184,9 @@ export default abstract class LeafletMap {
       let mousePositionOnMap: L.LatLng[];
       let addPolygon: L.Control;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
-        let latlng1 = e.latlng;
-        let latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + 10);
-        let latlng3 = L.latLng(e.latlng.lat-10, e.latlng.lng);
+        const latlng1 = e.latlng;
+        const latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + 10);
+        const latlng3 = L.latLng(e.latlng.lat-10, e.latlng.lng);
         mousePositionOnMap = [latlng1,latlng2, latlng3 ];
       });
       const dragListener = (e: L.DragEndEvent) => {
@@ -207,7 +205,6 @@ export default abstract class LeafletMap {
               this.savePolygonLocation(updatedEnttity).subscribe(() => {
                 this.map.removeLayer(newPolygon);
                 this.deletePolygon(ds.entityName);
-                // this.createPolygon(ds, this.datasources, this.options);
               });
             }
             datasourcesList.append(dsItem);
@@ -673,7 +670,7 @@ export default abstract class LeafletMap {
   }
 
   dragPolygonVertex = (e?, data = {} as FormattedData) => {
-    if (e == undefined || (e.type !== 'editable:vertex:dragend' && e.type !== 'editable:vertex:deleted')) return;
+    if (e === undefined || (e.type !== 'editable:vertex:dragend' && e.type !== 'editable:vertex:deleted')) return;
     this.savePolygonLocation({ ...data, ...this.convertPolygonToCustomFormat(e.layer._latlngs) }).subscribe();
   }
 

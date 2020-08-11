@@ -22,7 +22,9 @@ import { WidgetContext } from '@home/models/widget-component.models';
 export class HEREMap extends LeafletMap {
     constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
         super(ctx, $container, options);
-        const map = L.map($container, {editable: !!options.editablePolygon}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
+        const map = L.map($container, {
+          editable: !!options.editablePolygon
+        }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
         const tileLayer = (L.tileLayer as any).provider(options.mapProviderHere || 'HERE.normalDay', options.credentials);
         tileLayer.addTo(map);
         super.initSettings(options);

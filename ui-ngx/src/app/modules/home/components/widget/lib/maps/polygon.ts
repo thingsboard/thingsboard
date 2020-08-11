@@ -16,7 +16,7 @@
 
 import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
 import { createTooltip, functionValueCalculator, parseWithTranslation, safeExecute } from './maps-utils';
-import "leaflet-editable/src/Leaflet.Editable";
+import 'leaflet-editable/src/Leaflet.Editable';
 import { FormattedData, PolygonSettings } from './map-models';
 
 export class Polygon {
@@ -41,8 +41,8 @@ export class Polygon {
         if (settings.editablePolygon) {
             this.leafletPoly.enableEdit(this.map);
             if (onDragendListener) {
-                this.leafletPoly.on("editable:vertex:dragend", e => onDragendListener(e, this.data));
-                this.leafletPoly.on("editable:vertex:deleted", e => onDragendListener(e, this.data));
+                this.leafletPoly.on('editable:vertex:dragend', e => onDragendListener(e, this.data));
+                this.leafletPoly.on('editable:vertex:deleted', e => onDragendListener(e, this.data));
             }
         }
 

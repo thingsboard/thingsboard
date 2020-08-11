@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, {LatLngBounds, LatLngExpression, LatLngLiteral, LatLngTuple} from 'leaflet';
+import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { MapImage, PosFuncton, UnitedMapSettings } from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
@@ -24,9 +24,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull, isDefinedAndNotEmptyStr, isNumber } from '@core/utils';
-import "leaflet-editable/src/Leaflet.Editable";
-import {isArray} from "rxjs/internal-compatibility";
+import { isDefinedAndNotEmptyStr } from '@core/utils';
 
 const maxZoom = 4;// ?
 
@@ -260,7 +258,7 @@ export class ImageMap extends LeafletMap {
           if (point.length) {
             return this.convertToPolygonFormat(point);
           } else {
-            let pos = this.latLngToPoint(point);
+            const pos = this.latLngToPoint(point);
             return [calculateNewPointCoordinate(pos.x, this.width), calculateNewPointCoordinate(pos.y, this.height)];
           }
         })
