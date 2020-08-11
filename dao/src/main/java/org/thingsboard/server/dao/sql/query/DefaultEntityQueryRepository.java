@@ -200,7 +200,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " THEN (select additional_info from device where id = entity_id)" +
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
             " THEN (select additional_info from entity_view where id = entity_id)" +
-            " END as label";
+            " END as additional_info";
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -460,7 +460,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         //TODO: fetch last level only.
         //TODO: fetch distinct records.
         String lvlFilter = getLvlFilter(entityFilter.getMaxLevel());
-        String selectFields = "SELECT tenant_id, customer_id, id, created_time, type, name "
+        String selectFields = "SELECT tenant_id, customer_id, id, created_time, type, name, additional_info "
                 + (entityType.equals(EntityType.ENTITY_VIEW) ? "" : ", label ")
                 + "FROM " + entityType.name() + " WHERE id in ( SELECT entity_id";
         String from = getQueryTemplate(entityFilter.getDirection());
