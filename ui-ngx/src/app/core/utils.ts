@@ -510,3 +510,10 @@ export function padValue(val: any, dec: number): string {
   strVal = (n ? '-' : '') + strVal;
   return strVal;
 }
+
+export function sortObjectKeys(obj: object): object{
+  return Object.keys(obj).sort().reduce((acc,key)=>{
+    acc[key]=obj[key];
+    return acc;
+  },{});
+}

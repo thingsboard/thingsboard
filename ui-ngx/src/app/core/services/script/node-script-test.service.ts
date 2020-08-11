@@ -23,6 +23,7 @@ import {
   NodeScriptTestDialogComponent,
   NodeScriptTestDialogData
 } from '@shared/components/dialog/node-script-test-dialog.component';
+import { sortObjectKeys } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -75,6 +76,8 @@ export class NodeScriptTestService {
         deviceName: 'Test Device',
         ts: new Date().getTime() + ''
       };
+    } else {
+      metadata = sortObjectKeys(metadata) as {[key: string]: string};
     }
     if (!msgType) {
       msgType = 'POST_TELEMETRY_REQUEST';

@@ -38,6 +38,7 @@ import {
   EventContentDialogComponent,
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
+import { sortObjectKeys } from '@core/utils';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -233,11 +234,17 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     if ($event) {
       $event.stopPropagation();
     }
+    let sortedContent: string;
+    try {
+      sortedContent = JSON.stringify(sortObjectKeys(JSON.parse(content)));
+    } catch() {
+      sortedContent = content;
+    }
     this.dialog.open<EventContentDialogComponent, EventContentDialogData>(EventContentDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        content,
+        constent: sortedContent,
         title,
         contentType
       }
