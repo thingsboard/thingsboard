@@ -16,6 +16,7 @@
 
 import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
 import { createTooltip, functionValueCalculator, parseWithTranslation, safeExecute } from './maps-utils';
+import 'leaflet-editable/src/Leaflet.Editable';
 import { FormattedData, PolygonSettings } from './map-models';
 
 export class Polygon {
@@ -25,11 +26,10 @@ export class Polygon {
     data: FormattedData;
     dataSources: FormattedData[];
 
-    constructor(public map, polyData: FormattedData, dataSources: FormattedData[], private settings: PolygonSettings) {
+    constructor(public map, polyData: FormattedData, dataSources: FormattedData[], private settings: PolygonSettings, onDragendListener?) {
         this.dataSources = dataSources;
         this.data = polyData;
         const polygonColor = this.getPolygonColor(settings);
-
         this.leafletPoly = L.polygon(polyData[this.settings.polygonKeyName], {
           fill: true,
           fillColor: polygonColor,
@@ -38,6 +38,14 @@ export class Polygon {
           fillOpacity: settings.polygonOpacity,
           opacity: settings.polygonStrokeOpacity
         }).addTo(this.map);
+        if (settings.editablePolygon) {
+            this.leafletPoly.enableEdit(this.map);
+            if (onDragendListener) {
+                this.leafletPoly.on('editable:vertex:dragend', e => onDragendListener(e, this.data));
+                this.leafletPoly.on('editable:vertex:deleted', e => onDragendListener(e, this.data));
+            }
+        }
+
 
         if (settings.showPolygonTooltip) {
             this.tooltip = createTooltip(this.leafletPoly, settings, polyData.$datasource);
@@ -64,7 +72,13 @@ export class Polygon {
     updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
         this.data = data;
         this.dataSources = dataSources;
+        if (settings.editablePolygon) {
+          this.leafletPoly.disableEdit();
+        }
         this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
+      if (settings.editablePolygon) {
+        this.leafletPoly.enableEdit(this.map);
+      }
         if (settings.showPolygonTooltip)
             this.updateTooltip(this.data);
         this.updatePolygonColor(settings);

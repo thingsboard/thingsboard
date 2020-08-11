@@ -27,6 +27,7 @@ export type PosFuncton = (origXPos, origYPos) => { x, y };
 
 export type MapSettings = {
     draggableMarker: boolean;
+    editablePolygon: boolean;
     posFunction: PosFuncton;
     defaultZoomLevel?: number;
     disableScrollZooming?: boolean;
@@ -139,6 +140,7 @@ export type PolygonSettings = {
     usePolygonColorFunction: boolean;
     polygonTooltipFunction: GenericFunction;
     polygonColorFunction?: GenericFunction;
+    editablePolygon: boolean;
 }
 
 export type PolylineSettings = {
@@ -233,6 +235,7 @@ export const defaultSettings: any = {
     credentials: '',
     markerClusteringSetting: null,
     draggableMarker: false,
+    editablePolygon: false,
     fitMapBounds: true,
     mapPageSize: DEFAULT_MAP_PAGE_SIZE
 };

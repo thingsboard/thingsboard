@@ -78,6 +78,7 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map = new MapClass(this.ctx, $element, this.settings);
         (this.ctx as any).mapInstance = this.map;
         this.map.saveMarkerLocation = this.setMarkerLocation;
+        this.map.savePolygonLocation = this.savePolygonLocation;
         this.pageLink = {
           page: 0,
           pageSize: this.settings.mapPageSize,
@@ -239,6 +240,56 @@ export class MapWidgetController implements MapWidgetInterface {
         }
     }
 
+  savePolygonLocation = (e: FormattedData, coordinates?: Array<any>) => {
+    const attributeService = this.ctx.$injector.get(AttributeService);
+
+    const entityId: EntityId = {
+      entityType: e.$datasource.entityType,
+      id: e.$datasource.entityId
+    };
+    const attributes = [];
+    const timeseries = [];
+
+    const coordinatesProperties =  this.settings.polygonKeyName;
+    e.$datasource.dataKeys.forEach(key => {
+      let value;
+      if (coordinatesProperties == key.name) {
+        value = {
+          key: key.name,
+          value: isDefined(coordinates) ? coordinates : e[key.name]
+        };
+      }
+      if (value) {
+        if (key.type === DataKeyType.attribute) {
+          attributes.push(value)
+        }
+        if (key.type === DataKeyType.timeseries) {
+          timeseries.push(value)
+        }
+      }
+    });
+    const observables: Observable<any>[] = [];
+    if (timeseries.length) {
+      observables.push(attributeService.saveEntityTimeseries(
+        entityId,
+        LatestTelemetry.LATEST_TELEMETRY,
+        timeseries
+      ));
+    }
+    if (attributes.length) {
+      observables.push(attributeService.saveEntityAttributes(
+        entityId,
+        AttributeScope.SERVER_SCOPE,
+        attributes
+      ));
+    }
+    if (observables.length) {
+      return forkJoin(observables);
+    } else {
+      return of(null);
+    }
+  }
+
     initSettings(settings: UnitedMapSettings, isEditMap?: boolean): UnitedMapSettings {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
@@ -269,6 +320,9 @@ export class MapWidgetController implements MapWidgetInterface {
         }
         if (isEditMap && !settings.hasOwnProperty('draggableMarker')) {
             settings.draggableMarker = true;
+        }
+        if (isEditMap && !settings.hasOwnProperty('editablePolygon')) {
+            settings.editablePolygon = true;
         }
         return { ...defaultSettings, ...settings, ...customOptions, }
     }
