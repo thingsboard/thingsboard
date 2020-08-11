@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.edge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
@@ -150,13 +151,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
                 return null;
             }
             ActionType actionType = getActionTypeByMsgType(msg.getType());
-            JsonNode entityBody = null;
-            JsonNode data = json.readTree(msg.getData());
-            if (actionType.equals(ActionType.ATTRIBUTES_UPDATED) || actionType.equals(ActionType.ATTRIBUTES_DELETED)) {
-                entityBody = getAttributeEntityBody(actionType, data, msg.getMetaData().getData());
-            } else {
-                entityBody = data;
-            }
+            JsonNode entityBody = getEntityBody(actionType, msg.getData(), msg.getMetaData().getData());
             return buildEdgeEvent(ctx.getTenantId(), actionType, msg.getOriginator().getId(), edgeEventTypeByEntityType, entityBody);
         }
     }
@@ -171,19 +166,25 @@ public class TbMsgPushToEdgeNode implements TbNode {
         return edgeEvent;
     }
 
-    private JsonNode getAttributeEntityBody(ActionType actionType, JsonNode data, Map<String, String> metadata) throws JsonProcessingException {
-        Map<String, Object> entityData = new HashMap<>();
+    private JsonNode getEntityBody(ActionType actionType, String data, Map<String, String> metadata) throws JsonProcessingException {
+        Map<String, Object> entityBody = new HashMap<>();
+        JsonNode dataJson = json.readTree(data);
         switch (actionType) {
             case ATTRIBUTES_UPDATED:
-                entityData.put("kv", data);
+                entityBody.put("kv", dataJson);
+                entityBody.put("scope", metadata.get("scope"));
                 break;
             case ATTRIBUTES_DELETED:
-                List<String> keys = json.treeToValue(data.get("attributes"), List.class);
-                entityData.put("keys", keys);
+                List<String> keys = json.treeToValue(dataJson.get("attributes"), List.class);
+                entityBody.put("keys", keys);
+                entityBody.put("scope", metadata.get("scope"));
+                break;
+            case TIMESERIES_UPDATED:
+                entityBody.put("data", dataJson);
+                entityBody.put("ts", metadata.get("ts"));
                 break;
         }
-        entityData.put("scope", metadata.get("scope"));
-        return json.valueToTree(entityData);
+        return json.valueToTree(entityBody);
     }
 
     private UUID getUUIDFromMsgData(TbMsg msg) throws JsonProcessingException {
