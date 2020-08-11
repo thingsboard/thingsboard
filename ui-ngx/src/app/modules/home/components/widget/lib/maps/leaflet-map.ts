@@ -180,7 +180,7 @@ export default abstract class LeafletMap {
     }
 
   addPolygonControl() {
-    if (this.options.editablePolygon) {
+    if (this.options.showPolygon && this.options.editablePolygon) {
       let mousePositionOnMap: L.LatLng[];
       let addPolygon: L.Control;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
@@ -195,7 +195,7 @@ export default abstract class LeafletMap {
           icon.options.shadowSize = [0, 0];
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
           const datasourcesList = document.createElement('div');
-          const customLatLng = {coordinates: this.convertToPolygonFormat(mousePositionOnMap)};
+          const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(mousePositionOnMap)};
           this.datasources.forEach(ds => {
             const dsItem = document.createElement('p');
             dsItem.appendChild(document.createTextNode(ds.entityName));
