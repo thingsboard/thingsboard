@@ -21,6 +21,7 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
+import javax.net.ssl.SSLParameters;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
@@ -88,5 +89,10 @@ public class WsClient extends WebSocketClient {
             log.error("Timeout, ws message wasn't received");
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    protected void onSetSSLParameters(SSLParameters sslParameters) {
+        sslParameters.setEndpointIdentificationAlgorithm(null);
     }
 }

@@ -32,9 +32,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -147,7 +146,7 @@ public abstract class AbstractOAuth2ClientMapper {
     }
 
     private TenantId getTenantId(String tenantName) throws IOException {
-        List<Tenant> tenants = tenantService.findTenants(new TextPageLink(1, tenantName)).getData();
+        List<Tenant> tenants = tenantService.findTenants(new PageLink(1, 0, tenantName)).getData();
         Tenant tenant;
         if (tenants == null || tenants.isEmpty()) {
             tenant = new Tenant();
@@ -176,23 +175,19 @@ public abstract class AbstractOAuth2ClientMapper {
     }
 
     private Optional<DashboardId> getDashboardId(TenantId tenantId, String dashboardName) {
-        TextPageLink searchTextLink = new TextPageLink(1, dashboardName);
-        TextPageData<DashboardInfo> dashboardsPage = dashboardService.findDashboardsByTenantId(tenantId, searchTextLink);
+        PageLink searchTextLink = new PageLink(1, 0, dashboardName);
+        PageData<DashboardInfo> dashboardsPage = dashboardService.findDashboardsByTenantId(tenantId, searchTextLink);
         return dashboardsPage.getData().stream()
                 .findAny()
                 .map(IdBased::getId);
     }
 
     private Optional<DashboardId> getDashboardId(TenantId tenantId, CustomerId customerId, String dashboardName) {
-        TimePageData<DashboardInfo> dashboardsPage = null;
+        PageData<DashboardInfo> dashboardsPage;
+        PageLink pageLink = null;
         do {
-            TimePageLink timePageLink = dashboardsPage != null ?
-                    dashboardsPage.getNextPageLink() : new TimePageLink(DASHBOARDS_REQUEST_LIMIT);
-            try {
-                dashboardsPage = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, timePageLink).get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException("Failed to get customer's dashboards.", e);
-            }
+            pageLink = pageLink == null ? new PageLink(DASHBOARDS_REQUEST_LIMIT) : pageLink.nextPageLink();
+            dashboardsPage = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             Optional<DashboardInfo> dashboardInfoOpt = dashboardsPage.getData().stream()
                     .filter(dashboardInfo -> dashboardName.equals(dashboardInfo.getName()))
                     .findAny();

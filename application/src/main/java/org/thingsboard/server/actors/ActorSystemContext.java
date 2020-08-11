@@ -76,6 +76,7 @@ import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
@@ -169,10 +170,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private AlarmService alarmService;
-
-    @Autowired
-    @Getter
     private RelationService relationService;
 
     @Autowired
@@ -186,6 +183,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;
+
+    @Autowired
+    @Getter
+    private AlarmSubscriptionService alarmService;
 
     @Autowired
     @Getter

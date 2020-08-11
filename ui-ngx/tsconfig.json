@@ -1,0 +1,45 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "importHelpers": true,
+    "target": "es5",
+    "jsx": "react",
+    "typeRoots": [
+      "node_modules/@types",
+      "src/typings/rawloader.typings.d.ts",
+      "src/typings/jquery.typings.d.ts",
+      "src/typings/jquery.flot.typings.d.ts",
+      "src/typings/jquery.jstree.typings.d.ts",
+      "src/typings/split.js.typings.d.ts",
+      "src/typings/add-marker.d.ts",
+      "src/typings/leaflet-editable.d.ts"
+    ],
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@env/*": [
+        "src/environments/*"
+      ],
+      "@core/*": ["src/app/core/*"],
+      "@modules/*": ["src/app/modules/*"],
+      "@shared/*": ["src/app/shared/*"],
+      "@home/*": ["src/app/modules/home/*"],
+      "jszip": [
+        "node_modules/jszip/dist/jszip.min.js"
+      ]
+    },
+    "lib": [
+      "es2018",
+      "es2019",
+      "dom"
+    ]
+  }
+}

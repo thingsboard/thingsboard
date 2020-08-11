@@ -1,0 +1,141 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../scss/constants";
+
+$toolbar-height: 50px !default;
+$fullscreen-toolbar-height: 64px !default;
+$mobile-toolbar-height: 84px !default;
+
+tb-dashboard-page {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+div.tb-dashboard-page {
+  &.mat-content {
+    overflow: hidden;
+    background-color: #eee;
+  }
+  section.tb-dashboard-title {
+    position: relative;
+    padding-left: 20px;
+    max-height: 60px;
+    mat-form-field {
+      .mat-form-field-infix {
+        width: 100%;
+      }
+    }
+    input.tb-dashboard-title {
+      height: 38px;
+      font-size: 2rem;
+      font-weight: 500;
+      letter-spacing: .005em;
+    }
+  }
+
+  section.tb-dashboard-toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 13;
+    pointer-events: none;
+
+    &.tb-dashboard-toolbar-opened {
+      right: 0;
+      // transition: right .3s cubic-bezier(.55, 0, .55, .2);
+    }
+
+    &.tb-dashboard-toolbar-closed {
+      right: 18px;
+      transition: right .3s cubic-bezier(.55, 0, .55, .2) .2s;
+    }
+  }
+
+  .tb-dashboard-container {
+    &.tb-dashboard-toolbar-opened {
+      &.is-fullscreen {
+        margin-top: $mobile-toolbar-height;
+
+        @media #{$mat-gt-sm} {
+          margin-top: $fullscreen-toolbar-height;
+        }
+      }
+
+      &:not(.is-fullscreen) {
+        margin-top: $mobile-toolbar-height;
+
+        @media #{$mat-gt-sm} {
+          margin-top: $toolbar-height;
+        }
+        &.tb-dashboard-toolbar-animated {
+          transition: margin-top .3s cubic-bezier(.55, 0, .55, .2);
+        }
+      }
+    }
+
+    &.tb-dashboard-toolbar-closed {
+      margin-top: 0;
+
+      &.tb-dashboard-toolbar-animated {
+        transition: margin-top .3s cubic-bezier(.55, 0, .55, .2) .2s;
+      }
+    }
+  }
+
+  mat-drawer-container.tb-dashboard-drawer-container {
+    mat-drawer-container.tb-dashboard-layouts {
+      width: 100%;
+      &.tb-shrinked {
+        width: 40%;
+      }
+    }
+
+    mat-drawer.tb-details-drawer {
+      @media #{$mat-gt-sm} {
+        width: 85% !important;
+      }
+
+      @media #{$mat-gt-md} {
+        width: 75% !important;
+      }
+
+      @media #{$mat-gt-xl} {
+        width: 60% !important;
+      }
+    }
+  }
+
+  section.tb-powered-by-footer {
+    position: absolute;
+    right: 25px;
+    bottom: 5px;
+    z-index: 30;
+    pointer-events: none;
+
+    span {
+      font-size: 12px;
+
+      a {
+        font-weight: 700;
+        text-decoration: none;
+        pointer-events: all;
+        border: none;
+      }
+    }
+  }
+
+}

@@ -1,0 +1,61 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field [floatLabel]="showLabel ? 'auto' : 'always'"
+                [hideRequiredMarker]="!showLabel" [formGroup]="selectEntityAliasFormGroup" class="mat-block">
+  <mat-label *ngIf="!showLabel"></mat-label>
+  <input matInput type="text" placeholder="{{ 'entity.entity-alias' | translate }}"
+         #entityAliasInput
+         formControlName="entityAlias"
+         (focusin)="onFocus()"
+         [required]="tbRequired"
+         (keydown)="entityAliasEnter($event)"
+         (keypress)="entityAliasEnter($event)"
+         [matAutocomplete]="entityAliasAutocomplete">
+  <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <mat-autocomplete class="tb-autocomplete"
+                    #entityAliasAutocomplete="matAutocomplete"
+                    [displayWith]="displayEntityAliasFn">
+    <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
+      <span [innerHTML]="entityAlias.alias | highlight:searchText"></span>
+    </mat-option>
+    <mat-option *ngIf="!(filteredEntityAliases | async)?.length" [value]="null" class="tb-not-found">
+      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span translate>entity.no-aliases-found</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
+            {{ translate.get('entity.no-alias-matching',
+              {alias: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+          </span>
+        </ng-template>
+        <span>
+          <a translate (click)="createEntityAlias($event, searchText)">entity.create-new-alias</a>
+        </span>
+      </div>
+    </mat-option>
+  </mat-autocomplete>
+  <mat-error *ngIf="!modelValue && tbRequired">
+    {{ 'entity.alias-required' | translate }}
+  </mat-error>
+</mat-form-field>

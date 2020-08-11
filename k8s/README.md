@@ -24,7 +24,7 @@ Before performing initial installation you can configure the type of database to
 To set database type change the value of `DATABASE` variable in `.env` file to one of the following:
 
 - `postgres` - use PostgreSQL database;
-- `cassandra` - use Cassandra database;
+- `hybrid` - use PostgreSQL for entities database and Cassandra for timeseries database;
 
 **NOTE**: According to the database type corresponding kubernetes resources will be deployed (see `postgres.yml`, `cassandra.yml` for details).
 

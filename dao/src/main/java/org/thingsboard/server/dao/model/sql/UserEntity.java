@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,9 +35,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
-
-import static org.thingsboard.server.common.data.UUIDConverter.fromString;
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
+import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/21/2017.
@@ -51,10 +48,10 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<User> {
 
     @Column(name = ModelConstants.USER_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = ModelConstants.USER_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    private UUID customerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.USER_AUTHORITY_PROPERTY)
@@ -83,12 +80,13 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
         if (user.getId() != null) {
             this.setUuid(user.getId().getId());
         }
+        this.setCreatedTime(user.getCreatedTime());
         this.authority = user.getAuthority();
         if (user.getTenantId() != null) {
-            this.tenantId = fromTimeUUID(user.getTenantId().getId());
+            this.tenantId = user.getTenantId().getId();
         }
         if (user.getCustomerId() != null) {
-            this.customerId = fromTimeUUID(user.getCustomerId().getId());
+            this.customerId = user.getCustomerId().getId();
         }
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
@@ -109,13 +107,13 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
     @Override
     public User toData() {
         User user = new User(new UserId(this.getUuid()));
-        user.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
+        user.setCreatedTime(createdTime);
         user.setAuthority(authority);
         if (tenantId != null) {
-            user.setTenantId(new TenantId(fromString(tenantId)));
+            user.setTenantId(new TenantId(tenantId));
         }
         if (customerId != null) {
-            user.setCustomerId(new CustomerId(fromString(customerId)));
+            user.setCustomerId(new CustomerId(customerId));
         }
         user.setEmail(email);
         user.setFirstName(firstName);

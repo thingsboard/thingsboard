@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -31,6 +30,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -39,7 +39,7 @@ import javax.persistence.Table;
 public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentials> implements BaseEntity<DeviceCredentials> {
 
     @Column(name = ModelConstants.DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY)
-    private String deviceId;
+    private UUID deviceId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_TYPE_PROPERTY)
@@ -59,8 +59,9 @@ public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentia
         if (deviceCredentials.getId() != null) {
             this.setUuid(deviceCredentials.getId().getId());
         }
+        this.setCreatedTime(deviceCredentials.getCreatedTime());
         if (deviceCredentials.getDeviceId() != null) {
-            this.deviceId = toString(deviceCredentials.getDeviceId().getId());
+            this.deviceId = deviceCredentials.getDeviceId().getId();
         }
         this.credentialsType = deviceCredentials.getCredentialsType();
         this.credentialsId = deviceCredentials.getCredentialsId();
@@ -70,9 +71,9 @@ public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentia
     @Override
     public DeviceCredentials toData() {
         DeviceCredentials deviceCredentials = new DeviceCredentials(new DeviceCredentialsId(this.getUuid()));
-        deviceCredentials.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
+        deviceCredentials.setCreatedTime(createdTime);
         if (deviceId != null) {
-            deviceCredentials.setDeviceId(new DeviceId(toUUID(deviceId)));
+            deviceCredentials.setDeviceId(new DeviceId(deviceId));
         }
         deviceCredentials.setCredentialsType(credentialsType);
         deviceCredentials.setCredentialsId(credentialsId);

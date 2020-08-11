@@ -23,11 +23,9 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.model.sql.RuleNodeEntity;
 import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 @Slf4j
 @Component
-@SqlDao
 public class JpaRuleNodeDao extends JpaAbstractSearchTextDao<RuleNodeEntity, RuleNode> implements RuleNodeDao {
 
     @Autowired

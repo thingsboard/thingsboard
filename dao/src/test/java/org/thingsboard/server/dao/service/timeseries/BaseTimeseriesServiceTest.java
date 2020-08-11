@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.service.timeseries;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
 import org.thingsboard.server.common.data.EntityView;
@@ -84,17 +84,13 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllLatest() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
         saveEntries(deviceId, TS - 2);
         saveEntries(deviceId, TS - 1);
         saveEntries(deviceId, TS);
 
         testLatestTsAndVerify(deviceId);
-
-        EntityView entityView = saveAndCreateEntityView(deviceId, Arrays.asList(STRING_KEY, DOUBLE_KEY, LONG_KEY, BOOLEAN_KEY));
-
-        testLatestTsAndVerify(entityView.getId());
     }
 
     private void testLatestTsAndVerify(EntityId entityId) throws ExecutionException, InterruptedException {
@@ -132,7 +128,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindLatest() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
         saveEntries(deviceId, TS - 2);
         saveEntries(deviceId, TS - 1);
@@ -141,17 +137,11 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         List<TsKvEntry> entries = tsService.findLatest(tenantId, deviceId, Collections.singleton(STRING_KEY)).get();
         Assert.assertEquals(1, entries.size());
         Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
-
-        EntityView entityView = saveAndCreateEntityView(deviceId, Arrays.asList(STRING_KEY));
-
-        entries = tsService.findLatest(tenantId, entityView.getId(), Collections.singleton(STRING_KEY)).get();
-        Assert.assertEquals(1, entries.size());
-        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
     }
 
     @Test
     public void testFindByQueryAscOrder() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
         saveEntries(deviceId, TS - 2);
         saveEntries(deviceId, TS - 1);
@@ -177,7 +167,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindByQueryDescOrder() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
         saveEntries(deviceId, TS - 2);
         saveEntries(deviceId, TS - 1);
@@ -203,7 +193,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteDeviceTsDataWithOverwritingLatest() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
         saveEntries(deviceId, 10000);
         saveEntries(deviceId, 20000);
@@ -223,7 +213,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDeviceTsData() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
         List<TsKvEntry> entries = new ArrayList<>();
 
         entries.add(save(deviceId, 5000, 100));
@@ -374,7 +364,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDeviceLongAndDoubleTsData() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
         List<TsKvEntry> entries = new ArrayList<>();
 
         entries.add(save(deviceId, 5000, 100));

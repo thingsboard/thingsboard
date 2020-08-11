@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 @Data
 @Slf4j
-class TbHttpClient {
+public class TbHttpClient {
 
     private static final String STATUS = "status";
     private static final String STATUS_CODE = "statusCode";
@@ -162,7 +162,7 @@ class TbHttpClient {
         }
     }
 
-    void processMessage(TbContext ctx, TbMsg msg) {
+    public void processMessage(TbContext ctx, TbMsg msg) {
         String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
         HttpHeaders headers = prepareHeaders(msg.getMetaData());
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());

@@ -36,7 +36,7 @@ import javax.annotation.PreDestroy;
  * @author Andrew Shvayka
  */
 @Service("MqttTransportService")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.mqtt.enabled}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.mqtt.enabled}'=='true')")
 @Slf4j
 public class MqttTransportService {
 

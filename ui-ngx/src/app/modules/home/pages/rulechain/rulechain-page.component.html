@@ -1,0 +1,254 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="mat-content" fxFlex tb-fullscreen [fullscreen]="isFullscreen" tb-hotkeys [hotkeys]="hotKeys"
+     [cheatSheet]="cheatSheetComponent"
+  fxLayout="column" class="tb-rulechain">
+  <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
+  <section class="tb-rulechain-container" fxFlex fxLayout="column">
+    <div class="tb-rulechain-layout" fxFlex fxLayout="row">
+      <section fxLayout="row"
+               class="tb-header-buttons tb-library-open" [fxShow]="!isLibraryOpen">
+        <button mat-button mat-icon-button color="primary"
+                class="tb-btn-header tb-btn-open-library mat-fab"
+                (click)="isLibraryOpen = true"
+                matTooltip="{{ 'rulenode.open-node-library' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </section>
+      <mat-drawer-container style="width: 100%; height: 100%;">
+        <mat-drawer class="tb-rulechain-library mat-elevation-z4"
+                    disableClose="true"
+                    mode="side"
+                    [opened]="isLibraryOpen"
+                    position="start"
+                    fxLayout="column">
+          <mat-toolbar color="primary" class="tb-dark">
+            <div class="mat-toolbar-tools">
+              <button mat-button mat-icon-button class="tb-small"
+                matTooltip="{{'rulenode.search' | translate}}"
+                matTooltipPosition="above">
+                <mat-icon>search</mat-icon>
+              </button>
+              <mat-form-field fxFlex floatLabel="always">
+                <mat-label></mat-label>
+                <input #ruleNodeSearchInput matInput
+                       [(ngModel)]="ruleNodeTypeSearch"
+                       placeholder="{{'rulenode.search' | translate}}"/>
+              </mat-form-field>
+              <button mat-button mat-icon-button class="tb-small"
+                      [fxShow]="ruleNodeTypeSearch !== ''"
+                      (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
+                      matTooltip="{{'action.clear-search' | translate}}"
+                      matTooltipPosition="above">
+                <mat-icon>close</mat-icon>
+              </button>
+              <button mat-button mat-icon-button class="tb-small"
+                      (click)="isLibraryOpen = false"
+                      matTooltip="{{'action.close' | translate}}"
+                      matTooltipPosition="above">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+            </div>
+          </mat-toolbar>
+          <div class="tb-rulechain-library-panel-group">
+            <mat-expansion-panel #ruleNodeTypeExpansionPanels
+                                 class="mat-elevation-z2"
+                                 [expanded]="true" *ngFor="let ruleNodeType of ruleNodeTypesLibraryArray">
+              <mat-expansion-panel-header expandedHeight="48px"
+                                          (mouseenter)="typeHeaderMouseEnter($event, ruleNodeType)"
+                                          (mouseleave)="destroyTooltips()">
+                <mat-panel-title>
+                  <mat-icon>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).icon }}</mat-icon>
+                  <div class="tb-panel-title" translate>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).name }}</div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <fc-canvas id="tb-rulchain-{{ruleNodeType}}"
+                         [model]="ruleNodeTypesModel[ruleNodeType].model"
+                         [selectedObjects]="ruleNodeTypesModel[ruleNodeType].selectedObjects"
+                         [automaticResize]="false"
+                         fitModelSizeByDefault
+                         [userCallbacks]="nodeLibCallbacks"
+                         [nodeWidth]="170"
+                         [nodeHeight]="50"
+                         [dropTargetId]="'tb-rulchain-canvas'">
+              </fc-canvas>
+            </mat-expansion-panel>
+          </div>
+        </mat-drawer>
+        <mat-drawer class="tb-details-drawer"
+                    [opened]="isEditingRuleNode || isEditingRuleNodeLink"
+                    (closed)="onDetailsDrawerClosed()"
+                    mode="over"
+                    position="end">
+          <tb-details-panel *ngIf="editingRuleNode" fxFlex
+                            headerTitle="{{editingRuleNode.name}}"
+                            headerSubtitle="{{
+                              (ruleNodeTypeDescriptorsMap.get(editingRuleNode.component.type).name | translate)
+                              + ' - ' + editingRuleNode.component.name
+                            }}"
+                            [isReadOnly]="selectedRuleNodeTabIndex > 0"
+                            [isAlwaysEdit]="true"
+                            (closeDetails)="onEditRuleNodeClosed()"
+                            (toggleDetailsEditMode)="onRevertRuleNodeEdit()"
+                            (applyDetails)="saveRuleNode()"
+                            [theForm]="tbRuleNode.ruleNodeFormGroup">
+            <div class="details-buttons">
+              <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
+            </div>
+            <mat-tab-group fxFlex class="tb-absolute-fill tb-rulenode-details" [(selectedIndex)]="selectedRuleNodeTabIndex">
+              <mat-tab label="{{ 'rulenode.details' | translate }}">
+                <tb-rule-node #tbRuleNode
+                              [ruleNode]="editingRuleNode"
+                              [ruleChainId]="ruleChain.id?.id"
+                              [isEdit]="true"
+                              [isReadOnly]="false">
+                </tb-rule-node>
+              </mat-tab>
+              <mat-tab *ngIf="editingRuleNode.ruleNodeId" label="{{ 'rulenode.events' | translate }}" #eventsTab="matTab">
+                <tb-event-table [debugEventTypes]="[debugEventTypes.DEBUG_RULE_NODE]"
+                                [defaultEventType]="debugEventTypes.DEBUG_RULE_NODE"
+                                [active]="eventsTab.isActive"
+                                [tenantId]="ruleChain.tenantId.id"
+                                [entityId]="editingRuleNode.ruleNodeId"></tb-event-table>
+              </mat-tab>
+              <mat-tab label="{{ 'rulenode.help' | translate }}">
+                <div class="tb-rule-node-help">
+                  <div id="tb-node-content" class="mat-padding" fxLayout="column">
+                    <div class="tb-node-title">{{editingRuleNode.component.name}}</div>
+                    <div>&nbsp;</div>
+                    <div class="tb-node-description">{{editingRuleNode.component.configurationDescriptor.nodeDefinition.description}}</div>
+                    <div>&nbsp;</div>
+                    <div class="tb-node-details" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.details"></div>
+                  </div>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+          </tb-details-panel>
+          <tb-details-panel *ngIf="editingRuleNodeLink" fxFlex
+                            headerTitle="{{editingRuleNodeLink.label}}"
+                            headerSubtitle="{{'rulenode.link-details' | translate}}"
+                            [isReadOnly]="false"
+                            [isAlwaysEdit]="true"
+                            (closeDetails)="onEditRuleNodeLinkClosed()"
+                            (toggleDetailsEditMode)="onRevertRuleNodeLinkEdit()"
+                            (applyDetails)="saveRuleNodeLink()"
+                            [theForm]="tbRuleNodeLink.ruleNodeLinkFormGroup">
+            <div class="details-buttons">
+              <div [tb-help]="'ruleEngine'"></div>
+            </div>
+            <tb-rule-node-link
+              fxFlex
+              #tbRuleNodeLink
+              [(ngModel)]="editingRuleNodeLink"
+              [allowedLabels]="editingRuleNodeLinkLabels"
+              [allowCustom]="editingRuleNodeAllowCustomLabels">
+            </tb-rule-node-link>
+          </tb-details-panel>
+        </mat-drawer>
+        <mat-drawer-content class="tb-rulechain-graph-content">
+          <button mat-button
+                  type="button"
+                  mat-icon-button class="tb-fullscreen-button"
+                  (click)="isFullscreen = !isFullscreen"
+                  matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                  matTooltipPosition="above">
+            <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+          </button>
+          <div class="tb-absolute-fill tb-rulechain-graph" (contextmenu)="openRuleChainContextMenu($event)">
+            <div #ruleChainMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
+                 [style.left]="ruleChainMenuPosition.x"
+                 [style.top]="ruleChainMenuPosition.y"
+                 [matMenuTriggerFor]="ruleChainMenu">
+            </div>
+            <mat-menu #ruleChainMenu="matMenu" class="tb-rule-chain-context-menu"
+                      [overlapTrigger]="true">
+              <ng-template matMenuContent let-contextInfo="contextInfo">
+                <div class="tb-rule-chain-context-menu-container" (mouseleave)="onRuleChainContextMenuMouseLeave()">
+                  <div class="tb-context-menu-header {{contextInfo.headerClass}}">
+                    <mat-icon *ngIf="!contextInfo.iconUrl">{{contextInfo.icon}}</mat-icon>
+                    <img *ngIf="contextInfo.iconUrl" [src]="contextInfo.iconUrl"/>
+                    <div fxFlex>
+                      <div class="tb-context-menu-title">{{contextInfo.title}}</div>
+                      <div class="tb-context-menu-subtitle">{{contextInfo.subtitle}}</div>
+                    </div>
+                  </div>
+                  <div *ngFor="let menuItem of contextInfo.menuItems">
+                    <mat-divider *ngIf="menuItem.divider"></mat-divider>
+                    <button *ngIf="!menuItem.divider"
+                            mat-menu-item
+                            [disabled]="!menuItem.enabled"
+                            (click)="menuItem.action(contextMenuEvent)">
+                      <span *ngIf="menuItem.shortcut" class="tb-alt-text"> {{ menuItem.shortcut | keyboardShortcut }}</span>
+                      <mat-icon *ngIf="menuItem.icon">{{menuItem.icon}}</mat-icon>
+                      <span translate>{{menuItem.value}}</span>
+                    </button>
+                  </div>
+                </div>
+              </ng-template>
+            </mat-menu>
+            <fc-canvas #ruleChainCanvas
+                       id="tb-rulchain-canvas"
+                       [model]="ruleChainModel"
+                       (modelChanged)="onModelChanged()"
+                       [selectedObjects]="selectedObjects"
+                       [edgeStyle]="flowchartConstants.curvedStyle"
+                       [automaticResize]="true"
+                       fitModelSizeByDefault="false"
+                       [nodeWidth]="170"
+                       [nodeHeight]="50"
+                       [dragAnimation]="flowchartConstants.dragAnimationRepaint"
+                       [userCallbacks]="editCallbacks">
+            </fc-canvas>
+          </div>
+          <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
+            <button [disabled]="isLoading$ | async"
+                    mat-fab color="accent" class="tb-btn-footer"
+                    [ngClass]="{'tb-hide': !objectsSelected()}"
+                    (click)="deleteSelected()"
+                    matTooltip="{{ 'rulenode.delete-selected-objects' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+            <button [disabled]="(isLoading$ | async) || !isDebugModeEnabled()"
+                    mat-fab color="accent" class="tb-btn-footer"
+                    (click)="resetDebugModeInAllNodes()"
+                    matTooltip="{{ 'rulenode.reset-debug-mode' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>bug_report</mat-icon>
+            </button>
+            <button [disabled]="(isLoading$ | async) || isInvalid || (!isDirtyValue && !isImport)"
+                    mat-fab color="accent" class="tb-btn-footer"
+                    (click)="saveRuleChain()"
+                    matTooltip="{{ 'action.apply-changes' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>done</mat-icon>
+            </button>
+            <button [disabled]="(isLoading$ | async) || !isDirtyValue"
+                    mat-fab color="accent" class="tb-btn-footer"
+                    (click)="revertRuleChain()"
+                    matTooltip="{{ 'action.decline-changes' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          </section>
+        </mat-drawer-content>
+      </mat-drawer-container>
+    </div>
+  </section>
+</div>

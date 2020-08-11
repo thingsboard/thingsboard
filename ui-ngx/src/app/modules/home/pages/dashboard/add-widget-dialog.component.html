@@ -1,0 +1,57 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="widgetFormGroup" (ngSubmit)="add()" style="width: 900px;">
+  <mat-toolbar color="primary">
+    <h2 translate>widget.add</h2>
+    <span fxFlex></span>
+    <div [tb-help]="helpLinkIdForWidgetType()"></div>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async" style="position: relative; height: 600px;">
+      <tb-widget-config
+        [aliasController]="aliasController"
+        [functionsOnly]="false"
+        [entityAliases]="dashboard.configuration.entityAliases"
+        [filters]="dashboard.configuration.filters"
+        [dashboardStates]="dashboard.configuration.states"
+        formControlName="widgetConfig">
+      </tb-widget-config>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || widgetFormGroup.invalid">
+      {{ 'action.add' | translate }}
+    </button>
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()"
+            cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+  </div>
+</form>

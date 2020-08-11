@@ -1,0 +1,245 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-drawer-container hasBackdrop="false" class="tb-absolute-fill">
+  <mat-drawer *ngIf="entitiesTableConfig.detailsPanelEnabled"
+              class="tb-details-drawer mat-elevation-z4"
+              #drawer
+              mode="over"
+              position="end"
+              [opened]="isDetailsOpen">
+    <tb-entity-details-panel
+      [entitiesTableConfig]="entitiesTableConfig"
+      [entityId]="dataSource.currentEntity?.id"
+      (closeEntityDetails)="isDetailsOpen = false; detailsPanelOpened.emit(isDetailsOpen);"
+      (entityUpdated)="onEntityUpdated($event)"
+      (entityAction)="onEntityAction($event)"
+    >
+    </tb-entity-details-panel>
+  </mat-drawer>
+  <mat-drawer-content>
+    <div class="mat-padding tb-entity-table tb-absolute-fill">
+      <div fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
+        <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
+          <div class="mat-toolbar-tools">
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
+              <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
+              <tb-anchor #entityTableHeader></tb-anchor>
+              <tb-timewindow *ngIf="entitiesTableConfig.useTimePageLink" [(ngModel)]="timewindow"
+                              (ngModelChange)="onTimewindowChange()"
+                              asButton historyOnly></tb-timewindow>
+            </div>
+            <span fxFlex></span>
+            <div [fxShow]="addEnabled()">
+              <button mat-icon-button [disabled]="isLoading$ | async"
+                      *ngIf="!entitiesTableConfig.addActionDescriptors.length; else addActions"
+                      (click)="addEntity($event)"
+                      matTooltip="{{ translations.add | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>add</mat-icon>
+              </button>
+              <ng-template #addActions>
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                        *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else addActionsMenu"
+                        [fxShow]="entitiesTableConfig.addActionDescriptors[0].isEnabled()"
+                        (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
+                        matTooltip="{{ entitiesTableConfig.addActionDescriptors[0].name }}"
+                        matTooltipPosition="above">
+                  <mat-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</mat-icon>
+                </button>
+                <ng-template #addActionsMenu>
+                  <button mat-icon-button [disabled]="isLoading$ | async"
+                          matTooltip="{{ translations.add | translate }}"
+                          matTooltipPosition="above"
+                          [matMenuTriggerFor]="addActionsMenu">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                  <mat-menu #addActionsMenu="matMenu" xPosition="before">
+                    <button mat-menu-item *ngFor="let actionDescriptor of entitiesTableConfig.addActionDescriptors"
+                            [disabled]="isLoading$ | async"
+                            [fxShow]="actionDescriptor.isEnabled()"
+                            (click)="actionDescriptor.onAction($event)">
+                      <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+                      <span>{{ actionDescriptor.name }}</span>
+                    </button>
+                  </mat-menu>
+                </ng-template>
+              </ng-template>
+            </div>
+            <button mat-icon-button [disabled]="isLoading$ | async"
+                    [fxShow]="actionDescriptor.isEnabled()" *ngFor="let actionDescriptor of headerActionDescriptors"
+                    matTooltip="{{ actionDescriptor.name }}"
+                    matTooltipPosition="above"
+                    (click)="actionDescriptor.onAction($event)">
+              <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+            </button>
+            <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
+                    matTooltip="{{ 'action.refresh' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>refresh</mat-icon>
+            </button>
+            <button *ngIf="entitiesTableConfig.searchEnabled"
+                    mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
+                    matTooltip="{{ translations.search | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>search</mat-icon>
+            </button>
+          </div>
+        </mat-toolbar>
+        <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode && dataSource.selection.isEmpty()">
+          <div class="mat-toolbar-tools">
+            <button mat-icon-button
+                    matTooltip="{{ translations.search | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>search</mat-icon>
+            </button>
+            <mat-form-field fxFlex>
+              <mat-label>&nbsp;</mat-label>
+              <input #searchInput matInput
+                     [(ngModel)]="pageLink.textSearch"
+                     placeholder="{{ translations.search | translate }}"/>
+            </mat-form-field>
+            <button mat-icon-button (click)="exitFilterMode()"
+                    matTooltip="{{ 'action.close' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </mat-toolbar>
+        <mat-toolbar *ngIf="entitiesTableConfig.selectionEnabled" class="mat-table-toolbar" color="primary" [fxShow]="!dataSource.selection.isEmpty()">
+          <div class="mat-toolbar-tools">
+            <span class="tb-entity-table-info">
+              {{ translations.selectedEntities | translate:{count: dataSource.selection.selected.length} }}
+            </span>
+            <span fxFlex></span>
+            <button mat-icon-button [disabled]="isLoading$ | async"
+                    [fxShow]="actionDescriptor.isEnabled" *ngFor="let actionDescriptor of groupActionDescriptors"
+                    matTooltip="{{ actionDescriptor.name }}"
+                    matTooltipPosition="above"
+                    (click)="actionDescriptor.onAction($event, dataSource.selection.selected)">
+              <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+            </button>
+          </div>
+        </mat-toolbar>
+        <div fxFlex class="table-container">
+          <table mat-table [dataSource]="dataSource" [trackBy]="trackByEntityId"
+                     matSort [matSortActive]="pageLink.sortOrder?.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+            <ng-container matColumnDef="select" sticky>
+              <mat-header-cell *matHeaderCellDef style="width: 30px;">
+                <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
+                              [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+                              [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
+                </mat-checkbox>
+              </mat-header-cell>
+              <mat-cell *matCellDef="let entity">
+                <mat-checkbox (click)="$event.stopPropagation()"
+                              [fxShow]="entitiesTableConfig.entitySelectionEnabled(entity)"
+                              (change)="$event ? dataSource.selection.toggle(entity) : null"
+                              [checked]="dataSource.selection.isSelected(entity)">
+                </mat-checkbox>
+              </mat-cell>
+            </ng-container>
+            <ng-container [matColumnDef]="column.key" *ngFor="let column of entityColumns; trackBy: trackByColumnKey;">
+              <mat-header-cell [ngClass]="{'mat-number-cell': column.isNumberColumn}"
+                               [fxHide.lt-lg]="column.mobileHide"
+                               *matHeaderCellDef [ngStyle]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable">
+                {{ column.ignoreTranslate ? column.title : (column.title | translate) }} </mat-header-cell>
+              <mat-cell [ngClass]="{'mat-number-cell': column.isNumberColumn}"
+                        [fxHide.lt-lg]="column.mobileHide"
+                        *matCellDef="let entity; let row = index"
+                        [matTooltip]="cellTooltip(entity, column, row)"
+                        matTooltipPosition="above"
+                        [innerHTML]="cellContent(entity, column, row)"
+                        [ngStyle]="cellStyle(entity, column, row)">
+              </mat-cell>
+            </ng-container>
+            <ng-container [matColumnDef]="column.key" *ngFor="let column of actionColumns; trackBy: trackByColumnKey;">
+              <mat-header-cell *matHeaderCellDef [ngStyle]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
+              <mat-cell *matCellDef="let entity; let row = index"
+                        [ngStyle]="cellStyle(entity, column, row)">
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                        [fxShow]="column.actionDescriptor.isEnabled(entity)"
+                        matTooltip="{{ column.actionDescriptor.nameFunction ? column.actionDescriptor.nameFunction(entity) : column.actionDescriptor.name }}"
+                        matTooltipPosition="above"
+                        (click)="column.actionDescriptor.onAction($event, entity)">
+                  <mat-icon [svgIcon]="column.actionDescriptor.mdiIcon" [ngStyle]="column.actionDescriptor.style">
+                    {{column.actionDescriptor.icon}}</mat-icon>
+                </button>
+              </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="actions" stickyEnd>
+              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px',
+                                                                    maxWidth: (cellActionDescriptors.length * 40) + 'px',
+                                                                    width: (cellActionDescriptors.length * 40) + 'px' }">
+                {{ entitiesTableConfig.actionsColumnTitle ? (entitiesTableConfig.actionsColumnTitle | translate) : '' }}
+              </mat-header-cell>
+              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px',
+                                                                    maxWidth: (cellActionDescriptors.length * 40) + 'px',
+                                                                    width: (cellActionDescriptors.length * 40) + 'px' }">
+                <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+                  <button mat-icon-button [disabled]="(isLoading$ | async) || !actionDescriptor.isEnabled(entity)"
+                          *ngFor="let actionDescriptor of cellActionDescriptors"
+                          matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
+                          matTooltipPosition="above"
+                          (click)="actionDescriptor.onAction($event, entity)">
+                    <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
+                      {{actionDescriptor.icon}}</mat-icon>
+                  </button>
+                </div>
+                <div fxHide fxShow.lt-lg *ngIf="cellActionDescriptors.length">
+                  <button mat-icon-button
+                          (click)="$event.stopPropagation()"
+                          [matMenuTriggerFor]="cellActionsMenu">
+                    <mat-icon class="material-icons">more_vert</mat-icon>
+                  </button>
+                  <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                    <button mat-menu-item *ngFor="let actionDescriptor of cellActionDescriptors"
+                            [disabled]="isLoading$ | async"
+                            [fxShow]="actionDescriptor.isEnabled(entity)"
+                            (click)="actionDescriptor.onAction($event, entity)">
+                      <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
+                        {{actionDescriptor.icon}}</mat-icon>
+                      <span>{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}</span>
+                    </button>
+                  </mat-menu>
+                </div>
+              </mat-cell>
+            </ng-container>
+            <mat-header-row [ngClass]="{'mat-row-select': selectionEnabled}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+            <mat-row [fxShow]="!dataSource.dataLoading"
+                     [ngClass]="{'mat-row-select': selectionEnabled,
+                                 'mat-selected': dataSource.selection.isSelected(entity),
+                                 'tb-current-entity': dataSource.isCurrentEntity(entity)}"
+                     *matRowDef="let entity; columns: displayedColumns;" (click)="onRowClick($event, entity)"></mat-row>
+          </table>
+          <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async) && !dataSource.dataLoading"
+                fxLayoutAlign="center center"
+                class="no-data-found">{{ translations.noEntities | translate }}</span>
+          <span [fxShow]="dataSource.dataLoading"
+                fxLayoutAlign="center center"
+                class="no-data-found">{{ 'common.loading' | translate }}</span>
+        </div>
+        <mat-divider *ngIf="displayPagination"></mat-divider>
+        <mat-paginator *ngIf="displayPagination"
+                       [length]="dataSource.total() | async"
+                       [pageIndex]="pageLink.page"
+                       [pageSize]="pageLink.pageSize"
+                       [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+      </div>
+    </div>
+  </mat-drawer-content>
+</mat-drawer-container>

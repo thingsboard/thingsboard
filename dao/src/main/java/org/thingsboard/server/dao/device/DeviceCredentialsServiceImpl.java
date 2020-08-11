@@ -80,18 +80,15 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
-        if (!sqlDatabaseUsed) {
+        try {
             return deviceCredentialsDao.save(tenantId, deviceCredentials);
-        } else {
-            try {
-                return deviceCredentialsDao.save(tenantId, deviceCredentials);
-            } catch (Exception t) {
-                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key")) {
-                    throw new DataValidationException("Specified credentials are already registered!");
-                } else {
-                    throw t;
-                }
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null
+                    && (e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key") || e.getConstraintName().equalsIgnoreCase("device_credentials_device_id_unq_key"))) {
+                throw new DataValidationException("Specified credentials are already registered!");
+            } else {
+                throw t;
             }
         }
     }
@@ -115,25 +112,22 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    if (!sqlDatabaseUsed) {
-                        DeviceCredentials existingCredentialsEntity = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
-                        if (existingCredentialsEntity != null) {
-                            throw new DataValidationException("Create of existent device credentials!");
-                        }
+                    if (deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId()) != null) {
+                        throw new DataValidationException("Credentials for this device are already specified!");
+                    }
+                    if (deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId()) != null) {
+                        throw new DataValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    DeviceCredentials existingCredentials = deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId());
-                    if (existingCredentials == null) {
+                    if (deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId()) == null) {
                         throw new DataValidationException("Unable to update non-existent device credentials!");
                     }
-                    if (!sqlDatabaseUsed) {
-                        DeviceCredentials sameCredentialsId = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
-                        if (sameCredentialsId != null && !sameCredentialsId.getUuidId().equals(deviceCredentials.getUuidId())) {
-                            throw new DataValidationException("Specified credentials are already registered!");
-                        }
+                    DeviceCredentials existingCredentials = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
+                    if (existingCredentials != null && !existingCredentials.getId().equals(deviceCredentials.getId())) {
+                        throw new DataValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 

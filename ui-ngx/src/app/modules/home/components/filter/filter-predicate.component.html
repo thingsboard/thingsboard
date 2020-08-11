@@ -1,0 +1,50 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="filterPredicateFormGroup">
+  <div fxFlex fxLayout="column" [ngSwitch]="type">
+    <ng-template [ngSwitchCase]="filterPredicateType.STRING">
+      <tb-string-filter-predicate formControlName="predicate">
+      </tb-string-filter-predicate>
+    </ng-template>
+    <ng-template [ngSwitchCase]="filterPredicateType.NUMERIC">
+      <tb-numeric-filter-predicate [valueType]="valueType"
+                                   formControlName="predicate">
+      </tb-numeric-filter-predicate>
+    </ng-template>
+    <ng-template [ngSwitchCase]="filterPredicateType.BOOLEAN">
+      <tb-boolean-filter-predicate formControlName="predicate">
+      </tb-boolean-filter-predicate>
+    </ng-template>
+    <ng-template [ngSwitchCase]="filterPredicateType.COMPLEX">
+      <tb-complex-filter-predicate
+        [key]="key"
+        [valueType]="valueType"
+        formControlName="predicate">
+      </tb-complex-filter-predicate>
+    </ng-template>
+  </div>
+  <tb-filter-user-info *ngIf="type !== filterPredicateType.COMPLEX"
+                       style="width: 60px;"
+                       fxLayout="row" fxLayoutAlign="center"
+                       [valueType]="valueType"
+                       [operation]="filterPredicateFormGroup.get('predicate').value?.operation"
+                       [key]="key"
+                       formControlName="userInfo">
+  </tb-filter-user-info>
+</div>

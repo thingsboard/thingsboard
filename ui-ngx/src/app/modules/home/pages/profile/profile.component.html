@@ -1,0 +1,85 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <mat-card class="profile-card">
+    <mat-card-title>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px">
+        <div fxFlex fxLayout="column">
+          <span class="mat-headline" translate>profile.profile</span>
+          <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>
+        </div>
+        <div fxFlex fxLayout="column">
+          <span class="mat-subheader" translate>profile.last-login-time</span>
+          <span class="profile-last-login-ts" style='opacity: 0.7;'>{{ user?.additionalInfo?.lastLoginTs | date:'yyyy-MM-dd HH:mm:ss'  }}</span>
+        </div>
+      </div>
+    </mat-card-title>
+    <mat-card-title>
+    </mat-card-title>
+    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+    </mat-progress-bar>
+    <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+    <mat-card-content style="padding-top: 16px;">
+      <form [formGroup]="profile" (ngSubmit)="save()">
+        <fieldset [disabled]="isLoading$ | async">
+          <mat-form-field class="mat-block">
+            <mat-label translate>user.email</mat-label>
+            <input matInput formControlName="email" required/>
+            <mat-error *ngIf="profile.get('email').hasError('required')">
+              {{ 'user.email-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="profile.get('email').hasError('email')">
+              {{ 'user.invalid-email-format' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>user.first-name</mat-label>
+            <input matInput formControlName="firstName"/>
+          </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>user.last-name</mat-label>
+            <input matInput formControlName="lastName"/>
+          </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>language.language</mat-label>
+            <mat-select matInput formControlName="language">
+              <mat-option *ngFor="let lang of languageList" [value]="lang">
+                {{ lang ? ('language.locales.' + lang | translate) : ''}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div fxLayout="row" style="padding-bottom: 16px;">
+            <button mat-button mat-raised-button color="primary"
+                    type="button"
+                    [disabled]="(isLoading$ | async)" (click)="changePassword()">
+              {{'profile.change-password' | translate}}
+            </button>
+          </div>
+          <div fxLayout="row" class="layout-wrap">
+            <span fxFlex></span>
+            <button mat-button mat-raised-button color="primary"
+                    type="submit"
+                    [disabled]="(isLoading$ | async) || profile.invalid || !profile.dirty">
+              {{ 'action.save' | translate }}
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

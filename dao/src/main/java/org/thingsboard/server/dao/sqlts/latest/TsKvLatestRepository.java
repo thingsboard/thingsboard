@@ -18,9 +18,7 @@ package org.thingsboard.server.dao.sqlts.latest;
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
-import org.thingsboard.server.dao.util.SqlDao;
 
-@SqlDao
 public interface TsKvLatestRepository extends CrudRepository<TsKvLatestEntity, TsKvLatestCompositeKey> {
 
 }

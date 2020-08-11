@@ -338,17 +338,33 @@ spec:
         backend:
           serviceName: tb-http-transport
           servicePort: 8080
+      - path: /api/.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
+      - path: /swagger.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
+      - path: /webjars.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
+      - path: /v2/.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
       - path: /static/rulenode/.*
         backend:
           serviceName: tb-node
           servicePort: 8080
-      - path: /static/.*
+      - path: /oauth2/.*
         backend:
-          serviceName: tb-web-ui
+          serviceName: tb-node
           servicePort: 8080
-      - path: /index.html.*
+      - path: /login/oauth2/.*
         backend:
-          serviceName: tb-web-ui
+          serviceName: tb-node
           servicePort: 8080
       - path: /
         backend:
@@ -356,6 +372,6 @@ spec:
           servicePort: 8080
       - path: /.*
         backend:
-          serviceName: tb-node
+          serviceName: tb-web-ui
           servicePort: 8080
 ---

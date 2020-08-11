@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.dao.model;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.ArrayUtils;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 
@@ -28,8 +27,7 @@ public class ModelConstants {
     private ModelConstants() {
     }
 
-    public static final UUID NULL_UUID = UUIDs.startOf(0);
-    public static final String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
+    public static final UUID NULL_UUID = Uuids.startOf(0);
     public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
 
     // this is the difference between midnight October 15, 1582 UTC and midnight January 1, 1970 UTC as 100 nanosecond units
@@ -39,6 +37,7 @@ public class ModelConstants {
      * Generic constants.
      */
     public static final String ID_PROPERTY = "id";
+    public static final String CREATED_TIME_PROPERTY = "created_time";
     public static final String USER_ID_PROPERTY = "user_id";
     public static final String TENANT_ID_PROPERTY = "tenant_id";
     public static final String CUSTOMER_ID_PROPERTY = "customer_id";
@@ -228,6 +227,7 @@ public class ModelConstants {
     public static final String ALARM_TYPE_PROPERTY = "type";
     public static final String ALARM_DETAILS_PROPERTY = "details";
     public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
+    public static final String ALARM_ORIGINATOR_NAME_PROPERTY = "originator_name";
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
     public static final String ALARM_STATUS_PROPERTY = "status";

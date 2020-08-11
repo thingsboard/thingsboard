@@ -36,11 +36,13 @@ function installPostgres() {
     kubectl rollout status deployment/postgres
 }
 
-function installCassandra() {
+function installHybrid() {
 
+    kubectl apply -f common/postgres.yml
     kubectl apply -f common/cassandra.yml
-    kubectl apply -f common/tb-node-cassandra-configmap.yml
+    kubectl apply -f common/tb-node-hybrid-configmap.yml
 
+    kubectl rollout status deployment/postgres
     kubectl rollout status statefulset/cassandra
 
     kubectl exec -it cassandra-0 -- bash -c "cqlsh -e \
@@ -93,12 +95,12 @@ case $DATABASE in
             installPostgres
             installTb ${loadDemo}
         ;;
-        cassandra)
-            installCassandra
+        hybrid)
+            installHybrid
             installTb ${loadDemo}
         ;;
         *)
-        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or cassandra." >&2
+        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or hybrid." >&2
         exit 1
 esac
 
