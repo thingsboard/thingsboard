@@ -29,7 +29,7 @@ export class OpenStreetMap extends LeafletMap {
         else
             tileLayer = (L.tileLayer as any).provider(options.mapProvider || 'OpenStreetMap.Mapnik');
         tileLayer.addTo(map);
-        super.setMap(map);
         super.initSettings(options);
+        super.setMap(map);
     }
 }

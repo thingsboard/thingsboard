@@ -128,6 +128,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private long dynamicPageLinkRefreshInterval;
     @Value("${server.ws.dynamic_page_link.refresh_pool_size:1}")
     private int dynamicPageLinkRefreshPoolSize;
+    @Value("${server.ws.max_entities_per_data_subscription:1000}")
+    private int maxEntitiesPerDataSubscription;
     @Value("${server.ws.max_entities_per_alarm_subscription:1000}")
     private int maxEntitiesPerAlarmSubscription;
 
@@ -220,7 +222,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 } else if (cmd.getTsCmd() != null) {
                     handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
                 } else if (!theCtx.isInitialDataSent()) {
-                    EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null);
+                    EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
                     wsService.sendWsMsg(theCtx.getSessionId(), update);
                     theCtx.setInitialDataSent(true);
                 }
@@ -298,7 +300,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private TbEntityDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
         Map<Integer, TbAbstractDataSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
-        TbEntityDataSubCtx ctx = new TbEntityDataSubCtx(serviceId, wsService, entityService, localSubscriptionService, attributesService, stats, sessionRef, cmd.getCmdId());
+        TbEntityDataSubCtx ctx = new TbEntityDataSubCtx(serviceId, wsService, entityService, localSubscriptionService,
+                attributesService, stats, sessionRef, cmd.getCmdId(), maxEntitiesPerDataSubscription);
         ctx.setAndResolveQuery(cmd.getQuery());
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
@@ -306,7 +309,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private TbAlarmDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
         Map<Integer, TbAbstractDataSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
-        TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, entityService, localSubscriptionService, attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription);
+        TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, entityService, localSubscriptionService,
+                attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription);
         ctx.setAndResolveQuery(cmd.getQuery());
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
@@ -372,10 +376,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             });
             EntityDataUpdate update;
             if (!ctx.isInitialDataSent()) {
-                update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
+                update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
                 ctx.setInitialDataSent(true);
             } else {
-                update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
+                update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
             }
             wsService.sendWsMsg(ctx.getSessionId(), update);
             if (subscribe) {
@@ -422,10 +426,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     });
                     EntityDataUpdate update;
                     if (!ctx.isInitialDataSent()) {
-                        update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
+                        update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
                         ctx.setInitialDataSent(true);
                     } else {
-                        update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData());
+                        update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
                     }
                     wsService.sendWsMsg(ctx.getSessionId(), update);
                     ctx.createSubscriptions(latestCmd.getKeys(), true);
@@ -440,7 +444,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             }, wsCallBackExecutor);
         } else {
             if (!ctx.isInitialDataSent()) {
-                EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null);
+                EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
                 wsService.sendWsMsg(ctx.getSessionId(), update);
                 ctx.setInitialDataSent(true);
             }

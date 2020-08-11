@@ -31,7 +31,7 @@ export class TencentMap extends LeafletMap {
       attribution: '&copy;2020 Tencent - GS(2018)2236号- Data&copy; NavInfo'
     }).addTo(map);
     txLayer.addTo(map);
-    super.setMap(map);
     super.initSettings(options);
+    super.setMap(map);
   }
 }

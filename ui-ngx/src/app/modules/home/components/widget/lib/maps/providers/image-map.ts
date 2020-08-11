@@ -24,7 +24,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import {isDefinedAndNotNull, isNumber} from '@core/utils';
+import { isDefinedAndNotNull, isDefinedAndNotEmptyStr, isNumber } from '@core/utils';
 import "leaflet-editable/src/Leaflet.Editable";
 import {isArray} from "rxjs/internal-compatibility";
 
@@ -49,8 +49,8 @@ export class ImageMap extends LeafletMap {
             this.onResize(true);
           } else {
             this.onResize();
-            super.setMap(this.map);
             super.initSettings(options);
+            super.setMap(this.map);
           }
         });
     }
@@ -215,7 +215,7 @@ export class ImageMap extends LeafletMap {
     convertPosition(expression): L.LatLng {
       const xPos = expression[this.options.xPosKeyName];
       const yPos = expression[this.options.yPosKeyName];
-      if (!isDefinedAndNotNull(xPos) || isNaN(xPos) || !isDefinedAndNotNull(yPos) || isNaN(yPos)) {
+      if (!isDefinedAndNotEmptyStr(xPos) || isNaN(xPos) || !isDefinedAndNotEmptyStr(yPos) || isNaN(yPos)) {
         return null;
       }
       Object.assign(expression, this.posFunction(xPos, yPos));

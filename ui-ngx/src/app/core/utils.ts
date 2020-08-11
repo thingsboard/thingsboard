@@ -77,12 +77,20 @@ export function isUndefined(value: any): boolean {
   return typeof value === 'undefined';
 }
 
+export function isUndefinedOrNull(value: any): boolean {
+  return typeof value === 'undefined' || value === null;
+}
+
 export function isDefined(value: any): boolean {
   return typeof value !== 'undefined';
 }
 
 export function isDefinedAndNotNull(value: any): boolean {
   return typeof value !== 'undefined' && value !== null;
+}
+
+export function isDefinedAndNotEmptyStr(value: any): boolean {
+  return typeof value !== 'undefined' && value !== '';
 }
 
 export function isFunction(value: any): boolean {
@@ -452,7 +460,7 @@ export function insertVariable(pattern: string, name: string, value: any): strin
     const variable = match[0];
     const variableName = match[1];
     if (variableName === name) {
-      result = result.split(variable).join(value);
+      result = result.replace(variable, value);
     }
     match = varsRegex.exec(pattern);
   }
@@ -469,17 +477,17 @@ export function createLabelFromDatasource(datasource: Datasource, pattern: strin
     const variable = match[0];
     const variableName = match[1];
     if (variableName === 'dsName') {
-      label = label.split(variable).join(datasource.name);
+      label = label.replace(variable, datasource.name);
     } else if (variableName === 'entityName') {
-      label = label.split(variable).join(datasource.entityName);
+      label = label.replace(variable, datasource.entityName);
     } else if (variableName === 'deviceName') {
-      label = label.split(variable).join(datasource.entityName);
+      label = label.replace(variable, datasource.entityName);
     } else if (variableName === 'entityLabel') {
-      label = label.split(variable).join(datasource.entityLabel || datasource.entityName);
+      label = label.replace(variable, datasource.entityLabel || datasource.entityName);
     } else if (variableName === 'aliasName') {
-      label = label.split(variable).join(datasource.aliasName);
+      label = label.replace(variable, datasource.aliasName);
     } else if (variableName === 'entityDescription') {
-      label = label.split(variable).join(datasource.entityDescription);
+      label = label.replace(variable, datasource.entityDescription);
     }
     match = varsRegex.exec(pattern);
   }

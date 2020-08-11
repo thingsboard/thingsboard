@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngExpression, LeafletMouseEvent} from 'leaflet';
+import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
+import { createTooltip, functionValueCalculator, parseWithTranslation, safeExecute } from './maps-utils';
 import "leaflet-editable/src/Leaflet.Editable";
-import { createTooltip, parseWithTranslation, safeExecute } from './maps-utils';
 import { FormattedData, PolygonSettings } from './map-models';
 
 export class Polygon {
@@ -111,10 +111,7 @@ export class Polygon {
     }
 
     private getPolygonColor(settings: PolygonSettings): string | null {
-      if (settings.usePolygonColorFunction) {
-        return safeExecute(settings.polygonColorFunction, [this.data, this.dataSources, this.data.dsIndex]);
-      } else {
-        return settings.polygonColor;
-      }
+      return functionValueCalculator(settings.usePolygonColorFunction, settings.polygonColorFunction,
+        [this.data, this.dataSources, this.data.dsIndex], settings.polygonColor);
     }
 }

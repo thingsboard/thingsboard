@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Function;
@@ -98,9 +99,9 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         this.stats = stats;
         this.sessionRef = sessionRef;
         this.cmdId = cmdId;
-        this.subToEntityIdMap = new HashMap<>();
-        this.subToDynamicValueKeySet = new HashSet<>();
-        this.dynamicValues = new HashMap<>();
+        this.subToEntityIdMap = new ConcurrentHashMap<>();
+        this.subToDynamicValueKeySet = ConcurrentHashMap.newKeySet();
+        this.dynamicValues = new ConcurrentHashMap<>();
     }
 
     public void setAndResolveQuery(T query) {

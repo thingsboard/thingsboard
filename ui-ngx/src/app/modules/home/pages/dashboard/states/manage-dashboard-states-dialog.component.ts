@@ -35,7 +35,7 @@ import { fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
-import { deepClone } from '@core/utils';
+import { deepClone, isUndefined } from '@core/utils';
 import {
   DashboardStateDialogComponent,
   DashboardStateDialogData
@@ -198,8 +198,9 @@ export class ManageDashboardStatesDialogComponent extends
       root: state.root,
       layouts: state.layouts
     };
-    if (prevStateId) {
-      this.states[prevStateId] = newState;
+    if (prevStateId && prevStateId !== state.id) {
+      delete this.states[prevStateId];
+      this.states[state.id] = newState;
     } else {
       this.states[state.id] = newState;
     }
@@ -209,6 +210,19 @@ export class ManageDashboardStatesDialogComponent extends
         if (id !== state.id) {
           otherState.root = false;
         }
+      }
+    } else {
+      let rootFound = false;
+      for (const id of Object.keys(this.states)) {
+        const otherState = this.states[id];
+        if (otherState.root) {
+          rootFound = true;
+          break;
+        }
+      }
+      if (!rootFound) {
+        const firstStateId = Object.keys(this.states)[0];
+        this.states[firstStateId].root = true;
       }
     }
     this.onStatesUpdated();

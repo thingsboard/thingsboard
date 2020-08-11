@@ -15,13 +15,10 @@
  */
 package org.thingsboard.server.service.subscription;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -38,8 +35,6 @@ import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -48,8 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -63,11 +56,14 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
     private boolean initialDataSent;
     private TimeSeriesCmd curTsCmd;
     private LatestValueCmd latestValueCmd;
+    @Getter
+    private final int maxEntitiesPerDataSubscription;
 
     public TbEntityDataSubCtx(String serviceId, TelemetryWebSocketService wsService, EntityService entityService,
                               TbLocalSubscriptionService localSubscriptionService, AttributesService attributesService,
-                              SubscriptionServiceStatistics stats, TelemetryWebSocketSessionRef sessionRef, int cmdId) {
+                              SubscriptionServiceStatistics stats, TelemetryWebSocketSessionRef sessionRef, int cmdId, int maxEntitiesPerDataSubscription) {
         super(serviceId, wsService, entityService, localSubscriptionService, attributesService, stats, sessionRef, cmdId);
+        this.maxEntitiesPerDataSubscription = maxEntitiesPerDataSubscription;
     }
 
     @Override
@@ -120,7 +116,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         if (!latestUpdate.isEmpty()) {
             Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
             entityData = new EntityData(entityId, latestMap, null);
-            wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData)));
+            wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData), maxEntitiesPerDataSubscription));
         }
     }
 
@@ -163,7 +159,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
             Map<String, TsValue[]> tsMap = new HashMap<>();
             tsUpdate.forEach((key, tsValue) -> tsMap.put(key, tsValue.toArray(new TsValue[tsValue.size()])));
             entityData = new EntityData(entityId, null, tsMap);
-            wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData)));
+            wsService.sendWsMsg(sessionId, new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData), maxEntitiesPerDataSubscription));
         }
     }
 
@@ -207,7 +203,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
                 );
             }
         }
-        wsService.sendWsMsg(sessionRef.getSessionId(), new EntityDataUpdate(cmdId, data, null));
+        wsService.sendWsMsg(sessionRef.getSessionId(), new EntityDataUpdate(cmdId, data, null, maxEntitiesPerDataSubscription));
         subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getSessionId(), subId));
         subsToAdd.forEach(localSubscriptionService::addSubscription);
     }

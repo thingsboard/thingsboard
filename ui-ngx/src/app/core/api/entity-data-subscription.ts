@@ -193,6 +193,12 @@ export class EntityDataSubscription {
           key: 'label'
         });
       }
+      if (!entityFields.find(key => key.key === 'additionalInfo')) {
+        entityFields.push({
+          type: EntityKeyType.ENTITY_FIELD,
+          key: 'additionalInfo'
+        });
+      }
 
       this.attrFields = this.entityDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.attribute).map(
         dataKey => ({ type: EntityKeyType.ATTRIBUTE, key: dataKey.name })
