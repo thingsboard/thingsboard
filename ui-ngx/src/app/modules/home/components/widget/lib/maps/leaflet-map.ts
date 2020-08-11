@@ -362,12 +362,12 @@ export default abstract class LeafletMap {
         return L.latLng(lat, lng) as L.LatLng;
     }
 
-    convertPositionPolygon(expression:LatLngExpression[][] | LatLngExpression[][][]) {
-          return (expression as Array<any>).map((el) => {
-            if (el.length === 2 && !el.some(isNaN)) {
+    convertPositionPolygon(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]) {
+          return (expression).map((el) => {
+            if (!Array.isArray(el[0]) && el.length === 2) {
               return el;
-            } else if (isArray(el) && el.length) {
-              return this.convertPositionPolygon(el);
+            } else if (Array.isArray(el) && el.length) {
+              return this.convertPositionPolygon(el as LatLngTuple[] | LatLngTuple[][]);
             } else {
               return null;
             }
