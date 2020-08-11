@@ -23,6 +23,7 @@ export const LWM2M_SERVER = 'lwm2mServer';
 export const OBSERVE_ATTR = 'observeAttr';
 export const OBSERVE = 'observe';
 export const ATTR = 'attribute';
+export const TELEMETRY = 'telemetry';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
 const DEFAULT_ID_BOOTSTRAP = 111;
@@ -34,18 +35,18 @@ export const DEFAULT_PORT_BOOTSTRAP_SEC = 5690;
 export const DEFAULT_PORT_BOOTSTRAP_SEC_CERT = 5692;
 export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
-export const DEFAULT_DEFAULT_MIN_PERIOD =  1;
-const DEFAULT_NOTIF_IF_DESIBLED =  true;
+export const DEFAULT_DEFAULT_MIN_PERIOD = 1;
+const DEFAULT_NOTIF_IF_DESIBLED = true;
 export const DEFAULT_BINDING = "U";
 const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
 export const LEN_MAX_PSK = 64;
 export const LEN_MAX_PRIVATE_KEY = 134;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
 export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
-export const KEY_IDENT_REGEXP_PSK =/^[0-9a-fA-F]{64,64}$/;
-export const KEY_PRIVATE_REGEXP =/^[0-9a-fA-F]{134,134}$/;
-export const KEY_PUBLIC_REGEXP_PSK =/^[0-9a-fA-F]{182,182}$/;
-export const KEY_PUBLIC_REGEXP_X509 =/^[0-9a-fA-F]{0,3000}$/;
+export const KEY_IDENT_REGEXP_PSK = /^[0-9a-fA-F]{64,64}$/;
+export const KEY_PRIVATE_REGEXP = /^[0-9a-fA-F]{134,134}$/;
+export const KEY_PUBLIC_REGEXP_PSK = /^[0-9a-fA-F]{182,182}$/;
+export const KEY_PUBLIC_REGEXP_X509 = /^[0-9a-fA-F]{0,3000}$/;
 
 export interface DeviceCredentialsDialogLwm2mData {
   jsonAllConfig?: SecurityConfigModels;
@@ -126,7 +127,11 @@ interface BootstrapSecurityConfig {
 export interface SecurityConfigModels {
   client: ClientSecurityConfigType,
   bootstrap: BootstrapSecurityConfig,
-  observeAttr: ObjectLwM2M[]
+  observeAttr: {
+    observe: string [],
+    attr: string [],
+    telemetry: string []
+  }
 }
 
 export function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_CONFIG_MODE, endPoint?: string): ClientSecurityConfigType {
@@ -163,7 +168,6 @@ export function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_
 }
 
 
-
 export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
   return {
     shortId: DEFAULT_ID_SERVER,
@@ -190,21 +194,21 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSe
 }
 
 export function getDefaultLwM2MServerSecurityConfig(hostname): ServerSecurityConfig {
-  const DefaultLwM2MServerSecurityConfig =  getDefaultBootstrapServerSecurityConfig(hostname);
+  const DefaultLwM2MServerSecurityConfig = getDefaultBootstrapServerSecurityConfig(hostname);
   DefaultLwM2MServerSecurityConfig.bootstrapServerIs = false;
   DefaultLwM2MServerSecurityConfig.port = getDefaultPortServer();
   DefaultLwM2MServerSecurityConfig.serverId = DEFAULT_ID_SERVER;
   return DefaultLwM2MServerSecurityConfig;
 }
 
-export function getDefaultPortBootstrap (securityMode?: string): number {
+export function getDefaultPortBootstrap(securityMode?: string): number {
   return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_BOOTSTRAP_NO_SEC :
     (securityMode === SECURITY_CONFIG_MODE.X509.toString()) ? DEFAULT_PORT_BOOTSTRAP_SEC_CERT : DEFAULT_PORT_BOOTSTRAP_SEC;
 }
 
-export function getDefaultPortServer (securityMode?: string): number {
+export function getDefaultPortServer(securityMode?: string): number {
   return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_SERVER_NO_SEC :
-    (securityMode === SECURITY_CONFIG_MODE.X509.toString()) ?  DEFAULT_PORT_SERVER_SEC_CERT : DEFAULT_PORT_SERVER_SEC;
+    (securityMode === SECURITY_CONFIG_MODE.X509.toString()) ? DEFAULT_PORT_SERVER_SEC_CERT : DEFAULT_PORT_SERVER_SEC;
 }
 
 function getDefaultBootstrapSecurityConfig(hostname: any): BootstrapSecurityConfig {
@@ -214,11 +218,16 @@ function getDefaultBootstrapSecurityConfig(hostname: any): BootstrapSecurityConf
     lwm2mServer: getDefaultLwM2MServerSecurityConfig(hostname)
   }
 }
+
 export function getDefaultSecurityConfig(hostname: any): SecurityConfigModels {
   const securityConfigModels = {
     client: getDefaultClientSecurityConfigType(SECURITY_CONFIG_MODE.NO_SEC),
-    bootstrap: getDefaultBootstrapSecurityConfig (hostname),
-    observeAttr: []
+    bootstrap: getDefaultBootstrapSecurityConfig(hostname),
+    observeAttr: {
+      observe: [],
+      attr: [],
+      telemetry: []
+    }
   };
   return securityConfigModels;
 }
@@ -228,7 +237,8 @@ export interface ResourceLwM2M {
   id: number,
   name: string,
   isObserve: boolean,
-  isAttr: boolean
+  isAttr: boolean,
+  isTelemetry: boolean
 }
 
 export interface Instance {
@@ -242,55 +252,62 @@ export interface ObjectLwM2M {
   instance: Instance []
 }
 
-export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
+export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
   return [
     {
       id: 1,
       name: "LwM2M Server",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Short Server ID",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Lifetime",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Default Minimum Period",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Default Maximum Period",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "Disable Timeout",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6,
             name: "Notification Storing When Disabled or Offline",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 7,
             name: "Binding",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -298,32 +315,36 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 2,
       name: "Access control",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Object ID",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Object Instance ID",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "ACL",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Access Control Owner",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -331,128 +352,148 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 3,
       name: "Device",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Manufacturer",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Model Number",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Serial Number",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Firmware Version",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6,
             name: "Available Power Sources",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 7,
             name: "Power Source Voltage",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 8,
             name: "Power Source Current",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 9,
             name: "Battery Level",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 10,
             name: "Memory Free",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 11,
             name: "Error Code",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 13,
             name: "Current Time",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 14,
             name: "UTC Offset",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 15,
             name: "Timezone",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 16,
             name: "Supported Binding and Modes",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 17,
             name: "Device Type",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 18,
             name: "Hardware Version",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 19,
             name: "Software Version",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 20,
             name: "Battery Status",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 21,
             name: "Memory Total",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 22,
             name: "ExtDevInfo",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
         ]
       }]
@@ -460,74 +501,85 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 4,
       name: "Connectivity monitoring",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Network Bearer",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Available Network Bearer",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Radio Signal Strength",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Link Quality",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 4,
             name: "IP Addresses",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "Router IP Addresses",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6,
             name: "Link Utilization",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 7,
             name: "APN",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 8,
             name: "Cell ID",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 9,
             name: "SMNC",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 10,
             name: "SMCC",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -535,50 +587,57 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 5,
       name: "Firmware upgrade",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Package",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Package URI",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "State",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "Update Result",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6,
             name: "PkgName",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 7,
             name: "PkgVersion",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 8,
             name: "Firmware Update Protocol Support",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -586,50 +645,57 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 6,
       name: "Location",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Latitude",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Longitude",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Altitude",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Radius",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 4,
             name: "Velocity",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "Timestamp",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6,
             name: "Speed",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -637,50 +703,57 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 7,
       name: "Connectivity Statistics",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "SMS Tx Counter",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "SMS Rx Counter",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Tx Data",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Rx Data",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 4,
             name: "Max Message Size",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "Average Message Size",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 8,
             name: "Collection Period",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -688,80 +761,92 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 10,
       name: "Cellular connectivity",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "SMSC address",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Disable radio period",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Module activation code",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Vendor specific extensions",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 4,
             name: "PSM Timer (1)",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "Active Timer (1)",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6,
             name: "Serving PLMN Rate control",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 7,
             name: "eDRX parameters for lu mode (1)",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 8,
             name: "eDRX parameters for WB-S1 mode (1)",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 9,
             name: "eDRX parameters for NB-S1 mode (1)",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 10,
             name: "eDRX parameters for A/Gb mode (1)",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 11,
             name: "Activated Profile Names",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -769,50 +854,57 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 11,
       name: "APN Connection Profile",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "SMS Tx Counter",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "SMS Rx Counter",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Tx Data",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Rx Data",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 4,
             name: "Max Message Size",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "Average Message Size",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 8,
             name: "Collection Period",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -820,50 +912,57 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 13,
       name: "Bearer Selection",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "SMS Tx Counter",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "SMS Rx Counter",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Tx Data",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Rx Data",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 4,
             name: "Max Message Size",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "Average Message Size",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 8,
             name: "Collection Period",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -871,26 +970,29 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 16,
       name: "Portfolio",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Identity",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "AuthData",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "AuthStatus",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -898,26 +1000,29 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 18,
       name: "Stratum (NAS) Configuration",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Identity",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "AuthData",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "AuthStatus",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -925,44 +1030,50 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 19,
       name: "BinaryAppDataContainer",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Data",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Data Priority",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Data Creation Time",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Data Description",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 4,
             name: "Data Format",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5,
             name: "App ID ",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -970,56 +1081,64 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 3200,
       name: "Digital input",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 5500,
             name: "Digital Input State",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5501,
             name: "Digital Input Counter",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5502,
             name: "Digital Input Polarity",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5503,
             name: "Digital Input Debounce",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5504,
             name: "Digital Input Edge Selection",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5505,
             name: "Digital Input Counter Reset",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5750,
             name: "Application Type",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5751,
             name: "Sensor Type",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -1027,26 +1146,29 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 3201,
       name: "Digital output",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 5550,
             name: "Digital Output State",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5551,
             name: "Digital Output Polarity",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5750,
             name: "Application Type",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -1054,50 +1176,57 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 3202,
       name: "Analog input",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 5600,
             name: "Analog Input Current Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5601,
             name: "Min Measured Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5602,
             name: "Max Measured Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5603,
             name: "Min Range Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5604,
             name: "Max Range Value",
             isObserve: false,
             isAttr: false,
+            isTelemetry: false,
           },
           {
             id: 5750,
             name: "Application Type",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5751,
             name: "Sensor Type",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -1105,50 +1234,57 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 3303,
       name: "Temperature",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 5700,
             name: "Sensor Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5601,
             name: "Min Measured Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5602,
             name: "Max Measured Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5603,
             name: "Min Range Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5604,
             name: "Max Range Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5701,
             name: "Sensor Units",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5605,
             name: "Reset Min and Max Measured Values",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -1156,56 +1292,64 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 3311,
       name: "Light Control",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 5701,
             name: "Sensor Units",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5706,
             name: "Colour",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5750,
             name: "Application Type",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5805,
             name: "Cumulative active power",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5820,
             name: "Power factor",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5850,
             name: "On/Off",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5851,
             name: "Dimmer",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 5852,
             name: "On time",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -1213,32 +1357,36 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 3353,
       name: "scellID",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 6030,
             name: "plmnID",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6031,
             name: "BandIndicator",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6032,
             name: "TrackingAreaCode",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 6033,
             name: "CellID",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -1246,32 +1394,36 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 26241,
       name: "RTU coil",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Slave ID",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Address",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Status",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]
@@ -1279,32 +1431,36 @@ export function getDefaultClientObserveAttr (): ObjectLwM2M [] {
     {
       id: 26242,
       name: "RTU Register",
-      instance:[{
+      instance: [{
         id: 0,
         resource: [
           {
             id: 0,
             name: "Value",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 1,
             name: "Slave ID",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 2,
             name: "Address",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           },
           {
             id: 3,
             name: "Status",
             isObserve: false,
-            isAttr: false
+            isAttr: false,
+            isTelemetry: false
           }
         ]
       }]

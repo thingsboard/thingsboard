@@ -35,7 +35,7 @@
           <strong>{{ 'device.lwm2m-security-config.required' | translate }}</strong>
         </mat-error>
       </mat-form-field>
-      <mat-tab-group dynamicHeight #tabGroup (selectedTabChange)="tabChanged($event, tabGroup )">
+      <mat-tab-group dynamicHeight #tabGroup (selectedTabChange)="tabChanged($event)">
         <mat-tab label="{{ 'device.lwm2m-security-config.client-tab' | translate }}">
           <div class="mat-padding">
             <mat-form-field class="mat-block">
@@ -155,10 +155,10 @@
                   </mat-panel-title>
                 </mat-expansion-panel-header>
                 <div class="mat-padding">
-                    <tb-security-config-server-lwm2m
-                      [formControlName]="bootstrapServer"
-                      [serverFormGroup]="bootstrapFormGroup">
-                    </tb-security-config-server-lwm2m>
+                  <tb-security-config-server-lwm2m
+                    [formControlName]="bootstrapServer"
+                    [serverFormGroup]="bootstrapFormGroup">
+                  </tb-security-config-server-lwm2m>
                 </div>
               </mat-expansion-panel>
             </mat-accordion>
@@ -171,37 +171,20 @@
                   </mat-panel-title>
                 </mat-expansion-panel-header>
                 <div class="mat-padding">
-                    <tb-security-config-server-lwm2m
-                      [formControlName]="lwm2mServer"
-                      [serverFormGroup]="lwm2mServerFormGroup">
-                    </tb-security-config-server-lwm2m>
+                  <tb-security-config-server-lwm2m
+                    [formControlName]="lwm2mServer"
+                    [serverFormGroup]="lwm2mServerFormGroup">
+                  </tb-security-config-server-lwm2m>
                 </div>
               </mat-expansion-panel>
             </mat-accordion>
           </div>
         </mat-tab>
         <mat-tab label="{{ 'device.lwm2m-security-config.model-tab' | translate }}">
-<!--          <div fxLayout="column">-->
-<!--            <div fxLayout="row" fxLayoutGap="8px">-->
-              <!--            <div fxFlex="50">-->
-              <tb-security-config-observe-attr-lwm2m
-                                                [formControlName]="observeAttr"
-                                                [observeFormGroup]="observeAttrFormGroup">
-              </tb-security-config-observe-attr-lwm2m>
-              <!--            </div>-->
-              <!--            <div fxFlex="50">-->
-              <!--              <fieldset [disabled]="isLoading$ | async">-->
-              <!--                <tb-json-object-edit-->
-              <!--                  [formControlName]="formControlNameJsonObserve"-->
-              <!--                  label="{{ 'device.lwm2m-security-config.observeAttr-json-title' | translate }}"-->
-              <!--                  validateContent="true"-->
-              <!--                  [required]="true"-->
-              <!--                  [fillHeight]="false">-->
-              <!--                </tb-json-object-edit>-->
-              <!--              </fieldset>-->
-              <!--            </div>-->
-<!--            </div>-->
-<!--          </div>-->
+          <tb-security-config-observe-attr-lwm2m
+            [formControlName]="observeAttr"
+            [observeFormGroup]="observeAttrFormGroup">
+          </tb-security-config-observe-attr-lwm2m>
         </mat-tab>
         <mat-tab label="{{ 'device.lwm2m-security-config.config-json-tab' | translate }}">
           <div class="mat-padding">

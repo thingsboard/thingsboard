@@ -130,14 +130,14 @@ public class LwM2MTransportService {
 //        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
         log.info("[{}] [{}] Received endpoint updated registration version event", endpointId, lwm2mVersion);
-//        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
-//        log.info("[{}] [{}] Received endpoint observations updatedReg", registration.getEndpoint(), observations);
+        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+        log.info("[{}] [{}] Received endpoint observations updatedReg", registration.getEndpoint(), observations);
 
 //        getObservResource(lwServer, registration);
-//
-//        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetry(lwServer, endpointId);
-//        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
-//        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
+
+        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetry(lwServer, endpointId);
+        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
+        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
     }
 
     public void unReg(Registration registration) {
@@ -330,9 +330,11 @@ public class LwM2MTransportService {
                         String attrTelName = om.name + "_" + instanceId + "_" + resOm.getValue().name;
                         /** Attributs: om.id: Security, Server, ACL & 'R' ? */
                         if (om.id <= 2) {
-                            readResultAttrTel.getPostAttribute().addProperty(attrTelName, "");
-                        } else {
+//                            readResultAttrTel.getPostAttribute().addProperty(attrTelName, "");
                             readResultAttrTel.getPostTelemetry().addProperty(attrTelName, "");
+                        } else {
+                            readResultAttrTel.getPostAttribute().addProperty(attrTelName, "");
+//                            readResultAttrTel.getPostTelemetry().addProperty(attrTelName, "");
                         }
                     });
 

@@ -32,9 +32,10 @@ import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {
   DeviceCredentialsDialogLwm2mData,
   ObjectLwM2M,
-  Instance, ResourceLwM2M
+  Instance, ResourceLwM2M, getDefaultClientObserveAttr
 } from "@home/pages/device/lwm2m/security-config.models";
 import {MatCheckboxChange} from "@angular/material/checkbox";
+import {debug} from "@core/meta-reducers/debug.reducer";
 
 
 @Component({
@@ -53,8 +54,6 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
 
   @Input() observeFormGroup: FormGroup;
   observeValue: ObjectLwM2M[];
-  instance: FormArray;
-  clientLwM2M: FormArray;
   isObserve = 'isObserve' as string;
   isAttr = 'isAttr' as string;
   isTelemetry = 'isTelemetry' as string;
@@ -103,6 +102,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   }
 
   private buildClientObjectsLwM2M(objectsLwM2M: ObjectLwM2M []): void {
+    this.observeFormGroup.removeControl('clientLwM2M');
     this.observeFormGroup.addControl('clientLwM2M',
       this.createObjectsLwM2M(objectsLwM2M)
     );
@@ -111,11 +111,11 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
   createObjectsLwM2M(objectsLwM2MJson: ObjectLwM2M []): FormArray {
     this.indeterminateObserve = [];
     this.indeterminateAttr = [];
-    this.indeterminateTelemetry= [];
+    this.indeterminateTelemetry = [];
     this.indeterminate = {
-      [this.isObserve] : this.indeterminateObserve,
-      [this.isAttr] : this.indeterminateAttr,
-      [this.isTelemetry] : this.indeterminateTelemetry
+      [this.isObserve]: this.indeterminateObserve,
+      [this.isAttr]: this.indeterminateAttr,
+      [this.isTelemetry]: this.indeterminateTelemetry
     }
     return this.fb.array(objectsLwM2MJson.map((objectLwM2M, index) => {
       this.indeterminateObserve[index] = [];
@@ -138,7 +138,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
         id: instanceLwM2M.id,
         [this.isObserve]: false,
         [this.isAttr]: false,
-        [this.isTelemetry]: true,
+        [this.isTelemetry]: false,
         resource: this.createResourceLwM2M(instanceLwM2M.resource)
       })
     }))
@@ -148,10 +148,10 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     return this.fb.array(resourcesLwM2MJson.map(resourceLwM2M => {
       return this.fb.group({
         id: resourceLwM2M.id,
+        name: resourceLwM2M.name,
         [this.isObserve]: resourceLwM2M.isObserve,
         [this.isAttr]: resourceLwM2M.isAttr,
-        [this.isTelemetry]: !resourceLwM2M.isAttr,
-        name: resourceLwM2M.name
+        [this.isTelemetry]: resourceLwM2M.isTelemetry
       })
     }))
   }
@@ -168,17 +168,12 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     return instance.get('resource') as FormArray;
   }
 
-  changeInstanceResourcesCheckBox(value: MatCheckboxChange, objInd: number, instInd: number, nameFrom?: string, nameTo?: string): void {
+  changeInstanceResourcesCheckBox(value: MatCheckboxChange, objInd: number, instInd: number, nameFrom?: string): void {
     let instance = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(objInd).get('instance') as FormArray).at(instInd);
     let resources = instance.get('resource');
-    // let resources = ((this.observeFormGroup.get('clientLwM2M') as FormArray).at(objInd).get('instance') as FormArray).at(instInd).get('resource');
     (resources as FormArray).controls.map(resource => resource.patchValue({[nameFrom]: value.checked}));
     this.indeterminate[nameFrom][objInd][instInd] = false;
-    if (nameTo) {
-      (resources as FormArray).controls.map(resource => resource.patchValue({[nameTo]: !value.checked}));
-      this.indeterminate[nameTo][objInd][instInd] = false;
-      instance.patchValue({[nameTo]: !value.checked});
-    }
+    this.observeFormGroup.markAsDirty();
   }
 
   changeInstanceCheckBox(objInd?: number, instInd?: number, nameParameter?: string): void {
@@ -198,12 +193,7 @@ export class SecurityConfigObserveAttrComponent extends PageComponent implements
     this.indeterminate[nameParameter][objInd][instInd] = indeterm;
   }
 
-  changeResourceAttrTelemetry(value: boolean, objInd: number, instInd: number, resInd: number, nameFrom?: string, nameTo?: string): void {
-    (((this.observeFormGroup.get('clientLwM2M') as FormArray)
-      .at(objInd).get('instance') as FormArray)
-      .at(instInd).get('resource') as FormArray)
-      .at(resInd).patchValue({[nameTo]: !value});
-    this.changeInstanceCheckBox(objInd, instInd,  nameFrom);
-    this.changeInstanceCheckBox(objInd, instInd,  nameTo);
+  changeResourceCheckBox($event: unknown): void {
+    this.changeInstanceCheckBox($event['objInd'], $event['instInd'],  $event['nameFrom']);
   }
 }

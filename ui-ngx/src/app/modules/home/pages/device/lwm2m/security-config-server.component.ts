@@ -62,7 +62,6 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
 
   @Input() serverFormGroup: FormGroup;
-  serverData: ServerSecurityConfig;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
@@ -78,8 +77,8 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
     this.registerDisableOnLoadFormControl(this.serverFormGroup.get('securityMode'));
   }
 
-  updateValueFields(): void {
-    this.serverFormGroup.patchValue(this.serverData, {emitEvent: true});
+  updateValueFields(serverData: ServerSecurityConfig): void {
+    this.serverFormGroup.patchValue(serverData, {emitEvent: false});
     const securityMode = this.serverFormGroup.get('securityMode').value as SECURITY_CONFIG_MODE;
     this.updateValidate(securityMode);
   }
@@ -124,22 +123,17 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   }
 
   writeValue(value: any): void {
-    this.serverData = value;
-    console.log("serverData: ", this.serverData);
-    if (this.serverData) {
-      this.updateValueFields();
+    if (value) {
+      this.updateValueFields(value);
     }
   }
 
   registerOnChange(fn: (value: any) => any): void {
-
   }
 
   registerOnTouched(fn: any): void {
-
   }
 
   setDisabledState?(isDisabled: boolean): void {
-
   }
 }
