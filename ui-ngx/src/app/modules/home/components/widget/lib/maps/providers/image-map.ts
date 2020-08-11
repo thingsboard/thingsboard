@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
+import L, {LatLngBounds, LatLngExpression, LatLngLiteral, LatLngTuple} from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { MapImage, PosFuncton, UnitedMapSettings } from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
@@ -224,7 +224,7 @@ export class ImageMap extends LeafletMap {
         expression.y * this.height);
     }
 
-    convertPositionPolygon(expression: Array<[number, number]> | Array<Array<[number, number]>>) {
+    convertPositionPolygon(expression:  LatLngExpression[][] | LatLngExpression[][][]) {
       return (expression as Array<any>).map((el) => {
         if (el.length === 2 && !el.some(isNaN)) {
           return this.pointToLatLng(
@@ -269,7 +269,7 @@ export class ImageMap extends LeafletMap {
       }
     }
 
-    convertPolygonToCustomFormat(expression: Array<Array<any>>): object {
+    convertPolygonToCustomFormat(expression: any[][]): object {
       return {
         [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
       }

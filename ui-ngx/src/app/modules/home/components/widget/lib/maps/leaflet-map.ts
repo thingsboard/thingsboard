@@ -17,7 +17,7 @@
 import L, {
   FeatureGroup,
   Icon,
-  LatLngBounds,
+  LatLngBounds, LatLngExpression,
   LatLngTuple,
   markerClusterGroup,
   MarkerClusterGroup,
@@ -362,7 +362,7 @@ export default abstract class LeafletMap {
         return L.latLng(lat, lng) as L.LatLng;
     }
 
-    convertPositionPolygon(expression: Array<[number, number]> | Array<Array<[number, number]>>) {
+    convertPositionPolygon(expression:LatLngExpression[][] | LatLngExpression[][][]) {
           return (expression as Array<any>).map((el) => {
             if (el.length === 2 && !el.some(isNaN)) {
               return el;
@@ -395,7 +395,7 @@ export default abstract class LeafletMap {
     }
   }
 
-  convertPolygonToCustomFormat(expression: Array<Array<any>>): object {
+  convertPolygonToCustomFormat(expression: any[][]): object {
     return {
       [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
     }
