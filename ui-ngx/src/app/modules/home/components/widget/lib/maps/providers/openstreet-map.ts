@@ -22,7 +22,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 export class OpenStreetMap extends LeafletMap {
     constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
         super(ctx, $container, options);
-        const map =  new L.Map($container, {editable: !!options.editablePolygon}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
+        const map =  L.map($container, {editable: !!options.editablePolygon}).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
         let tileLayer;
         if (options.useCustomProvider)
             tileLayer = L.tileLayer(options.customProviderTileUrl);

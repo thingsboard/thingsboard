@@ -330,7 +330,7 @@ export class MapWidgetController implements MapWidgetInterface {
     update() {
         const formattedData = parseData(this.data);
         this.map.updateData(this.data, formattedData, this.drawRoutes, this.settings.showPolygon);
-        if (this.settings.draggableMarker) {
+        if (this.settings.draggableMarker || this.settings.editablePolygon) {
           this.map.setDataSources(formattedData);
         }
     }

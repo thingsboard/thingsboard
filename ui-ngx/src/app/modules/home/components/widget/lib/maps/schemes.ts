@@ -524,6 +524,11 @@ export const mapPolygonSchema =
                 type: 'string',
                 default: 'coordinates'
             },
+            editablePolygon: {
+              title: 'Enable polygon edit',
+              type: 'boolean',
+              default: false
+            },
             polygonColor: {
                 title: 'Polygon color',
                 type: 'string'
@@ -581,6 +586,7 @@ export const mapPolygonSchema =
     form: [
         'showPolygon',
         'polygonKeyName',
+        'editablePolygon',
         {
             key: 'polygonColor',
             type: 'color'

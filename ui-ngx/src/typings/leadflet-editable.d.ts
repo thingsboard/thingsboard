@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import * as Leaflet from 'leaflet';
+import * as leaflet from 'leaflet';
 
 declare module 'leaflet' {
 
@@ -31,7 +31,11 @@ declare module 'leaflet' {
   /**
    * Options to pass to L.Editable when instanciating.
    */
-  interface EditOptions extends  Leaflet.MapOptions{
+  interface EditOptions extends  leaflet.MapOptions{
+    /**
+     * Whether to create a L.Editable instance at map init or not.
+     */
+    editable: boolean;
     /**
      * Class to be used when creating a new Polyline.
      */
@@ -55,7 +59,7 @@ declare module 'leaflet' {
     /**
      * Layer used to store edit tools (vertex, line guide…).
      */
-    editLayer?: LayerGroup<Leaflet.Layer>;
+    editLayer?: LayerGroup<leaflet.Layer>;
 
     /**
      * Default layer used to store drawn features (marker, polyline…).
@@ -104,7 +108,7 @@ declare module 'leaflet' {
    * This is not a plug and play UI, and will not. This is a minimal, lightweight, and fully extendable API to
    * control editing of geometries. So you can easily build your own UI with your own needs and choices.
    */
-  interface Editable extends Leaflet.Evented {
+  interface Editable extends leaflet.Evented {
     /**
      * Options to pass to L.Editable when instanciating.
      */
@@ -172,15 +176,12 @@ declare module 'leaflet' {
   }
 
   interface Map {
-    /**
-     * Whether to create a L.Editable instance at map init or not.
-     */
-    editable: boolean;
+
 
     /**
      * Options to pass to L.Editable when instanciating.
      */
-    editOptions: EditOptions;
+    editOptions: MapOptions;
 
     /**
      * L.Editable plugin instance.
@@ -201,7 +202,7 @@ declare module 'leaflet' {
       /**
        * Options to pass to L.Editable when instanciating.
        */
-      editOptions?: EditOptions;
+      editOptions?: MapOptions;
     }
   }
 
@@ -269,4 +270,6 @@ declare module 'leaflet' {
   interface Polyline extends EditableMixin, PolylineEditor {}
 
   interface Polygon extends EditableMixin, PolygonEditor {}
+
+  function map(element: string | HTMLElement, options?: EditOptions): Map;
 }
