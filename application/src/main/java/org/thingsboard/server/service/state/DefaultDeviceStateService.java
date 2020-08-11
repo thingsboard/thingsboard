@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.state;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -503,8 +504,15 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private void pushRuleEngineMessage(DeviceStateData stateData, String msgType) {
         DeviceState state = stateData.getState();
         try {
-            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
-                    , json.writeValueAsString(state));
+            String data;
+            if (msgType.equals(CONNECT_EVENT)) {
+                ObjectNode stateNode = json.convertValue(state, ObjectNode.class);
+                stateNode.remove(ACTIVITY_STATE);
+                data = stateNode.toString();
+            } else {
+                data = json.writeValueAsString(state);
+            }
+            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON, data);
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
