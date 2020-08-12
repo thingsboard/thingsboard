@@ -61,9 +61,6 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     private static final int MAX_STR_V_LENGTH = 10000000;
 
     @Autowired
-    private EntityDatabaseSchemaService entityDatabaseSchemaService;
-
-    @Autowired
     private InsertLatestTsRepository insertLatestTsRepository;
 
     @Autowired
@@ -88,7 +85,6 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     @Override
     public void migrate() throws Exception {
         log.info("Performing migration of latest timeseries data from cassandra to SQL database ...");
-        entityDatabaseSchemaService.createDatabaseSchema(false);
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
             conn.setAutoCommit(false);
             for (CassandraToSqlTable table : tables) {
