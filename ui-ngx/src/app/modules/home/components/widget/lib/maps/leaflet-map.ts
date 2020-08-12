@@ -49,7 +49,7 @@ import {
   safeExecute
 } from '@home/components/widget/lib/maps/maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { deepClone, isDefinedAndNotEmptyStr } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEmptyStr, isString } from '@core/utils';
 
 export default abstract class LeafletMap {
 
@@ -127,10 +127,14 @@ export default abstract class LeafletMap {
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     const datasourcesList = document.createElement('div');
                     const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
+                    const header = document.createElement('p');
+                    header.appendChild(document.createTextNode('Select entity:'));
+                    header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
+                    datasourcesList.append(header);
                     this.datasources.forEach(ds => {
                         const dsItem = document.createElement('p');
                         dsItem.appendChild(document.createTextNode(ds.entityName));
-                        dsItem.setAttribute('style', 'font-size: 14px');
+                        dsItem.setAttribute('style', 'font-size: 14px; margin: 8px 0; cursor: pointer');
                         dsItem.onclick = () => {
                             const updatedEnttity = { ...ds, ...customLatLng };
                             this.saveMarkerLocation(updatedEnttity).subscribe(() => {
@@ -141,9 +145,9 @@ export default abstract class LeafletMap {
                         }
                         datasourcesList.append(dsItem);
                     });
+                    datasourcesList.append(document.createElement('br'));
                     const deleteBtn = document.createElement('a');
-                    deleteBtn.appendChild(document.createTextNode('Delete position'));
-                    deleteBtn.setAttribute('color', 'red');
+                    deleteBtn.appendChild(document.createTextNode('Discard changes'));
                     deleteBtn.onclick = () => {
                         this.map.removeLayer(newMarker);
                     }
@@ -196,10 +200,14 @@ export default abstract class LeafletMap {
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
           const datasourcesList = document.createElement('div');
           const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(mousePositionOnMap)};
+          const header = document.createElement('p');
+          header.appendChild(document.createTextNode('Select entity:'));
+          header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
+          datasourcesList.append(header);
           this.datasources.forEach(ds => {
             const dsItem = document.createElement('p');
             dsItem.appendChild(document.createTextNode(ds.entityName));
-            dsItem.setAttribute('style', 'font-size: 14px');
+            dsItem.setAttribute('style', 'font-size: 14px; margin: 8px 0; cursor: pointer');
             dsItem.onclick = () => {
               const updatedEnttity = { ...ds, ...customLatLng };
               this.savePolygonLocation(updatedEnttity).subscribe(() => {
@@ -209,9 +217,9 @@ export default abstract class LeafletMap {
             }
             datasourcesList.append(dsItem);
           });
+          datasourcesList.append(document.createElement('br'));
           const deleteBtn = document.createElement('a');
-          deleteBtn.appendChild(document.createTextNode('Delete position'));
-          deleteBtn.setAttribute('color', 'red');
+          deleteBtn.appendChild(document.createTextNode('Discard changes'));
           deleteBtn.onclick = () => {
             this.map.removeLayer(newPolygon);
           }
@@ -350,13 +358,13 @@ export default abstract class LeafletMap {
     }
 
     convertPosition(expression: object): L.LatLng {
-        if (!expression) return null;
-        const lat = expression[this.options.latKeyName];
-        const lng = expression[this.options.lngKeyName];
-        if (!isDefinedAndNotEmptyStr(lat) || isNaN(lat) || !isDefinedAndNotEmptyStr(lng) || isNaN(lng)) {
-          return null;
-        }
-        return L.latLng(lat, lng) as L.LatLng;
+      if (!expression) return null;
+      const lat = expression[this.options.latKeyName];
+      const lng = expression[this.options.lngKeyName];
+      if (!isDefinedAndNotNull(lat) || isString(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isString(lng) || isNaN(lng)) {
+        return null;
+      }
+      return L.latLng(lat, lng) as L.LatLng;
     }
 
     convertPositionPolygon(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]) {
@@ -449,7 +457,7 @@ export default abstract class LeafletMap {
 
   // Markers
     updateMarkers(markersData: FormattedData[], updateBounds = true, callback?) {
-        const rawMarkers = markersData.filter(mdata => !!this.convertPosition(mdata));
+      const rawMarkers = markersData.filter(mdata => !!this.convertPosition(mdata));
       const toDelete = new Set(Array.from(this.markers.keys()));
       const createdMarkers: Marker[] = [];
       const updatedMarkers: Marker[] = [];
@@ -644,8 +652,8 @@ export default abstract class LeafletMap {
     const keys: string[] = [];
     this.polygonsData = deepClone(polyData);
     polyData.forEach((data: FormattedData) => {
-      if (data && isDefinedAndNotEmptyStr(data[this.options.polygonKeyName])) {
-        if (typeof (data[this.options.polygonKeyName]) === 'string') {
+      if (data && isDefinedAndNotNull(data[this.options.polygonKeyName]) && !isEmptyStr(data[this.options.polygonKeyName])) {
+        if (isString((data[this.options.polygonKeyName]))) {
           data[this.options.polygonKeyName] = JSON.parse(data[this.options.polygonKeyName]);
         }
         data[this.options.polygonKeyName] = this.convertPositionPolygon(data[this.options.polygonKeyName]);

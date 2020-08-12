@@ -89,8 +89,8 @@ export function isDefinedAndNotNull(value: any): boolean {
   return typeof value !== 'undefined' && value !== null;
 }
 
-export function isDefinedAndNotEmptyStr(value: any): boolean {
-  return typeof value !== 'undefined' && value !== '';
+export function isEmptyStr(value: any): boolean {
+  return value === '';
 }
 
 export function isFunction(value: any): boolean {
