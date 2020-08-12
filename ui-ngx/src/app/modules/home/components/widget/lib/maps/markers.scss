@@ -22,13 +22,12 @@
   background-repeat: no-repeat;
 }
 
-//.leaflet-div-icon,
-//.tb-marker-label,
-//.tb-marker-label:before {
-//  border: none;
-//  background: none;
-//  box-shadow: none;
-//}
+.tb-marker-label,
+.tb-marker-label:before {
+  border: none;
+  background: none;
+  box-shadow: none;
+}
 
 .leaflet-container{
   background-color: white;

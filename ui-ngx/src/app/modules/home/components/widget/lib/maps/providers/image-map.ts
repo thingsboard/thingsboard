@@ -24,7 +24,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotEmptyStr } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
 
 const maxZoom = 4;// ?
 
@@ -213,7 +213,7 @@ export class ImageMap extends LeafletMap {
     convertPosition(expression): L.LatLng {
       const xPos = expression[this.options.xPosKeyName];
       const yPos = expression[this.options.yPosKeyName];
-      if (!isDefinedAndNotEmptyStr(xPos) || isNaN(xPos) || !isDefinedAndNotEmptyStr(yPos) || isNaN(yPos)) {
+      if (!isDefinedAndNotNull(xPos) || isEmptyStr(xPos) || isNaN(xPos) || !isDefinedAndNotNull(yPos) || isEmptyStr(yPos) || isNaN(yPos)) {
         return null;
       }
       Object.assign(expression, this.posFunction(xPos, yPos));

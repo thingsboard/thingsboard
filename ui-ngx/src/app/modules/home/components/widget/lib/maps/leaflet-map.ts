@@ -49,7 +49,7 @@ import {
   safeExecute
 } from '@home/components/widget/lib/maps/maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { deepClone, isDefinedAndNotEmptyStr } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEmptyStr, isString } from '@core/utils';
 
 export default abstract class LeafletMap {
 
@@ -350,13 +350,13 @@ export default abstract class LeafletMap {
     }
 
     convertPosition(expression: object): L.LatLng {
-        if (!expression) return null;
-        const lat = expression[this.options.latKeyName];
-        const lng = expression[this.options.lngKeyName];
-        if (!isDefinedAndNotEmptyStr(lat) || isNaN(lat) || !isDefinedAndNotEmptyStr(lng) || isNaN(lng)) {
-          return null;
-        }
-        return L.latLng(lat, lng) as L.LatLng;
+      if (!expression) return null;
+      const lat = expression[this.options.latKeyName];
+      const lng = expression[this.options.lngKeyName];
+      if (!isDefinedAndNotNull(lat) || isString(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isString(lng) || isNaN(lng)) {
+        return null;
+      }
+      return L.latLng(lat, lng) as L.LatLng;
     }
 
     convertPositionPolygon(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]) {
@@ -449,7 +449,7 @@ export default abstract class LeafletMap {
 
   // Markers
     updateMarkers(markersData: FormattedData[], updateBounds = true, callback?) {
-        const rawMarkers = markersData.filter(mdata => !!this.convertPosition(mdata));
+      const rawMarkers = markersData.filter(mdata => !!this.convertPosition(mdata));
       const toDelete = new Set(Array.from(this.markers.keys()));
       const createdMarkers: Marker[] = [];
       const updatedMarkers: Marker[] = [];
@@ -644,8 +644,8 @@ export default abstract class LeafletMap {
     const keys: string[] = [];
     this.polygonsData = deepClone(polyData);
     polyData.forEach((data: FormattedData) => {
-      if (data && isDefinedAndNotEmptyStr(data[this.options.polygonKeyName])) {
-        if (typeof (data[this.options.polygonKeyName]) === 'string') {
+      if (data && isDefinedAndNotNull(data[this.options.polygonKeyName]) && !isEmptyStr(data[this.options.polygonKeyName])) {
+        if (isString((data[this.options.polygonKeyName]))) {
           data[this.options.polygonKeyName] = JSON.parse(data[this.options.polygonKeyName]);
         }
         data[this.options.polygonKeyName] = this.convertPositionPolygon(data[this.options.polygonKeyName]);
