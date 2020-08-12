@@ -783,6 +783,10 @@ service:
 metrics:
   # Enable/disable actuator metrics.
   enabled: "${METRICS_ENABLED:false}"
+  timer:
+    # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
+    percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
+
 
 management:
   endpoints:

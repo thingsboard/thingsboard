@@ -22,17 +22,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
-import org.thingsboard.server.common.msg.queue.RuleEngineException;
-import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.msg.queue.*;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
@@ -42,40 +36,25 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
-import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
-import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
-import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
-import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
-import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategy;
-import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategyFactory;
-import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
-import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategyFactory;
+import org.thingsboard.server.service.queue.processing.*;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 @Service
 @TbRuleEngineComponent
 @Slf4j
 public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
 
+    public static final String SUCCESSFUL_STATUS = "successful";
+    public static final String FAILED_STATUS = "failed";
     @Value("${queue.rule-engine.poll-interval}")
     private long pollDuration;
     @Value("${queue.rule-engine.pack-processing-timeout}")
@@ -170,7 +149,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                             log.trace("[{}] Creating callback for message: {}", id, msg.getValue());
                             ToRuleEngineMsg toRuleEngineMsg = msg.getValue();
                             TenantId tenantId = new TenantId(new UUID(toRuleEngineMsg.getTenantIdMSB(), toRuleEngineMsg.getTenantIdLSB()));
-                            TbMsgCallback callback = new TbMsgPackCallback(id, tenantId, ctx);
+                            TbMsgCallback callback = statsEnabled ?
+                                    new TbMsgPackCallback(id, tenantId, ctx, stats.getTimer(tenantId, SUCCESSFUL_STATUS), stats.getTimer(tenantId, FAILED_STATUS)) :
+                                    new TbMsgPackCallback(id, tenantId, ctx);
                             try {
                                 if (toRuleEngineMsg.getTbMsg() != null && !toRuleEngineMsg.getTbMsg().isEmpty()) {
                                     forwardToRuleEngineActor(configuration.getName(), tenantId, toRuleEngineMsg, callback);
