@@ -41,7 +41,9 @@ public class EntityDataMsgConstructor {
         switch (actionType) {
             case TIMESERIES_UPDATED:
                 try {
-                    builder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(entityData));
+                    JsonObject data = entityData.getAsJsonObject();
+                    long ts = data.getAsJsonPrimitive("ts").getAsLong();
+                    builder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(data.getAsJsonObject("data"), ts));
                 } catch (Exception e) {
                     log.warn("Can't convert to telemetry proto, entityData [{}]", entityData, e);
                 }
