@@ -129,7 +129,7 @@ public class LwM2MTransportService {
         String endpointId = registration.getEndpoint();
 //        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
-        log.info("[{}] [{}] Received endpoint updated registration version event", endpointId, lwm2mVersion);
+        log.info("[{}] [{}] Received endpoint updated registration version event (next observe)", endpointId, lwm2mVersion);
         Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
         log.info("[{}] [{}] Received endpoint observations updatedReg", registration.getEndpoint(), observations);
 
