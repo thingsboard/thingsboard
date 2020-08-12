@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.service.sql;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, OAUTH2_CLIENT_REGISTRATION, OAUTH2_CLIENT_REGISTRATION_TEMPLATE
+import org.thingsboard.server.dao.service.BaseOAuth2ConfigTemplateServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+
+@DaoSqlTest
+public class OAuth2ConfigTemplateServiceSqlTest extends BaseOAuth2ConfigTemplateServiceTest {
 }

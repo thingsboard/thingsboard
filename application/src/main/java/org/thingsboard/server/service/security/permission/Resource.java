@@ -33,6 +33,7 @@ public enum Resource {
     WIDGETS_BUNDLE(EntityType.WIDGETS_BUNDLE),
     WIDGET_TYPE(EntityType.WIDGET_TYPE),
     OAUTH2_CONFIGURATION(EntityType.OAUTH2_CLIENT_REGISTRATION),
+    OAUTH2_CONFIGURATION_TEMPLATE(EntityType.OAUTH2_CLIENT_REGISTRATION_TEMPLATE),
     ;
 
     private final EntityType entityType;

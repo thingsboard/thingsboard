@@ -48,6 +48,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.WIDGETS_BUNDLE, widgetsPermissionChecker);
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
         put(Resource.OAUTH2_CONFIGURATION, tenantOAuth2ConfigPermissionChecker);
+        put(Resource.OAUTH2_CONFIGURATION_TEMPLATE, tenantOAuth2ConfigTemplatePermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
@@ -108,7 +109,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
     };
 
-    private final PermissionChecker tenantOAuth2ConfigPermissionChecker = new PermissionChecker() {
+    private  final PermissionChecker tenantOAuth2ConfigPermissionChecker = new PermissionChecker() {
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation) {
             return oAuth2Service.isOAuth2ClientRegistrationAllowed(user.getTenantId());
@@ -120,6 +121,18 @@ public class TenantAdminPermissions extends AbstractPermissions {
                 return false;
             }
             return hasPermission(user, operation);
+        }
+    };
+
+    private static final PermissionChecker tenantOAuth2ConfigTemplatePermissionChecker = new PermissionChecker() {
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation) {
+            return operation == Operation.READ;
+        }
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+            return operation == Operation.READ;
         }
     };
 }

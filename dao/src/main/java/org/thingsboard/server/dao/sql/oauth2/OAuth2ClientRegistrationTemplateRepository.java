@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.sql.oauth2;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, OAUTH2_CLIENT_REGISTRATION, OAUTH2_CLIENT_REGISTRATION_TEMPLATE
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationTemplateEntity;
+
+import java.util.UUID;
+
+public interface OAuth2ClientRegistrationTemplateRepository extends CrudRepository<OAuth2ClientRegistrationTemplateEntity, UUID> {
 }

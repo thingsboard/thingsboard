@@ -22,4 +22,5 @@ DROP TABLE IF EXISTS rule_node;
 DROP TABLE IF EXISTS rule_chain;
 DROP TABLE IF EXISTS entity_view;
 DROP TABLE IF EXISTS oauth2_client_registration;
+DROP TABLE IF EXISTS oauth2_client_registration_template;
 DROP TABLE IF EXISTS tb_schema_settings;

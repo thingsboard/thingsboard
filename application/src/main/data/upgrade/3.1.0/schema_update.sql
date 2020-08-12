@@ -49,3 +49,28 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     custom_username varchar(255),
     custom_password varchar(255)
 );
+
+DROP TABLE IF EXISTS oauth2_client_registration_template;
+
+CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    provider_id varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
+);

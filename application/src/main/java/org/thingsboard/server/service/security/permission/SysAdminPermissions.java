@@ -40,6 +40,7 @@ public class SysAdminPermissions extends AbstractPermissions {
         put(Resource.WIDGETS_BUNDLE, systemEntityPermissionChecker);
         put(Resource.WIDGET_TYPE, systemEntityPermissionChecker);
         put(Resource.OAUTH2_CONFIGURATION, sysAdminOAuth2ConfigPermissionChecker);
+        put(Resource.OAUTH2_CONFIGURATION_TEMPLATE, PermissionChecker.allowAllPermissionChecker);
     }
 
     private static final PermissionChecker systemEntityPermissionChecker = new PermissionChecker() {

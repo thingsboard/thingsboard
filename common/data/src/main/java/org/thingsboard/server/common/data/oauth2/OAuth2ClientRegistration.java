@@ -49,9 +49,9 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2ClientRegistrationI
 
     public OAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration) {
         super(clientRegistration);
-        this.tenantId = clientRegistration.getTenantId();
-        this.domainName = clientRegistration.getDomainName();
-        this.redirectUriTemplate = clientRegistration.getRedirectUriTemplate();
+        this.tenantId = clientRegistration.tenantId;
+        this.domainName = clientRegistration.domainName;
+        this.redirectUriTemplate = clientRegistration.redirectUriTemplate;
         this.mapperConfig = clientRegistration.mapperConfig;
         this.clientId = clientRegistration.clientId;
         this.clientSecret = clientRegistration.clientSecret;
