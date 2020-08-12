@@ -44,6 +44,7 @@ var ruleNodeClazzHelpLinkMap = {
     'org.thingsboard.rule.engine.aws.sqs.TbSqsNode': 'ruleNodeAwsSqs',
     'org.thingsboard.rule.engine.kafka.TbKafkaNode': 'ruleNodeKafka',
     'org.thingsboard.rule.engine.mqtt.TbMqttNode': 'ruleNodeMqtt',
+    'org.thingsboard.rule.engine.mqtt.azure.TbAzureIotHubNode': 'ruleNodeAzureIotHub',
     'org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode': 'ruleNodeRabbitMq',
     'org.thingsboard.rule.engine.rest.TbRestApiCallNode': 'ruleNodeRestApiCall',
     'org.thingsboard.rule.engine.mail.TbSendEmailNode': 'ruleNodeSendEmail'
@@ -88,6 +89,7 @@ export default angular.module('thingsboard.help', [])
                 ruleNodeAwsSqs: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/external-nodes/#aws-sqs-node",
                 ruleNodeKafka: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/external-nodes/#kafka-node",
                 ruleNodeMqtt: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/external-nodes/#mqtt-node",
+                ruleNodeAzureIotHub: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/external-nodes/#azure-iot-hub-node",
                 ruleNodeRabbitMq: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/external-nodes/#rabbitmq-node",
                 ruleNodeRestApiCall: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node",
                 ruleNodeSendEmail: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node",

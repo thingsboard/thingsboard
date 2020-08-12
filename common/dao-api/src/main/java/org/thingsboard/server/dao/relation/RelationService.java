@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by ashvayka on 27.04.17.
@@ -76,6 +75,8 @@ public interface RelationService {
     ListenableFuture<List<EntityRelation>> findByQuery(TenantId tenantId, EntityRelationsQuery query);
 
     ListenableFuture<List<EntityRelationInfo>> findInfoByQuery(TenantId tenantId, EntityRelationsQuery query);
+
+    void removeRelations(TenantId tenantId, EntityId entityId);
 
 //    TODO: This method may be useful for some validations in the future
 //    ListenableFuture<Boolean> checkRecursiveRelation(EntityId from, EntityId to);
