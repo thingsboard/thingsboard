@@ -28,6 +28,15 @@ public class JacksonUtil {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
+        try {
+            return OBJECT_MAPPER.convertValue(fromValue, toValueType);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("The given object value: "
+                    + fromValue + " cannot be converted to " + toValueType);
+        }
+    }
+
     public static <T> T fromString(String string, Class<T> clazz) {
         try {
             return OBJECT_MAPPER.readValue(string, clazz);

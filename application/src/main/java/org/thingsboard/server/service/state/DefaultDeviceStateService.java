@@ -36,26 +36,27 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -91,7 +92,6 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @Slf4j
 public class DefaultDeviceStateService implements DeviceStateService {
 
-    private static final ObjectMapper json = new ObjectMapper();
     public static final String ACTIVITY_STATE = "active";
     public static final String LAST_CONNECT_TIME = "lastConnectTime";
     public static final String LAST_DISCONNECT_TIME = "lastDisconnectTime";
@@ -506,11 +506,11 @@ public class DefaultDeviceStateService implements DeviceStateService {
         try {
             String data;
             if (msgType.equals(CONNECT_EVENT)) {
-                ObjectNode stateNode = json.convertValue(state, ObjectNode.class);
+                ObjectNode stateNode = JacksonUtil.convertValue(state, ObjectNode.class);
                 stateNode.remove(ACTIVITY_STATE);
-                data = stateNode.toString();
+                data = JacksonUtil.toString(stateNode);
             } else {
-                data = json.writeValueAsString(state);
+                data = JacksonUtil.toString(state);
             }
             TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON, data);
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
