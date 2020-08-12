@@ -127,10 +127,14 @@ export default abstract class LeafletMap {
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     const datasourcesList = document.createElement('div');
                     const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
+                    const header = document.createElement('p');
+                    header.appendChild(document.createTextNode('Select entity:'));
+                    header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
+                    datasourcesList.append(header);
                     this.datasources.forEach(ds => {
                         const dsItem = document.createElement('p');
                         dsItem.appendChild(document.createTextNode(ds.entityName));
-                        dsItem.setAttribute('style', 'font-size: 14px');
+                        dsItem.setAttribute('style', 'font-size: 14px; margin: 8px 0; cursor: pointer');
                         dsItem.onclick = () => {
                             const updatedEnttity = { ...ds, ...customLatLng };
                             this.saveMarkerLocation(updatedEnttity).subscribe(() => {
@@ -141,9 +145,9 @@ export default abstract class LeafletMap {
                         }
                         datasourcesList.append(dsItem);
                     });
+                    datasourcesList.append(document.createElement('br'));
                     const deleteBtn = document.createElement('a');
-                    deleteBtn.appendChild(document.createTextNode('Delete position'));
-                    deleteBtn.setAttribute('color', 'red');
+                    deleteBtn.appendChild(document.createTextNode('Discard changes'));
                     deleteBtn.onclick = () => {
                         this.map.removeLayer(newMarker);
                     }
@@ -196,10 +200,14 @@ export default abstract class LeafletMap {
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
           const datasourcesList = document.createElement('div');
           const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(mousePositionOnMap)};
+          const header = document.createElement('p');
+          header.appendChild(document.createTextNode('Select entity:'));
+          header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
+          datasourcesList.append(header);
           this.datasources.forEach(ds => {
             const dsItem = document.createElement('p');
             dsItem.appendChild(document.createTextNode(ds.entityName));
-            dsItem.setAttribute('style', 'font-size: 14px');
+            dsItem.setAttribute('style', 'font-size: 14px; margin: 8px 0; cursor: pointer');
             dsItem.onclick = () => {
               const updatedEnttity = { ...ds, ...customLatLng };
               this.savePolygonLocation(updatedEnttity).subscribe(() => {
@@ -209,9 +217,9 @@ export default abstract class LeafletMap {
             }
             datasourcesList.append(dsItem);
           });
+          datasourcesList.append(document.createElement('br'));
           const deleteBtn = document.createElement('a');
-          deleteBtn.appendChild(document.createTextNode('Delete position'));
-          deleteBtn.setAttribute('color', 'red');
+          deleteBtn.appendChild(document.createTextNode('Discard changes'));
           deleteBtn.onclick = () => {
             this.map.removeLayer(newPolygon);
           }
