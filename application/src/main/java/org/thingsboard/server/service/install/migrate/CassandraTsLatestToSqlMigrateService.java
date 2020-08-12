@@ -31,8 +31,12 @@ import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.util.NoSqlTsDao;
 import org.thingsboard.server.dao.util.SqlTsLatestDao;
-import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
+import org.thingsboard.server.service.install.InstallScripts;
 
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Arrays;
@@ -69,6 +73,9 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     @Autowired
     protected TsKvDictionaryRepository dictionaryRepository;
 
+    @Autowired
+    private InstallScripts installScripts;
+
     @Value("${spring.datasource.url}")
     protected String dbUrl;
 
@@ -86,6 +93,8 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     public void migrate() throws Exception {
         log.info("Performing migration of latest timeseries data from cassandra to SQL database ...");
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+            Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.0.1", "schema_ts_latest.sql");
+            loadSql(schemaUpdateFile, conn);
             conn.setAutoCommit(false);
             for (CassandraToSqlTable table : tables) {
                 table.migrateToSql(cluster.getSession(), conn);
@@ -214,5 +223,11 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
             }
         }
         return keyId;
+    }
+
+    private void loadSql(Path sqlFile, Connection conn) throws Exception {
+        String sql = new String(Files.readAllBytes(sqlFile), Charset.forName("UTF-8"));
+        conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+        Thread.sleep(5000);
     }
 }
