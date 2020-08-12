@@ -34,6 +34,8 @@ public final class EdgeUtils {
                 return EdgeEventType.DASHBOARD;
             case USER:
                 return EdgeEventType.USER;
+            case RULE_CHAIN:
+                return EdgeEventType.RULE_CHAIN;
             case ALARM:
                 return EdgeEventType.ALARM;
             case TENANT:

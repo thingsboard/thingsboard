@@ -18,9 +18,11 @@ package org.thingsboard.server.service.edge;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
@@ -46,12 +48,15 @@ import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -85,6 +90,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RuleChainService ruleChainService;
 
     @Autowired
     private RelationService relationService;
@@ -223,11 +231,48 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             case UNASSIGNED_FROM_EDGE:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
                 saveEdgeEvent(tenantId, edgeId, edgeEventType, edgeEventActionType, entityId, null);
+                if (edgeEventType.equals(EdgeEventType.RULE_CHAIN)) {
+                    updateDependentRuleChains(tenantId, new RuleChainId(entityId.getId()), edgeId);
+                }
                 break;
             case RELATIONS_DELETED:
                 // TODO: voba - add support for relations deleted
                 break;
         }
+    }
+
+    private void updateDependentRuleChains(TenantId tenantId, RuleChainId processingRuleChainId, EdgeId edgeId) {
+        ListenableFuture<TimePageData<RuleChain>> future = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, new TimePageLink(Integer.MAX_VALUE));
+        Futures.addCallback(future, new FutureCallback<TimePageData<RuleChain>>() {
+            @Override
+            public void onSuccess(@Nullable TimePageData<RuleChain> pageData) {
+                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                    for (RuleChain ruleChain : pageData.getData()) {
+                        if (!ruleChain.getId().equals(processingRuleChainId)) {
+                            List<RuleChainConnectionInfo> connectionInfos =
+                                    ruleChainService.loadRuleChainMetaData(ruleChain.getTenantId(), ruleChain.getId()).getRuleChainConnections();
+                            if (connectionInfos != null && !connectionInfos.isEmpty()) {
+                                for (RuleChainConnectionInfo connectionInfo : connectionInfos) {
+                                    if (connectionInfo.getTargetRuleChainId().equals(processingRuleChainId)) {
+                                        saveEdgeEvent(tenantId,
+                                                edgeId,
+                                                EdgeEventType.RULE_CHAIN_METADATA,
+                                                ActionType.UPDATED,
+                                                ruleChain.getId(),
+                                                null);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Exception during updating dependent rule chains on sync!", t);
+            }
+        }, dbCallbackExecutorService);
     }
 
     private void processAlarm(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
