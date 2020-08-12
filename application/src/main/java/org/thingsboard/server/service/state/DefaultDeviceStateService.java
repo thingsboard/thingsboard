@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.state;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
@@ -46,16 +45,17 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -91,7 +91,6 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @Slf4j
 public class DefaultDeviceStateService implements DeviceStateService {
 
-    private static final ObjectMapper json = new ObjectMapper();
     public static final String ACTIVITY_STATE = "active";
     public static final String LAST_CONNECT_TIME = "lastConnectTime";
     public static final String LAST_DISCONNECT_TIME = "lastDisconnectTime";
@@ -506,11 +505,11 @@ public class DefaultDeviceStateService implements DeviceStateService {
         try {
             String data;
             if (msgType.equals(CONNECT_EVENT)) {
-                ObjectNode stateNode = json.convertValue(state, ObjectNode.class);
+                ObjectNode stateNode = JacksonUtil.convertValue(state, ObjectNode.class);
                 stateNode.remove(ACTIVITY_STATE);
-                data = stateNode.toString();
+                data = JacksonUtil.toString(stateNode);
             } else {
-                data = json.writeValueAsString(state);
+                data = JacksonUtil.toString(state);
             }
             TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON, data);
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
